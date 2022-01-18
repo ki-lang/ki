@@ -13,6 +13,7 @@ void fc_build_asts() {
       for (int x = 0; x < fc->functions->length; x++) {
         Function* func = array_get_index(fc->functions, x);
         FileCompiler* fc = func->fc;
+        if (fc->is_header) continue;
         fc_build_ast(fc, func->scope);
         Token* t = init_token();
         t->type = tkn_func;
@@ -24,6 +25,7 @@ void fc_build_asts() {
       for (int x = 0; x < fc->classes->length; x++) {
         Class* class = array_get_index(fc->classes, x);
         FileCompiler* fc = class->fc;
+        if (fc->is_header) continue;
         for (int y = 0; y < class->props->values->length; y++) {
           char* name = array_get_index(class->props->keys, y);
           ClassProp* prop = array_get_index(class->props->values, y);

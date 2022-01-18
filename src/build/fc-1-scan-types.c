@@ -236,5 +236,11 @@ void fc_scan_types(FileCompiler* fc) {
     }
   }
 
+  if (fc->macro_results->length > 0) {
+    fc_error(
+        fc, "Reached end of file, but some macro if statements were not closed",
+        NULL);
+  }
+
   free(token);
 }

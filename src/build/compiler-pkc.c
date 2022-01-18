@@ -130,6 +130,7 @@ void pkc_check_config(PkgCompiler* pkc) {
         }
       }
     }
-    free(content);
+    // Freeing the content breaks the json object
+    // free(content);
   }
 }

@@ -1,5 +1,6 @@
 
 #include "../all.h"
+#include "../libs/nxjson.h"
 
 void fc_read_header_token(FileCompiler* fc) {
   fc_expect_token(fc, "\"", false, true, true);
@@ -19,14 +20,13 @@ void fc_read_header_token(FileCompiler* fc) {
   path[pos++] = 'k';
   path[pos++] = 'h';
   path[pos] = '\0';
+  fc->i++;
 
   // Get full path
   char* fullpath = NULL;
   PkgCompiler* pkc = fc->nsc->pkc;
   if (pkc->config) {
-    printf("config:%s\n", pkc->config_path);
     const nx_json* headers = nx_json_get(pkc->config, "headers");
-    printf("hh:%p\n", headers);
     if (headers) {
       const nx_json* ob = nx_json_get(headers, "dirs");
       if (ob != NULL) {
@@ -38,7 +38,7 @@ void fc_read_header_token(FileCompiler* fc) {
           strcat(find, item->text_value);
           strcat(find, "/");
           strcat(find, path);
-          printf("try:%s\n", find);
+          //   printf("try:%s\n", find);
           if (file_exists(find)) {
             fullpath = find;
             break;

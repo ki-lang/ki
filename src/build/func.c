@@ -39,14 +39,23 @@ void fc_scan_func(FileCompiler* fc, Function* func) {
   func->args_i_end = fc->i;
   // Return type
   fc_next_token(fc, token, true, false, true);
-  if (strcmp(token, "{") != 0) {
-    fc_skip_type(fc);
+  if (fc->is_header) {
+    // Header
+    if (strcmp(token, ";") != 0) {
+      fc_skip_type(fc);
+    }
+    fc_expect_token(fc, ";", false, true, true);
+  } else {
+    // Not header
+    if (strcmp(token, "{") != 0) {
+      fc_skip_type(fc);
+    }
+    // Body
+    fc_expect_token(fc, "{", false, true, true);
+    func->scope->body_i = fc->i;
+    fc_skip_body(fc, "{", "}", NULL, false);
+    func->scope->body_i_end = fc->i;
   }
-  // Body
-  fc_expect_token(fc, "{", false, true, true);
-  func->scope->body_i = fc->i;
-  fc_skip_body(fc, "{", "}", NULL, false);
-  func->scope->body_i_end = fc->i;
 
   free(token);
 }
@@ -103,22 +112,24 @@ void fc_scan_func_args(Function* func) {
 
   // Return type
   fc_next_token(fc, token, true, false, true);
-  if (strcmp(token, "{") != 0) {
+  if (strcmp(token, fc->is_header ? ";" : "{") != 0) {
     if (strcmp(token, "!") == 0) {
       fc_next_token(fc, token, false, false, true);  // skip '!'
       fc_next_token(fc, token, true, false, true);   // read next
       func->can_error = true;
     }
-    if (strcmp(token, "{") != 0) {
+    if (strcmp(token, fc->is_header ? ";" : "{") != 0) {
       Type* return_type = fc_read_type(fc);
       func->return_type = return_type;
       func->scope->return_type = return_type;
       func->scope->must_return = true;
     }
   }
-  fc_expect_token(fc, "{", false, false, true);
 
-  func->scope->body_i = fc->i;
+  if (!fc->is_header) {
+    fc_expect_token(fc, "{", false, false, true);
+    func->scope->body_i = fc->i;
+  }
 
   //
   free(token);

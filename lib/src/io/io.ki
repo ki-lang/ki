@@ -1,8 +1,8 @@
 
 namespace io;
 
-#import <stdio.h>
+#header "sys/io"
 
 func print(string str) {
-	_:printf("%s".data, str.data);
+	write(1, str.data, str.length);
 }

@@ -79,10 +79,13 @@ void cmd_build_init_static() {
   pointer_size = 8;
 
   internal_types = array_make(10);
+  array_push(internal_types, "ixx");
   array_push(internal_types, "i8");
   array_push(internal_types, "u8");
   array_push(internal_types, "i32");
   array_push(internal_types, "u32");
+  array_push(internal_types, "i64");
+  array_push(internal_types, "u64");
   array_push(internal_types, "ptr");
   array_push(internal_types, "bool");
   array_push(internal_types, "string");

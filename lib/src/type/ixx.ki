@@ -1,0 +1,5 @@
+
+namespace type;
+
+class ixx number:u:8 {
+}

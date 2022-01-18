@@ -1,0 +1,5 @@
+
+namespace main;
+
+func write(i32 fd, ptr buf, u64 length);
+

@@ -107,5 +107,6 @@ void fc_error(FileCompiler* fc, char* msg, char* token) {
   printf("\n");
   // printf("################################\n");
 
+  // raise(SIGSEGV);  // Useful for debugging
   exit(1);
 }

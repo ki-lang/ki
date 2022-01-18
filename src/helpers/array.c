@@ -23,7 +23,8 @@ void* array_pop(Array* arr) {
   if (arr->length == 0) {
     return NULL;
   }
-  uintptr_t* adr = arr->data + ((arr->length - 1) * sizeof(void*));
+  arr->length--;
+  uintptr_t* adr = arr->data + ((arr->length) * sizeof(void*));
   return (void*)(*adr);
 }
 
