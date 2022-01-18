@@ -1,0 +1,5 @@
+
+namespace type;
+
+class i64 number:s:8 {
+}

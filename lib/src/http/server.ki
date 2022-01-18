@@ -1,0 +1,94 @@
+
+namespace http;
+
+#import <sys/socket.h>
+
+use type {PtrArray};
+
+func response_handler(Request req) Response {
+	
+	return Response {
+		body: "Hello",
+	};
+}
+
+class Server {
+	u32 port;
+	?PtrArray clients = null;
+	response_handler handler = null;
+
+	func start(){
+
+		if(this.handler == null){
+			this.handler = ki:http:response_handler;
+		}
+
+		io:print("Starting server\n");
+
+		u32 max = 10000;
+		this.clients = PtrArray{ size: max, data: mem:malloc(max * 8) };
+
+		@ s = ki:net:Socket { port: this.port };
+		s.listen();
+
+		// 
+		@ inadr = c:struct in_addr {
+			s_addr: 0
+		};
+		@ tmp = c:struct sockaddr_in* restrict {
+			sin_addr: inadr
+		};
+		@ clientaddr = cast tmp to ptr;
+		u32 addrlen = sizeof(clientaddr);
+		u32 rslot = 0;
+
+		//
+		while(true){
+			//io:print(c"accept\n");
+        	i32 result = c:accept(s.listenfd, clientaddr, &addrlen);
+			if (result < 0){
+				result.to_cstring();
+				io:print("failed to accept\n");
+				throw failed_to_accept;
+			}else{
+				//io:print("success\n");
+				this.clients.set(rslot, &result);
+				this.respond(rslot);
+			}
+
+			rslot++;
+			if(rslot >= max){
+				rslot = 0;
+			}
+		}
+	}
+
+	func respond(u32 slot){
+		io:print("Respond\n");
+
+		u32 clientfd = 0;
+		this.clients.get(slot, &clientfd);
+
+		ptr buf = mem:malloc(65535);
+		i32 rcvd = c:recv(clientfd, buf, 65535, 0);
+
+		if (rcvd<0){
+			io:print("receive error\n");
+		} else if (rcvd == 0){
+			io:print("Client disconnected upexpectedly\n");
+		} else {
+
+			@ payload = string.make(buf, rcvd);
+			@ req = Request.make(payload);
+
+			@ response = this.handler(req);
+
+			string output = response.output();
+			c:write(clientfd, output.to_cstring(), output.length);
+		}
+
+		c:shutdown(clientfd, 2); // SHUT_RD, SHUT_WR, SHUT_RDWR have the value 0, 1, 2
+		c:close(clientfd);
+	}
+
+}

@@ -1,0 +1,18 @@
+
+namespace mem;
+
+#import <stdlib.h>
+#import <stdio.h>
+#import <string.h>
+
+func malloc(u32 size) ptr {
+	return _:malloc(size);
+}
+
+func mcopy(ptr from, u32 len, ptr to) {
+	_:memcpy(to, from, len);
+}
+
+func mequal(ptr a, ptr b, u32 length) bool {
+	return _:memcmp(a, b, length);
+}

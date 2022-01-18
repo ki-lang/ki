@@ -1,0 +1,50 @@
+
+// class Array<T> {
+// 	private uint length = 0;
+// 	private uint max_length = 0;
+// 	private ptr data;
+// 	private uint graves = 0;
+// 
+// 	func push(T item) array<T> {
+// 		if(this.length == this.max_length){
+// 			if(this.max_length > 0){
+// 				this.max_length *= 2;
+// 			} else {
+// 				this.max_length = 1;
+// 			}
+// 			this.data = malloc(this.max_length * @PTR_SIZE);
+// 		}
+// 		ptr adr = this.data;
+// 		adr += (this.length - 1) * @PTR_SIZE;
+// 		mcopy(*item, @PTR_SIZE, adr);
+// 		this.length++;
+// 
+// 		return this;
+// 	}
+// 
+// 	func remove_index(uint index) {
+// 		if(this.index >= this.length){
+// 			return;
+// 		}
+// 		ptr adr = this.data;
+// 		adr += index * @PTR_SIZE;
+// 		ptr grave = 0;
+// 		mcopy(grave, @PTR_SIZE, adr);
+// 		this.graves++;
+// 		// todo: count graves and delete them if too many
+// 	}
+// 
+// 	func index_of(T item) ?uint {
+// 		ptr find = *item;
+// 		unit index = 0;
+// 		while(index < this.length){
+// 			var adr = this.data + (index * @PTR_SIZE);
+// 			ptr x = cast adr to ptr
+// 			if ( x == find ) {
+// 				return index;
+// 			}
+// 			index++;
+// 		}
+// 		return null;
+// 	}
+// }

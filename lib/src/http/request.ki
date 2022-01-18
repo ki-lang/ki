@@ -1,0 +1,37 @@
+
+namespace http;
+
+class Request {
+	public string method;
+	public string uri;
+	public string protocol;
+
+	public static func make(string payload) Request {
+
+		//io:print(payload);
+
+		@ chunker = payload.chunker();
+		chunker.break_on_bytes(" \t\r\n");
+		@ method = chunker.get_chunk();
+		chunker.break_on_bytes(" \t");
+		@ uri = chunker.get_chunk();
+		chunker.break_on_bytes(" \t\r\n");
+		@ protocol = chunker.get_chunk();
+
+		@ req = Request {
+			method: method,
+			uri: uri,
+			protocol: protocol,
+		};
+
+		//io:print(method);
+		//io:print("\n");
+		//io:print(uri);
+		//io:print("\n");
+		//io:print(protocol);
+		//io:print("\n");
+
+		return req;
+	}
+
+}

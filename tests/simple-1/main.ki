@@ -1,0 +1,18 @@
+
+
+func main() void {
+
+    server := ki.HttpServer {
+        port: 9000
+        on_request: function(req, res) {
+
+            if(req.path == "/") {
+                res.send("Hello world")
+                return;
+            }
+
+        }
+    }
+
+}
+

@@ -1,0 +1,8 @@
+
+namespace io;
+
+#import <stdio.h>
+
+func print(string str) {
+	_:printf("%s".data, str.data);
+}

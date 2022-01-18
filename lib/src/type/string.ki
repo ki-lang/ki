@@ -1,0 +1,156 @@
+
+namespace type;
+
+use mem {malloc,mcopy,mequal};
+
+class string {
+	public u64 length = 0;
+	private u64 mem_size = 0;
+	private ptr data;
+
+	static func make(ptr data, u64 length) string {
+		u64 mem_size = length + 10;
+		@ str = string { data: malloc(mem_size), mem_size: mem_size };
+		mcopy(data, length + 1, str.data);
+		str.length = length;
+		return str;
+	}
+
+	func __add(string str) string {
+		u64 new_length = this.length;
+		new_length += str.length;
+		while(new_length > this.mem_size){
+			this.mem_size *= 2;
+		}
+		ptr adr = malloc(this.mem_size);
+		mcopy(this.data, this.length, adr);
+		adr += this.length;
+		mcopy(str.data, str.length, adr);
+		this.length = new_length;
+		free this.data;
+		this.data = adr;
+		return this;
+	}
+
+	func __eq(string str) bool {
+		if(this.length != str.length){
+			return false;
+		}
+		return mequal(this.data, str.data, this.length);
+	}
+
+	func __free() {
+		free this.data;
+	}
+
+	func index_of(string str) u64 {
+		if(str.length == 0){
+			return -1;
+		}
+		u64 last_char_pos = this.length - str.length + 1;
+		u64 result = 0;
+		u64 eq_count = 0;
+		ptr adr1 = this.data;
+		ptr adr2 = str.data;
+		while(result < last_char_pos){
+			adr1 += eq_count;
+			adr2 += eq_count;
+			u8 ch1 = cast adr1 as u8;
+			u8 ch2 = cast adr2 as u8;
+			if(ch1 == ch2){
+				eq_count++;
+				if(eq_count == str.length){
+					return result;
+				}
+				continue;
+			} else if(eq_count > 0) {
+				eq_count = 0;
+			}
+			result++;
+			adr1++;
+		}
+		return -1;
+	}
+
+	func to_cstring() cstring {
+		cstring cstr = malloc(this.length + 1);
+		mcopy(this.data, this.length, cstr);
+		ptr x = cstr;
+		x += this.length;
+		x = '\0';
+		return cstr;
+	}
+
+	func get_index(u64 index) u8 {
+		if(index >= this.length){
+			return '\0';
+		}
+		ptr x = this.data;
+		x += index;
+		u8 result = cast x as u8;
+		return result;
+	}
+
+	func chunker() StringChunker {
+		return StringChunker { str: this, start: 0 };
+	}
+
+	func substring(u64 start, u64 length) string {
+		if(length == 0){
+			return "";
+		}
+		ptr x = malloc(length + 1);
+		ptr from = this.data;
+		from += start;
+		mcopy(from, length, x);
+		ptr y = x;
+		y += length;
+		y = '\0';
+		return string.make(x, length);
+	}
+}
+
+class StringChunker{
+	public string str;
+	public u64 start = 0;
+	public u64 end = 0;
+	public bool on_bytes = false;
+	public string break_on;
+
+	public func reset(){
+		this.start = 0;
+		this.end = 0;
+	}
+
+	public func break_on_bytes(string bytes) StringChunker {
+		this.on_bytes = true;
+		this.break_on = bytes;
+		return this;
+	}
+
+	public func find_char_index(string bytes) !u64 {
+		u64 pos = this.start;
+		u64 bytes_pos = 0;
+		while(pos < this.str.length){
+			u8 a = this.str.get_index(pos);
+			while(bytes_pos < bytes.length){
+				u8 b = bytes.get_index(bytes_pos);
+				if(a == b){
+					return pos;
+				}
+				bytes_pos++;
+			}
+			bytes_pos = 0;
+			pos++;
+		}
+		throw not_found;
+	}
+
+	public func get_chunk() string {
+		this.end = this.find_char_index(this.break_on);
+		@ result = this.str.substring(this.start, this.end - this.start);
+		this.end += 1;
+		this.start = this.end;
+		return result;
+	}
+}

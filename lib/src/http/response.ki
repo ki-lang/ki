@@ -1,0 +1,11 @@
+
+namespace http;
+
+class Response {
+	public u32 status = 200;
+	public string body;
+
+	public func output() string {
+		return "HTTP/1.1 200 OK\r\ncontent-type: text/html\r\n\r\nHello world";
+	}
+}

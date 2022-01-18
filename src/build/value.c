@@ -1,0 +1,524 @@
+
+#include "../all.h"
+
+Value* init_value() {
+  //
+  Value* v = malloc(sizeof(Value));
+  v->type = vt_unknown;
+  v->return_type = NULL;
+  v->item = NULL;
+  return v;
+}
+
+void free_value(Value* v) {
+  //
+  free(v);
+}
+
+Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
+                     bool sameline, bool allow_space) {
+  //
+  char* token = malloc(KI_TOKEN_MAX);
+  int index = fc->i;
+  Value* value = init_value();
+
+  fc_next_token(fc, token, false, false, true);
+
+  if (strcmp(token, "(") == 0) {
+    value->type = vt_group;
+    Value* subv = fc_read_value(fc, scope, false, false, true);
+    value->item = subv;
+    value->return_type = subv->return_type;
+    fc_expect_token(fc, ")", false, false, true);
+  } else if (strcmp(token, "null") == 0) {
+    value->type = vt_null;
+    Type* type = init_type();
+    type->type = type_null;
+    value->return_type = type;
+  } else if (strcmp(token, "true") == 0) {
+    value->type = vt_true;
+    value->return_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"));
+  } else if (strcmp(token, "false") == 0) {
+    value->type = vt_false;
+    value->return_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"));
+  } else if (strcmp(token, "sizeof") == 0) {
+    value->type = vt_sizeof;
+    value->return_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "u32"));
+    fc_expect_token(fc, "(", false, true, false);
+    // type or type of var
+    IdentifierFor* idf = fc_read_and_get_idf(fc, scope, false, true, true);
+    int size = 0;
+    if (idf->type == idfor_class) {
+      Class* class = idf->item;
+      size = class->size;
+      fc_error(fc, "sizeof class (todo)", NULL);
+    } else if (idf->type == idfor_enum) {
+      size = 4;
+    } else if (idf->type == idfor_func) {
+      size = pointer_size;
+    } else if (idf->type == idfor_var) {
+      Type* type = idf->item;
+      size = type->bytes;
+    } else {
+      fc_error(fc, "cannot determine sizeof this value", NULL);
+    }
+    value->item = malloc(16);
+    sprintf(value->item, "%d", size);
+    //
+    fc_expect_token(fc, ")", false, true, true);
+  } else if (strcmp(token, "cast") == 0) {
+    value->type = vt_cast;
+
+    ValueCast* cast = malloc(sizeof(ValueCast));
+    cast->value = fc_read_value(fc, scope, false, true, true);
+
+    fc_expect_token(fc, "as", false, true, true);
+
+    cast->as_type = fc_read_type(fc);
+
+    value->item = cast;
+    value->return_type = cast->as_type;
+  } else if (strcmp(token, "\"") == 0) {
+    // String
+    Str* str = str_make("");
+    char prev_ch = '\0';
+    char ch = '\0';
+    while (fc->i < fc->content_len) {
+      prev_ch = ch;
+      ch = fc->content[fc->i];
+      fc->i++;
+      if (ch == '"' && prev_ch != '\\') {
+        break;
+      }
+      str_append_char(str, ch);
+    }
+
+    char* strbody = str_to_chars(str);
+    free_str(str);
+
+    value->item = strbody;
+    value->type = vt_string;
+    value->return_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "string"));
+  } else if (strcmp(token, "'") == 0) {
+    char* str = malloc(3);
+    strcpy(str, "");
+    char ch = fc_get_char(fc, 0);
+    fc->i++;
+    str[0] = ch;
+    str[1] = '\0';
+    if (ch == '\\') {
+      ch = fc_get_char(fc, 0);
+      fc->i++;
+      str[1] = ch;
+      str[2] = '\0';
+    }
+
+    value->type = vt_char;
+    value->item = str;
+    value->return_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "u8"));
+
+    fc_expect_token(fc, "'", false, true, false);
+  } else if (strcmp(token, "_") == 0 && fc_get_char(fc, 0) == ':') {
+    // imported global access
+    fc->i++;
+    fc_next_token(fc, token, false, true, false);
+    if (!is_valid_varname(token)) {
+      fc_error(fc, "Invalid identifier: '%s'", token);
+    }
+
+    if (strcmp(token, "struct") == 0) {
+    }
+
+    IdentifierFor* idf = map_get(c_identifiers, token);
+    if (idf == NULL) {
+      fc_error(fc, "Unknown variable/function: '%s'", token);
+    }
+
+    if (idf->type == idfor_func) {
+      Function* func = idf->item;
+      value->type = vt_var;
+      value->item = strdup(token);
+      Type* t = init_type();
+      t->type = type_funcref;
+      t->func = func;
+      value->return_type = t;
+    } else if (idf->type == idfor_var) {
+      value->type = vt_var;
+      value->item = strdup(token);
+      value->return_type = idf->item;
+    } else {
+      fc_error(fc, "Unhandled identifier (compiler import bug): '%s'", token);
+    }
+
+    //
+  } else if (is_valid_number(token) || strcmp(token, "-") == 0) {
+    bool negative = strcmp(token, "-") == 0;
+    // todo: put negative in value
+    if (negative) {
+      fc_next_token(fc, token, false, true, false);
+      if (!is_valid_number(token)) {
+        fc_error(fc, "Invalid number syntax: %s", token);
+      }
+    }
+
+    char ch = fc_get_char(fc, 0);
+    if (ch == '.') {
+      // Float
+      fc->i++;
+      char* fl = malloc(256);
+      strcpy(fl, token);
+      strcat(fl, ".");
+      int x = strlen(fl);
+      char digit = fc_get_char(fc, 0);
+      if (is_number(digit)) {
+        if (x >= 250) {
+          char msg[100];
+          sprintf(msg,
+                  "Float decimals are limited to 250 characters at the moment: "
+                  "\"%s\"\n",
+                  token);
+          die(msg);
+        }
+        fl[x] = digit;
+        x++;
+        fc->i++;
+        digit = fc_get_char(fc, 0);
+      }
+      fl[x] = '\0';
+      value->type = vt_number;
+      value->item = fl;
+      value->return_type =
+          fc_identifier_to_type(fc, create_identifier("ki", "type", "f32"));
+
+    } else {
+      // Int
+      value->type = vt_number;
+      value->item = strdup(token);
+      value->return_type =
+          fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"));
+    }
+  } else if (is_valid_varname(token)) {
+    IdentifierFor* idf = NULL;
+    if (strcmp(token, "c") == 0 && fc_get_char(fc, 0) == ':') {
+      // C namespace
+      fc->i++;  // skip ":"
+      fc_next_token(fc, token, false, true, false);
+
+      if (strcmp(token, "struct") == 0) {
+        fc_next_token(fc, token, false, true, true);
+        idf = map_get(c_struct_identifiers, token);
+      } else {
+        idf = map_get(c_identifiers, token);
+      }
+
+    } else {
+      fc->i -= strlen(token);
+      idf = fc_read_and_get_idf(fc, scope, false, true, true);
+    }
+    if (idf == NULL) {
+      fc_error(fc, "Unknown variable/function/class/enum: %s", token);
+    }
+    if (idf->type == idfor_func) {
+      Function* func = idf->item;
+      value->type = vt_var;
+      value->item = func->cname;
+      Type* t = init_type();
+      t->type = type_funcref;
+      t->func = func;
+      value->return_type = t;
+    } else if (idf->type == idfor_var) {
+      value->type = vt_var;
+      value->item = strdup(token);
+      value->return_type = idf->item;
+    } else if (idf->type == idfor_class) {
+      // class init or static func or prop access
+      Class* class = idf->item;
+      if (fc_get_char(fc, 0) == '.') {
+        // Prop access
+
+        fc->i++;
+        fc_next_token(fc, token, false, true, false);
+        char* prop_name = strdup(token);
+
+        ValueClassPropAccess* pa = malloc(sizeof(ValueClassPropAccess));
+        pa->on = class;
+        pa->name = prop_name;
+        pa->is_static = true;
+
+        ClassProp* prop = map_get(class->props, prop_name);
+        if (!prop) {
+          fc_error(fc, "Unknown property: %s", prop_name);
+        }
+        if (!prop->is_static) {
+          fc_error(fc, "Trying to access non static property statically: %s",
+                   prop_name);
+        }
+
+        value->type = vt_prop_access;
+        value->item = pa;
+        value->return_type = prop->return_type;
+
+      } else {
+        // Init func
+        fc_expect_token(fc, "{", false, true, true);
+
+        ValueClassInit* ini = malloc(sizeof(ValueClassInit));
+        ini->class = class;
+        ini->prop_values = map_make();
+
+        // Read prop values
+        fc_next_token(fc, token, false, false, true);
+        while (strcmp(token, "}") != 0) {
+          char* prop_name = strdup(token);
+          ClassProp* prop = map_get(class->props, prop_name);
+          if (!prop) {
+            fc_error(fc, "Unknown property: %s", prop_name);
+          }
+          if (prop->is_static) {
+            fc_error(fc, "Property is static: %s", prop_name);
+          }
+          if (prop->is_func) {
+            fc_error(fc, "Property is a function: %s", prop_name);
+          }
+          fc_expect_token(fc, ":", false, true, true);
+
+          Value* value = fc_read_value(fc, scope, false, true, true);
+
+          fc_next_token(fc, token, false, false, true);
+          if (strcmp(token, ",") == 0) {
+            fc_next_token(fc, token, false, false, true);
+          }
+
+          map_set(ini->prop_values, prop_name, value);
+        }
+
+        //
+        value->type = vt_class_init;
+        value->item = ini;
+
+        Type* type = init_type();
+        type->type = type_struct;
+        type->is_pointer = true;
+        type->class = class;
+        type->bytes = class->size;
+        if (type->class->is_number) {
+          type->is_pointer = false;
+          type->allow_math = true;
+        }
+
+        value->return_type = type;
+      }
+    } else {
+      fc_error(fc, "Unhandled identifier (compiler bug): '%s'", token);
+    }
+  }
+
+  if (value->type == vt_unknown) {
+    fc_error(fc, "Unknown value: '%s'", token);
+  }
+
+  fc_next_token(fc, token, true, true, true);
+  char ch = fc_get_char(fc, 0);
+  while (ch == '.' || ch == '(' || strcmp(token, "+") == 0 ||
+         strcmp(token, "-") == 0 || strcmp(token, "*") == 0 ||
+         strcmp(token, "/") == 0 || strcmp(token, "%") == 0 ||
+         strcmp(token, "++") == 0 || strcmp(token, "--") == 0 ||
+         strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 ||
+         strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 ||
+         strcmp(token, ">") == 0 || strcmp(token, "<") == 0) {
+    fc_next_token(fc, token, false, true, true);
+    //
+    if (ch == '.') {
+      // Prop access
+      if (!value->return_type ||
+          (!value->return_type->class && !value->return_type->enu)) {
+        fc_error(fc, "Trying to access property on non class/enum value", NULL);
+      }
+      fc_next_token(fc, token, false, true, false);
+      if (!is_valid_varname(token)) {
+        fc_error(fc, "Invalid property: '%s'", token);
+      }
+      char* prop_name = strdup(token);
+
+      // Enum
+      if (value->return_type->enu) {
+        Enum* enu = value->return_type->enu;
+        char* enuv = map_get(enu->values, prop_name);
+        if (!enuv) {
+          fc_error(fc, "Unknown enum property: '%s'", prop_name);
+        }
+
+        value = init_value();
+        value->type = vt_number;
+        value->item = enuv;
+        value->return_type =
+            fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"));
+
+      } else if (value->return_type->class) {
+        // Class
+        Class* class = value->return_type->class;
+        // printf("pa:%s\n", prop_name);
+        // printf("ca:%s\n", class->cname);
+        ClassProp* prop = map_get(class->props, prop_name);
+        if (!prop) {
+          fc_error(fc, "Unknown property: '%s'", prop_name);
+        }
+        if (prop->is_static) {
+          fc_error(fc, "Property is static: '%s'", prop_name);
+        }
+
+        ValueClassPropAccess* pa = malloc(sizeof(ValueClassPropAccess));
+        pa->on = value;
+        pa->name = prop_name;
+        pa->is_static = false;
+
+        value = init_value();
+        value->type = vt_prop_access;
+        value->item = pa;
+        value->return_type = prop->return_type;
+      }
+
+    } else if (ch == '(') {
+      // Func call
+      value = fc_read_func_call(fc, scope, value);
+    } else if (strcmp(token, "+") == 0 || strcmp(token, "-") == 0 ||
+               strcmp(token, "*") == 0 || strcmp(token, "/") == 0 ||
+               strcmp(token, "%") == 0) {
+      ValueOperator* op = malloc(sizeof(ValueOperator));
+      op->left = value;
+      op->right = fc_read_value(fc, scope, false, false, true);
+
+      if (strcmp(token, "+") == 0) {
+        op->type = op_add;
+      } else if (strcmp(token, "-") == 0) {
+        op->type = op_sub;
+      } else if (strcmp(token, "*") == 0) {
+        op->type = op_mult;
+      } else if (strcmp(token, "/") == 0) {
+        op->type = op_div;
+      } else if (strcmp(token, "%") == 0) {
+        op->type = op_mod;
+      }
+
+      Type* return_type =
+          fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"));
+
+      value = init_value();
+      value->type = vt_operator;
+      value->item = op;
+      value->return_type = return_type;
+    } else if (strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 ||
+               strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 ||
+               strcmp(token, "<") == 0 || strcmp(token, ">") == 0) {
+      ValueOperator* op = malloc(sizeof(ValueOperator));
+      op->left = value;
+      op->right = fc_read_value(fc, scope, false, false, true);
+
+      if (strcmp(token, "==") == 0) {
+        op->type = op_eq;
+      } else if (strcmp(token, "!=") == 0) {
+        op->type = op_neq;
+      } else if (strcmp(token, "<=") == 0) {
+        op->type = op_lte;
+      } else if (strcmp(token, ">=") == 0) {
+        op->type = op_gte;
+      } else if (strcmp(token, "<") == 0) {
+        op->type = op_lt;
+      } else if (strcmp(token, ">") == 0) {
+        op->type = op_gt;
+      }
+
+      Type* return_type =
+          fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"));
+
+      value = init_value();
+      value->type = vt_operator;
+      value->item = op;
+      value->return_type = return_type;
+    } else if (strcmp(token, "++") == 0 || strcmp(token, "--") == 0) {
+      ValueOperator* op = malloc(sizeof(ValueOperator));
+      op->left = value;
+      op->right = NULL;
+
+      if (strcmp(token, "++") == 0) {
+        op->type = op_incr;
+      } else {
+        op->type = op_decr;
+      }
+
+      value = init_value();
+      value->type = vt_operator;
+      value->item = op;
+      value->return_type = NULL;
+
+    } else {
+      fc_error(fc, "Unhandled operator '%s' (todo)", token);
+    }
+
+    //
+    ch = fc_get_char(fc, 0);
+    fc_next_token(fc, token, true, true, true);
+  }
+
+  if (readonly) {
+    fc->i = index;
+  }
+
+  return value;
+}
+
+Value* fc_read_func_call(FileCompiler* fc, Scope* scope, Value* on) {
+  if (on->return_type->type != type_funcref) {
+    fc_error(fc, "Trying to do a function call on a non function value.", NULL);
+  }
+  if (on->return_type->nullable) {
+    fc_error(fc, "Trying to do a function call on a nullable value.", NULL);
+  }
+
+  ValueFuncCall* fcall = malloc(sizeof(ValueFuncCall));
+  fcall->on = on;
+  fcall->arg_values = array_make(2);
+
+  Value* value = init_value();
+  value->type = vt_func_call;
+  value->item = fcall;
+  value->return_type = on->return_type->func->return_type;
+
+  Function* func = on->return_type->func;
+  if (func && func->can_error) {
+    scope->catch_errors = true;
+  }
+
+  if (on->type == vt_prop_access) {
+    ValueClassPropAccess* pa = on->item;
+    if (!pa->is_static) {
+      Value* prev_on = on;
+      on = init_value();
+      on->type = vt_var;
+      on->item = func->cname;
+      on->return_type = prev_on->return_type;
+      fcall->on = on;
+      array_push(fcall->arg_values, pa->on);
+    }
+  }
+
+  char* token = malloc(KI_TOKEN_MAX);
+  fc_next_token(fc, token, true, false, true);
+  while (strcmp(token, ")") != 0) {
+    Value* argv = fc_read_value(fc, scope, false, false, true);
+    array_push(fcall->arg_values, argv);
+    fc_next_token(fc, token, true, false, true);
+    if (strcmp(token, ",") == 0) {
+      fc_next_token(fc, token, false, false, true);
+      fc_next_token(fc, token, true, false, true);
+    }
+  }
+  fc_next_token(fc, token, false, false, true);
+
+  return value;
+}

@@ -1,0 +1,10 @@
+{
+	"namespaces": {
+		"mem": "src/mem",
+		"type": "src/type",
+		"io": "src/io",
+		"net": "src/net",
+		"std": "src/std",
+		"http": "src/http"
+	}
+}

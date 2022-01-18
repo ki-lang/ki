@@ -1,0 +1,5 @@
+
+namespace type;
+
+class i8 number:s:1 {
+}

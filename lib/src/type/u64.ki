@@ -1,0 +1,5 @@
+
+namespace type;
+
+class u64 number:u:8 {
+}

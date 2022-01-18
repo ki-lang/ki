@@ -1,0 +1,49 @@
+
+namespace type;
+
+class i32 number:s:4 {
+
+	public func to_cstring() cstring {
+		ptr str = mem:malloc(20);
+		ptr strp = str;
+
+		i32 value = this;
+		i32 rest = 0;
+		i32 pos = sizeof(this) - 1;
+		i32 len = 0;
+		i32 mult = 1;
+
+		while(pos >= 0){
+			rest = value % (mult * 10);
+			value -= rest;
+			i32 r = rest / mult;
+			u8 b = r;
+			b += 48; // ascii
+
+			strp = b;
+			strp++;
+
+			if(value == 0){ break; }
+
+			mult = mult * 10;
+			pos--;
+			len++;
+		}
+
+		strp = '\0';
+		ptr result = mem:malloc(20);
+		ptr tmp = result;
+		while(len >= 0){
+			strp = str;
+			strp += len;
+			u8 x = strp;
+			len--;
+			result = x;
+			result++;
+		}
+		result = tmp;
+		cstring r = cast result as cstring;
+		//c:printf(c"r:%s\n", r);
+		return r;
+	}
+}

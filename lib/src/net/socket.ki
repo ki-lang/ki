@@ -1,0 +1,82 @@
+
+namespace net;
+
+class Socket {
+
+	enum IPTYPE {
+		ipv4: 2,
+		ipv6: 10,
+	};
+
+	enum TYPE {
+		stream: 1, // Sequenced, reliable, connection-based byte streams
+		dgram: 2,  // Connectionless, unreliable datagrams of fixed maximum length.
+	};
+
+	enum FLAGS {
+		passive: 1, // Socket address is intended for `bind`
+	};
+
+	enum PROTOCOL {
+		http: 132, // IPPROTO_SCTP
+	};
+
+	public u32 port;
+	public Socket.TYPE type = Socket.TYPE.stream;
+	public Socket.IPTYPE ip_type = Socket.IPTYPE.ipv4;
+	public Socket.FLAGS flags = Socket.FLAGS.passive;
+
+	private i32 listenfd = 0;
+	// private array clients = [];
+
+	public func listen() ! {
+
+ 		@ hints = c:struct addrinfo* {
+			 ai_flags: Socket.FLAGS.passive,
+			 ai_family: Socket.IPTYPE.ipv4,
+			 ai_socktype: Socket.TYPE.stream
+			 ai_protocol: Socket.PROTOCOL.http
+			 ai_addrlen: 0,
+			 ai_addr: null,
+			 ai_canonname: null,
+			 ai_next: null,
+		};
+ 		c:struct addrinfo* res = mem:malloc(sizeof(hints));
+
+		i32 check = c:getaddrinfo(null, this.port.to_cstring(), hints, &res);
+		if(check != 0){
+			io:print("getaddrinfo_failed\n");
+			throw getaddrinfo_failed;
+		}
+
+ 		@ p = res;
+
+		while(p != null){
+			i32 option = 1;
+        	this.listenfd = c:socket(p.ai_family, p.ai_socktype, 0);
+        	c:setsockopt(this.listenfd, 1, 2, &option, sizeof(option));
+        	if (this.listenfd == -1) { continue; }
+        	if (c:bind(this.listenfd, p.ai_addr, p.ai_addrlen) == 0){ break; }
+
+			p = p.ai_next;
+		}
+
+		if (p == null) {
+        	io:print("could_not_bind");
+        	throw could_not_bind;
+    	}
+
+		// c:freeaddrinfo(res);
+
+		// listen for incoming connections
+ 	   if (c:listen(this.listenfd, 1000000) != 0 ) {
+        	io:print("listen_error");
+			throw listen_error;
+ 	   }
+	}
+
+	public func accept() ! {
+		//return c:accept(this.listenfd, clientaddr, &addrlen);
+	}
+
+}

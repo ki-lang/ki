@@ -1,0 +1,21 @@
+
+CC=gcc
+CFLAGS = -g -Wall -O0 -std=gnu99
+#CFLAGS = -g -O0
+LDFLAGS = -lm
+
+SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/helpers/*.c) $(wildcard src/build/*.c)
+OBJECTS=$(patsubst %.c, build/%.o, $(SRC))
+TARGET=ki
+
+$(TARGET) : $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(OBJECTS): build/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $< $(CFLAGS) -c -o $@
+
+.PHONY: clean
+
+clean:
+	rm -f $(TARGET) $(OBJECTS) core
