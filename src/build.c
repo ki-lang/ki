@@ -19,7 +19,6 @@ void cmd_build(Array* files, Map* options) {
   c_enum_identifiers = map_make();
   c_union_identifiers = map_make();
   allow_new_namespaces = true;
-  disable_macro_check = false;
   last_readonly_i = 0;
   GEN_C = 0;
   //
@@ -87,8 +86,6 @@ void cmd_build_init_static() {
   array_push(internal_types, "ptr");
   array_push(internal_types, "bool");
   array_push(internal_types, "string");
-
-  c_importer = create_cimport();
 }
 
 #ifdef WIN32

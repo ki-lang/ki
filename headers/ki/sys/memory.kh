@@ -1,0 +1,8 @@
+
+#if OS_WIN
+func VirtualAlloc(ptr addr_suggestion, ixx size, i32 flAllocationType, i32 flProtect);
+func VirtualFree(ptr addr, ixx size, i32 dwFreeType);
+#elif OS_LIN
+func mmap(ptr addr_suggestion, ixx size, i32 protect, i32 flags, i32 fd, i32 offset);
+func munmap(ptr addr, ixx size) int;
+#end

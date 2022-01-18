@@ -48,49 +48,8 @@ void fc_scan_types(FileCompiler* fc) {
         fc_error(fc, "Dont put a space after a '#'", NULL);
       }
 
-      if (strcmp(token, "import") == 0) {
-        fc_next_token(fc, token, false, true, true);
-        if (strcmp(token, "<") != 0 && strcmp(token, "\"") != 0) {
-          fc_error(fc, "Invalid token: '%s'", token);
-        }
-        char endch = token[0];
-        bool is_syslib = false;
-        if (endch == '<') {
-          is_syslib = true;
-          endch = '>';
-        }
-        char* fn = malloc(KI_PATH_MAX);
-        strcpy(fn, "");
-        char ch = fc_get_char(fc, 0);
-        fc->i++;
-        int pos = 0;
-        while (ch != endch) {
-          if (is_newline(ch)) {
-            fc_error(fc, "Unexpected new line", NULL);
-          }
-          fn[pos] = ch;
-          pos++;
-          ch = fc_get_char(fc, 0);
-          fc->i++;
-        }
-        fn[pos] = '\0';
-
-        if (!is_syslib) {
-          // Prepend fc dir
-          char* buf = malloc(KI_PATH_MAX);
-          char* dir = get_dir_from_path(fc->ki_filepath);
-          strcpy(buf, dir);
-          strcat(buf, fn);
-          free(dir);
-          free(fn);
-          fn = buf;
-        }
-
-        ci_scan_header(c_importer, fn, is_syslib);
-        map_set(headers, fn, is_syslib ? "1" : "0");
-
-        fc_expect_token(fc, "", false, true, true);
-
+      if (strcmp(token, "???????") == 0) {
+        // todo
       } else {
         fc_error(fc, "Unknown token: #%s", token);
       }

@@ -1,18 +1,100 @@
 
 namespace mem;
 
-#import <stdlib.h>
-#import <stdio.h>
-#import <string.h>
+#header "ki/sys/memory"
 
-func malloc(u32 size) ptr {
-	return _:malloc(size);
+func malloc(ixx size) ptr {
+
+	#if OS_WIN
+
+	// MEM_COMMIT: 0x1000,
+	// MEM_RESERVE: 0x2000,
+	// MEM_RESET: 0x80000,
+	// MEM_RESET_UNDO: 0x1000000,
+
+	// PAGE_EXECUTE: 0x10,
+	// PAGE_EXECUTE_READ: 0x20,
+	// PAGE_EXECUTE_READWRITE: 0x40,
+	// PAGE_EXECUTE_WRITECOPY: 0x80,
+	// -
+	// PAGE_NOACCESS: 0x1,
+	// PAGE_READONLY: 0x2,
+	// PAGE_READWRITE: 0x4,
+	// PAGE_WRITECOPY: 0x8,
+	// PAGE_TARGETS_INVALID: 0x40000000,
+	// PAGE_TARGETS_NO_UPDATE: 0x40000000,
+	// -
+	// PAGE_GUARD: 0x100,
+	// PAGE_NOCACHE: 0x200,
+	// PAGE_WRITECOMBINE: 0x400,
+
+	return VirtualAlloc(null, size, 0x3000, 0x40);
+
+	#elif OS_LIN
+
+	// PROT_NONE: 0, // 
+	// PROT_READ: 1, // Pages may be read
+	// PROT_WRITE: 2, // Pages may be written
+	// PROT_EXEC: 4, // Pages may be executed
+
+	// MAP_SHARED: 1, // Share changes 
+	// MAP_PRIVATE: 2, // Changes are private 
+	// MAP_ANONYMOUS: 0x20, // No file, use fd -1
+
+	return mmap(null, size, 0, 0x20, -1, 0);
+
+	#else
+	#error Unsupported OS
+	#end
+}
+
+func free(ptr adr) {
+
+	#if OS_WIN
+
+	// MEM_DECOMMIT: 0x4000
+	// MEM_RELEASE: 0x8000
+
+	VirtualFree(adr, 0, 0x8000);
+
+	#elif OS_LIN
+
+	// 0 = success, -1 = fail
+	int result = munmap(adr, 0);
+
+	#else
+	#error Unsupported OS
+	#end
 }
 
 func mcopy(ptr from, u32 len, ptr to) {
-	_:memcpy(to, from, len);
+	//_:memcpy(to, from, len);
 }
 
 func mequal(ptr a, ptr b, u32 length) bool {
-	return _:memcmp(a, b, length);
+	ptr a += length;
+	ptr b += length;
+	while(length > 3){
+		i32 av = cast a to i32;
+		i32 bv = cast b to i32;
+		if(av != bv) {
+			return false;
+		}
+		length -= 4;
+		a -= 4;
+		b -= 4;
+	}
+	while(length >= 0){
+		u8 av = cast a to u8;
+		u8 bv = cast b to u8;
+		if(av != bv) {
+			return false;
+		}
+		if(length != 0){
+			length--;
+			a--;
+			b--;
+		}
+	}
+	return true;
 }
