@@ -128,3 +128,31 @@ void fc_skip_type(FileCompiler* fc) {
   free(token);
   free_id(id);
 }
+
+void fc_skip_macro(FileCompiler* fc) {
+  //
+  char* token = malloc(KI_TOKEN_MAX);
+  int depth = 1;
+  while (true) {
+    if (fc->i >= fc->content_len) {
+      fc_error(fc, "Unable to find end of macro if statement", NULL);
+    }
+
+    fc_skip_body(fc, "--IGNORE--", "#", NULL, false);
+    fc_next_token(fc, token, false, true, false);
+    if (strcmp(token, "if") == 0) {
+      depth++;
+    } else if (strcmp(token, "elif") == 0 || strcmp(token, "else") == 0) {
+      if (depth == 1) {
+        fc->i -= 5;
+        break;
+      }
+    } else if (strcmp(token, "end") == 0) {
+      depth--;
+      if (depth == 0) {
+        fc->i -= 4;
+        break;
+      }
+    }
+  }
+}

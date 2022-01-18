@@ -1,7 +1,7 @@
 
 namespace mem;
 
-#header "ki/sys/memory"
+#header "sys/memory"
 
 func malloc(ixx size) ptr {
 

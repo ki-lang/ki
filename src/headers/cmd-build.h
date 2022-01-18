@@ -114,6 +114,13 @@ void fc_skip_body(FileCompiler* fc, char* start, char* end, char* alt_end,
 void fc_skip_until_char(FileCompiler* fc, char ch);
 void fc_skip_comment(FileCompiler* fc);
 void fc_skip_type(FileCompiler* fc);
+void fc_skip_macro(FileCompiler* fc);
+
+// Headers
+void fc_read_header_token(FileCompiler* fc);
+
+// Macro
+bool fc_resolve_if_value(FileCompiler* fc);
 
 // Write c
 void fc_write_c_all();

@@ -6,5 +6,8 @@
 		"net": "src/net",
 		"std": "src/std",
 		"http": "src/http"
+	},
+	"headers": {
+		"dirs": ["headers"]
 	}
 }

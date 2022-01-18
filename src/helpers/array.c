@@ -19,6 +19,14 @@ void array_push(Array* arr, void* item) {
   arr->length++;
 }
 
+void* array_pop(Array* arr) {
+  if (arr->length == 0) {
+    return NULL;
+  }
+  uintptr_t* adr = arr->data + ((arr->length - 1) * sizeof(void*));
+  return (void*)(*adr);
+}
+
 void array_shift(Array* arr, void* item) {
   if (arr->length == arr->max_length) {
     arr->max_length *= 2;

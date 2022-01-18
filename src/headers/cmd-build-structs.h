@@ -1,9 +1,12 @@
 
 #include "../all.h"
+#include "../libs/nxjson.h"
 
 typedef struct PkgCompiler {
   char* name;
   char* dir;
+  const nx_json* config;
+  char* config_path;
   struct Map* namespaces;
   struct Map* package_dirs;
   struct Map* namespace_dirs;
@@ -23,6 +26,7 @@ typedef struct FileCompiler {
   char* c_filepath;
   char* h_filepath;
   char* o_filepath;
+  bool is_header;
   //
   char* content;
   int content_len;
@@ -30,6 +34,8 @@ typedef struct FileCompiler {
   int i;
   int line;
   int col;
+  // Macros
+  Array* macro_results;
   // Write c
   Str* c_code;
   Str* c_code_after;

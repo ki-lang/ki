@@ -10,6 +10,7 @@ FileCompiler* init_fc() {
   fc->c_filepath = NULL;
   fc->h_filepath = NULL;
   fc->o_filepath = NULL;
+  fc->is_header = false;
   //
   fc->content = NULL;
   fc->content_len = 0;
@@ -17,6 +18,8 @@ FileCompiler* init_fc() {
   fc->i = 0;
   fc->col = 0;
   fc->line = 0;
+  //
+  fc->macro_results = array_make(4);
   //
   fc->c_code = str_make("");
   fc->c_code_after = str_make("");
@@ -31,8 +34,8 @@ FileCompiler* init_fc() {
   //
   fc->create_o_file = false;
   fc->classes = array_make(2);
-  fc->functions = array_make(2);
-  fc->enums = array_make(2);
+  fc->functions = array_make(8);
+  fc->enums = array_make(4);
   return fc;
 }
 
@@ -42,7 +45,14 @@ void free_fc(FileCompiler* fc) {
 }
 
 FileCompiler* fc_new_file(PkgCompiler* pkc, char* path, bool is_cmd_arg_file) {
-  char* ki_filepath = get_fullpath(path);
+  //
+  bool is_header = ends_with(path, ".kh");
+  char* ki_filepath = NULL;
+  if (is_header) {
+    ki_filepath = path;
+  } else {
+    ki_filepath = get_fullpath(path);
+  }
 
   if (!ki_filepath) {
     printf("File not found: '%s'\n", path);
@@ -86,6 +96,7 @@ FileCompiler* fc_new_file(PkgCompiler* pkc, char* path, bool is_cmd_arg_file) {
   fc->c_filepath = c_filepath;
   fc->h_filepath = h_filepath;
   fc->o_filepath = o_filepath;
+  fc->is_header = is_header;
   //
   Str* content = file_get_contents(ki_filepath);
   fc->content = str_to_chars(content);

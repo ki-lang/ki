@@ -6,6 +6,8 @@ PkgCompiler* init_pkc() {
   PkgCompiler* pkc = malloc(sizeof(PkgCompiler));
   pkc->name = NULL;
   pkc->dir = NULL;
+  pkc->config = NULL;
+  pkc->config_path = NULL;
   pkc->namespaces = map_make();
   pkc->namespace_dirs = map_make();
   pkc->package_dirs = map_make();
@@ -16,6 +18,10 @@ PkgCompiler* init_pkc() {
 void free_pkc(PkgCompiler* pkc) {
   free(pkc->name);
   free(pkc->dir);
+  //
+  if (pkc->config) {
+    nx_json_free(pkc->config);
+  }
   //
   free(pkc);
 }
@@ -92,14 +98,19 @@ NsCompiler* pkc_create_namespace(PkgCompiler* pkc, char* name) {
 }
 
 void pkc_check_config(PkgCompiler* pkc) {
+  //
   char* path = malloc(strlen(pkc->dir) + 20);
   strcpy(path, pkc->dir);
   strcat(path, "/ki.json");
+  pkc->config_path = path;
+
   if (file_exists(path)) {
     Str* content_str = file_get_contents(path);
     char* content = str_to_chars(content_str);
     free(content_str);
     const nx_json* json = nx_json_parse(content, 0);
+
+    pkc->config = json;
 
     const nx_json* ob = nx_json_get(json, "namespaces");
     if (ob != NULL) {

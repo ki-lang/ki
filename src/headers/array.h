@@ -11,6 +11,7 @@ typedef struct Array {
 
 Array* array_make(int max_length);
 void array_push(Array*, void*);
+void* array_pop(Array* arr);
 bool array_contains(Array*, void*, char*);
 int array_find(Array*, void*, char*);
 void array_free(Array*);
