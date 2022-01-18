@@ -89,47 +89,6 @@ bool type_compatible(Type* t1, Type* t2);
 void fc_type_compatible(FileCompiler* fc, Type* t1, Type* t2);
 Type* fc_create_type_for_enum(Enum* enu);
 
-// CImport
-CImport* init_cimport();
-void free_cimport(CImport* cimport);
-CImportTarget* init_cimport_target();
-void free_cimport_target(CImportTarget* t);
-CImport* create_cimport();
-int ci_push_chunk(CImportTarget* t, char* content);
-void ci_pop_chunk(CImportTarget* t);
-//
-void ci_scan_header(CImport* ci, char* path, bool is_syslib);
-void ci_scan_header_target(CImport* ci, CImportTarget* t);
-Type* ci_read_type(CImport* ci, CImportTarget* t, bool readonly, bool sameline,
-                   bool allow_space);
-void ci_read_struct_props(CImport* ci, CImportTarget* t, Class* class);
-void ci_read_enum_values(CImport* ci, CImportTarget* t, Enum* enu);
-void ci_check_type_is_array(CImport* ci, CImportTarget* t, Type* type);
-//
-char ci_next_char(CImportTarget* t, bool readonly);
-void ci_next_token(CImportTarget* t, char* token, bool read_only, bool sameline, bool allow_space);
-void ci_skip_comment(CImportTarget* t);
-void ci_skip_comment_block(CImportTarget* t);
-void ci_skip_body(CImportTarget* t, char end);
-void ci_skip_line(CImportTarget* t);
-void ci_skip_macro(CImportTarget* t);
-void ci_error(CImportTarget* t, char* msg, char* token);
-
-// Macro Value
-MacroDefinition* init_md();
-void free_md(MacroDefinition* md);
-void mv_quick_def(CImport* ci, char* name, char* def);
-MacroDefinition* mv_definition(CImport* ci, CImportTarget* t);
-int mv_get_value(CImport* ci, CImportTarget* t, Map* local_defines);
-void mv_skip_value(CImportTarget* t);
-//
-int ci_next_content_token(char* content, int i, char* token);
-//
-int mv_resolve_macro(CImportTarget* t, char* content, int i, Map* local_defines, char* result);
-int mv_resolve_if_value(CImportTarget* t, bool check_operators, bool skip);
-Map* mv_read_args(CImportTarget* t, MacroDefinition* md, Map* local_defines);
-int mv_read_arg(CImportTarget* t, char* content, int i, char* result);
-
 // Value
 Value* init_value();
 void free_value(Value* v);

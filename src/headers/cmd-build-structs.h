@@ -278,15 +278,6 @@ typedef struct ValueClassPropAccess {
   bool is_static;
 } ValueClassPropAccess;
 
-//////////
-
-typedef struct MacroDefinition {
-  Array* arg_names;
-  char* content;
-  int len;
-  struct CImport* ci;
-  struct CImportTarget* target;
-} MacroDefinition;
 
 //////////
 

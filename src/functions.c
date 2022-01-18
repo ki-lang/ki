@@ -42,17 +42,3 @@ int atoi(const char *str) {
   if (isNegetive) num = -1 * num;
   return num;
 }
-
-char *strip_macro_number_typehint(char *str) {
-  char *dup = strdup(str);
-  int len = strlen(dup);
-  if (dup[len - 1] == 'L') {
-    dup[len - 1] = '\0';
-    len--;
-  }
-  if (dup[len - 1] == 'U') {
-    dup[len - 1] = '\0';
-    len--;
-  }
-  return dup;
-}
