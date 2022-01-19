@@ -4,7 +4,7 @@ namespace type;
 class u32 number:u:4 {
 
 	public func to_cstring() cstring {
-		ptr str = mem:malloc(20);
+		ptr str = mem:alloc(20);
 		ptr strp = str;
 
 		i32 value = this;
@@ -31,7 +31,7 @@ class u32 number:u:4 {
 		}
 
 		strp = '\0';
-		ptr result = mem:malloc(20);
+		ptr result = mem:alloc(20);
 		ptr tmp = result;
 		while(len >= 0){
 			strp = str;

@@ -41,7 +41,7 @@ class Socket {
 			 ai_canonname: null,
 			 ai_next: null,
 		};
- 		c:struct addrinfo* res = mem:malloc(sizeof(hints));
+ 		c:struct addrinfo* res = mem:alloc(sizeof(hints));
 
 		i32 check = c:getaddrinfo(null, this.port.to_cstring(), hints, &res);
 		if(check != 0){

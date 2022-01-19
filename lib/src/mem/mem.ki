@@ -3,7 +3,7 @@ namespace mem;
 
 #header "sys/memory"
 
-func malloc(ixx size) ptr {
+func alloc(ixx size) ptr {
 
 	//#if OS_WIN
 
@@ -68,7 +68,7 @@ func free(ptr adr) {
 	//#end
 }
 
-func mcopy(ptr from, u32 len, ptr to) {
+func copy(ptr from, u32 len, ptr to) {
   while (len > 0){
 	  len--;
 	  u8 byte = getptrv from as u8;
@@ -78,7 +78,7 @@ func mcopy(ptr from, u32 len, ptr to) {
   }
 }
 
-func mequal(ptr a, ptr b, u32 length) bool {
+func equal(ptr a, ptr b, u32 length) bool {
 	a += length;
 	b += length;
 	while(length > 3){

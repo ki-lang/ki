@@ -1,7 +1,7 @@
 
 namespace type;
 
-use mem {malloc,mcopy,mequal};
+use mem {alloc,copy,equal};
 
 class string {
 	public u64 length = 0;
@@ -10,8 +10,8 @@ class string {
 
 	static func make(ptr data, u64 length) string {
 		u64 mem_size = length + 10;
-		@ str = string { data: malloc(mem_size), mem_size: mem_size };
-		mcopy(data, length + 1, str.data);
+		@ str = string { data: alloc(mem_size), mem_size: mem_size };
+		copy(data, length + 1, str.data);
 		str.length = length;
 		return str;
 	}
@@ -22,10 +22,10 @@ class string {
 		while(new_length > this.mem_size){
 			this.mem_size *= 2;
 		}
-		ptr adr = malloc(this.mem_size);
-		mcopy(this.data, this.length, adr);
+		ptr adr = alloc(this.mem_size);
+		copy(this.data, this.length, adr);
 		adr += this.length;
-		mcopy(str.data, str.length, adr);
+		copy(str.data, str.length, adr);
 		this.length = new_length;
 		free this.data;
 		this.data = adr;
@@ -36,7 +36,7 @@ class string {
 		if(this.length != str.length){
 			return false;
 		}
-		return mequal(this.data, str.data, this.length);
+		return equal(this.data, str.data, this.length);
 	}
 
 	func __free() {
@@ -73,8 +73,8 @@ class string {
 	}
 
 	func to_cstring() cstring {
-		cstring cstr = malloc(this.length + 1);
-		mcopy(this.data, this.length, cstr);
+		cstring cstr = alloc(this.length + 1);
+		copy(this.data, this.length, cstr);
 		ptr x = cstr;
 		x += this.length;
 		x = '\0';
@@ -99,10 +99,10 @@ class string {
 		if(length == 0){
 			return "";
 		}
-		ptr x = malloc(length + 1);
+		ptr x = alloc(length + 1);
 		ptr from = this.data;
 		from += start;
-		mcopy(from, length, x);
+		copy(from, length, x);
 		ptr y = x;
 		y += length;
 		y = '\0';

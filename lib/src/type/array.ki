@@ -12,11 +12,11 @@
 // 			} else {
 // 				this.max_length = 1;
 // 			}
-// 			this.data = malloc(this.max_length * @PTR_SIZE);
+// 			this.data = alloc(this.max_length * @PTR_SIZE);
 // 		}
 // 		ptr adr = this.data;
 // 		adr += (this.length - 1) * @PTR_SIZE;
-// 		mcopy(*item, @PTR_SIZE, adr);
+// 		copy(*item, @PTR_SIZE, adr);
 // 		this.length++;
 // 
 // 		return this;
@@ -29,7 +29,7 @@
 // 		ptr adr = this.data;
 // 		adr += index * @PTR_SIZE;
 // 		ptr grave = 0;
-// 		mcopy(grave, @PTR_SIZE, adr);
+// 		copy(grave, @PTR_SIZE, adr);
 // 		this.graves++;
 // 		// todo: count graves and delete them if too many
 // 	}

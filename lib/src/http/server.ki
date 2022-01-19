@@ -26,7 +26,7 @@ class Server {
 		io:print("Starting server\n");
 
 		u32 max = 10000;
-		this.clients = PtrArray{ size: max, data: mem:malloc(max * 8) };
+		this.clients = PtrArray{ size: max, data: mem:alloc(max * 8) };
 
 		@ s = ki:net:Socket { port: this.port };
 		s.listen();
@@ -69,7 +69,7 @@ class Server {
 		u32 clientfd = 0;
 		this.clients.get(slot, &clientfd);
 
-		ptr buf = mem:malloc(65535);
+		ptr buf = mem:alloc(65535);
 		i32 rcvd = c:recv(clientfd, buf, 65535, 0);
 
 		if (rcvd<0){
