@@ -4,5 +4,5 @@ namespace io;
 #header "sys/io"
 
 func print(string str) {
-	write(1, str.data, str.length);
+	main:main:write(1, str.data, str.length);
 }

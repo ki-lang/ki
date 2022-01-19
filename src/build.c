@@ -11,7 +11,7 @@ void cmd_build(Array* files, Map* options) {
   cmd_build_init_static();
   // Globals
   packages = map_make();
-  headers = map_make();
+  headers = array_make(10);
   o_files = array_make(10);
   cmd_arg_files = array_make(2);
   c_identifiers = map_make();

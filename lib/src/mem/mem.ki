@@ -41,7 +41,7 @@ func malloc(ixx size) ptr {
 	// MAP_PRIVATE: 2, // Changes are private 
 	// MAP_ANONYMOUS: 0x20, // No file, use fd -1
 
-	return mmap(null, size, 0, 0x20, -1, 0);
+	return main:main:mmap(null, size, 0, 0x20, -1, 0);
 
 	//#else
 	//#error Unsupported OS
@@ -60,7 +60,7 @@ func free(ptr adr) {
 	//#elif OS_LIN
 
 	// 0 = success, -1 = fail
-	int result = munmap(adr, 0);
+	i32 result = main:main:munmap(adr, 0);
 
 	//#else
 	//#error Unsupported OS
@@ -72,29 +72,27 @@ func mcopy(ptr from, u32 len, ptr to) {
 }
 
 func mequal(ptr a, ptr b, u32 length) bool {
-	ptr a += length;
-	ptr b += length;
+	a += length;
+	b += length;
 	while(length > 3){
-		i32 av = cast a to i32;
-		i32 bv = cast b to i32;
+		a -= 4;
+		b -= 4;
+		i32 av = getptrv a as i32;
+		i32 bv = getptrv b as i32;
 		if(av != bv) {
 			return false;
 		}
 		length -= 4;
-		a -= 4;
-		b -= 4;
 	}
-	while(length >= 0){
-		u8 av = cast a to u8;
-		u8 bv = cast b to u8;
+	while(length > 0){
+		a--;
+		b--;
+		u8 av = getptrv a as u8;
+		u8 bv = getptrv b as u8;
 		if(av != bv) {
 			return false;
 		}
-		if(length != 0){
-			length--;
-			a--;
-			b--;
-		}
+		length--;
 	}
 	return true;
 }

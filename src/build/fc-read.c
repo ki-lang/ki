@@ -13,6 +13,7 @@ void fc_next_token(FileCompiler *fc, char *token, bool readonly, bool sameline,
                    bool allow_space) {
   int ti = 0;
   int index = fc->i;
+  bool is_num = false;
   while (index < fc->content_len) {
     char ch = fc->content[index];
 
@@ -36,7 +37,25 @@ void fc_next_token(FileCompiler *fc, char *token, bool readonly, bool sameline,
       continue;
     }
 
-    if (is_valid_varname_char(ch) || (strlen(token) > 0 && is_number(ch))) {
+    if (ti == 0 && is_number(ch)) {
+      is_num = true;
+      token[ti] = ch;
+      index++;
+      ti++;
+      continue;
+    }
+
+    if (is_num) {
+      if (is_number(ch)) {
+        token[ti] = ch;
+        index++;
+        ti++;
+        continue;
+      }
+      break;
+    }
+
+    if (is_valid_varname_char(ch) || (ti > 0 && is_number(ch))) {
       token[ti] = ch;
       ti++;
       index++;

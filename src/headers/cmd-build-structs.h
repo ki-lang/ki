@@ -236,6 +236,8 @@ typedef enum ValueType {
   vt_func_call, // 10
   vt_sizeof,
   vt_cast,
+  vt_getptrv,
+  vt_setptrv,
   vt_class_init,
   vt_prop_access,
   // vt_enum_value, // 15

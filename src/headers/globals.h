@@ -2,7 +2,7 @@
 #include "../all.h"
 
 Map* packages;
-Map* headers;
+Array* headers;
 Array* o_files;
 Array* cmd_arg_files;
 

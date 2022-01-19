@@ -9,19 +9,21 @@ void fc_write_c_all() {
   strcat(path, "/project.h");
   write_file(path, "", false);
   write_file(path, "#include <stdbool.h>\n", true);
+  write_file(path, "#include <stdlib.h>\n", true);
+  write_file(path, "#include <sys/mman.h>\n", true);
 
-  for (int i = 0; i < headers->keys->length; i++) {
-    char* fn = array_get_index(headers->keys, i);
-    bool is_syslib = strcmp(array_get_index(headers->keys, i), "1") == 0;
-    if (is_syslib) {
-      write_file(path, "#include <", true);
-      write_file(path, fn, true);
-      write_file(path, ">\n", true);
-    } else {
-      write_file(path, "#include \"", true);
-      write_file(path, fn, true);
-      write_file(path, "\"\n", true);
-    }
+  for (int i = 0; i < headers->length; i++) {
+    // char* fn = array_get_index(headers->keys, i);
+    // bool is_syslib = strcmp(array_get_index(headers->keys, i), "1") == 0;
+    // if (is_syslib) {
+    //   write_file(path, "#include <", true);
+    //   write_file(path, fn, true);
+    //   write_file(path, ">\n", true);
+    // } else {
+    //   write_file(path, "#include \"", true);
+    //   write_file(path, fn, true);
+    //   write_file(path, "\"\n", true);
+    // }
   }
 
   //
@@ -406,6 +408,12 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
     str_append_chars(fc->tkn_buffer, "(");
     fc_write_c_type(fc->tkn_buffer, cast->as_type);
     str_append_chars(fc->tkn_buffer, ")");
+    fc_write_c_value(fc, cast->value);
+  } else if (value->type == vt_getptrv) {
+    ValueCast* cast = value->item;
+    str_append_chars(fc->tkn_buffer, "*(");
+    fc_write_c_type(fc->tkn_buffer, cast->as_type);
+    str_append_chars(fc->tkn_buffer, "*)");
     fc_write_c_value(fc, cast->value);
   } else if (value->type == vt_class_init) {
     // Generate function

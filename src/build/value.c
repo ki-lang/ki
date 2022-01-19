@@ -81,6 +81,18 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     value->item = cast;
     value->return_type = cast->as_type;
+  } else if (strcmp(token, "getptrv") == 0) {
+    value->type = vt_getptrv;
+
+    ValueCast* cast = malloc(sizeof(ValueCast));
+    cast->value = fc_read_value(fc, scope, false, true, true);
+
+    fc_expect_token(fc, "as", false, true, true);
+
+    cast->as_type = fc_read_type(fc);
+
+    value->item = cast;
+    value->return_type = cast->as_type;
   } else if (strcmp(token, "\"") == 0) {
     // String
     Str* str = str_make("");
@@ -166,8 +178,23 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       }
     }
 
+    // Check hex number
+    bool is_hex = false;
+    if (strcmp(token, "0") == 0) {
+      char ch = fc_get_char(fc, 0);
+      if (ch == 'x') {
+        fc->i++;
+        is_hex = true;
+        fc_next_token(fc, token, false, true, false);
+        prepend(token, "0x");
+        if (!is_valid_hex_number(token)) {
+          fc_error(fc, "Invalid hex number: %s", token);
+        }
+      }
+    }
+
     char ch = fc_get_char(fc, 0);
-    if (ch == '.') {
+    if (!is_hex && ch == '.') {
       // Float
       fc->i++;
       char* fl = malloc(256);

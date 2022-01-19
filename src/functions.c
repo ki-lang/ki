@@ -42,3 +42,9 @@ int atoi(const char *str) {
   if (isNegetive) num = -1 * num;
   return num;
 }
+
+void prepend(char *s, const char *t) {
+  size_t len = strlen(t);
+  memmove(s + len, s, strlen(s) + 1);
+  memcpy(s, t, len);
+}
