@@ -415,6 +415,14 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
     fc_write_c_type(fc->tkn_buffer, cast->as_type);
     str_append_chars(fc->tkn_buffer, "*)");
     fc_write_c_value(fc, cast->value);
+  } else if (value->type == vt_setptrv) {
+    SetPtrValue* cast = value->item;
+    str_append_chars(fc->tkn_buffer, "*(");
+    fc_write_c_type(fc->tkn_buffer, cast->to_value->return_type);
+    str_append_chars(fc->tkn_buffer, "*)");
+    fc_write_c_value(fc, cast->ptr_value);
+    str_append_chars(fc->tkn_buffer, " = ");
+    fc_write_c_value(fc, cast->to_value);
   } else if (value->type == vt_class_init) {
     // Generate function
     GEN_C++;

@@ -275,6 +275,11 @@ typedef struct ValueCast {
   Type* as_type;
 } ValueCast;
 
+typedef struct SetPtrValue{
+  Value* ptr_value;
+  Value* to_value;
+} SetPtrValue;
+
 typedef struct ValueClassInit {
   Class* class;
   Map* prop_values;

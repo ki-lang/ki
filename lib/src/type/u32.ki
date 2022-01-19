@@ -20,7 +20,7 @@ class u32 number:u:4 {
 			u8 b = r;
 			b += 48; // ascii
 
-			strp = b;
+			setptrv strp to b;
 			strp++;
 
 			if(value == 0){ break; }

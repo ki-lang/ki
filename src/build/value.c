@@ -93,6 +93,18 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     value->item = cast;
     value->return_type = cast->as_type;
+  } else if (strcmp(token, "setptrv") == 0) {
+    value->type = vt_setptrv;
+
+    SetPtrValue* cast = malloc(sizeof(ValueCast));
+    cast->ptr_value = fc_read_value(fc, scope, false, true, true);
+
+    fc_expect_token(fc, "to", false, true, true);
+
+    cast->to_value = fc_read_value(fc, scope, false, true, true);
+
+    value->item = cast;
+    value->return_type = NULL;
   } else if (strcmp(token, "\"") == 0) {
     // String
     Str* str = str_make("");

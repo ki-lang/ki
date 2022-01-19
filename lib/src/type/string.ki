@@ -55,8 +55,8 @@ class string {
 		while(result < last_char_pos){
 			adr1 += eq_count;
 			adr2 += eq_count;
-			u8 ch1 = cast adr1 as u8;
-			u8 ch2 = cast adr2 as u8;
+			u8 ch1 = getptrv adr1 as u8;
+			u8 ch2 = getptrv adr2 as u8;
 			if(ch1 == ch2){
 				eq_count++;
 				if(eq_count == str.length){
@@ -87,7 +87,7 @@ class string {
 		}
 		ptr x = this.data;
 		x += index;
-		u8 result = cast x as u8;
+		u8 result = getptrv x as u8;
 		return result;
 	}
 
