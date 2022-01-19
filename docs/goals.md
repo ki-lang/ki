@@ -6,7 +6,7 @@
 - easy to setup web servers and gui applications
 - type safe
 - versioned packages without sub packages
-- coroutines
+- coroutines & actors
 - generics
 - casting memory addresses
 
