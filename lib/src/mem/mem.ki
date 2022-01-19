@@ -69,7 +69,13 @@ func free(ptr adr) {
 }
 
 func mcopy(ptr from, u32 len, ptr to) {
-	//_:memcpy(to, from, len);
+  while (len > 0){
+	  len--;
+	  u8 byte = getptrv from as u8;
+	  setptrv to to byte;
+	  from++;
+	  to++;
+  }
 }
 
 func mequal(ptr a, ptr b, u32 length) bool {
