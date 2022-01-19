@@ -39,6 +39,42 @@ char *get_dir_from_path(char *path) {
   return result;
 }
 
+char *get_path_basename(char *path) {
+  char *result = strdup(path);
+  int len = strlen(path) - 1;
+  int original_len = len;
+  while (len > 0) {
+    len--;
+    if (result[len] == '/' || result[len] == '\\') {
+      len++;
+      break;
+    }
+  }
+  int pos = 0;
+  while (len <= original_len) {
+    result[pos] = path[len];
+    len++;
+    pos++;
+  }
+  result[pos] = '\0';
+  return result;
+}
+
+char *strip_ext(char *fn) {
+  char *result = strdup(fn);
+  int len = strlen(fn) - 1;
+  while (len > 0) {
+    len--;
+    if (result[len] == '.') {
+      break;
+    }
+  }
+  if (len > 0) {
+    result[len] = '\0';
+  }
+  return result;
+}
+
 void makedir(char *dir, int mod) {
 #ifdef __linux__
   mkdir(dir, mod);

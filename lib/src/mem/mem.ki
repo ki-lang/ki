@@ -32,16 +32,17 @@ func malloc(ixx size) ptr {
 
 	//#elif OS_LIN
 
-	// PROT_NONE: 0, // 
-	// PROT_READ: 1, // Pages may be read
-	// PROT_WRITE: 2, // Pages may be written
-	// PROT_EXEC: 4, // Pages may be executed
+	// PROT_NONE: 0x0, // 
+	// PROT_READ: 0x1, // Pages may be read
+	// PROT_WRITE: 0x2, // Pages may be written
+	// PROT_EXEC: 0x4, // Pages may be executed
 
-	// MAP_SHARED: 1, // Share changes 
-	// MAP_PRIVATE: 2, // Changes are private 
+	// MAP_SHARED: 0x1, // Share changes 
+	// MAP_PRIVATE: 0x2, // Changes are private 
 	// MAP_ANONYMOUS: 0x20, // No file, use fd -1
 
-	return main:main:mmap(null, size, 0, 0x20, -1, 0);
+	// void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
+	return main:main:mmap(null, size, 0x3, 0x22, -1, 0);
 
 	//#else
 	//#error Unsupported OS

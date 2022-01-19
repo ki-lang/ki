@@ -205,6 +205,10 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       }
     }
 
+    if (negative) {
+      prepend(token, "-");
+    }
+
     char ch = fc_get_char(fc, 0);
     if (!is_hex && ch == '.') {
       // Float

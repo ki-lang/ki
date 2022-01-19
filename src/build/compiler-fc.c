@@ -73,12 +73,18 @@ FileCompiler* fc_new_file(PkgCompiler* pkc, char* path, bool is_cmd_arg_file) {
   char* h_filepath = malloc(KI_PATH_MAX);
   char* o_filepath = malloc(KI_PATH_MAX);
 
+  char* fn_ext = get_path_basename(ki_filepath);
+  char* fn = strip_ext(fn_ext);
+  free(fn_ext);
+
   char* hash = malloc(33);
   strcpy(hash, "");
   md5(ki_filepath, hash);
 
   strcpy(c_filepath, cache_dir);
   strcat(c_filepath, "/");
+  strcat(c_filepath, fn);
+  strcat(c_filepath, "_");
   strcat(c_filepath, hash);
 
   strcpy(h_filepath, c_filepath);
@@ -87,6 +93,8 @@ FileCompiler* fc_new_file(PkgCompiler* pkc, char* path, bool is_cmd_arg_file) {
   strcat(c_filepath, ".c");
   strcat(h_filepath, ".h");
   strcat(o_filepath, ".o");
+
+  free(fn);
 
   fc = init_fc();
   fc->nsc = pkc_create_namespace(pkc, "main");

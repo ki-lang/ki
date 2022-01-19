@@ -10,6 +10,7 @@ void fc_write_c_all() {
   write_file(path, "", false);
   write_file(path, "#include <stdbool.h>\n", true);
   write_file(path, "#include <stdlib.h>\n", true);
+  write_file(path, "#include <unistd.h>\n", true);
   write_file(path, "#include <sys/mman.h>\n", true);
 
   for (int i = 0; i < headers->length; i++) {
