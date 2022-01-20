@@ -121,6 +121,7 @@ void fc_skip_macro(FileCompiler* fc);
 void fc_read_header_token(FileCompiler* fc);
 
 // Macro
+void fc_parse_macro(FileCompiler* fc, char* token);
 bool fc_resolve_macro_if_value(FileCompiler* fc);
 
 // Write c

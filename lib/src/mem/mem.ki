@@ -5,7 +5,7 @@ namespace mem;
 
 func alloc(ixx size) ptr {
 
-	//#if OS_WIN
+	#if OS_WIN
 
 	// MEM_COMMIT: 0x1000,
 	// MEM_RESERVE: 0x2000,
@@ -28,9 +28,9 @@ func alloc(ixx size) ptr {
 	// PAGE_NOCACHE: 0x200,
 	// PAGE_WRITECOMBINE: 0x400,
 
-	//return VirtualAlloc(null, size, 0x3000, 0x40);
+	return VirtualAlloc(null, size, 0x3000, 0x40);
 
-	//#elif OS_LIN
+	#elif OS_LINUX
 
 	// PROT_NONE: 0x0, // 
 	// PROT_READ: 0x1, // Pages may be read
@@ -44,28 +44,28 @@ func alloc(ixx size) ptr {
 	// void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 	return main:main:mmap(null, size, 0x3, 0x22, -1, 0);
 
-	//#else
-	//#error Unsupported OS
-	//#end
+	#else
+	#error Unsupported OS
+	#end
 }
 
 func free(ptr adr) {
 
-	//#if OS_WIN
+	#if OS_WIN
 
 	// MEM_DECOMMIT: 0x4000
 	// MEM_RELEASE: 0x8000
 
-	//VirtualFree(adr, 0, 0x8000);
+	VirtualFree(adr, 0, 0x8000);
 
-	//#elif OS_LIN
+	#elif OS_LINUX
 
 	// 0 = success, -1 = fail
 	i32 result = main:main:munmap(adr, 0);
 
-	//#else
-	//#error Unsupported OS
-	//#end
+	#else
+	#error Unsupported OS
+	#end
 }
 
 func copy(ptr from, u32 len, ptr to) {

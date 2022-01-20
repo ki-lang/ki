@@ -57,6 +57,11 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
       break;
     }
 
+    if (strcmp(token, "#") == 0) {
+      fc_parse_macro(fc, token);
+      continue;
+    }
+
     if (strcmp(token, "return") == 0) {
       token_return(fc, scope);
       continue;
