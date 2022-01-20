@@ -14,6 +14,8 @@ void cmd_build(Array* files, Map* options) {
   headers = array_make(10);
   o_files = array_make(10);
   cmd_arg_files = array_make(2);
+  macro_defines = map_make();
+
   c_identifiers = map_make();
   c_struct_identifiers = map_make();
   c_enum_identifiers = map_make();
@@ -21,6 +23,8 @@ void cmd_build(Array* files, Map* options) {
   allow_new_namespaces = true;
   last_readonly_i = 0;
   GEN_C = 0;
+  //
+  cmd_build_init_before_build();
   //
   PkgCompiler* pkc = init_pkc();
   pkc->name = "main";
@@ -110,3 +114,13 @@ double get_time() {
 }
 
 #endif
+
+void cmd_build_init_before_build() {
+#if defined _WIN32
+  map_set(macro_defines, "OS_WIN", "1");
+#elif defined __APPLE__
+  map_set(macro_defines, "OS_MAC", "1");
+#else
+  map_set(macro_defines, "OS_LINUX", "1");
+#endif
+}

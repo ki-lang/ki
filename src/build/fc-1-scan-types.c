@@ -52,7 +52,7 @@ void fc_scan_types(FileCompiler* fc) {
         // ki header
         fc_read_header_token(fc);
       } else if (strcmp(token, "if") == 0) {
-        bool result = fc_resolve_if_value(fc);
+        bool result = fc_resolve_macro_if_value(fc);
         array_push(fc->macro_results, result ? "1" : "0");
         if (!result) {
           fc_skip_macro(fc);
@@ -62,7 +62,7 @@ void fc_scan_types(FileCompiler* fc) {
           fc_error(fc, "Unexcepted else if, no previous if statement", NULL);
         }
         char* last_result = array_pop(fc->macro_results);
-        bool result = fc_resolve_if_value(fc);
+        bool result = fc_resolve_macro_if_value(fc);
         array_push(fc->macro_results, result ? "1" : "0");
         if (last_result[0] == '1' || !result) {
           fc_skip_macro(fc);

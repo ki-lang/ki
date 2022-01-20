@@ -21,6 +21,7 @@ void fc_scan_types(FileCompiler* fc);
 
 // Build
 void cmd_build_init_static();
+void cmd_build_init_before_build();
 void fc_scan_values();
 void fc_scan_args_and_props(FileCompiler* fc);
 void fc_scan_class_prop_values(NsCompiler* nsc);
@@ -120,7 +121,7 @@ void fc_skip_macro(FileCompiler* fc);
 void fc_read_header_token(FileCompiler* fc);
 
 // Macro
-bool fc_resolve_if_value(FileCompiler* fc);
+bool fc_resolve_macro_if_value(FileCompiler* fc);
 
 // Write c
 void fc_write_c_all();
