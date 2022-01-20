@@ -299,7 +299,7 @@ typedef struct Token {
   void* item;
 } Token;
 
-typedef enum TokenType {
+typedef enum TokenTypeEnum {
   tkn_unknown,
   tkn_return,
   tkn_while,
@@ -314,7 +314,7 @@ typedef enum TokenType {
   // Global ast only
   tkn_func,
   tkn_class,
-} TokenType;
+} TokenTypeEnum;
 
 typedef struct TokenIf {
   Value* condition;

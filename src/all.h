@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>  // might be linux only?
-#include <sys/wait.h>
+//#include <sys/wait.h>
 #include <unistd.h>
 
 #define KI_PATH_MAX 4096

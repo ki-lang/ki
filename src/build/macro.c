@@ -22,7 +22,8 @@ void fc_parse_macro(FileCompiler* fc, char* token) {
     }
     char* last_result = array_pop(fc->macro_results);
     bool result = fc_resolve_macro_if_value(fc);
-    array_push(fc->macro_results, result ? "1" : "0");
+    array_push(fc->macro_results,
+               (last_result[0] == '1' || result) ? "1" : "0");
     if (last_result[0] == '1' || !result) {
       fc_skip_macro(fc);
     }
@@ -32,7 +33,8 @@ void fc_parse_macro(FileCompiler* fc, char* token) {
     }
     char* last_result = array_pop(fc->macro_results);
     bool result = last_result[0] != '1';
-    array_push(fc->macro_results, result ? "1" : "0");
+    array_push(fc->macro_results,
+               (last_result[0] == '1' || result) ? "1" : "0");
     if (!result) {
       fc_skip_macro(fc);
     }

@@ -11,7 +11,11 @@ void fc_write_c_all() {
   write_file(path, "#include <stdbool.h>\n", true);
   write_file(path, "#include <stdlib.h>\n", true);
   write_file(path, "#include <unistd.h>\n", true);
+
+#ifdef __linux__
+  // Todo delete this after .kh files can be converted to .h
   write_file(path, "#include <sys/mman.h>\n", true);
+#endif
 
   for (int i = 0; i < headers->length; i++) {
     // char* fn = array_get_index(headers->keys, i);
