@@ -147,39 +147,39 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
         fc_identifier_to_type(fc, create_identifier("ki", "type", "u8"));
 
     fc_expect_token(fc, "'", false, true, false);
-  } else if (strcmp(token, "_") == 0 && fc_get_char(fc, 0) == ':') {
-    // imported global access
-    fc->i++;
-    fc_next_token(fc, token, false, true, false);
-    if (!is_valid_varname(token)) {
-      fc_error(fc, "Invalid identifier: '%s'", token);
-    }
+    // } else if (strcmp(token, "_") == 0 && fc_get_char(fc, 0) == ':') {
+    //   // imported global access
+    //   fc->i++;
+    //   fc_next_token(fc, token, false, true, false);
+    //   if (!is_valid_varname(token)) {
+    //     fc_error(fc, "Invalid identifier: '%s'", token);
+    //   }
 
-    if (strcmp(token, "struct") == 0) {
-    }
+    //   if (strcmp(token, "struct") == 0) {
+    //   }
 
-    IdentifierFor* idf = map_get(c_identifiers, token);
-    if (idf == NULL) {
-      fc_error(fc, "Unknown variable/function: '%s'", token);
-    }
+    //   IdentifierFor* idf = map_get(c_identifiers, token);
+    //   if (idf == NULL) {
+    //     fc_error(fc, "Unknown variable/function: '%s'", token);
+    //   }
 
-    if (idf->type == idfor_func) {
-      Function* func = idf->item;
-      value->type = vt_var;
-      value->item = strdup(token);
-      Type* t = init_type();
-      t->type = type_funcref;
-      t->func = func;
-      value->return_type = t;
-    } else if (idf->type == idfor_var) {
-      value->type = vt_var;
-      value->item = strdup(token);
-      value->return_type = idf->item;
-    } else {
-      fc_error(fc, "Unhandled identifier (compiler import bug): '%s'", token);
-    }
+    //   if (idf->type == idfor_func) {
+    //     Function* func = idf->item;
+    //     value->type = vt_var;
+    //     value->item = strdup(token);
+    //     Type* t = init_type();
+    //     t->type = type_funcref;
+    //     t->func = func;
+    //     value->return_type = t;
+    //   } else if (idf->type == idfor_var) {
+    //     value->type = vt_var;
+    //     value->item = strdup(token);
+    //     value->return_type = idf->item;
+    //   } else {
+    //     fc_error(fc, "Unhandled identifier (compiler import bug): '%s'",
+    //     token);
+    //   }
 
-    //
   } else if (is_valid_number(token) || strcmp(token, "-") == 0) {
     bool negative = strcmp(token, "-") == 0;
     // todo: put negative in value
