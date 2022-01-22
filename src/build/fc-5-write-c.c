@@ -8,14 +8,6 @@ void fc_write_c_all() {
   strcpy(path, cache_dir);
   strcat(path, "/project.h");
   write_file(path, "", false);
-  write_file(path, "#include <stdbool.h>\n", true);
-  write_file(path, "#include <stdlib.h>\n", true);
-  // write_file(path, "#include <unistd.h>\n", true);
-
-#ifdef __linux__
-  // Todo delete this after .kh files can be converted to .h
-  // write_file(path, "#include <sys/mman.h>\n", true);
-#endif
 
   for (int i = 0; i < headers->length; i++) {
     // char* fn = array_get_index(headers->keys, i);
@@ -179,7 +171,7 @@ void fc_write_c_func(FileCompiler* fc, Function* func) {
   if (!fc->is_header) {
     str_append_chars(fc->tkn_buffer, ") {\n");
     if (func->scope->catch_errors) {
-      str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG_BUF = NULL;\n");
+      str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG_BUF = 0;\n");
     }
     fc->indent++;
     fc_write_c_ast(fc, func->scope->ast);
@@ -263,12 +255,12 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     if (tt->return_type == NULL) {
       str_append_chars(fc->tkn_buffer, "return;\n");
     } else if (tt->return_type->is_pointer) {
-      str_append_chars(fc->tkn_buffer, "return NULL;\n");
+      str_append_chars(fc->tkn_buffer, "return 0;\n");
     } else {
       str_append_chars(fc->tkn_buffer, "return 0;\n");
     }
   } else if (token->type == tkn_free) {
-    str_append_chars(fc->tkn_buffer, "free(");
+    str_append_chars(fc->tkn_buffer, "ki__mem__free(");
     fc_write_c_value(fc, token->item);
     str_append_chars(fc->tkn_buffer, ");\n");
   } else if (token->type == tkn_value) {
@@ -347,12 +339,12 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
     str_append_chars(fc->tkn_buffer, lenstr);
     str_append_chars(fc->tkn_buffer, ")");
   } else if (value->type == vt_null) {
-    str_append_chars(fc->tkn_buffer, "NULL");
+    str_append_chars(fc->tkn_buffer, "0");
     // Bools
   } else if (value->type == vt_false) {
-    str_append_chars(fc->tkn_buffer, "false");
+    str_append_chars(fc->tkn_buffer, "0");
   } else if (value->type == vt_true) {
-    str_append_chars(fc->tkn_buffer, "true");
+    str_append_chars(fc->tkn_buffer, "1");
   } else if (value->type == vt_group) {
     str_append_chars(fc->tkn_buffer, "(");
     fc_write_c_value(fc, value->item);
@@ -498,7 +490,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
     if (value->return_type->is_pointer) {
       sign = "->";
       fc_write_c_type(fc->c_code_after, value->return_type);
-      str_append_chars(fc->c_code_after, " KI_RET_V = malloc(sizeof(");
+      str_append_chars(fc->c_code_after, " KI_RET_V = ki__mem__alloc(sizeof(");
       fc_write_c_type(fc->c_code_after, value->return_type);
       str_append_chars(fc->c_code_after, "));\n");
     } else {
@@ -552,7 +544,7 @@ void fc_write_c_type(Str* append_to, Type* type) {
   }
   //
   if (type->type == type_bool) {
-    str_append_chars(append_to, "bool");
+    str_append_chars(append_to, "int");
     return;
   }
   //
