@@ -11,6 +11,7 @@ typedef struct PkgCompiler {
   struct Map* package_dirs;
   struct Map* namespace_dirs;
   struct Map* file_compilers;
+  struct Map* headers;
 } PkgCompiler;
 
 typedef struct NsCompiler {
@@ -53,6 +54,8 @@ typedef struct FileCompiler {
   struct Array* functions;
   struct Array* classes;
   struct Array* enums;
+  // Extern
+  struct Array* include_headers_from;
 } FileCompiler;
 
 typedef struct Scope {

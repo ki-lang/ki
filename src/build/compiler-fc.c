@@ -36,6 +36,8 @@ FileCompiler* init_fc() {
   fc->classes = array_make(2);
   fc->functions = array_make(8);
   fc->enums = array_make(4);
+  //
+  fc->include_headers_from = array_make(10);
   return fc;
 }
 
@@ -120,4 +122,11 @@ FileCompiler* fc_new_file(PkgCompiler* pkc, char* path, bool is_cmd_arg_file) {
   // printf("Compiled: %s\n", fc->ki_filepath);
 
   return fc;
+}
+
+void fc_include_headers_from(FileCompiler* fc, FileCompiler* from) {
+  //
+  if (!array_contains(fc->include_headers_from, from, "address")) {
+    array_push(fc->include_headers_from, from);
+  }
 }

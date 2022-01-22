@@ -18,6 +18,7 @@ FileCompiler* init_fc();
 void free_fc(FileCompiler* fc);
 FileCompiler* fc_new_file(PkgCompiler* pkc, char* path, bool is_cmd_arg_file);
 void fc_scan_types(FileCompiler* fc);
+void fc_include_headers_from(FileCompiler* fc, FileCompiler* from);
 
 // Build
 void cmd_build_init_static();

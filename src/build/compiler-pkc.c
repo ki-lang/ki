@@ -12,6 +12,7 @@ PkgCompiler* init_pkc() {
   pkc->namespace_dirs = map_make();
   pkc->package_dirs = map_make();
   pkc->file_compilers = map_make();
+  pkc->headers = map_make();
   return pkc;
 }
 

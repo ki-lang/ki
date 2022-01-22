@@ -2,9 +2,9 @@
 namespace main;
 
 #if OS_WIN
-func VirtualAlloc(ptr addr_suggestion, ixx size, i32 flAllocationType, i32 flProtect);
+func VirtualAlloc(ptr addr_suggestion, ixx size, i32 flAllocationType, i32 flProtect) ptr;
 func VirtualFree(ptr addr, ixx size, i32 dwFreeType);
 #elif OS_LINUX
-func mmap(ptr addr_suggestion, ixx size, i32 protect, i32 flags, i32 fd, i32 offset);
+func mmap(ptr addr_suggestion, ixx size, i32 protect, i32 flags, i32 fd, i32 offset) ptr;
 func munmap(ptr addr, ixx size) i32;
 #end

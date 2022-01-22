@@ -9,12 +9,15 @@ void fc_build_asts() {
     for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
       FileCompiler* fc = array_get_index(pkc->file_compilers->values, o);
 
+      // printf("-- %s\n", fc->h_filepath);
+
       // Functions
       for (int x = 0; x < fc->functions->length; x++) {
         Function* func = array_get_index(fc->functions, x);
         FileCompiler* fc = func->fc;
-        if (fc->is_header) continue;
-        fc_build_ast(fc, func->scope);
+        if (!fc->is_header) {
+          fc_build_ast(fc, func->scope);
+        }
         Token* t = init_token();
         t->type = tkn_func;
         t->item = func;
@@ -31,7 +34,9 @@ void fc_build_asts() {
           ClassProp* prop = array_get_index(class->props->values, y);
           if (prop->is_func) {
             Function* func = prop->return_type->func;
-            fc_build_ast(fc, func->scope);
+            if (!fc->is_header) {
+              fc_build_ast(fc, func->scope);
+            }
             Token* t = init_token();
             t->type = tkn_func;
             t->item = func;

@@ -10,11 +10,11 @@ void fc_write_c_all() {
   write_file(path, "", false);
   write_file(path, "#include <stdbool.h>\n", true);
   write_file(path, "#include <stdlib.h>\n", true);
-  write_file(path, "#include <unistd.h>\n", true);
+  // write_file(path, "#include <unistd.h>\n", true);
 
 #ifdef __linux__
   // Todo delete this after .kh files can be converted to .h
-  write_file(path, "#include <sys/mman.h>\n", true);
+  // write_file(path, "#include <sys/mman.h>\n", true);
 #endif
 
   for (int i = 0; i < headers->length; i++) {
@@ -60,16 +60,28 @@ void fc_write_c(FileCompiler* fc) {
   // printf("%s\n", code);
 
   fc->create_o_file = false;
-  if (strlen(code) > 0) {
+  if (!fc->is_header && strlen(code) > 0) {
     fc->create_o_file = true;
     write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
+
+    char* incl = malloc(KI_PATH_MAX + 50);
+    for (int i = 0; i < fc->include_headers_from->length; i++) {
+      FileCompiler* hfc = array_get_index(fc->include_headers_from, i);
+      strcpy(incl, "#include \"");
+      strcat(incl, hfc->h_filepath);
+      strcat(incl, "\"\n");
+      write_file(fc->c_filepath, incl, true);
+    }
+    free(incl);
+
+    write_file(fc->c_filepath, "\n", true);
     write_file(fc->c_filepath, code, true);
     write_file(fc->c_filepath, code_gen, true);
 
     array_push(o_files, fc->o_filepath);
   }
 
-  // write_file(fc->h_filepath, hcode, true);
+  write_file(fc->h_filepath, hcode, false);
 
   char* path = malloc(KI_PATH_MAX);
   char* cache_dir = get_cache_dir();
@@ -163,14 +175,17 @@ void fc_write_c_func(FileCompiler* fc, Function* func) {
   }
   //
   str_append_chars(fc->h_code, ");\n");
-  str_append_chars(fc->tkn_buffer, ") {\n");
-  if (func->scope->catch_errors) {
-    str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG_BUF = NULL;\n");
+
+  if (!fc->is_header) {
+    str_append_chars(fc->tkn_buffer, ") {\n");
+    if (func->scope->catch_errors) {
+      str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG_BUF = NULL;\n");
+    }
+    fc->indent++;
+    fc_write_c_ast(fc, func->scope->ast);
+    fc->indent--;
+    str_append_chars(fc->tkn_buffer, "}\n\n");
   }
-  fc->indent++;
-  fc_write_c_ast(fc, func->scope->ast);
-  fc->indent--;
-  str_append_chars(fc->tkn_buffer, "}\n\n");
 }
 
 void fc_write_c_ast(FileCompiler* fc, Array* ast) {

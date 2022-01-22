@@ -22,9 +22,16 @@ void fc_read_header_token(FileCompiler* fc) {
   path[pos] = '\0';
   fc->i++;
 
+  PkgCompiler* pkc = fc->nsc->pkc;
+  // Check if already imported
+  FileCompiler* hfc = map_get(pkc->headers, path);
+  if (hfc) {
+    fc_include_headers_from(fc, hfc);
+    return;
+  }
+
   // Get full path
   char* fullpath = NULL;
-  PkgCompiler* pkc = fc->nsc->pkc;
   if (pkc->config) {
     const nx_json* headers = nx_json_get(pkc->config, "headers");
     if (headers) {
@@ -55,5 +62,8 @@ void fc_read_header_token(FileCompiler* fc) {
   free(path);
   // Parse
   PkgCompiler* mainpkc = map_get(packages, "main");
-  fc_new_file(mainpkc, fullpath, false);
+  hfc = fc_new_file(mainpkc, fullpath, false);
+
+  map_set(pkc->headers, path, hfc);
+  fc_include_headers_from(fc, hfc);
 }
