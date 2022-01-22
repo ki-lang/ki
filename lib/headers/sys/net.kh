@@ -12,4 +12,5 @@ class sockaddr_in norfc {
 	i8 sin_zero;
 }
 
-func accept(i32 sockfd, sockaddr_in addr, ptr addrlen);
+func accept(i32 sockfd, sockaddr_in addr, ptr addrlen) i32;
+func recv(i32 sockfd, ptr buf, ixx len, i32 flags) ixx;

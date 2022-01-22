@@ -42,14 +42,14 @@ class Server {
 		//
 		while(true){
 			//io:print(c"accept\n");
-        	i32 result = main:main:accept(s.listenfd, clientaddr, &addrlen);
+        	i32 result = main:main:accept(s.listenfd, clientaddr, getptr addrlen);
 			if (result < 0){
-				result.to_cstring();
+				// result.to_cstring();
 				io:print("failed to accept\n");
 				throw failed_to_accept;
 			}else{
 				//io:print("success\n");
-				this.clients.set(rslot, &result);
+				this.clients.set(rslot, getptr result);
 				this.respond(rslot);
 			}
 
@@ -64,10 +64,10 @@ class Server {
 		io:print("Respond\n");
 
 		u32 clientfd = 0;
-		this.clients.get(slot, &clientfd);
+		this.clients.get(slot, getptr clientfd);
 
 		ptr buf = mem:alloc(65535);
-		i32 rcvd = c:recv(clientfd, buf, 65535, 0);
+		i32 rcvd = main:main:recv(clientfd, buf, 65535, 0);
 
 		if (rcvd<0){
 			io:print("receive error\n");

@@ -3,5 +3,5 @@
 
 ## Todo
 
-- convert .kh to .h 
+- type checking on assign
 - refcounting + free
