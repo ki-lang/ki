@@ -544,7 +544,7 @@ void fc_write_c_type(Str* append_to, Type* type) {
   }
   //
   if (type->type == type_bool) {
-    str_append_chars(append_to, "int");
+    str_append_chars(append_to, "unsigned char");
     return;
   }
   //
