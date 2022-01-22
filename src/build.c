@@ -86,6 +86,8 @@ void cmd_build_init_static() {
   array_push(internal_types, "ixx");
   array_push(internal_types, "i8");
   array_push(internal_types, "u8");
+  array_push(internal_types, "i16");
+  array_push(internal_types, "u16");
   array_push(internal_types, "i32");
   array_push(internal_types, "u32");
   array_push(internal_types, "i64");

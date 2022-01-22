@@ -1,0 +1,5 @@
+
+namespace type;
+
+class u16 number:u:2 {
+}

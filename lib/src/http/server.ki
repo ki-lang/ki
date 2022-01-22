@@ -1,7 +1,7 @@
 
 namespace http;
 
-#import <sys/socket.h>
+#header "sys/net"
 
 use type {PtrArray};
 
@@ -32,12 +32,10 @@ class Server {
 		s.listen();
 
 		// 
-		@ inadr = c:struct in_addr {
-			s_addr: 0
+		@ tmp = sockaddr_in {
+			sin_addr: 0
 		};
-		@ tmp = c:struct sockaddr_in* restrict {
-			sin_addr: inadr
-		};
+
 		@ clientaddr = cast tmp to ptr;
 		u32 addrlen = sizeof(clientaddr);
 		u32 rslot = 0;

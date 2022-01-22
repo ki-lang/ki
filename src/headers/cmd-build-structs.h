@@ -135,6 +135,7 @@ typedef struct Class {
   char* cname;
   char* name;
   struct FileCompiler* fc;
+  bool norfc;
   bool is_number;
   bool is_float;
   bool is_unsigned;

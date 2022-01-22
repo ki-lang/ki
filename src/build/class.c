@@ -5,6 +5,7 @@ Class* init_class() {
   Class* class = malloc(sizeof(Class));
   class->name = NULL;
   class->fc = NULL;
+  class->norfc = false;
   class->is_number = false;
   class->is_float = false;
   class->is_unsigned = false;

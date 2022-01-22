@@ -80,29 +80,41 @@ void fc_scan_types(FileCompiler* fc) {
 
       array_push(fc->classes, class);
 
-      fc_next_token(fc, token, true, true, true);
-      if (strcmp(token, "number") == 0 || strcmp(token, "float") == 0) {
-        fc_next_token(fc, token, false, true, true);
-        class->is_number = true;
-        class->is_float = strcmp(token, "float") == 0;
-        fc_expect_token(fc, ":", false, true, false);
-        fc_next_token(fc, token, false, true, false);
-        if (strcmp(token, "u") == 0) {
-          class->is_unsigned = true;
-        } else if (strcmp(token, "s") == 0) {
-          class->is_unsigned = false;
-        } else {
-          fc_error(fc, "Expected 'u' or 'p', instead of: '%s'", token);
+      while (true) {
+        fc_next_token(fc, token, true, true, true);
+
+        if (strcmp(token, "norfc") == 0) {
+          fc_next_token(fc, token, false, true, true);
+          class->norfc = true;
+          continue;
         }
-        fc_expect_token(fc, ":", false, true, false);
-        fc_next_token(fc, token, false, true, false);
-        if (!is_valid_number(token)) {
-          fc_error(fc, "Invalid number: '%s'", token);
+
+        if (strcmp(token, "number") == 0 || strcmp(token, "float") == 0) {
+          fc_next_token(fc, token, false, true, true);
+          class->is_number = true;
+          class->is_float = strcmp(token, "float") == 0;
+          fc_expect_token(fc, ":", false, true, false);
+          fc_next_token(fc, token, false, true, false);
+          if (strcmp(token, "u") == 0) {
+            class->is_unsigned = true;
+          } else if (strcmp(token, "s") == 0) {
+            class->is_unsigned = false;
+          } else {
+            fc_error(fc, "Expected 'u' or 'p', instead of: '%s'", token);
+          }
+          fc_expect_token(fc, ":", false, true, false);
+          fc_next_token(fc, token, false, true, false);
+          if (!is_valid_number(token)) {
+            fc_error(fc, "Invalid number: '%s'", token);
+          }
+          class->size = atoi(token);
+          if (class->size < 1) {
+            fc_error(fc, "Number byte size must be atleast 1, got: '%s'",
+                     token);
+          }
+          continue;
         }
-        class->size = atoi(token);
-        if (class->size < 1) {
-          fc_error(fc, "Number byte size must be atleast 1, got: '%s'", token);
-        }
+        break;
       }
 
       IdentifierFor* idf = init_idf();

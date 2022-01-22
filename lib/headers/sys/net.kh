@@ -1,0 +1,13 @@
+
+namespace main;
+
+//class in_addr norfc {
+//	ixx s_addr;
+//}
+
+class sockaddr_in norfc {
+	i16 sin_family;
+	u16 sin_port;
+	ixx sin_addr;
+	i8 sin_zero;
+}
