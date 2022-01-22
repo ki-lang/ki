@@ -93,6 +93,11 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     value->item = cast;
     value->return_type = cast->as_type;
+  } else if (strcmp(token, "getptr") == 0) {
+    value->type = vt_getptr;
+    value->item = fc_read_value(fc, scope, false, true, true);
+    value->return_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "ptr"));
   } else if (strcmp(token, "setptrv") == 0) {
     value->type = vt_setptrv;
 

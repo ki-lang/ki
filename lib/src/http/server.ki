@@ -32,18 +32,17 @@ class Server {
 		s.listen();
 
 		// 
-		@ tmp = sockaddr_in {
+		@ clientaddr = main:main:sockaddr_in {
 			sin_addr: 0
 		};
 
-		@ clientaddr = cast tmp to ptr;
 		u32 addrlen = sizeof(clientaddr);
 		u32 rslot = 0;
 
 		//
 		while(true){
 			//io:print(c"accept\n");
-        	i32 result = c:accept(s.listenfd, clientaddr, &addrlen);
+        	i32 result = main:main:accept(s.listenfd, clientaddr, &addrlen);
 			if (result < 0){
 				result.to_cstring();
 				io:print("failed to accept\n");
