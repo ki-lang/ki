@@ -33,6 +33,8 @@ class Socket {
 
 	public func listen() ! {
 
+		i32 success = 0;
+
  		@ hints = main:main:addrinfo {
 			 ai_flags: Socket.FLAGS.passive,
 			 ai_family: Socket.IPTYPE.ipv4,
@@ -43,22 +45,24 @@ class Socket {
 			 ai_canonname: null,
 			 ai_next: null,
 		};
- 		main:main:addrinfo res = mem:alloc(sizeof(hints));
+		ptr tmp = mem:alloc(sizeof(hints));
+ 		@ res = cast tmp as main:main:addrinfo;
 
-		i32 check = main:main:getaddrinfo(null, this.port.to_cstring(), hints, &res);
-		if(check != 0){
-			io:print("getaddrinfo_failed\n");
-			throw getaddrinfo_failed;
-		}
+		//i32 check = main:main:getaddrinfo(null, this.port.to_cstring(), hints, &res);
+		//if(check != 0){
+		//	io:print("getaddrinfo_failed\n");
+		//	throw getaddrinfo_failed;
+		//}
 
  		@ p = res;
 
 		while(p != null){
 			i32 option = 1;
-        	this.listenfd = c:socket(p.ai_family, p.ai_socktype, 0);
-        	c:setsockopt(this.listenfd, 1, 2, &option, sizeof(option));
+        	this.listenfd = main:main:socket(p.ai_family, p.ai_socktype, 0);
+        	success = main:main:setsockopt(this.listenfd, 1, 2, getptr option, sizeof(option));
         	if (this.listenfd == -1) { continue; }
-        	if (c:bind(this.listenfd, p.ai_addr, p.ai_addrlen) == 0){ break; }
+			success = main:main:bind(this.listenfd, p.ai_addr, p.ai_addrlen);
+        	if (success == 0){ break; }
 
 			p = p.ai_next;
 		}
@@ -71,10 +75,11 @@ class Socket {
 		// c:freeaddrinfo(res);
 
 		// listen for incoming connections
- 	   if (c:listen(this.listenfd, 1000000) != 0 ) {
+		success = main:main:listen(this.listenfd, 1000000);
+ 	    if (success != 0 ) {
         	io:print("listen_error");
 			throw listen_error;
- 	   }
+ 	    }
 	}
 
 	public func accept() ! {

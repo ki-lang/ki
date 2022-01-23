@@ -11,11 +11,11 @@ class Request {
 		//io:print(payload);
 
 		@ chunker = payload.chunker();
-		chunker.break_on_bytes(" \t\r\n");
+		chunker = chunker.break_on_bytes(" \t\r\n");
 		@ method = chunker.get_chunk();
-		chunker.break_on_bytes(" \t");
+		chunker = chunker.break_on_bytes(" \t");
 		@ uri = chunker.get_chunk();
-		chunker.break_on_bytes(" \t\r\n");
+		chunker = chunker.break_on_bytes(" \t\r\n");
 		@ protocol = chunker.get_chunk();
 
 		@ req = Request {

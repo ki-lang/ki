@@ -100,17 +100,7 @@ void fc_write_c_class(FileCompiler* fc, Class* class) {
     if (prop->is_static) {
       continue;
     }
-    fc_write_c_type(fc->h_code, prop->return_type);
-    str_append_chars(fc->h_code, " ");
-    str_append_chars(fc->h_code, name);
-    if (prop->return_type->is_array) {
-      str_append_chars(fc->h_code, "[");
-      char* asize = malloc(20);
-      sprintf(asize, "%d", prop->return_type->array_size);
-      str_append_chars(fc->h_code, asize);
-      free(asize);
-      str_append_chars(fc->h_code, "]");
-    }
+    fc_write_c_type(fc->h_code, prop->return_type, name);
     str_append_chars(fc->h_code, ";\n");
   }
   str_append_chars(fc->h_code, "};\n");
@@ -139,8 +129,8 @@ void fc_write_c_enum(FileCompiler* fc, Enum* enu) {
 
 void fc_write_c_func(FileCompiler* fc, Function* func) {
   //
-  fc_write_c_type(fc->tkn_buffer, func->return_type);
-  fc_write_c_type(fc->h_code, func->return_type);
+  fc_write_c_type(fc->tkn_buffer, func->return_type, NULL);
+  fc_write_c_type(fc->h_code, func->return_type, NULL);
   str_append_chars(fc->tkn_buffer, " ");
   str_append_chars(fc->h_code, " ");
   str_append_chars(fc->tkn_buffer, func->cname);
@@ -154,10 +144,8 @@ void fc_write_c_func(FileCompiler* fc, Function* func) {
     FunctionArg* arg = array_get_index(func->args, x);
     char* name = arg->name;
     Type* type = arg->type;
-    fc_write_c_type(fc->tkn_buffer, type);
-    fc_write_c_type(fc->h_code, type);
-    str_append_chars(fc->tkn_buffer, " ");
-    str_append_chars(fc->tkn_buffer, name);
+    fc_write_c_type(fc->tkn_buffer, type, name);
+    fc_write_c_type(fc->h_code, type, name);
     x++;
     if (x < arg_len) {
       str_append_chars(fc->tkn_buffer, ", ");
@@ -211,9 +199,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     fc_write_c_func(fc, token->item);
   } else if (token->type == tkn_declare) {
     TokenDeclare* decl = token->item;
-    fc_write_c_type(fc->tkn_buffer, decl->value->return_type);
-    str_append_chars(fc->tkn_buffer, " ");
-    str_append_chars(fc->tkn_buffer, decl->name);
+    fc_write_c_type(fc->tkn_buffer, decl->value->return_type, decl->name);
     str_append_chars(fc->tkn_buffer, " = ");
     fc_write_c_value(fc, decl->value);
     str_append_chars(fc->tkn_buffer, ";\n");
@@ -425,13 +411,13 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
   } else if (value->type == vt_cast) {
     ValueCast* cast = value->item;
     str_append_chars(fc->tkn_buffer, "(");
-    fc_write_c_type(fc->tkn_buffer, cast->as_type);
+    fc_write_c_type(fc->tkn_buffer, cast->as_type, NULL);
     str_append_chars(fc->tkn_buffer, ")");
     fc_write_c_value(fc, cast->value);
   } else if (value->type == vt_getptrv) {
     ValueCast* cast = value->item;
     str_append_chars(fc->tkn_buffer, "*(");
-    fc_write_c_type(fc->tkn_buffer, cast->as_type);
+    fc_write_c_type(fc->tkn_buffer, cast->as_type, NULL);
     str_append_chars(fc->tkn_buffer, "*)");
     fc_write_c_value(fc, cast->value);
   } else if (value->type == vt_getptr) {
@@ -440,7 +426,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
   } else if (value->type == vt_setptrv) {
     SetPtrValue* cast = value->item;
     str_append_chars(fc->tkn_buffer, "*(");
-    fc_write_c_type(fc->tkn_buffer, cast->to_value->return_type);
+    fc_write_c_type(fc->tkn_buffer, cast->to_value->return_type, NULL);
     str_append_chars(fc->tkn_buffer, "*)");
     fc_write_c_value(fc, cast->ptr_value);
     str_append_chars(fc->tkn_buffer, " = ");
@@ -464,7 +450,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
     str_append_chars(fc->tkn_buffer, ")");
 
     // Write header
-    fc_write_c_type(fc->h_code, value->return_type);
+    fc_write_c_type(fc->h_code, value->return_type, NULL);
     str_append_chars(fc->h_code, " ");
     str_append_chars(fc->h_code, func_name);
     str_append_chars(fc->h_code, "(");
@@ -474,14 +460,12 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
       }
       char* prop_name = array_get_index(ini->prop_values->keys, i);
       ClassProp* prop = map_get(class->props, prop_name);
-      fc_write_c_type(fc->h_code, prop->return_type);
-      str_append_chars(fc->h_code, " ");
-      str_append_chars(fc->h_code, prop_name);
+      fc_write_c_type(fc->h_code, prop->return_type, prop_name);
     }
     str_append_chars(fc->h_code, ");\n");
 
     // Write func
-    fc_write_c_type(fc->c_code_after, value->return_type);
+    fc_write_c_type(fc->c_code_after, value->return_type, NULL);
     str_append_chars(fc->c_code_after, " ");
     str_append_chars(fc->c_code_after, func_name);
     str_append_chars(fc->c_code_after, "(");
@@ -491,22 +475,20 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
       }
       char* prop_name = array_get_index(ini->prop_values->keys, i);
       ClassProp* prop = map_get(class->props, prop_name);
-      fc_write_c_type(fc->c_code_after, prop->return_type);
-      str_append_chars(fc->c_code_after, " ");
-      str_append_chars(fc->c_code_after, prop_name);
+      fc_write_c_type(fc->c_code_after, prop->return_type, prop_name);
     }
     str_append_chars(fc->c_code_after, ") {\n");
     char* sign;
     if (value->return_type->is_pointer) {
       sign = "->";
-      fc_write_c_type(fc->c_code_after, value->return_type);
-      str_append_chars(fc->c_code_after, " KI_RET_V = ki__mem__alloc(sizeof(");
-      fc_write_c_type(fc->c_code_after, value->return_type);
+      fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
+      str_append_chars(fc->c_code_after, " = ki__mem__alloc(sizeof(");
+      fc_write_c_type(fc->c_code_after, value->return_type, NULL);
       str_append_chars(fc->c_code_after, "));\n");
     } else {
       sign = ".";
-      fc_write_c_type(fc->c_code_after, value->return_type);
-      str_append_chars(fc->c_code_after, " KI_RET_V;\n");
+      fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
+      str_append_chars(fc->c_code_after, ";\n");
     }
 
     for (int i = 0; i < ini->prop_values->keys->length; i++) {
@@ -548,19 +530,51 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
   }
 }
 
-void fc_write_c_type(Str* append_to, Type* type) {
+char i_to_str_buf[100];
+
+void fc_write_c_type_varname(Str* append_to, Type* type, char* varname) {
+  if (varname) {
+    str_append_chars(append_to, " ");
+    str_append_chars(append_to, varname);
+  }
+  if (type && type->is_array) {
+    str_append_chars(append_to, "[");
+    sprintf(i_to_str_buf, "%d", type->array_size);
+    str_append_chars(append_to, i_to_str_buf);
+    str_append_chars(append_to, "]");
+  }
+}
+
+void fc_write_c_type(Str* append_to, Type* type, char* varname) {
   if (type == NULL) {
     str_append_chars(append_to, "void");
+    fc_write_c_type_varname(append_to, type, varname);
     return;
   }
   //
   if (type->type == type_bool) {
     str_append_chars(append_to, "unsigned char");
+    fc_write_c_type_varname(append_to, type, varname);
     return;
   }
   //
   if (type->type == type_void_pointer) {
     str_append_chars(append_to, "void*");
+    fc_write_c_type_varname(append_to, type, varname);
+    return;
+  }
+  //
+  if (type->type == type_funcref) {
+    // {ret_type} (*{varname})({arg1_type}, {arg2_type}) = ...
+    fc_write_c_type(append_to, type->func_return_type, NULL);
+    str_append_chars(append_to, "(*");
+    fc_write_c_type_varname(append_to, type, varname);
+    str_append_chars(append_to, ")(");
+    for (int i = 0; i < type->func_arg_types->length; i++) {
+      Type* arg_type = array_get_index(type->func_arg_types, i);
+      fc_write_c_type(append_to, arg_type, NULL);
+    }
+    str_append_chars(append_to, ")");
     return;
   }
   //
@@ -593,6 +607,8 @@ void fc_write_c_type(Str* append_to, Type* type) {
     if (type->is_pointer) {
       str_append_chars(append_to, "*");
     }
+    fc_write_c_type_varname(append_to, type, varname);
+    return;
   }
 }
 

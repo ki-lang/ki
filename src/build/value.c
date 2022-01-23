@@ -543,20 +543,23 @@ Value* fc_read_func_call(FileCompiler* fc, Scope* scope, Value* on) {
   value->item = fcall;
   value->return_type = on->return_type->func_return_type;
 
-  scope->catch_errors = on->return_type->func_can_error;
+  if (on->return_type->func_can_error) scope->catch_errors = true;
 
-  // if (on->type == vt_prop_access) {
-  //   ValueClassPropAccess* pa = on->item;
-  //   if (!pa->is_static) {
-  //     Value* prev_on = on;
-  //     on = init_value();
-  //     on->type = vt_var;
-  //     on->item = on;
-  //     on->return_type = prev_on->return_type;
-  //     fcall->on = on;
-  //     array_push(fcall->arg_values, pa->on);
-  //   }
-  // }
+  if (on->type == vt_prop_access) {
+    ValueClassPropAccess* pa = on->item;
+    if (!pa->is_static) {
+      Value* class_instance_value = pa->on;
+      Class* class = class_instance_value->return_type->class;
+      ClassProp* prop = map_get(class->props, pa->name);
+      Value* prev_on = on;
+      on = init_value();
+      on->type = vt_var;
+      on->item = prop->func->cname;
+      on->return_type = prev_on->return_type;
+      fcall->on = on;
+      array_push(fcall->arg_values, pa->on);
+    }
+  }
 
   char* token = malloc(KI_TOKEN_MAX);
   fc_next_token(fc, token, true, false, true);

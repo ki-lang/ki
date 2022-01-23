@@ -135,7 +135,7 @@ void fc_write_c_ast(FileCompiler* fc, Array* ast);
 void fc_indent(FileCompiler* fc, Str* append_to);
 void fc_write_c_token(FileCompiler* fc, Token* token);
 void fc_write_c_value(FileCompiler* fc, Value* value);
-void fc_write_c_type(Str* append_to, Type* type);
+void fc_write_c_type(Str* append_to, Type* type, char* varname);
 void fc_write_c_if(FileCompiler* fc, TokenIf* ift);
 
 // Compile

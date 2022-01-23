@@ -32,3 +32,7 @@ func accept(i32 sockfd, sockaddr_in addr, ptr addrlen) i32;
 func recv(i32 sockfd, ptr buf, ixx len, i32 flags) ixx;
 func shutdown(i32 sockfd, i32 how) i32;
 func close(i32 sockfd) i32;
+func socket(i32 domain, i32 type, i32 protocol) i32;
+func setsockopt(i32 sockfd, i32 level, i32 optname, ptr optval, ixx optlen) i32;
+func bind(i32 sockfd, sockaddr addr, ixx addrlen) i32;
+func listen(i32 sockfd, i32 backlog) i32;
