@@ -396,7 +396,6 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
     }
   } else if (value->type == vt_func_call) {
     ValueFuncCall* fa = value->item;
-    Function* func = fa->on->return_type->func;
     fc_write_c_value(fc, fa->on);
     str_append_chars(fc->tkn_buffer, "(");
     for (int i = 0; i < fa->arg_values->length; i++) {
@@ -406,7 +405,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
       Value* v = array_get_index(fa->arg_values, i);
       fc_write_c_value(fc, v);
     }
-    if (func->can_error) {
+    if (fa->on->return_type->func_can_error) {
       if (fa->arg_values->length > 0) {
         str_append_chars(fc->tkn_buffer, ", ");
       }
@@ -522,8 +521,9 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
       ClassProp* prop = map_get(class->props, pa->name);
       // func ref
       Type* type = prop->return_type;
-      Function* func = type->func;
-      str_append_chars(fc->tkn_buffer, func->cname);
+      str_append_chars(fc->tkn_buffer, class->cname);
+      str_append_chars(fc->tkn_buffer, "__");
+      str_append_chars(fc->tkn_buffer, pa->name);
     } else {
       fc_write_c_value(fc, pa->on);
       Value* val = pa->on;

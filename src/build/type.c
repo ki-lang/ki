@@ -17,8 +17,11 @@ Type* init_type() {
   type->array_size = 0;
   type->bytes = 0;
   type->class = NULL;
-  type->func = NULL;
   type->enu = NULL;
+  //
+  type->func_arg_types = NULL;
+  type->func_return_type = NULL;
+  type->func_can_error = false;
   return type;
 }
 
@@ -103,8 +106,33 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
     if (strcmp(id->name, "void") == 0) {
       t->type = type_void;
     } else if (strcmp(id->name, "funcref") == 0) {
+      char* token = malloc(KI_TOKEN_MAX);
+      t->type = type_funcref;
       fc_expect_token(fc, "(", false, true, true);
-      die("TODO funcref");
+      // Read arg types
+      t->func_arg_types = array_make(4);
+      fc_next_token(fc, token, true, true, true);
+      while (strcmp(token, ")") != 0) {
+        Type* arg_type = fc_read_type(fc);
+        array_push(t->func_arg_types, arg_type);
+        fc_next_token(fc, token, true, true, true);
+        if (strcmp(token, ",") == 0) {
+          fc_next_token(fc, token, false, true, true);
+          fc_next_token(fc, token, true, true, true);
+        } else {
+          fc_expect_token(fc, ")", false, true, true);
+        }
+      }
+
+      // Read return type
+      fc_next_token(fc, token, true, true, true);
+      if (strcmp(token, "!") == 0) {
+        t->func_can_error = true;
+        fc_next_token(fc, token, false, true, true);
+      }
+      t->func_return_type = fc_read_type(fc);
+
+      free(token);
     }
   }
 
@@ -156,6 +184,11 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
         t->allow_math = true;
       }
     }
+  }
+
+  if (t->type == type_unknown) {
+    free_type(t);
+    return NULL;
   }
 
   return t;

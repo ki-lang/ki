@@ -154,6 +154,7 @@ typedef struct ClassProp {
   struct Type* return_type;
   struct Value* default_value;
   int value_i;
+  struct Function* func;
 } ClassProp;
 
 typedef enum ClassPropAccType {
@@ -204,9 +205,13 @@ typedef struct Type {
   int array_size;
   short bytes;
   Class* class;
-  Function* func;
   Enum* enu;
+  // Func ref
+  Array* func_arg_types;
+  struct Type* func_return_type;
+  bool func_can_error;
 } Type;
+
 typedef enum TypeType {
   type_unknown,
   type_void,

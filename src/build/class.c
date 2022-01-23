@@ -30,6 +30,7 @@ ClassProp* init_class_prop() {
   prop->return_type = NULL;
   prop->default_value = NULL;
   prop->value_i = 0;
+  prop->func = NULL;
   return prop;
 }
 
@@ -161,9 +162,10 @@ void fc_scan_class_props(Class* class) {
 
       Type* type = init_type();
       type->type = type_funcref;
-      type->func = func;
+
       prop->return_type = type;
       prop->is_func = true;
+      prop->func = func;
 
       map_set(class->props, name, prop);
 
@@ -210,6 +212,10 @@ void fc_scan_class_props(Class* class) {
       func->args_i_end = fc->i + 5000;
 
       fc_scan_func_args(func);
+
+      type->func_arg_types = func->args;
+      type->func_return_type = func->return_type;
+      type->func_can_error = func->can_error;
 
       // fc_skip_until_char(fc, '{');
       // fc_expect_token(fc, "{", false, true, false);

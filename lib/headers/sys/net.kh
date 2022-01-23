@@ -12,5 +12,23 @@ class sockaddr_in norfc {
 	i8 sin_zero;
 }
 
+class sockaddr norfc {
+	unsigned short int sa_family;
+	i8[14] sa_data;
+}
+
+class addrinfo norfc {
+	i32 ai_flags;
+    i32 ai_family;
+    i32 ai_socktype;
+    i32 ai_protocol;
+    ixx ai_addrlen;
+    sockaddr ai_addr;
+    ptr ai_canonname;
+    addrinfo ai_next;
+}
+
 func accept(i32 sockfd, sockaddr_in addr, ptr addrlen) i32;
 func recv(i32 sockfd, ptr buf, ixx len, i32 flags) ixx;
+func shutdown(i32 sockfd, i32 how) i32;
+func close(i32 sockfd) i32;

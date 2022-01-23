@@ -252,22 +252,22 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     }
   } else if (is_valid_varname(token)) {
     IdentifierFor* idf = NULL;
-    if (strcmp(token, "c") == 0 && fc_get_char(fc, 0) == ':') {
-      // C namespace
-      fc->i++;  // skip ":"
-      fc_next_token(fc, token, false, true, false);
+    // if (strcmp(token, "c") == 0 && fc_get_char(fc, 0) == ':') {
+    //   // C namespace
+    //   fc->i++;  // skip ":"
+    //   fc_next_token(fc, token, false, true, false);
 
-      if (strcmp(token, "struct") == 0) {
-        fc_next_token(fc, token, false, true, true);
-        idf = map_get(c_struct_identifiers, token);
-      } else {
-        idf = map_get(c_identifiers, token);
-      }
+    //   if (strcmp(token, "struct") == 0) {
+    //     fc_next_token(fc, token, false, true, true);
+    //     idf = map_get(c_struct_identifiers, token);
+    //   } else {
+    //     idf = map_get(c_identifiers, token);
+    //   }
 
-    } else {
-      fc->i -= strlen(token);
-      idf = fc_read_and_get_idf(fc, scope, false, true, true);
-    }
+    // } else {
+    fc->i -= strlen(token);
+    idf = fc_read_and_get_idf(fc, scope, false, true, true);
+    // }
     if (idf == NULL) {
       fc_error(fc, "Unknown variable/function/class/enum: %s", token);
     }
@@ -277,7 +277,9 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       value->item = func->cname;
       Type* t = init_type();
       t->type = type_funcref;
-      t->func = func;
+      t->func_arg_types = func->args;
+      t->func_return_type = func->return_type;
+      t->func_can_error = func->can_error;
       value->return_type = t;
     } else if (idf->type == idfor_var) {
       value->type = vt_var;
@@ -535,25 +537,22 @@ Value* fc_read_func_call(FileCompiler* fc, Scope* scope, Value* on) {
   Value* value = init_value();
   value->type = vt_func_call;
   value->item = fcall;
-  value->return_type = on->return_type->func->return_type;
+  value->return_type = on->return_type->func_return_type;
 
-  Function* func = on->return_type->func;
-  if (func && func->can_error) {
-    scope->catch_errors = true;
-  }
+  scope->catch_errors = on->return_type->func_can_error;
 
-  if (on->type == vt_prop_access) {
-    ValueClassPropAccess* pa = on->item;
-    if (!pa->is_static) {
-      Value* prev_on = on;
-      on = init_value();
-      on->type = vt_var;
-      on->item = func->cname;
-      on->return_type = prev_on->return_type;
-      fcall->on = on;
-      array_push(fcall->arg_values, pa->on);
-    }
-  }
+  // if (on->type == vt_prop_access) {
+  //   ValueClassPropAccess* pa = on->item;
+  //   if (!pa->is_static) {
+  //     Value* prev_on = on;
+  //     on = init_value();
+  //     on->type = vt_var;
+  //     on->item = on;
+  //     on->return_type = prev_on->return_type;
+  //     fcall->on = on;
+  //     array_push(fcall->arg_values, pa->on);
+  //   }
+  // }
 
   char* token = malloc(KI_TOKEN_MAX);
   fc_next_token(fc, token, true, false, true);

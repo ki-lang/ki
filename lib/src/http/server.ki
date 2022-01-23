@@ -15,13 +15,9 @@ func response_handler(Request req) Response {
 class Server {
 	u32 port;
 	?PtrArray clients = null;
-	response_handler handler = null;
+	funcref (Request) Response handler = response_handler;
 
 	func start(){
-
-		if(this.handler == null){
-			this.handler = ki:http:response_handler;
-		}
 
 		io:print("Starting server\n");
 
@@ -81,11 +77,11 @@ class Server {
 			@ response = this.handler(req);
 
 			string output = response.output();
-			c:write(clientfd, output.to_cstring(), output.length);
+			main:main:write(clientfd, output.to_cstring(), output.length);
 		}
 
-		c:shutdown(clientfd, 2); // SHUT_RD, SHUT_WR, SHUT_RDWR have the value 0, 1, 2
-		c:close(clientfd);
+		i32 result = main:main:shutdown(clientfd, 2); // SHUT_RD, SHUT_WR, SHUT_RDWR have the value 0, 1, 2
+		result = main:main:close(clientfd);
 	}
 
 }

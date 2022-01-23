@@ -33,7 +33,7 @@ class Socket {
 
 	public func listen() ! {
 
- 		@ hints = c:struct addrinfo* {
+ 		@ hints = main:main:addrinfo {
 			 ai_flags: Socket.FLAGS.passive,
 			 ai_family: Socket.IPTYPE.ipv4,
 			 ai_socktype: Socket.TYPE.stream
@@ -43,9 +43,9 @@ class Socket {
 			 ai_canonname: null,
 			 ai_next: null,
 		};
- 		c:struct addrinfo* res = mem:alloc(sizeof(hints));
+ 		main:main:addrinfo res = mem:alloc(sizeof(hints));
 
-		i32 check = c:getaddrinfo(null, this.port.to_cstring(), hints, &res);
+		i32 check = main:main:getaddrinfo(null, this.port.to_cstring(), hints, &res);
 		if(check != 0){
 			io:print("getaddrinfo_failed\n");
 			throw getaddrinfo_failed;

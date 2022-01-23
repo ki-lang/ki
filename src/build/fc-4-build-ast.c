@@ -33,7 +33,7 @@ void fc_build_asts() {
           char* name = array_get_index(class->props->keys, y);
           ClassProp* prop = array_get_index(class->props->values, y);
           if (prop->is_func) {
-            Function* func = prop->return_type->func;
+            Function* func = prop->func;
             if (!fc->is_header) {
               fc_build_ast(fc, func->scope);
             }
