@@ -103,6 +103,14 @@ void fc_write_c_class(FileCompiler* fc, Class* class) {
     fc_write_c_type(fc->h_code, prop->return_type);
     str_append_chars(fc->h_code, " ");
     str_append_chars(fc->h_code, name);
+    if (prop->return_type->is_array) {
+      str_append_chars(fc->h_code, "[");
+      char* asize = malloc(20);
+      sprintf(asize, "%d", prop->return_type->array_size);
+      str_append_chars(fc->h_code, asize);
+      free(asize);
+      str_append_chars(fc->h_code, "]");
+    }
     str_append_chars(fc->h_code, ";\n");
   }
   str_append_chars(fc->h_code, "};\n");

@@ -13,7 +13,7 @@ class sockaddr_in norfc {
 }
 
 class sockaddr norfc {
-	unsigned short int sa_family;
+	u16 sa_family;
 	i8[14] sa_data;
 }
 

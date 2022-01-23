@@ -81,6 +81,20 @@ Type* fc_read_type(FileCompiler* fc) {
     fc_error(fc, "Invalid type, only pointer types can be null: '%s'", token);
   }
 
+  // Check if array
+  fc_next_token(fc, token, true, true, false);
+  if (strcmp(token, "[") == 0) {
+    t->is_array = true;
+    fc_next_token(fc, token, false, true, false);
+    fc_next_token(fc, token, false, true, true);
+    if (!is_valid_number(token)) {
+      fc_error(fc, "Invalid number: '%s'", token);
+    }
+    int size = atoi(token);
+    t->array_size = size;
+    fc_expect_token(fc, "]", false, true, true);
+  }
+
   free_id(id);
   free(token);
   return t;
