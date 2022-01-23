@@ -266,11 +266,15 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     // } else {
     fc->i -= strlen(token);
-    idf = fc_read_and_get_idf(fc, scope, false, true, true);
+    Identifier* id = fc_read_identifier(fc, false, true, true);
+    Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
+    idf = idf_find_in_scope(idf_scope, id->name);
     // }
     if (idf == NULL) {
-      fc_error(fc, "Unknown variable/function/class/enum: %s", token);
+      fc_error(fc, "Unknown variable/function/class/enum: %s", id->name);
     }
+    free_id(id);
+
     if (idf->type == idfor_func) {
       Function* func = idf->item;
       value->type = vt_var;
