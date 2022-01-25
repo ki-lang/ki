@@ -551,13 +551,15 @@ Value* fc_read_func_call(FileCompiler* fc, Scope* scope, Value* on) {
       Value* class_instance_value = pa->on;
       Class* class = class_instance_value->return_type->class;
       ClassProp* prop = map_get(class->props, pa->name);
-      Value* prev_on = on;
-      on = init_value();
-      on->type = vt_var;
-      on->item = prop->func->cname;
-      on->return_type = prev_on->return_type;
-      fcall->on = on;
-      array_push(fcall->arg_values, pa->on);
+      if (prop->func) {
+        Value* prev_on = on;
+        on = init_value();
+        on->type = vt_var;
+        on->item = prop->func->cname;
+        on->return_type = prev_on->return_type;
+        fcall->on = on;
+        array_push(fcall->arg_values, pa->on);
+      }
     }
   }
 

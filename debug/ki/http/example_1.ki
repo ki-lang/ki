@@ -8,8 +8,8 @@ func main() i32 {
 	@ a = x(); 
 	print(a);
 
-	//@ s = ki:http:Server { port: 9000 };
-	//s.start();
+	@ s = ki:http:Server { port: 9000 };
+	s.start();
 
 	return 0;
 }

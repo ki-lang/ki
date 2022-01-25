@@ -17,7 +17,7 @@ class Server {
 	?PtrArray clients = null;
 	funcref (Request) Response handler = response_handler;
 
-	func start(){
+	func start() ! {
 
 		io:print("Starting server\n");
 

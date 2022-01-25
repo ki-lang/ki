@@ -73,13 +73,15 @@ void fc_write_c(FileCompiler* fc) {
     array_push(o_files, fc->o_filepath);
   }
 
-  write_file(fc->h_filepath, hcode, false);
-
-  char* path = malloc(KI_PATH_MAX);
-  char* cache_dir = get_cache_dir();
-  strcpy(path, cache_dir);
-  strcat(path, "/project.h");
-  write_file(path, hcode, true);
+  if (fc->is_header) {
+    write_file(fc->h_filepath, hcode, false);
+  } else {
+    char* path = malloc(KI_PATH_MAX);
+    char* cache_dir = get_cache_dir();
+    strcpy(path, cache_dir);
+    strcat(path, "/project.h");
+    write_file(path, hcode, true);
+  }
 
   free(hcode);
   free(code);
