@@ -60,7 +60,9 @@ class Socket {
 		while(p != null){
 			i32 option = 1;
         	this.listenfd = main:main:socket(p.ai_family, p.ai_socktype, 0);
-			io:print(this.listenfd.to_string());
+			if(this.listenfd < 0){
+				io:print("Cant listen\n");
+			}
         	success = main:main:setsockopt(this.listenfd, 1, 2, getptr option, sizeof(option));
         	if (this.listenfd == -1) { continue; }
 			success = main:main:bind(this.listenfd, p.ai_addr, p.ai_addrlen);

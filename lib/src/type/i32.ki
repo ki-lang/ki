@@ -3,6 +3,10 @@ namespace type;
 
 class i32 number:s:4 {
 
+	public func to_string() string {
+		return this.to_cstring().to_string();
+	}
+
 	public func to_cstring() cstring {
 		ptr str = mem:alloc(20);
 		ptr strp = str;

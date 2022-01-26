@@ -4,7 +4,17 @@ namespace type;
 class cstring {
 
 	public func to_string() string {
-		return string;
+		u64 len = 0;
+		ptr adr = getptr this;
+		while(true){
+			u8 ch = cast adr as u8;
+			if(ch == '\0'){
+				break;
+			}
+			len++;
+			adr++;
+		}
+		return string.make(this, len);
 	}
 
 }
