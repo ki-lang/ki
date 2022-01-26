@@ -191,7 +191,7 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
       t->type = type_struct;
       t->class = idf->item;
       t->is_pointer = true;
-      t->bytes = t->class->size;
+      t->bytes = pointer_size;
       if (t->class->is_number) {
         // t->type = type_number;
         t->is_pointer = false;

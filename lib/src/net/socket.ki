@@ -45,6 +45,7 @@ class Socket {
 			 ai_canonname: null,
 			 ai_next: null,
 		};
+		
 		ptr tmp = mem:alloc(sizeof(hints));
  		@ res = cast tmp as main:main:addrinfo;
 

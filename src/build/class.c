@@ -9,7 +9,7 @@ Class* init_class() {
   class->is_number = false;
   class->is_float = false;
   class->is_unsigned = false;
-  class->size = -1;
+  class->size = 0;
   class->props = map_make();
   return class;
 }
@@ -231,6 +231,8 @@ void fc_scan_class_props(Class* class) {
     // Not a function, look for type
     Type* type = fc_read_type(fc);
     prop->return_type = type;
+
+    class->size += type->bytes;
 
     fc_next_token(fc, token, false, true, true);
     char* name = strdup(token);
