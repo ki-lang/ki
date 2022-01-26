@@ -3,4 +3,8 @@ namespace type;
 
 class cstring {
 
+	public func to_string() string {
+		return string;
+	}
+
 }

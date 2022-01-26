@@ -37,14 +37,14 @@ class Server {
 
 		//
 		while(true){
-			//io:print(c"accept\n");
+			io:print("accept\n");
         	i32 result = main:main:accept(s.listenfd, clientaddr, getptr addrlen);
 			if (result < 0){
 				// result.to_cstring();
 				io:print("failed to accept\n");
 				throw failed_to_accept;
 			}else{
-				//io:print("success\n");
+				io:print("success\n");
 				this.clients.set(rslot, getptr result);
 				this.respond(rslot);
 			}
