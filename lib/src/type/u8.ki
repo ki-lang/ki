@@ -2,4 +2,50 @@
 namespace type;
 
 class u8 number:u:1 {
+
+	public func to_cstring() cstring {
+		ptr str = mem:alloc(20);
+		ptr strp = str;
+
+		u8 value = this;
+		u8 rest = 0;
+		u8 pos = sizeof(this) - 1;
+		u8 len = 0;
+		u8 mult = 1;
+
+		while(true){
+			rest = value % (mult * 10);
+			value -= rest;
+			i32 r = rest / mult;
+			u8 b = cast r as u8;
+			b += 48; // ascii
+
+			setptrv strp to b;
+			strp++;
+
+			if(value == 0){ break; }
+
+			mult = mult * 10;
+			pos--;
+			len++;
+		}
+
+		setptrv strp to '\0';
+		ptr result = mem:alloc(20);
+		ptr tmp = result;
+		while(len >= 0){
+			strp = str;
+			strp += len;
+			u8 x = getptrv strp as u8;
+			len--;
+			setptrv result to x;
+			result++;
+		}
+		setptrv result to '\0';
+
+		result = tmp;
+		cstring r = cast result as cstring;
+		//c:printf(c"r:%s\n", r);
+		return r;
+	}
 }

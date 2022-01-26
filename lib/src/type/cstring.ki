@@ -5,9 +5,9 @@ class cstring {
 
 	public func to_string() string {
 		u64 len = 0;
-		ptr adr = getptr this;
+		ptr adr = cast this as ptr;
 		while(true){
-			u8 ch = cast adr as u8;
+			u8 ch = getptrv adr as u8;
 			if(ch == '\0'){
 				break;
 			}

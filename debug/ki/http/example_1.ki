@@ -8,7 +8,7 @@ func main() i32 {
 	@ a = x(); 
 	print(a);
 
-	@ s = ki:http:Server { port: 9001 };
+	@ s = ki:http:Server { port: 9000, handler: ki:http:response_handler };
 	s.start();
 
 	return 0;

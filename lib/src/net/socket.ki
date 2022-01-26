@@ -24,9 +24,9 @@ class Socket {
 	};
 
 	public u32 port;
+	public Socket.FLAGS flags = Socket.FLAGS.passive;
 	public Socket.TYPE type = Socket.TYPE.stream;
 	public Socket.IPTYPE ip_type = Socket.IPTYPE.ipv4;
-	public Socket.FLAGS flags = Socket.FLAGS.passive;
 
 	private i32 listenfd = 0;
 	// private array clients = [];
@@ -39,15 +39,48 @@ class Socket {
 			 ai_flags: Socket.FLAGS.passive,
 			 ai_family: Socket.IPTYPE.ipv4,
 			 ai_socktype: Socket.TYPE.stream
-			 ai_protocol: Socket.PROTOCOL.http
-			 ai_addrlen: 0,
+			 ai_protocol: Socket.PROTOCOL.http,
+			 //ai_protocol: 6,
+			 ai_addrlen: 16,
 			 ai_addr: null,
+			 ai_addr: main:main:sockaddr {
+				 sa_family: Socket.IPTYPE.ipv4,
+			 },
 			 ai_canonname: null,
 			 ai_next: null,
 		};
+
+		// Set port
+		ptr buf = mem:alloc(14);
+		setptrv buf to this.port;
+		ptr x = getptr hints.ai_addr.sa_data;
+		ptr y = x;
+		i32 i = 0;
+		u8 v = 0;
+		while(i < 14){
+			setptrv x to v;
+			x++;
+			i++;
+		}
+		x = y;
+		i = 3;
+		bool skip = true;
+		while(i >= 0){
+			u8 z = getptrv (buf + i) as u8; 
+			i--;
+			if(skip){
+				if(z == 0){
+					continue;
+				}
+			}
+			skip = false;
+			setptrv x to z;
+			x++;
+		}
+		mem:free(buf);
 		
-		ptr tmp = mem:alloc(sizeof(hints));
- 		@ res = cast tmp as main:main:addrinfo;
+		//ptr tmp = mem:alloc(sizeof(hints));
+ 		//@ res = cast tmp as main:main:addrinfo;
 
 		//i32 check = main:main:getaddrinfo(null, this.port.to_cstring(), hints, &res);
 		//if(check != 0){
@@ -55,7 +88,7 @@ class Socket {
 		//	throw getaddrinfo_failed;
 		//}
 
- 		@ p = res;
+ 		@ p = hints;
 
 		while(p != null){
 			i32 option = 1;
@@ -63,7 +96,7 @@ class Socket {
 			if(this.listenfd < 0){
 				io:print("Cant listen\n");
 			}
-        	success = main:main:setsockopt(this.listenfd, 1, 2, getptr option, sizeof(option));
+        	success = main:main:setsockopt(this.listenfd, 1, 2, getptr option, 4); //sizeof(option)
         	if (this.listenfd == -1) { continue; }
 			success = main:main:bind(this.listenfd, p.ai_addr, p.ai_addrlen);
         	if (success == 0){ break; }

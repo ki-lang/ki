@@ -32,19 +32,21 @@ class Server {
 			sin_addr: 0
 		};
 
-		u32 addrlen = sizeof(clientaddr);
+		//u32 addrlen = sizeof(clientaddr);
+		u32 addrlen = 16;
 		u32 rslot = 0;
 
 		//
 		while(true){
-			io:print("accept\n");
+			//io:print("accept\n");
+			addrlen = 16;
         	i32 result = main:main:accept(s.listenfd, clientaddr, getptr addrlen);
 			if (result < 0){
 				// result.to_cstring();
 				io:print("failed to accept\n");
 				throw failed_to_accept;
 			}else{
-				io:print("success\n");
+				//io:print("success\n");
 				this.clients.set(rslot, getptr result);
 				this.respond(rslot);
 			}
@@ -61,6 +63,7 @@ class Server {
 
 		u32 clientfd = 0;
 		this.clients.get(slot, getptr clientfd);
+		//io:print(clientfd.to_string());
 
 		ptr buf = mem:alloc(65535);
 		i32 rcvd = main:main:recv(clientfd, buf, 65535, 0);

@@ -2,6 +2,10 @@
 namespace type;
 
 class u32 number:u:4 {
+	
+	public func to_string() string {
+		return this.to_cstring().to_string();
+	}
 
 	public func to_cstring() cstring {
 		ptr str = mem:alloc(20);

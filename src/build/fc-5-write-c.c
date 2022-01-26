@@ -534,6 +534,19 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
       str_append_chars(fc->c_code_after, prop_name);
       str_append_chars(fc->c_code_after, ";\n");
     }
+    // for (int i = 0; i < class->props->keys->length; i++) {
+    //   char* prop_name = array_get_index(class->props->keys, i);
+    //   if (map_contains(ini->prop_values, prop_name)) {
+    //     continue;
+    //   }
+    //   ClassProp* prop = array_get_index(class->props->values, i);
+    //   str_append_chars(fc->c_code_after, "KI_RET_V");
+    //   str_append_chars(fc->c_code_after, sign);
+    //   str_append_chars(fc->c_code_after, prop_name);
+    //   str_append_chars(fc->c_code_after, " = ");
+    //   fc_write_c_value(fc, prop->default_value);
+    //   str_append_chars(fc->c_code_after, ";\n");
+    // }
 
     str_append_chars(fc->c_code_after, "return KI_RET_V;\n");
     str_append_chars(fc->c_code_after, "}\n\n");

@@ -196,6 +196,7 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
         // t->type = type_number;
         t->is_pointer = false;
         t->allow_math = true;
+        t->bytes = t->class->size;
       }
     }
   }
