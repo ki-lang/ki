@@ -6,3 +6,7 @@ namespace io;
 func print(string str) {
 	main:main:write(1, str.data, str.length);
 }
+
+func write(i32 fd, string str) {
+	main:main:write(fd, str.data, str.length);
+}

@@ -23,6 +23,20 @@ void fc_write_c_all() {
     // }
   }
 
+  // Predefine all struct names
+  for (int i = 0; i < packages->keys->length; i++) {
+    PkgCompiler* pkc = array_get_index(packages->values, i);
+    for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+      FileCompiler* fc = array_get_index(pkc->file_compilers->values, o);
+
+      for (int x = 0; x < fc->classes->length; x++) {
+        fc_write_c_predefine_class(fc, array_get_index(fc->classes, x));
+      }
+
+      fc_write_c_pre(fc);
+    }
+  }
+
   //
   for (int i = 0; i < packages->keys->length; i++) {
     PkgCompiler* pkc = array_get_index(packages->values, i);
@@ -40,6 +54,18 @@ void fc_write_c_all() {
       fc_write_c(fc);
     }
   }
+}
+
+void fc_write_c_pre(FileCompiler* fc) {
+  char* structs_code = str_to_chars(fc->struct_code);
+
+  char* path = malloc(KI_PATH_MAX);
+  char* cache_dir = get_cache_dir();
+  strcpy(path, cache_dir);
+  strcat(path, "/project.h");
+  write_file(path, structs_code, true);
+
+  free(structs_code);
 }
 
 void fc_write_c(FileCompiler* fc) {
@@ -86,6 +112,12 @@ void fc_write_c(FileCompiler* fc) {
   free(hcode);
   free(code);
   free(code_gen);
+}
+
+void fc_write_c_predefine_class(FileCompiler* fc, Class* class) {
+  str_append_chars(fc->struct_code, "struct ");
+  str_append_chars(fc->struct_code, class->cname);
+  str_append_chars(fc->struct_code, ";\n");
 }
 
 void fc_write_c_class(FileCompiler* fc, Class* class) {

@@ -127,7 +127,9 @@ bool fc_resolve_macro_if_value(FileCompiler* fc);
 
 // Write c
 void fc_write_c_all();
+void fc_write_c_pre(FileCompiler* fc);
 void fc_write_c(FileCompiler* fc);
+void fc_write_c_predefine_class(FileCompiler* fc, Class* class);
 void fc_write_c_class(FileCompiler* fc, Class* class);
 void fc_write_c_enum(FileCompiler* fc, Enum* enu);
 void fc_write_c_func(FileCompiler* fc, Function* func);

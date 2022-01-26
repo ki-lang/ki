@@ -77,7 +77,7 @@ class Server {
 			@ response = this.handler(req);
 
 			string output = response.output();
-			main:main:write(clientfd, output.to_cstring(), output.length);
+			io:write(clientfd, output);
 		}
 
 		i32 result = main:main:shutdown(clientfd, 2); // SHUT_RD, SHUT_WR, SHUT_RDWR have the value 0, 1, 2
