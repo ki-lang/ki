@@ -1,6 +1,28 @@
 
 trait Number {
 
+// public func to_string() string {
+//	int sum = num;
+//	int i = 0;
+//	int digit;
+//	if (len == 0)
+//		return -1;
+//	do
+//	{
+//		digit = sum % base;
+//		if (digit < 0xA)
+//			str[i++] = '0' + digit;
+//		else
+//			str[i++] = 'A' + digit - 0xA;
+//		sum /= base;
+//	}while (sum && (i < (len - 1)));
+//	if (i == (len - 1) && sum)
+//		return -1;
+//	str[i] = '\0';
+//	strrev(str);
+//	return 0;
+// }
+
 	public func to_cstring() cstring {
 		ptr str = mem:alloc(20);
 		ptr strp = str;
