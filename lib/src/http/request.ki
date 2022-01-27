@@ -24,13 +24,6 @@ class Request {
 			protocol: protocol,
 		};
 
-		//io:print(method);
-		//io:print("\n");
-		//io:print(uri);
-		//io:print("\n");
-		//io:print(protocol);
-		//io:print("\n");
-
 		return req;
 	}
 
