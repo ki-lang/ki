@@ -91,34 +91,10 @@ typedef enum IdentifierForType {
   idfor_var,
   idfor_type, // 5
   idfor_property,
+  idfor_trait,
 } IdentifierForType;
 
 //////////
-
-typedef struct CImport {
-  //
-  Map* targets;
-  struct CImportTarget* target;
-  //
-  Map* macro_defines;
-  //
-  struct Map* identifiers;
-  struct Map* classes;
-  struct Map* functions;
-} CImport;
-
-typedef struct CImportTarget {
-  char* path;
-  bool is_syslib;
-  //
-  char* content;
-  int content_len;
-  int i;
-  Array* chunks;
-  //
-  Array* if_results;
-  int if_depth;
-} CImportTarget;
 
 typedef struct ContentChunk {
   char* content;
@@ -139,12 +115,15 @@ typedef struct Class {
   bool is_number;
   bool is_float;
   bool is_unsigned;
+  bool is_trait;
   int size;
   //
   Map* props;
   //
   int body_i;
   int body_i_end;
+  //
+  Array* traits;
 } Class;
 
 typedef struct ClassProp {
@@ -182,6 +161,12 @@ typedef struct FunctionArg {
   struct Type* type;
   struct Value* default_value;
 } FunctionArg;
+
+typedef struct Trait {
+  char* cname;
+  struct FileCompiler* fc;
+  int body_i;
+} Trait;
 
 typedef struct Enum {
   char* cname;

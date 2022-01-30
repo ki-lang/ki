@@ -9,8 +9,10 @@ Class* init_class() {
   class->is_number = false;
   class->is_float = false;
   class->is_unsigned = false;
+  class->is_trait = false;
   class->size = 0;
   class->props = map_make();
+  class->traits = array_make(2);
   return class;
 }
 
@@ -119,6 +121,12 @@ void fc_scan_class_props(Class* class) {
 
     // Skip enum
     if (strcmp(token, "enum") == 0) {
+      fc_skip_until_char(fc, ';');
+      fc_expect_token(fc, ";", false, true, false);
+      continue;
+    }
+
+    if (strcmp(token, "trait") == 0) {
       fc_skip_until_char(fc, ';');
       fc_expect_token(fc, ";", false, true, false);
       continue;

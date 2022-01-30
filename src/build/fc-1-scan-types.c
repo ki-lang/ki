@@ -68,7 +68,9 @@ void fc_scan_types(FileCompiler* fc) {
       enu->cname = cname;
       map_set(c_identifiers, cname, idf);
 
-    } else if (strcmp(token, "class") == 0) {
+    } else if (strcmp(token, "class") == 0 || strcmp(token, "trait") == 0) {
+      bool is_trait = strcmp(token, "trait") == 0;
+
       fc_next_token(fc, token, false, true, true);
       fc_name_taken(fc, fc->nsc->scope->identifiers, token);
 
@@ -77,10 +79,11 @@ void fc_scan_types(FileCompiler* fc) {
       Class* class = init_class();
       class->name = name;
       class->fc = fc;
+      class->is_trait = is_trait;
 
       array_push(fc->classes, class);
 
-      while (true) {
+      while (!class->is_trait) {
         fc_next_token(fc, token, true, true, true);
 
         if (strcmp(token, "norfc") == 0) {
