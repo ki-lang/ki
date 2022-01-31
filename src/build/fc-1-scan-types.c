@@ -131,6 +131,32 @@ void fc_scan_types(FileCompiler* fc) {
 
       fc_scan_class(fc, class);
 
+    } else if (strcmp(token, "trait") == 0) {
+      fc_next_token(fc, token, false, true, true);
+      fc_name_taken(fc, fc->nsc->scope->identifiers, token);
+
+      char* name = strdup(token);
+
+      fc_expect_token(fc, "{", false, true, false);
+
+      char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
+                                                     fc->nsc->name, name);
+      Trait* trait = init_trait();
+      trait->fc = fc;
+      trait->cname = cname;
+      trait->body_i = fc->i;
+
+      IdentifierFor* idf = init_idf();
+      idf->type = idfor_trait;
+      idf->item = trait;
+
+      Scope* scope = fc->nsc->scope;
+      map_set(scope->identifiers, name, idf);
+
+      free(name);
+
+      fc_skip_body(fc, "{", "}", NULL, false);
+
     } else if (strcmp(token, "func") == 0) {
       fc_next_token(fc, token, false, true, true);
       fc_name_taken(fc, fc->nsc->scope->identifiers, token);

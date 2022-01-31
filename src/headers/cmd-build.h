@@ -74,6 +74,10 @@ ClassProp* init_class_prop();
 void free_class_prop(ClassProp* prop);
 void fc_scan_class(FileCompiler* fc, Class* class);
 
+// Trait
+Trait* init_trait();
+void free_trait(Trait* trait);
+
 // Func
 Function* init_func();
 void free_func(Function* func);
@@ -81,6 +85,12 @@ FunctionArg* init_func_arg();
 void free_func_arg(FunctionArg* arg);
 void fc_scan_func(FileCompiler* fc, Function* func);
 void fc_scan_func_args(Function* func);
+
+// Content Chunks
+ContentChunk* init_content_chunk();
+void free_chunk(ContentChunk* chunk);
+ContentChunk* content_chunk_pop(Array* chunks);
+ContentChunk* content_chunk_create_for_fc(Array* chunks, FileCompiler* fc);
 
 // Type
 Type* init_type();

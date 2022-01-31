@@ -106,15 +106,15 @@ void fc_scan_class_props(Class* class) {
   char* token = malloc(KI_TOKEN_MAX);
   FileCompiler* fc = class->fc;
   fc->i = class->body_i;
+
+  Array* chunks = array_make(2);
+  ContentChunk* cc = content_chunk_create_for_fc(chunks, fc);
+
   //
   while (fc->i < class->body_i_end) {
     fc_next_token(fc, token, false, false, true);
 
-    if (token[0] == '\0') {
-      break;
-    }
-
-    if (strcmp(token, "}") == 0) {
+    if (token[0] == '\0' || strcmp(token, "}") == 0) {
       break;
     }
 
@@ -126,8 +126,15 @@ void fc_scan_class_props(Class* class) {
     }
 
     if (strcmp(token, "trait") == 0) {
-      fc_skip_until_char(fc, ';');
-      fc_expect_token(fc, ";", false, true, false);
+      Identifier* id = fc_read_identifier(fc, false, true, true);
+      IdentifierFor* idf = fc_get_identifier_scope(fc, fc->nsc->scope, id);
+      if (!idf) {
+        fc_error(fc, "Cannot find trait: %s", id->name);
+      }
+      if (idf->type != idfor_trait) {
+        fc_error(fc, "Is not a trait: %s", id->name);
+      }
+      Trait* trait = idf->item;
       continue;
     }
 

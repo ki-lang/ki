@@ -97,8 +97,7 @@ typedef enum IdentifierForType {
 //////////
 
 typedef struct ContentChunk {
-  char* content;
-  int length;
+  FileCompiler* fc;
   int i;
 } ContentChunk;
 
