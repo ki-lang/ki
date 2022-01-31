@@ -2,4 +2,7 @@
 namespace type;
 
 class i16 number:s:2 {
+
+	trait type_trait:Number;
+	
 }

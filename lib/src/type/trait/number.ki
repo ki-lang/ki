@@ -1,4 +1,6 @@
 
+namespace type_trait;
+
 trait Number {
 
 // public func to_string() string {
@@ -23,7 +25,7 @@ trait Number {
 //	return 0;
 // }
 
-	public func to_cstring() cstring {
+	public func to_cstring() type:cstring {
 		ptr str = mem:alloc(20);
 		ptr strp = str;
 
@@ -64,7 +66,7 @@ trait Number {
 		setptrv result to '\0';
 
 		result = tmp;
-		cstring r = cast result as cstring;
+		@ r = cast result as type:cstring;
 		//c:printf(c"r:%s\n", r);
 		return r;
 	}

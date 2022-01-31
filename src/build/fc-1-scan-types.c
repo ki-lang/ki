@@ -137,7 +137,7 @@ void fc_scan_types(FileCompiler* fc) {
 
       char* name = strdup(token);
 
-      fc_expect_token(fc, "{", false, true, false);
+      fc_expect_token(fc, "{", false, true, true);
 
       char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
                                                      fc->nsc->name, name);

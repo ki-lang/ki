@@ -83,6 +83,10 @@ void fc_scan_class(FileCompiler* fc, Class* class) {
       continue;
     }
 
+    if (strcmp(token, "trait") == 0) {
+      Identifier* id = fc_read_identifier(fc, false, true, true);
+    }
+
     if (strcmp(token, "\"") == 0) {
       fc_skip_string(fc);
       continue;
@@ -108,13 +112,18 @@ void fc_scan_class_props(Class* class) {
   fc->i = class->body_i;
 
   Array* chunks = array_make(2);
-  ContentChunk* cc = content_chunk_create_for_fc(chunks, fc);
 
   //
-  while (fc->i < class->body_i_end) {
+  while (true) {
     fc_next_token(fc, token, false, false, true);
 
     if (token[0] == '\0' || strcmp(token, "}") == 0) {
+      if (chunks->length > 0) {
+        ContentChunk* cc = content_chunk_pop(chunks);
+        fc = cc->fc;
+        fc->i = cc->i;
+        continue;
+      }
       break;
     }
 
@@ -127,14 +136,21 @@ void fc_scan_class_props(Class* class) {
 
     if (strcmp(token, "trait") == 0) {
       Identifier* id = fc_read_identifier(fc, false, true, true);
-      IdentifierFor* idf = fc_get_identifier_scope(fc, fc->nsc->scope, id);
+      Scope* idf_scope = fc_get_identifier_scope(fc, fc->nsc->scope, id);
+      IdentifierFor* idf = idf_find_in_scope(idf_scope, id->name);
       if (!idf) {
         fc_error(fc, "Cannot find trait: %s", id->name);
       }
       if (idf->type != idfor_trait) {
         fc_error(fc, "Is not a trait: %s", id->name);
       }
+      fc_expect_token(fc, ";", false, true, true);
       Trait* trait = idf->item;
+      ContentChunk* cc = content_chunk_create_for_fc(chunks, fc);
+      // Scope* prev_scope = fc->scope;
+      fc = trait->fc;
+      fc->i = trait->body_i;
+      // fc->scope = prev_scope;
       continue;
     }
 

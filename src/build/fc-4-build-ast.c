@@ -35,7 +35,7 @@ void fc_build_asts() {
           if (prop->is_func) {
             Function* func = prop->func;
             if (!fc->is_header) {
-              fc_build_ast(fc, func->scope);
+              fc_build_ast(func->fc, func->scope);
             }
             Token* t = init_token();
             t->type = tkn_func;

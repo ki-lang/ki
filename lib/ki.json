@@ -2,6 +2,7 @@
 	"namespaces": {
 		"mem": "src/mem",
 		"type": "src/type",
+		"type_trait": "src/type/trait",
 		"io": "src/io",
 		"net": "src/net",
 		"std": "src/std",
