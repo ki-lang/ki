@@ -115,7 +115,6 @@ typedef struct Class {
   bool is_number;
   bool is_float;
   bool is_unsigned;
-  bool is_trait;
   int size;
   //
   Map* props;

@@ -115,18 +115,12 @@ void fc_write_c(FileCompiler* fc) {
 }
 
 void fc_write_c_predefine_class(FileCompiler* fc, Class* class) {
-  if (class->is_trait) {
-    return;
-  }
   str_append_chars(fc->struct_code, "struct ");
   str_append_chars(fc->struct_code, class->cname);
   str_append_chars(fc->struct_code, ";\n");
 }
 
 void fc_write_c_class(FileCompiler* fc, Class* class) {
-  if (class->is_trait) {
-    return;
-  }
   //
   str_append_chars(fc->h_code, "struct ");
   str_append_chars(fc->h_code, class->cname);
