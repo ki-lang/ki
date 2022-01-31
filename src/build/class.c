@@ -285,4 +285,24 @@ void fc_scan_class_props(Class* class) {
       fc_expect_token(fc, ";", false, true, true);
     }
   }
+
+  // Ref counting property
+  if (class->norfc == false) {
+    ClassProp* prop = init_class_prop();
+    prop->access_type = acct_public;
+    prop->is_static = false;
+
+    Type* type =
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "u16"));
+    prop->return_type = type;
+
+    Value* def_value = init_value();
+    def_value->type = vt_number;
+    def_value->item = "0";
+
+    prop->default_value = def_value;
+
+    class->size += type->bytes;
+    map_set(class->props, "_RFC", prop);
+  }
 }
