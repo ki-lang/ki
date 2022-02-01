@@ -5,8 +5,8 @@ func x() string {
 
 func main() i32 {
 	
-	@ a = x(); 
-	print(a);
+	//@ a = x(); 
+	//print(a);
 
 	@ s = ki:http:Server { port: 9000, handler: ki:http:response_handler };
 	s.start();

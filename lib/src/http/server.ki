@@ -19,8 +19,6 @@ class Server {
 
 	func start() ! {
 
-		io:print("Starting server\n");
-
 		u32 max = 10000;
 		this.clients = PtrArray{ size: max, data: mem:alloc(max * 8) };
 
@@ -35,6 +33,11 @@ class Server {
 		//u32 addrlen = sizeof(clientaddr);
 		u32 addrlen = 16;
 		u32 rslot = 0;
+
+		//
+		io:print("Running http server on port ");
+		io:print(this.port.to_string());
+		io:print("\n");
 
 		//
 		while(true){
