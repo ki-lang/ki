@@ -23,7 +23,7 @@ class Socket {
 		http: 132, // IPPROTO_SCTP
 	};
 
-	public u32 port;
+	public u16 port;
 	public Socket.FLAGS flags = Socket.FLAGS.passive;
 	public Socket.TYPE type = Socket.TYPE.stream;
 	public Socket.IPTYPE ip_type = Socket.IPTYPE.ipv4;
@@ -51,43 +51,22 @@ class Socket {
 		};
 
 		// Set port
-		ptr buf = mem:alloc(14);
-		setptrv buf to this.port;
-		ptr x = getptr hints.ai_addr.sa_data;
-		ptr y = x;
+		ptr portadr = getptr this.port;
+		ptr swapadr = getptr hints.ai_addr.sa_data;
+
 		i32 i = 0;
 		u8 v = 0;
 		while(i < 14){
-			setptrv x to v;
-			x++;
+			setptrv (swapadr+i) to v;
 			i++;
 		}
-		x = y;
-		i = 3;
-		bool skip = true;
-		while(i >= 0){
-			u8 z = getptrv (buf + i) as u8; 
-			i--;
-			if(skip){
-				if(z == 0){
-					continue;
-				}
-			}
-			skip = false;
-			setptrv x to z;
-			x++;
-		}
-		mem:free(buf);
+
+		u8 nr1 = getptrv portadr as u8;
+		u8 nr2 = getptrv portadr+1 as u8;
+
+		setptrv swapadr to nr2;
+		setptrv (swapadr+1) to nr1;
 		
-		//ptr tmp = mem:alloc(sizeof(hints));
- 		//@ res = cast tmp as main:main:addrinfo;
-
-		//i32 check = main:main:getaddrinfo(null, this.port.to_cstring(), hints, &res);
-		//if(check != 0){
-		//	io:print("getaddrinfo_failed\n");
-		//	throw getaddrinfo_failed;
-		//}
-
  		@ p = hints;
 
 		while(p != null){

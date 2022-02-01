@@ -24,6 +24,9 @@ trait Number {
 //	strrev(str);
 //	return 0;
 // }
+	public func to_string() type:string {
+		return this.to_cstring().to_string();
+	}
 
 	public func to_cstring() type:cstring {
 		ptr str = mem:alloc(20);

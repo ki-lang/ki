@@ -452,8 +452,9 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
     ValueCast* cast = value->item;
     str_append_chars(fc->tkn_buffer, "*(");
     fc_write_c_type(fc->tkn_buffer, cast->as_type, NULL);
-    str_append_chars(fc->tkn_buffer, "*)");
+    str_append_chars(fc->tkn_buffer, "*)(");
     fc_write_c_value(fc, cast->value);
+    str_append_chars(fc->tkn_buffer, ")");
   } else if (value->type == vt_getptr) {
     str_append_chars(fc->tkn_buffer, "&");
     fc_write_c_value(fc, value->item);
