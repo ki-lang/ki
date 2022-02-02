@@ -23,14 +23,22 @@ when to add to depency_for:
 
 ## RC
 
-a = new A; rf=1
+Strategy:
+- init object with rc = 0
+- Every time a value that's a class instance with refcounting:
+-> rc-- it's current value before assign + check if rc = 0, if so delete
+-> rc++ after the assign
+- How to return:
+-> rc++ the return value and store it in _KI_RET
+-> rc-- all local variables except _KI_RET
+-> return _KI_RET;
 
-b->something = a; rf=2
-b->something = NULL; rf=1;
+// Example
+A* a = something(); rc = 1
+B* b = createB();
+b->prop = a; rc = 2
+b->prop = NULL; rc = 0; -> we cannot dealloc here because a still holds a reference
 
-A* var = a; nothing
-b->something = var; rf=2;
-
-free(b); rf=1
-free(a); rf=0
+// deref a, so rc = 1;
+// deref b, so rc = 0;
 return;
