@@ -5,7 +5,7 @@ Class* init_class() {
   Class* class = malloc(sizeof(Class));
   class->name = NULL;
   class->fc = NULL;
-  class->norfc = false;
+  class->ref_count = true;
   class->is_number = false;
   class->is_float = false;
   class->is_unsigned = false;
@@ -287,7 +287,7 @@ void fc_scan_class_props(Class* class) {
   }
 
   // Ref counting property
-  if (class->norfc == false) {
+  if (class->ref_count) {
     ClassProp* prop = init_class_prop();
     prop->access_type = acct_public;
     prop->is_static = false;
@@ -303,6 +303,6 @@ void fc_scan_class_props(Class* class) {
     prop->default_value = def_value;
 
     class->size += type->bytes;
-    map_set(class->props, "_RFC", prop);
+    map_set(class->props, "_RC", prop);
   }
 }

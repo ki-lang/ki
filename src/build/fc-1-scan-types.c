@@ -85,13 +85,13 @@ void fc_scan_types(FileCompiler* fc) {
 
         if (strcmp(token, "norfc") == 0) {
           fc_next_token(fc, token, false, true, true);
-          class->norfc = true;
+          class->ref_count = false;
           continue;
         }
 
         if (strcmp(token, "number") == 0 || strcmp(token, "float") == 0) {
           fc_next_token(fc, token, false, true, true);
-          class->norfc = true;
+          class->ref_count = false;
           class->is_number = true;
           class->is_float = strcmp(token, "float") == 0;
           fc_expect_token(fc, ":", false, true, false);

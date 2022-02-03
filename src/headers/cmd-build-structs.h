@@ -110,7 +110,7 @@ typedef struct Class {
   char* cname;
   char* name;
   struct FileCompiler* fc;
-  bool norfc;
+  bool ref_count;
   bool is_number;
   bool is_float;
   bool is_unsigned;

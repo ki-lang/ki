@@ -1,5 +1,5 @@
 
 namespace type;
 
-class bool {
+class bool norfc {
 }

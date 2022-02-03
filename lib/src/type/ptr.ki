@@ -1,5 +1,5 @@
 
 namespace type;
 
-class ptr {
+class ptr norfc {
 }

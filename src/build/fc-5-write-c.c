@@ -237,8 +237,39 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     str_append_chars(fc->tkn_buffer, " = ");
     fc_write_c_value(fc, decl->value);
     str_append_chars(fc->tkn_buffer, ";\n");
+
+    Class* class = decl->value->return_type->class;
+    if (class && class->ref_count) {
+      str_append_chars(fc->tkn_buffer, "if(");
+      str_append_chars(fc->tkn_buffer, decl->name);
+      str_append_chars(fc->tkn_buffer, "){ ");
+      str_append_chars(fc->tkn_buffer, decl->name);
+      str_append_chars(fc->tkn_buffer, "->_RC++; }\n");
+    }
   } else if (token->type == tkn_assign) {
     TokenAssign* ta = token->item;
+
+    // RC--
+    bool refc = false;
+    if (ta->type == op_eq) {
+      Value* left = ta->left;
+      Class* class = left->return_type->class;
+      if (class && class->ref_count) {
+        refc = true;
+        str_append_chars(fc->tkn_buffer, "if(");
+        fc_write_c_value(fc, ta->left);
+        str_append_chars(fc->tkn_buffer, "){ ");
+        fc_write_c_value(fc, ta->left);
+        str_append_chars(fc->tkn_buffer, "->_RC--;\n");
+        str_append_chars(fc->tkn_buffer, "if(");
+        fc_write_c_value(fc, ta->left);
+        str_append_chars(fc->tkn_buffer, "->_RC == 0) ki__mem__free(");
+        fc_write_c_value(fc, ta->left);
+        str_append_chars(fc->tkn_buffer, ");\n");
+        str_append_chars(fc->tkn_buffer, "}\n");
+      }
+    }
+
     fc_write_c_value(fc, ta->left);
     if (ta->type == op_eq) {
       str_append_chars(fc->tkn_buffer, " = ");
@@ -257,6 +288,15 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     }
     fc_write_c_value(fc, ta->right);
     str_append_chars(fc->tkn_buffer, ";\n");
+
+    // RC++
+    if (refc) {
+      str_append_chars(fc->tkn_buffer, "if(");
+      fc_write_c_value(fc, ta->left);
+      str_append_chars(fc->tkn_buffer, "){ ");
+      fc_write_c_value(fc, ta->left);
+      str_append_chars(fc->tkn_buffer, "->_RC++; }\n");
+    }
   } else if (token->type == tkn_return) {
     str_append_chars(fc->tkn_buffer, "return ");
     fc_write_c_value(fc, token->item);

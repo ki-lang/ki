@@ -62,7 +62,7 @@ class Server {
 	}
 
 	func respond(u32 slot){
-		io:print("Respond\n");
+		//io:print("Respond\n");
 
 		u32 clientfd = 0;
 		this.clients.get(slot, getptr clientfd);

@@ -1,7 +1,7 @@
 
 namespace type;
 
-class cstring {
+class cstring norfc {
 
 	public func to_string() string {
 		u64 len = 0;
