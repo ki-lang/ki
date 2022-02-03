@@ -251,11 +251,16 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
 
     // RC--
     bool refc = false;
+    bool refc_nullable = false;
     if (ta->type == op_eq) {
       Value* left = ta->left;
       Class* class = left->return_type->class;
       if (class && class->ref_count) {
         refc = true;
+        if (left->return_type->nullable) {
+          refc_nullable = true;
+        }
+
         str_append_chars(fc->tkn_buffer, "if(");
         fc_write_c_value(fc, ta->left);
         str_append_chars(fc->tkn_buffer, "){ ");
@@ -265,8 +270,9 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
         fc_write_c_value(fc, ta->left);
         str_append_chars(fc->tkn_buffer, "->_RC == 0) ki__mem__free(");
         fc_write_c_value(fc, ta->left);
-        str_append_chars(fc->tkn_buffer, "); ");
-        str_append_chars(fc->tkn_buffer, "}\n");
+        str_append_chars(fc->tkn_buffer, ");");
+        str_append_chars(fc->tkn_buffer, " }");
+        str_append_chars(fc->tkn_buffer, "\n");
       }
     }
 
@@ -291,11 +297,17 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
 
     // RC++
     if (refc) {
-      str_append_chars(fc->tkn_buffer, "if(");
+      if (refc_nullable) {
+        str_append_chars(fc->tkn_buffer, "if(");
+        fc_write_c_value(fc, ta->left);
+        str_append_chars(fc->tkn_buffer, "){ ");
+      }
       fc_write_c_value(fc, ta->left);
-      str_append_chars(fc->tkn_buffer, "){ ");
-      fc_write_c_value(fc, ta->left);
-      str_append_chars(fc->tkn_buffer, "->_RC++; }\n");
+      str_append_chars(fc->tkn_buffer, "->_RC++;");
+      if (refc_nullable) {
+        str_append_chars(fc->tkn_buffer, " }");
+      }
+      str_append_chars(fc->tkn_buffer, "\n");
     }
   } else if (token->type == tkn_return) {
     str_append_chars(fc->tkn_buffer, "return ");
