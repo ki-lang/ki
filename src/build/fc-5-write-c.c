@@ -235,7 +235,8 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     TokenDeclare* decl = token->item;
     fc_write_c_type(fc->tkn_buffer, decl->value->return_type, decl->name);
     str_append_chars(fc->tkn_buffer, " = ");
-    fc_write_c_value(fc, decl->value);
+    fc_write_c_value(fc, decl->value, value_buf(fc), fc->var_bufs);
+    str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
 
     Class* class = decl->value->return_type->class;
@@ -262,21 +263,26 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
         }
 
         str_append_chars(fc->tkn_buffer, "if(");
-        fc_write_c_value(fc, ta->left);
+        fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
+        str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, "){ ");
-        fc_write_c_value(fc, ta->left);
+        fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
+        str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, "->_RC--;\n");
         str_append_chars(fc->tkn_buffer, "if(");
-        fc_write_c_value(fc, ta->left);
+        fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
+        str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, "->_RC == 0) ki__mem__free(");
-        fc_write_c_value(fc, ta->left);
+        fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
+        str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ");");
         str_append_chars(fc->tkn_buffer, " }");
         str_append_chars(fc->tkn_buffer, "\n");
       }
     }
 
-    fc_write_c_value(fc, ta->left);
+    fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
+    str_append(fc->tkn_buffer, fc->value_buffer);
     if (ta->type == op_eq) {
       str_append_chars(fc->tkn_buffer, " = ");
     } else if (ta->type == op_add) {
@@ -292,17 +298,20 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     } else {
       fc_error(fc, "Unhandled assign operator translation", NULL);
     }
-    fc_write_c_value(fc, ta->right);
+    fc_write_c_value(fc, ta->right, value_buf(fc), fc->var_bufs);
+    str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
 
     // RC++
     if (refc) {
       if (refc_nullable) {
         str_append_chars(fc->tkn_buffer, "if(");
-        fc_write_c_value(fc, ta->left);
+        fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
+        str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, "){ ");
       }
-      fc_write_c_value(fc, ta->left);
+      fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
+      str_append(fc->tkn_buffer, fc->value_buffer);
       str_append_chars(fc->tkn_buffer, "->_RC++;");
       if (refc_nullable) {
         str_append_chars(fc->tkn_buffer, " }");
@@ -311,7 +320,8 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     }
   } else if (token->type == tkn_return) {
     str_append_chars(fc->tkn_buffer, "return ");
-    fc_write_c_value(fc, token->item);
+    fc_write_c_value(fc, token->item, value_buf(fc), fc->var_bufs);
+    str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
   } else if (token->type == tkn_if) {
     fc_write_c_if(fc, token->item);
@@ -319,7 +329,8 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     //
     TokenWhile* wt = token->item;
     str_append_chars(fc->tkn_buffer, "while(");
-    fc_write_c_value(fc, wt->condition);
+    fc_write_c_value(fc, wt->condition, value_buf(fc), fc->var_bufs);
+    str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ") {\n");
     fc_write_c_ast(fc, wt->scope->ast);
     str_append_chars(fc->tkn_buffer, "}\n\n");
@@ -341,10 +352,12 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     }
   } else if (token->type == tkn_free) {
     str_append_chars(fc->tkn_buffer, "ki__mem__free(");
-    fc_write_c_value(fc, token->item);
+    fc_write_c_value(fc, token->item, value_buf(fc), fc->var_bufs);
+    str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ");\n");
   } else if (token->type == tkn_value) {
-    fc_write_c_value(fc, token->item);
+    fc_write_c_value(fc, token->item, value_buf(fc), fc->var_bufs);
+    str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
   } else {
     printf("Token: %d\n", token->type);
@@ -386,14 +399,15 @@ void fc_indent(FileCompiler* fc, Str* append_to) {
   }
 }
 
-void fc_write_c_value(FileCompiler* fc, Value* value) {
+void fc_write_c_value(FileCompiler* fc, Value* value, Str* result,
+                      Array* func_result_vars) {
   //
   // printf("Type: %d\n", value->type);
   if (value->type == vt_string) {
-    str_append_chars(fc->tkn_buffer, "ki__type__string__make(\"");
+    str_append_chars(result, "ki__type__string__make(\"");
     char* str = value->item;
-    str_append_chars(fc->tkn_buffer, str);
-    str_append_chars(fc->tkn_buffer, "\", ");
+    str_append_chars(result, str);
+    str_append_chars(result, "\", ");
     size_t len = strlen(str);
     int count = 0;
     int diff = 0;
@@ -416,108 +430,108 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
     len -= diff;
     char lenstr[20];
     sprintf(lenstr, "%zu", len);
-    str_append_chars(fc->tkn_buffer, lenstr);
-    str_append_chars(fc->tkn_buffer, ")");
+    str_append_chars(result, lenstr);
+    str_append_chars(result, ")");
   } else if (value->type == vt_null) {
-    str_append_chars(fc->tkn_buffer, "0");
+    str_append_chars(result, "0");
     // Bools
   } else if (value->type == vt_false) {
-    str_append_chars(fc->tkn_buffer, "0");
+    str_append_chars(result, "0");
   } else if (value->type == vt_true) {
-    str_append_chars(fc->tkn_buffer, "1");
+    str_append_chars(result, "1");
   } else if (value->type == vt_group) {
-    str_append_chars(fc->tkn_buffer, "(");
-    fc_write_c_value(fc, value->item);
-    str_append_chars(fc->tkn_buffer, ")");
+    str_append_chars(result, "(");
+    fc_write_c_value(fc, value->item, result, func_result_vars);
+    str_append_chars(result, ")");
   } else if (value->type == vt_var) {
-    str_append_chars(fc->tkn_buffer, value->item);
+    str_append_chars(result, value->item);
   } else if (value->type == vt_number) {
-    str_append_chars(fc->tkn_buffer, value->item);
+    str_append_chars(result, value->item);
   } else if (value->type == vt_char) {
-    str_append_chars(fc->tkn_buffer, "'");
-    str_append_chars(fc->tkn_buffer, value->item);
-    str_append_chars(fc->tkn_buffer, "'");
+    str_append_chars(result, "'");
+    str_append_chars(result, value->item);
+    str_append_chars(result, "'");
   } else if (value->type == vt_operator) {
     ValueOperator* op = value->item;
-    fc_write_c_value(fc, op->left);
+    fc_write_c_value(fc, op->left, result, func_result_vars);
     if (op->type == op_add) {
-      str_append_chars(fc->tkn_buffer, " + ");
+      str_append_chars(result, " + ");
     } else if (op->type == op_sub) {
-      str_append_chars(fc->tkn_buffer, " - ");
+      str_append_chars(result, " - ");
     } else if (op->type == op_mult) {
-      str_append_chars(fc->tkn_buffer, " * ");
+      str_append_chars(result, " * ");
     } else if (op->type == op_div) {
-      str_append_chars(fc->tkn_buffer, " / ");
+      str_append_chars(result, " / ");
     } else if (op->type == op_mod) {
-      str_append_chars(fc->tkn_buffer, " \% ");
+      str_append_chars(result, " \% ");
       //
     } else if (op->type == op_eq) {
-      str_append_chars(fc->tkn_buffer, " == ");
+      str_append_chars(result, " == ");
     } else if (op->type == op_neq) {
-      str_append_chars(fc->tkn_buffer, " != ");
+      str_append_chars(result, " != ");
     } else if (op->type == op_lt) {
-      str_append_chars(fc->tkn_buffer, " < ");
+      str_append_chars(result, " < ");
     } else if (op->type == op_lte) {
-      str_append_chars(fc->tkn_buffer, " <= ");
+      str_append_chars(result, " <= ");
     } else if (op->type == op_gt) {
-      str_append_chars(fc->tkn_buffer, " > ");
+      str_append_chars(result, " > ");
     } else if (op->type == op_gte) {
-      str_append_chars(fc->tkn_buffer, " >= ");
+      str_append_chars(result, " >= ");
     } else if (op->type == op_incr) {
-      str_append_chars(fc->tkn_buffer, "++");
+      str_append_chars(result, "++");
     } else if (op->type == op_decr) {
-      str_append_chars(fc->tkn_buffer, "--");
+      str_append_chars(result, "--");
     } else {
       printf("Op: %d\n", op->type);
       fc_error(fc, "Unhandled operator type", NULL);
     }
     if (op->right) {
-      fc_write_c_value(fc, op->right);
+      fc_write_c_value(fc, op->right, result, func_result_vars);
     }
   } else if (value->type == vt_func_call) {
     ValueFuncCall* fa = value->item;
-    fc_write_c_value(fc, fa->on);
-    str_append_chars(fc->tkn_buffer, "(");
+    fc_write_c_value(fc, fa->on, result, func_result_vars);
+    str_append_chars(result, "(");
     for (int i = 0; i < fa->arg_values->length; i++) {
       if (i > 0) {
-        str_append_chars(fc->tkn_buffer, ", ");
+        str_append_chars(result, ", ");
       }
       Value* v = array_get_index(fa->arg_values, i);
-      fc_write_c_value(fc, v);
+      fc_write_c_value(fc, v, result, func_result_vars);
     }
     if (fa->on->return_type->func_can_error) {
       if (fa->arg_values->length > 0) {
-        str_append_chars(fc->tkn_buffer, ", ");
+        str_append_chars(result, ", ");
       }
-      str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF");
+      str_append_chars(result, "_KI_THROW_MSG_BUF");
     }
-    str_append_chars(fc->tkn_buffer, ")");
+    str_append_chars(result, ")");
   } else if (value->type == vt_sizeof) {
-    str_append_chars(fc->tkn_buffer, value->item);
+    str_append_chars(result, value->item);
   } else if (value->type == vt_cast) {
     ValueCast* cast = value->item;
-    str_append_chars(fc->tkn_buffer, "(");
-    fc_write_c_type(fc->tkn_buffer, cast->as_type, NULL);
-    str_append_chars(fc->tkn_buffer, ")");
-    fc_write_c_value(fc, cast->value);
+    str_append_chars(result, "(");
+    fc_write_c_type(result, cast->as_type, NULL);
+    str_append_chars(result, ")");
+    fc_write_c_value(fc, cast->value, result, func_result_vars);
   } else if (value->type == vt_getptrv) {
     ValueCast* cast = value->item;
-    str_append_chars(fc->tkn_buffer, "*(");
-    fc_write_c_type(fc->tkn_buffer, cast->as_type, NULL);
-    str_append_chars(fc->tkn_buffer, "*)(");
-    fc_write_c_value(fc, cast->value);
-    str_append_chars(fc->tkn_buffer, ")");
+    str_append_chars(result, "*(");
+    fc_write_c_type(result, cast->as_type, NULL);
+    str_append_chars(result, "*)(");
+    fc_write_c_value(fc, cast->value, result, func_result_vars);
+    str_append_chars(result, ")");
   } else if (value->type == vt_getptr) {
-    str_append_chars(fc->tkn_buffer, "&");
-    fc_write_c_value(fc, value->item);
+    str_append_chars(result, "&");
+    fc_write_c_value(fc, value->item, result, func_result_vars);
   } else if (value->type == vt_setptrv) {
     SetPtrValue* cast = value->item;
-    str_append_chars(fc->tkn_buffer, "*(");
-    fc_write_c_type(fc->tkn_buffer, cast->to_value->return_type, NULL);
-    str_append_chars(fc->tkn_buffer, "*)");
-    fc_write_c_value(fc, cast->ptr_value);
-    str_append_chars(fc->tkn_buffer, " = ");
-    fc_write_c_value(fc, cast->to_value);
+    str_append_chars(result, "*(");
+    fc_write_c_type(result, cast->to_value->return_type, NULL);
+    str_append_chars(result, "*)");
+    fc_write_c_value(fc, cast->ptr_value, result, func_result_vars);
+    str_append_chars(result, " = ");
+    fc_write_c_value(fc, cast->to_value, result, func_result_vars);
   } else if (value->type == vt_class_init) {
     // Generate function
     GEN_C++;
@@ -525,16 +539,16 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
     Class* class = ini->class;
     char* func_name = malloc(30);
     sprintf(func_name, "_KI_CLASS_INIT_%d", GEN_C);
-    str_append_chars(fc->tkn_buffer, func_name);
-    str_append_chars(fc->tkn_buffer, "(");
+    str_append_chars(result, func_name);
+    str_append_chars(result, "(");
     for (int i = 0; i < ini->prop_values->values->length; i++) {
       if (i > 0) {
-        str_append_chars(fc->tkn_buffer, ", ");
+        str_append_chars(result, ", ");
       }
       Value* val = array_get_index(ini->prop_values->values, i);
-      fc_write_c_value(fc, val);
+      fc_write_c_value(fc, val, result, func_result_vars);
     }
-    str_append_chars(fc->tkn_buffer, ")");
+    str_append_chars(result, ")");
 
     // Write header
     fc_write_c_type(fc->h_code, value->return_type, NULL);
@@ -611,19 +625,19 @@ void fc_write_c_value(FileCompiler* fc, Value* value) {
       ClassProp* prop = map_get(class->props, pa->name);
       // func ref
       Type* type = prop->return_type;
-      str_append_chars(fc->tkn_buffer, class->cname);
-      str_append_chars(fc->tkn_buffer, "__");
-      str_append_chars(fc->tkn_buffer, pa->name);
+      str_append_chars(result, class->cname);
+      str_append_chars(result, "__");
+      str_append_chars(result, pa->name);
     } else {
-      fc_write_c_value(fc, pa->on);
+      fc_write_c_value(fc, pa->on, result, func_result_vars);
       Value* val = pa->on;
       Type* type = val->return_type;
       if (type->is_pointer) {
-        str_append_chars(fc->tkn_buffer, "->");
+        str_append_chars(result, "->");
       } else {
-        str_append_chars(fc->tkn_buffer, ".");
+        str_append_chars(result, ".");
       }
-      str_append_chars(fc->tkn_buffer, pa->name);
+      str_append_chars(result, pa->name);
     }
   } else {
     fc_error(fc, "Unhandled value token (compiler bug)", NULL);
@@ -719,7 +733,8 @@ void fc_write_c_if(FileCompiler* fc, TokenIf* ift) {
   }
   if (ift->condition) {
     str_append_chars(fc->tkn_buffer, "if (");
-    fc_write_c_value(fc, ift->condition);
+    fc_write_c_value(fc, ift->condition, value_buf(fc), fc->var_bufs);
+    str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ") ");
   }
   str_append_chars(fc->tkn_buffer, "{\n");
@@ -729,4 +744,17 @@ void fc_write_c_if(FileCompiler* fc, TokenIf* ift) {
   if (ift->next) {
     fc_write_c_if(fc, ift->next);
   }
+}
+
+Str* value_buf(FileCompiler* fc) {
+  fc->value_buffer->length = 0;
+  return fc->value_buffer;
+}
+
+char* var_buf(FileCompiler* fc) {
+  strcpy(fc->var_buf, "_KI_VBUF");
+  fc->var_bufc++;
+  sprintf(fc->sprintf, "%d", fc->var_bufc);
+  strcat(fc->var_buf, fc->sprintf);
+  return fc->var_buf;
 }

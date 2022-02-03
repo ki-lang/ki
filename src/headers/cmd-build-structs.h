@@ -44,7 +44,13 @@ typedef struct FileCompiler {
   Str* h_code;       // Function/Vars
   Str* tkn_buffer;
   Str* before_tkn_buffer;
+  Str* value_buffer;
   int indent;
+  int var_bufc;
+  char* var_buf;
+  Array* var_bufs;
+  // Misc
+  char* sprintf;
   // Local identifiers
   struct Scope* scope;
   struct Map* uses;

@@ -27,7 +27,13 @@ FileCompiler* init_fc() {
   fc->h_code = str_make("");
   fc->tkn_buffer = NULL;
   fc->before_tkn_buffer = NULL;
+  fc->value_buffer = str_make("");
   fc->indent = 0;
+  fc->var_bufc = 0;
+  fc->var_buf = malloc(12);
+  fc->var_bufs = array_make(8);
+  //
+  fc->sprintf = malloc(100);
   //
   fc->scope = init_scope();
   fc->uses = map_make();
