@@ -265,7 +265,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
         fc_write_c_value(fc, ta->left);
         str_append_chars(fc->tkn_buffer, "->_RC == 0) ki__mem__free(");
         fc_write_c_value(fc, ta->left);
-        str_append_chars(fc->tkn_buffer, ");\n");
+        str_append_chars(fc->tkn_buffer, "); ");
         str_append_chars(fc->tkn_buffer, "}\n");
       }
     }
