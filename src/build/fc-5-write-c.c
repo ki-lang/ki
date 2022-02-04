@@ -259,12 +259,15 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     str_append_chars(fc->tkn_buffer, ";\n");
 
     Class* class = decl->value->return_type->class;
+    bool nullable = decl->value->return_type->nullable;
     if (class && class->ref_count) {
-      str_append_chars(fc->tkn_buffer, "if(");
+      if (nullable) {
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, decl->name);
+        str_append_chars(fc->tkn_buffer, ") ");
+      }
       str_append_chars(fc->tkn_buffer, decl->name);
-      str_append_chars(fc->tkn_buffer, "){ ");
-      str_append_chars(fc->tkn_buffer, decl->name);
-      str_append_chars(fc->tkn_buffer, "->_RC++; }\n");
+      str_append_chars(fc->tkn_buffer, "->_RC++;\n");
 
       array_push(fc->local_var_names, decl);
     }
@@ -875,14 +878,15 @@ void deref_local_vars(FileCompiler* fc, Array* local_vars) {
   for (int i = 0; i < local_vars->length; i++) {
     TokenDeclare* decl = array_get_index(local_vars, i);
     Class* class = decl->value->return_type->class;
+    bool nullable = decl->value->return_type->nullable;
     char* lv = decl->name;
 
-    str_append_chars(fc->tkn_buffer, "if(");
-    str_append_chars(fc->tkn_buffer, lv);
-    str_append_chars(fc->tkn_buffer, "){ ");
-    str_append_chars(fc->tkn_buffer, lv);
-    str_append_chars(fc->tkn_buffer, "->_RC--;\n");
-    str_append_chars(fc->tkn_buffer, "if(");
+    if (nullable) {
+      str_append_chars(fc->tkn_buffer, "if(");
+      str_append_chars(fc->tkn_buffer, lv);
+      str_append_chars(fc->tkn_buffer, "){ ");
+    }
+    str_append_chars(fc->tkn_buffer, "if(--");
     str_append_chars(fc->tkn_buffer, lv);
     str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
 
@@ -897,7 +901,9 @@ void deref_local_vars(FileCompiler* fc, Array* local_vars) {
     str_append_chars(fc->tkn_buffer, "(");
     str_append_chars(fc->tkn_buffer, lv);
     str_append_chars(fc->tkn_buffer, ");");
-    str_append_chars(fc->tkn_buffer, " }");
+    if (nullable) {
+      str_append_chars(fc->tkn_buffer, " }");
+    }
     str_append_chars(fc->tkn_buffer, "\n");
   }
 }
