@@ -262,18 +262,15 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
           refc_nullable = true;
         }
 
-        str_append_chars(fc->tkn_buffer, "if(");
         fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
+        str_append_chars(fc->tkn_buffer, "if(");
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, "){ ");
-        fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, "->_RC--;\n");
         str_append_chars(fc->tkn_buffer, "if(");
-        fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, "->_RC == 0) ki__mem__free(");
-        fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ");");
         str_append_chars(fc->tkn_buffer, " }");
@@ -304,13 +301,12 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
 
     // RC++
     if (refc) {
+      fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
       if (refc_nullable) {
         str_append_chars(fc->tkn_buffer, "if(");
-        fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, "){ ");
       }
-      fc_write_c_value(fc, ta->left, value_buf(fc), fc->var_bufs);
       str_append(fc->tkn_buffer, fc->value_buffer);
       str_append_chars(fc->tkn_buffer, "->_RC++;");
       if (refc_nullable) {
@@ -319,8 +315,10 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       str_append_chars(fc->tkn_buffer, "\n");
     }
   } else if (token->type == tkn_return) {
-    str_append_chars(fc->tkn_buffer, "return ");
     fc_write_c_value(fc, token->item, value_buf(fc), fc->var_bufs);
+    // Deref local vars + Check if var_bufs RC == 0 (if so free)
+    //
+    str_append_chars(fc->tkn_buffer, "return ");
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
   } else if (token->type == tkn_if) {
@@ -328,8 +326,8 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
   } else if (token->type == tkn_while) {
     //
     TokenWhile* wt = token->item;
-    str_append_chars(fc->tkn_buffer, "while(");
     fc_write_c_value(fc, wt->condition, value_buf(fc), fc->var_bufs);
+    str_append_chars(fc->tkn_buffer, "while(");
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ") {\n");
     fc_write_c_ast(fc, wt->scope->ast);
@@ -351,8 +349,8 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       str_append_chars(fc->tkn_buffer, "return 0;\n");
     }
   } else if (token->type == tkn_free) {
-    str_append_chars(fc->tkn_buffer, "ki__mem__free(");
     fc_write_c_value(fc, token->item, value_buf(fc), fc->var_bufs);
+    str_append_chars(fc->tkn_buffer, "ki__mem__free(");
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ");\n");
   } else if (token->type == tkn_value) {
@@ -745,20 +743,27 @@ void fc_write_c_type(Str* append_to, Type* type, char* varname) {
 void fc_write_c_if(FileCompiler* fc, TokenIf* ift) {
   //
   if (ift->is_else) {
-    str_append_chars(fc->tkn_buffer, " else ");
+    str_append_chars(fc->tkn_buffer, " else {\n");
   }
   if (ift->condition) {
-    str_append_chars(fc->tkn_buffer, "if (");
     fc_write_c_value(fc, ift->condition, value_buf(fc), fc->var_bufs);
+    str_append_chars(fc->tkn_buffer, "if (");
     str_append(fc->tkn_buffer, fc->value_buffer);
-    str_append_chars(fc->tkn_buffer, ") ");
+    str_append_chars(fc->tkn_buffer, ") {\n");
   }
-  str_append_chars(fc->tkn_buffer, "{\n");
+
   fc_write_c_ast(fc, ift->scope->ast);
-  str_append_chars(fc->tkn_buffer, "}\n\n");
+
+  if (ift->condition) {
+    str_append_chars(fc->tkn_buffer, "}\n");
+  }
 
   if (ift->next) {
     fc_write_c_if(fc, ift->next);
+  }
+
+  if (ift->is_else) {
+    str_append_chars(fc->tkn_buffer, "}\n");
   }
 }
 
