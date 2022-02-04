@@ -1,7 +1,7 @@
 
 namespace type;
 
-use mem {alloc,copy,equal};
+use mem {alloc,copy,equal,free};
 
 class string {
 	public u64 length = 0;
@@ -27,7 +27,7 @@ class string {
 		adr += this.length;
 		copy(str.data, str.length, adr);
 		this.length = new_length;
-		free this.data;
+		free(this.data);
 		this.data = adr;
 		return this;
 	}
@@ -40,7 +40,8 @@ class string {
 	}
 
 	func __free() {
-		free this.data;
+		free(this.data);
+		free(this);
 	}
 
 	func index_of(string str) u64 {

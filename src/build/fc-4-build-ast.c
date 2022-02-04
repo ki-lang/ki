@@ -91,10 +91,10 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
       continue;
     }
 
-    if (strcmp(token, "free") == 0) {
-      token_free(fc, scope);
-      continue;
-    }
+    // if (strcmp(token, "free") == 0) {
+    //   token_free(fc, scope);
+    //   continue;
+    // }
 
     if (scope->in_loop) {
       if (strcmp(token, "break") == 0) {

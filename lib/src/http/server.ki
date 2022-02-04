@@ -88,6 +88,8 @@ class Server {
 
 		i32 result = main:main:shutdown(clientfd, 2); // SHUT_RD, SHUT_WR, SHUT_RDWR have the value 0, 1, 2
 		result = main:main:close(clientfd);
+
+		mem:free(buf);
 	}
 
 }

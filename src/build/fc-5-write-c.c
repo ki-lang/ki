@@ -80,21 +80,23 @@ void fc_write_c(FileCompiler* fc) {
   fc->create_o_file = false;
   if (!fc->is_header && strlen(code) > 0) {
     fc->create_o_file = true;
-    write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
+    if (true) {
+      write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
 
-    char* incl = malloc(KI_PATH_MAX + 50);
-    for (int i = 0; i < fc->include_headers_from->length; i++) {
-      FileCompiler* hfc = array_get_index(fc->include_headers_from, i);
-      strcpy(incl, "#include \"");
-      strcat(incl, hfc->h_filepath);
-      strcat(incl, "\"\n");
-      write_file(fc->c_filepath, incl, true);
+      char* incl = malloc(KI_PATH_MAX + 50);
+      for (int i = 0; i < fc->include_headers_from->length; i++) {
+        FileCompiler* hfc = array_get_index(fc->include_headers_from, i);
+        strcpy(incl, "#include \"");
+        strcat(incl, hfc->h_filepath);
+        strcat(incl, "\"\n");
+        write_file(fc->c_filepath, incl, true);
+      }
+      free(incl);
+
+      write_file(fc->c_filepath, "\n", true);
+      write_file(fc->c_filepath, code, true);
+      write_file(fc->c_filepath, code_gen, true);
     }
-    free(incl);
-
-    write_file(fc->c_filepath, "\n", true);
-    write_file(fc->c_filepath, code, true);
-    write_file(fc->c_filepath, code_gen, true);
 
     array_push(o_files, fc->o_filepath);
   }
@@ -262,7 +264,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       str_append_chars(fc->tkn_buffer, decl->name);
       str_append_chars(fc->tkn_buffer, "->_RC++; }\n");
 
-      array_push(fc->local_var_names, decl->name);
+      array_push(fc->local_var_names, decl);
     }
   } else if (token->type == tkn_assign) {
     TokenAssign* ta = token->item;
@@ -332,7 +334,16 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       str_append_chars(fc->tkn_buffer, "\n");
     }
   } else if (token->type == tkn_return) {
+    Value* retv = token->item;
     fc_write_c_value(fc, token->item, true);
+
+    bool refc = false;
+    if (retv->return_type->class && retv->return_type->class->ref_count) {
+      refc = true;
+      str_append(fc->tkn_buffer, fc->value_buffer);
+      str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+    }
+
     // Deref local vars + Check if var_bufs RC == 0 (if so free)
     deref_local_vars(fc, fc->local_var_names);
 
@@ -340,6 +351,12 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     str_append_chars(fc->tkn_buffer, "return ");
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
+
+    if (refc) {
+      str_append(fc->tkn_buffer, fc->value_buffer);
+      str_append_chars(fc->tkn_buffer, "->_RC--;\n");
+    }
+
   } else if (token->type == tkn_if) {
     fc_write_c_if(fc, token->item);
   } else if (token->type == tkn_while) {
@@ -615,6 +632,12 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(fc->c_code_after, ";\n");
     }
 
+    if (class->ref_count) {
+      str_append_chars(fc->c_code_after, "KI_RET_V");
+      str_append_chars(fc->c_code_after, sign);
+      str_append_chars(fc->c_code_after, "_RC = 0;\n");
+    }
+
     for (int i = 0; i < ini->prop_values->keys->length; i++) {
       char* prop_name = array_get_index(ini->prop_values->keys, i);
       str_append_chars(fc->c_code_after, "KI_RET_V");
@@ -826,7 +849,9 @@ char* var_buf(FileCompiler* fc) {
 
 void deref_local_vars(FileCompiler* fc, Array* local_vars) {
   for (int i = 0; i < local_vars->length; i++) {
-    char* lv = array_get_index(local_vars, i);
+    TokenDeclare* decl = array_get_index(local_vars, i);
+    Class* class = decl->value->return_type->class;
+    char* lv = decl->name;
 
     str_append_chars(fc->tkn_buffer, "if(");
     str_append_chars(fc->tkn_buffer, lv);
@@ -835,7 +860,17 @@ void deref_local_vars(FileCompiler* fc, Array* local_vars) {
     str_append_chars(fc->tkn_buffer, "->_RC--;\n");
     str_append_chars(fc->tkn_buffer, "if(");
     str_append_chars(fc->tkn_buffer, lv);
-    str_append_chars(fc->tkn_buffer, "->_RC == 0) ki__mem__free(");
+    str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
+
+    ClassProp* prop = map_get(class->props, "__free");
+    if (prop) {
+      str_append_chars(fc->tkn_buffer, class->cname);
+      str_append_chars(fc->tkn_buffer, "____free");
+    } else {
+      str_append_chars(fc->tkn_buffer, "ki__mem__free");
+    }
+
+    str_append_chars(fc->tkn_buffer, "(");
     str_append_chars(fc->tkn_buffer, lv);
     str_append_chars(fc->tkn_buffer, ");");
     str_append_chars(fc->tkn_buffer, " }");

@@ -8,4 +8,9 @@ class Response {
 	public func output() string {
 		return "HTTP/1.1 200 OK\r\ncontent-type: text/html\r\n\r\nHello world";
 	}
+
+	public func __free(){
+		this.body.__free();
+		ki:mem:free(this);
+	}
 }
