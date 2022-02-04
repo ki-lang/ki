@@ -140,6 +140,54 @@ void fc_write_c_class(FileCompiler* fc, Class* class) {
     str_append_chars(fc->h_code, ";\n");
   }
   str_append_chars(fc->h_code, "};\n");
+
+  // Free func
+  ClassProp* prop = map_get(class->props, "__free");
+  if (class->ref_count && !prop) {
+    str_append_chars(fc->h_code, "void ");
+    str_append_chars(fc->h_code, class->cname);
+    str_append_chars(fc->h_code, "____free(struct ");
+    str_append_chars(fc->h_code, class->cname);
+    str_append_chars(fc->h_code, "* this);\n");
+
+    str_append_chars(fc->c_code, "void ");
+    str_append_chars(fc->c_code, class->cname);
+    str_append_chars(fc->c_code, "____free(struct ");
+    str_append_chars(fc->c_code, class->cname);
+    str_append_chars(fc->c_code, "* this){\n");
+
+    for (int i = 0; i < class->props->keys->length; i++) {
+      char* name = array_get_index(class->props->keys, i);
+      ClassProp* prop = array_get_index(class->props->values, i);
+      if (prop->is_func) {
+        continue;
+      }
+      if (prop->is_static) {
+        continue;
+      }
+
+      if (prop->return_type->class && prop->return_type->class->ref_count) {
+        bool nullable = prop->return_type->nullable;
+        if (nullable) {
+          str_append_chars(fc->c_code, "if(this->");
+          str_append_chars(fc->c_code, name);
+          str_append_chars(fc->c_code, ") {\n");
+        }
+        str_append_chars(fc->c_code, "if(--this->");
+        str_append_chars(fc->c_code, name);
+        str_append_chars(fc->c_code, "->_RC == 0) ");
+        str_append_chars(fc->c_code, "ki__mem__free(this->");
+        str_append_chars(fc->c_code, name);
+        str_append_chars(fc->c_code, ");\n");
+        if (nullable) {
+          str_append_chars(fc->c_code, "}\n");
+        }
+      }
+    }
+
+    str_append_chars(fc->c_code, "ki__mem__free(this);\n");
+    str_append_chars(fc->c_code, "}\n\n");
+  }
 }
 
 void fc_write_c_enum(FileCompiler* fc, Enum* enu) {
@@ -294,7 +342,9 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
         str_append_chars(fc->tkn_buffer, "->_RC--;\n");
         str_append_chars(fc->tkn_buffer, "if(");
         str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, "->_RC == 0) ki__mem__free(");
+        str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
+        str_append_chars(fc->tkn_buffer, class->cname);
+        str_append_chars(fc->tkn_buffer, "____free(");
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ");");
         str_append_chars(fc->tkn_buffer, " }");
@@ -889,16 +939,8 @@ void deref_local_vars(FileCompiler* fc, Array* local_vars) {
     str_append_chars(fc->tkn_buffer, "if(--");
     str_append_chars(fc->tkn_buffer, lv);
     str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
-
-    ClassProp* prop = map_get(class->props, "__free");
-    if (prop) {
-      str_append_chars(fc->tkn_buffer, class->cname);
-      str_append_chars(fc->tkn_buffer, "____free");
-    } else {
-      str_append_chars(fc->tkn_buffer, "ki__mem__free");
-    }
-
-    str_append_chars(fc->tkn_buffer, "(");
+    str_append_chars(fc->tkn_buffer, class->cname);
+    str_append_chars(fc->tkn_buffer, "____free(");
     str_append_chars(fc->tkn_buffer, lv);
     str_append_chars(fc->tkn_buffer, ");");
     if (nullable) {
