@@ -66,7 +66,7 @@ class Server {
 
 		u32 clientfd = 0;
 		this.clients.get(slot, getptr clientfd);
-		//io:print(clientfd.to_string());
+		io:print(clientfd.to_string());
 
 		ptr buf = mem:alloc(65535);
 		i32 rcvd = main:main:recv(clientfd, buf, 65535, 0);

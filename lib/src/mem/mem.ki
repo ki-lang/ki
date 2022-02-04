@@ -3,7 +3,7 @@ namespace mem;
 
 #header "sys/memory"
 
-func alloc(ixx size) ptr {
+func alloc(uxx size) ptr {
 
 	#if OS_WIN
 
@@ -42,7 +42,11 @@ func alloc(ixx size) ptr {
 	// MAP_ANONYMOUS: 0x20, // No file, use fd -1
 
 	// void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
-	return main:main:mmap(null, size, 0x3, 0x22, -1, 0);
+	size += 8;
+	ptr adr = main:main:mmap(null, size, 0x3, 0x22, -1, 0);
+	setptrv adr to size;
+
+	return adr + 8;
 
 	#else
 	#error Unsupported OS
@@ -61,7 +65,8 @@ func free(ptr adr) {
 	#elif OS_LINUX
 
 	// 0 = success, -1 = fail
-	i32 result = main:main:munmap(adr, 0);
+	uxx size = getptrv adr - 8 as uxx;
+	i32 result = main:main:munmap(adr, size);
 
 	#else
 	#error Unsupported OS

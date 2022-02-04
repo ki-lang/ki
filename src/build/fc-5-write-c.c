@@ -347,15 +347,15 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     // Deref local vars + Check if var_bufs RC == 0 (if so free)
     deref_local_vars(fc, fc->local_var_names);
 
-    //
-    str_append_chars(fc->tkn_buffer, "return ");
-    str_append(fc->tkn_buffer, fc->value_buffer);
-    str_append_chars(fc->tkn_buffer, ";\n");
-
     if (refc) {
       str_append(fc->tkn_buffer, fc->value_buffer);
       str_append_chars(fc->tkn_buffer, "->_RC--;\n");
     }
+
+    //
+    str_append_chars(fc->tkn_buffer, "return ");
+    str_append(fc->tkn_buffer, fc->value_buffer);
+    str_append_chars(fc->tkn_buffer, ";\n");
 
   } else if (token->type == tkn_if) {
     fc_write_c_if(fc, token->item);
