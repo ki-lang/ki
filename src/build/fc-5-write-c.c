@@ -250,9 +250,11 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     fc_write_c_func(fc, token->item);
   } else if (token->type == tkn_declare) {
     TokenDeclare* decl = token->item;
+
+    fc_write_c_value(fc, decl->value, true);
+
     fc_write_c_type(fc->tkn_buffer, decl->value->return_type, decl->name);
     str_append_chars(fc->tkn_buffer, " = ");
-    fc_write_c_value(fc, decl->value, true);
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
 
@@ -298,7 +300,10 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     }
 
     fc_write_c_value(fc, ta->left, true);
-    str_append(fc->tkn_buffer, fc->value_buffer);
+    char* left = str_to_chars(fc->value_buffer);
+    fc_write_c_value(fc, ta->right, true);
+    str_append_chars(fc->tkn_buffer, left);
+    free(left);
     if (ta->type == op_eq) {
       str_append_chars(fc->tkn_buffer, " = ");
     } else if (ta->type == op_add) {
@@ -314,7 +319,6 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     } else {
       fc_error(fc, "Unhandled assign operator translation", NULL);
     }
-    fc_write_c_value(fc, ta->right, true);
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
 
@@ -337,19 +341,21 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     Value* retv = token->item;
     fc_write_c_value(fc, token->item, true);
 
-    bool refc = false;
-    if (retv->return_type->class && retv->return_type->class->ref_count) {
-      refc = true;
-      str_append(fc->tkn_buffer, fc->value_buffer);
-      str_append_chars(fc->tkn_buffer, "->_RC++;\n");
-    }
+    if (fc->local_var_names->length > 0) {
+      bool refc = false;
+      if (retv->return_type->class && retv->return_type->class->ref_count) {
+        refc = true;
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+      }
 
-    // Deref local vars + Check if var_bufs RC == 0 (if so free)
-    deref_local_vars(fc, fc->local_var_names);
+      // Deref local vars + Check if var_bufs RC == 0 (if so free)
+      deref_local_vars(fc, fc->local_var_names);
 
-    if (refc) {
-      str_append(fc->tkn_buffer, fc->value_buffer);
-      str_append_chars(fc->tkn_buffer, "->_RC--;\n");
+      if (refc) {
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, "->_RC--;\n");
+      }
     }
 
     //
@@ -435,7 +441,6 @@ void fc_indent(FileCompiler* fc, Str* append_to) {
 
 void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
   Str* result = fc->value_buffer;
-  Array* func_result_vars = fc->var_bufs;
 
   if (new_value) {
     result->length = 0;
@@ -530,14 +535,29 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     }
   } else if (value->type == vt_func_call) {
     ValueFuncCall* fa = value->item;
+
+    // Arg values
+    char* cache = str_to_chars(fc->value_buffer);
+    Array* arg_strings = array_make(4);
+    for (int i = 0; i < fa->arg_values->length; i++) {
+      Value* v = array_get_index(fa->arg_values, i);
+      fc_write_c_value(fc, v, true);
+      array_push(arg_strings, str_to_chars(fc->value_buffer));
+    }
+    fc->value_buffer->length = 0;
+    str_append_chars(fc->value_buffer, cache);
+    free(cache);
+
+    //
     fc_write_c_value(fc, fa->on, false);
     str_append_chars(result, "(");
-    for (int i = 0; i < fa->arg_values->length; i++) {
+    for (int i = 0; i < arg_strings->length; i++) {
       if (i > 0) {
         str_append_chars(result, ", ");
       }
-      Value* v = array_get_index(fa->arg_values, i);
-      fc_write_c_value(fc, v, false);
+      char* arg_str = array_get_index(arg_strings, i);
+      str_append_chars(result, arg_str);
+      free(arg_str);
     }
     if (fa->on->return_type->func_can_error) {
       if (fa->arg_values->length > 0) {
@@ -546,6 +566,25 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(result, "_KI_THROW_MSG_BUF");
     }
     str_append_chars(result, ")");
+
+    if (value->return_type) {
+      Class* retClass = value->return_type->class;
+      if (retClass && retClass->ref_count) {
+        // Buffer the value
+        char* buf_var_name = strdup(var_buf(fc));
+        str_append_chars(fc->tkn_buffer, "struct ");
+        str_append_chars(fc->tkn_buffer, retClass->cname);
+        str_append_chars(fc->tkn_buffer, "* ");
+        str_append_chars(fc->tkn_buffer, buf_var_name);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append(fc->tkn_buffer, result);
+        str_append_chars(fc->tkn_buffer, ";\n");
+        result->length = 0;
+        str_append_chars(result, buf_var_name);
+        array_push(fc->var_bufs, buf_var_name);
+      }
+    }
+
   } else if (value->type == vt_sizeof) {
     str_append_chars(result, value->item);
   } else if (value->type == vt_cast) {
@@ -677,21 +716,6 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(result, pa->name);
     } else {
       Value* val = pa->on;
-      if (val->return_type->type == vt_func_call) {
-        Class* retClass = val->return_type->class;
-        if (retClass && retClass->ref_count) {
-          // Buffer the value
-          char* buf_var_name = strdup(var_buf(fc));
-          str_append_chars(fc->tkn_buffer, buf_var_name);
-          str_append_chars(fc->tkn_buffer, " = ");
-          str_append(fc->tkn_buffer, result);
-          str_append_chars(fc->tkn_buffer, ";");
-          result->length = 0;
-          str_append_chars(result, buf_var_name);
-          array_push(func_result_vars, buf_var_name);
-        }
-      }
-
       fc_write_c_value(fc, pa->on, false);
       Type* type = val->return_type;
       if (type->is_pointer) {
