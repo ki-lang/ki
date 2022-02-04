@@ -143,7 +143,7 @@ void fc_write_c_predefine_class(FileCompiler* fc, Class* class);
 void fc_write_c_class(FileCompiler* fc, Class* class);
 void fc_write_c_enum(FileCompiler* fc, Enum* enu);
 void fc_write_c_func(FileCompiler* fc, Function* func);
-void fc_write_c_ast(FileCompiler* fc, Array* ast);
+void fc_write_c_ast(FileCompiler* fc, Scope* scope);
 void fc_indent(FileCompiler* fc, Str* append_to);
 void fc_write_c_token(FileCompiler* fc, Token* token);
 void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value);

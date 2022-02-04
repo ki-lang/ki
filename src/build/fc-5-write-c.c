@@ -50,7 +50,7 @@ void fc_write_c_all() {
         fc_write_c_enum(fc, array_get_index(fc->enums, x));
       }
 
-      fc_write_c_ast(fc, fc->scope->ast);
+      fc_write_c_ast(fc, fc->scope);
       fc_write_c(fc);
     }
   }
@@ -207,19 +207,31 @@ void fc_write_c_func(FileCompiler* fc, Function* func) {
       str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG_BUF = 0;\n");
     }
     fc->indent++;
-    fc_write_c_ast(fc, func->scope->ast);
+    fc_write_c_ast(fc, func->scope);
     fc->indent--;
     str_append_chars(fc->tkn_buffer, "}\n\n");
   }
 }
 
-void fc_write_c_ast(FileCompiler* fc, Array* ast) {
+void fc_write_c_ast(FileCompiler* fc, Scope* scope) {
+  Array* prev_local_vars = fc->local_var_names;
+
+  fc->local_var_names = array_make(8);
+
   int c = 0;
+  Array* ast = scope->ast;
   while (c < ast->length) {
     Token* t = array_get_index(ast, c);
     fc_write_c_token(fc, t);
     c++;
   }
+
+  if (!scope->did_return) {
+    deref_local_vars(fc, fc->local_var_names);
+  }
+
+  free(fc->local_var_names);
+  fc->local_var_names = prev_local_vars;
 }
 
 void fc_write_c_token(FileCompiler* fc, Token* token) {
@@ -337,7 +349,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     str_append_chars(fc->tkn_buffer, "while(");
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ") {\n");
-    fc_write_c_ast(fc, wt->scope->ast);
+    fc_write_c_ast(fc, wt->scope);
     str_append_chars(fc->tkn_buffer, "}\n\n");
   } else if (token->type == tkn_break) {
     str_append_chars(fc->tkn_buffer, "break;\n");
@@ -784,7 +796,7 @@ void fc_write_c_if(FileCompiler* fc, TokenIf* ift) {
     str_append_chars(fc->tkn_buffer, ") {\n");
   }
 
-  fc_write_c_ast(fc, ift->scope->ast);
+  fc_write_c_ast(fc, ift->scope);
 
   if (ift->condition) {
     str_append_chars(fc->tkn_buffer, "}\n");
