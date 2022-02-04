@@ -620,6 +620,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, Str* result,
 
   } else if (value->type == vt_prop_access) {
     ValueClassPropAccess* pa = value->item;
+
     if (pa->is_static) {
       Class* class = pa->on;
       ClassProp* prop = map_get(class->props, pa->name);
@@ -629,8 +630,23 @@ void fc_write_c_value(FileCompiler* fc, Value* value, Str* result,
       str_append_chars(result, "__");
       str_append_chars(result, pa->name);
     } else {
-      fc_write_c_value(fc, pa->on, result, func_result_vars);
       Value* val = pa->on;
+      if (val->return_type->type == vt_func_call) {
+        Class* retClass = val->return_type->class;
+        if (retClass && retClass->ref_count) {
+          // Buffer the value
+          char* buf_var_name = strdup(var_buf(fc));
+          str_append_chars(fc->tkn_buffer, buf_var_name);
+          str_append_chars(fc->tkn_buffer, " = ");
+          str_append(fc->tkn_buffer, result);
+          str_append_chars(fc->tkn_buffer, ";");
+          result->length = 0;
+          str_append_chars(result, buf_var_name);
+          array_push(func_result_vars, buf_var_name);
+        }
+      }
+
+      fc_write_c_value(fc, pa->on, result, func_result_vars);
       Type* type = val->return_type;
       if (type->is_pointer) {
         str_append_chars(result, "->");
