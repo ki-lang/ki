@@ -49,6 +49,7 @@ typedef struct FileCompiler {
   int var_bufc;
   char* var_buf;
   Array* var_bufs;
+  Array* local_var_names;
   // Misc
   char* sprintf;
   // Local identifiers

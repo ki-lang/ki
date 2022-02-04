@@ -32,6 +32,7 @@ FileCompiler* init_fc() {
   fc->var_bufc = 0;
   fc->var_buf = malloc(12);
   fc->var_bufs = array_make(8);
+  fc->local_var_names = array_make(8);
   //
   fc->sprintf = malloc(100);
   //
