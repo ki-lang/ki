@@ -143,7 +143,7 @@ void fc_write_c_class(FileCompiler* fc, Class* class) {
 
   // Free func
   ClassProp* prop = map_get(class->props, "__free");
-  if (class->ref_count && !prop) {
+  if (!prop) {
     str_append_chars(fc->h_code, "void ");
     str_append_chars(fc->h_code, class->cname);
     str_append_chars(fc->h_code, "____free(struct ");
@@ -265,8 +265,10 @@ void fc_write_c_func(FileCompiler* fc, Function* func) {
 
 void fc_write_c_ast(FileCompiler* fc, Scope* scope) {
   Array* prev_local_vars = fc->local_var_names;
+  Array* prev_var_bufs = fc->var_bufs;
 
   fc->local_var_names = array_make(8);
+  fc->var_bufs = array_make(8);
 
   int c = 0;
   Array* ast = scope->ast;
@@ -277,11 +279,13 @@ void fc_write_c_ast(FileCompiler* fc, Scope* scope) {
   }
 
   if (!scope->did_return) {
-    deref_local_vars(fc, fc->local_var_names);
+    deref_local_vars(fc);
   }
 
   free(fc->local_var_names);
+  free(fc->var_bufs);
   fc->local_var_names = prev_local_vars;
+  fc->var_bufs = prev_var_bufs;
 }
 
 void fc_write_c_token(FileCompiler* fc, Token* token) {
@@ -322,39 +326,57 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
   } else if (token->type == tkn_assign) {
     TokenAssign* ta = token->item;
 
-    // RC--
+    fc_write_c_value(fc, ta->left, true);
+    char* left = str_to_chars(fc->value_buffer);
+    fc_write_c_value(fc, ta->right, true);
+
     bool refc = false;
     bool refc_nullable = false;
+    Class* class = NULL;
     if (ta->type == op_eq) {
       Value* left = ta->left;
-      Class* class = left->return_type->class;
+      class = left->return_type->class;
       if (class && class->ref_count) {
         refc = true;
         if (left->return_type->nullable) {
           refc_nullable = true;
         }
-
-        fc_write_c_value(fc, ta->left, true);
-        str_append_chars(fc->tkn_buffer, "if(");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, "){ ");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, "->_RC--;\n");
-        str_append_chars(fc->tkn_buffer, "if(");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
-        str_append_chars(fc->tkn_buffer, class->cname);
-        str_append_chars(fc->tkn_buffer, "____free(");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ");");
-        str_append_chars(fc->tkn_buffer, " }");
-        str_append_chars(fc->tkn_buffer, "\n");
       }
     }
 
-    fc_write_c_value(fc, ta->left, true);
-    char* left = str_to_chars(fc->value_buffer);
-    fc_write_c_value(fc, ta->right, true);
+    // RC++ the new value first
+    if (refc) {
+      if (refc_nullable) {
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, left);
+        str_append_chars(fc->tkn_buffer, "){ ");
+      }
+      str_append_chars(fc->tkn_buffer, left);
+      str_append_chars(fc->tkn_buffer, "->_RC++;");
+      if (refc_nullable) {
+        str_append_chars(fc->tkn_buffer, " }");
+      }
+      str_append_chars(fc->tkn_buffer, "\n");
+    }
+
+    // RC-- the old value
+    if (refc) {
+      str_append_chars(fc->tkn_buffer, "if(");
+      str_append_chars(fc->tkn_buffer, left);
+      str_append_chars(fc->tkn_buffer, "){ ");
+      str_append_chars(fc->tkn_buffer, left);
+      str_append_chars(fc->tkn_buffer, "->_RC--;\n");
+      str_append_chars(fc->tkn_buffer, "if(");
+      str_append_chars(fc->tkn_buffer, left);
+      str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
+      str_append_chars(fc->tkn_buffer, class->cname);
+      str_append_chars(fc->tkn_buffer, "____free(");
+      str_append_chars(fc->tkn_buffer, left);
+      str_append_chars(fc->tkn_buffer, ");");
+      str_append_chars(fc->tkn_buffer, " }");
+      str_append_chars(fc->tkn_buffer, "\n");
+    }
+
     str_append_chars(fc->tkn_buffer, left);
     free(left);
     if (ta->type == op_eq) {
@@ -374,22 +396,6 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     }
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
-
-    // RC++
-    if (refc) {
-      fc_write_c_value(fc, ta->left, true);
-      if (refc_nullable) {
-        str_append_chars(fc->tkn_buffer, "if(");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, "){ ");
-      }
-      str_append(fc->tkn_buffer, fc->value_buffer);
-      str_append_chars(fc->tkn_buffer, "->_RC++;");
-      if (refc_nullable) {
-        str_append_chars(fc->tkn_buffer, " }");
-      }
-      str_append_chars(fc->tkn_buffer, "\n");
-    }
   } else if (token->type == tkn_return) {
     Value* retv = token->item;
     fc_write_c_value(fc, token->item, true);
@@ -403,7 +409,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       }
 
       // Deref local vars + Check if var_bufs RC == 0 (if so free)
-      deref_local_vars(fc, fc->local_var_names);
+      deref_local_vars(fc);
 
       if (refc) {
         str_append(fc->tkn_buffer, fc->value_buffer);
@@ -415,7 +421,6 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     str_append_chars(fc->tkn_buffer, "return ");
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
-
   } else if (token->type == tkn_if) {
     fc_write_c_if(fc, token->item);
   } else if (token->type == tkn_while) {
@@ -594,7 +599,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     Array* arg_strings = array_make(4);
     for (int i = 0; i < fa->arg_values->length; i++) {
       Value* v = array_get_index(fa->arg_values, i);
-      fc_write_c_value(fc, v, true);
+      fc->value_buffer->length = 0;
+      fc_write_c_value(fc, v, false);
       array_push(arg_strings, str_to_chars(fc->value_buffer));
     }
     fc->value_buffer->length = 0;
@@ -634,7 +640,12 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
         str_append_chars(fc->tkn_buffer, ";\n");
         result->length = 0;
         str_append_chars(result, buf_var_name);
-        array_push(fc->var_bufs, buf_var_name);
+
+        VarInfo* vi = malloc(sizeof(VarInfo));
+        vi->name = buf_var_name;
+        vi->return_type = value->return_type;
+
+        array_push(fc->var_bufs, vi);
       }
     }
 
@@ -715,8 +726,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     if (value->return_type->is_pointer) {
       sign = "->";
       fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
-      str_append_chars(fc->c_code_after, " = ki__mem__alloc(sizeof(");
-      fc_write_c_type(fc->c_code_after, value->return_type, NULL);
+      str_append_chars(fc->c_code_after, " = ki__mem__alloc(sizeof(struct ");
+      str_append_chars(fc->c_code_after, class->cname);
       str_append_chars(fc->c_code_after, "));\n");
     } else {
       sign = ".";
@@ -724,34 +735,57 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(fc->c_code_after, ";\n");
     }
 
-    if (class->ref_count) {
-      str_append_chars(fc->c_code_after, "KI_RET_V");
-      str_append_chars(fc->c_code_after, sign);
-      str_append_chars(fc->c_code_after, "_RC = 0;\n");
-    }
+    // if (class->ref_count) {
+    //   str_append_chars(fc->c_code_after, "KI_RET_V");
+    //   str_append_chars(fc->c_code_after, sign);
+    //   str_append_chars(fc->c_code_after, "_RC = 0;\n");
+    // }
 
     for (int i = 0; i < ini->prop_values->keys->length; i++) {
       char* prop_name = array_get_index(ini->prop_values->keys, i);
+      Value* v = array_get_index(ini->prop_values->values, i);
       str_append_chars(fc->c_code_after, "KI_RET_V");
       str_append_chars(fc->c_code_after, sign);
       str_append_chars(fc->c_code_after, prop_name);
       str_append_chars(fc->c_code_after, " = ");
       str_append_chars(fc->c_code_after, prop_name);
       str_append_chars(fc->c_code_after, ";\n");
+
+      if (v->return_type->class && v->return_type->class->ref_count) {
+        str_append_chars(fc->c_code_after, "KI_RET_V");
+        str_append_chars(fc->c_code_after, sign);
+        str_append_chars(fc->c_code_after, prop_name);
+        str_append_chars(fc->c_code_after, "->_RC++;\n");
+      }
     }
-    // for (int i = 0; i < class->props->keys->length; i++) {
-    //   char* prop_name = array_get_index(class->props->keys, i);
-    //   if (map_contains(ini->prop_values, prop_name)) {
-    //     continue;
-    //   }
-    //   ClassProp* prop = array_get_index(class->props->values, i);
-    //   str_append_chars(fc->c_code_after, "KI_RET_V");
-    //   str_append_chars(fc->c_code_after, sign);
-    //   str_append_chars(fc->c_code_after, prop_name);
-    //   str_append_chars(fc->c_code_after, " = ");
-    //   fc_write_c_value(fc, prop->default_value);
-    //   str_append_chars(fc->c_code_after, ";\n");
-    // }
+
+    for (int i = 0; i < class->props->keys->length; i++) {
+      char* prop_name = array_get_index(class->props->keys, i);
+      if (map_contains(ini->prop_values, prop_name)) {
+        continue;
+      }
+      ClassProp* prop = array_get_index(class->props->values, i);
+      if (!prop->default_value) {
+        continue;
+      }
+
+      char* cache = str_to_chars(fc->value_buffer);
+      fc->value_buffer->length = 0;
+      fc_write_c_value(fc, prop->default_value, false);
+      char* defv = str_to_chars(fc->value_buffer);
+      fc->value_buffer->length = 0;
+      str_append_chars(fc->value_buffer, cache);
+      free(cache);
+
+      str_append_chars(fc->c_code_after, "KI_RET_V");
+      str_append_chars(fc->c_code_after, sign);
+      str_append_chars(fc->c_code_after, prop_name);
+      str_append_chars(fc->c_code_after, " = ");
+      str_append_chars(fc->c_code_after, defv);
+      str_append_chars(fc->c_code_after, ";\n");
+
+      free(defv);
+    }
 
     str_append_chars(fc->c_code_after, "return KI_RET_V;\n");
     str_append_chars(fc->c_code_after, "}\n\n");
@@ -780,25 +814,6 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     }
   } else {
     fc_error(fc, "Unhandled value token (compiler bug)", NULL);
-  }
-
-  if (new_value) {
-    // Write + Clear var bufs
-    for (int i = 0; i < fc->var_bufs->length; i++) {
-      char* vb = array_get_index(fc->var_bufs, i);
-
-      str_append_chars(fc->tkn_buffer, "if(");
-      str_append_chars(fc->tkn_buffer, vb);
-      str_append_chars(fc->tkn_buffer, " && ");
-      str_append_chars(fc->tkn_buffer, vb);
-      str_append_chars(fc->tkn_buffer, "->_RC == 0) ki__mem__free(");
-      str_append_chars(fc->tkn_buffer, vb);
-      str_append_chars(fc->tkn_buffer, ");\n");
-
-      free(vb);
-    }
-
-    fc->var_bufs->length = 0;
   }
 }
 
@@ -882,6 +897,12 @@ void fc_write_c_type(Str* append_to, Type* type, char* varname) {
     fc_write_c_type_varname(append_to, type, varname);
     return;
   }
+  if (type->type == type_enum) {
+    str_append_chars(append_to, "int");
+    fc_write_c_type_varname(append_to, type, varname);
+    return;
+  }
+  die("Could not convert type to c\n");
 }
 
 void fc_write_c_if(FileCompiler* fc, TokenIf* ift) {
@@ -924,7 +945,33 @@ char* var_buf(FileCompiler* fc) {
   return fc->var_buf;
 }
 
-void deref_local_vars(FileCompiler* fc, Array* local_vars) {
+void deref_local_vars(FileCompiler* fc) {
+  // Write + Clear var bufs
+  for (int i = 0; i < fc->var_bufs->length; i++) {
+    VarInfo* vi = array_get_index(fc->var_bufs, i);
+    char* vb = vi->name;
+    Type* rt = vi->return_type;
+
+    str_append_chars(fc->tkn_buffer, "if(");
+    if (rt->nullable) {
+      str_append_chars(fc->tkn_buffer, vb);
+      str_append_chars(fc->tkn_buffer, " && ");
+    }
+    str_append_chars(fc->tkn_buffer, vb);
+    str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
+    str_append_chars(fc->tkn_buffer, rt->class->cname);
+    str_append_chars(fc->tkn_buffer, "____free(");
+    str_append_chars(fc->tkn_buffer, vb);
+    str_append_chars(fc->tkn_buffer, ");\n");
+
+    free(vb);
+    free(vi);
+  }
+
+  fc->var_bufs->length = 0;
+
+  // Clear local vars
+  Array* local_vars = fc->local_var_names;
   for (int i = 0; i < local_vars->length; i++) {
     TokenDeclare* decl = array_get_index(local_vars, i);
     Class* class = decl->value->return_type->class;

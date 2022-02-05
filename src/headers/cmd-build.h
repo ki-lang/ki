@@ -151,7 +151,7 @@ void fc_write_c_type(Str* append_to, Type* type, char* varname);
 void fc_write_c_if(FileCompiler* fc, TokenIf* ift);
 Str* value_buf(FileCompiler* fc);
 char* var_buf(FileCompiler* fc);
-void deref_local_vars(FileCompiler* fc, Array* local_vars);
+void deref_local_vars(FileCompiler* fc);
 
 // Compile
 void compile_all();

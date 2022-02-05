@@ -116,7 +116,7 @@ class StringChunker{
 	public u64 start = 0;
 	public u64 end = 0;
 	public bool on_bytes = false;
-	public ?string break_on;
+	public ?string break_on = null;
 
 	public func reset(){
 		this.start = 0;

@@ -64,8 +64,9 @@ func free(ptr adr) {
 
 	#elif OS_LINUX
 
+	adr -= 8;
 	// 0 = success, -1 = fail
-	uxx size = getptrv adr - 8 as uxx;
+	uxx size = getptrv adr as uxx;
 	i32 result = main:main:munmap(adr, size);
 
 	#else

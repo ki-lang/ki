@@ -343,3 +343,8 @@ typedef struct TokenThrow {
   char* msg;
   Type* return_type;
 } TokenThrow;
+
+typedef struct VarInfo {
+  char* name;
+  Type* return_type;
+} VarInfo;
