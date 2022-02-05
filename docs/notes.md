@@ -3,6 +3,7 @@
 
 ## Todo
 
+! _KI_INIT objects are not being free'd
 - type checking on assign
 - refcounting + free
 - specify list of non-allowed variable/func/class names

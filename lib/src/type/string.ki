@@ -107,7 +107,9 @@ class string {
 		ptr y = x;
 		y += length;
 		y = '\0';
-		return string.make(x, length);
+		@ res = string.make(x, length);
+		free(x);
+		return res;
 	}
 }
 

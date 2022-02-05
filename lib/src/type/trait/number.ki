@@ -25,7 +25,10 @@ trait Number {
 //	return 0;
 // }
 	public func to_string() type:string {
-		return this.to_cstring().to_string();
+		ki:type:cstring x = this.to_cstring();
+		string res = x.to_string();
+		ki:mem:free(x);
+		return res;
 	}
 
 	public func to_cstring() type:cstring {
