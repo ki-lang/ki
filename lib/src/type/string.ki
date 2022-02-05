@@ -6,7 +6,7 @@ use mem {alloc,copy,equal,free};
 class string {
 	public u64 length = 0;
 	private u64 mem_size = 0;
-	private ptr data;
+	private ptr data = 0;
 
 	static func make(ptr data, u64 length) string {
 		u64 mem_size = length + 10;

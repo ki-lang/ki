@@ -348,10 +348,10 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     if (refc) {
       if (refc_nullable) {
         str_append_chars(fc->tkn_buffer, "if(");
-        str_append_chars(fc->tkn_buffer, left);
+        str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, "){ ");
       }
-      str_append_chars(fc->tkn_buffer, left);
+      str_append(fc->tkn_buffer, fc->value_buffer);
       str_append_chars(fc->tkn_buffer, "->_RC++;");
       if (refc_nullable) {
         str_append_chars(fc->tkn_buffer, " }");
@@ -507,10 +507,14 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
   //
   // printf("Type: %d\n", value->type);
   if (value->type == vt_string) {
-    str_append_chars(result, "ki__type__string__make(\"");
+    char* buf_var_name = strdup(var_buf(fc));
+
+    str_append_chars(fc->tkn_buffer, "struct ki__type__string* ");
+    str_append_chars(fc->tkn_buffer, buf_var_name);
+    str_append_chars(fc->tkn_buffer, " = ki__type__string__make(\"");
     char* str = value->item;
-    str_append_chars(result, str);
-    str_append_chars(result, "\", ");
+    str_append_chars(fc->tkn_buffer, str);
+    str_append_chars(fc->tkn_buffer, "\", ");
     size_t len = strlen(str);
     int count = 0;
     int diff = 0;
@@ -533,8 +537,23 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     len -= diff;
     char lenstr[20];
     sprintf(lenstr, "%zu", len);
-    str_append_chars(result, lenstr);
-    str_append_chars(result, ")");
+    str_append_chars(fc->tkn_buffer, lenstr);
+    str_append_chars(fc->tkn_buffer, ");\n");
+
+    str_append_chars(fc->tkn_buffer, buf_var_name);
+    str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+
+    str_append_chars(result, buf_var_name);
+
+    VarInfo* vi = malloc(sizeof(VarInfo));
+    vi->name = buf_var_name;
+    // todo: this leaks memory
+    vi->return_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "string"));
+    //
+
+    array_push(fc->var_bufs, vi);
+
   } else if (value->type == vt_null) {
     str_append_chars(result, "0");
     // Bools
@@ -638,6 +657,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
         str_append_chars(fc->tkn_buffer, " = ");
         str_append(fc->tkn_buffer, result);
         str_append_chars(fc->tkn_buffer, ";\n");
+        str_append_chars(fc->tkn_buffer, buf_var_name);
+        str_append_chars(fc->tkn_buffer, "->_RC++;\n");
         result->length = 0;
         str_append_chars(result, buf_var_name);
 
@@ -955,7 +976,7 @@ void deref_local_vars(FileCompiler* fc) {
     str_append_chars(fc->tkn_buffer, "if(");
     if (rt->nullable) {
       str_append_chars(fc->tkn_buffer, vb);
-      str_append_chars(fc->tkn_buffer, " && ");
+      str_append_chars(fc->tkn_buffer, " && --");
     }
     str_append_chars(fc->tkn_buffer, vb);
     str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
