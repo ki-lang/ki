@@ -71,9 +71,11 @@ trait Number {
 		}
 		setptrv result to '\0';
 
+		free(str);
+
 		result = tmp;
 		@ r = cast result as type:cstring;
-		//c:printf(c"r:%s\n", r);
+
 		return r;
 	}
 }
