@@ -80,7 +80,7 @@ void fc_write_c(FileCompiler* fc) {
   fc->create_o_file = false;
   if (!fc->is_header && strlen(code) > 0) {
     fc->create_o_file = true;
-    if (false) {
+    if (true) {
       write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
 
       char* incl = malloc(KI_PATH_MAX + 50);

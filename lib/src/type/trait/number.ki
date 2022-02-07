@@ -71,7 +71,7 @@ trait Number {
 		}
 		setptrv result to '\0';
 
-		free(str);
+		ki:mem:free(str);
 
 		result = tmp;
 		@ r = cast result as type:cstring;
