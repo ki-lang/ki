@@ -704,16 +704,37 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     Class* class = ini->class;
     char* func_name = malloc(30);
     sprintf(func_name, "_KI_CLASS_INIT_%d", GEN_C);
-    str_append_chars(result, func_name);
-    str_append_chars(result, "(");
+
+    char* buf_var_name = strdup(var_buf(fc));
+    str_append_chars(result, buf_var_name);
+
+    // Set cache
+    char* cache = str_to_chars(fc->value_buffer);
+
+    //
+    Str* args_str = str_make("");
     for (int i = 0; i < ini->prop_values->values->length; i++) {
       if (i > 0) {
-        str_append_chars(result, ", ");
+        str_append_chars(args_str, ", ");
       }
       Value* val = array_get_index(ini->prop_values->values, i);
+      fc->value_buffer->length = 0;
       fc_write_c_value(fc, val, false);
+      str_append(args_str, fc->value_buffer);
     }
-    str_append_chars(result, ")");
+    fc_write_c_type(fc->tkn_buffer, value->return_type, buf_var_name);
+    str_append_chars(fc->tkn_buffer, " = ");
+
+    str_append_chars(fc->tkn_buffer, func_name);
+    str_append_chars(fc->tkn_buffer, "(");
+    str_append(fc->tkn_buffer, args_str);
+    str_append_chars(fc->tkn_buffer, ");\n");
+    free_str(args_str);
+
+    // Restore cache
+    fc->value_buffer->length = 0;
+    str_append_chars(fc->value_buffer, cache);
+    free(cache);
 
     // Write header
     fc_write_c_type(fc->h_code, value->return_type, NULL);
