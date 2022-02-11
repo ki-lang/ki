@@ -176,7 +176,8 @@ void fc_write_c_class(FileCompiler* fc, Class* class) {
         str_append_chars(fc->c_code, "if(--this->");
         str_append_chars(fc->c_code, name);
         str_append_chars(fc->c_code, "->_RC == 0) ");
-        str_append_chars(fc->c_code, "ki__mem__free(this->");
+        str_append_chars(fc->c_code, prop->return_type->class->cname);
+        str_append_chars(fc->c_code, "____free(this->");
         str_append_chars(fc->c_code, name);
         str_append_chars(fc->c_code, ");\n");
         if (nullable) {
@@ -400,7 +401,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     Value* retv = token->item;
     fc_write_c_value(fc, token->item, true);
 
-    if (fc->local_var_names->length > 0) {
+    if (fc->local_var_names->length > 0 || fc->var_bufs->length > 0) {
       bool refc = false;
       if (retv->return_type->class && retv->return_type->class->ref_count) {
         refc = true;
@@ -976,8 +977,9 @@ void deref_local_vars(FileCompiler* fc) {
     str_append_chars(fc->tkn_buffer, "if(");
     if (rt->nullable) {
       str_append_chars(fc->tkn_buffer, vb);
-      str_append_chars(fc->tkn_buffer, " && --");
+      str_append_chars(fc->tkn_buffer, " && ");
     }
+    str_append_chars(fc->tkn_buffer, "--");
     str_append_chars(fc->tkn_buffer, vb);
     str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
     str_append_chars(fc->tkn_buffer, rt->class->cname);
