@@ -45,11 +45,8 @@ class Server {
 			addrlen = 16;
         	i32 result = main:main:accept(s.listenfd, clientaddr, getptr addrlen);
 			if (result < 0){
-				// result.to_cstring();
 				io:print("failed to accept\n");
-				throw failed_to_accept;
 			}else{
-				//io:print("success\n");
 				this.clients.set(rslot, getptr result);
 				this.respond(rslot);
 			}
@@ -86,7 +83,7 @@ class Server {
 			io:write(clientfd, output);
 		}
 
-		i32 result = main:main:shutdown(clientfd, 2); // SHUT_RD, SHUT_WR, SHUT_RDWR have the value 0, 1, 2
+		i32 result = main:main:shutdown(clientfd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
 		result = main:main:close(clientfd);
 
 		mem:free(buf);

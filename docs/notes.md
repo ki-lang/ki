@@ -3,12 +3,13 @@
 
 ## Todo
 
-! _KI_INIT objects are not being free'd
+- async
 - type checking on assign
-- refcounting + free
 - specify list of non-allowed variable/func/class names
 - when using throw check function can_error
 - concurrency
+- concat strings
+- improve refcounting
 
 
 ## Compile cache
@@ -21,6 +22,12 @@ when to add to depency_for:
 - when using class from other file
 - when using a function from other file
 - when using enum from other file
+
+## Async
+- No object sharing, only clones allowed
+
+async x = this.respond(rslot);
+@ result = await x;
 
 ## RC
 
@@ -43,3 +50,12 @@ b->prop = NULL; rc = 0; -> we cannot dealloc here because a still holds a refere
 // deref a, so rc = 1;
 // deref b, so rc = 0;
 return;
+
+## Syntax
+@ list = array<i32>{};
+@ list = []i32,10;
+
+list.push(1);
+@ z = list.get_index(55) or value 0;
+@ m = Map<string,i32>{};
+@ mv = m.get("yolo") or pass;

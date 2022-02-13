@@ -1,0 +1,20 @@
+
+func main() i32 {
+
+	@ results = []chan,10;
+	@ x = 10;
+	while(x > 0){
+		x--;
+		chan b = async multiply_by_2(x);
+		results.push(b)
+	}
+
+	@ total = 0;
+	foreach(results as v){
+		total += await v;
+	}
+
+	ki:io:print(total.to_string());
+
+	return 0;
+}
