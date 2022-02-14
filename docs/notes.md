@@ -26,7 +26,19 @@ when to add to depency_for:
 ## Async
 - No object sharing, only clones allowed
 
-async x = this.respond(rslot);
+chan x = async this.respond(rslot);
+=>
+Async* tmp = malloc(Async);
+tmp->func = &func;
+tmp->args = malloc(ARGS_SIZE);
+for(args as arg){
+	if(arg is class|actor){
+		arg->_RC++;
+	}
+	memcopy(tmp->args, arg, sizeof(arg));
+	tmp->args += sizeof(arg);
+}
+
 @ result = await x;
 
 ## RC
