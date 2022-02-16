@@ -108,6 +108,7 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
       }
     }
 
+    //
     if (strcmp(token, "@") == 0) {
       token_declare(fc, scope, NULL);
       continue;

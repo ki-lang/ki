@@ -3,10 +3,21 @@ func x() string {
 	return "hello world\n";
 }
 
+func hi() i32 {
+	ki:io:print("hello world\n");
+	return "ready";
+}
+
 func main() i32 {
 	
 	//@ a = x(); 
 	//print(a);
+
+	@ c = async hi();
+	@ a = await c;
+	ki:io:print(a);
+
+	return 0;
 
 	@ s = ki:http:Server { port: 9000, handler: ki:http:response_handler };
 	s.start();

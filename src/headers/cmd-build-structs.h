@@ -237,10 +237,11 @@ typedef enum ValueType {
   vt_cast,
   vt_getptr,
   vt_getptrv,
-  vt_setptrv,
+  vt_setptrv, // 15
   vt_class_init,
   vt_prop_access,
-  // vt_enum_value, // 15
+  vt_async,
+  vt_await,
 } ValueType;
 
 typedef struct ValueFuncCall {
@@ -290,7 +291,6 @@ typedef struct ValueClassPropAccess {
   char* name;
   bool is_static;
 } ValueClassPropAccess;
-
 
 //////////
 
