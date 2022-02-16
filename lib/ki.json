@@ -5,7 +5,8 @@
 		"type_trait": "src/type/trait",
 		"io": "src/io",
 		"net": "src/net",
-		"http": "src/http"
+		"http": "src/http",
+		"async": "src/async"
 	},
 	"headers": {
 		"dirs": ["headers"]

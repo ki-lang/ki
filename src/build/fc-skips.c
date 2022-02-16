@@ -67,6 +67,14 @@ void fc_skip_body(FileCompiler* fc, char* start, char* end, char* alt_end,
       if (id == NULL) {
         continue;
       }
+      if (!uses_async && id->package == NULL && id->namespace == NULL) {
+        if (strcmp(id->name, "async") == 0) {
+          PkgCompiler* pkc = pkc_get_by_name("ki");
+          pkc_create_namespace(pkc, "async");
+          uses_async = true;
+        }
+        continue;
+      }
     }
   }
 

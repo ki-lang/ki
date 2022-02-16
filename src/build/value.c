@@ -251,13 +251,12 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
           fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"));
     }
   } else if (strcmp(token, "async") == 0) {
-    Value* value = fc_read_value(fc, scope, false, true, true);
+    Value* fcall = fc_read_value(fc, scope, false, true, true);
 
-    if (value->type != vt_func_call) {
+    if (fcall->type != vt_func_call) {
       fc_error(fc, "Expected a function call after 'async'", NULL);
     }
 
-    Value* fcall = value;
     value = init_value();
     value->type = vt_async;
     value->item = fcall;
@@ -266,15 +265,14 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     value->return_type->func_return_type = fcall->return_type;
 
   } else if (strcmp(token, "await") == 0) {
-    Value* value = fc_read_value(fc, scope, false, true, true);
+    Value* chan = fc_read_value(fc, scope, false, true, true);
     Type* expect_type =
         fc_identifier_to_type(fc, create_identifier("ki", "async", "Channel"));
 
-    if (value->return_type->class != expect_type->class) {
+    if (chan->return_type->class != expect_type->class) {
       fc_error(fc, "Expected a 'channel' value after 'await'", NULL);
     }
 
-    Value* chan = value;
     value = init_value();
     value->type = vt_await;
     value->item = chan;

@@ -21,6 +21,7 @@ void cmd_build(Array* files, Map* options) {
   c_enum_identifiers = map_make();
   c_union_identifiers = map_make();
   allow_new_namespaces = true;
+  uses_async = false;
   last_readonly_i = 0;
   GEN_C = 0;
   //
