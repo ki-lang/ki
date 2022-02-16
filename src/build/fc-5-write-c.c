@@ -855,6 +855,11 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       }
       str_append_chars(result, pa->name);
     }
+  } else if (value->type == vt_async) {
+    Value* fcall = value->item;
+    //
+  } else if (value->type == vt_await) {
+    //
   } else {
     fc_error(fc, "Unhandled value token (compiler bug)", NULL);
   }

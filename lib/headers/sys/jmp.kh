@@ -1,0 +1,4 @@
+
+namespace main;
+
+func setjmp(ptr jmpbuf) i32;
