@@ -1,0 +1,11 @@
+
+namespace async;
+
+class Task {
+	ptr handler_func;
+	ptr func;
+	ptr args = 0;
+	ptr jmpbuf = 0;
+	ptr result = 0;
+	bool ready = false;
+}

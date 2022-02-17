@@ -261,23 +261,24 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     value->type = vt_async;
     value->item = fcall;
     value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "async", "Channel"));
+        fc_identifier_to_type(fc, create_identifier("ki", "async", "Task"));
     value->return_type->func_return_type = fcall->return_type;
 
   } else if (strcmp(token, "await") == 0) {
-    Value* chan = fc_read_value(fc, scope, false, true, true);
+    Value* task = fc_read_value(fc, scope, false, true, true);
     Type* expect_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "async", "Channel"));
+        fc_identifier_to_type(fc, create_identifier("ki", "async", "Task"));
 
-    if (chan->return_type->class != expect_type->class) {
+    if (task->return_type->class != expect_type->class) {
       fc_error(fc, "Expected a 'channel' value after 'await'", NULL);
     }
 
+    Type* ret_type = task->return_type->func_return_type;
+
     value = init_value();
     value->type = vt_await;
-    value->item = chan;
-    value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "async", "Channel"));
+    value->item = task;
+    value->return_type = ret_type;
 
   } else if (is_valid_varname(token)) {
     IdentifierFor* idf = NULL;

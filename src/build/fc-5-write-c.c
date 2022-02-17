@@ -638,6 +638,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(result, arg_str);
       free(arg_str);
     }
+    free(arg_strings);
+
     if (fa->on->return_type->func_can_error) {
       if (fa->arg_values->length > 0) {
         str_append_chars(result, ", ");
@@ -856,9 +858,114 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(result, pa->name);
     }
   } else if (value->type == vt_async) {
-    Value* fcall = value->item;
+    Value* fcallv = value->item;
+    ValueFuncCall* fcall = fcallv->item;
+    Value* on = fcall->on;
+    char* size = malloc(10);
     //
+    Type* task_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "async", "Task"));
+    // Cache current value
+    char* cache = str_to_chars(fc->value_buffer);
+
+    // Step 1. Generate execution function
+    char* handler_name = var_buf(fc);
+    str_append_chars(fc->c_code_after, "void ");
+    str_append_chars(fc->c_code_after, handler_name);
+    str_append_chars(fc->c_code_after, "(");
+    fc_write_c_type(fc->c_code_after, task_type, "task");
+    str_append_chars(fc->c_code_after, ") {\n");
+    str_append_chars(fc->c_code_after, "void* arg_pointer = task->args;\n");
+    // Body
+    Array* arg_strings = array_make(4);
+    for (int i = 0; i < fcall->arg_values->length; i++) {
+      char* arg_name = malloc(10);
+      Value* v = array_get_index(fcall->arg_values, i);
+      sprintf(arg_name, "arg_%d", i);
+      array_push(arg_strings, arg_name);
+      fc_write_c_type(fc->c_code_after, v->return_type, arg_name);
+      str_append_chars(fc->c_code_after, " = arg_pointer;\n");
+      str_append_chars(fc->c_code_after, "arg_pointer += ");
+      sprintf(size, "%d", v->return_type->bytes);
+      str_append_chars(fc->c_code_after, ";\n");
+    }
+    // Call func
+    char* func_ref_name = strdup(var_buf(fc));
+    str_append_chars(fc->c_code_after, "void* ");
+    str_append_chars(fc->c_code_after, func_ref_name);
+    str_append_chars(fc->c_code_after, " = task->func;\n");
+
+    char* ret_name = NULL;
+    if (value->return_type) {
+      ret_name = var_buf(fc);
+      fc_write_c_type(fc->c_code_after, fcallv->return_type, ret_name);
+      str_append_chars(fc->c_code_after, " = ");
+    }
+    str_append_chars(fc->c_code_after, "((");
+    fc_write_c_type(fc->c_code_after, on->return_type, NULL);
+    str_append_chars(fc->c_code_after, ")");
+    str_append_chars(fc->c_code_after, func_ref_name);
+    free(func_ref_name);
+    str_append_chars(fc->c_code_after, ")(");
+    // Args
+    for (int i = 0; i < arg_strings->length; i++) {
+      char* arg_name = array_get_index(arg_strings, i);
+      if (i > 0) {
+        str_append_chars(fc->c_code_after, ", ");
+      }
+      str_append_chars(fc->c_code_after, arg_name);
+      free(arg_name);
+    }
+    free(arg_strings);
+    str_append_chars(fc->c_code_after, ");\n");
+    // End func call
+    if (ret_name) {
+      str_append_chars(fc->c_code_after, "task->result = (void*)");
+      str_append_chars(fc->c_code_after, ret_name);
+      str_append_chars(fc->c_code_after, ";\n");
+    }
+    str_append_chars(fc->c_code_after, "task->ready = 1;\n");
+    // End body
+    str_append_chars(fc->c_code_after, "}\n\n");
+
+    // Step 2. Create Task and push onto stack
+    // Func ref
+    char* func_name = strdup(var_buf(fc));
+    str_append_chars(fc->tkn_buffer, "void* ");
+    str_append_chars(fc->tkn_buffer, func_name);
+    str_append_chars(fc->tkn_buffer, " = ");
+    fc->value_buffer->length = 0;
+    fc_write_c_value(fc, on, false);
+    str_append(fc->tkn_buffer, fc->value_buffer);
+    str_append_chars(fc->tkn_buffer, ";\n");
+    // Init Task
+    char* var_name = var_buf(fc);
+    fc_write_c_type(fc->tkn_buffer, task_type, var_name);
+    str_append_chars(fc->tkn_buffer, " = ki__mem__alloc(");
+    sprintf(size, "%d", task_type->class->size);
+    str_append_chars(fc->tkn_buffer, size);
+    str_append_chars(fc->tkn_buffer, ");\n");
+    //
+    str_append_chars(fc->tkn_buffer, var_name);
+    str_append_chars(fc->tkn_buffer, "->_RC = 1;\n");
+    // Set function
+    str_append_chars(fc->tkn_buffer, var_name);
+    str_append_chars(fc->tkn_buffer, "->func = ");
+    str_append_chars(fc->tkn_buffer, func_name);
+    str_append_chars(fc->tkn_buffer, ";\n");
+    // Set args
+
+    // Set cache back
+    fc->value_buffer->length = 0;
+    str_append_chars(fc->value_buffer, cache);
+    free(cache);
+    free(size);
+    free(func_name);
+
+    str_append_chars(result, var_name);
+
   } else if (value->type == vt_await) {
+    str_append_chars(result, "0");
     //
   } else {
     fc_error(fc, "Unhandled value token (compiler bug)", NULL);
@@ -869,7 +976,9 @@ char i_to_str_buf[100];
 
 void fc_write_c_type_varname(Str* append_to, Type* type, char* varname) {
   if (varname) {
-    str_append_chars(append_to, " ");
+    if (type->type != type_funcref) {
+      str_append_chars(append_to, " ");
+    }
     str_append_chars(append_to, varname);
   }
   if (type && type->is_array) {

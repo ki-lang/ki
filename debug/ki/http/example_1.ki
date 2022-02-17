@@ -3,7 +3,7 @@ func x() string {
 	return "hello world\n";
 }
 
-func hi() i32 {
+func hi() string {
 	ki:io:print("hello world\n");
 	return "ready";
 }
