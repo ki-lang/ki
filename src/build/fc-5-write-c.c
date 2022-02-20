@@ -54,6 +54,9 @@ void fc_write_c_all() {
       fc_write_c(fc);
     }
   }
+
+  write_file(path, "void KI_RM_push_task(struct ki__async__Task* task);\n",
+             true);
 }
 
 void fc_write_c_pre(FileCompiler* fc) {
@@ -216,6 +219,10 @@ void fc_write_c_enum(FileCompiler* fc, Enum* enu) {
 void fc_write_c_func(FileCompiler* fc, Function* func) {
   // Clear local var names array
   fc->local_var_names->length = 0;
+
+  if (uses_async && strcmp(func->cname, "main") == 0) {
+    func->cname = strdup("ki_async_main");
+  }
 
   //
   fc_write_c_type(fc->tkn_buffer, func->return_type, NULL);
@@ -993,6 +1000,11 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append(fc->tkn_buffer, fc->value_buffer);
       str_append_chars(fc->tkn_buffer, ";\n");
     }
+
+    // Push task on stack
+    str_append_chars(fc->tkn_buffer, "KI_RM_push_task(");
+    str_append_chars(fc->tkn_buffer, var_name);
+    str_append_chars(fc->tkn_buffer, ");\n");
 
     // Set cache back
     fc->value_buffer->length = 0;

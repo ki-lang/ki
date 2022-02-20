@@ -36,7 +36,6 @@ void fc_compile_local_c_files() {
 
   free(cmd);
   free(c_file);
-  free(o_file);
 }
 
 void compile_all() {
@@ -64,7 +63,7 @@ void compile_all() {
   // Compile executable
   char* cmd = malloc(3000);
   strcpy(cmd, get_compiler_path());
-  strcat(cmd, " -o test");
+  strcat(cmd, " -lpthread -pthread -o test");
 
   for (int i = 0; i < o_files->length; i++) {
     strcat(cmd, " ");

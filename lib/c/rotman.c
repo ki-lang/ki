@@ -3,6 +3,8 @@
 
 #include <pthread.h>
 #include <setjmp.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include "/home/ctx/.ki/cache/project.h"
 
@@ -10,7 +12,7 @@
 #define KI_MAX_TASKS_PER_R 10
 
 pthread_key_t KI_RM;
-char KI_RM_LIST_LOCK = 0;
+pthread_mutex_t KI_RM_LIST_LOCK;
 
 // typedef struct ki__async__Task {
 //   void* handler_func;
@@ -25,6 +27,7 @@ char KI_RM_LIST_LOCK = 0;
 typedef struct ki__async__Task ki__async__Task;
 
 typedef struct RoutineManager {
+  int nr;
   ki__async__Task* tasks[KI_MAX_TASKS_PER_R];
   char current_task;
   char tasks_running;
@@ -40,7 +43,7 @@ int KI_RM_TASK_LIST_PRIO_C = 0;
 void* KI_RM_init_thread(void* i);
 void KI_RM_task_run_loop(RoutineManager* rm);
 
-void KI_RM_init() {
+int main() {
   pthread_t threads[KI_NUMTHREADS];
 
   pthread_key_create(&KI_RM, NULL);
@@ -49,6 +52,7 @@ void KI_RM_init() {
   }
 
   // Run main
+  ki_async_main();
 
   // Wait until all threads are done
   int run_count = 0;
@@ -71,6 +75,7 @@ void* KI_RM_init_thread(void* i) {
   size_t nr = (size_t)i;
   //
   RoutineManager* rm = ki__mem__alloc(sizeof(RoutineManager));
+  rm->nr = nr;
   rm->current_task = 0;
   rm->tasks_running = 0;
 
@@ -91,12 +96,14 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
     if (rm->tasks_running > 0) {
       if (rm->tasks[rm->current_task]) {
         if (!setjmp(rm->jmpbuf)) {
-          ki__async__Task* task = rm->tasks[rm->current_task];
+          int nr = rm->current_task;
+          ki__async__Task* task = rm->tasks[nr];
           if (task->jmpbuf) {
             longjmp(*(jmp_buf*)task->jmpbuf, 1);
           } else {
             ((void (*)(ki__async__Task*))task->handler_func)(task);
             rm->tasks_running--;
+            rm->tasks[nr] = NULL;
           }
         }
       } else {
@@ -109,20 +116,25 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
     //
     if (rm->tasks_running < 2) {
       // Get new task
-      while (KI_RM_LIST_LOCK) {
-      }
-      KI_RM_LIST_LOCK = 1;
+      pthread_mutex_lock(&KI_RM_LIST_LOCK);
+      //   printf("lock\n");
+
       int pos = 0;
+      char found = 0;
       while (1) {
         ki__async__Task* task = KI_RM_TASK_LIST[pos];
         if (task) {
           for (int i = 0; i < KI_MAX_TASKS_PER_R; i++) {
             if (rm->tasks[i] == NULL) {
               rm->tasks[i] = task;
-              KI_RM_TASK_LIST[pos] = NULL;
               rm->tasks_running++;
+              KI_RM_TASK_LIST[pos] = NULL;
+              found = 1;
               break;
             }
+          }
+          if (found) {
+            break;
           }
         }
         pos++;
@@ -130,9 +142,30 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
           break;
         }
       }
-      KI_RM_LIST_LOCK = 0;
+
+      //   printf("unlock\n");
+      pthread_mutex_unlock(&KI_RM_LIST_LOCK);
     }
   }
+}
+
+void KI_RM_push_task(ki__async__Task* task) {
+  //
+  pthread_mutex_lock(&KI_RM_LIST_LOCK);
+
+  int pos = 0;
+  while (1) {
+    ki__async__Task* t = KI_RM_TASK_LIST[pos];
+    if (t == NULL) {
+      KI_RM_TASK_LIST[pos] = task;
+      break;
+    }
+    pos++;
+    if (pos == 1024) {
+      break;
+    }
+  }
+  pthread_mutex_unlock(&KI_RM_LIST_LOCK);
 }
 
 void KI_RM_run_next_task() {
