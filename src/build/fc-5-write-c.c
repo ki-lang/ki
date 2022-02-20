@@ -1041,7 +1041,7 @@ char i_to_str_buf[100];
 
 void fc_write_c_type_varname(Str* append_to, Type* type, char* varname) {
   if (varname) {
-    if (type->type != type_funcref) {
+    if (type && type->type != type_funcref) {
       str_append_chars(append_to, " ");
     }
     str_append_chars(append_to, varname);

@@ -16,8 +16,7 @@ func main() i32 {
 	@ c = async hi();
 	@ a = await c;
 	ki:io:print(a);
-
-	return 0;
+	// return 0;
 
 	@ s = ki:http:Server { port: 9000, handler: ki:http:response_handler };
 	s.start();

@@ -146,6 +146,8 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
       //   printf("unlock\n");
       pthread_mutex_unlock(&KI_RM_LIST_LOCK);
     }
+
+    usleep(10);
   }
 }
 
