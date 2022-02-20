@@ -7,6 +7,38 @@ pid_t child_pid, wpid;
 int status = 0;
 #endif
 
+void fc_compile_local_c_files() {
+  char* cache_dir = get_cache_dir();
+
+  char* c_file = malloc(3000);
+  strcpy(c_file, get_binary_dir());
+  strcat(c_file, "/lib/c/rotman.c");
+
+  char* o_file = malloc(3000);
+  strcpy(o_file, cache_dir);
+  strcat(o_file, "/rotman.o");
+
+  array_push(o_files, o_file);
+
+  char* cmd = malloc(3000);
+  strcpy(cmd, get_compiler_path());
+  strcat(cmd, " -g -O0 -c");
+  strcat(cmd, " -I ");
+  strcat(cmd, get_binary_dir());
+  strcat(cmd, " -o ");
+  strcat(cmd, o_file);
+  strcat(cmd, " ");
+  strcat(cmd, c_file);
+
+  printf("Write .o: %s\n", o_file);
+
+  int result = run_cmd(cmd);
+
+  free(cmd);
+  free(c_file);
+  free(o_file);
+}
+
 void compile_all() {
   if (o_files->length == 0) {
     printf("Nothing to compile\n");
@@ -23,6 +55,8 @@ void compile_all() {
       }
     }
   }
+
+  fc_compile_local_c_files();
 
   //
   wait_cmd();

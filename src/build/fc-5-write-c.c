@@ -7,7 +7,7 @@ void fc_write_c_all() {
   char* cache_dir = get_cache_dir();
   strcpy(path, cache_dir);
   strcat(path, "/project.h");
-  write_file(path, "", false);
+  write_file(path, "#include <setjmp.h>\n", false);
 
   for (int i = 0; i < headers->length; i++) {
     // char* fn = array_get_index(headers->keys, i);
@@ -870,13 +870,20 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     char* cache = str_to_chars(fc->value_buffer);
 
     // Step 1. Generate execution function
-    char* handler_name = var_buf(fc);
+    char* handler_name = strdup(var_buf(fc));
     str_append_chars(fc->c_code_after, "void ");
     str_append_chars(fc->c_code_after, handler_name);
     str_append_chars(fc->c_code_after, "(");
     fc_write_c_type(fc->c_code_after, task_type, "task");
     str_append_chars(fc->c_code_after, ") {\n");
     str_append_chars(fc->c_code_after, "void* arg_pointer = task->args;\n");
+    // Header
+    str_append_chars(fc->h_code, "void ");
+    str_append_chars(fc->h_code, handler_name);
+    str_append_chars(fc->h_code, "(");
+    fc_write_c_type(fc->h_code, task_type, "task");
+    str_append_chars(fc->h_code, ");\n");
+
     // Body
     int args_size = 0;
     Array* arg_strings = array_make(4);
@@ -951,6 +958,11 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     //
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->_RC = 1;\n");
+    //
+    str_append_chars(fc->tkn_buffer, var_name);
+    str_append_chars(fc->tkn_buffer, "->handler_func = ");
+    str_append_chars(fc->tkn_buffer, handler_name);
+    str_append_chars(fc->tkn_buffer, ";\n");
     // Set function
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->func = ");
@@ -988,6 +1000,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     free(cache);
     free(size);
     free(func_name);
+    free(handler_name);
 
     str_append_chars(result, var_name);
 
@@ -995,11 +1008,17 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
   } else if (value->type == vt_await) {
     // loop until task is ready
     // if not ready, check for other tasks todo
+    fc_write_c_value(fc, value->item, false);
+    //
     str_append_chars(fc->tkn_buffer, "while(!");
     str_append(fc->tkn_buffer, result);
     str_append_chars(fc->tkn_buffer, "->ready){\n");
-    str_append_chars(fc->tkn_buffer, "longjmp();\n");
+    // str_append_chars(fc->tkn_buffer,
+    //                  "RoutineManager* rm = pthread_getspecific(KI_RM);\n");
+    // str_append_chars(fc->tkn_buffer, "if(rm){ longjmp(rm->jmpbuf, 1); }\n");
     str_append_chars(fc->tkn_buffer, "}\n");
+
+    str_append_chars(result, "->result");
     //
   } else {
     fc_error(fc, "Unhandled value token (compiler bug)", NULL);
