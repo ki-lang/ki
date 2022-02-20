@@ -48,7 +48,7 @@ class Server {
 				io:print("failed to accept\n");
 			}else{
 				this.clients.set(rslot, getptr result);
-				this.respond(rslot);
+				@ task = async this.respond(rslot);
 			}
 
 			rslot++;

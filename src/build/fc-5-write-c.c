@@ -901,9 +901,12 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       sprintf(arg_name, "arg_%d", i);
       array_push(arg_strings, arg_name);
       fc_write_c_type(fc->c_code_after, v->return_type, arg_name);
-      str_append_chars(fc->c_code_after, " = arg_pointer;\n");
+      str_append_chars(fc->c_code_after, " = *(");
+      fc_write_c_type(fc->c_code_after, v->return_type, NULL);
+      str_append_chars(fc->c_code_after, "*)arg_pointer;\n");
       str_append_chars(fc->c_code_after, "arg_pointer += ");
       sprintf(size, "%d", v->return_type->bytes);
+      str_append_chars(fc->c_code_after, size);
       str_append_chars(fc->c_code_after, ";\n");
     }
     // Call func
@@ -913,7 +916,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(fc->c_code_after, " = task->func;\n");
 
     char* ret_name = NULL;
-    if (value->return_type) {
+    if (fcallv->return_type) {
       ret_name = var_buf(fc);
       fc_write_c_type(fc->c_code_after, fcallv->return_type, ret_name);
       str_append_chars(fc->c_code_after, " = ");
@@ -965,6 +968,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     //
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->_RC = 1;\n");
+    str_append_chars(fc->tkn_buffer, var_name);
+    str_append_chars(fc->tkn_buffer, "->jmpbuf = 0;\n");
     //
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->handler_func = ");
@@ -994,10 +999,18 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       fc->value_buffer->length = 0;
       fc_write_c_value(fc, v, false);
       //
-      str_append_chars(fc->tkn_buffer, "*");
+      str_append_chars(fc->tkn_buffer, "*(");
+      fc_write_c_type(fc->tkn_buffer, v->return_type, NULL);
+      str_append_chars(fc->tkn_buffer, "*)");
       str_append_chars(fc->tkn_buffer, argsptr_name);
       str_append_chars(fc->tkn_buffer, " = ");
       str_append(fc->tkn_buffer, fc->value_buffer);
+      str_append_chars(fc->tkn_buffer, ";\n");
+
+      str_append_chars(fc->tkn_buffer, argsptr_name);
+      str_append_chars(fc->tkn_buffer, " += ");
+      sprintf(size, "%d", v->return_type->bytes);
+      str_append_chars(fc->tkn_buffer, size);
       str_append_chars(fc->tkn_buffer, ";\n");
     }
 
@@ -1081,6 +1094,9 @@ void fc_write_c_type(Str* append_to, Type* type, char* varname) {
     str_append_chars(append_to, ")(");
     for (int i = 0; i < type->func_arg_types->length; i++) {
       Type* arg_type = array_get_index(type->func_arg_types, i);
+      if (i > 0) {
+        str_append_chars(append_to, ", ");
+      }
       fc_write_c_type(append_to, arg_type, NULL);
     }
     str_append_chars(append_to, ")");
@@ -1124,6 +1140,8 @@ void fc_write_c_type(Str* append_to, Type* type, char* varname) {
     fc_write_c_type_varname(append_to, type, varname);
     return;
   }
+  raise(SIGSEGV);  // Useful for debugging
+  printf("Type:%d\n", type->type);
   die("Could not convert type to c\n");
 }
 

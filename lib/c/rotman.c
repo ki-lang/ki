@@ -13,6 +13,9 @@
 
 pthread_key_t KI_RM;
 pthread_mutex_t KI_RM_LIST_LOCK;
+pthread_t KI_RM_THREADS[KI_NUMTHREADS];
+pthread_cond_t KI_RM_THREAD_CONDS[KI_NUMTHREADS];
+pthread_mutex_t KI_RM_THREAD_LOCKS[KI_NUMTHREADS];
 
 // typedef struct ki__async__Task {
 //   void* handler_func;
@@ -28,6 +31,8 @@ typedef struct ki__async__Task ki__async__Task;
 
 typedef struct RoutineManager {
   int nr;
+  pthread_t thread;
+  char suspended;
   ki__async__Task* tasks[KI_MAX_TASKS_PER_R];
   char current_task;
   char tasks_running;
@@ -44,11 +49,10 @@ void* KI_RM_init_thread(void* i);
 void KI_RM_task_run_loop(RoutineManager* rm);
 
 int main() {
-  pthread_t threads[KI_NUMTHREADS];
-
   pthread_key_create(&KI_RM, NULL);
   for (int i = 0; i < KI_NUMTHREADS; i++) {
-    pthread_create(threads + i, NULL, KI_RM_init_thread, (void*)(size_t)i);
+    pthread_create(&KI_RM_THREADS[i], NULL, KI_RM_init_thread,
+                   (void*)(size_t)i);
   }
 
   // Run main
@@ -73,11 +77,13 @@ int main() {
 void* KI_RM_init_thread(void* i) {
   //
   size_t nr = (size_t)i;
+  // printf("t:%ld\n", nr);
   //
   RoutineManager* rm = ki__mem__alloc(sizeof(RoutineManager));
   rm->nr = nr;
   rm->current_task = 0;
   rm->tasks_running = 0;
+  rm->thread = KI_RM_THREADS[nr];
 
   KI_RM_LIST[nr] = rm;
 
@@ -104,6 +110,8 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
             ((void (*)(ki__async__Task*))task->handler_func)(task);
             rm->tasks_running--;
             rm->tasks[nr] = NULL;
+            ki__mem__free(task->args);
+            ki__mem__free(task);
           }
         }
       } else {
@@ -112,9 +120,7 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
           rm->current_task = 0;
         }
       }
-    }
-    //
-    if (rm->tasks_running < 2) {
+    } else {
       // Get new task
       pthread_mutex_lock(&KI_RM_LIST_LOCK);
       //   printf("lock\n");
@@ -145,9 +151,19 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
 
       //   printf("unlock\n");
       pthread_mutex_unlock(&KI_RM_LIST_LOCK);
+
+      if (!found) {
+        // Suspend thread, nothing todo
+        rm->suspended = 1;
+        // printf("sus:%d\n", rm->nr);
+        // pthread_mutex_lock(&KI_RM_THREAD_LOCKS[rm->nr]);
+        pthread_cond_wait(&KI_RM_THREAD_CONDS[rm->nr],
+                          &KI_RM_THREAD_LOCKS[rm->nr]);
+        // printf("u1:%d\n", rm->nr);
+      }
     }
 
-    usleep(10);
+    // usleep(10);
   }
 }
 
@@ -160,6 +176,18 @@ void KI_RM_push_task(ki__async__Task* task) {
     ki__async__Task* t = KI_RM_TASK_LIST[pos];
     if (t == NULL) {
       KI_RM_TASK_LIST[pos] = task;
+      // Unsuspend a thread
+      for (int i = 0; i < KI_NUMTHREADS; i++) {
+        // printf("rm:%d is suspend: %d\n", i, KI_RM_LIST[i]->suspended);
+        if (KI_RM_LIST[i]->suspended) {
+          KI_RM_LIST[i]->suspended = 0;
+          // pthread_unsuspend_np(KI_RM_LIST[i]);
+          pthread_cond_signal(&KI_RM_THREAD_CONDS[i]);
+          // pthread_mutex_unlock(&KI_RM_THREAD_LOCKS[i]);
+          // printf("un-sus:%d\n", i);
+          break;
+        }
+      }
       break;
     }
     pos++;

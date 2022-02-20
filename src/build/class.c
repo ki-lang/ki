@@ -243,7 +243,11 @@ void fc_scan_class_props(Class* class) {
 
       fc_scan_func_args(func);
 
-      type->func_arg_types = func->args;
+      type->func_arg_types = array_make(4);
+      for (int i = 0; i < func->args->length; i++) {
+        FunctionArg* arg = array_get_index(func->args, i);
+        array_push(type->func_arg_types, arg->type);
+      }
       type->func_return_type = func->return_type;
       type->func_can_error = func->can_error;
 
