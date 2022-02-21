@@ -934,9 +934,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
         str_append_chars(fc->c_code_after, ", ");
       }
       str_append_chars(fc->c_code_after, arg_name);
-      free(arg_name);
     }
-    free(arg_strings);
     str_append_chars(fc->c_code_after, ");\n");
     // End func call
     if (ret_name) {
@@ -945,6 +943,21 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(fc->c_code_after, ";\n");
     }
     str_append_chars(fc->c_code_after, "task->ready = 1;\n");
+    // Deref args if needed
+    for (int i = 0; i < fcall->arg_values->length; i++) {
+      Value* v = array_get_index(fcall->arg_values, i);
+      char* arg_name = array_get_index(arg_strings, i);
+      if (v->return_type->class && v->return_type->class->ref_count) {
+        str_append_chars(fc->c_code_after, "if(--");
+        str_append_chars(fc->c_code_after, arg_name);
+        str_append_chars(fc->c_code_after, "->_RC == 0) ");
+        str_append_chars(fc->c_code_after, v->return_type->class->cname);
+        str_append_chars(fc->c_code_after, "____free(");
+        str_append_chars(fc->c_code_after, arg_name);
+        str_append_chars(fc->c_code_after, ");\n");
+      }
+    }
+    array_free(arg_strings);
     // End body
     str_append_chars(fc->c_code_after, "}\n\n");
 
@@ -967,7 +980,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(fc->tkn_buffer, ");\n");
     //
     str_append_chars(fc->tkn_buffer, var_name);
-    str_append_chars(fc->tkn_buffer, "->_RC = 1;\n");
+    str_append_chars(fc->tkn_buffer, "->_RC = 2;\n");
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->jmpbuf = 0;\n");
     //
@@ -1007,6 +1020,11 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append(fc->tkn_buffer, fc->value_buffer);
       str_append_chars(fc->tkn_buffer, ";\n");
 
+      if (v->return_type->class && v->return_type->class->ref_count) {
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+      }
+
       str_append_chars(fc->tkn_buffer, argsptr_name);
       str_append_chars(fc->tkn_buffer, " += ");
       sprintf(size, "%d", v->return_type->bytes);
@@ -1019,6 +1037,12 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, ");\n");
 
+    VarInfo* vi = malloc(sizeof(VarInfo));
+    vi->name = var_name;
+    vi->return_type = value->return_type;
+
+    array_push(fc->var_bufs, vi);
+
     // Set cache back
     fc->value_buffer->length = 0;
     str_append_chars(fc->value_buffer, cache);
@@ -1029,7 +1053,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
 
     str_append_chars(result, var_name);
 
-    free(var_name);
+    // free(var_name);
   } else if (value->type == vt_await) {
     // loop until task is ready
     // if not ready, check for other tasks todo

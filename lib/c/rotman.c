@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "/home/ctx/.ki/cache/project.h"
+#include "/home/ctxz/.ki/cache/project.h"
 
 #define KI_NUMTHREADS 16
 #define KI_MAX_TASKS_PER_R 10
@@ -112,8 +112,9 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
             ((void (*)(ki__async__Task*))task->handler_func)(task);
             rm->tasks_running--;
             rm->tasks[nr] = NULL;
+            if (task->jmpbuf) ki__mem__free(task->jmpbuf);
             ki__mem__free(task->args);
-            ki__mem__free(task);
+            if (--task->_RC == 0) ki__async__Task____free(task);
           }
         }
       } else {
@@ -205,6 +206,9 @@ void KI_RM_run_next_task() {
   RoutineManager* rm = pthread_getspecific(KI_RM);
   ki__async__Task* task = rm->tasks[rm->current_task];
   // Jump back to task runner
+  if (!task->jmpbuf) {
+    task->jmpbuf = ki__mem__alloc(200);
+  }
   if (setjmp(*(jmp_buf*)task->jmpbuf)) {
     rm->current_task++;
     if (rm->current_task == KI_MAX_TASKS_PER_R) {
