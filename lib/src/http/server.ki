@@ -19,7 +19,7 @@ class Server {
 
 	func start() ! {
 
-		u32 max = 10000;
+		u32 max = 20000;
 		this.clients = PtrArray{ size: max, data: mem:alloc(max * 8) };
 
 		@ s = ki:net:Socket { port: this.port };

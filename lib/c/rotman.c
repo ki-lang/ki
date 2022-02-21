@@ -10,9 +10,11 @@
 
 #define KI_NUMTHREADS 16
 #define KI_MAX_TASKS_PER_R 10
+#define KI_MAX_TASKS 512
 
 pthread_key_t KI_RM;
 pthread_mutex_t KI_RM_LIST_LOCK;
+pthread_mutex_t KI_RM_LIST_LOCK_ADD;
 pthread_t KI_RM_THREADS[KI_NUMTHREADS];
 pthread_cond_t KI_RM_THREAD_CONDS[KI_NUMTHREADS];
 pthread_mutex_t KI_RM_THREAD_LOCKS[KI_NUMTHREADS];
@@ -40,8 +42,8 @@ typedef struct RoutineManager {
 } RoutineManager;
 
 RoutineManager* KI_RM_LIST[KI_NUMTHREADS];
-ki__async__Task* KI_RM_TASK_LIST[1024];
-ki__async__Task* KI_RM_TASK_LIST_PRIO[1024];
+ki__async__Task* KI_RM_TASK_LIST[KI_MAX_TASKS];
+ki__async__Task* KI_RM_TASK_LIST_PRIO[KI_MAX_TASKS];
 int KI_RM_TASK_LIST_C = 0;
 int KI_RM_TASK_LIST_PRIO_C = 0;
 
@@ -144,7 +146,7 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
           }
         }
         pos++;
-        if (pos == 1024) {
+        if (pos == KI_MAX_TASKS) {
           break;
         }
       }
@@ -169,7 +171,7 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
 
 void KI_RM_push_task(ki__async__Task* task) {
   //
-  pthread_mutex_lock(&KI_RM_LIST_LOCK);
+  pthread_mutex_lock(&KI_RM_LIST_LOCK_ADD);
 
   int pos = 0;
   while (1) {
@@ -191,11 +193,11 @@ void KI_RM_push_task(ki__async__Task* task) {
       break;
     }
     pos++;
-    if (pos == 1024) {
+    if (pos == KI_MAX_TASKS) {
       break;
     }
   }
-  pthread_mutex_unlock(&KI_RM_LIST_LOCK);
+  pthread_mutex_unlock(&KI_RM_LIST_LOCK_ADD);
 }
 
 void KI_RM_run_next_task() {
