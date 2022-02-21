@@ -55,8 +55,10 @@ void fc_write_c_all() {
     }
   }
 
-  write_file(path, "void KI_RM_push_task(struct ki__async__Task* task);\n",
-             true);
+  if (uses_async) {
+    write_file(path, "void KI_RM_push_task(struct ki__async__Task* task);\n",
+               true);
+  }
 }
 
 void fc_write_c_pre(FileCompiler* fc) {

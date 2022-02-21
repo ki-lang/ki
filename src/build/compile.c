@@ -8,6 +8,10 @@ int status = 0;
 #endif
 
 void fc_compile_local_c_files() {
+  if (!uses_async) {
+    return;
+  }
+
   char* cache_dir = get_cache_dir();
 
   char* c_file = malloc(3000);
