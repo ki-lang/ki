@@ -5,3 +5,5 @@
 /test.exe
 .vscode
 /build
+/flame
+perf.data
