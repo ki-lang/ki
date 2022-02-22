@@ -7,7 +7,7 @@ void fc_write_c_all() {
   char* cache_dir = get_cache_dir();
   strcpy(path, cache_dir);
   strcat(path, "/project.h");
-  write_file(path, "#include <setjmp.h>\n", false);
+  write_file(path, "#include <setjmp.h>\n#include <pthread.h>\n", false);
 
   for (int i = 0; i < headers->length; i++) {
     // char* fn = array_get_index(headers->keys, i);
@@ -83,7 +83,7 @@ void fc_write_c(FileCompiler* fc) {
   // printf("%s\n", code);
 
   fc->create_o_file = false;
-  if (!fc->is_header && strlen(code) > 0) {
+  if (strlen(code) > 0 || strlen(code_gen) > 0) {
     fc->create_o_file = true;
     if (true) {
       write_file(fc->c_filepath,
@@ -100,7 +100,9 @@ void fc_write_c(FileCompiler* fc) {
       free(incl);
 
       write_file(fc->c_filepath, "\n", true);
-      write_file(fc->c_filepath, code, true);
+      if (!fc->is_header) {
+        write_file(fc->c_filepath, code, true);
+      }
       write_file(fc->c_filepath, code_gen, true);
     }
 
@@ -192,7 +194,11 @@ void fc_write_c_class(FileCompiler* fc, Class* class) {
       }
     }
 
-    str_append_chars(fc->c_code, "ki__mem__free(this);\n");
+    char* alloc_func = fc_write_c_get_allocator(fc, class->size);
+
+    str_append_chars(fc->c_code, "ki__mem__Allocator__free(");
+    str_append_chars(fc->c_code, alloc_func);
+    str_append_chars(fc->c_code, "(), this);\n");
     str_append_chars(fc->c_code, "}\n\n");
   }
 }
@@ -316,7 +322,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
 
     fc_write_c_value(fc, decl->value, true);
 
-    fc_write_c_type(fc->tkn_buffer, decl->value->return_type, decl->name);
+    fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
     str_append_chars(fc->tkn_buffer, " = ");
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
@@ -566,7 +572,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     array_push(fc->var_bufs, vi);
 
   } else if (value->type == vt_null) {
-    str_append_chars(result, "0");
+    str_append_chars(result, "(void*)0");
     // Bools
   } else if (value->type == vt_false) {
     str_append_chars(result, "0");
@@ -714,6 +720,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     GEN_C++;
     ValueClassInit* ini = value->item;
     Class* class = ini->class;
+
+    char* allocator_name = fc_write_c_get_allocator(fc, class->size);
     char* func_name = malloc(30);
     sprintf(func_name, "_KI_CLASS_INIT_%d", GEN_C);
 
@@ -781,9 +789,10 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     if (value->return_type->is_pointer) {
       sign = "->";
       fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
-      str_append_chars(fc->c_code_after, " = ki__mem__alloc(sizeof(struct ");
-      str_append_chars(fc->c_code_after, class->cname);
-      str_append_chars(fc->c_code_after, "));\n");
+
+      str_append_chars(fc->c_code_after, " = ki__mem__Allocator__get_chunk(");
+      str_append_chars(fc->c_code_after, allocator_name);
+      str_append_chars(fc->c_code_after, "());\n");
     } else {
       sign = ".";
       fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
@@ -1166,9 +1175,13 @@ void fc_write_c_type(Str* append_to, Type* type, char* varname) {
     fc_write_c_type_varname(append_to, type, varname);
     return;
   }
+  if (type->type == type_null) {
+    str_append_chars(append_to, "void");
+    fc_write_c_type_varname(append_to, type, varname);
+    return;
+  }
+  printf("Could not convert type to c: %d\n", type->type);
   raise(SIGSEGV);  // Useful for debugging
-  printf("Type:%d\n", type->type);
-  die("Could not convert type to c\n");
 }
 
 void fc_write_c_if(FileCompiler* fc, TokenIf* ift) {
@@ -1241,8 +1254,8 @@ void deref_local_vars(FileCompiler* fc) {
   Array* local_vars = fc->local_var_names;
   for (int i = 0; i < local_vars->length; i++) {
     TokenDeclare* decl = array_get_index(local_vars, i);
-    Class* class = decl->value->return_type->class;
-    bool nullable = decl->value->return_type->nullable;
+    Class* class = decl->type->class;
+    bool nullable = decl->type->nullable;
     char* lv = decl->name;
 
     if (nullable) {
@@ -1262,4 +1275,57 @@ void deref_local_vars(FileCompiler* fc) {
     }
     str_append_chars(fc->tkn_buffer, "\n");
   }
+}
+
+char* fc_write_c_get_allocator(FileCompiler* fc, int size) {
+  //
+  sprintf(fc->sprintf, "KI_allocator_%d", size);
+  char* name = fc->sprintf;
+
+  char* last = map_get(allocators, name);
+  if (last) {
+    // printf("Already has %s\n", name);
+    return last;
+  }
+  // printf("Create %s\n", name);
+  // printf("-> %s\n", fc->c_filepath);
+
+  name = strdup(name);
+  sprintf(fc->sprintf, "%d", size);
+  str_append_chars(fc->c_code_after, "pthread_key_t ");
+  str_append_chars(fc->c_code_after, name);
+  str_append_chars(fc->c_code_after, "__TK;\n");
+
+  str_append_chars(fc->h_code, "struct ki__mem__Allocator* ");
+  str_append_chars(fc->h_code, name);
+  str_append_chars(fc->h_code, "();\n");
+
+  str_append_chars(fc->c_code_after, "struct ki__mem__Allocator* ");
+  str_append_chars(fc->c_code_after, name);
+  str_append_chars(fc->c_code_after, "(){\n");
+
+  str_append_chars(fc->c_code_after, "struct ki__mem__Allocator* a = ");
+  str_append_chars(fc->c_code_after, "pthread_getspecific(");
+  str_append_chars(fc->c_code_after, name);
+  str_append_chars(fc->c_code_after, "__TK);\n");
+
+  str_append_chars(fc->c_code_after, "a = ki__mem__alloc(32);\n");
+  str_append_chars(fc->c_code_after, "a->size = ");
+  str_append_chars(fc->c_code_after, fc->sprintf);
+  str_append_chars(fc->c_code_after, ";\n");
+
+  str_append_chars(fc->c_code_after, "a->block_i = 0;\n");
+  str_append_chars(fc->c_code_after, "a->block_c = 1;\n");
+  str_append_chars(fc->c_code_after,
+                   "a->blocks_ptr = ki__mem__alloc(256 * 8);\n");
+
+  str_append_chars(fc->c_code_after, "pthread_setspecific(");
+  str_append_chars(fc->c_code_after, name);
+  str_append_chars(fc->c_code_after, "__TK, a);\n");
+
+  str_append_chars(fc->c_code_after, "return a;\n");
+  str_append_chars(fc->c_code_after, "}\n");
+
+  map_set(allocators, name, name);
+  return name;
 }

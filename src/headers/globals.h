@@ -5,6 +5,7 @@ Map* packages;
 Array* headers;
 Array* o_files;
 Array* cmd_arg_files;
+Map* allocators;
 Map* macro_defines;
 
 Map* c_identifiers;

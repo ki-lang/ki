@@ -13,6 +13,7 @@ void cmd_build(Array* files, Map* options) {
   packages = map_make();
   headers = array_make(10);
   o_files = array_make(10);
+  allocators = map_make();
   cmd_arg_files = array_make(2);
   macro_defines = map_make();
 

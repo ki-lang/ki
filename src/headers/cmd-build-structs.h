@@ -331,6 +331,7 @@ typedef struct TokenWhile {
 typedef struct TokenDeclare {
   char* name;
   struct Value* value;
+  struct Type* type;
 
 } TokenDeclare;
 typedef struct TokenAssign {

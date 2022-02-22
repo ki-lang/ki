@@ -168,6 +168,7 @@ void token_declare(FileCompiler* fc, Scope* scope, Type* left_type) {
   TokenDeclare* decl = malloc(sizeof(TokenDeclare));
   decl->name = strdup(token);
   decl->value = value;
+  decl->type = left_type ? left_type : value->return_type;
 
   Token* t = init_token();
   t->type = tkn_declare;
@@ -177,7 +178,7 @@ void token_declare(FileCompiler* fc, Scope* scope, Type* left_type) {
 
   IdentifierFor* idf = init_idf();
   idf->type = idfor_var;
-  idf->item = value->return_type;
+  idf->item = decl->type;
 
   map_set(scope->identifiers, decl->name, idf);
 
