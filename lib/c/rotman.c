@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "/home/ctx/.ki/cache/project.h"
+#include "/home/ctxz/.ki/cache/project.h"
 
 #define KI_NUMTHREADS 16
 #define KI_MAX_TASKS_PER_R 10
@@ -18,16 +18,6 @@ pthread_mutex_t KI_RM_LIST_LOCK_ADD;
 pthread_t KI_RM_THREADS[KI_NUMTHREADS];
 pthread_cond_t KI_RM_THREAD_CONDS[KI_NUMTHREADS];
 pthread_mutex_t KI_RM_THREAD_LOCKS[KI_NUMTHREADS];
-
-// typedef struct ki__async__Task {
-//   void* handler_func;
-//   void* func;
-//   void* args;
-//   jmp_buf* jmpbuf;
-//   void* result;
-//   unsigned char ready;
-//   short _RC;
-// } ki__async__Task;
 
 typedef struct ki__async__Task ki__async__Task;
 
