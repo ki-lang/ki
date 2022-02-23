@@ -44,7 +44,7 @@ trait Number {
 		while(true){
 			rest = value % (mult * 10);
 			value -= rest;
-			i32 r = rest / mult;
+			uxx r = rest / mult;
 			u8 b = cast r as u8;
 			b += 48; // ascii
 
