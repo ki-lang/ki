@@ -40,8 +40,6 @@ int KI_RM_TASK_LIST_PRIO_C = 0;
 void* KI_RM_init_thread(void* i);
 void KI_RM_task_run_loop(RoutineManager* rm);
 
-#include <stdio.h>
-
 int main() {
   //
   KI_INITS();

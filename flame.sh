@@ -1,5 +1,7 @@
 
-mkdir flame
-sudo perf record -a -F 99 -g -p $(pgrep -x test)
-sudo perf script | ~/FlameGraph/stackcollapse-perf.pl > flame/out.perf-folded
-~/FlameGraph/flamegraph.pl flame/out.perf-folded > flame/perf.svg
+# cargo install flamegraph
+# sudo bash -c 'vim ~/.bashrc'
+# PATH=$PATH:~/.cargo/bin
+
+mkdir -p flame
+sudo bash -i -c 'cd flame && flamegraph -o graph.svg ../test'
