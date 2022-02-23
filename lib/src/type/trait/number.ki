@@ -35,11 +35,11 @@ trait Number {
 		ptr str = mem:alloc(20);
 		ptr strp = str;
 
-		u8 value = this;
-		u8 rest = 0;
+		@ value = this;
+		@ rest = 0;
 		u8 pos = sizeof(this) - 1;
 		u8 len = 0;
-		u8 mult = 1;
+		uxx mult = 1;
 
 		while(true){
 			rest = value % (mult * 10);
