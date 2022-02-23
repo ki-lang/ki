@@ -48,9 +48,18 @@ int main() {
 
   // Create threads
   pthread_key_create(&KI_RM, NULL);
-  for (int i = 1; i < KI_NUMTHREADS; i++) {
-    pthread_create(&KI_RM_THREADS[i], NULL, KI_RM_init_thread,
-                   (void*)(size_t)i);
+  for (int i = 0; i < KI_NUMTHREADS; i++) {
+    //
+    RoutineManager* rm = ki__mem__alloc(sizeof(RoutineManager));
+    rm->nr = i;
+    rm->current_task = 0;
+    rm->tasks_running = 0;
+    rm->thread = NULL;
+
+    KI_RM_LIST[i] = rm;
+    // printf("set %d | %p | %p\n", i, KI_RM_LIST, KI_RM_LIST[i]);
+
+    pthread_create(&KI_RM_THREADS[i], NULL, KI_RM_init_thread, rm);
   }
 
   // Run main
@@ -72,19 +81,11 @@ int main() {
   }
 }
 
-void* KI_RM_init_thread(void* i) {
+void* KI_RM_init_thread(void* p) {
   //
-  size_t nr = (size_t)i;
-  // printf("t:%ld\n", nr);
+  RoutineManager* rm = p;
+  rm->thread = KI_RM_THREADS[rm->nr];
   //
-  RoutineManager* rm = ki__mem__alloc(sizeof(RoutineManager));
-  rm->nr = nr;
-  rm->current_task = 0;
-  rm->tasks_running = 0;
-  rm->thread = KI_RM_THREADS[nr];
-
-  KI_RM_LIST[nr] = rm;
-
   pthread_setspecific(KI_RM, rm);
 
   KI_RM_task_run_loop(rm);
