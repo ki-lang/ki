@@ -153,6 +153,7 @@ Str* value_buf(FileCompiler* fc);
 char* var_buf(FileCompiler* fc);
 void deref_local_vars(FileCompiler* fc);
 char* fc_write_c_get_allocator(FileCompiler* fc, int size);
+void fc_write_c_inits();
 
 // Compile
 void compile_all();

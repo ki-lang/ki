@@ -55,10 +55,13 @@ void fc_write_c_all() {
     }
   }
 
+  fc_write_c_inits();
+
   if (uses_async) {
     write_file(path, "void KI_RM_push_task(struct ki__async__Task* task);\n",
                true);
   }
+  write_file(path, "void KI_INITS();\n", true);
 }
 
 void fc_write_c_pre(FileCompiler* fc) {
@@ -71,6 +74,46 @@ void fc_write_c_pre(FileCompiler* fc) {
   write_file(path, structs_code, true);
 
   free(structs_code);
+}
+
+void fc_write_c_inits() {
+  Str* code = str_make("");
+  //
+  str_append_chars(code, "#include \"project.h\"\n\n");
+
+  for (int i = 0; i < packages->keys->length; i++) {
+    PkgCompiler* pkc = array_get_index(packages->values, i);
+    for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+      FileCompiler* fc = array_get_index(pkc->file_compilers->values, o);
+      if (fc->is_header) {
+        str_append_chars(code, "#include \"");
+        str_append_chars(code, fc->h_filepath);
+        str_append_chars(code, "\"\n");
+      }
+    }
+  }
+
+  str_append_chars(code, "void KI_INITS(){\n");
+
+  for (int i = 0; i < allocators->keys->length; i++) {
+    char* name = array_get_index(allocators->values, i);
+    str_append_chars(code, "pthread_key_create(&");
+    str_append_chars(code, name);
+    str_append_chars(code, "__TK, (void*)0);\n");
+  }
+
+  str_append_chars(code, "}\n");
+
+  //
+  char* code_ = str_to_chars(code);
+  char* path = malloc(KI_PATH_MAX);
+  char* cache_dir = get_cache_dir();
+  strcpy(path, cache_dir);
+  strcat(path, "/inits.c");
+  write_file(path, code_, false);
+
+  free(code_);
+  free_str(code);
 }
 
 void fc_write_c(FileCompiler* fc) {
@@ -1278,6 +1321,7 @@ void deref_local_vars(FileCompiler* fc) {
 }
 
 char* fc_write_c_get_allocator(FileCompiler* fc, int size) {
+  size += 24;
   //
   sprintf(fc->sprintf, "KI_allocator_%d", size);
   char* name = fc->sprintf;
@@ -1292,6 +1336,11 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size) {
 
   name = strdup(name);
   sprintf(fc->sprintf, "%d", size);
+
+  str_append_chars(fc->h_code, "pthread_key_t ");
+  str_append_chars(fc->h_code, name);
+  str_append_chars(fc->h_code, "__TK;\n");
+
   str_append_chars(fc->c_code_after, "pthread_key_t ");
   str_append_chars(fc->c_code_after, name);
   str_append_chars(fc->c_code_after, "__TK;\n");
@@ -1309,13 +1358,15 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size) {
   str_append_chars(fc->c_code_after, name);
   str_append_chars(fc->c_code_after, "__TK);\n");
 
+  str_append_chars(fc->c_code_after, "if(a){ return a; }\n");
+
   str_append_chars(fc->c_code_after, "a = ki__mem__alloc(32);\n");
   str_append_chars(fc->c_code_after, "a->size = ");
   str_append_chars(fc->c_code_after, fc->sprintf);
   str_append_chars(fc->c_code_after, ";\n");
 
   str_append_chars(fc->c_code_after, "a->block_i = 0;\n");
-  str_append_chars(fc->c_code_after, "a->block_c = 1;\n");
+  str_append_chars(fc->c_code_after, "a->block_c = 0;\n");
   str_append_chars(fc->c_code_after,
                    "a->blocks_ptr = ki__mem__alloc(256 * 8);\n");
 

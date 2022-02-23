@@ -40,9 +40,15 @@ int KI_RM_TASK_LIST_PRIO_C = 0;
 void* KI_RM_init_thread(void* i);
 void KI_RM_task_run_loop(RoutineManager* rm);
 
+#include <stdio.h>
+
 int main() {
+  //
+  KI_INITS();
+
+  // Create threads
   pthread_key_create(&KI_RM, NULL);
-  for (int i = 0; i < KI_NUMTHREADS; i++) {
+  for (int i = 1; i < KI_NUMTHREADS; i++) {
     pthread_create(&KI_RM_THREADS[i], NULL, KI_RM_init_thread,
                    (void*)(size_t)i);
   }
