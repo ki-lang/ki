@@ -242,6 +242,7 @@ typedef enum ValueType {
   vt_prop_access,
   vt_async,
   vt_await,
+  vt_allocator, // 20
 } ValueType;
 
 typedef struct ValueFuncCall {

@@ -36,15 +36,16 @@ trait Number {
 		ptr strp = str;
 
 		@ value = this;
-		@ rest = 0;
+		u32 rest = 0;
 		u8 pos = sizeof(this) - 1;
-		u8 len = 0;
+		i8 len = 0;
 		uxx mult = 1;
 
 		while(true){
 			rest = value % (mult * 10);
+			//io:print("2\n");
 			value -= rest;
-			uxx r = rest / mult;
+			u32 r = rest / mult;
 			u8 b = cast r as u8;
 			b += 48; // ascii
 

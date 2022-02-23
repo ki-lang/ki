@@ -83,9 +83,10 @@ class Allocator norfc {
 		return new_block + 1 + 1; // skip empty_pos byte & skip value pos byte
 	}
 
-	func free(ptr adr){
-		setptrv adr to 0;
-		u8 pos = getptrv adr - 1 as u8;
+	func free(ptr adr) {
+		adr--;
+		u8 pos = getptrv adr as u8;
+		setptrv adr to (cast 0 as u8);
 		adr -= (pos * (this.size + 1));
 		adr--;
 		u8 empty_pos = getptrv adr as u8;
@@ -99,10 +100,12 @@ class Allocator norfc {
 		adr--;
 		u8 len = getptrv adr as u8;
 		if(empty_count == len){
-			this.block_i--;
-			if(this.block_c > this.block_i + 2){
-				this.block_c--;
-				free(this.blocks_ptr + ((this.block_c) * 8));
+			if(this.block_i > 0){
+				this.block_i--;
+				if(this.block_c > this.block_i + 2){
+					this.block_c--;
+					free(this.blocks_ptr + ((this.block_c) * 8));
+				}
 			}
 		}
 	}

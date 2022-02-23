@@ -54,7 +54,6 @@ int main() {
     rm->nr = i;
     rm->current_task = 0;
     rm->tasks_running = 0;
-    rm->thread = NULL;
 
     KI_RM_LIST[i] = rm;
     // printf("set %d | %p | %p\n", i, KI_RM_LIST, KI_RM_LIST[i]);

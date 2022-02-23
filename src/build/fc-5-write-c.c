@@ -1123,6 +1123,12 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
 
     str_append_chars(result, "->result");
     //
+  } else if (value->type == vt_allocator) {
+    char* size = value->item;
+    int sizei = atoi(size);
+    char* name = fc_write_c_get_allocator(fc, sizei);
+    str_append_chars(result, name);
+    str_append_chars(result, "()");
   } else {
     fc_error(fc, "Unhandled value token (compiler bug)", NULL);
   }
@@ -1185,7 +1191,7 @@ void fc_write_c_type(Str* append_to, Type* type, char* varname) {
     Class* class = type->class;
     if (class->is_number) {
       int bytes = type->bytes;
-      if (type->is_unsigned) {
+      if (class->is_unsigned) {
         str_append_chars(append_to, "unsigned ");
       }
       while (bytes > 4) {

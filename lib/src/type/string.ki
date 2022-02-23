@@ -41,7 +41,8 @@ class string {
 
 	func __free() {
 		free(this.data);
-		free(this);
+		@ a = allocator sizeof(string);
+		a.free(this);
 	}
 
 	func index_of(string str) u64 {

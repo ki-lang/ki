@@ -54,7 +54,6 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     if (idf->type == idfor_class) {
       Class* class = idf->item;
       size = class->size;
-      fc_error(fc, "sizeof class (todo)", NULL);
     } else if (idf->type == idfor_enum) {
       size = 4;
     } else if (idf->type == idfor_func) {
@@ -257,7 +256,6 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       fc_error(fc, "Expected a function call after 'async'", NULL);
     }
 
-    value = init_value();
     value->type = vt_async;
     value->item = fcall;
     value->return_type =
@@ -275,10 +273,22 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     Type* ret_type = task->return_type->func_return_type;
 
-    value = init_value();
     value->type = vt_await;
     value->item = task;
     value->return_type = ret_type;
+  } else if (strcmp(token, "allocator") == 0) {
+    Value* sizev = fc_read_value(fc, scope, false, true, true);
+
+    if (sizev->type != vt_sizeof) {
+      fc_error(fc, "Expected a sizeof value", NULL);
+    }
+
+    char* sizec = sizev->item;
+
+    value->type = vt_allocator;
+    value->item = sizec;
+    value->return_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "mem", "Allocator"));
 
   } else if (is_valid_varname(token)) {
     IdentifierFor* idf = NULL;

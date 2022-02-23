@@ -11,6 +11,7 @@ class Response {
 
 	public func __free(){
 		this.body.__free();
-		ki:mem:free(this);
+		@ a = allocator sizeof(Response);
+		a.free(this);
 	}
 }
