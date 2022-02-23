@@ -279,14 +279,17 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
   } else if (strcmp(token, "allocator") == 0) {
     Value* sizev = fc_read_value(fc, scope, false, true, true);
 
-    if (sizev->type != vt_sizeof) {
+    if (sizev->type == vt_sizeof) {
+      char* sizec = sizev->item;
+      value->item = sizec;
+    } else if (sizev->type == vt_number) {
+      char* sizec = sizev->item;
+      value->item = sizec;
+    } else {
       fc_error(fc, "Expected a sizeof value", NULL);
     }
 
-    char* sizec = sizev->item;
-
     value->type = vt_allocator;
-    value->item = sizec;
     value->return_type =
         fc_identifier_to_type(fc, create_identifier("ki", "mem", "Allocator"));
 

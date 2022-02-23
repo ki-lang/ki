@@ -65,7 +65,9 @@ class Server {
 		this.clients.get(slot, getptr clientfd);
 		// io:print(clientfd.to_string());
 
-		ptr buf = mem:alloc(65535);
+		@ alc = allocator 65535;
+		ptr buf = alc.get_chunk();
+		//ptr buf = mem:alloc(65535);
 		i32 rcvd = main:main:recv(clientfd, buf, 65535, 0);
 
 		if (rcvd<0){
@@ -86,7 +88,8 @@ class Server {
 		i32 result = main:main:shutdown(clientfd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
 		result = main:main:close(clientfd);
 
-		mem:free(buf);
+		alc.free(buf);
+		//mem:free(buf);
 	}
 
 }

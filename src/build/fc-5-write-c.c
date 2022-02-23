@@ -1017,6 +1017,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
 
     // Step 2. Create Task and push onto stack
     // Func ref
+    char* allocator_name = fc_write_c_get_allocator(fc, task_type->class->size);
     char* func_name = strdup(var_buf(fc));
     str_append_chars(fc->tkn_buffer, "void* ");
     str_append_chars(fc->tkn_buffer, func_name);
@@ -1028,10 +1029,13 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     // Init Task
     char* var_name = strdup(var_buf(fc));
     fc_write_c_type(fc->tkn_buffer, task_type, var_name);
-    str_append_chars(fc->tkn_buffer, " = ki__mem__alloc(");
-    sprintf(size, "%d", task_type->class->size);
-    str_append_chars(fc->tkn_buffer, size);
-    str_append_chars(fc->tkn_buffer, ");\n");
+    str_append_chars(fc->tkn_buffer, " = ki__mem__Allocator__get_chunk(");
+    str_append_chars(fc->tkn_buffer, allocator_name);
+    str_append_chars(fc->tkn_buffer, "());\n");
+    // str_append_chars(fc->tkn_buffer, " = ki__mem__alloc(");
+    // sprintf(size, "%d", task_type->class->size);
+    // str_append_chars(fc->tkn_buffer, size);
+    // str_append_chars(fc->tkn_buffer, ");\n");
     //
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->_RC = 2;\n");

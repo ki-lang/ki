@@ -8,7 +8,7 @@
 
 #include "/home/ctxz/.ki/cache/project.h"
 
-#define KI_NUMTHREADS 16
+#define KI_NUMTHREADS 3
 #define KI_MAX_TASKS_PER_R 10
 #define KI_MAX_TASKS 512
 
