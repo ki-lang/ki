@@ -145,6 +145,7 @@ void token_set_threaded(FileCompiler* fc, Scope* scope) {
   // Todo: type check value->return_type with tg->type
 
   t->item = iv;
+  array_push(scope->ast, t);
 
   fc_expect_token(fc, ";", false, true, true);
 }

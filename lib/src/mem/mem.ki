@@ -21,7 +21,13 @@ func alloc(uxx size) ptr {
 
 	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
 	if(alc == null){
-		alc = Allocator { size: psize + 1 };
+
+		alc = cast (alloc_flat(50)) as Allocator;
+		alc.size = psize + 1;
+		alc.block_i = 0;
+		alc.block_c = 0;
+		alc.blocks_ptr = alloc_flat(256 * 8);
+
 		setptrv (allocators + pow * 8) to alc;
 	}
 
