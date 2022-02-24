@@ -27,7 +27,7 @@ void fc_compile_local_c_files() {
 
   char* cmd = malloc(3000);
   strcpy(cmd, get_compiler_path());
-  strcat(cmd, " -g -O0 -c");
+  strcat(cmd, " -g -O2 -c");
   strcat(cmd, " -I ");
   strcat(cmd, get_binary_dir());
   strcat(cmd, " -o ");
@@ -49,7 +49,7 @@ void fc_compile_local_c_files() {
 
   cmd = malloc(3000);
   strcpy(cmd, get_compiler_path());
-  strcat(cmd, " -g -O0 -c");
+  strcat(cmd, " -g -O2 -c");
   strcat(cmd, " -I ");
   strcat(cmd, get_binary_dir());
   strcat(cmd, " -o ");
@@ -109,7 +109,7 @@ void fc_compile_o_file(FileCompiler* fc) {
   //
   char* cmd = malloc(3000);
   strcpy(cmd, get_compiler_path());
-  strcat(cmd, " -g -O0 -c");
+  strcat(cmd, " -g -O2 -c");
   strcat(cmd, " -I ");
   strcat(cmd, get_binary_dir());
   strcat(cmd, " -o ");
