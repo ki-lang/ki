@@ -252,6 +252,7 @@ typedef enum ValueType {
   vt_async,
   vt_await,
   vt_allocator, // 20
+  vt_get_threaded,
 } ValueType;
 
 typedef struct ValueFuncCall {
@@ -321,9 +322,11 @@ typedef enum TokenTypeEnum {
   tkn_value,
   tkn_declare,
   tkn_assign,
+  tkn_set_threaded,
   // Global ast only
   tkn_func,
   tkn_class,
+  //
 } TokenTypeEnum;
 
 typedef struct TokenIf {
@@ -359,3 +362,8 @@ typedef struct VarInfo {
   char* name;
   Type* return_type;
 } VarInfo;
+
+typedef struct TokenIdValue {
+  char* name;
+  Value* value;
+} TokenIdValue;

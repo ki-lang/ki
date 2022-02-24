@@ -293,6 +293,21 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     value->return_type =
         fc_identifier_to_type(fc, create_identifier("ki", "mem", "Allocator"));
 
+  } else if (strcmp(token, "get_threaded") == 0) {
+    Identifier* id = fc_read_identifier(fc, false, true, true);
+    Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
+    IdentifierFor* idf = idf_find_in_scope(idf_scope, id->name);
+
+    if (!idf || idf->type != idfor_threaded_var) {
+      fc_error(fc, "Cannot find threaded global variable: %s", id->name);
+    }
+
+    ThreadedGlobal* tg = idf->item;
+
+    value->type = vt_get_threaded;
+    value->item = fc_create_identifier_global_cname(fc, id);
+    value->return_type = tg->default_value->return_type;
+
   } else if (is_valid_varname(token)) {
     IdentifierFor* idf = NULL;
     // if (strcmp(token, "c") == 0 && fc_get_char(fc, 0) == ':') {

@@ -1,0 +1,110 @@
+
+namespace mem;
+
+class Allocator norfc {
+	u64 size;
+	u32 block_i = 0;
+	u32 block_c = 0;
+	ptr blocks_ptr = alloc_flat(256 * 8);
+
+	// 1(10x)1(20x)15(40x)0(80x)102(160x)7(256x)13(256x)
+	// 1(10x) example
+	// (len:10,empty-count:1,empty-pos:1)|(pos){...}|(pos){NULL}|(pos){...}
+
+	func get_chunk() ptr {
+		u8 len = 10;
+		ptr block_ptr = 0;
+		u8 empty_count = 0;
+		u8 empty_pos = 0;
+
+		ptr result = 0;
+		u8 pos = 0;
+
+		if(this.block_c > 0){
+			block_ptr = this.blocks_ptr + ((this.block_i) * 8);
+			block_ptr = getptrv block_ptr as ptr;
+			len = getptrv block_ptr as u8;
+			block_ptr++;
+			empty_count = getptrv block_ptr as u8;
+			if(empty_count > 0){
+				// Set new empty_count
+				empty_count--;
+				setptrv block_ptr to empty_count;
+				// 
+				block_ptr++;
+				empty_pos = getptrv block_ptr as u8;
+				block_ptr++;
+				result = block_ptr + ((this.size + 1) * empty_pos);
+				setptrv result to empty_pos;
+				result++;
+				// find next empty pos
+				pos = empty_pos + 1;
+				while(pos < len){
+					empty_pos = getptrv (block_ptr + ((this.size + 1) * pos)) as u8;
+					if(empty_pos == 0){
+						break;
+					}
+					pos++;
+				}
+				//
+				setptrv (block_ptr - 1) to pos;
+				return result;
+			}
+			// No empty slots, create new block
+			this.block_i++;
+
+			if(this.block_i < this.block_c){
+				// This is an old block we didnt free and can re-use
+				block_ptr = this.blocks_ptr + ((this.block_i) * 8);
+				block_ptr = getptrv block_ptr as ptr;
+				return block_ptr + 4;
+			}
+		}
+		this.block_c++;
+		u16 new_len_16 = len * 2;
+		if(new_len_16 > 250){
+			new_len_16 = 250;
+		}
+		u8 new_len = cast new_len_16 as u8;
+
+		ptr new_block = alloc_flat(new_len * (this.size + 1) + 3);
+		ptr block_list_adr = this.blocks_ptr + ((this.block_i) * 8);
+		setptrv block_list_adr to new_block;
+
+		setptrv new_block to new_len;
+		new_block++;
+		setptrv new_block to new_len;
+		new_block++;
+		empty_pos = 1;
+		setptrv new_block to empty_pos;
+		
+		return new_block + 1 + 1; // skip empty_pos byte & skip value pos byte
+	}
+
+	func free(ptr adr) {
+		adr--;
+		u8 pos = getptrv adr as u8;
+		setptrv adr to (cast 0 as u8);
+		adr -= (pos * (this.size + 1));
+		adr--;
+		u8 empty_pos = getptrv adr as u8;
+		if(pos < empty_pos){
+			setptrv adr to pos;
+		}
+		adr--;
+		u8 empty_count = getptrv adr as u8;
+		empty_count++;
+		setptrv adr to empty_count;
+		adr--;
+		u8 len = getptrv adr as u8;
+		if(empty_count == len){
+			if(this.block_i > 0){
+				this.block_i--;
+				if(this.block_c > this.block_i + 2){
+					this.block_c--;
+					free(this.blocks_ptr + ((this.block_c) * 8));
+				}
+			}
+		}
+	}
+}

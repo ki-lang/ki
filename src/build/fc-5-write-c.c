@@ -107,6 +107,29 @@ void fc_write_c_inits() {
     str_append_chars(code, "__TK, (void*)0);\n");
   }
 
+  for (int i = 0; i < packages->keys->length; i++) {
+    PkgCompiler* pkc = array_get_index(packages->values, i);
+    for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+      FileCompiler* fc = array_get_index(pkc->file_compilers->values, o);
+
+      for (int x = 0; x < fc->threaded_globals->length; x++) {
+        ThreadedGlobal* tg = array_get_index(fc->threaded_globals, x);
+
+        fc_write_c_value(fc, tg->default_value, true);
+
+        str_append_chars(code, "pthread_key_create(&");
+        str_append_chars(code, fc->nsc->pkc->name);
+        str_append_chars(code, "__");
+        str_append_chars(code, fc->nsc->name);
+        str_append_chars(code, "__");
+        str_append_chars(code, tg->name);
+        str_append_chars(code, ", ");
+        str_append(code, fc->value_buffer);
+        str_append_chars(code, ");\n");
+      }
+    }
+  }
+
   str_append_chars(code, "}\n");
 
   //
@@ -270,6 +293,16 @@ void fc_write_c_enum(FileCompiler* fc, Enum* enu) {
   str_append_chars(fc->h_code, "} ");
   str_append_chars(fc->h_code, enu->cname);
   str_append_chars(fc->h_code, ";");
+}
+
+void fc_write_c_threaded_globals(FileCompiler* fc, ThreadedGlobal* tg) {
+  str_append_chars(fc->h_code, "pthread_key_t ");
+  str_append_chars(fc->h_code, fc->nsc->pkc->name);
+  str_append_chars(fc->h_code, "__");
+  str_append_chars(fc->h_code, fc->nsc->name);
+  str_append_chars(fc->h_code, "__");
+  str_append_chars(fc->h_code, tg->name);
+  str_append_chars(fc->h_code, ";\n");
 }
 
 void fc_write_c_func(FileCompiler* fc, Function* func) {
@@ -513,6 +546,17 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     } else {
       str_append_chars(fc->tkn_buffer, "return 0;\n");
     }
+  } else if (token->type == tkn_set_threaded) {
+    TokenIdValue* iv = token->item;
+
+    fc_write_c_value(fc, iv->value, true);
+
+    str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
+    str_append_chars(fc->tkn_buffer, iv->name);
+    str_append_chars(fc->tkn_buffer, ",");
+    str_append(fc->tkn_buffer, fc->value_buffer);
+    str_append_chars(fc->tkn_buffer, ");\n");
+
   } else if (token->type == tkn_free) {
     fc_write_c_value(fc, token->item, true);
     str_append_chars(fc->tkn_buffer, "ki__mem__free(");
@@ -1138,6 +1182,11 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     char* name = fc_write_c_get_allocator(fc, sizei);
     str_append_chars(result, name);
     str_append_chars(result, "()");
+  } else if (value->type == vt_get_threaded) {
+    char* name = value->item;
+    str_append_chars(result, "pthread_getspecific(");
+    str_append_chars(result, name);
+    str_append_chars(result, ")");
   } else {
     fc_error(fc, "Unhandled value token (compiler bug)", NULL);
   }
@@ -1375,7 +1424,7 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size) {
 
   str_append_chars(fc->c_code_after, "if(a){ return a; }\n");
 
-  str_append_chars(fc->c_code_after, "a = ki__mem__alloc(32);\n");
+  str_append_chars(fc->c_code_after, "a = ki__mem__alloc(34);\n");
   str_append_chars(fc->c_code_after, "a->size = ");
   str_append_chars(fc->c_code_after, fc->sprintf);
   str_append_chars(fc->c_code_after, ";\n");

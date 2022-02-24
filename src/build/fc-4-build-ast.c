@@ -91,6 +91,11 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
       continue;
     }
 
+    if (strcmp(token, "set_threaded") == 0) {
+      token_set_threaded(fc, scope);
+      continue;
+    }
+
     // if (strcmp(token, "free") == 0) {
     //   token_free(fc, scope);
     //   continue;

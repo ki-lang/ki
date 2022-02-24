@@ -44,6 +44,18 @@ char* create_c_identifier_with_strings(char* package, char* namespace,
   return result;
 }
 
+char* fc_create_identifier_global_cname(FileCompiler* fc, Identifier* id) {
+  PkgCompiler* pkc = fc->nsc->pkc;
+  if (id->package != NULL) {
+    pkc = pkc_get_by_name(id->package);
+  }
+  NsCompiler* nsc = fc->nsc;
+  if (id->namespace != NULL) {
+    nsc = pkc_get_namespace_by_name(pkc, id->namespace);
+  }
+  return create_c_identifier_with_strings(pkc->name, nsc->name, id->name);
+}
+
 Identifier* create_identifier(char* package, char* namespace, char* name) {
   Identifier* id = init_id();
   id->package = strdup(package);

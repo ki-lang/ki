@@ -122,6 +122,33 @@ void token_throw(FileCompiler* fc, Scope* scope) {
   fc_expect_token(fc, ";", false, true, true);
 }
 
+void token_set_threaded(FileCompiler* fc, Scope* scope) {
+  Token* t = init_token();
+  t->type = tkn_set_threaded;
+
+  Identifier* id = fc_read_identifier(fc, false, true, true);
+  Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
+  IdentifierFor* idf = idf_find_in_scope(idf_scope, id->name);
+
+  if (!idf || idf->type != idfor_threaded_var) {
+    fc_error(fc, "Cannot find threaded global variable: %s", id->name);
+  }
+
+  ThreadedGlobal* tg = idf->item;
+
+  fc_expect_token(fc, "=", false, true, true);
+
+  TokenIdValue* iv = malloc(sizeof(TokenIdValue));
+  iv->name = fc_create_identifier_global_cname(fc, id);
+  iv->value = fc_read_value(fc, scope, false, true, true);
+
+  // Todo: type check value->return_type with tg->type
+
+  t->item = iv;
+
+  fc_expect_token(fc, ";", false, true, true);
+}
+
 void token_break(FileCompiler* fc, Scope* scope) {
   //
   Token* t = init_token();
