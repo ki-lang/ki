@@ -139,6 +139,13 @@ func free_pure(ptr adr, uxx size) {
 }
 
 func copy(ptr from, u32 len, ptr to) {
+  while (len > 8){
+	  len-=8;
+	  u64 byte = getptrv from as u64;
+	  setptrv to to byte;
+	  from+=8;
+	  to+=8;
+  }
   while (len > 0){
 	  len--;
 	  u8 byte = getptrv from as u8;

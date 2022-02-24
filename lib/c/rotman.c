@@ -10,7 +10,7 @@
 
 #define KI_NUMTHREADS 8
 #define KI_MAX_TASKS_PER_R 10
-#define KI_MAX_TASKS 512
+#define KI_MAX_TASKS 256
 
 pthread_key_t KI_RM;
 pthread_mutex_t KI_RM_LIST_LOCK;
@@ -164,34 +164,44 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
   }
 }
 
+int KI_RM_push_stack_pos = 0;
+int KI_RM_push_thread_pos = 0;
+
 void KI_RM_push_task(ki__async__Task* task) {
   //
   pthread_mutex_lock(&KI_RM_LIST_LOCK_ADD);
 
   int pos = 0;
+  ki__async__Task* t;
   while (1) {
-    ki__async__Task* t = KI_RM_TASK_LIST[pos];
-    if (t == NULL) {
-      KI_RM_TASK_LIST[pos] = task;
-      // Unsuspend a thread
-      for (int i = 0; i < KI_NUMTHREADS; i++) {
-        // printf("rm:%d is suspend: %d\n", i, KI_RM_LIST[i]->suspended);
-        if (KI_RM_LIST[i]->suspended) {
-          KI_RM_LIST[i]->suspended = 0;
-          // pthread_unsuspend_np(KI_RM_LIST[i]);
-          pthread_cond_signal(&KI_RM_THREAD_CONDS[i]);
-          // pthread_mutex_unlock(&KI_RM_THREAD_LOCKS[i]);
-          // printf("un-sus:%d\n", i);
-          break;
-        }
-      }
-      break;
+    t = KI_RM_TASK_LIST[KI_RM_push_stack_pos];
+    KI_RM_push_stack_pos++;
+    if (KI_RM_push_stack_pos == KI_MAX_TASKS) {
+      KI_RM_push_stack_pos = 0;
     }
-    pos++;
-    if (pos == KI_MAX_TASKS) {
+    if (t == NULL) {
       break;
     }
   }
+
+  KI_RM_TASK_LIST[KI_RM_push_stack_pos] = task;
+  // Unsuspend a thread
+  for (int i = 0; i < KI_NUMTHREADS; i++) {
+    KI_RM_push_thread_pos++;
+    if (KI_RM_push_thread_pos == KI_NUMTHREADS) {
+      KI_RM_push_thread_pos = 0;
+    }
+    // printf("rm:%d is suspend: %d\n", i, KI_RM_LIST[i]->suspended);
+    if (KI_RM_LIST[KI_RM_push_thread_pos]->suspended) {
+      KI_RM_LIST[KI_RM_push_thread_pos]->suspended = 0;
+      // pthread_unsuspend_np(KI_RM_LIST[i]);
+      pthread_cond_signal(&KI_RM_THREAD_CONDS[KI_RM_push_thread_pos]);
+      // pthread_mutex_unlock(&KI_RM_THREAD_LOCKS[i]);
+      // printf("un-sus:%d\n", i);
+      break;
+    }
+  }
+
   pthread_mutex_unlock(&KI_RM_LIST_LOCK_ADD);
 }
 
