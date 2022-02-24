@@ -50,6 +50,11 @@ void fc_write_c_all() {
         fc_write_c_enum(fc, array_get_index(fc->enums, x));
       }
 
+      for (int x = 0; x < fc->threaded_globals->length; x++) {
+        fc_write_c_threaded_globals(fc,
+                                    array_get_index(fc->threaded_globals, x));
+      }
+
       fc_write_c_ast(fc, fc->scope);
       fc_write_c(fc);
     }

@@ -231,6 +231,23 @@ void fc_scan_types(FileCompiler* fc) {
 
       fc_expect_token(fc, ";", false, true, true);
 
+    } else if (strcmp(token, "threaded") == 0) {
+      //
+      ThreadedGlobal* tg = malloc(sizeof(ThreadedGlobal));
+      tg->i = fc->i;
+      tg->type = NULL;
+      tg->name = NULL;
+      tg->default_value = NULL;
+
+      array_push(fc->threaded_globals, tg);
+
+      fc_skip_type(fc);
+      // Skip name
+      fc_next_token(fc, token, false, true, true);
+      fc_expect_token(fc, "=", false, true, true);
+      fc_skip_assign_value(fc);
+      fc_expect_token(fc, ";", false, true, true);
+
     } else {
       fc_error(fc, "Unexpected token: '%s'", token);
     }

@@ -111,6 +111,17 @@ class Allocator norfc {
 	}
 }
 
+threaded Allocator KI_allocators = NULL;
+
+func alloc(uxx size) ptr {
+	u8 pow = 0;
+	uxx psize = 1;
+	while(psize < size){
+		pow++;
+		psize *= 2;
+	}
+}
+
 func alloc(uxx size) ptr {
 
 	#if OS_WIN

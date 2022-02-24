@@ -127,6 +127,7 @@ void fc_skip_until_char(FileCompiler* fc, char ch);
 void fc_skip_comment(FileCompiler* fc);
 void fc_skip_type(FileCompiler* fc);
 void fc_skip_macro(FileCompiler* fc);
+void fc_skip_assign_value(FileCompiler* fc);
 
 // Headers
 void fc_read_header_token(FileCompiler* fc);

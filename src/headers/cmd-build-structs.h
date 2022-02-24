@@ -61,6 +61,7 @@ typedef struct FileCompiler {
   struct Array* functions;
   struct Array* classes;
   struct Array* enums;
+  struct Array* threaded_globals;
   // Extern
   struct Array* include_headers_from;
 } FileCompiler;
@@ -99,6 +100,7 @@ typedef enum IdentifierForType {
   idfor_type, // 5
   idfor_property,
   idfor_trait,
+  idfor_threaded_var,
 } IdentifierForType;
 
 //////////
@@ -178,6 +180,13 @@ typedef struct Enum {
   char* name;
   struct Map* values;
 } Enum;
+
+typedef struct ThreadedGlobal {
+  int i;
+  struct Type* type;
+  char* name;
+  struct Value* default_value;
+} ThreadedGlobal;
 
 //////////
 

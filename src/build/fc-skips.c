@@ -91,6 +91,32 @@ void fc_skip_until_char(FileCompiler* fc, char ch) {
   }
 }
 
+void fc_skip_assign_value(FileCompiler* fc) {
+  while (fc->i < fc->content_len) {
+    char nch = fc->content[fc->i];
+    if (nch == ';') {
+      break;
+    }
+    fc->i++;
+    if (nch == '\"') {
+      fc_skip_string(fc);
+      continue;
+    }
+    if (nch == '(') {
+      fc_skip_body(fc, "(", ")", NULL, false);
+      continue;
+    }
+    if (nch == '[') {
+      fc_skip_body(fc, "[", "]", NULL, false);
+      continue;
+    }
+    if (nch == '{') {
+      fc_skip_body(fc, "{", "}", NULL, false);
+      continue;
+    }
+  }
+}
+
 void fc_skip_comment(FileCompiler* fc) {
   while (fc->i < fc->content_len) {
     char nch = fc->content[fc->i];
