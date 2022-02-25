@@ -2,4 +2,5 @@
 namespace main;
 
 func write(i32 fd, ptr buf, u64 length);
+func fcntl(i32 fd, i32 cmd, i32 flags);
 

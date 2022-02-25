@@ -39,16 +39,26 @@ class Server {
 		io:print(this.port.to_string());
 		io:print("\n");
 
+		i32 maxfd = 0;
 		//
 		while(true){
+			//if (select(fdmax+1, getptr read_fds, NULL, NULL, NULL) == -1) {
+				//io:print("select failed\n");
+				//continue;
+			//}
+
 			//io:print("accept\n");
 			addrlen = 16;
-        	i32 result = main:main:accept(s.listenfd, clientaddr, getptr addrlen);
-			if (result < 0){
-				io:print("failed to accept\n");
-			}else{
-				this.clients.set(rslot, getptr result);
-				@ task = async this.respond(rslot);
+        	i32 new_fd = main:main:accept4(s.listenfd, clientaddr, getptr addrlen, 0);
+			//if(new_fd > maxfd){
+			//	io:print("Max fd:");
+			//	io:print(new_fd.to_string());
+			//	io:print("\n");
+			//	maxfd = new_fd;
+			//}
+
+			if (new_fd != -1){
+				@ task = async this.respond(rslot, new_fd);
 			}
 
 			rslot++;
@@ -58,11 +68,8 @@ class Server {
 		}
 	}
 
-	func respond(u32 slot){
+	func respond(u32 slot, i32 clientfd){
 		//io:print("Respond\n");
-
-		u32 clientfd = 0;
-		this.clients.get(slot, getptr clientfd);
 		// io:print(clientfd.to_string());
 
 		@ alc = allocator 65535;

@@ -2,6 +2,7 @@
 namespace net;
 
 #header "sys/net"
+#header "sys/io"
 
 class Socket {
 
@@ -28,7 +29,7 @@ class Socket {
 	public Socket.TYPE type = Socket.TYPE.stream;
 	public Socket.IPTYPE ip_type = Socket.IPTYPE.ipv4;
 
-	private i32 listenfd = 0;
+	public i32 listenfd = 0;
 	// private array clients = [];
 
 	public func listen() ! {
@@ -38,7 +39,7 @@ class Socket {
  		@ hints = main:main:addrinfo {
 			 ai_flags: Socket.FLAGS.passive,
 			 ai_family: Socket.IPTYPE.ipv4,
-			 ai_socktype: Socket.TYPE.stream
+			 ai_socktype: Socket.TYPE.stream,
 			 ai_protocol: Socket.PROTOCOL.http,
 			 //ai_protocol: 6,
 			 ai_addrlen: 16,
@@ -87,7 +88,6 @@ class Socket {
         	io:print("could_not_bind");
         	throw could_not_bind;
     	}
-
 		// c:freeaddrinfo(res);
 
 		// listen for incoming connections
@@ -96,6 +96,8 @@ class Socket {
         	io:print("listen_error");
 			throw listen_error;
  	    }
+
+		//main:main:fcntl(this.listenfd, 4, 4001);
 	}
 
 	public func accept() ! {

@@ -230,6 +230,8 @@ void token_assign(FileCompiler* fc, Scope* scope, char* sign, Value* left) {
     ta->type = op_div;
   } else if (strcmp(sign, "\%=") == 0) {
     ta->type = op_mod;
+  } else if (strcmp(sign, "|=") == 0) {
+    ta->type = op_bit_incl_OR;
   } else {
     fc_error(fc, "Invalid assign token: '%s'", sign);
   }

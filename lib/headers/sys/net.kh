@@ -28,7 +28,8 @@ class addrinfo norfc {
     addrinfo ai_next;
 }
 
-func accept(i32 sockfd, sockaddr_in addr, ptr addrlen) i32;
+func select(i32 fdcount, ptr readfdset, ptr writefdset, ptr expectfdset, ptr timeout) i32;
+func accept4(i32 sockfd, sockaddr_in addr, ptr addrlen, i32 flags) i32;
 func recv(i32 sockfd, ptr buf, ixx len, i32 flags) ixx;
 func shutdown(i32 sockfd, i32 how) i32;
 func close(i32 sockfd) i32;

@@ -439,10 +439,11 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
   while (ch == '.' || ch == '(' || strcmp(token, "+") == 0 ||
          strcmp(token, "-") == 0 || strcmp(token, "*") == 0 ||
          strcmp(token, "/") == 0 || strcmp(token, "%") == 0 ||
-         strcmp(token, "++") == 0 || strcmp(token, "--") == 0 ||
-         strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 ||
-         strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 ||
-         strcmp(token, ">") == 0 || strcmp(token, "<") == 0) {
+         strcmp(token, "|") == 0 || strcmp(token, "++") == 0 ||
+         strcmp(token, "--") == 0 || strcmp(token, "<=") == 0 ||
+         strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 ||
+         strcmp(token, "!=") == 0 || strcmp(token, ">") == 0 ||
+         strcmp(token, "<") == 0) {
     fc_next_token(fc, token, false, true, true);
     //
     if (ch == '.') {
@@ -500,7 +501,7 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       value = fc_read_func_call(fc, scope, value);
     } else if (strcmp(token, "+") == 0 || strcmp(token, "-") == 0 ||
                strcmp(token, "*") == 0 || strcmp(token, "/") == 0 ||
-               strcmp(token, "%") == 0) {
+               strcmp(token, "%") == 0 || strcmp(token, "|") == 0) {
       ValueOperator* op = malloc(sizeof(ValueOperator));
       op->left = value;
       op->right = fc_read_value(fc, scope, false, false, true);
@@ -515,6 +516,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
         op->type = op_div;
       } else if (strcmp(token, "%") == 0) {
         op->type = op_mod;
+      } else if (strcmp(token, "|") == 0) {
+        op->type = op_bit_incl_OR;
       }
 
       Type* return_type =
