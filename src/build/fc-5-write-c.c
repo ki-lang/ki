@@ -355,6 +355,11 @@ void fc_write_c_func(FileCompiler* fc, Function* func) {
       str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG_BUF = 0;\n");
     }
     fc->indent++;
+
+    if (strcmp(func->cname, "main") == 0) {
+      str_append_chars(fc->tkn_buffer, "KI_INITS();\n");
+    }
+
     fc_write_c_ast(fc, func->scope);
     fc->indent--;
     str_append_chars(fc->tkn_buffer, "}\n\n");

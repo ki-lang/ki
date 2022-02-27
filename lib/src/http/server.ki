@@ -2,6 +2,7 @@
 namespace http;
 
 #header "sys/net"
+#header "sys/io"
 
 use type {PtrArray};
 
@@ -32,7 +33,6 @@ class Server {
 
 		//u32 addrlen = sizeof(clientaddr);
 		u32 addrlen = 16;
-		u32 rslot = 0;
 
 		//
 		io:print("Running http server on port ");
@@ -40,35 +40,37 @@ class Server {
 		io:print("\n");
 
 		i32 maxfd = 0;
+		i32 new_fd = 0;
 		//
 		while(true){
-			//if (select(fdmax+1, getptr read_fds, NULL, NULL, NULL) == -1) {
+			//if (select(1, getptr read_fds, NULL, NULL, NULL) == -1) {
 				//io:print("select failed\n");
 				//continue;
 			//}
 
 			//io:print("accept\n");
-			addrlen = 16;
-        	i32 new_fd = main:main:accept4(s.listenfd, clientaddr, getptr addrlen, 0);
-			//if(new_fd > maxfd){
-			//	io:print("Max fd:");
-			//	io:print(new_fd.to_string());
-			//	io:print("\n");
-			//	maxfd = new_fd;
-			//}
 
-			if (new_fd != -1){
-				@ task = async this.respond(rslot, new_fd);
-			}
+			i32 r = main:main:dup2(s.listenfd, new_fd);
+			this.accept(new_fd);
 
-			rslot++;
-			if(rslot >= max){
-				rslot = 0;
-			}
 		}
 	}
 
-	func respond(u32 slot, i32 clientfd){
+	func accept(i32 clientfd){
+
+		@ clientaddr = main:main:sockaddr_in {
+			sin_addr: 0
+		};
+		i32 addrlen = 16;
+
+        i32 new_fd = main:main:accept4(clientfd, clientaddr, getptr addrlen, 0);
+
+		if (new_fd != -1){
+			@ task = async this.respond(new_fd);
+		}
+	}
+
+	func respond(i32 clientfd){
 		//io:print("Respond\n");
 		// io:print(clientfd.to_string());
 

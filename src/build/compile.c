@@ -8,24 +8,44 @@ int status = 0;
 #endif
 
 void fc_compile_local_c_files() {
-  if (!uses_async) {
-    return;
+  //
+  int result;
+  char* cache_dir = get_cache_dir();
+  char* c_file = malloc(3000);
+  char* o_file = malloc(3000);
+  char* cmd = malloc(3000);
+
+  if (uses_async) {
+    //
+    strcpy(c_file, get_binary_dir());
+    strcat(c_file, "/lib/c/rotman.c");
+
+    strcpy(o_file, cache_dir);
+    strcat(o_file, "/rotman.o");
+
+    array_push(o_files, strdup(o_file));
+
+    strcpy(cmd, get_compiler_path());
+    strcat(cmd, " -g -O2 -c");
+    strcat(cmd, " -I ");
+    strcat(cmd, get_binary_dir());
+    strcat(cmd, " -o ");
+    strcat(cmd, o_file);
+    strcat(cmd, " ");
+    strcat(cmd, c_file);
+
+    result = run_cmd(cmd);
   }
 
-  char* cache_dir = get_cache_dir();
-
   //
-  char* c_file = malloc(3000);
-  strcpy(c_file, get_binary_dir());
-  strcat(c_file, "/lib/c/rotman.c");
+  strcpy(c_file, cache_dir);
+  strcat(c_file, "/inits.c");
 
-  char* o_file = malloc(3000);
   strcpy(o_file, cache_dir);
-  strcat(o_file, "/rotman.o");
+  strcat(o_file, "/inits.o");
 
-  array_push(o_files, o_file);
+  array_push(o_files, strdup(o_file));
 
-  char* cmd = malloc(3000);
   strcpy(cmd, get_compiler_path());
   strcat(cmd, " -g -O2 -c");
   strcat(cmd, " -I ");
@@ -35,33 +55,12 @@ void fc_compile_local_c_files() {
   strcat(cmd, " ");
   strcat(cmd, c_file);
 
-  int result = run_cmd(cmd);
-
-  //
-  strcpy(c_file, cache_dir);
-  strcat(c_file, "/inits.c");
-
-  char* o_file_inits = malloc(3000);
-  strcpy(o_file_inits, cache_dir);
-  strcat(o_file_inits, "/inits.o");
-
-  array_push(o_files, o_file_inits);
-
-  cmd = malloc(3000);
-  strcpy(cmd, get_compiler_path());
-  strcat(cmd, " -g -O2 -c");
-  strcat(cmd, " -I ");
-  strcat(cmd, get_binary_dir());
-  strcat(cmd, " -o ");
-  strcat(cmd, o_file_inits);
-  strcat(cmd, " ");
-  strcat(cmd, c_file);
-
   result = run_cmd(cmd);
 
   //
   free(cmd);
   free(c_file);
+  free(o_file);
 }
 
 void compile_all() {

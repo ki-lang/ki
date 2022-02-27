@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "/home/ctxz/.ki/cache/project.h"
+#include "/home/ctx/.ki/cache/project.h"
 
 #define KI_NUMTHREADS 8
 #define KI_MAX_TASKS_PER_R 10
@@ -185,17 +185,18 @@ void KI_RM_push_task(ki__async__Task* task) {
   }
 
   KI_RM_TASK_LIST[KI_RM_push_stack_pos] = task;
+
   // Unsuspend a thread
   for (int i = 0; i < KI_NUMTHREADS; i++) {
-    KI_RM_push_thread_pos++;
-    if (KI_RM_push_thread_pos == KI_NUMTHREADS) {
-      KI_RM_push_thread_pos = 0;
-    }
+    // KI_RM_push_thread_pos++;
+    // if (KI_RM_push_thread_pos == KI_NUMTHREADS) {
+    //   KI_RM_push_thread_pos = 0;
+    // }
     // printf("rm:%d is suspend: %d\n", i, KI_RM_LIST[i]->suspended);
-    if (KI_RM_LIST[KI_RM_push_thread_pos]->suspended) {
-      KI_RM_LIST[KI_RM_push_thread_pos]->suspended = 0;
+    if (KI_RM_LIST[i]->suspended) {
+      KI_RM_LIST[i]->suspended = 0;
       // pthread_unsuspend_np(KI_RM_LIST[i]);
-      pthread_cond_signal(&KI_RM_THREAD_CONDS[KI_RM_push_thread_pos]);
+      pthread_cond_signal(&KI_RM_THREAD_CONDS[i]);
       // pthread_mutex_unlock(&KI_RM_THREAD_LOCKS[i]);
       // printf("un-sus:%d\n", i);
       break;
