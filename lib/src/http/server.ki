@@ -52,7 +52,6 @@ class Server {
 
 			i32 r = main:main:dup2(s.listenfd, new_fd);
 			this.accept(new_fd);
-
 		}
 	}
 
