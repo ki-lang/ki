@@ -53,12 +53,17 @@ class Server {
 
 	func accept(i32 clientfd){
 
-		@ clientaddr = main:main:sockaddr_in {
-			sin_addr: 0
-		};
+		@ alc = allocator 48;
+		//@ clientaddr = main:main:sockaddr_in {
+		//	sin_addr: 0
+		//};
+		@ clientaddr = alc.get_chunk();
 		i32 addrlen = 16;
 
         i32 new_fd = main:main:accept4(clientfd, clientaddr, getptr addrlen, 0);
+
+		alc.free(clientaddr);
+		//io:print("accept\n");
 
 		i32 keep_alive = 1;
 		i32 keep_idle = 1;  // Keep alive time in seconds
@@ -82,10 +87,10 @@ class Server {
 		//io:print("Respond\n");
 		// io:print(clientfd.to_string());
 
-		@ alc = allocator 65535;
+		@ alc = allocator 1000;
 		ptr buf = alc.get_chunk();
 		//ptr buf = mem:alloc(65535);
-		i32 rcvd = main:main:recv(clientfd, buf, 65535, 0);
+		i32 rcvd = main:main:recv(clientfd, buf, 1000, 0);
 
 		if (rcvd<0){
 			io:print("receive error\n");

@@ -100,7 +100,7 @@ class Allocator norfc {
 		if(empty_count == len){
 			if(this.block_i > 0){
 				this.block_i--;
-				if(this.block_c > this.block_i + 2){
+				if(this.block_c > this.block_i + 10){
 					this.block_c--;
 					free(this.blocks_ptr + ((this.block_c) * 8));
 				}

@@ -502,12 +502,16 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ";\n");
   } else if (token->type == tkn_return) {
-    Value* retv = token->item;
-    fc_write_c_value(fc, token->item, true);
+    Value* retv = NULL;
+    if (token->item) {
+      retv = token->item;
+      fc_write_c_value(fc, token->item, true);
+    }
 
     if (fc->local_var_names->length > 0 || fc->var_bufs->length > 0) {
       bool refc = false;
-      if (retv->return_type->class && retv->return_type->class->ref_count) {
+      if (retv && retv->return_type->class &&
+          retv->return_type->class->ref_count) {
         refc = true;
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, "->_RC++;\n");
@@ -524,7 +528,9 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
 
     //
     str_append_chars(fc->tkn_buffer, "return ");
-    str_append(fc->tkn_buffer, fc->value_buffer);
+    if (retv) {
+      str_append(fc->tkn_buffer, fc->value_buffer);
+    }
     str_append_chars(fc->tkn_buffer, ";\n");
   } else if (token->type == tkn_if) {
     fc_write_c_if(fc, token->item);
