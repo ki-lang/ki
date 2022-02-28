@@ -61,7 +61,14 @@ class Server {
         i32 new_fd = main:main:accept4(clientfd, clientaddr, getptr addrlen, 0);
 
 		i32 keep_alive = 1;
-		i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(keep_alive));
+		i32 keep_idle = 1;  // Keep alive time in seconds
+		i32 keep_intvl = 1; // Keep alive interval in seconds
+		i32 keep_pcnt = 5; // Keep alive retry count
+
+		i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
+		success = main:main:setsockopt(new_fd, 6, 3, getptr keep_idle, sizeof(i32));
+		success = main:main:setsockopt(new_fd, 6, 16, getptr keep_pcnt, sizeof(i32));
+		success = main:main:setsockopt(new_fd, 6, 17, getptr keep_intvl, sizeof(i32));
 
 		if (new_fd != -1){
 			@ task = async this.respond(new_fd);
