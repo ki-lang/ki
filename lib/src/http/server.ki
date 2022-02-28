@@ -35,20 +35,33 @@ class Server {
 		io:print(this.port.to_string());
 		io:print("\n");
 
-		i32 maxfd = 0;
-		i32 new_fd = 0;
+		this.set_socketfd_options(s.listenfd);
+
 		//
 		while(true){
-			//if (select(1, getptr read_fds, NULL, NULL, NULL) == -1) {
-				//io:print("select failed\n");
-				//continue;
-			//}
-
-			//io:print("accept\n");
-
-			//i32 r = main:main:dup2(s.listenfd, new_fd);
 			this.accept(s.listenfd);
 		}
+	}
+
+	func set_socketfd_options(i32 fd){
+
+		i32 keep_alive = 1;
+		i32 keep_idle = 1;  // Keep alive time in seconds
+		i32 keep_intvl = 1; // Keep alive interval in seconds
+		i32 keep_pcnt = 5; // Keep alive retry count
+
+		i32 success = main:main:setsockopt(fd, 1, 9, getptr keep_alive, sizeof(i32));
+		success = main:main:setsockopt(fd, 6, 3, getptr keep_idle, sizeof(i32));
+		success = main:main:setsockopt(fd, 6, 16, getptr keep_pcnt, sizeof(i32));
+		success = main:main:setsockopt(fd, 6, 17, getptr keep_intvl, sizeof(i32));
+
+		// IPPROTO_TCP => TCP_NODELAY
+		i32 nodelay = 1;
+		success = main:main:setsockopt(fd, 6, 1, getptr nodelay, sizeof(i32));
+
+		i32 reuseaddr = 1;
+		success = main:main:setsockopt(fd, 1, 2, getptr reuseaddr, sizeof(i32));
+		
 	}
 
 	func accept(i32 clientfd){
@@ -62,21 +75,10 @@ class Server {
 
         i32 new_fd = main:main:accept4(clientfd, clientaddr, getptr addrlen, 0);
 
+		//this.set_socketfd_options(new_fd);
+
 		alc.free(clientaddr);
 		//io:print("accept\n");
-
-		i32 keep_alive = 1;
-		i32 keep_idle = 1;  // Keep alive time in seconds
-		i32 keep_intvl = 1; // Keep alive interval in seconds
-		i32 keep_pcnt = 5; // Keep alive retry count
-
-		i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
-		success = main:main:setsockopt(new_fd, 6, 3, getptr keep_idle, sizeof(i32));
-		success = main:main:setsockopt(new_fd, 6, 16, getptr keep_pcnt, sizeof(i32));
-		success = main:main:setsockopt(new_fd, 6, 17, getptr keep_intvl, sizeof(i32));
-
-		i32 reuseaddr = 1;
-		success = main:main:setsockopt(new_fd, 1, 2, getptr reuseaddr, sizeof(i32));
 
 		if (new_fd != -1){
 			@ task = async this.respond(new_fd);

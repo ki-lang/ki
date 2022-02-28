@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <setjmp.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "/home/ctxz/.ki/cache/project.h"
@@ -156,11 +157,12 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
         // Suspend thread, nothing todo
         rm->suspended = 1;
         // printf("sus:%d\n", rm->nr);
-        // pthread_mutex_lock(&KI_RM_THREAD_LOCKS[rm->nr]);
-        pthread_cond_wait(&KI_RM_THREAD_CONDS[rm->nr],
-                          &KI_RM_THREAD_LOCKS[rm->nr]);
-        // pthread_mutex_unlock(&KI_RM_THREAD_LOCKS[rm->nr]);
-        // printf("u1:%d\n", rm->nr);
+        if (pthread_cond_wait(&KI_RM_THREAD_CONDS[rm->nr],
+                              &KI_RM_THREAD_LOCKS[rm->nr]) != 0) {
+          perror("pthread_cond_timedwait() error");
+          exit(7);
+        }
+        usleep(1);
       }
     }
 
@@ -193,10 +195,10 @@ void KI_RM_push_task(ki__async__Task* task) {
   int i = KI_RM_push_stack_pos % KI_NUMTHREADS;
   // if (KI_RM_LIST[i]->suspended) {
   KI_RM_LIST[i]->suspended = 0;
-  // pthread_unsuspend_np(KI_RM_LIST[i]);
-  pthread_cond_signal(&KI_RM_THREAD_CONDS[i]);
-  // pthread_mutex_unlock(&KI_RM_THREAD_LOCKS[i]);
-  // printf("un-sus:%d\n", i);
+  if (pthread_cond_signal(&KI_RM_THREAD_CONDS[i]) != 0) {
+    perror("pthread_cond_signal() error");
+    exit(4);
+  }
   // }
 
   // pthread_mutex_unlock(&KI_RM_LIST_LOCK_ADD);
