@@ -6,11 +6,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "/home/ctx/.ki/cache/project.h"
+#include "/home/ctxz/.ki/cache/project.h"
 
 #define KI_NUMTHREADS 8
 #define KI_MAX_TASKS_PER_R 10
-#define KI_MAX_TASKS 256
+#define KI_MAX_TASKS 200
 
 pthread_key_t KI_RM;
 pthread_mutex_t KI_RM_LIST_LOCK;
@@ -113,7 +113,7 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
         }
       } else {
         rm->current_task++;
-        if (rm->current_task == KI_MAX_TASKS_PER_R) {
+        if (rm->current_task >= KI_MAX_TASKS_PER_R) {
           rm->current_task = 0;
         }
       }
@@ -133,6 +133,7 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
               rm->tasks_running++;
               KI_RM_TASK_LIST[pos] = NULL;
               found = 1;
+              // printf("clear_task: %d\n", pos);
               break;
             }
           }
@@ -172,7 +173,7 @@ void KI_RM_push_task(ki__async__Task* task) {
   while (1) {
     t = KI_RM_TASK_LIST[KI_RM_push_stack_pos];
     KI_RM_push_stack_pos++;
-    if (KI_RM_push_stack_pos == KI_MAX_TASKS) {
+    if (KI_RM_push_stack_pos >= KI_MAX_TASKS) {
       KI_RM_push_stack_pos = 0;
     }
     if (t == NULL) {
@@ -180,6 +181,7 @@ void KI_RM_push_task(ki__async__Task* task) {
     }
   }
 
+  // printf("set_task: %d\n", KI_RM_push_stack_pos);
   KI_RM_TASK_LIST[KI_RM_push_stack_pos] = task;
   int i = KI_RM_push_stack_pos % KI_NUMTHREADS;
   if (KI_RM_LIST[i]->suspended) {
