@@ -39,7 +39,7 @@ class Server {
 
 		//
 		while(true){
-			this.accept(s.listenfd);
+			@ task = async this.accept(s.listenfd);
 		}
 	}
 
@@ -81,7 +81,7 @@ class Server {
 		//io:print("accept\n");
 
 		if (new_fd != -1){
-			@ task = async this.respond(new_fd);
+			this.respond(new_fd);
 		}else{
 			io:print("new_fd failed\n");
 		}
