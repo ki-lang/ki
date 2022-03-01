@@ -71,12 +71,17 @@ class Socket {
  		@ p = hints;
 
 		while(p != null){
-			i32 option = 1;
+
         	this.listenfd = main:main:socket(p.ai_family, p.ai_socktype, 0);
 			if(this.listenfd < 0){
-				io:print("Cant listen\n");
+				io:print("Cant create socket\n");
 			}
-        	success = main:main:setsockopt(this.listenfd, 1, 2, getptr option, 4); //sizeof(option)
+
+			i32 option = 1;
+        	success = main:main:setsockopt(this.listenfd, 1, 2, getptr option, sizeof(i32));
+
+			this.set_keep_alive(this.listenfd);
+
         	if (this.listenfd == -1) { continue; }
 			success = main:main:bind(this.listenfd, p.ai_addr, p.ai_addrlen);
         	if (success == 0){ break; }
@@ -98,6 +103,27 @@ class Socket {
  	    }
 
 		//main:main:fcntl(this.listenfd, 4, 4001);
+	}
+
+	func set_keep_alive(i32 fd){
+		i32 keep_alive = 1;
+		i32 keep_idle = 1;  // Keep alive time in seconds
+		i32 keep_intvl = 1; // Keep alive interval in seconds
+		i32 keep_pcnt = 5; // Keep alive retry count
+
+		// SOL_SOCKET: 1
+		// SO_KEEPALIVE: 9
+		i32 success = main:main:setsockopt(fd, 1, 9, getptr keep_alive, sizeof(i32));
+		//success = main:main:setsockopt(fd, 6, 3, getptr keep_idle, sizeof(i32));
+		//success = main:main:setsockopt(fd, 6, 16, getptr keep_pcnt, sizeof(i32));
+		//success = main:main:setsockopt(fd, 6, 17, getptr keep_intvl, sizeof(i32));
+
+		// IPPROTO_TCP => TCP_NODELAY
+		i32 nodelay = 1;
+		//success = main:main:setsockopt(fd, 6, 1, getptr nodelay, sizeof(i32));
+
+		i32 reuseaddr = 1;
+		//success = main:main:setsockopt(fd, 1, 2, getptr reuseaddr, sizeof(i32));
 	}
 
 	public func accept() ! {

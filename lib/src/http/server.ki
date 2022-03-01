@@ -35,8 +35,6 @@ class Server {
 		io:print(this.port.to_string());
 		io:print("\n");
 
-		//this.set_socketfd_options(s.listenfd);
-
 		//
 		i32 new_fd = 0;
 		while(true){
