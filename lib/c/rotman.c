@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "/home/ctxz/.ki/cache/project.h"
+#include "/home/ctx/.ki/cache/project.h"
 
 #define KI_NUMTHREADS 8
 #define KI_MAX_TASKS_PER_R 10
@@ -175,16 +175,16 @@ int KI_RM_push_thread_pos = 0;
 
 void KI_RM_push_task(ki__async__Task* task) {
   //
-  // pthread_mutex_lock(&KI_RM_LIST_LOCK_ADD);
+  pthread_mutex_lock(&KI_RM_LIST_LOCK_ADD);
 
   int pos = 0;
   ki__async__Task* t;
   while (1) {
-    t = KI_RM_TASK_LIST[KI_RM_push_stack_pos];
     KI_RM_push_stack_pos++;
-    if (KI_RM_push_stack_pos >= KI_MAX_TASKS) {
+    if (KI_RM_push_stack_pos == KI_MAX_TASKS) {
       KI_RM_push_stack_pos = 0;
     }
+    t = KI_RM_TASK_LIST[KI_RM_push_stack_pos];
     if (t == NULL) {
       break;
     }
@@ -201,7 +201,7 @@ void KI_RM_push_task(ki__async__Task* task) {
   }
   // }
 
-  // pthread_mutex_unlock(&KI_RM_LIST_LOCK_ADD);
+  pthread_mutex_unlock(&KI_RM_LIST_LOCK_ADD);
 }
 
 void KI_RM_run_next_task() {
