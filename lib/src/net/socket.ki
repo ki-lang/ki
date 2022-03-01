@@ -7,8 +7,8 @@ namespace net;
 class Socket {
 
 	enum IPTYPE {
-		ipv4: 2,
-		ipv6: 10,
+		ipv4: 2, // AF_INET aka. PF_INET
+		ipv6: 10, // AF_INET6 aka. PF_INET6
 	};
 
 	enum TYPE {
