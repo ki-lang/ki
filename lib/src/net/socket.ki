@@ -106,19 +106,15 @@ class Socket {
 	}
 
 	func set_keep_alive(i32 fd){
-		i32 keep_alive = 1;
 		i32 keep_idle = 180;  // Keep alive time in seconds
 		i32 keep_intvl = 60; // Keep alive interval in seconds
 		i32 keep_pcnt = 20; // Keep alive retry count
 
-		// SOL_SOCKET: 1
-		// SO_KEEPALIVE: 9
-		i32 success = main:main:setsockopt(fd, 1, 9, getptr keep_alive, sizeof(i32));
 		// SOL_TCP: 6
 		// TCP_KEEPIDLE: 4
 		// TCP_KEEPINTVL: 5
 		// TCP_KEEPCNT: 6
-		success = main:main:setsockopt(fd, 6, 4, getptr keep_idle, sizeof(i32));
+		i32 success = main:main:setsockopt(fd, 6, 4, getptr keep_idle, sizeof(i32));
 		success = main:main:setsockopt(fd, 6, 5, getptr keep_intvl, sizeof(i32));
 		success = main:main:setsockopt(fd, 6, 6, getptr keep_pcnt, sizeof(i32));
 

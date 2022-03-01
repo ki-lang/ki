@@ -44,27 +44,6 @@ class Server {
 		}
 	}
 
-	func set_socketfd_options(i32 fd){
-
-		i32 keep_alive = 1;
-		i32 keep_idle = 1;  // Keep alive time in seconds
-		i32 keep_intvl = 1; // Keep alive interval in seconds
-		i32 keep_pcnt = 5; // Keep alive retry count
-
-		i32 success = main:main:setsockopt(fd, 1, 9, getptr keep_alive, sizeof(i32));
-		success = main:main:setsockopt(fd, 6, 3, getptr keep_idle, sizeof(i32));
-		success = main:main:setsockopt(fd, 6, 16, getptr keep_pcnt, sizeof(i32));
-		success = main:main:setsockopt(fd, 6, 17, getptr keep_intvl, sizeof(i32));
-
-		// IPPROTO_TCP => TCP_NODELAY
-		i32 nodelay = 1;
-		success = main:main:setsockopt(fd, 6, 1, getptr nodelay, sizeof(i32));
-
-		i32 reuseaddr = 1;
-		success = main:main:setsockopt(fd, 1, 2, getptr reuseaddr, sizeof(i32));
-		
-	}
-
 	func accept(i32 clientfd){
 
 		@ alc = allocator 48;
@@ -74,15 +53,20 @@ class Server {
 		@ clientaddr = alc.get_chunk();
 		i32 addrlen = 16;
 
+		//io:print("accept\n");
+
         i32 new_fd = main:main:accept4(clientfd, clientaddr, getptr addrlen, 0);
 
+		// SOL_SOCKET: 1
+		// SO_KEEPALIVE: 9
+		i32 keep_alive = 1;
+		i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
+
+		// O_NONBLOCK
 		//i32 flags = main:main:fcntl(new_fd, 3, 0);
 		//i32 x = main:main:fcntl(new_fd, 4, flags | 04000);
 
-		//this.set_socketfd_options(new_fd);
-
 		alc.free(clientaddr);
-		//io:print("accept\n");
 
 		if (new_fd != -1){
 			this.respond(new_fd);
