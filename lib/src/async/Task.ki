@@ -8,4 +8,9 @@ class Task {
 	ptr jmpbuf = 0;
 	ptr result = 0;
 	bool ready = false;
+
+	public func __free(){
+		if(this.args != null){ mem:free(this.args); }
+		this._ALLOCATOR.free(this);
+	}
 }

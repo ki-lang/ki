@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "/home/ctx/.ki/cache/project.h"
+#include "/home/ctxz/.ki/cache/project.h"
 
 #define KI_NUMTHREADS 8
 #define KI_MAX_TASKS_PER_R 10
@@ -110,7 +110,7 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
             rm->tasks_running--;
             rm->tasks[nr] = NULL;
             if (task->jmpbuf) ki__mem__free(task->jmpbuf);
-            ki__mem__free(task->args);
+            // ki__mem__free(task->args);
             if (--task->_RC == 0) ki__async__Task____free(task);
           }
         }

@@ -930,6 +930,14 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       }
     }
 
+    if (class->ref_count) {
+      str_append_chars(fc->c_code_after, "KI_RET_V");
+      str_append_chars(fc->c_code_after, sign);
+      str_append_chars(fc->c_code_after, "_ALLOCATOR = ");
+      str_append_chars(fc->c_code_after, allocator_name);
+      str_append_chars(fc->c_code_after, "();\n");
+    }
+
     for (int i = 0; i < class->props->keys->length; i++) {
       char* prop_name = array_get_index(class->props->keys, i);
       if (map_contains(ini->prop_values, prop_name)) {
@@ -1105,6 +1113,10 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(fc->tkn_buffer, "->_RC = 2;\n");
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->jmpbuf = 0;\n");
+    str_append_chars(fc->tkn_buffer, var_name);
+    str_append_chars(fc->tkn_buffer, "->_ALLOCATOR = ");
+    str_append_chars(fc->tkn_buffer, allocator_name);
+    str_append_chars(fc->tkn_buffer, "();\n");
     //
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->handler_func = ");
