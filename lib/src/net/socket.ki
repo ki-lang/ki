@@ -115,9 +115,12 @@ class Socket {
 		// SO_KEEPALIVE: 9
 		i32 success = main:main:setsockopt(fd, 1, 9, getptr keep_alive, sizeof(i32));
 		// SOL_TCP: 6
-		success = main:main:setsockopt(fd, 6, 3, getptr keep_idle, sizeof(i32));
-		success = main:main:setsockopt(fd, 6, 16, getptr keep_pcnt, sizeof(i32));
-		success = main:main:setsockopt(fd, 6, 17, getptr keep_intvl, sizeof(i32));
+		// TCP_KEEPIDLE: 4
+		// TCP_KEEPINTVL: 5
+		// TCP_KEEPCNT: 6
+		success = main:main:setsockopt(fd, 6, 4, getptr keep_idle, sizeof(i32));
+		success = main:main:setsockopt(fd, 6, 5, getptr keep_intvl, sizeof(i32));
+		success = main:main:setsockopt(fd, 6, 6, getptr keep_pcnt, sizeof(i32));
 
 		// IPPROTO_TCP => TCP_NODELAY
 		i32 nodelay = 1;
