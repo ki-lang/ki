@@ -2,7 +2,18 @@
 namespace main;
 
 func write(i32 fd, ptr buf, u64 length);
-func fcntl(i32 fd, i32 cmd, i32 flags);
+
+// Values for the second argument to `fcntl'.
+// #define        F_DUPFD                0        Duplicate file descriptor.
+// #define        F_GETFD                1        Get file descriptor flags.
+// #define        F_SETFD                2        Set file descriptor flags.
+// #define        F_GETFL                3        Get file status flags.
+// #define        F_SETFL                4        Set file status flags.
+
+// File descriptor flags used with F_GETFD and F_SETFD.
+// #define        FD_CLOEXEC             1        Close on exec.
+
+func fcntl(i32 fd, i32 cmd, i32 flags) i32;
 
 func dup2(i32 oldfd, i32 newfd) i32;
 

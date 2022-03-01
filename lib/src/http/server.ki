@@ -35,11 +35,13 @@ class Server {
 		io:print(this.port.to_string());
 		io:print("\n");
 
-		this.set_socketfd_options(s.listenfd);
+		//this.set_socketfd_options(s.listenfd);
 
 		//
+		i32 new_fd = 0;
 		while(true){
-			@ task = async this.accept(s.listenfd);
+			i32 r = main:main:dup2(s.listenfd, new_fd);
+			@ task = async this.accept(new_fd);
 			task._RC--;
 		}
 	}
@@ -75,6 +77,9 @@ class Server {
 		i32 addrlen = 16;
 
         i32 new_fd = main:main:accept4(clientfd, clientaddr, getptr addrlen, 0);
+
+		//i32 flags = main:main:fcntl(new_fd, 3, 0);
+		//i32 x = main:main:fcntl(new_fd, 4, flags | 04000);
 
 		//this.set_socketfd_options(new_fd);
 
@@ -112,8 +117,8 @@ class Server {
 			io:write(clientfd, output);
 		}
 
-		i32 result = main:main:shutdown(clientfd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
-		result = main:main:close(clientfd);
+		//i32 result = main:main:shutdown(clientfd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
+		i32 result = main:main:close(clientfd);
 
 		alc.free(buf);
 		//mem:free(buf);
