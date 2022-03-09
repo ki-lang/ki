@@ -150,11 +150,33 @@ class StringChunker{
 		throw not_found;
 	}
 
-	public func get_chunk() string {
+	public func skip_bytes(string bytes){
+		while(this.start < this.str.length){
+			u8 a = this.str.get_index(this.start);
+			u64 bytes_pos = 0;
+			bool found = false;
+			while(bytes_pos < bytes.length){
+				u8 b = bytes.get_index(bytes_pos);
+				if(a == b){
+					found = true;
+					break;
+				}
+				bytes_pos++;
+			}
+			if(found == false){
+				break;
+			}
+			this.start++;
+		}
+	}
+
+	public func get_chunk(bool skip_break_bytes_at_end) string {
 		this.end = this.find_char_index(this.break_on);
 		@ result = this.str.substring(this.start, this.end - this.start);
-		this.end += 1;
 		this.start = this.end;
+		if(skip_break_bytes_at_end){
+			this.skip_bytes(this.break_on);
+		}
 		return result;
 	}
 }

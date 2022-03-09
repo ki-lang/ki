@@ -1,28 +1,78 @@
 
 namespace http;
 
+#header "sys/net"
+
 class Request {
 	public string method;
 	public string uri;
 	public string protocol;
+	public i64 body_length = 0;
+	public string body;
 
-	public static func make(string payload) Request {
+	public static func read_request(i32 clientfd) ?Request {
 
-		//io:print(payload);
+		@ alc = allocator 65535;
+		ptr buf = alc.get_chunk();
 
+		ixx rcvd = main:main:recv(clientfd, buf, 65535, 0);
+		if (rcvd<0){
+			io:print("receive error\n");
+			return null;
+		} else if (rcvd == 0){
+			io:print("Client disconnected upexpectedly\n");
+			return null;
+		}
+
+		@ payload = string.make(buf, rcvd);
+
+		// Read HTTP request line
 		@ chunker = payload.chunker();
-		chunker = chunker.break_on_bytes(" \t\r\n");
-		@ method = chunker.get_chunk();
 		chunker = chunker.break_on_bytes(" \t");
-		@ uri = chunker.get_chunk();
-		chunker = chunker.break_on_bytes(" \t\r\n");
-		@ protocol = chunker.get_chunk();
+		@ method = chunker.get_chunk(true);
+		@ uri = chunker.get_chunk(true);
+		chunker = chunker.break_on_bytes("\r\n");
+		@ protocol = chunker.get_chunk(false);
+
+		u64 body_length = 0;
+
+		// Read headers
+		while(chunker.start < payload.length){
+			u32 new_line_count = 0;
+			while(payload.get_index(chunker.start) == '\r'){
+				chunker.start += 2;
+				new_line_count++;
+				if(chunker.start >= payload.length){
+					break;
+				}
+			}
+			if(new_line_count > 1){
+				break;
+			}
+
+			chunker = chunker.break_on_bytes(":");
+			@ name = chunker.get_chunk(true);
+			chunker.skip_bytes(" \t");
+			chunker = chunker.break_on_bytes("\r\n");
+			@ value = chunker.get_chunk(false);
+		}
+
+		string body = "";
+
+		// Read body
+		if(body_length > 0){
+			// Todo
+		}
 
 		@ req = Request {
 			method: method,
 			uri: uri,
 			protocol: protocol,
+			body: body,
+			body_length: body_length,
 		};
+
+		alc.free(buf);
 
 		return req;
 	}

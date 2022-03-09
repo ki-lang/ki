@@ -35,12 +35,17 @@ class Server {
 		io:print(this.port.to_string());
 		io:print("\n");
 
+		//@ read_set = mem:alloc(100);
+
+		u64 read_set = 8;
+
 		//
 		i32 new_fd = 0;
 		while(true){
-			i32 r = main:main:dup2(s.listenfd, new_fd);
-			@ task = async this.accept(new_fd);
-			task._RC--;
+			i32 result = main:main:select(s.listenfd + 1, getptr read_set, null, null, null);
+			if(result > 0){
+				this.accept(s.listenfd);
+			}
 		}
 	}
 
@@ -52,8 +57,6 @@ class Server {
 		//};
 		@ clientaddr = alc.get_chunk();
 		i32 addrlen = 16;
-
-		//io:print("accept\n");
 
         i32 new_fd = main:main:accept4(clientfd, clientaddr, getptr addrlen, 0);
 
@@ -76,34 +79,16 @@ class Server {
 	}
 
 	func respond(i32 clientfd){
-		//io:print("Respond\n");
-		// io:print(clientfd.to_string());
 
-		@ alc = allocator 1000;
-		ptr buf = alc.get_chunk();
-		//ptr buf = mem:alloc(65535);
-		ixx rcvd = main:main:recv(clientfd, buf, 1000, 0);
+		@ req = Request.read_request(clientfd);
 
-		if (rcvd<0){
-			io:print("receive error\n");
-		} else if (rcvd == 0){
-			io:print("Client disconnected upexpectedly\n");
-		} else {
+		@ response = this.handler(req);
 
-			@ payload = string.make(buf, rcvd);
-			@ req = Request.make(payload);
-
-			@ response = this.handler(req);
-
-			string output = response.output();
-			io:write(clientfd, output);
-		}
+		string output = response.output();
+		io:write(clientfd, output);
 
 		//i32 result = main:main:shutdown(clientfd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
-		i32 result = main:main:close(clientfd);
-
-		alc.free(buf);
-		//mem:free(buf);
+		//i32 result = main:main:close(clientfd);
 	}
 
 }
