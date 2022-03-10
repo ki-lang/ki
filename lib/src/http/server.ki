@@ -44,7 +44,9 @@ class Server {
 		while(true){
 			i32 result = main:main:select(s.listenfd + 1, getptr read_set, null, null, null);
 			if(result > 0){
-				this.accept(s.listenfd);
+				i32 check = main:main:dup2(s.listenfd, new_fd);
+				@ task = async this.accept(new_fd);
+				task._RC--;
 			}
 		}
 	}
@@ -71,8 +73,20 @@ class Server {
 
 		alc.free(clientaddr);
 
+		i32 pow = new_fd;
+		u64 read_set = 1;
+		while(pow > 0){
+			read_set *= 2;
+			pow--;
+		}
+
 		if (new_fd != -1){
-			this.respond(new_fd);
+			while(true){
+				i32 result = main:main:select(new_fd + 1, getptr read_set, null, null, null);
+				if(result > 0){
+					this.respond(new_fd);
+				}
+			}
 		}else{
 			io:print("new_fd failed\n");
 		}
