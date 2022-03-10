@@ -15,12 +15,13 @@ func response_handler(Request req) Response {
 
 class Server {
 	u32 port;
+	ki:net:Socket socket;
 	funcref (Request) Response handler = response_handler;
 
 	func start() ! {
 
-		@ s = ki:net:Socket { port: this.port };
-		s.listen();
+		@ sock = ki:net:Socket { port: this.port };
+		sock.listen();
 
 		// 
 		@ clientaddr = main:main:sockaddr_in {
@@ -42,9 +43,9 @@ class Server {
 		//
 		i32 new_fd = 0;
 		while(true){
-			i32 result = main:main:select(s.listenfd + 1, getptr read_set, null, null, null);
+			i32 result = main:main:select(sock.listenfd + 1, getptr read_set, null, null, null);
 			if(result > 0){
-				i32 check = main:main:dup2(s.listenfd, new_fd);
+				i32 check = main:main:dup2(sock.listenfd, new_fd);
 				@ task = async this.accept(new_fd);
 				task._RC--;
 			}

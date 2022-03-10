@@ -1,0 +1,6 @@
+
+namespace net;
+
+class TcpCon {
+	i32 fd;
+}
