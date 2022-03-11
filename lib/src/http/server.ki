@@ -45,7 +45,7 @@ class Server {
 		//
 		i32 new_fd = 0;
 		while(true){
-			i32 result = main:main:select(sock.listenfd + 1, getptr read_set, null, null, null);
+			i32 result = main:main:select(sock.listenfd + 1, read_set, null, null, null);
 			if(result > 0){
 
 			}
