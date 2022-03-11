@@ -180,3 +180,21 @@ func equal(ptr a, ptr b, u32 length) bool {
 	}
 	return true;
 }
+
+func calloc(uxx size) ptr {
+	ptr adr = mem:alloc(size);
+	ptr adrc = adr;
+	u32 zero = 0;
+	u8 zerob = 0;
+	while(size > 3){
+		setptrv adrc to zero;
+		adrc += 4;
+		size -= 4;
+	}
+	while(size > 0){
+		setptrv adrc to zero;
+		adrc++;
+		size--;
+	}
+	return adr;
+}

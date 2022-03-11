@@ -439,7 +439,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
   while (ch == '.' || ch == '(' || strcmp(token, "+") == 0 ||
          strcmp(token, "-") == 0 || strcmp(token, "*") == 0 ||
          strcmp(token, "/") == 0 || strcmp(token, "%") == 0 ||
-         strcmp(token, "|") == 0 || strcmp(token, "++") == 0 ||
+         strcmp(token, "bitOR") == 0 || strcmp(token, "bitAND") == 0 ||
+         strcmp(token, "bitXOR") == 0 || strcmp(token, "++") == 0 ||
          strcmp(token, "--") == 0 || strcmp(token, "<=") == 0 ||
          strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 ||
          strcmp(token, "!=") == 0 || strcmp(token, ">") == 0 ||
@@ -501,7 +502,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       value = fc_read_func_call(fc, scope, value);
     } else if (strcmp(token, "+") == 0 || strcmp(token, "-") == 0 ||
                strcmp(token, "*") == 0 || strcmp(token, "/") == 0 ||
-               strcmp(token, "%") == 0 || strcmp(token, "|") == 0) {
+               strcmp(token, "%") == 0 || strcmp(token, "bitOR") == 0 ||
+               strcmp(token, "bitAND") == 0 || strcmp(token, "bitXOR") == 0) {
       ValueOperator* op = malloc(sizeof(ValueOperator));
       op->left = value;
       op->right = fc_read_value(fc, scope, false, false, true);
@@ -516,8 +518,12 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
         op->type = op_div;
       } else if (strcmp(token, "%") == 0) {
         op->type = op_mod;
-      } else if (strcmp(token, "|") == 0) {
-        op->type = op_bit_incl_OR;
+      } else if (strcmp(token, "bitOR") == 0) {
+        op->type = op_bit_OR;
+      } else if (strcmp(token, "bitAND") == 0) {
+        op->type = op_bit_AND;
+      } else if (strcmp(token, "bitXOR") == 0) {
+        op->type = op_bit_XOR;
       }
 
       Type* return_type =

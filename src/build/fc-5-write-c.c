@@ -494,8 +494,12 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       str_append_chars(fc->tkn_buffer, " /= ");
     } else if (ta->type == op_mod) {
       str_append_chars(fc->tkn_buffer, " \%= ");
-    } else if (ta->type == op_bit_incl_OR) {
+    } else if (ta->type == op_bit_OR) {
       str_append_chars(fc->tkn_buffer, " |= ");
+    } else if (ta->type == op_bit_AND) {
+      str_append_chars(fc->tkn_buffer, " &= ");
+    } else if (ta->type == op_bit_XOR) {
+      str_append_chars(fc->tkn_buffer, " ^= ");
     } else {
       fc_error(fc, "Unhandled assign operator translation", NULL);
     }
@@ -708,8 +712,12 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(result, " / ");
     } else if (op->type == op_mod) {
       str_append_chars(result, " \% ");
-    } else if (op->type == op_bit_incl_OR) {
+    } else if (op->type == op_bit_OR) {
       str_append_chars(result, " | ");
+    } else if (op->type == op_bit_AND) {
+      str_append_chars(result, " & ");
+    } else if (op->type == op_bit_XOR) {
+      str_append_chars(result, " ^ ");
       //
     } else if (op->type == op_eq) {
       str_append_chars(result, " == ");

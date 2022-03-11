@@ -1,0 +1,31 @@
+
+namespace fd;
+
+func add_to_set(ptr set, i32 fd){
+	u8 rest = fd % 8;
+	i32 chunk = (fd - rest) / 8;
+	set += chunk;
+	u8 v = 1;
+	u8 pow = 7 - rest;
+	while(pow > 0){
+		v *= 2;
+		pow--;
+	}
+	u8 current = getptrv set as u8;
+	setptrv set to (current bitOR v);
+}
+
+func remove_from_set(ptr set, i32 fd){
+	u8 rest = fd % 8;
+	i32 chunk = (fd - rest) / 8;
+	set += chunk;
+	u8 v = 1;
+	u8 pow = 7 - rest;
+	while(pow > 0){
+		v *= 2;
+		pow--;
+	}
+	u8 current = getptrv set as u8;
+	u64 allones = cast -1 as u64;
+	setptrv set to (current bitAND (allones bitXOR v));
+}
