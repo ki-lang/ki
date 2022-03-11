@@ -47,7 +47,7 @@ class Server {
 		while(true){
 			i32 result = main:main:select(sock.listenfd + 1, read_set, null, null, null);
 			if(result > 0){
-
+				this.accept(sock.listenfd);
 			}
 		}
 	}
