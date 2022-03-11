@@ -1,8 +1,9 @@
 
 namespace fd;
 
-// fd 3 = byte 0 with value 8: (2 pow 3) -> 00001000
-// fd 8 = byte 1 with value 1: (2 pow 0) -> 00000001
+// fd 3 = byte 0 with value 8: (2 pow 3) or (1 << 3) -> 00001000
+// fd 8 = byte 1 with value 1: (2 pow 0) or (1 << 0) -> 00000001
+// fd 9 = byte 1 with value 2: (2 pow 1) or (1 << 1) -> 00000010
 
 func add_to_set(ptr set, i32 fd){
 	u8 rest = fd % 8;
