@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "/home/ctxz/.ki/cache/project.h"
+#include "/home/ctx/.ki/cache/project.h"
 
 #define KI_NUMTHREADS 8
 #define KI_MAX_TASKS_PER_R 10
