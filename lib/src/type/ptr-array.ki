@@ -6,7 +6,7 @@ class PtrArray {
 	private ptr data; 
 
 	static func make(u64 size) PtrArray {
-		@ arr = PtrArray { size: size, data: mem:alloc(size * 8) };
+		@ arr = PtrArray { size: size, data: mem:calloc(size * 8) };
 		//c:printf(c"p1:%p\n", arr.data);
 		return arr;
 	}
@@ -15,11 +15,24 @@ class PtrArray {
 		ptr adr = this.data;
 		//c:printf(c"p:%p\n", adr);
 		adr += index * sizeof(adr);
-		mem:copy(value, adr, sizeof(adr));
+		//mem:copy(value, adr, sizeof(adr));
+		setptrv adr to (cast value as uxx);
 	}
-	func get(u64 index, ptr result) {
+	func get(u64 index) ptr {
 		ptr adr = this.data;
 		adr += index * sizeof(adr);
-		mem:copy(adr, result, sizeof(adr));
+		return getptrv adr as ptr;
+	}
+	func clear(u64 index) {
+		ptr adr = this.data;
+		adr += index * sizeof(adr);
+		uxx v = 0;
+		setptrv adr to v;
+	}
+	func has(u64 index) bool {
+		ptr adr = this.data;
+		adr += index * sizeof(adr);
+		ptr x = cast (getptrv adr as uxx) as ptr;
+		return x != null;
 	}
 }

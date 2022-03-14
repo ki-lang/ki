@@ -15,7 +15,7 @@ class Request {
 		@ alc = allocator 65535;
 		ptr buf = alc.get_chunk();
 
-		ixx rcvd = main:main:recv(clientfd, buf, 65535, 0);
+		i32 rcvd = main:main:recv(clientfd, buf, 65535, 0);
 		if (rcvd<0){
 			io:print("receive error\n");
 			return null;

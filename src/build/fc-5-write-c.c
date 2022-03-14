@@ -791,6 +791,13 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
         str_append_chars(fc->tkn_buffer, " = ");
         str_append(fc->tkn_buffer, result);
         str_append_chars(fc->tkn_buffer, ";\n");
+
+        if (value->return_type->nullable) {
+          str_append_chars(fc->tkn_buffer, "if(");
+          str_append_chars(fc->tkn_buffer, buf_var_name);
+          str_append_chars(fc->tkn_buffer, ") ");
+        }
+
         str_append_chars(fc->tkn_buffer, buf_var_name);
         str_append_chars(fc->tkn_buffer, "->_RC++;\n");
         result->length = 0;

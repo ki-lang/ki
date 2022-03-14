@@ -1,0 +1,15 @@
+
+namespace async;
+
+//class Mutex {
+//
+//	_mutex mutex;
+//
+//	func lock() {
+//		_mutex_lock(this);
+//	}
+//
+//	func unlock() {
+//		_mutex_unlock(this);
+//	}
+//}

@@ -1,0 +1,8 @@
+
+namespace http;
+
+class Connection {
+	i32 fd;
+	bool busy = false;
+	bool disconnected = false;
+}

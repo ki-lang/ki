@@ -40,6 +40,8 @@ class Server {
 		@ clientaddr = alc.get_chunk();
 		i32 addrlen = 16;
 
+		PtrArray connections = PtrArray.make(this.max_connections);
+
 		//
 		i32 maxfd = sock.listenfd;
 		i32 new_fd = 0;
@@ -47,67 +49,117 @@ class Server {
 			i32 result = main:main:select(maxfd + 1, read_set, null, null, null);
 			if(result > 0){
 
+				// Check new socket connection
+				if(fd:isset(read_set, sock.listenfd) == true){
+					// New connection
+  			      	i32 new_fd = main:main:accept4(sock.listenfd, clientaddr, getptr addrlen, 0);
+
+					if (new_fd == -1){
+						io:print("Failed to accept connection\n");
+						continue;
+					}
+
+					if(new_fd > maxfd){
+						maxfd = new_fd;
+					}
+
+					// SOL_SOCKET: 1
+					// SO_KEEPALIVE: 9
+					i32 keep_alive = 1;
+					i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
+
+					// O_NONBLOCK
+					//i32 flags = main:main:fcntl(new_fd, 3, 0);
+					//i32 x = main:main:fcntl(new_fd, 4, flags | 04000);
+
+					fd:add_to_set(read_set, new_fd);
+
+					Connection con = Connection{ fd: new_fd };
+					con._RC++;
+
+					if(connections.has(new_fd)){
+						ptr conptr = connections.get(new_fd);
+						Connection conx = cast conptr as Connection;
+						conx._RC--;
+					}
+
+					connections.set(new_fd, con);
+					io:print("New con:");
+					io:print(new_fd.to_string());
+					io:print("\n");
+				}
+
+				fd:add_to_set(read_set, sock.listenfd);
+
 				i32 fd = maxfd + 2;
 				while(fd > 3){
 					fd--;
 
-					bool notset = fd:isset(read_set, fd) == false;
-
-					// After select() has returned, readfds will be cleared of all file descriptors except for those that are ready for reading.
-					// So we need to set back all the fds
-					fd:add_to_set(read_set, fd);
-
-					if(notset){
+					if(fd == sock.listenfd){
 						continue;
 					}
 
-					if(fd == sock.listenfd){
-						// New connection
-  				      	i32 new_fd = main:main:accept4(sock.listenfd, clientaddr, getptr addrlen, 0);
+					if(connections.has(fd)){
 
-						if (new_fd == -1){
-							io:print("Failed to accept connection\n");
+						bool notset = fd:isset(read_set, fd) == false;
+
+						// After select() has returned, readfds will be cleared of all file descriptors except for those that are ready for reading.
+						// So we need to set back all the fds
+						fd:add_to_set(read_set, fd);
+
+						if(notset){
 							continue;
 						}
 
-						if(new_fd > maxfd){
-							maxfd = new_fd;
+						ptr conptr = connections.get(fd);
+						Connection con = cast conptr as Connection;
+
+						if(con.disconnected){
+							con._ALLOCATOR.free(con);
+							connections.clear(fd);
+							fd:remove_from_set(read_set, fd);
+							i32 result = main:main:shutdown(fd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
+							result = main:main:close(fd);
+							continue;
 						}
 
-						fd:add_to_set(read_set, new_fd);
+						if(con.busy){
+							continue;
+						}
 
-						// SOL_SOCKET: 1
-						// SO_KEEPALIVE: 9
-						i32 keep_alive = 1;
-						i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
-
-						// O_NONBLOCK
-						//i32 flags = main:main:fcntl(new_fd, 3, 0);
-						//i32 x = main:main:fcntl(new_fd, 4, flags | 04000);
-						continue;
+						con.busy = true;
+						@ task = async this.respond(fd, cast con as ptr);
+						task._RC++;
+					}else{
+						fd:remove_from_set(read_set, fd);
 					}
 
-					this.respond(fd);
-					//@ task = async this.respond(fd);
-
 				} // END FD LOOP
+
 			} // END SELECT
 		} // END LOOP
 
 		alc.free(clientaddr);
 	}
 
-	func respond(i32 clientfd){
+	func respond(i32 clientfd, ptr conptr){
+
+		Connection con = cast conptr as Connection;
 
 		@ req = Request.read_request(clientfd);
+
+		if(req == null){
+			con.busy = false;
+			con.disconnected = true;
+			return;
+		}
 
 		@ response = this.handler(req);
 
 		string output = response.output();
 		io:write(clientfd, output);
 
-		//i32 result = main:main:shutdown(clientfd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
-		//i32 result = main:main:close(clientfd);
+		con.busy = false;
 	}
 
 }

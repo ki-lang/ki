@@ -1,5 +1,25 @@
 
 namespace async;
 
-class Channel {
-}
+// func channel_handler(string msg) {}
+// 
+// class Channel allow_race_conditions {
+// 	public funcref (string) {} handler = channel_handler;
+// 	private Mutex mutex = Mutex {};
+// 	private Array<string> messages = Array<string> {};
+// 
+// 	func send(string msg) {
+// 		this.mutex.lock();
+// 		this.messages.push(msg);
+// 		this.mutex.unlock();
+// 	}
+// 
+// 	func check_messages() {
+// 		this.mutex.lock();
+// 		//
+// 
+// 		//
+// 		this.messages = Array<string> {};
+// 		this.mutex.unlock();
+// 	}
+// }
