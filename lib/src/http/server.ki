@@ -23,15 +23,6 @@ class Server {
 
 		@ sock = ki:net:Socket { port: this.port };
 		sock.listen();
-
-		// 
-		@ clientaddr = main:main:sockaddr_in {
-			sin_addr: 0
-		};
-
-		//u32 addrlen = sizeof(clientaddr);
-		u32 addrlen = 16;
-
 		//
 		io:print("Running http server on port ");
 		io:print(this.port.to_string());
@@ -42,18 +33,6 @@ class Server {
 
 		fd:add_to_set(read_set, sock.listenfd);
 
-		//
-		i32 new_fd = 0;
-		while(true){
-			i32 result = main:main:select(sock.listenfd + 1, read_set, null, null, null);
-			if(result > 0){
-				this.accept(sock.listenfd);
-			}
-		}
-	}
-
-	func accept(i32 clientfd){
-
 		@ alc = allocator 48;
 		//@ clientaddr = main:main:sockaddr_in {
 		//	sin_addr: 0
@@ -61,36 +40,61 @@ class Server {
 		@ clientaddr = alc.get_chunk();
 		i32 addrlen = 16;
 
-        i32 new_fd = main:main:accept4(clientfd, clientaddr, getptr addrlen, 0);
+		//
+		i32 maxfd = sock.listenfd;
+		i32 new_fd = 0;
+		while(true){
+			i32 result = main:main:select(maxfd + 1, read_set, null, null, null);
+			if(result > 0){
 
-		// SOL_SOCKET: 1
-		// SO_KEEPALIVE: 9
-		i32 keep_alive = 1;
-		i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
+				i32 fd = maxfd + 2;
+				while(fd > 3){
+					fd--;
 
-		// O_NONBLOCK
-		//i32 flags = main:main:fcntl(new_fd, 3, 0);
-		//i32 x = main:main:fcntl(new_fd, 4, flags | 04000);
+					bool isset = fd:isset(read_set, fd) == false;
+
+					// After select() has returned, readfds will be cleared of all file descriptors except for those that are ready for reading.
+					// So we need to set back all the fds
+					fd:add_to_set(read_set, fd);
+
+					if(isset){
+						continue;
+					}
+
+					if(fd == sock.listenfd){
+						// New connection
+  				      	i32 new_fd = main:main:accept4(sock.listenfd, clientaddr, getptr addrlen, 0);
+
+						if (new_fd == -1){
+							io:print("Failed to accept connection\n");
+							continue;
+						}
+
+						if(new_fd > maxfd){
+							maxfd = new_fd;
+						}
+
+						fd:add_to_set(read_set, new_fd);
+
+						// SOL_SOCKET: 1
+						// SO_KEEPALIVE: 9
+						i32 keep_alive = 1;
+						i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
+
+						// O_NONBLOCK
+						//i32 flags = main:main:fcntl(new_fd, 3, 0);
+						//i32 x = main:main:fcntl(new_fd, 4, flags | 04000);
+						continue;
+					}
+
+					this.respond(fd);
+					//@ task = async this.respond(fd);
+
+				} // END FD LOOP
+			} // END SELECT
+		} // END LOOP
 
 		alc.free(clientaddr);
-
-		i32 pow = new_fd;
-		u64 read_set = 1;
-		while(pow > 0){
-			read_set *= 2;
-			pow--;
-		}
-
-		if (new_fd != -1){
-			while(true){
-				i32 result = main:main:select(new_fd + 1, getptr read_set, null, null, null);
-				if(result > 0){
-					this.respond(new_fd);
-				}
-			}
-		}else{
-			io:print("new_fd failed\n");
-		}
 	}
 
 	func respond(i32 clientfd){

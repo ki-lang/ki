@@ -5,7 +5,7 @@ namespace fd;
 // fd 8 = byte 1 with value 1: (2 pow 0) or (1 << 0) -> 00000001
 // fd 9 = byte 1 with value 2: (2 pow 1) or (1 << 1) -> 00000010
 
-func isset(ptr set, i32 fd){
+func isset(ptr set, i32 fd) bool {
 	u8 rest = fd % 8;
 	i32 chunk = (fd - rest) / 8;
 	set += chunk;
