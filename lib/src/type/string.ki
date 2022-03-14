@@ -11,7 +11,7 @@ class string {
 	static func make(ptr data, u64 length) string {
 		u64 mem_size = length + 10;
 		@ str = string { data: alloc(mem_size), mem_size: mem_size };
-		copy(data, length + 1, str.data);
+		copy(data, str.data, length + 1);
 		str.length = length;
 		return str;
 	}
@@ -23,9 +23,9 @@ class string {
 			this.mem_size *= 2;
 		}
 		ptr adr = alloc(this.mem_size);
-		copy(this.data, this.length, adr);
+		copy(this.data, adr, this.length);
 		adr += this.length;
-		copy(str.data, str.length, adr);
+		copy(str.data, adr, str.length);
 		this.length = new_length;
 		free(this.data);
 		this.data = adr;
@@ -76,7 +76,7 @@ class string {
 
 	func to_cstring() cstring {
 		cstring cstr = alloc(this.length + 1);
-		copy(this.data, this.length, cstr);
+		copy(this.data, cstr, this.length);
 		ptr x = cstr;
 		x += this.length;
 		x = '\0';
@@ -104,7 +104,7 @@ class string {
 		ptr x = alloc(length + 1);
 		ptr from = this.data;
 		from += start;
-		copy(from, length, x);
+		copy(from, x, length);
 		ptr y = x;
 		y += length;
 		y = '\0';

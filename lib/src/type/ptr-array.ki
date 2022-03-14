@@ -15,11 +15,11 @@ class PtrArray {
 		ptr adr = this.data;
 		//c:printf(c"p:%p\n", adr);
 		adr += index * sizeof(adr);
-		mem:copy(value, sizeof(adr), adr);
+		mem:copy(value, adr, sizeof(adr));
 	}
 	func get(u64 index, ptr result) {
 		ptr adr = this.data;
 		adr += index * sizeof(adr);
-		mem:copy(adr, sizeof(adr), result);
+		mem:copy(adr, result, sizeof(adr));
 	}
 }
