@@ -130,7 +130,7 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
       char found = 0;
       for (pos = rm->nr; pos < KI_MAX_TASKS; pos += KI_NUMTHREADS) {
         ki__async__Task* task = KI_RM_TASK_LIST[pos];
-        if (task) {
+        if (task && !task->suspended) {
           for (int i = 0; i < KI_MAX_TASKS_PER_R; i++) {
             if (i > 0) {
               printf("something wrong:%d\n", i);
@@ -202,6 +202,10 @@ void KI_RM_push_task(ki__async__Task* task) {
   // }
 
   pthread_mutex_unlock(&KI_RM_LIST_LOCK_ADD);
+}
+
+void KI_RM_suspend_task() {
+  //
 }
 
 void KI_RM_run_next_task() {

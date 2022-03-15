@@ -102,6 +102,7 @@ void fc_write_c_inits() {
 
   for (int i = 0; i < allocators->keys->length; i++) {
     char* name = array_get_index(allocators->values, i);
+    if (name[strlen(name) - 1] == '0') continue;
     str_append_chars(code, "pthread_key_create(&");
     str_append_chars(code, name);
     str_append_chars(code, "__TK, (void*)0);\n");
@@ -265,7 +266,7 @@ void fc_write_c_class(FileCompiler* fc, Class* class) {
       }
     }
 
-    char* alloc_func = fc_write_c_get_allocator(fc, class->size);
+    char* alloc_func = fc_write_c_get_allocator(fc, class->size, true);
 
     str_append_chars(fc->c_code, "ki__mem__Allocator__free(");
     str_append_chars(fc->c_code, alloc_func);
@@ -843,7 +844,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     ValueClassInit* ini = value->item;
     Class* class = ini->class;
 
-    char* allocator_name = fc_write_c_get_allocator(fc, class->size);
+    char* allocator_name = fc_write_c_get_allocator(fc, class->size, true);
     char* func_name = malloc(30);
     sprintf(func_name, "_KI_CLASS_INIT_%d", GEN_C);
 
@@ -1104,7 +1105,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
 
     // Step 2. Create Task and push onto stack
     // Func ref
-    char* allocator_name = fc_write_c_get_allocator(fc, task_type->class->size);
+    char* allocator_name =
+        fc_write_c_get_allocator(fc, task_type->class->size, false);
     char* func_name = strdup(var_buf(fc));
     str_append_chars(fc->tkn_buffer, "void* ");
     str_append_chars(fc->tkn_buffer, func_name);
@@ -1144,7 +1146,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(fc->tkn_buffer, ";\n");
     // Set args
     str_append_chars(fc->tkn_buffer, var_name);
-    str_append_chars(fc->tkn_buffer, "->args = ki__mem__alloc(");
+    str_append_chars(fc->tkn_buffer, "->args = ki__mem__alloc_flat(");
     sprintf(size, "%d", args_size);
     str_append_chars(fc->tkn_buffer, size);
     str_append_chars(fc->tkn_buffer, ");\n");
@@ -1221,7 +1223,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
   } else if (value->type == vt_allocator) {
     char* size = value->item;
     int sizei = atoi(size);
-    char* name = fc_write_c_get_allocator(fc, sizei);
+    char* name = fc_write_c_get_allocator(fc, sizei, true);
     str_append_chars(result, name);
     str_append_chars(result, "()");
   } else if (value->type == vt_get_threaded) {
@@ -1426,10 +1428,10 @@ void deref_local_vars(FileCompiler* fc) {
   }
 }
 
-char* fc_write_c_get_allocator(FileCompiler* fc, int size) {
+char* fc_write_c_get_allocator(FileCompiler* fc, int size, bool threaded) {
   size += 24;
   //
-  sprintf(fc->sprintf, "KI_allocator_%d", size);
+  sprintf(fc->sprintf, "KI_allocator_%d_%d", size, threaded);
   char* name = fc->sprintf;
 
   char* last = map_get(allocators, name);
@@ -1443,11 +1445,11 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size) {
   name = strdup(name);
   sprintf(fc->sprintf, "%d", size);
 
-  str_append_chars(fc->h_code, "pthread_key_t ");
+  str_append_chars(fc->h_code, threaded ? "pthread_key_t " : "void* ");
   str_append_chars(fc->h_code, name);
   str_append_chars(fc->h_code, "__TK;\n");
 
-  str_append_chars(fc->c_code_after, "pthread_key_t ");
+  str_append_chars(fc->c_code_after, threaded ? "pthread_key_t " : "void* ");
   str_append_chars(fc->c_code_after, name);
   str_append_chars(fc->c_code_after, "__TK;\n");
 
@@ -1460,7 +1462,7 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size) {
   str_append_chars(fc->c_code_after, "(){\n");
 
   str_append_chars(fc->c_code_after, "struct ki__mem__Allocator* a = ");
-  str_append_chars(fc->c_code_after, "pthread_getspecific(");
+  str_append_chars(fc->c_code_after, threaded ? "pthread_getspecific(" : "(");
   str_append_chars(fc->c_code_after, name);
   str_append_chars(fc->c_code_after, "__TK);\n");
 
@@ -1476,9 +1478,14 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size) {
   str_append_chars(fc->c_code_after,
                    "a->blocks_ptr = ki__mem__alloc(256 * 8);\n");
 
-  str_append_chars(fc->c_code_after, "pthread_setspecific(");
-  str_append_chars(fc->c_code_after, name);
-  str_append_chars(fc->c_code_after, "__TK, a);\n");
+  if (threaded) {
+    str_append_chars(fc->c_code_after, "pthread_setspecific(");
+    str_append_chars(fc->c_code_after, name);
+    str_append_chars(fc->c_code_after, "__TK, a);\n");
+  } else {
+    str_append_chars(fc->c_code_after, name);
+    str_append_chars(fc->c_code_after, "__TK = a;\n");
+  }
 
   str_append_chars(fc->c_code_after, "return a;\n");
   str_append_chars(fc->c_code_after, "}\n");

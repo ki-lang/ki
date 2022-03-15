@@ -15,7 +15,8 @@ func alloc(uxx size) ptr {
 
 	ptr allocators = get_threaded thr_allocators;
 	if(allocators == null){
-		allocators = alloc_flat(64);
+		allocators = alloc_flat(64 * 8);
+		clear(allocators, 64 * 8);
 		set_threaded thr_allocators = allocators;
 	}
 
@@ -41,7 +42,12 @@ func free(ptr adr) {
 	u8 pow = getptrv adr as u8;
 
 	ptr allocators = get_threaded thr_allocators;
-	@ alc = getptrv (allocators + pow * 8) as Allocator;
+	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
+
+	if(alc == null){
+		// Something went wrong
+	}
+
 	alc.free(adr);
 }
 
@@ -183,7 +189,11 @@ func equal(ptr a, ptr b, u32 length) bool {
 
 func calloc(uxx size) ptr {
 	ptr adr = mem:alloc(size);
-	ptr adrc = adr;
+	clear(adr, size);
+	return adr;
+}
+
+func clear(ptr adrc, uxx size){
 	u32 zero = 0;
 	u8 zerob = 0;
 	while(size > 3){
@@ -196,5 +206,4 @@ func calloc(uxx size) ptr {
 		adrc++;
 		size--;
 	}
-	return adr;
 }

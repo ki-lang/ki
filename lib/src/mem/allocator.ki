@@ -108,7 +108,7 @@ class Allocator norfc {
 				this.block_i--;
 				if(this.block_c > this.block_i + 10){
 					this.block_c--;
-					free(this.blocks_ptr + ((this.block_c) * 8));
+					free_flat(this.blocks_ptr + ((this.block_c) * 8));
 				}
 			}
 		}

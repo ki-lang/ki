@@ -3,6 +3,7 @@ namespace http;
 
 class Connection {
 	i32 fd;
+	ptr read_set;
 	bool busy = false;
 	bool disconnected = false;
 	?async:Task task = null;
