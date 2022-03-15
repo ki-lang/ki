@@ -128,8 +128,8 @@ class Server {
 						}
 
 						con.busy = true;
-						@ task = async this.respond(fd, cast con as ptr);
-						task._RC++;
+						con.task = async this.respond(fd, cast con as ptr);
+						con.task._RC++;
 					}else{
 						fd:remove_from_set(read_set, fd);
 					}
@@ -145,6 +145,23 @@ class Server {
 	func respond(i32 clientfd, ptr conptr){
 
 		Connection con = cast conptr as Connection;
+
+		@ alc = allocator 65535;
+		ptr buf = alc.get_chunk();
+		i32 rcvd = main:main:recv(clientfd, buf, 65535, 0);
+		alc.free(buf);
+
+		con.task._RC--;
+
+		if(rcvd < 0){
+			con.disconnected = true;
+			con.busy = false;
+			return;
+		}
+
+		io:write(clientfd, "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world");
+		con.busy = false;
+		return;
 
 		@ req = Request.read_request(clientfd);
 

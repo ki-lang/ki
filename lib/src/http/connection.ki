@@ -5,4 +5,5 @@ class Connection {
 	i32 fd;
 	bool busy = false;
 	bool disconnected = false;
+	?async:Task task = null;
 }
