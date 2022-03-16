@@ -23,11 +23,13 @@ func alloc(uxx size) ptr {
 	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
 	if(alc == null){
 
-		alc = cast (alloc_flat(50)) as Allocator;
+		alc = cast (alloc_flat(64)) as Allocator;
 		alc.size = psize + 1;
 		alc.block_i = 0;
 		alc.block_c = 0;
 		alc.blocks_ptr = alloc_flat(256 * 8);
+		alc.mut = alloc_flat(40);
+		alc.mut_inited = false;
 
 		setptrv (allocators + pow * 8) to alc;
 	}
@@ -61,11 +63,16 @@ func alloc_flat(uxx size) ptr {
 
 	#if OS_LINUX
 	setptrv adr to size;
-	return adr + 8;
-	#else
-	return adr;
+	adr += 8;
 	#end
 
+	return adr;
+}
+
+func calloc_flat(uxx size) ptr {
+	@ adr = alloc_flat(size);
+	clear(adr, size);
+	return adr;
 }
 
 func free_flat(ptr adr) {

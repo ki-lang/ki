@@ -55,6 +55,10 @@ void fc_write_c_all() {
                                     array_get_index(fc->threaded_globals, x));
       }
 
+      for (int x = 0; x < fc->mutexes->length; x++) {
+        fc_write_c_mutex(fc, array_get_index(fc->mutexes, x));
+      }
+
       fc_write_c_ast(fc, fc->scope);
       fc_write_c(fc);
     }
@@ -102,10 +106,14 @@ void fc_write_c_inits() {
 
   for (int i = 0; i < allocators->keys->length; i++) {
     char* name = array_get_index(allocators->values, i);
-    if (name[strlen(name) - 1] == '0') continue;
-    str_append_chars(code, "pthread_key_create(&");
-    str_append_chars(code, name);
-    str_append_chars(code, "__TK, (void*)0);\n");
+    if (name[strlen(name) - 1] == '0') {
+      str_append_chars(code, name);
+      str_append_chars(code, "__TK = (void*) 0;\n");
+    } else {
+      str_append_chars(code, "pthread_key_create(&");
+      str_append_chars(code, name);
+      str_append_chars(code, "__TK, (void*)0);\n");
+    }
   }
 
   for (int i = 0; i < packages->keys->length; i++) {
@@ -303,6 +311,12 @@ void fc_write_c_threaded_globals(FileCompiler* fc, ThreadedGlobal* tg) {
   str_append_chars(fc->h_code, fc->nsc->name);
   str_append_chars(fc->h_code, "__");
   str_append_chars(fc->h_code, tg->name);
+  str_append_chars(fc->h_code, ";\n");
+}
+
+void fc_write_c_mutex(FileCompiler* fc, Mutex* mut) {
+  str_append_chars(fc->h_code, "pthread_mutex_t ");
+  str_append_chars(fc->h_code, mut->cname);
   str_append_chars(fc->h_code, ";\n");
 }
 
@@ -572,6 +586,42 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
     str_append_chars(fc->tkn_buffer, iv->name);
     str_append_chars(fc->tkn_buffer, ",");
+    str_append(fc->tkn_buffer, fc->value_buffer);
+    str_append_chars(fc->tkn_buffer, ");\n");
+
+  } else if (token->type == tkn_mutex_init) {
+    Value* val = token->item;
+
+    fc_write_c_value(fc, val, true);
+
+    str_append_chars(fc->tkn_buffer, "pthread_mutexattr_t ma;\n");
+    str_append_chars(fc->tkn_buffer, "pthread_mutexattr_init(&ma);\n");
+    str_append_chars(
+        fc->tkn_buffer,
+        "pthread_mutexattr_setpshared(&ma, PTHREAD_PROCESS_SHARED);\n");
+    str_append_chars(
+        fc->tkn_buffer,
+        "pthread_mutexattr_setpshared(&ma, PTHREAD_MUTEX_ROBUST);\n");
+
+    str_append_chars(fc->tkn_buffer, "pthread_mutex_init(");
+    str_append(fc->tkn_buffer, fc->value_buffer);
+    str_append_chars(fc->tkn_buffer, ", &ma);\n");
+
+  } else if (token->type == tkn_mutex_lock) {
+    Value* val = token->item;
+
+    fc_write_c_value(fc, val, true);
+
+    str_append_chars(fc->tkn_buffer, "pthread_mutex_lock(");
+    str_append(fc->tkn_buffer, fc->value_buffer);
+    str_append_chars(fc->tkn_buffer, ");\n");
+
+  } else if (token->type == tkn_mutex_unlock) {
+    Value* val = token->item;
+
+    fc_write_c_value(fc, val, true);
+
+    str_append_chars(fc->tkn_buffer, "pthread_mutex_unlock(");
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ");\n");
 
@@ -1430,6 +1480,7 @@ void deref_local_vars(FileCompiler* fc) {
 
 char* fc_write_c_get_allocator(FileCompiler* fc, int size, bool threaded) {
   size += 24;
+  threaded = false;  // force unthreaded
   //
   sprintf(fc->sprintf, "KI_allocator_%d_%d", size, threaded);
   char* name = fc->sprintf;
@@ -1468,7 +1519,7 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size, bool threaded) {
 
   str_append_chars(fc->c_code_after, "if(a){ return a; }\n");
 
-  str_append_chars(fc->c_code_after, "a = ki__mem__alloc(34);\n");
+  str_append_chars(fc->c_code_after, "a = ki__mem__alloc_flat(64);\n");
   str_append_chars(fc->c_code_after, "a->size = ");
   str_append_chars(fc->c_code_after, fc->sprintf);
   str_append_chars(fc->c_code_after, ";\n");
@@ -1476,7 +1527,9 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size, bool threaded) {
   str_append_chars(fc->c_code_after, "a->block_i = 0;\n");
   str_append_chars(fc->c_code_after, "a->block_c = 0;\n");
   str_append_chars(fc->c_code_after,
-                   "a->blocks_ptr = ki__mem__alloc(256 * 8);\n");
+                   "a->blocks_ptr = ki__mem__alloc_flat(256 * 8);\n");
+  str_append_chars(fc->c_code_after, "a->mut = ki__mem__calloc_flat(128);\n");
+  str_append_chars(fc->c_code_after, "a->mut_inited = 0;\n");
 
   if (threaded) {
     str_append_chars(fc->c_code_after, "pthread_setspecific(");

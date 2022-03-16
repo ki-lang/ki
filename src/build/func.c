@@ -9,6 +9,7 @@ Function* init_func() {
   func->args_i = 0;
   func->args_i_end = 0;
   func->scope = NULL;
+  func->return_type = NULL;
   return func;
 }
 

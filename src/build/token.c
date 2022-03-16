@@ -150,6 +150,39 @@ void token_set_threaded(FileCompiler* fc, Scope* scope) {
   fc_expect_token(fc, ";", false, true, true);
 }
 
+void token_mutex_init(FileCompiler* fc, Scope* scope) {
+  Value* val = fc_read_value(fc, scope, false, true, true);
+
+  Token* t = init_token();
+  t->type = tkn_mutex_init;
+  t->item = val;
+
+  array_push(scope->ast, t);
+  fc_expect_token(fc, ";", false, true, true);
+}
+
+void token_mutex_lock(FileCompiler* fc, Scope* scope) {
+  Value* val = fc_read_value(fc, scope, false, true, true);
+
+  Token* t = init_token();
+  t->type = tkn_mutex_lock;
+  t->item = val;
+
+  array_push(scope->ast, t);
+  fc_expect_token(fc, ";", false, true, true);
+}
+
+void token_mutex_unlock(FileCompiler* fc, Scope* scope) {
+  Value* val = fc_read_value(fc, scope, false, true, true);
+
+  Token* t = init_token();
+  t->type = tkn_mutex_unlock;
+  t->item = val;
+
+  array_push(scope->ast, t);
+  fc_expect_token(fc, ";", false, true, true);
+}
+
 void token_break(FileCompiler* fc, Scope* scope) {
   //
   Token* t = init_token();

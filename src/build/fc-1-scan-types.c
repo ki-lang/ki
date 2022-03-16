@@ -248,6 +248,35 @@ void fc_scan_types(FileCompiler* fc) {
       fc_skip_assign_value(fc);
       fc_expect_token(fc, ";", false, true, true);
 
+    } else if (strcmp(token, "mutex") == 0) {
+      //
+      Mutex* mut = malloc(sizeof(Mutex));
+      mut->name = NULL;
+
+      array_push(fc->mutexes, mut);
+
+      fc_next_token(fc, token, false, true, true);
+
+      if (!is_valid_varname(token)) {
+        fc_error(fc, "Invalid mutex name: '%s'", token);
+      }
+
+      mut->name = strdup(token);
+
+      IdentifierFor* idf = init_idf();
+      idf->type = idfor_mutex;
+      idf->item = mut;
+
+      Scope* scope = fc->nsc->scope;
+      map_set(scope->identifiers, mut->name, idf);
+
+      char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
+                                                     fc->nsc->name, mut->name);
+      mut->cname = cname;
+      map_set(c_identifiers, cname, idf);
+
+      fc_expect_token(fc, ";", false, true, true);
+
     } else {
       fc_error(fc, "Unexpected token: '%s'", token);
     }

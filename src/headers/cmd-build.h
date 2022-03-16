@@ -41,10 +41,14 @@ Scope* init_sub_scope(Scope* parent);
 Token* init_token();
 void free_token(Token* token);
 void token_return(FileCompiler* fc, Scope* scope);
-TokenIf* token_if(FileCompiler* fc, Scope* scope, bool is_else, bool has_condition);
+TokenIf* token_if(FileCompiler* fc, Scope* scope, bool is_else,
+                  bool has_condition);
 void token_while(FileCompiler* fc, Scope* scope);
 void token_throw(FileCompiler* fc, Scope* scope);
 void token_set_threaded(FileCompiler* fc, Scope* scope);
+void token_mutex_init(FileCompiler* fc, Scope* scope);
+void token_mutex_lock(FileCompiler* fc, Scope* scope);
+void token_mutex_unlock(FileCompiler* fc, Scope* scope);
 void token_break(FileCompiler* fc, Scope* scope);
 void token_continue(FileCompiler* fc, Scope* scope);
 void token_declare(FileCompiler* fc, Scope* scope, Type* left_type);
@@ -61,8 +65,11 @@ char* create_c_identifier_with_strings(char* package, char* namespace,
 char* fc_create_identifier_global_cname(FileCompiler* fc, Identifier* id);
 Identifier* create_identifier(char* package, char* namespace, char* name);
 IdentifierFor* idf_find_in_scope(Scope* scope, char* name);
-Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline, bool allow_space);
-IdentifierFor* fc_read_and_get_idf(FileCompiler* fc, Scope* scope, bool readonly, bool sameline, bool allow_space);
+Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
+                               bool allow_space);
+IdentifierFor* fc_read_and_get_idf(FileCompiler* fc, Scope* scope,
+                                   bool readonly, bool sameline,
+                                   bool allow_space);
 Scope* fc_get_identifier_scope(FileCompiler* fc, Scope* scope, Identifier* id);
 
 // Enum
@@ -107,8 +114,8 @@ Type* fc_create_type_for_enum(Enum* enu);
 // Value
 Value* init_value();
 void free_value(Value* v);
-Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly, bool sameline,
-                     bool allow_space);
+Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
+                     bool sameline, bool allow_space);
 Value* fc_read_func_call(FileCompiler* fc, Scope* scope, Value* on);
 
 // Read
@@ -145,6 +152,7 @@ void fc_write_c_pre(FileCompiler* fc);
 void fc_write_c(FileCompiler* fc);
 void fc_write_c_predefine_class(FileCompiler* fc, Class* class);
 void fc_write_c_threaded_globals(FileCompiler* fc, ThreadedGlobal* tg);
+void fc_write_c_mutex(FileCompiler* fc, Mutex* mut);
 void fc_write_c_class(FileCompiler* fc, Class* class);
 void fc_write_c_enum(FileCompiler* fc, Enum* enu);
 void fc_write_c_func(FileCompiler* fc, Function* func);

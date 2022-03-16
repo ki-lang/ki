@@ -62,6 +62,7 @@ typedef struct FileCompiler {
   struct Array* classes;
   struct Array* enums;
   struct Array* threaded_globals;
+  struct Array* mutexes;
   // Extern
   struct Array* include_headers_from;
 } FileCompiler;
@@ -97,10 +98,11 @@ typedef enum IdentifierForType {
   idfor_class,
   idfor_enum,
   idfor_var,
-  idfor_type, // 5
+  idfor_type,  // 5
   idfor_property,
   idfor_trait,
   idfor_threaded_var,
+  idfor_mutex,
 } IdentifierForType;
 
 //////////
@@ -188,6 +190,11 @@ typedef struct ThreadedGlobal {
   struct Value* default_value;
 } ThreadedGlobal;
 
+typedef struct Mutex {
+  char* name;
+  char* cname;
+} Mutex;
+
 //////////
 
 typedef struct Type {
@@ -236,22 +243,22 @@ typedef enum ValueType {
   vt_true,
   vt_false,
   vt_group,
-  vt_number, // 5
+  vt_number,  // 5
   vt_string,
   vt_char,
   vt_operator,
   vt_var,
-  vt_func_call, // 10
+  vt_func_call,  // 10
   vt_sizeof,
   vt_cast,
   vt_getptr,
   vt_getptrv,
-  vt_setptrv, // 15
+  vt_setptrv,  // 15
   vt_class_init,
   vt_prop_access,
   vt_async,
   vt_await,
-  vt_allocator, // 20
+  vt_allocator,  // 20
   vt_get_threaded,
 } ValueType;
 
@@ -272,12 +279,12 @@ typedef enum OperatorType {
   op_mult,
   op_div,
   op_mod,
-  op_eq, // 5
+  op_eq,  // 5
   op_neq,
   op_lte,
   op_gte,
   op_lt,
-  op_gt, // 10
+  op_gt,  // 10
   op_incr,
   op_decr,
   op_bit_OR,
@@ -290,7 +297,7 @@ typedef struct ValueCast {
   Type* as_type;
 } ValueCast;
 
-typedef struct SetPtrValue{
+typedef struct SetPtrValue {
   Value* ptr_value;
   Value* to_value;
 } SetPtrValue;
@@ -319,13 +326,16 @@ typedef enum TokenTypeEnum {
   tkn_while,
   tkn_if,
   tkn_throw,
-  tkn_break, // 5
+  tkn_break,  // 5
   tkn_continue,
   tkn_free,
   tkn_value,
   tkn_declare,
   tkn_assign,
   tkn_set_threaded,
+  tkn_mutex_init,
+  tkn_mutex_lock,
+  tkn_mutex_unlock,
   // Global ast only
   tkn_func,
   tkn_class,
