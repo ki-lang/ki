@@ -1,6 +1,6 @@
 
 CC=gcc
-CFLAGS = -g -Wall -O0 -std=gnu99
+CFLAGS = -g -Wall -O0 -std=gnu99 -fcommon
 #CFLAGS = -g -O0
 LDFLAGS = -lm
 
@@ -13,7 +13,7 @@ $(TARGET) : $(OBJECTS)
 
 $(OBJECTS): build/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) $< $(CFLAGS) -c -o $@
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 .PHONY: clean
 

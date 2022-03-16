@@ -1,6 +1,10 @@
 
 #include "../all.h"
 
+#ifdef H_GLOBALS
+#else
+#define H_GLOBALS 1
+
 Map* packages;
 Array* headers;
 Array* o_files;
@@ -27,3 +31,5 @@ int LOC;
 
 // Write c
 int GEN_C;
+
+#endif
