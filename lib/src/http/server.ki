@@ -121,7 +121,7 @@ class Server {
 						}
 
 						if(con.disconnected){
-							io:print("Disconneeeeeeeeeeeeeeeeeect\n");
+							io:print("Disconnect\n");
 							con._ALLOCATOR.free(con);
 							connections.clear(fd);
 							fd:remove_from_set(read_set, fd);
@@ -131,6 +131,7 @@ class Server {
 						}
 
 						con.busy = true;
+						this._RC++;
 						con.task = async this.respond(cast con as ptr);
 						con.task._RC++;
 					}else{

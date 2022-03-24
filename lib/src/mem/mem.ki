@@ -3,6 +3,11 @@ namespace mem;
 
 #header "sys/memory"
 
+func get_mutex() ptr {
+	static ptr m = mem:alloc_flat(128);
+	return m;
+}
+
 func get_allocators() ptr {
 	static ptr allocators = mem:alloc_flat(64 * 8);
 	return allocators;
@@ -20,20 +25,29 @@ func alloc(uxx size) ptr {
 
 	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
 	if(alc == null){
+		ptr mut = get_mutex();
+		mutex_lock mut;
 
-		alc = cast (alloc_flat(64)) as Allocator;
-		alc.size = psize + 1;
-		alc.block_i = 0;
-		alc.block_c = 0;
-		alc.blocks_ptr = alloc_flat(256 * 8);
-		alc.mut = alloc_flat(40);
-		alc.mut_inited = false;
+		alc = getptrv (allocators + pow * 8) as ?Allocator;
 
-		setptrv (allocators + pow * 8) to alc;
+		if(alc == null){
+			alc = cast (alloc_flat(64)) as Allocator;
+			alc.size = psize + 1;
+			alc.block_i = 0;
+			alc.block_c = 0;
+			alc.blocks_ptr = alloc_flat(256 * 8);
+			alc.mut = alloc_flat(40);
+			alc.mut_inited = false;
+
+			setptrv (allocators + pow * 8) to alc;
+		}
+
+		mutex_unlock mut;
 	}
 
 	ptr adr = alc.get_chunk();
 	setptrv adr to pow; // store pow for free()
+
 	return adr + 1;
 }
 
