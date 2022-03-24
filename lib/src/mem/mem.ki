@@ -13,6 +13,8 @@ func alloc(uxx size) ptr {
 		psize *= 2;
 	}
 
+	ptr allocators = get_static allocators;
+
 	ptr allocators = get_threaded thr_allocators;
 	if(allocators == null){
 		allocators = alloc_flat(64 * 8);
