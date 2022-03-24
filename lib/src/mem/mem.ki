@@ -3,7 +3,10 @@ namespace mem;
 
 #header "sys/memory"
 
-threaded ptr thr_allocators = null;
+func get_allocators() ptr {
+	static ptr allocators = mem:alloc_flat(64 * 8);
+	return allocators;
+}
 
 func alloc(uxx size) ptr {
 	u8 pow = 0;
@@ -13,14 +16,7 @@ func alloc(uxx size) ptr {
 		psize *= 2;
 	}
 
-	ptr allocators = get_static allocators;
-
-	ptr allocators = get_threaded thr_allocators;
-	if(allocators == null){
-		allocators = alloc_flat(64 * 8);
-		clear(allocators, 64 * 8);
-		set_threaded thr_allocators = allocators;
-	}
+	ptr allocators = get_allocators();
 
 	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
 	if(alc == null){
@@ -45,7 +41,8 @@ func free(ptr adr) {
 	adr -= 1;
 	u8 pow = getptrv adr as u8;
 
-	ptr allocators = get_threaded thr_allocators;
+	ptr allocators = get_allocators();
+
 	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
 
 	if(alc == null){

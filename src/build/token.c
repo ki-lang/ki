@@ -122,6 +122,51 @@ void token_throw(FileCompiler* fc, Scope* scope) {
   fc_expect_token(fc, ";", false, true, true);
 }
 
+void token_static(FileCompiler* fc, Scope* scope) {
+  // Get type
+  Type* left_type = fc_read_type(fc);
+
+  // Get var name
+  char* token = malloc(KI_TOKEN_MAX);
+  fc_next_token(fc, token, false, true, true);
+  fc_name_taken(fc, scope->identifiers, token);
+
+  //
+  fc_expect_token(fc, "=", false, true, true);
+  //
+  Value* value = fc_read_value(fc, scope, false, true, true);
+
+  if (left_type) {
+    if (!type_compatible(left_type, value->return_type)) {
+      fc_error(fc, "Types are not compatible", NULL);
+    }
+  }
+
+  char* gname = malloc(KI_TOKEN_MAX);
+  sprintf(gname, "_KI_STATIC_VAR_%d_%s", fc->static_vars->length, fc->hash);
+
+  TokenStaticDeclare* decl = malloc(sizeof(TokenStaticDeclare));
+  decl->name = token;
+  decl->global_name = gname;
+  decl->value = value;
+  decl->type = left_type ? left_type : value->return_type;
+
+  Token* t = init_token();
+  t->type = tkn_static;
+  t->item = decl;
+
+  array_push(scope->ast, t);
+  array_push(fc->static_vars, decl);
+
+  IdentifierFor* idf = init_idf();
+  idf->type = idfor_var;
+  idf->item = decl->type;
+
+  map_set(scope->identifiers, decl->name, idf);
+
+  fc_expect_token(fc, ";", false, true, true);
+}
+
 void token_set_threaded(FileCompiler* fc, Scope* scope) {
   Token* t = init_token();
   t->type = tkn_set_threaded;
@@ -227,7 +272,7 @@ void token_declare(FileCompiler* fc, Scope* scope, Type* left_type) {
   }
 
   TokenDeclare* decl = malloc(sizeof(TokenDeclare));
-  decl->name = strdup(token);
+  decl->name = token;
   decl->value = value;
   decl->type = left_type ? left_type : value->return_type;
 

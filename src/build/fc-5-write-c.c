@@ -50,6 +50,10 @@ void fc_write_c_all() {
         fc_write_c_enum(fc, array_get_index(fc->enums, x));
       }
 
+      for (int x = 0; x < fc->static_vars->length; x++) {
+        fc_write_c_static_var_global(fc, array_get_index(fc->static_vars, x));
+      }
+
       for (int x = 0; x < fc->threaded_globals->length; x++) {
         fc_write_c_threaded_globals(fc,
                                     array_get_index(fc->threaded_globals, x));
@@ -120,6 +124,17 @@ void fc_write_c_inits() {
     PkgCompiler* pkc = array_get_index(packages->values, i);
     for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
       FileCompiler* fc = array_get_index(pkc->file_compilers->values, o);
+
+      for (int x = 0; x < fc->static_vars->length; x++) {
+        TokenStaticDeclare* decl = array_get_index(fc->static_vars, x);
+
+        fc_write_c_value(fc, decl->value, true);
+
+        str_append_chars(code, decl->global_name);
+        str_append_chars(code, " = ");
+        str_append(code, fc->value_buffer);
+        str_append_chars(code, ";\n");
+      }
 
       for (int x = 0; x < fc->threaded_globals->length; x++) {
         ThreadedGlobal* tg = array_get_index(fc->threaded_globals, x);
@@ -304,6 +319,11 @@ void fc_write_c_enum(FileCompiler* fc, Enum* enu) {
   str_append_chars(fc->h_code, ";");
 }
 
+void fc_write_c_static_var_global(FileCompiler* fc, TokenStaticDeclare* decl) {
+  fc_write_c_type(fc->h_code, decl->type, decl->global_name);
+  str_append_chars(fc->h_code, ";\n");
+}
+
 void fc_write_c_threaded_globals(FileCompiler* fc, ThreadedGlobal* tg) {
   str_append_chars(fc->h_code, "pthread_key_t ");
   str_append_chars(fc->h_code, fc->nsc->pkc->name);
@@ -418,6 +438,28 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
   fc_indent(fc, fc->tkn_buffer);
   if (token->type == tkn_func) {
     fc_write_c_func(fc, token->item);
+  } else if (token->type == tkn_static) {
+    TokenStaticDeclare* decl = token->item;
+
+    fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
+    str_append_chars(fc->tkn_buffer, " = ");
+    str_append_chars(fc->tkn_buffer, decl->global_name);
+    str_append_chars(fc->tkn_buffer, ";\n");
+
+    Class* class = decl->value->return_type->class;
+    bool nullable = decl->value->return_type->nullable;
+    if (class && class->ref_count) {
+      if (nullable) {
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, decl->name);
+        str_append_chars(fc->tkn_buffer, ") ");
+      }
+      str_append_chars(fc->tkn_buffer, decl->name);
+      str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+
+      array_push(fc->local_var_names, decl);
+    }
+
   } else if (token->type == tkn_declare) {
     TokenDeclare* decl = token->item;
 

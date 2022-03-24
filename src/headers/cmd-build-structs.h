@@ -23,6 +23,7 @@ typedef struct NsCompiler {
 typedef struct FileCompiler {
   struct NsCompiler* nsc;
   //
+  char* hash;
   char* ki_filepath;
   char* c_filepath;
   char* h_filepath;
@@ -63,6 +64,7 @@ typedef struct FileCompiler {
   struct Array* enums;
   struct Array* threaded_globals;
   struct Array* mutexes;
+  struct Array* static_vars;
   // Extern
   struct Array* include_headers_from;
 } FileCompiler;
@@ -332,6 +334,7 @@ typedef enum TokenTypeEnum {
   tkn_value,
   tkn_declare,
   tkn_assign,
+  tkn_static,
   tkn_set_threaded,
   tkn_mutex_init,
   tkn_mutex_lock,
@@ -354,11 +357,16 @@ typedef struct TokenWhile {
   struct Scope* scope;
 } TokenWhile;
 
+typedef struct TokenStaticDeclare {
+  char* name;
+  char* global_name;
+  struct Value* value;
+  struct Type* type;
+} TokenStaticDeclare;
 typedef struct TokenDeclare {
   char* name;
   struct Value* value;
   struct Type* type;
-
 } TokenDeclare;
 typedef struct TokenAssign {
   int type;

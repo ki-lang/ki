@@ -152,6 +152,7 @@ void fc_write_c_pre(FileCompiler* fc);
 void fc_write_c(FileCompiler* fc);
 void fc_write_c_predefine_class(FileCompiler* fc, Class* class);
 void fc_write_c_threaded_globals(FileCompiler* fc, ThreadedGlobal* tg);
+void fc_write_c_static_var_global(FileCompiler* fc, TokenStaticDeclare* decl);
 void fc_write_c_mutex(FileCompiler* fc, Mutex* mut);
 void fc_write_c_class(FileCompiler* fc, Class* class);
 void fc_write_c_enum(FileCompiler* fc, Enum* enu);

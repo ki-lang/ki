@@ -6,6 +6,7 @@ FileCompiler* init_fc() {
   FileCompiler* fc = malloc(sizeof(FileCompiler));
   fc->nsc = NULL;
   //
+  fc->hash = NULL;
   fc->ki_filepath = NULL;
   fc->c_filepath = NULL;
   fc->h_filepath = NULL;
@@ -45,6 +46,7 @@ FileCompiler* init_fc() {
   fc->enums = array_make(4);
   fc->threaded_globals = array_make(4);
   fc->mutexes = array_make(4);
+  fc->static_vars = array_make(2);
   //
   fc->include_headers_from = array_make(10);
   return fc;
@@ -111,6 +113,7 @@ FileCompiler* fc_new_file(PkgCompiler* pkc, char* path, bool is_cmd_arg_file) {
   fc->nsc = pkc_create_namespace(pkc, "main");
   fc->scope->parent = fc->nsc->scope;
   //
+  fc->hash = hash;
   fc->ki_filepath = ki_filepath;
   fc->c_filepath = c_filepath;
   fc->h_filepath = h_filepath;
