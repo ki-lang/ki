@@ -1082,9 +1082,9 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
 
     if (pa->is_static) {
       Class* class = pa->on;
-      ClassProp* prop = map_get(class->props, pa->name);
-      // func ref
-      Type* type = prop->return_type;
+      // ClassProp* prop = map_get(class->props, pa->name);
+      //  func ref
+      //  Type* type = prop->return_type;
       str_append_chars(result, class->cname);
       str_append_chars(result, "__");
       str_append_chars(result, pa->name);
