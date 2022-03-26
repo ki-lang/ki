@@ -73,6 +73,7 @@ void fc_write_c_all() {
   if (uses_async) {
     write_file(path, "void KI_RM_push_task(struct ki__async__Task* task);\n",
                true);
+    write_file(path, "void KI_RM_suspend_task();\n", true);
   }
   write_file(path, "void KI_INITS();\n", true);
 }
@@ -620,6 +621,8 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     } else {
       str_append_chars(fc->tkn_buffer, "return 0;\n");
     }
+  } else if (token->type == tkn_task_suspend) {
+    str_append_chars(fc->tkn_buffer, "KI_RM_suspend_task();\n");
   } else if (token->type == tkn_set_threaded) {
     TokenIdValue* iv = token->item;
 

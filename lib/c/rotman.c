@@ -204,10 +204,6 @@ void KI_RM_push_task(ki__async__Task* task) {
   pthread_mutex_unlock(&KI_RM_LIST_LOCK_ADD);
 }
 
-void KI_RM_suspend_task() {
-  //
-}
-
 void KI_RM_run_next_task() {
   //
   RoutineManager* rm = pthread_getspecific(KI_RM);
@@ -223,6 +219,15 @@ void KI_RM_run_next_task() {
     }
     longjmp(rm->jmpbuf, 1);
   }
+}
+
+void KI_RM_suspend_task() {
+  //
+  RoutineManager* rm = pthread_getspecific(KI_RM);
+  ki__async__Task* task = rm->tasks[rm->current_task];
+  task->suspended = 1;
+  //
+  KI_RM_run_next_task();
 }
 
 // void KI_RM_move_current_to_prio() {

@@ -14,4 +14,9 @@ class Task {
 		if(this.args != null){ mem:free_flat(this.args); }
 		this._ALLOCATOR.free(this);
 	}
+
+	public func continue (){
+		this.suspended = false;
+		// todo unsuspend RM threads
+	}
 }

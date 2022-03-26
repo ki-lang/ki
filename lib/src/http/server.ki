@@ -74,7 +74,7 @@ class Server {
 
 					fd:add_to_set(read_set, new_fd);
 
-					Connection con = Connection{ fd: new_fd, read_set: read_set };
+					Connection con = Connection{ fd: new_fd };
 					con._RC++;
 
 					if(connections.has(new_fd)){
@@ -103,11 +103,11 @@ class Server {
 
 						ptr conptr = connections.get(fd);
 						Connection con = cast conptr as Connection;
-						con._RC++;
 
-						if(con.busy){
-							con._RC--;
-							continue;
+						if(con.task != null){
+							if(con.task.suspended == false){
+								continue;
+							}
 						}
 
 						bool notset = fd:isset(read_set, fd) == false;
@@ -120,19 +120,22 @@ class Server {
 							continue;
 						}
 
-						if(con.disconnected){
-							io:print("Disconnect\n");
-							con._ALLOCATOR.free(con);
-							connections.clear(fd);
-							fd:remove_from_set(read_set, fd);
-							i32 result = main:main:shutdown(fd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
-							result = main:main:close(fd);
-							continue;
-						}
+						//if(con.disconnected){
+						//	io:print("Disconnect\n");
+						//	con._ALLOCATOR.free(con);
+						//	connections.clear(fd);
+						//	fd:remove_from_set(read_set, fd);
+						//	i32 result = main:main:shutdown(fd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
+						//	result = main:main:close(fd);
+						//	continue;
+						//}
 
-						con.busy = true;
 						this._RC++;
-						con.task = async this.respond(cast con as ptr);
+						if(con.task == null){
+							con.task = async this.respond(con.fd);
+						} else {
+							con.task.continue();
+						}
 						con.task._RC++;
 					}else{
 						fd:remove_from_set(read_set, fd);
@@ -146,44 +149,42 @@ class Server {
 		alc.free(clientaddr);
 	}
 
-	func respond(ptr conptr){
+	func respond(i32 fd){
 
-		Connection con = cast conptr as Connection;
+		while(true){
 
-		con.task._RC--;
+			@ alc = allocator 65535;
+			ptr buf = alc.get_chunk();
+			i32 rcvd = main:main:recv(fd, buf, 65535, 0);
+			alc.free(buf);
 
-		@ alc = allocator 65535;
-		ptr buf = alc.get_chunk();
-		i32 rcvd = main:main:recv(con.fd, buf, 65535, 0);
-		alc.free(buf);
+			if(rcvd < 0){
+				async_task_suspend;
+				continue;
+			}
 
-		if(rcvd < 0){
-			con.disconnected = true;
-			con.busy = false;
-			return;
+			@ str = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
+			// MSG_NOSIGNAL: 0x4000
+			@ check = main:main:send(fd, str.data, str.length, 0x4000);
+
 		}
 
-		@ str = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
-		// MSG_NOSIGNAL: 0x4000
-		@ check = main:main:send(con.fd, str.data, str.length, 0x4000);
-
-		con.busy = false;
 		return;
 
-		@ req = Request.read_request(con.fd);
+		//@ req = Request.read_request(con.fd);
 
-		if(req == null){
-			con.busy = false;
-			con.disconnected = true;
-			return;
-		}
+		//if(req == null){
+		//	con.busy = false;
+		//	con.disconnected = true;
+		//	return;
+		//}
 
-		@ response = this.handler(req);
+		//@ response = this.handler(req);
 
-		string output = response.output();
-		io:write(con.fd, output);
+		//string output = response.output();
+		//io:write(con.fd, output);
 
-		con.busy = false;
+		//con.busy = false;
 	}
 
 }
