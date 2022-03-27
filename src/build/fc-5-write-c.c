@@ -361,10 +361,6 @@ void fc_write_c_func(FileCompiler* fc, Function* func) {
   // Clear local var names array
   fc->local_var_names->length = 0;
 
-  if (uses_async && strcmp(func->cname, "main") == 0) {
-    func->cname = strdup("ki_async_main");
-  }
-
   //
   fc_write_c_type(fc->tkn_buffer, func->return_type, NULL);
   fc_write_c_type(fc->h_code, func->return_type, NULL);
@@ -411,8 +407,21 @@ void fc_write_c_func(FileCompiler* fc, Function* func) {
     if (strcmp(func->cname, "main") == 0) {
       str_append_chars(fc->tkn_buffer, "KI_INITS();\n");
     }
+    if (uses_async && strcmp(func->cname, "main") == 0) {
+      str_append_chars(
+          fc->tkn_buffer,
+          "void* KI_MAIN_TMS = ki__async__Taskman__setup_task_managers();\n");
+    }
 
+    // Body
     fc_write_c_ast(fc, func->scope);
+
+    if (uses_async && strcmp(func->cname, "main") == 0) {
+      str_append_chars(
+          fc->tkn_buffer,
+          "ki__async__Taskman__wait_for_tasks_to_end(KI_MAIN_TMS);\n");
+    }
+
     fc->indent--;
     str_append_chars(fc->tkn_buffer, "}\n\n");
   }
