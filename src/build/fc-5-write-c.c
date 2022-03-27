@@ -74,6 +74,7 @@ void fc_write_c_all() {
     write_file(path, "void KI_RM_push_task(struct ki__async__Task* task);\n",
                true);
     write_file(path, "void KI_RM_suspend_task();\n", true);
+    write_file(path, "void KI_RM_run_another_task();\n", true);
   }
   write_file(path, "void KI_INITS();\n", true);
 }
@@ -1310,6 +1311,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(fc->tkn_buffer, "while(!");
     str_append(fc->tkn_buffer, result);
     str_append_chars(fc->tkn_buffer, "->ready){\n");
+    str_append_chars(fc->tkn_buffer, "KI_RM_run_another_task();\n");
     // str_append_chars(fc->tkn_buffer,
     //                  "RoutineManager* rm = pthread_getspecific(KI_RM);\n");
     // str_append_chars(fc->tkn_buffer, "if(rm){ longjmp(rm->jmpbuf, 1); }\n");

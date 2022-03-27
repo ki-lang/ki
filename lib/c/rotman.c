@@ -103,25 +103,20 @@ void KI_RM_task_run_loop(RoutineManager* rm, char stop_after_one_task) {
           int nr = rm->current_task;
           // printf("run-task:%d\n", rm->nr);
           ki__async__Task* task = rm->tasks[nr];
-          if (task->jmpbuf) {
-            // printf("jmp-task:%d\n", rm->nr);
-            longjmp(*(jmp_buf*)task->jmpbuf, 1);
-          } else {
-            ((void (*)(ki__async__Task*))task->handler_func)(task);
+          ((void (*)(ki__async__Task*))task->handler_func)(task);
 
+          rm->tasks_running--;
+
+          if (!task->suspended) {
             rm->tasks_running--;
+            rm->tasks[nr] = NULL;
+            if (task->jmpbuf) ki__mem__free(task->jmpbuf);
+            // ki__mem__free(task->args);
+            if (--task->_RC == 0) ki__async__Task____free(task);
+          }
 
-            if (!task->suspended) {
-              rm->tasks_running--;
-              rm->tasks[nr] = NULL;
-              if (task->jmpbuf) ki__mem__free(task->jmpbuf);
-              // ki__mem__free(task->args);
-              if (--task->_RC == 0) ki__async__Task____free(task);
-            }
-
-            if (stop_after_one_task) {
-              return;
-            }
+          if (stop_after_one_task) {
+            return;
           }
         }
       } else {
@@ -221,8 +216,13 @@ void KI_RM_run_another_task() {
   //
   RoutineManager* rm = pthread_getspecific(KI_RM);
   ki__async__Task* task = rm->tasks[rm->current_task];
+
   task->suspended = 1;
+  jmp_buf buf = rm->jmpbuf;
+
   KI_RM_task_run_loop(rm, 1);
+
+  rm->jmpbuf = buf;
   task->suspended = 0;
 }
 
@@ -232,29 +232,3 @@ void KI_RM_suspend_task() {
   ki__async__Task* task = rm->tasks[rm->current_task];
   task->suspended = 1;
 }
-
-// void KI_RM_move_current_to_prio() {
-//   // Used when the current thread is 'await'-ing a result
-//   // But there is no result yet.
-//   //
-//   RoutineManager* rm = pthread_getspecific(KI_RM);
-//   ki__async__Task* task = rm->tasks[rm->current_task];
-//   // Remove current
-//   rm->tasks[rm->current_task] = NULL;
-//   rm->tasks_running--;
-//   // Add to prio
-//   KI_RM_TASK_LIST_PRIO_C++;
-//   for (int i = 0; i < 1024; i++) {
-//     void* x = KI_RM_TASK_LIST_PRIO[i];
-//     if (x == NULL) {
-//       KI_RM_TASK_LIST_PRIO[i] = task;
-//     }
-//     if (i == 1024 - 1) {
-//       i = 0;
-//     }
-//   }
-//   // Jump back to task runner
-//   if (setjmp(task->jmpbuf)) {
-//     longjmp(rm->jmpbuf, 1);
-//   }
-// }
