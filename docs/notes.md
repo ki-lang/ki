@@ -3,7 +3,9 @@
 
 ## Todo
 
-- async
+- clear memory allocating funcs in mem allocator
+- fix static vars, give them a ast scope instead of default value
+
 - type checking on assign
 - specify list of non-allowed variable/func/class names
 - when using throw check function can_error
