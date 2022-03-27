@@ -1,0 +1,174 @@
+
+namespace async;
+
+threaded LOCAL_TM;
+mutex mutex_add_task;
+
+class TaskList {
+
+	PtrArray tasks;
+
+	public static func get() TaskList {
+		static TaskList m = TaskList { tasks: PtrArray.make(1024) };
+		return m;
+	}
+}
+
+class Taskman {
+  	public i32 nr = 0;
+  	public ?Thread thread = null;
+  	public bool suspended = false;
+  	public i32 tasks_run_count = 0;
+  	public i32 current_task_index = 0;
+  	public ptr jmpbuf = 0;
+  	public PtrArray* tasks;
+
+	public static func setup_task_managers() PtrArray {
+
+		@ tms = PtrArray.make(64);
+
+		i32 i = 0;
+		while(i < 8){
+
+			Taskman tm = Taskman { nr: i, tasks: PtrArray::make(100) };
+
+			tm.thread = Thead.start(Taskman.init_thread, tm);
+
+			tms.set(i, tm);
+
+			i++;
+		}
+
+		return tms;
+	}
+
+	public static func init_thread(ptr tm_ptr) {
+
+		Taskman tm = cast tm_ptr as Taskman; 
+
+		set_threaded LOCAL_TM = tm;
+
+		tm.run_tasks(false);
+
+		//set_threaded LOCAL_TM = null;
+	}
+
+	public static func wait_for_tasks_to_end(PtrArray tms) {
+
+		i32 run_count = 0;
+		while(true){
+			run_count = 0;
+			i32 i = 0;
+			while(i < tms.size){
+				?Taskman tm = tms.get(i);
+				if(tm == null){
+					break;
+				}
+				if(tm.tasks_run_count > 0) {
+					run_count++;
+					break;
+				}
+			}
+			if(run_count == 0) {
+				break;
+			}
+		}
+	}
+
+	public func run_tasks(bool max_one_task) {
+
+		while(true){
+			if(this.tasks_run_count > 0) {
+				// If there is a task to run
+				Task task = this.tasks.get(this.current_task_index);
+				if(task != null && task.suspended == false) {
+					// Run task
+					if(main:main:setjmp(this.jmpbuf) == 0) {
+
+						i32 task_index = this.current_task_index;
+						task.handler_func(task);
+						task.tasks_run_count--;
+
+						if(task.suspended == false) {
+							this.tasks.clear(task_index);
+						}
+
+						if(max_one_task) { return; }
+					}
+				} else {
+					// Check next task
+					this.task_index++;
+					if(this.task_index > 32){
+						this.task_index = 0;
+					}
+				}
+			} else {
+				// Get a new task from the list
+				i32 pos = this.nr;
+				bool found = false;
+				while(pos < 1024) {
+					?Task task = this.tasks.get(pos); 
+					if(task != null && task.suspended == false){
+
+					}
+
+					pos += 8;
+				}
+
+				if(found == false){
+					// No new tasks found
+					if(max_one_task){ return; }
+					// Suspend task manager
+					this.suspended = true;
+					this.thread.suspend();
+				}
+			}
+		}
+	}
+
+	public static func add_task(Task task) {
+
+		mutex_lock mutex_add_task;
+
+		i32 pos = 0;
+		@ task_list = TaskList.get();
+
+		static i32 task_pos = 0;
+		while(true){
+			task_pos++;
+			if(task_pos == 1024) {
+				task_pos = 0;
+			}
+			?Task t = task_list.tasks.get(task_pos);
+			if(t == null){
+				break;
+			}
+		}
+
+		task_list.tasks.set(task_pos, task);
+
+		// Unsuspend thread
+
+
+		//
+		mutex_unlock mutex_add_task;
+	}
+
+	public static func run_another_task() {
+
+		Taskman tm = get_threaded LOCAL_TM;
+		Task task = tm.tasks.get(tm.current_task_index);
+
+		task.suspended = true;
+
+		rm.run_tasks(true);
+
+		task.suspended = false;
+	}
+
+	public static func suspend_task() {
+		Taskman tm = get_threaded LOCAL_TM;
+		Task task = tm.tasks.get(tm.current_task_index);
+		task.suspended = true;
+	}
+}

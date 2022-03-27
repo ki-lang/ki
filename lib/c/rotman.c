@@ -108,10 +108,7 @@ void KI_RM_task_run_loop(RoutineManager* rm, char stop_after_one_task) {
           rm->tasks_running--;
 
           if (!task->suspended) {
-            rm->tasks_running--;
             rm->tasks[nr] = NULL;
-            if (task->jmpbuf) ki__mem__free(task->jmpbuf);
-            // ki__mem__free(task->args);
             if (--task->_RC == 0) ki__async__Task____free(task);
           }
 
