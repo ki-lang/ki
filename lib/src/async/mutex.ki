@@ -1,15 +1,24 @@
 
 namespace async;
 
-//class Mutex {
-//
-//	_mutex mutex;
-//
-//	func lock() {
-//		_mutex_lock(this);
-//	}
-//
-//	func unlock() {
-//		_mutex_unlock(this);
-//	}
-//}
+#header "sys/thread"
+
+class Mutex {
+
+	public main:main:pthread_mutex_t mutex;
+
+	static func make() Mutex {
+		@ pm = main:main:pthread_mutex_t{};
+		@ check = main:main:pthread_mutex_init(pm, null);
+		@ m = Mutex { mutex: pm };
+		return m;
+	}
+
+	func lock() {
+		mutex_lock getptrv this.mutex as NPT main:main:pthread_mutex_t;
+	}
+
+	func unlock() {
+		mutex_unlock getptrv this.mutex as NPT main:main:pthread_mutex_t;
+	}
+}

@@ -7,7 +7,7 @@ void fc_write_c_all() {
   char* cache_dir = get_cache_dir();
   strcpy(path, cache_dir);
   strcat(path, "/project.h");
-  write_file(path, "#include <setjmp.h>\n#include <pthread.h>\n", false);
+  write_file(path, "", false);
 
   for (int i = 0; i < headers->length; i++) {
     // char* fn = array_get_index(headers->keys, i);
@@ -71,10 +71,11 @@ void fc_write_c_all() {
   fc_write_c_inits();
 
   if (uses_async) {
-    write_file(path, "void KI_RM_push_task(struct ki__async__Task* task);\n",
+    write_file(path,
+               "void asnyc__taskman__add_task(struct ki__async__Task* task);\n",
                true);
-    write_file(path, "void KI_RM_suspend_task();\n", true);
-    write_file(path, "void KI_RM_run_another_task();\n", true);
+    write_file(path, "void asnyc__taskman__suspend_task();\n", true);
+    write_file(path, "void asnyc__taskman__run_another_task();\n", true);
   }
   write_file(path, "void KI_INITS();\n", true);
 }
@@ -101,9 +102,9 @@ void fc_write_c_inits() {
     for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
       FileCompiler* fc = array_get_index(pkc->file_compilers->values, o);
       if (fc->is_header) {
-        str_append_chars(code, "#include \"");
-        str_append_chars(code, fc->h_filepath);
-        str_append_chars(code, "\"\n");
+        // str_append_chars(code, "#include \"");
+        // str_append_chars(code, fc->h_filepath);
+        // str_append_chars(code, "\"\n");
       }
     }
   }
@@ -130,7 +131,10 @@ void fc_write_c_inits() {
       for (int x = 0; x < fc->static_vars->length; x++) {
         TokenStaticDeclare* decl = array_get_index(fc->static_vars, x);
 
+        fc->tkn_buffer = str_make("");
         fc_write_c_value(fc, decl->value, true);
+        str_append(code, fc->tkn_buffer);
+        free_str(fc->tkn_buffer);
 
         str_append_chars(code, decl->global_name);
         str_append_chars(code, " = ");
@@ -141,7 +145,10 @@ void fc_write_c_inits() {
       for (int x = 0; x < fc->threaded_globals->length; x++) {
         ThreadedGlobal* tg = array_get_index(fc->threaded_globals, x);
 
+        fc->tkn_buffer = str_make("");
         fc_write_c_value(fc, tg->default_value, true);
+        str_append(code, fc->tkn_buffer);
+        free_str(fc->tkn_buffer);
 
         str_append_chars(code, "pthread_key_create(&");
         str_append_chars(code, fc->nsc->pkc->name);
@@ -183,18 +190,17 @@ void fc_write_c(FileCompiler* fc) {
   if (strlen(code) > 0 || strlen(code_gen) > 0) {
     fc->create_o_file = true;
     if (true) {
-      write_file(fc->c_filepath,
-                 "\n#include <setjmp.h>\n#include \"project.h\"\n\n", false);
+      write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
 
-      char* incl = malloc(KI_PATH_MAX + 50);
-      for (int i = 0; i < fc->include_headers_from->length; i++) {
-        FileCompiler* hfc = array_get_index(fc->include_headers_from, i);
-        strcpy(incl, "#include \"");
-        strcat(incl, hfc->h_filepath);
-        strcat(incl, "\"\n");
-        write_file(fc->c_filepath, incl, true);
-      }
-      free(incl);
+      // char* incl = malloc(KI_PATH_MAX + 50);
+      // for (int i = 0; i < fc->include_headers_from->length; i++) {
+      //   FileCompiler* hfc = array_get_index(fc->include_headers_from, i);
+      //   strcpy(incl, "#include \"");
+      //   strcat(incl, hfc->h_filepath);
+      //   strcat(incl, "\"\n");
+      //   write_file(fc->c_filepath, incl, true);
+      // }
+      // free(incl);
 
       write_file(fc->c_filepath, "\n", true);
       if (!fc->is_header) {
@@ -206,7 +212,7 @@ void fc_write_c(FileCompiler* fc) {
     array_push(o_files, fc->o_filepath);
   }
 
-  if (fc->is_header) {
+  if (fc->is_header && false) {
     write_file(fc->h_filepath, hcode, false);
   } else {
     char* path = malloc(KI_PATH_MAX);
@@ -222,6 +228,14 @@ void fc_write_c(FileCompiler* fc) {
 }
 
 void fc_write_c_predefine_class(FileCompiler* fc, Class* class) {
+  if (class->is_ctype) {
+    str_append_chars(fc->struct_code, "typedef struct ");
+    str_append_chars(fc->struct_code, class->cname);
+    str_append_chars(fc->struct_code, " ");
+    str_append_chars(fc->struct_code, class->cname);
+    str_append_chars(fc->struct_code, ";\n");
+  }
+
   str_append_chars(fc->struct_code, "struct ");
   str_append_chars(fc->struct_code, class->cname);
   str_append_chars(fc->struct_code, ";\n");
@@ -327,7 +341,7 @@ void fc_write_c_static_var_global(FileCompiler* fc, TokenStaticDeclare* decl) {
 }
 
 void fc_write_c_threaded_globals(FileCompiler* fc, ThreadedGlobal* tg) {
-  str_append_chars(fc->h_code, "pthread_key_t ");
+  str_append_chars(fc->h_code, "struct pthread_key_t ");
   str_append_chars(fc->h_code, fc->nsc->pkc->name);
   str_append_chars(fc->h_code, "__");
   str_append_chars(fc->h_code, fc->nsc->name);
@@ -337,7 +351,7 @@ void fc_write_c_threaded_globals(FileCompiler* fc, ThreadedGlobal* tg) {
 }
 
 void fc_write_c_mutex(FileCompiler* fc, Mutex* mut) {
-  str_append_chars(fc->h_code, "pthread_mutex_t ");
+  str_append_chars(fc->h_code, "struct pthread_mutex_t ");
   str_append_chars(fc->h_code, mut->cname);
   str_append_chars(fc->h_code, ";\n");
 }
@@ -448,19 +462,19 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     str_append_chars(fc->tkn_buffer, decl->global_name);
     str_append_chars(fc->tkn_buffer, ";\n");
 
-    Class* class = decl->value->return_type->class;
-    bool nullable = decl->value->return_type->nullable;
-    if (class && class->ref_count) {
-      if (nullable) {
-        str_append_chars(fc->tkn_buffer, "if(");
-        str_append_chars(fc->tkn_buffer, decl->name);
-        str_append_chars(fc->tkn_buffer, ") ");
-      }
-      str_append_chars(fc->tkn_buffer, decl->name);
-      str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+    // Class* class = decl->value->return_type->class;
+    // bool nullable = decl->value->return_type->nullable;
+    // if (class && class->ref_count) {
+    //   if (nullable) {
+    //     str_append_chars(fc->tkn_buffer, "if(");
+    //     str_append_chars(fc->tkn_buffer, decl->name);
+    //     str_append_chars(fc->tkn_buffer, ") ");
+    //   }
+    //   str_append_chars(fc->tkn_buffer, decl->name);
+    //   str_append_chars(fc->tkn_buffer, "->_RC++;\n");
 
-      array_push(fc->local_var_names, decl);
-    }
+    //   array_push(fc->local_var_names, decl);
+    // }
 
   } else if (token->type == tkn_declare) {
     TokenDeclare* decl = token->item;
@@ -623,7 +637,8 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       str_append_chars(fc->tkn_buffer, "return 0;\n");
     }
   } else if (token->type == tkn_task_suspend) {
-    str_append_chars(fc->tkn_buffer, "KI_RM_suspend_task(); return;\n");
+    str_append_chars(fc->tkn_buffer,
+                     "asnyc__taskman__suspend_task(); return;\n");
   } else if (token->type == tkn_set_threaded) {
     TokenIdValue* iv = token->item;
 
@@ -640,25 +655,25 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
 
     fc_write_c_value(fc, val, true);
 
-    str_append_chars(fc->tkn_buffer, "pthread_mutexattr_t ma;\n");
-    str_append_chars(fc->tkn_buffer, "pthread_mutexattr_init(&ma);\n");
-    str_append_chars(
-        fc->tkn_buffer,
-        "pthread_mutexattr_setpshared(&ma, PTHREAD_PROCESS_SHARED);\n");
-    str_append_chars(
-        fc->tkn_buffer,
-        "pthread_mutexattr_setpshared(&ma, PTHREAD_MUTEX_ROBUST);\n");
+    // str_append_chars(fc->tkn_buffer, "pthread_mutexattr_t ma;\n");
+    // str_append_chars(fc->tkn_buffer, "pthread_mutexattr_init(&ma);\n");
+    // str_append_chars(
+    //     fc->tkn_buffer,
+    //     "pthread_mutexattr_setpshared(&ma, PTHREAD_PROCESS_SHARED);\n");
+    // str_append_chars(
+    //     fc->tkn_buffer,
+    //     "pthread_mutexattr_setpshared(&ma, PTHREAD_MUTEX_ROBUST);\n");
 
     str_append_chars(fc->tkn_buffer, "pthread_mutex_init(");
     str_append(fc->tkn_buffer, fc->value_buffer);
-    str_append_chars(fc->tkn_buffer, ", &ma);\n");
+    str_append_chars(fc->tkn_buffer, ", (void*)0);\n");
 
   } else if (token->type == tkn_mutex_lock) {
     Value* val = token->item;
 
     fc_write_c_value(fc, val, true);
 
-    str_append_chars(fc->tkn_buffer, "pthread_mutex_lock(");
+    str_append_chars(fc->tkn_buffer, "pthread_mutex_lock(&");
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ");\n");
 
@@ -667,7 +682,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
 
     fc_write_c_value(fc, val, true);
 
-    str_append_chars(fc->tkn_buffer, "pthread_mutex_unlock(");
+    str_append_chars(fc->tkn_buffer, "pthread_mutex_unlock(&");
     str_append(fc->tkn_buffer, fc->value_buffer);
     str_append_chars(fc->tkn_buffer, ");\n");
 
@@ -790,6 +805,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(result, ")");
   } else if (value->type == vt_var) {
     str_append_chars(result, value->item);
+  } else if (value->type == vt_mutex) {
+    str_append_chars(result, value->item);
   } else if (value->type == vt_number) {
     str_append_chars(result, value->item);
   } else if (value->type == vt_char) {
@@ -815,6 +832,11 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(result, " & ");
     } else if (op->type == op_bit_XOR) {
       str_append_chars(result, " ^ ");
+      //
+    } else if (op->type == op_and) {
+      str_append_chars(result, " && ");
+    } else if (op->type == op_or) {
+      str_append_chars(result, " || ");
       //
     } else if (op->type == op_eq) {
       str_append_chars(result, " == ");
@@ -1282,7 +1304,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     }
 
     // Push task on stack
-    str_append_chars(fc->tkn_buffer, "KI_RM_push_task(");
+    str_append_chars(fc->tkn_buffer, "asnyc__taskman__add_task(");
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, ");\n");
 
@@ -1311,10 +1333,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(fc->tkn_buffer, "while(!");
     str_append(fc->tkn_buffer, result);
     str_append_chars(fc->tkn_buffer, "->ready){\n");
-    str_append_chars(fc->tkn_buffer, "KI_RM_run_another_task();\n");
-    // str_append_chars(fc->tkn_buffer,
-    //                  "RoutineManager* rm = pthread_getspecific(KI_RM);\n");
-    // str_append_chars(fc->tkn_buffer, "if(rm){ longjmp(rm->jmpbuf, 1); }\n");
+    str_append_chars(fc->tkn_buffer, "asnyc__taskman__run_another_task();\n");
     str_append_chars(fc->tkn_buffer, "}\n");
 
     str_append_chars(result, "->result");
@@ -1410,7 +1429,9 @@ void fc_write_c_type(Str* append_to, Type* type, char* varname) {
       }
     } else {
       // Normal class
-      str_append_chars(append_to, "struct ");
+      if (!class->is_ctype) {
+        str_append_chars(append_to, "struct ");
+      }
       str_append_chars(append_to, class->cname);
     }
 
@@ -1426,6 +1447,11 @@ void fc_write_c_type(Str* append_to, Type* type, char* varname) {
     return;
   }
   if (type->type == type_null) {
+    str_append_chars(append_to, "void");
+    fc_write_c_type_varname(append_to, type, varname);
+    return;
+  }
+  if (type->type == type_void) {
     str_append_chars(append_to, "void");
     fc_write_c_type_varname(append_to, type, varname);
     return;
@@ -1545,11 +1571,12 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size, bool threaded) {
   name = strdup(name);
   sprintf(fc->sprintf, "%d", size);
 
-  str_append_chars(fc->h_code, threaded ? "pthread_key_t " : "void* ");
+  str_append_chars(fc->h_code, threaded ? "struct pthread_key_t " : "void* ");
   str_append_chars(fc->h_code, name);
   str_append_chars(fc->h_code, "__TK;\n");
 
-  str_append_chars(fc->c_code_after, threaded ? "pthread_key_t " : "void* ");
+  str_append_chars(fc->c_code_after,
+                   threaded ? "struct pthread_key_t " : "void* ");
   str_append_chars(fc->c_code_after, name);
   str_append_chars(fc->c_code_after, "__TK;\n");
 
@@ -1577,8 +1604,7 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size, bool threaded) {
   str_append_chars(fc->c_code_after, "a->block_c = 0;\n");
   str_append_chars(fc->c_code_after,
                    "a->blocks_ptr = ki__mem__alloc_flat(256 * 8);\n");
-  str_append_chars(fc->c_code_after, "a->mut = ki__mem__calloc_flat(128);\n");
-  str_append_chars(fc->c_code_after, "a->mut_inited = 0;\n");
+  str_append_chars(fc->c_code_after, "a->mut = ki__async__Mutex__make();\n");
 
   if (threaded) {
     str_append_chars(fc->c_code_after, "pthread_setspecific(");

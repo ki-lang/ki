@@ -1,16 +1,16 @@
 
 namespace async;
 
-threaded LOCAL_TM;
+threaded Taskman LOCAL_TM = null;
 mutex mutex_add_task;
 
 class TaskList {
 
-	PtrArray tasks;
+	type:PtrArray tasks;
 
 	public static func get() TaskList {
-		static TaskList m = TaskList { tasks: PtrArray.make(1024) };
-		return m;
+		static TaskList mx = TaskList { tasks: type:PtrArray.make(1024) };
+		return mx;
 	}
 }
 
@@ -21,18 +21,18 @@ class Taskman {
   	public i32 tasks_run_count = 0;
   	public i32 current_task_index = 0;
   	public ptr jmpbuf = 0;
-  	public PtrArray* tasks;
+  	public type:PtrArray tasks;
 
-	public static func setup_task_managers() PtrArray {
+	public static func setup_task_managers() type:PtrArray {
 
-		@ tms = PtrArray.make(64);
+		@ tms = type:PtrArray.make(64);
 
 		i32 i = 0;
 		while(i < 8){
 
-			Taskman tm = Taskman { nr: i, tasks: PtrArray::make(100) };
+			Taskman tm = Taskman { nr: i, tasks: type:PtrArray.make(100) };
 
-			tm.thread = Thead.start(Taskman.init_thread, tm);
+			tm.thread = Thread.start(Taskman.init_thread, tm);
 
 			tms.set(i, tm);
 
@@ -53,7 +53,7 @@ class Taskman {
 		//set_threaded LOCAL_TM = null;
 	}
 
-	public static func wait_for_tasks_to_end(PtrArray tms) {
+	public static func wait_for_tasks_to_end(type:PtrArray tms) {
 
 		i32 run_count = 0;
 		while(true){
@@ -87,7 +87,7 @@ class Taskman {
 
 						i32 task_index = this.current_task_index;
 						task.handler_func(task);
-						task.tasks_run_count--;
+						this.tasks_run_count--;
 
 						if(task.suspended == false) {
 							this.tasks.clear(task_index);
@@ -97,9 +97,9 @@ class Taskman {
 					}
 				} else {
 					// Check next task
-					this.task_index++;
-					if(this.task_index > 32){
-						this.task_index = 0;
+					this.current_task_index++;
+					if(this.current_task_index > 32){
+						this.current_task_index = 0;
 					}
 				}
 			} else {
@@ -149,7 +149,6 @@ class Taskman {
 
 		// Unsuspend thread
 
-
 		//
 		mutex_unlock mutex_add_task;
 	}
@@ -161,7 +160,7 @@ class Taskman {
 
 		task.suspended = true;
 
-		rm.run_tasks(true);
+		tm.run_tasks(true);
 
 		task.suspended = false;
 	}

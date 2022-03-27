@@ -1,6 +1,27 @@
 
 namespace async;
 
+#header "sys/thread"
+
 class Thread {
+
+	public main:main:pthread_t pt;
+	public Mutex mut;
+	public main:main:pthread_cond_t cond;
+
+	public static func start(funcref (ptr) void start_func, ptr data) Thread {
+
+		@ pt = main:main:pthread_t {};
+		@ mut = Mutex.make();
+		@ cond = main:main:pthread_cond_t {};
+		@ check = main:main:pthread_create(pt, null, start_func, data);
+		Thread t = Thread { pt: pt, mut: mut, cond: cond };
+
+		return t;
+	}
+
+	public func suspend(){
+		@ check = main:main:pthread_cond_wait(this.cond, this.mut.mutex);
+	}
 
 }

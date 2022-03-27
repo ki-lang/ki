@@ -9,6 +9,7 @@ Class* init_class() {
   class->is_number = false;
   class->is_float = false;
   class->is_unsigned = false;
+  class->is_ctype = false;
   class->size = 0;
   class->props = map_make();
   class->traits = array_make(2);

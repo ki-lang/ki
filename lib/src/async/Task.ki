@@ -2,7 +2,7 @@
 namespace async;
 
 class Task {
-	ptr handler_func;
+	funcref (Task) void handler_func;
 	ptr func;
 	ptr args = 0;
 	ptr jmpbuf = 0;

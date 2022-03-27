@@ -6,8 +6,7 @@ class Allocator norfc {
 	u32 block_i = 0;
 	u32 block_c = 0;
 	ptr blocks_ptr = alloc_flat(256 * 8);
-	bool mut_inited = false;
-	ptr mut = alloc_flat(128);
+	ki:async:Mutex mut = ki:async:Mutex.make();
 
 	// 1(10x)1(20x)15(40x)0(80x)102(160x)7(256x)13(256x)
 	// 1(10x) example
@@ -15,12 +14,7 @@ class Allocator norfc {
 
 	func get_chunk() ptr {
 
-		if(this.mut_inited == false){
-			this.mut_inited = true;
-			mutex_init this.mut;
-		}
-
-		mutex_lock this.mut;
+		this.mut.lock();
 
 		u8 len = 10;
 		ptr block_ptr = 0;
@@ -58,7 +52,7 @@ class Allocator norfc {
 				}
 				//
 				setptrv (block_ptr - 1) to pos;
-				mutex_unlock this.mut;
+				this.mut.unlock();
 				return result;
 			}
 			// No empty slots, create new block
@@ -68,7 +62,7 @@ class Allocator norfc {
 				// This is an old block we didnt free and can re-use
 				block_ptr = this.blocks_ptr + ((this.block_i) * 8);
 				block_ptr = getptrv block_ptr as ptr;
-				mutex_unlock this.mut;
+				this.mut.unlock();
 				return block_ptr + 4;
 			}
 		}
@@ -96,14 +90,14 @@ class Allocator norfc {
 		//	io:print("\n");
 		//}
 
-		mutex_unlock this.mut;
+		this.mut.unlock();
 		
 		return new_block + 1 + 1; // skip empty_pos byte & skip value pos byte
 	}
 
 	func free(ptr adr) {
 
-		mutex_lock this.mut;
+		this.mut.lock();
 
 		adr--;
 		u8 pos = getptrv adr as u8;
@@ -130,6 +124,6 @@ class Allocator norfc {
 			}
 		}
 
-		mutex_unlock this.mut;
+		this.mut.unlock();
 	}
 }

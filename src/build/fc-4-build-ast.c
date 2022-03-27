@@ -195,7 +195,7 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
     t->type = tkn_value;
     t->item = value;
 
-    if (value->return_type != NULL) {
+    if (value->return_type != NULL && value->return_type->type != type_void) {
       fc_error(fc,
                "Statement that returns a value, but has no variable to store "
                "it in",

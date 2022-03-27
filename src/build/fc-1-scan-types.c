@@ -89,6 +89,12 @@ void fc_scan_types(FileCompiler* fc) {
           continue;
         }
 
+        if (strcmp(token, "ctype") == 0) {
+          fc_next_token(fc, token, false, true, true);
+          // class->is_ctype = true;
+          continue;
+        }
+
         if (strcmp(token, "number") == 0 || strcmp(token, "float") == 0) {
           fc_next_token(fc, token, false, true, true);
           class->ref_count = false;

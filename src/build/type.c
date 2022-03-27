@@ -5,6 +5,7 @@ Type* init_type() {
   Type* type = malloc(sizeof(Type));
   type->type = type_unknown;
   type->nullable = false;
+  type->npt = false;
   type->allow_math = false;
   type->is_float = false;
   type->is_unsigned = false;
@@ -34,11 +35,24 @@ Type* fc_read_type(FileCompiler* fc) {
   //
   char* token = malloc(KI_TOKEN_MAX);
   bool nullable = false;
+  bool npt = false;
   //
   fc_next_token(fc, token, false, false, true);
   if (strcmp(token, "?") == 0) {
     nullable = true;
     fc_next_token(fc, token, false, false, true);
+  }
+
+  if (strcmp(token, "NPT") == 0) {
+    npt = true;
+    fc_next_token(fc, token, false, false, true);
+    if (strcmp(token, "?") == 0) {
+      nullable = true;
+    }
+  }
+
+  if (npt && nullable) {
+    fc_error(fc, "NPT (non pointer type) cannot be NULL", NULL);
   }
 
   //
@@ -76,9 +90,20 @@ Type* fc_read_type(FileCompiler* fc) {
 
   //
   t->nullable = nullable;
+  t->npt = npt;
+
+  if (t->npt && t->type != type_struct) {
+    fc_error(fc,
+             "NPT (not pointer type) can only be applied to class instances",
+             NULL);
+  }
 
   if (t->nullable && !t->is_pointer) {
     fc_error(fc, "Invalid type, only pointer types can be null: '%s'", token);
+  }
+
+  if (t->npt) {
+    t->is_pointer = false;
   }
 
   // Check if array

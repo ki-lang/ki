@@ -331,7 +331,6 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     if (idf == NULL) {
       fc_error(fc, "Unknown variable/function/class/enum: %s", id->name);
     }
-    free_id(id);
 
     if (idf->type == idfor_func) {
       Function* func = idf->item;
@@ -347,6 +346,12 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       value->type = vt_var;
       value->item = strdup(token);
       value->return_type = idf->item;
+    } else if (idf->type == idfor_mutex) {
+      // todo: check idf_scope is global
+      value->type = vt_mutex;
+      value->item = fc_create_identifier_global_cname(fc, id);
+      value->return_type = fc_identifier_to_type(
+          fc, create_identifier("main", "main", "pthread_mutex_t"));
     } else if (idf->type == idfor_class) {
       // class init or static func or prop access
       Class* class = idf->item;
@@ -425,6 +430,9 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
         value->return_type = type;
       }
+
+      free_id(id);
+
     } else {
       fc_error(fc, "Unhandled identifier (compiler bug): '%s'", token);
     }
@@ -444,7 +452,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
          strcmp(token, "--") == 0 || strcmp(token, "<=") == 0 ||
          strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 ||
          strcmp(token, "!=") == 0 || strcmp(token, ">") == 0 ||
-         strcmp(token, "<") == 0) {
+         strcmp(token, "<") == 0 || strcmp(token, "&&") == 0 ||
+         strcmp(token, "||") == 0) {
     fc_next_token(fc, token, false, true, true);
     //
     if (ch == '.') {
@@ -577,6 +586,24 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       value->item = op;
       value->return_type = NULL;
 
+    } else if (strcmp(token, "&&") == 0 || strcmp(token, "||") == 0) {
+      ValueOperator* op = malloc(sizeof(ValueOperator));
+      op->left = value;
+      op->right = fc_read_value(fc, scope, false, false, true);
+
+      if (strcmp(token, "&&") == 0) {
+        op->type = op_and;
+      } else if (strcmp(token, "||") == 0) {
+        op->type = op_or;
+      }
+
+      Type* return_type =
+          fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"));
+
+      value = init_value();
+      value->type = vt_operator;
+      value->item = op;
+      value->return_type = return_type;
     } else {
       fc_error(fc, "Unhandled operator '%s' (todo)", token);
     }

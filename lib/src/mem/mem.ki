@@ -3,8 +3,11 @@ namespace mem;
 
 #header "sys/memory"
 
-func get_mutex() ptr {
-	static ptr m = mem:alloc_flat(128);
+func get_mutex() async:Mutex {
+	static async:Mutex m = null;
+	if(m == null){
+		m = ki:async:Mutex.make();
+	}
 	return m;
 }
 
@@ -25,8 +28,8 @@ func alloc(uxx size) ptr {
 
 	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
 	if(alc == null){
-		ptr mut = get_mutex();
-		mutex_lock mut;
+		@ mut = get_mutex();
+		mut.lock();
 
 		alc = getptrv (allocators + pow * 8) as ?Allocator;
 
@@ -36,13 +39,12 @@ func alloc(uxx size) ptr {
 			alc.block_i = 0;
 			alc.block_c = 0;
 			alc.blocks_ptr = alloc_flat(256 * 8);
-			alc.mut = alloc_flat(40);
-			alc.mut_inited = false;
+			alc.mut = ki:async:Mutex.make();
 
 			setptrv (allocators + pow * 8) to alc;
 		}
 
-		mutex_unlock mut;
+		mut.unlock();
 	}
 
 	ptr adr = alc.get_chunk();

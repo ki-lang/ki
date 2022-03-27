@@ -127,6 +127,7 @@ typedef struct Class {
   bool is_number;
   bool is_float;
   bool is_unsigned;
+  bool is_ctype;
   int size;
   //
   Map* props;
@@ -202,6 +203,7 @@ typedef struct Mutex {
 typedef struct Type {
   int type;
   bool nullable;
+  bool npt;
   bool allow_math;
   bool is_pointer;
   bool is_array;
@@ -262,6 +264,7 @@ typedef enum ValueType {
   vt_await,
   vt_allocator,  // 20
   vt_get_threaded,
+  vt_mutex,
 } ValueType;
 
 typedef struct ValueFuncCall {
@@ -291,7 +294,9 @@ typedef enum OperatorType {
   op_decr,
   op_bit_OR,
   op_bit_AND,
-  op_bit_XOR,
+  op_bit_XOR, // 15
+  op_and,
+  op_or,
 } OperatorType;
 
 typedef struct ValueCast {
