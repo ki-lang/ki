@@ -27,13 +27,32 @@ void token_return(FileCompiler* fc, Scope* scope) {
     fc_error(fc, "Trying to return in a non function scope", NULL);
   }
 
-  if (func_scope->return_type != NULL) {
+  char* token = malloc(KI_TOKEN_MAX);
+  fc_next_token(fc, token, true, true, true);
+
+  if (strcmp(token, ";") != 0) {
     Value* value = fc_read_value(fc, func_scope, false, true, true);
+
+    if (func_scope->autofill_return_type && func_scope->return_type == NULL) {
+      func_scope->return_type = value->return_type;
+    }
+
+    if (func_scope->return_type == NULL) {
+      fc_error(fc,
+               "Function has no return type, but you are returning a value.",
+               NULL);
+    }
+
     fc_type_compatible(fc, func_scope->return_type, value->return_type);
+
     t->item = value;
   }
-  func_scope->did_return = true;
+
   fc_expect_token(fc, ";", false, true, true);
+
+  free(token);
+
+  func_scope->did_return = true;
 
   array_push(scope->ast, t);
 }
@@ -141,12 +160,21 @@ void token_static(FileCompiler* fc, Scope* scope) {
   fc_name_taken(fc, scope->identifiers, token);
 
   //
-  fc_expect_token(fc, "=", false, true, true);
+  fc_expect_token(fc, "{", false, true, true);
   //
-  Value* value = fc_read_value(fc, scope, false, true, true);
+  Scope* val_scope = init_sub_scope(fc->scope);
+  val_scope->body_i = fc->i;
+  val_scope->is_func = true;
+  val_scope->autofill_return_type = true;
+
+  fc_build_ast(fc, val_scope);
+
+  if (!left_type && !scope->return_type) {
+    fc_error(fc, "Scope must return a value", NULL);
+  }
 
   if (left_type) {
-    if (!type_compatible(left_type, value->return_type)) {
+    if (!type_compatible(left_type, scope->return_type)) {
       fc_error(fc, "Types are not compatible", NULL);
     }
   }
@@ -157,8 +185,8 @@ void token_static(FileCompiler* fc, Scope* scope) {
   TokenStaticDeclare* decl = malloc(sizeof(TokenStaticDeclare));
   decl->name = token;
   decl->global_name = gname;
-  decl->value = value;
-  decl->type = left_type ? left_type : value->return_type;
+  decl->scope = val_scope;
+  decl->type = left_type ? left_type : scope->return_type;
 
   Token* t = init_token();
   t->type = tkn_static;
@@ -168,12 +196,10 @@ void token_static(FileCompiler* fc, Scope* scope) {
   array_push(fc->static_vars, decl);
 
   IdentifierFor* idf = init_idf();
-  idf->type = idfor_var;
-  idf->item = decl->type;
+  idf->type = idfor_static_var;
+  idf->item = decl;
 
   map_set(scope->identifiers, decl->name, idf);
-
-  fc_expect_token(fc, ";", false, true, true);
 }
 
 void token_set_threaded(FileCompiler* fc, Scope* scope) {

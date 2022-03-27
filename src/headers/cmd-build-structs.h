@@ -76,6 +76,7 @@ typedef struct Scope {
   bool must_return;
   bool did_return;
   bool catch_errors;
+  bool autofill_return_type;
   int body_i;
   int body_i_end;
   struct Array* ast;
@@ -104,6 +105,7 @@ typedef enum IdentifierForType {
   idfor_property,
   idfor_trait,
   idfor_threaded_var,
+  idfor_static_var,
   idfor_mutex,
 } IdentifierForType;
 
@@ -366,7 +368,7 @@ typedef struct TokenWhile {
 typedef struct TokenStaticDeclare {
   char* name;
   char* global_name;
-  struct Value* value;
+  struct Scope* scope;
   struct Type* type;
 } TokenStaticDeclare;
 typedef struct TokenDeclare {

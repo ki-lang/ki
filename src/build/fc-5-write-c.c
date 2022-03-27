@@ -96,19 +96,40 @@ void fc_write_c_pre(FileCompiler* fc) {
 void fc_write_c_inits() {
   Str* code = str_make("");
   //
+  char* hpath = malloc(KI_PATH_MAX);
+  char* cache_dir = get_cache_dir();
+  strcpy(hpath, cache_dir);
+  strcat(hpath, "/project.h");
+  //
   str_append_chars(code, "#include \"project.h\"\n\n");
+
+  FileCompiler* inits_fc = init_fc();
 
   for (int i = 0; i < packages->keys->length; i++) {
     PkgCompiler* pkc = array_get_index(packages->values, i);
     for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
       FileCompiler* fc = array_get_index(pkc->file_compilers->values, o);
-      if (fc->is_header) {
-        // str_append_chars(code, "#include \"");
-        // str_append_chars(code, fc->h_filepath);
-        // str_append_chars(code, "\"\n");
+
+      for (int x = 0; x < fc->static_vars->length; x++) {
+        TokenStaticDeclare* decl = array_get_index(fc->static_vars, x);
+
+        fc_write_c_type(code, decl->scope->return_type, NULL);
+        str_append_chars(code, " ");
+        str_append_chars(code, decl->global_name);
+        str_append_chars(code, "_init(){\n");
+
+        inits_fc->tkn_buffer = str_make("");
+        fc_write_c_ast(inits_fc, decl->scope);
+        str_append(code, inits_fc->tkn_buffer);
+        free_str(inits_fc->tkn_buffer);
+
+        str_append_chars(code, "}\n");
       }
     }
   }
+
+  str_append(code, inits_fc->c_code_after);
+  write_file(hpath, str_to_chars(inits_fc->h_code), true);
 
   str_append_chars(code, "void KI_INITS(){\n");
 
@@ -132,15 +153,10 @@ void fc_write_c_inits() {
       for (int x = 0; x < fc->static_vars->length; x++) {
         TokenStaticDeclare* decl = array_get_index(fc->static_vars, x);
 
-        fc->tkn_buffer = str_make("");
-        fc_write_c_value(fc, decl->value, true);
-        str_append(code, fc->tkn_buffer);
-        free_str(fc->tkn_buffer);
-
         str_append_chars(code, decl->global_name);
         str_append_chars(code, " = ");
-        str_append(code, fc->value_buffer);
-        str_append_chars(code, ";\n");
+        str_append_chars(code, decl->global_name);
+        str_append_chars(code, "_init();\n");
       }
 
       for (int x = 0; x < fc->threaded_globals->length; x++) {
@@ -169,7 +185,6 @@ void fc_write_c_inits() {
   //
   char* code_ = str_to_chars(code);
   char* path = malloc(KI_PATH_MAX);
-  char* cache_dir = get_cache_dir();
   strcpy(path, cache_dir);
   strcat(path, "/inits.c");
   write_file(path, code_, false);
@@ -337,6 +352,11 @@ void fc_write_c_enum(FileCompiler* fc, Enum* enu) {
 }
 
 void fc_write_c_static_var_global(FileCompiler* fc, TokenStaticDeclare* decl) {
+  fc_write_c_type(fc->h_code, decl->scope->return_type, NULL);
+  str_append_chars(fc->h_code, " ");
+  str_append_chars(fc->h_code, decl->global_name);
+  str_append_chars(fc->h_code, "_init();\n");
+
   fc_write_c_type(fc->h_code, decl->type, decl->global_name);
   str_append_chars(fc->h_code, ";\n");
 }

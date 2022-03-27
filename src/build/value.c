@@ -346,6 +346,11 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       value->type = vt_var;
       value->item = strdup(token);
       value->return_type = idf->item;
+    } else if (idf->type == idfor_static_var) {
+      TokenStaticDeclare* decl = idf->item;
+      value->type = vt_var;
+      value->item = decl->name;
+      value->return_type = decl->scope->return_type;
     } else if (idf->type == idfor_mutex) {
       // todo: check idf_scope is global
       value->type = vt_mutex;

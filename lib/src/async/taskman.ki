@@ -9,9 +9,8 @@ class TaskList {
 	type:PtrArray tasks;
 
 	public static func get() TaskList {
-		static TaskList mx = null;
-		if(mx == null){
-			mx = TaskList { tasks: type:PtrArray.make(1024) };
+		static TaskList mx {
+			return TaskList { tasks: type:PtrArray.make(1024) };
 		}
 		return mx;
 	}
@@ -136,7 +135,10 @@ class Taskman {
 		i32 pos = 0;
 		@ task_list = TaskList.get();
 
-		static i32 task_pos = 0;
+		static i32 task_pos {
+			return 0;
+		}
+
 		while(true){
 			task_pos++;
 			if(task_pos == 1024) {

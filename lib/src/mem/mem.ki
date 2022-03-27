@@ -4,15 +4,16 @@ namespace mem;
 #header "sys/memory"
 
 func get_mutex() async:Mutex {
-	static async:Mutex m = null;
-	if(m == null){
-		m = ki:async:Mutex.make();
+	static async:Mutex m {
+		return ki:async:Mutex.make();
 	}
 	return m;
 }
 
 func get_allocators() ptr {
-	static ptr allocators = mem:alloc_flat(64 * 8);
+	static ptr allocators {
+		return mem:alloc_flat(64 * 8);
+	}
 	return allocators;
 }
 

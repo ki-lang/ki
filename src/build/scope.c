@@ -9,6 +9,7 @@ Scope* init_scope() {
   scope->must_return = false;
   scope->did_return = false;
   scope->catch_errors = false;
+  scope->autofill_return_type = false;
   scope->body_i = 0;
   scope->body_i_end = 0;
   scope->ast = array_make(4);
