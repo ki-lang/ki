@@ -9,7 +9,10 @@ class TaskList {
 	type:PtrArray tasks;
 
 	public static func get() TaskList {
-		static TaskList mx = TaskList { tasks: type:PtrArray.make(1024) };
+		static TaskList mx = null;
+		if(mx == null){
+			mx = TaskList { tasks: type:PtrArray.make(1024) };
+		}
 		return mx;
 	}
 }

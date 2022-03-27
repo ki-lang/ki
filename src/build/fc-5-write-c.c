@@ -71,11 +71,12 @@ void fc_write_c_all() {
   fc_write_c_inits();
 
   if (uses_async) {
-    write_file(path,
-               "void asnyc__taskman__add_task(struct ki__async__Task* task);\n",
-               true);
-    write_file(path, "void asnyc__taskman__suspend_task();\n", true);
-    write_file(path, "void asnyc__taskman__run_another_task();\n", true);
+    write_file(
+        path,
+        "void ki__async__Taskman__add_task(struct ki__async__Task* task);\n",
+        true);
+    write_file(path, "void ki__async__Taskman__suspend_task();\n", true);
+    write_file(path, "void ki__async__Taskman__run_another_task();\n", true);
   }
   write_file(path, "void KI_INITS();\n", true);
 }
@@ -638,7 +639,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     }
   } else if (token->type == tkn_task_suspend) {
     str_append_chars(fc->tkn_buffer,
-                     "asnyc__taskman__suspend_task(); return;\n");
+                     "ki__async__Taskman__suspend_task(); return;\n");
   } else if (token->type == tkn_set_threaded) {
     TokenIdValue* iv = token->item;
 
@@ -1304,7 +1305,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     }
 
     // Push task on stack
-    str_append_chars(fc->tkn_buffer, "asnyc__taskman__add_task(");
+    str_append_chars(fc->tkn_buffer, "ki__async__Taskman__add_task(");
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, ");\n");
 
@@ -1333,7 +1334,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(fc->tkn_buffer, "while(!");
     str_append(fc->tkn_buffer, result);
     str_append_chars(fc->tkn_buffer, "->ready){\n");
-    str_append_chars(fc->tkn_buffer, "asnyc__taskman__run_another_task();\n");
+    str_append_chars(fc->tkn_buffer,
+                     "ki__async__Taskman__run_another_task();\n");
     str_append_chars(fc->tkn_buffer, "}\n");
 
     str_append_chars(result, "->result");
