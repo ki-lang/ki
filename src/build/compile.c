@@ -7,6 +7,11 @@ pid_t child_pid, wpid;
 int status = 0;
 #endif
 
+char* fc_compile_basic_args() {
+  //
+  return " -g -O2 -fcommon -c -D_FORTIFY_SOURCE=0";
+}
+
 void fc_compile_local_c_files() {
   //
   int result;
@@ -26,7 +31,7 @@ void fc_compile_local_c_files() {
     array_push(o_files, strdup(o_file));
 
     strcpy(cmd, get_compiler_path());
-    strcat(cmd, " -g -O2 -fcommon -c");
+    strcat(cmd, fc_compile_basic_args());
     strcat(cmd, " -I ");
     strcat(cmd, get_binary_dir());
     strcat(cmd, " -o ");
@@ -47,7 +52,7 @@ void fc_compile_local_c_files() {
   array_push(o_files, strdup(o_file));
 
   strcpy(cmd, get_compiler_path());
-  strcat(cmd, " -g -O2 -fcommon -c");
+  strcat(cmd, fc_compile_basic_args());
   strcat(cmd, " -I ");
   strcat(cmd, get_binary_dir());
   strcat(cmd, " -o ");
@@ -108,7 +113,7 @@ void fc_compile_o_file(FileCompiler* fc) {
   //
   char* cmd = malloc(3000);
   strcpy(cmd, get_compiler_path());
-  strcat(cmd, " -g -O2 -fcommon -c");
+  strcat(cmd, fc_compile_basic_args());
   strcat(cmd, " -I ");
   strcat(cmd, get_binary_dir());
   strcat(cmd, " -o ");

@@ -106,39 +106,44 @@ class Server {
 
 						if(con.task != null){
 							if(con.task.suspended == false){
+								// Task is still busy handling a request
 								continue;
 							}
 						}
 
-						bool notset = fd:isset(read_set, fd) == false;
+						bool has_incoming_data = fd:isset(read_set, fd) == true;
 
 						// After select() has returned, readfds will be cleared of all file descriptors except for those that are ready for reading.
 						// So we need to set back all the fds
 						fd:add_to_set(read_set, fd);
 
-						if(notset){
+						if(has_incoming_data == false){
 							continue;
 						}
-
-						//if(con.disconnected){
-						//	io:print("Disconnect\n");
-						//	con._ALLOCATOR.free(con);
-						//	connections.clear(fd);
-						//	fd:remove_from_set(read_set, fd);
-						//	i32 result = main:main:shutdown(fd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
-						//	result = main:main:close(fd);
-						//	continue;
-						//}
 
 						this._RC++;
 						if(con.task == null){
 							con.task = async this.respond(con.fd);
 						} else {
+							// Peek recv to detect disconnects
+							u8 buffer = ' ';
+							// MSG_PEEK = 0x2
+  							i32 result = main:main:recv(fd, getptr buffer, 1, 2);
+							if(result <= 0){
+								io:print("Disconnect\n");
+								con._ALLOCATOR.free(con);
+								connections.clear(fd);
+								fd:remove_from_set(read_set, fd);
+								i32 result = main:main:shutdown(fd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
+								result = main:main:close(fd);
+								continue;
+							}
+							io:print("CON\n");
 							con.task.continue();
 						}
 						con.task._RC++;
 					}else{
-						fd:remove_from_set(read_set, fd);
+						//fd:remove_from_set(read_set, fd);
 					}
 
 				} // END FD LOOP
@@ -158,9 +163,8 @@ class Server {
 			i32 rcvd = main:main:recv(fd, buf, 65535, 0);
 			alc.free(buf);
 
-			if(rcvd < 0){
+			if(rcvd <= 0){
 				async_task_suspend;
-				continue;
 			}
 
 			@ str = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";

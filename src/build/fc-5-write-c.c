@@ -622,7 +622,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       str_append_chars(fc->tkn_buffer, "return 0;\n");
     }
   } else if (token->type == tkn_task_suspend) {
-    str_append_chars(fc->tkn_buffer, "KI_RM_suspend_task();\n");
+    str_append_chars(fc->tkn_buffer, "KI_RM_suspend_task(); return;\n");
   } else if (token->type == tkn_set_threaded) {
     TokenIdValue* iv = token->item;
 
@@ -1179,6 +1179,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(fc->c_code_after, ret_name);
       str_append_chars(fc->c_code_after, ";\n");
     }
+    str_append_chars(fc->c_code_after, "if(!task->suspended){\n");
     str_append_chars(fc->c_code_after, "task->ready = 1;\n");
     // Deref args if needed
     for (int i = 0; i < fcall->arg_values->length; i++) {
@@ -1195,6 +1196,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       }
     }
     array_free(arg_strings);
+    str_append_chars(fc->c_code_after, "}\n");
     // End body
     str_append_chars(fc->c_code_after, "}\n\n");
 

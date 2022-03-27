@@ -97,7 +97,8 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
   while (1) {
     // Run a task
     if (rm->tasks_running > 0) {
-      if (rm->tasks[rm->current_task]) {
+      if (rm->tasks[rm->current_task] &&
+          !rm->tasks[rm->current_task]->suspended) {
         if (!setjmp(rm->jmpbuf)) {
           int nr = rm->current_task;
           // printf("run-task:%d\n", rm->nr);
@@ -107,11 +108,15 @@ void KI_RM_task_run_loop(RoutineManager* rm) {
             longjmp(*(jmp_buf*)task->jmpbuf, 1);
           } else {
             ((void (*)(ki__async__Task*))task->handler_func)(task);
-            rm->tasks_running--;
-            rm->tasks[nr] = NULL;
-            if (task->jmpbuf) ki__mem__free(task->jmpbuf);
-            // ki__mem__free(task->args);
-            if (--task->_RC == 0) ki__async__Task____free(task);
+            if (task->suspended) {
+              rm->tasks_running--;
+            } else {
+              rm->tasks_running--;
+              rm->tasks[nr] = NULL;
+              if (task->jmpbuf) ki__mem__free(task->jmpbuf);
+              // ki__mem__free(task->args);
+              if (--task->_RC == 0) ki__async__Task____free(task);
+            }
           }
         }
       } else {
@@ -212,13 +217,15 @@ void KI_RM_run_next_task() {
   if (!task->jmpbuf) {
     task->jmpbuf = ki__mem__alloc(200);
   }
-  if (setjmp(*(jmp_buf*)task->jmpbuf)) {
+  if (!setjmp(*(jmp_buf*)task->jmpbuf)) {
     rm->current_task++;
     if (rm->current_task == KI_MAX_TASKS_PER_R) {
       rm->current_task = 0;
     }
+    printf("ljump\n");
     longjmp(rm->jmpbuf, 1);
   }
+  printf("unsus\n");
 }
 
 void KI_RM_suspend_task() {
@@ -226,8 +233,9 @@ void KI_RM_suspend_task() {
   RoutineManager* rm = pthread_getspecific(KI_RM);
   ki__async__Task* task = rm->tasks[rm->current_task];
   task->suspended = 1;
+  // printf("sus\n");
   //
-  KI_RM_run_next_task();
+  // KI_RM_run_next_task();
 }
 
 // void KI_RM_move_current_to_prio() {
