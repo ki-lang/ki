@@ -218,11 +218,12 @@ void KI_RM_run_another_task() {
   ki__async__Task* task = rm->tasks[rm->current_task];
 
   task->suspended = 1;
-  jmp_buf buf = rm->jmpbuf;
+  jmp_buf buf;
+  ki__mem__copy(&rm->jmpbuf, &buf, sizeof(jmp_buf));
 
   KI_RM_task_run_loop(rm, 1);
 
-  rm->jmpbuf = buf;
+  ki__mem__copy(&buf, &rm->jmpbuf, sizeof(jmp_buf));
   task->suspended = 0;
 }
 
