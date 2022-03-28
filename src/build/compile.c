@@ -20,28 +20,6 @@ void fc_compile_local_c_files() {
   char* o_file = malloc(3000);
   char* cmd = malloc(3000);
 
-  if (uses_async) {
-    //
-    // strcpy(c_file, get_binary_dir());
-    // strcat(c_file, "/lib/c/rotman.c");
-
-    // strcpy(o_file, cache_dir);
-    // strcat(o_file, "/rotman.o");
-
-    // array_push(o_files, strdup(o_file));
-
-    // strcpy(cmd, get_compiler_path());
-    // strcat(cmd, fc_compile_basic_args());
-    // strcat(cmd, " -I ");
-    // strcat(cmd, get_binary_dir());
-    // strcat(cmd, " -o ");
-    // strcat(cmd, o_file);
-    // strcat(cmd, " ");
-    // strcat(cmd, c_file);
-
-    // result = run_cmd(cmd);
-  }
-
   //
   strcpy(c_file, cache_dir);
   strcat(c_file, "/inits.c");

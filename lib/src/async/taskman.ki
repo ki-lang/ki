@@ -22,7 +22,7 @@ class Taskman {
   	public bool suspended = false;
   	public i32 tasks_run_count = 0;
   	public i32 current_task_index = 0;
-  	public ptr jmpbuf = 0;
+  	public ptr jmpbuf = mem:alloc_flat(100);
   	public type:PtrArray tasks;
 
 	public static func get_task_managers() type:PtrArray {
@@ -132,6 +132,7 @@ class Taskman {
 								this.tasks_run_count++;
 								task_list.tasks.clear(pos);
 								found = true;
+								break;
 							}
 							slot++;
 						}
