@@ -11,17 +11,26 @@ class Thread {
 
 	public static func start(funcref (ptr) void start_func, ptr data) Thread {
 
-		@ pt = main:main:pthread_t {};
+		@ pt = mem:alloc_flat(sizeof(main:main:pthread_t));
 		@ mut = Mutex.make();
-		@ cond = main:main:pthread_cond_t {};
+		@ cond = mem:alloc_flat(sizeof(main:main:pthread_cond_t));
 		@ check = main:main:pthread_create(pt, null, start_func, data);
-		Thread t = Thread { pt: pt, mut: mut, cond: cond };
+
+		Thread t = mem:alloc_flat(sizeof(Thread));
+		t.pt = pt;
+		t.mut = mut;
+		t.cond = cond;
 
 		return t;
 	}
 
 	public func suspend(){
 		@ check = main:main:pthread_cond_wait(this.cond, this.mut.mutex);
+	}
+
+	public func continue(){
+		@ check = main:main:pthread_cond_signal(this.cond);
+		check = main:main:pthread_mutex_unlock(this.mut.mutex);
 	}
 
 }

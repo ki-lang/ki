@@ -8,9 +8,10 @@ class Mutex {
 	public main:main:pthread_mutex_t mutex;
 
 	static func make() Mutex {
-		@ pm = main:main:pthread_mutex_t{};
+		@ pm = mem:alloc_flat(sizeof(main:main:pthread_mutex_t));
 		@ check = main:main:pthread_mutex_init(pm, null);
-		@ m = Mutex { mutex: pm };
+		Mutex m = mem:alloc_flat(sizeof(Mutex));
+		m.mutex = pm;
 		return m;
 	}
 

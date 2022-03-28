@@ -25,9 +25,17 @@ class Taskman {
   	public ptr jmpbuf = 0;
   	public type:PtrArray tasks;
 
+	public static func get_task_managers() type:PtrArray {
+		static type:PtrArray list {
+			return type:PtrArray.make(1024);
+		}
+		return list;
+	}
+
 	public static func setup_task_managers() type:PtrArray {
 
 		@ tms = type:PtrArray.make(64);
+		@ list = Taskman.get_task_managers();
 
 		i32 i = 0;
 		while(i < 8){
@@ -37,6 +45,7 @@ class Taskman {
 			tm.thread = Thread.start(Taskman.init_thread, tm);
 
 			tms.set(i, tm);
+			list.set(i, tm);
 
 			i++;
 		}
@@ -70,6 +79,7 @@ class Taskman {
 					run_count++;
 					break;
 				}
+				i++;
 			}
 			if(run_count == 0) {
 				break;
@@ -78,6 +88,8 @@ class Taskman {
 	}
 
 	public func run_tasks(bool max_one_task) {
+
+		@ task_list = TaskList.get();
 
 		while(true){
 			if(this.tasks_run_count > 0) {
@@ -109,9 +121,24 @@ class Taskman {
 				i32 pos = this.nr;
 				bool found = false;
 				while(pos < 1024) {
-					?Task task = this.tasks.get(pos); 
+					?Task task = task_list.tasks.get(pos); 
 					if(task != null && task.suspended == false){
+						// Found a task, assign to slot
+						i32 slot = 0;
+						while(slot < 32){
+							?Task task_slot = this.tasks.get(slot);
+							if(task_slot == null) {
+								this.tasks.set(slot, task);
+								this.tasks_run_count++;
+								task_list.tasks.clear(pos);
+								found = true;
+							}
+							slot++;
+						}
+					}
 
+					if(found == true){
+						break;
 					}
 
 					pos += 8;
@@ -121,8 +148,10 @@ class Taskman {
 					// No new tasks found
 					if(max_one_task){ return; }
 					// Suspend task manager
-					this.suspended = true;
-					this.thread.suspend();
+					if(this.thread != null) {
+						this.suspended = true;
+						this.thread.suspend();
+					}
 				}
 			}
 		}
@@ -153,6 +182,16 @@ class Taskman {
 		task_list.tasks.set(task_pos, task);
 
 		// Unsuspend thread
+		@ list = Taskman.get_task_managers();
+		i32 i = 0;
+		while(i < list.size){
+			?Taskman tm = list.get(i);
+			if(tm == null){
+				break;
+			}
+			tm.thread.continue();
+			i++;
+		}
 
 		//
 		mutex_unlock mutex_add_task;
