@@ -74,9 +74,33 @@ void fc_scan_types(FileCompiler* fc) {
 
       char* name = strdup(token);
 
+      Array* generic_names = NULL;
+      fc_next_token(fc, token, true, true, true);
+      if (strcmp(token, "<") == 0) {
+        if (fc_get_char(fc, 0) != '<') {
+          fc_error(fc, "Remove the space between the class name and '<'", NULL);
+        }
+        // Read sub types
+        generic_names = array_make(2);
+        // Skip '<'
+        fc_next_token(fc, token, false, true, true);
+        fc_next_token(fc, token, false, true, true);
+        while (strcmp(token, ">") != 0) {
+          if (!is_valid_varname(token)) {
+            fc_error(fc, "Invalid type placeholder name: '%s'", token);
+          }
+          array_push(generic_names, strdup(token));
+          fc_next_token(fc, token, true, true, true);
+          if (strcmp(token, ">") != 0) {
+            fc_expect_token(fc, ",", false, true, true);
+          }
+        }
+      }
+
       Class* class = init_class();
       class->name = name;
       class->fc = fc;
+      class->generic_names = generic_names;
 
       array_push(fc->classes, class);
 

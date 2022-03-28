@@ -12,6 +12,11 @@ class PtrArray {
 	}
 
 	func set(u64 index, ptr value){
+		if(index >= this.size){
+			// increase size
+			ptr new_data = mem:alloc(this.size * 2);
+		}
+
 		ptr adr = this.data;
 		//c:printf(c"p:%p\n", adr);
 		adr += index * sizeof(adr);

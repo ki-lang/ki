@@ -138,6 +138,7 @@ typedef struct Class {
   int body_i_end;
   //
   Array* traits;
+  Array* generic_names;
 } Class;
 
 typedef struct ClassProp {

@@ -13,6 +13,7 @@ Class* init_class() {
   class->size = 0;
   class->props = map_make();
   class->traits = array_make(2);
+  class->generic_names = NULL;
   return class;
 }
 
