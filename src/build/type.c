@@ -258,6 +258,16 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
           // Scan class
           fc_scan_class_props(gclass, true);
           fc_scan_class_prop_values(gclass, true);
+
+          // Add to class lists
+          array_push(fc->classes, gclass);
+          map_set(c_identifiers, cname, gclass);
+
+          IdentifierFor* idf = init_idf();
+          idf->type = idfor_class;
+          idf->item = class;
+
+          map_set(fc->nsc->scope->identifiers, cname, idf);
         }
 
         free(cname);
