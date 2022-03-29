@@ -145,6 +145,17 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
     }
   }
 
+  // Check for new namespaces
+  if (allow_new_namespaces) {
+    PkgCompiler* pkc = fc->nsc->pkc;
+    if (id->package != NULL) {
+      pkc = pkc_get_by_name(id->package);
+    }
+    if (id->namespace != NULL) {
+      pkc_create_namespace(pkc, id->namespace);
+    }
+  }
+
   // Check for generic
   char* cname = fc_create_identifier_global_cname(fc, id);
   IdentifierFor* idf = map_get(c_identifiers, cname);
@@ -164,16 +175,6 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
   // printf("p:%s\n", id->package);
   // printf("n:%s\n", id->namespace);
   // printf("nn:%s\n", id->name);
-
-  if (allow_new_namespaces) {
-    PkgCompiler* pkc = fc->nsc->pkc;
-    if (id->package != NULL) {
-      pkc = pkc_get_by_name(id->package);
-    }
-    if (id->namespace != NULL) {
-      pkc_create_namespace(pkc, id->namespace);
-    }
-  }
 
   return id;
 }

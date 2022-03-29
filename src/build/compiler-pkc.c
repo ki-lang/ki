@@ -58,7 +58,7 @@ NsCompiler* pkc_get_namespace_by_name(PkgCompiler* pkc, char* name) {
   NsCompiler* nsc = map_get(pkc->namespaces, name);
   //
   if (nsc == NULL) {
-    printf("Unknown namespace: '%s'\n", name);
+    printf("Unknown namespace: '%s' in pacakge '%s'\n", name, pkc->name);
     exit(1);
   }
   return nsc;
