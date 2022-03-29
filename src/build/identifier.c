@@ -176,7 +176,7 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
     Class* class = idf->item;
     if (class->generic_names != NULL) {
       Class* gclass = fc_get_generic_class(fc, class);
-      id->generic_hash = gclass->generic_hash;
+      id->generic_hash = strdup(gclass->generic_hash);
     }
   }
 

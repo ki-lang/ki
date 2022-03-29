@@ -51,6 +51,8 @@ Class* fc_make_generic_class(Class* class) {
   Class* gclass = malloc(sizeof(Class));
   memcpy(gclass, class, sizeof(Class));
   gclass->generic_types = map_make();
+  gclass->props = map_make();
+  gclass->traits = array_make(2);
   return gclass;
 }
 
@@ -62,8 +64,12 @@ Class* fc_get_generic_class(FileCompiler* fc, Class* class) {
   strcat(cname, "__");
   strcat(cname, uid);
 
-  Class* gclass = map_get(c_identifiers, cname);
-  if (!gclass) {
+  Class* gclass = NULL;
+  IdentifierFor* idf = map_get(c_identifiers, cname);
+  if (idf) {
+    gclass = idf->item;
+    free(uid);
+  } else {
     gclass = fc_make_generic_class(class);
     gclass->cname = strdup(cname);
     gclass->generic_hash = uid;
@@ -86,23 +92,20 @@ Class* fc_get_generic_class(FileCompiler* fc, Class* class) {
     fc_expect_token(fc, ">", false, true, true);
 
     // Add to class lists
-    array_push(fc->classes, gclass);
-    map_set(c_identifiers, cname, gclass);
+    array_push(gclass->fc->classes, gclass);
 
     IdentifierFor* idf = init_idf();
     idf->type = idfor_class;
     idf->item = gclass;
+
+    map_set(c_identifiers, gclass->cname, idf);
 
     char* vn = malloc(KI_TOKEN_MAX);
     strcpy(vn, gclass->name);
     strcat(vn, "__");
     strcat(vn, uid);
 
-    map_set(fc->nsc->scope->identifiers, vn, idf);
-
-    // Scan class
-    // fc_scan_class_props(gclass, true);
-    // fc_scan_class_prop_values(gclass, true);
+    map_set(gclass->fc->nsc->scope->identifiers, vn, idf);
   }
 
   free(cname);
@@ -112,7 +115,7 @@ Class* fc_get_generic_class(FileCompiler* fc, Class* class) {
 
 Map* fc_class_set_generic_identifiers(Class* gclass) {
   //
-  Scope* fcidfs = gclass->fc->scope->identifiers;
+  Map* fcidfs = gclass->fc->scope->identifiers;
   Map* prev_identifiers = map_make();
   for (int i = 0; i < gclass->generic_types->keys->length; i++) {
     char* key = array_get_index(gclass->generic_types->keys, i);
@@ -129,7 +132,7 @@ Map* fc_class_set_generic_identifiers(Class* gclass) {
 Map* fc_class_restore_generic_identifiers(Class* gclass,
                                           Map* prev_identifiers) {
   // Set old identifiers
-  Scope* fcidfs = gclass->fc->scope->identifiers;
+  Map* fcidfs = gclass->fc->scope->identifiers;
   //
   for (int i = 0; i < prev_identifiers->keys->length; i++) {
     char* key = array_get_index(prev_identifiers->keys, i);

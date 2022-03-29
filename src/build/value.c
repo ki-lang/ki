@@ -61,6 +61,9 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     } else if (idf->type == idfor_var) {
       Type* type = idf->item;
       size = type->bytes;
+    } else if (idf->type == idfor_type) {
+      Type* type = idf->item;
+      size = type->bytes;
     } else {
       fc_error(fc, "cannot determine sizeof this value", NULL);
     }
@@ -329,7 +332,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     idf = idf_find_in_scope(idf_scope, id);
     // }
     if (idf == NULL) {
-      printf("name:%s , hash: %s\n", id->name, id->generic_hash);
+      printf("ns: %s , name:%s , hash: %s\n", id->namespace, id->name,
+             id->generic_hash);
       fc_error(fc, "Unknown variable/function/class/enum: %s", id->name);
     }
 

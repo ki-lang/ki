@@ -25,7 +25,6 @@ void cmd_build_init_static();
 void cmd_build_init_before_build();
 void fc_scan_values();
 void fc_scan_args_and_props(FileCompiler* fc);
-void fc_scan_all_class_prop_values(NsCompiler* nsc);
 void fc_scan_class_props(Class* class);
 void fc_scan_class_prop_values(Class* class);
 void fc_scan_threaded_globals(FileCompiler* fc);

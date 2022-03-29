@@ -21,12 +21,22 @@ void fc_scan_values() {
     }
   }
 
-  // Scan property values
-  for (int i = 0; i < packages->keys->length; i++) {
-    PkgCompiler* pkc = array_get_index(packages->values, i);
-    for (int o = 0; o < pkc->namespaces->keys->length; o++) {
-      NsCompiler* nsc = array_get_index(pkc->namespaces->values, o);
-      fc_scan_all_class_prop_values(nsc);
+  // Scan class props
+  for (int x = 0; x < c_identifiers->keys->length; x++) {
+    IdentifierFor* idf = array_get_index(c_identifiers->values, x);
+    if (idf->type == idfor_class) {
+      Class* class = idf->item;
+      fc_scan_class_props(class);
+      // printf(class->cname);
+      // map_print_keys(class->props);
+    }
+  }
+  // Scan class prop values
+  for (int x = 0; x < c_identifiers->keys->length; x++) {
+    IdentifierFor* idf = array_get_index(c_identifiers->values, x);
+    if (idf->type == idfor_class) {
+      Class* class = idf->item;
+      fc_scan_class_prop_values(class);
     }
   }
 }
@@ -50,11 +60,6 @@ void fc_scan_args_and_props(FileCompiler* fc) {
   for (int x = 0; x < fc->functions->length; x++) {
     Function* func = array_get_index(fc->functions, x);
     fc_scan_func_args(func);
-  }
-
-  for (int x = 0; x < fc->classes->length; x++) {
-    Class* class = array_get_index(fc->classes, x);
-    fc_scan_class_props(class);
   }
 }
 
@@ -89,19 +94,4 @@ void fc_scan_threaded_globals(FileCompiler* fc) {
   }
 
   free(token);
-}
-
-void fc_scan_all_class_prop_values(NsCompiler* nsc) {
-  //
-  int i = 0;
-  Scope* scope = nsc->scope;
-  //
-  for (i = 0; i < scope->identifiers->keys->length; i++) {
-    IdentifierFor* idf = array_get_index(scope->identifiers->values, i);
-
-    if (idf->type == idfor_class) {
-      Class* class = idf->item;
-      fc_scan_class_prop_values(class);
-    }
-  }
 }

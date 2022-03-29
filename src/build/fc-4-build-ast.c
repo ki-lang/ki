@@ -154,7 +154,9 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
     IdentifierFor* idf = fc_read_and_get_idf(fc, scope, false, true, true);
 
     // Check if declare
-    if (idf && (idf->type == idfor_class || idf->type == idfor_enum) &&
+    if (idf &&
+        (idf->type == idfor_class || idf->type == idfor_enum ||
+         idf->type == idfor_type) &&
         fc_get_char(fc, 0) == ' ') {
       fc_next_token(fc, token, true, true, true);
       if (is_valid_varname(token)) {
