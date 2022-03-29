@@ -296,7 +296,7 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
   } else if (strcmp(token, "get_threaded") == 0) {
     Identifier* id = fc_read_identifier(fc, false, true, true);
     Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
-    IdentifierFor* idf = idf_find_in_scope(idf_scope, id->name);
+    IdentifierFor* idf = idf_find_in_scope(idf_scope, id);
 
     if (!idf || idf->type != idfor_threaded_var) {
       fc_error(fc, "Cannot find threaded global variable: %s", id->name);
@@ -324,11 +324,13 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     // } else {
     fc->i -= strlen(token);
+    printf("t:%s\n", token);
     Identifier* id = fc_read_identifier(fc, false, true, true);
     Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
-    idf = idf_find_in_scope(idf_scope, id->name);
+    idf = idf_find_in_scope(idf_scope, id);
     // }
     if (idf == NULL) {
+      printf("name:%s , hash: %s\n", id->name, id->generic_hash);
       fc_error(fc, "Unknown variable/function/class/enum: %s", id->name);
     }
 

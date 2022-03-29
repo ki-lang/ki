@@ -141,6 +141,7 @@ typedef struct Class {
   Array* traits;
   Array* generic_names;
   Map* generic_types;
+  char* generic_hash;
 } Class;
 
 typedef struct ClassProp {

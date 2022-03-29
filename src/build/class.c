@@ -16,6 +16,7 @@ Class* init_class() {
   class->traits = array_make(2);
   class->generic_names = NULL;
   class->generic_types = NULL;
+  class->generic_hash = NULL;
   return class;
 }
 
@@ -53,6 +54,79 @@ Class* fc_make_generic_class(Class* class) {
   return gclass;
 }
 
+Class* fc_get_generic_class(FileCompiler* fc, Class* class) {
+  int fci = fc->i;
+  char* uid = fc_class_read_generic_unique_id(fc);
+  char* cname = malloc(KI_TOKEN_MAX);
+  strcpy(cname, class->cname);
+  strcat(cname, "__");
+  strcat(cname, uid);
+
+  Class* gclass = map_get(c_identifiers, cname);
+  if (!gclass) {
+    gclass = fc_make_generic_class(class);
+    gclass->cname = strdup(cname);
+    gclass->generic_hash = uid;
+    // Read generic types
+    fc->i = fci;
+    fc_expect_token(fc, "<", false, true, true);
+    int generic_c = 0;
+    while (generic_c < class->generic_names->length) {
+      Type* gen_t = fc_read_type(fc);
+      char* name = array_get_index(class->generic_names, generic_c);
+      IdentifierFor* idf = init_idf();
+      idf->type = idfor_type;
+      idf->item = gen_t;
+      map_set(gclass->generic_types, name, idf);
+      generic_c++;
+      if (generic_c < class->generic_names->length) {
+        fc_expect_token(fc, ",", false, true, true);
+      }
+    }
+    fc_expect_token(fc, ">", false, true, true);
+
+    // Add to class lists
+    array_push(fc->classes, gclass);
+    map_set(c_identifiers, cname, gclass);
+
+    IdentifierFor* idf = init_idf();
+    idf->type = idfor_class;
+    idf->item = gclass;
+
+    char* vn = malloc(KI_TOKEN_MAX);
+    strcpy(vn, gclass->name);
+    strcat(vn, "__");
+    strcat(vn, uid);
+
+    map_set(fc->nsc->scope->identifiers, vn, idf);
+
+    // Scan class
+    Scope* fcidfs = gclass->fc->scope->identifiers;
+    Map* prev_identifiers = array_make(2);
+    for (int i = 0; i < gclass->generic_types->keys->length; i++) {
+      char* key = array_get_index(gclass->generic_types->keys, i);
+      IdentifierFor* tidf = array_get_index(gclass->generic_types->values, i);
+      IdentifierFor* pidf = map_get(fcidfs, key);
+      if (pidf) {
+        map_set(prev_identifiers, key, pidf);
+      }
+      map_set(fcidfs, key, tidf);
+    }
+    fc_scan_class_props(gclass, true);
+    fc_scan_class_prop_values(gclass, true);
+    // Set old identifiers
+    for (int i = 0; i < prev_identifiers->keys->length; i++) {
+      char* key = array_get_index(prev_identifiers->keys, i);
+      IdentifierFor* pidf = array_get_index(prev_identifiers->values, i);
+      map_set(fcidfs, key, pidf);
+    }
+  }
+
+  free(cname);
+
+  return gclass;
+}
+
 char* fc_class_read_generic_unique_id(FileCompiler* fc) {
   //
   Str* uid = str_make("|");
@@ -60,7 +134,7 @@ char* fc_class_read_generic_unique_id(FileCompiler* fc) {
 
   fc_expect_token(fc, "<", false, true, true);
 
-  fc_next_token(fc, token, false, true, true);
+  fc_next_token(fc, token, true, true, true);
   while (strcmp(token, ">") != 0) {
     Identifier* id = fc_read_identifier(fc, false, true, true);
     char* gname = fc_create_identifier_global_cname(fc, id);
@@ -85,7 +159,7 @@ char* fc_class_read_generic_unique_id(FileCompiler* fc) {
   strcpy(hash, "");
   md5(uidchars, hash);
 
-  free(uid);
+  free(uidchars);
 
   return hash;
 }
@@ -188,8 +262,8 @@ void fc_scan_class_props(Class* class, bool allow_generics) {
 
     if (strcmp(token, "trait") == 0) {
       Identifier* id = fc_read_identifier(fc, false, true, true);
-      Scope* idf_scope = fc_get_identifier_scope(fc, fc->nsc->scope, id);
-      IdentifierFor* idf = idf_find_in_scope(idf_scope, id->name);
+      Scope* idf_scope = fc_get_identifier_scope(fc, fc->scope, id);
+      IdentifierFor* idf = idf_find_in_scope(idf_scope, id);
       if (!idf) {
         fc_error(fc, "Cannot find trait: %s", id->name);
       }

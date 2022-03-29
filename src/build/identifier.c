@@ -71,14 +71,22 @@ Identifier* create_identifier(char* package, char* namespace, char* name) {
   return id;
 }
 
-IdentifierFor* idf_find_in_scope(Scope* scope, char* name) {
+IdentifierFor* idf_find_in_scope(Scope* scope, Identifier* id) {
+  char* vn = malloc(KI_TOKEN_MAX);
+  strcpy(vn, id->name);
+  if (id->generic_hash) {
+    strcat(vn, "__");
+    strcat(vn, id->generic_hash);
+  }
   while (scope != NULL) {
-    void* x = map_get(scope->identifiers, name);
+    void* x = map_get(scope->identifiers, vn);
     if (x != NULL) {
+      free(vn);
       return x;
     }
     scope = scope->parent;
   }
+  free(vn);
   return NULL;
 }
 
@@ -91,7 +99,7 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
 
   fc_next_token(fc, token, false, sameline, allow_space);
   if (!is_valid_varname(token)) {
-    fc_error(fc, "Invalid name: '%s'", token);
+    fc_error(fc, "Invalid name (id1): '%s'", token);
   }
 
   id->name = strdup(token);
@@ -108,7 +116,7 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
       if (allow_new_namespaces) {
         return NULL;
       }
-      fc_error(fc, "Invalid name: '%s'", token);
+      fc_error(fc, "Invalid name (id2): '%s'", token);
     }
 
     id->name = strdup(token);
@@ -157,12 +165,13 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
   }
 
   // Check for generic
-  char* cname = fc_create_identifier_global_cname(fc, id);
-  IdentifierFor* idf = map_get(c_identifiers, cname);
+  Scope* idf_scope = fc_get_identifier_scope(fc, fc->scope, id);
+  IdentifierFor* idf = idf_find_in_scope(idf_scope, id);
   if (idf && idf->type == idfor_class) {
     Class* class = idf->item;
     if (class->generic_names != NULL) {
-      id->generic_hash = fc_class_read_generic_unique_id(fc);
+      Class* gclass = fc_get_generic_class(fc, class);
+      id->generic_hash = gclass->generic_hash;
     }
   }
 
@@ -200,5 +209,5 @@ IdentifierFor* fc_read_and_get_idf(FileCompiler* fc, Scope* scope,
                                    bool allow_space) {
   Identifier* id = fc_read_identifier(fc, readonly, sameline, allow_space);
   Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
-  return idf_find_in_scope(idf_scope, id->name);
+  return idf_find_in_scope(idf_scope, id);
 }

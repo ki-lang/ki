@@ -208,7 +208,7 @@ void token_set_threaded(FileCompiler* fc, Scope* scope) {
 
   Identifier* id = fc_read_identifier(fc, false, true, true);
   Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
-  IdentifierFor* idf = idf_find_in_scope(idf_scope, id->name);
+  IdentifierFor* idf = idf_find_in_scope(idf_scope, id);
 
   if (!idf || idf->type != idfor_threaded_var) {
     fc_error(fc, "Cannot find threaded global variable: %s", id->name);

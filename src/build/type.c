@@ -179,7 +179,7 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
       strcmp(id->namespace, "type") == 0) {
     if (strcmp(id->name, "ptr") == 0) {
       t->type = type_void_pointer;
-      IdentifierFor* idf = idf_find_in_scope(scope, id->name);
+      IdentifierFor* idf = idf_find_in_scope(scope, id);
       if (idf == NULL) {
         fc_error(fc, "Compiler bug, cant find ptr class", NULL);
       }
@@ -190,7 +190,7 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
     }
     if (strcmp(id->name, "bool") == 0) {
       t->type = type_bool;
-      IdentifierFor* idf = idf_find_in_scope(scope, id->name);
+      IdentifierFor* idf = idf_find_in_scope(scope, id);
       if (idf == NULL) {
         fc_error(fc, "Compiler bug, cant find ptr class", NULL);
       }
@@ -200,8 +200,8 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
   }
 
   if (t->type == type_unknown) {
-    // Check other types
-    IdentifierFor* idf = idf_find_in_scope(scope, id->name);
+    //
+    IdentifierFor* idf = idf_find_in_scope(scope, id);
 
     if (idf == NULL) {
       free_type(t);
@@ -222,57 +222,6 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
         t->is_pointer = false;
         t->allow_math = true;
         t->bytes = t->class->size;
-      }
-    }
-
-    if (idf->type == idfor_class) {
-      // Check for generics
-      Class* class = t->class;
-      if (class->generic_names != NULL) {
-        // Find generic class
-        char* fci = fc->i;
-        char* uid = fc_class_read_generic_unique_id(fc);
-        char* cname = malloc(KI_TOKEN_MAX);
-        strcpy(cname, class->cname);
-        strcat(cname, "__");
-        strcat(cname, uid);
-
-        Class* gclass = map_get(c_identifiers, cname);
-        if (!gclass) {
-          gclass = fc_make_generic_class(class);
-          gclass->cname = strdup(cname);
-          // Read generic types
-          fc_expect_token(fc, "<", false, true, true);
-          int generic_c = 0;
-          while (generic_c < class->generic_names->length) {
-            Type* gen_t = fc_read_type(fc);
-            char* name = array_get_index(class->generic_names, generic_c);
-            map_set(gclass->generic_types, name, gen_t);
-            generic_c++;
-            if (generic_c < class->generic_names->length) {
-              fc_expect_token(fc, ",", false, true, true);
-            }
-          }
-          fc_expect_token(fc, ">", false, true, true);
-
-          // Scan class
-          fc_scan_class_props(gclass, true);
-          fc_scan_class_prop_values(gclass, true);
-
-          // Add to class lists
-          array_push(fc->classes, gclass);
-          map_set(c_identifiers, cname, gclass);
-
-          IdentifierFor* idf = init_idf();
-          idf->type = idfor_class;
-          idf->item = class;
-
-          map_set(fc->nsc->scope->identifiers, cname, idf);
-        }
-
-        free(cname);
-
-        t->class = gclass;
       }
     }
   }
