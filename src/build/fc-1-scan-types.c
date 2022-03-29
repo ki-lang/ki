@@ -63,8 +63,8 @@ void fc_scan_types(FileCompiler* fc) {
       Scope* scope = fc->nsc->scope;
       map_set(scope->identifiers, enu->name, idf);
 
-      char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
-                                                     fc->nsc->name, enu->name);
+      char* cname = create_c_identifier_with_strings(
+          fc->nsc->pkc->name, fc->nsc->name, enu->name, NULL);
       enu->cname = cname;
       map_set(c_identifiers, cname, idf);
 
@@ -95,6 +95,8 @@ void fc_scan_types(FileCompiler* fc) {
             fc_expect_token(fc, ",", false, true, true);
           }
         }
+        // Skip '>'
+        fc_next_token(fc, token, false, true, true);
       }
 
       Class* class = init_class();
@@ -156,7 +158,7 @@ void fc_scan_types(FileCompiler* fc) {
       map_set(scope->identifiers, name, idf);
 
       char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
-                                                     fc->nsc->name, name);
+                                                     fc->nsc->name, name, NULL);
       class->cname = cname;
       map_set(c_identifiers, cname, idf);
 
@@ -171,7 +173,7 @@ void fc_scan_types(FileCompiler* fc) {
       fc_expect_token(fc, "{", false, true, true);
 
       char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
-                                                     fc->nsc->name, name);
+                                                     fc->nsc->name, name, NULL);
       Trait* trait = init_trait();
       trait->fc = fc;
       trait->cname = cname;
@@ -212,7 +214,7 @@ void fc_scan_types(FileCompiler* fc) {
       map_set(scope->identifiers, name, idf);
 
       char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
-                                                     fc->nsc->name, name);
+                                                     fc->nsc->name, name, NULL);
       func->cname = cname;
       map_set(c_identifiers, cname, idf);
 
@@ -300,8 +302,8 @@ void fc_scan_types(FileCompiler* fc) {
       Scope* scope = fc->nsc->scope;
       map_set(scope->identifiers, mut->name, idf);
 
-      char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
-                                                     fc->nsc->name, mut->name);
+      char* cname = create_c_identifier_with_strings(
+          fc->nsc->pkc->name, fc->nsc->name, mut->name, NULL);
       mut->cname = cname;
       map_set(c_identifiers, cname, idf);
 

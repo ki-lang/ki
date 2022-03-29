@@ -6,6 +6,7 @@ Identifier* init_id() {
   id->package = NULL;
   id->namespace = NULL;
   id->name = NULL;
+  id->generic_hash = NULL;
   return id;
 }
 
@@ -27,7 +28,7 @@ void free_idf(IdentifierFor* idf) {
 }
 
 char* create_c_identifier_with_strings(char* package, char* namespace,
-                                       char* name) {
+                                       char* name, char* generic_hash) {
   char* result = malloc(KI_TOKEN_MAX);
   strcpy(result, "");
 
@@ -41,6 +42,11 @@ char* create_c_identifier_with_strings(char* package, char* namespace,
   }
   strcat(result, name);
 
+  if (generic_hash) {
+    strcat(result, "__");
+    strcat(result, generic_hash);
+  }
+
   return result;
 }
 
@@ -53,7 +59,8 @@ char* fc_create_identifier_global_cname(FileCompiler* fc, Identifier* id) {
   if (id->namespace != NULL) {
     nsc = pkc_get_namespace_by_name(pkc, id->namespace);
   }
-  return create_c_identifier_with_strings(pkc->name, nsc->name, id->name);
+  return create_c_identifier_with_strings(pkc->name, nsc->name, id->name,
+                                          id->generic_hash);
 }
 
 Identifier* create_identifier(char* package, char* namespace, char* name) {
@@ -138,6 +145,17 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
     }
   }
 
+  // Check for generic
+  char* cname = fc_create_identifier_global_cname(fc, id);
+  IdentifierFor* idf = map_get(c_identifiers, cname);
+  if (idf && idf->type == idfor_class) {
+    Class* class = idf->item;
+    if (class->generic_names != NULL) {
+      id->generic_hash = fc_class_read_generic_unique_id(fc);
+    }
+  }
+
+  //
   if (readonly) {
     fc->i = i;
   }

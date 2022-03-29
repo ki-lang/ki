@@ -26,7 +26,7 @@ void fc_scan_values() {
     PkgCompiler* pkc = array_get_index(packages->values, i);
     for (int o = 0; o < pkc->namespaces->keys->length; o++) {
       NsCompiler* nsc = array_get_index(pkc->namespaces->values, o);
-      fc_scan_class_prop_values(nsc);
+      fc_scan_all_class_prop_values(nsc);
     }
   }
 }
@@ -54,7 +54,7 @@ void fc_scan_args_and_props(FileCompiler* fc) {
 
   for (int x = 0; x < fc->classes->length; x++) {
     Class* class = array_get_index(fc->classes, x);
-    fc_scan_class_props(class);
+    fc_scan_class_props(class, false);
   }
 }
 
@@ -91,7 +91,7 @@ void fc_scan_threaded_globals(FileCompiler* fc) {
   free(token);
 }
 
-void fc_scan_class_prop_values(NsCompiler* nsc) {
+void fc_scan_all_class_prop_values(NsCompiler* nsc) {
   //
   int i = 0;
   Scope* scope = nsc->scope;
@@ -101,18 +101,7 @@ void fc_scan_class_prop_values(NsCompiler* nsc) {
 
     if (idf->type == idfor_class) {
       Class* class = idf->item;
-      FileCompiler* fc = class->fc;
-
-      for (int o = 0; o < class->props->keys->length; o++) {
-        //
-        ClassProp* prop = array_get_index(class->props->values, o);
-        //
-        if (prop->value_i > 0) {
-          fc->i = prop->value_i;
-          prop->default_value = fc_read_value(fc, fc->scope, false, true, true);
-          fc_expect_token(fc, ";", false, true, true);
-        }
-      }
+      fc_scan_class_prop_values(class, false);
     }
   }
 }

@@ -88,6 +88,7 @@ typedef struct Identifier {
   char* package;
   char* namespace;
   char* name;
+  char* generic_hash;
 } Identifier;
 
 typedef struct IdentifierFor {
@@ -139,6 +140,7 @@ typedef struct Class {
   //
   Array* traits;
   Array* generic_names;
+  Map* generic_types;
 } Class;
 
 typedef struct ClassProp {
@@ -297,7 +299,7 @@ typedef enum OperatorType {
   op_decr,
   op_bit_OR,
   op_bit_AND,
-  op_bit_XOR, // 15
+  op_bit_XOR,  // 15
   op_and,
   op_or,
 } OperatorType;

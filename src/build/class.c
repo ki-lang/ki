@@ -4,6 +4,7 @@
 Class* init_class() {
   Class* class = malloc(sizeof(Class));
   class->name = NULL;
+  class->cname = NULL;
   class->fc = NULL;
   class->ref_count = true;
   class->is_number = false;
@@ -14,6 +15,7 @@ Class* init_class() {
   class->props = map_make();
   class->traits = array_make(2);
   class->generic_names = NULL;
+  class->generic_types = NULL;
   return class;
 }
 
@@ -42,6 +44,50 @@ void free_class_prop(ClassProp* prop) {
   free_type(prop->return_type);
   //
   free(prop);
+}
+
+Class* fc_make_generic_class(Class* class) {
+  Class* gclass = malloc(sizeof(Class));
+  memcpy(gclass, class, sizeof(Class));
+  gclass->generic_types = map_make();
+  return gclass;
+}
+
+char* fc_class_read_generic_unique_id(FileCompiler* fc) {
+  //
+  Str* uid = str_make("|");
+  char* token = malloc(KI_TOKEN_MAX);
+
+  fc_expect_token(fc, "<", false, true, true);
+
+  fc_next_token(fc, token, false, true, true);
+  while (strcmp(token, ">") != 0) {
+    Identifier* id = fc_read_identifier(fc, false, true, true);
+    char* gname = fc_create_identifier_global_cname(fc, id);
+    str_append_chars(uid, gname);
+    free(gname);
+
+    fc_next_token(fc, token, true, true, true);
+    if (strcmp(token, ">") != 0) {
+      fc_expect_token(fc, ",", false, true, true);
+      str_append_chars(uid, ",");
+    }
+  }
+
+  fc_expect_token(fc, ">", false, true, true);
+  str_append_chars(uid, "|");
+
+  //
+  char* uidchars = str_to_chars(uid);
+  free_str(uid);
+
+  char* hash = malloc(33);
+  strcpy(hash, "");
+  md5(uidchars, hash);
+
+  free(uid);
+
+  return hash;
 }
 
 void fc_scan_class(FileCompiler* fc, Class* class) {
@@ -107,7 +153,11 @@ void fc_scan_class(FileCompiler* fc, Class* class) {
   class->body_i_end = fc->i;
 }
 
-void fc_scan_class_props(Class* class) {
+void fc_scan_class_props(Class* class, bool allow_generics) {
+  //
+  if (!allow_generics && class->generic_names != NULL) {
+    return;
+  }
   //
   char* token = malloc(KI_TOKEN_MAX);
   FileCompiler* fc = class->fc;
@@ -201,13 +251,10 @@ void fc_scan_class_props(Class* class) {
 
       map_set(class->props, name, prop);
 
-      char* ctmp = malloc(strlen(class->name) + strlen(token) + 3);
-      strcpy(ctmp, class->name);
-      strcat(ctmp, "__");
-      strcat(ctmp, name);
-
-      char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
-                                                     fc->nsc->name, ctmp);
+      char* cname = malloc(strlen(class->cname) + strlen(token) + 3);
+      strcpy(cname, class->cname);
+      strcat(cname, "__");
+      strcat(cname, name);
 
       IdentifierFor* find = map_get(c_identifiers, cname);
       if (find != NULL) {
@@ -329,5 +376,25 @@ void fc_scan_class_props(Class* class) {
 
     class->size += type->bytes;
     map_set(class->props, "_ALLOCATOR", prop);
+  }
+}
+
+void fc_scan_class_prop_values(Class* class, bool allow_generics) {
+  //
+  if (!allow_generics && class->generic_names != NULL) {
+    return;
+  }
+
+  FileCompiler* fc = class->fc;
+
+  for (int o = 0; o < class->props->keys->length; o++) {
+    //
+    ClassProp* prop = array_get_index(class->props->values, o);
+    //
+    if (prop->value_i > 0) {
+      fc->i = prop->value_i;
+      prop->default_value = fc_read_value(fc, fc->scope, false, true, true);
+      fc_expect_token(fc, ";", false, true, true);
+    }
   }
 }
