@@ -324,7 +324,6 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     // } else {
     fc->i -= strlen(token);
-    printf("t:%s\n", token);
     Identifier* id = fc_read_identifier(fc, false, true, true);
     Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
     idf = idf_find_in_scope(idf_scope, id);

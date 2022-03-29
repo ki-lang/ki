@@ -54,7 +54,7 @@ void fc_scan_args_and_props(FileCompiler* fc) {
 
   for (int x = 0; x < fc->classes->length; x++) {
     Class* class = array_get_index(fc->classes, x);
-    fc_scan_class_props(class, false);
+    fc_scan_class_props(class);
   }
 }
 
@@ -101,7 +101,7 @@ void fc_scan_all_class_prop_values(NsCompiler* nsc) {
 
     if (idf->type == idfor_class) {
       Class* class = idf->item;
-      fc_scan_class_prop_values(class, false);
+      fc_scan_class_prop_values(class);
     }
   }
 }

@@ -72,21 +72,26 @@ Identifier* create_identifier(char* package, char* namespace, char* name) {
 }
 
 IdentifierFor* idf_find_in_scope(Scope* scope, Identifier* id) {
-  char* vn = malloc(KI_TOKEN_MAX);
-  strcpy(vn, id->name);
+  char* vn = id->name;
   if (id->generic_hash) {
+    vn = malloc(KI_TOKEN_MAX);
+    strcpy(vn, id->name);
     strcat(vn, "__");
     strcat(vn, id->generic_hash);
   }
   while (scope != NULL) {
     void* x = map_get(scope->identifiers, vn);
     if (x != NULL) {
-      free(vn);
+      if (id->generic_hash) {
+        free(vn);
+      }
       return x;
     }
     scope = scope->parent;
   }
-  free(vn);
+  if (id->generic_hash) {
+    free(vn);
+  }
   return NULL;
 }
 

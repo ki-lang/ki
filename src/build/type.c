@@ -223,6 +223,9 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
         t->allow_math = true;
         t->bytes = t->class->size;
       }
+    } else if (idf->type == idfor_type) {
+      free_type(t);
+      t = idf->item;
     }
   }
 
