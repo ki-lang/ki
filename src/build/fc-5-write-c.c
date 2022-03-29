@@ -30,7 +30,11 @@ void fc_write_c_all() {
       FileCompiler* fc = array_get_index(pkc->file_compilers->values, o);
 
       for (int x = 0; x < fc->classes->length; x++) {
-        fc_write_c_predefine_class(fc, array_get_index(fc->classes, x));
+        Class* class = array_get_index(fc->classes, x);
+        if (class->generic_names != NULL && class->generic_hash == NULL) {
+          continue;
+        }
+        fc_write_c_predefine_class(fc, class);
       }
 
       fc_write_c_pre(fc);
@@ -44,7 +48,11 @@ void fc_write_c_all() {
       FileCompiler* fc = array_get_index(pkc->file_compilers->values, o);
 
       for (int x = 0; x < fc->classes->length; x++) {
-        fc_write_c_class(fc, array_get_index(fc->classes, x));
+        Class* class = array_get_index(fc->classes, x);
+        if (class->generic_names != NULL && class->generic_hash == NULL) {
+          continue;
+        }
+        fc_write_c_class(fc, class);
       }
       for (int x = 0; x < fc->enums->length; x++) {
         fc_write_c_enum(fc, array_get_index(fc->enums, x));
@@ -1102,6 +1110,15 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(fc->c_code_after, "();\n");
     }
 
+    Array* prev_local_vars = fc->local_var_names;
+    Array* prev_var_bufs = fc->var_bufs;
+
+    fc->local_var_names = array_make(8);
+    fc->var_bufs = array_make(8);
+
+    Str* prevbuf = fc->tkn_buffer;
+    fc->tkn_buffer = str_make("");
+
     for (int i = 0; i < class->props->keys->length; i++) {
       char* prop_name = array_get_index(class->props->keys, i);
       if (map_contains(ini->prop_values, prop_name)) {
@@ -1120,15 +1137,26 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(fc->value_buffer, cache);
       free(cache);
 
-      str_append_chars(fc->c_code_after, "KI_RET_V");
-      str_append_chars(fc->c_code_after, sign);
-      str_append_chars(fc->c_code_after, prop_name);
-      str_append_chars(fc->c_code_after, " = ");
-      str_append_chars(fc->c_code_after, defv);
-      str_append_chars(fc->c_code_after, ";\n");
+      str_append_chars(fc->tkn_buffer, "KI_RET_V");
+      str_append_chars(fc->tkn_buffer, sign);
+      str_append_chars(fc->tkn_buffer, prop_name);
+      str_append_chars(fc->tkn_buffer, " = ");
+      str_append_chars(fc->tkn_buffer, defv);
+      str_append_chars(fc->tkn_buffer, ";\n");
 
       free(defv);
     }
+
+    deref_local_vars(fc);
+
+    str_append(fc->c_code_after, fc->tkn_buffer);
+    free_str(fc->tkn_buffer);
+    fc->tkn_buffer = prevbuf;
+
+    free(fc->local_var_names);
+    free(fc->var_bufs);
+    fc->local_var_names = prev_local_vars;
+    fc->var_bufs = prev_var_bufs;
 
     str_append_chars(fc->c_code_after, "return KI_RET_V;\n");
     str_append_chars(fc->c_code_after, "}\n\n");

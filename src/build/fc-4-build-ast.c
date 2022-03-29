@@ -27,6 +27,11 @@ void fc_build_asts() {
       // Classes
       for (int x = 0; x < fc->classes->length; x++) {
         Class* class = array_get_index(fc->classes, x);
+
+        if (class->generic_names != NULL && class->generic_hash == NULL) {
+          continue;
+        }
+
         FileCompiler* fc = class->fc;
         if (fc->is_header) continue;
         for (int y = 0; y < class->props->values->length; y++) {

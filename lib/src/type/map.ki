@@ -8,7 +8,7 @@ class Map<T> {
 
 	public func set(string key, T value) {
 		uxx len = key.length;
-		uxx adr = key.data;
+		uxx adr = cast key.data as ptr;
 		i32 total = 0;
 		while(len > 7) {
 			u64 val = getptrv (adr) as u64;
@@ -36,7 +36,7 @@ class Map<T> {
 		array += sizeof(uxx);
 		uxx pos = 0;
 		while(true){
-			T val = getptrv array as T;
+			?T val = getptrv array as ?T;
 			if(val == null){
 				break;
 			}

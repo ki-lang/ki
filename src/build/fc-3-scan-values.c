@@ -27,7 +27,7 @@ void fc_scan_values() {
     if (idf->type == idfor_class) {
       Class* class = idf->item;
       fc_scan_class_props(class);
-      // printf(class->cname);
+      // printf("%s\n", class->cname);
       // map_print_keys(class->props);
     }
   }

@@ -368,11 +368,14 @@ void fc_scan_class_props(Class* class) {
 
       if (!prop->is_static) {
         // first arg is "this"
+        Identifier* fid = create_identifier(class->fc->nsc->pkc->name,
+                                            class->fc->nsc->name, class->name);
+        if (class->generic_hash) {
+          fid->generic_hash = strdup(class->generic_hash);
+        }
         FunctionArg* arg = init_func_arg();
         arg->name = "this";
-        arg->type = fc_identifier_to_type(
-            fc, create_identifier(class->fc->nsc->pkc->name,
-                                  class->fc->nsc->name, class->name));
+        arg->type = fc_identifier_to_type(fc, fid);
 
         array_push(func->args, arg);
         IdentifierFor* thisidf = init_idf();
@@ -418,6 +421,7 @@ void fc_scan_class_props(Class* class) {
     map_set(class->props, name, prop);
 
     // printf("p:%s\n", name);
+    // printf("c:%s\n", class->cname);
     // if (type->class) {
     //   printf("c:%s\n", type->class->cname);
     // }
@@ -426,7 +430,6 @@ void fc_scan_class_props(Class* class) {
     fc_next_token(fc, token, true, true, true);
     if (strcmp(token, "=") == 0) {
       fc_next_token(fc, token, false, true, true);
-      // prop->default_value = fc_read_value(fc, false, true, true);
       prop->value_i = fc->i;
       fc_skip_body(fc, "(", ")", ";", true);
     } else {
