@@ -254,6 +254,10 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
             }
           }
           fc_expect_token(fc, ">", false, true, true);
+
+          // Scan class
+          fc_scan_class_props(gclass, true);
+          fc_scan_class_prop_values(gclass, true);
         }
 
         free(cname);
