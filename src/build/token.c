@@ -31,7 +31,7 @@ void token_return(FileCompiler* fc, Scope* scope) {
   fc_next_token(fc, token, true, true, true);
 
   if (strcmp(token, ";") != 0) {
-    Value* value = fc_read_value(fc, func_scope, false, true, true);
+    Value* value = fc_read_value(fc, scope, false, true, true);
 
     if (func_scope->autofill_return_type && func_scope->return_type == NULL) {
       func_scope->return_type = value->return_type;

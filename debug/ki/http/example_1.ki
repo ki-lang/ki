@@ -18,8 +18,13 @@ func main() i32 {
 	//ki:io:print(a);
 	// return 0;
 
+	@ k = "hello";
 	@ m = ki:type:Map<string>{};
-	m.set("hello", "is it me you're looking for");
+	m.set(k, " is it me you're looking for\n");
+	@ x = m.get(k);
+
+	ki:io:print(k);
+	ki:io:print(x);
 
 	return 0;
 
