@@ -159,6 +159,10 @@ class Server {
 						#end
 
 						if(has_incoming_data == false){
+							#if OS_WIN
+							#else
+								io:print("Unexpected\n");
+							#end
 							continue;
 						}
 
@@ -185,6 +189,11 @@ class Server {
 							con.task.continue();
 						}
 						con.task._RC++;
+					} else {
+						#if OS_WIN
+						#else
+							io:print("Connection not found\n");
+						#end
 					}
 
 				} // END FD LOOP
