@@ -27,6 +27,11 @@ void fc_build_asts() {
       // Classes
       for (int x = 0; x < fc->classes->length; x++) {
         Class* class = array_get_index(fc->classes, x);
+
+        if (class->generic_names != NULL && class->generic_hash == NULL) {
+          continue;
+        }
+
         FileCompiler* fc = class->fc;
         if (fc->is_header) continue;
         for (int y = 0; y < class->props->values->length; y++) {
@@ -154,7 +159,9 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
     IdentifierFor* idf = fc_read_and_get_idf(fc, scope, false, true, true);
 
     // Check if declare
-    if (idf && (idf->type == idfor_class || idf->type == idfor_enum) &&
+    if (idf &&
+        (idf->type == idfor_class || idf->type == idfor_enum ||
+         idf->type == idfor_type) &&
         fc_get_char(fc, 0) == ' ') {
       fc_next_token(fc, token, true, true, true);
       if (is_valid_varname(token)) {

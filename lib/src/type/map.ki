@@ -1,4 +1,92 @@
 
-// class Map<K,V> {
-// 	
-// }
+namespace type;
+
+class Map<T> {
+
+	private ptr indexes = mem:alloc(128);
+	private PtrArray arrays = PtrArray.make(1);
+
+	public func set(string key, T value) {
+
+		u8 rest = this.get_rest(key);
+
+		ptr array = this.arrays.get(rest);
+		if(array == null){
+			array = mem:calloc(sizeof(string) + sizeof(T) + sizeof(uxx));
+			uxx start_size = 1;
+			setptrv array to start_size;
+			this.arrays.set(rest, array);
+		}
+
+		uxx arr_size = getptrv array as uxx;
+		array += sizeof(uxx);
+		uxx pos = 0;
+		while(true){
+			?string k = getptrv array as ?string;
+			if(k == null){
+				break;
+			}
+
+			array += (sizeof(string) + sizeof(T));
+			pos++;
+
+			if(pos == arr_size){
+				// Need more space, Resize
+				arr_size *= 2;
+				array = mem:calloc(((sizeof(string) + sizeof(T)) * arr_size) + sizeof(uxx));
+				setptrv array to arr_size;
+				this.arrays.set(rest, array);
+			}
+		}
+
+		setptrv array to key;
+		array += sizeof(string);
+		setptrv array to value;
+	}
+
+	public func get(string key) ?T {
+
+		u8 rest = this.get_rest(key);
+
+		ptr array = this.arrays.get(rest);
+		if(array == null){
+			return null;
+		}
+
+		uxx arr_size = getptrv array as uxx;
+		array += sizeof(uxx);
+		uxx pos = 0;
+		while(pos < arr_size){
+			@ k = getptrv array as ?string;
+			array += sizeof(string);
+			if(k != null && key == k){
+				@ val = getptrv array as ?T;
+				return val;
+			}
+			array += sizeof(T);
+		}
+
+		return null;
+	}
+
+	private func get_rest(string key) u8 {
+		uxx len = key.length;
+		uxx adr = cast key.data as ptr;
+		i32 total = 0;
+		while(len > 7) {
+			u64 val = getptrv (adr) as u64;
+			total += val;
+			len -= 8;
+			adr += 8;
+		}
+		while(len > 0) {
+			u8 val = getptrv (adr) as u8;
+			total += val;
+			len -= 1;
+			adr += 1;
+		}
+		u8 rest = total % 128;
+
+		return rest;
+	}
+}

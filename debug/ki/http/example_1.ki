@@ -18,9 +18,19 @@ func main() i32 {
 	//ki:io:print(a);
 	// return 0;
 
-	@ s = ki:http:Server { port: 9000, handler: ki:http:response_handler };
-	s.start();
+	@ k = "hello";
+	@ m = ki:type:Map<string>{};
+	m.set(k, " is it me you're looking for\n");
+	@ x = m.get(k);
+
+	ki:io:print(k);
+	ki:io:print(x);
 
 	return 0;
+
+	//@ s = ki:http:Server { port: 9000, handler: ki:http:response_handler };
+	//s.start();
+
+	//return 0;
 }
 

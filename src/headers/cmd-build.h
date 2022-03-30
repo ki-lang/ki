@@ -25,8 +25,8 @@ void cmd_build_init_static();
 void cmd_build_init_before_build();
 void fc_scan_values();
 void fc_scan_args_and_props(FileCompiler* fc);
-void fc_scan_class_prop_values(NsCompiler* nsc);
 void fc_scan_class_props(Class* class);
+void fc_scan_class_prop_values(Class* class);
 void fc_scan_threaded_globals(FileCompiler* fc);
 void fc_build_asts();
 void fc_build_ast(FileCompiler* fc, Scope* scope);
@@ -61,10 +61,10 @@ void free_id(Identifier* id);
 IdentifierFor* init_idf();
 void free_idf(IdentifierFor* idf);
 char* create_c_identifier_with_strings(char* package, char* namespace,
-                                       char* name);
+                                       char* name, char* generic_hash);
 char* fc_create_identifier_global_cname(FileCompiler* fc, Identifier* id);
 Identifier* create_identifier(char* package, char* namespace, char* name);
-IdentifierFor* idf_find_in_scope(Scope* scope, char* name);
+IdentifierFor* idf_find_in_scope(Scope* scope, Identifier* id);
 Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
                                bool allow_space);
 IdentifierFor* fc_read_and_get_idf(FileCompiler* fc, Scope* scope,
@@ -83,6 +83,9 @@ void free_class(Class* class);
 ClassProp* init_class_prop();
 void free_class_prop(ClassProp* prop);
 void fc_scan_class(FileCompiler* fc, Class* class);
+char* fc_class_read_generic_unique_id(FileCompiler* fc);
+Class* fc_make_generic_class(Class* class);
+Class* fc_get_generic_class(FileCompiler* fc, Class* class);
 
 // Trait
 Trait* init_trait();

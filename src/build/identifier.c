@@ -6,6 +6,7 @@ Identifier* init_id() {
   id->package = NULL;
   id->namespace = NULL;
   id->name = NULL;
+  id->generic_hash = NULL;
   return id;
 }
 
@@ -27,7 +28,7 @@ void free_idf(IdentifierFor* idf) {
 }
 
 char* create_c_identifier_with_strings(char* package, char* namespace,
-                                       char* name) {
+                                       char* name, char* generic_hash) {
   char* result = malloc(KI_TOKEN_MAX);
   strcpy(result, "");
 
@@ -41,6 +42,11 @@ char* create_c_identifier_with_strings(char* package, char* namespace,
   }
   strcat(result, name);
 
+  if (generic_hash) {
+    strcat(result, "__");
+    strcat(result, generic_hash);
+  }
+
   return result;
 }
 
@@ -53,7 +59,8 @@ char* fc_create_identifier_global_cname(FileCompiler* fc, Identifier* id) {
   if (id->namespace != NULL) {
     nsc = pkc_get_namespace_by_name(pkc, id->namespace);
   }
-  return create_c_identifier_with_strings(pkc->name, nsc->name, id->name);
+  return create_c_identifier_with_strings(pkc->name, nsc->name, id->name,
+                                          id->generic_hash);
 }
 
 Identifier* create_identifier(char* package, char* namespace, char* name) {
@@ -64,13 +71,26 @@ Identifier* create_identifier(char* package, char* namespace, char* name) {
   return id;
 }
 
-IdentifierFor* idf_find_in_scope(Scope* scope, char* name) {
+IdentifierFor* idf_find_in_scope(Scope* scope, Identifier* id) {
+  char* vn = id->name;
+  if (id->generic_hash) {
+    vn = malloc(KI_TOKEN_MAX);
+    strcpy(vn, id->name);
+    strcat(vn, "__");
+    strcat(vn, id->generic_hash);
+  }
   while (scope != NULL) {
-    void* x = map_get(scope->identifiers, name);
+    void* x = map_get(scope->identifiers, vn);
     if (x != NULL) {
+      if (id->generic_hash) {
+        free(vn);
+      }
       return x;
     }
     scope = scope->parent;
+  }
+  if (id->generic_hash) {
+    free(vn);
   }
   return NULL;
 }
@@ -84,7 +104,7 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
 
   fc_next_token(fc, token, false, sameline, allow_space);
   if (!is_valid_varname(token)) {
-    fc_error(fc, "Invalid name: '%s'", token);
+    fc_error(fc, "Invalid name (id1): '%s'", token);
   }
 
   id->name = strdup(token);
@@ -101,7 +121,7 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
       if (allow_new_namespaces) {
         return NULL;
       }
-      fc_error(fc, "Invalid name: '%s'", token);
+      fc_error(fc, "Invalid name (id2): '%s'", token);
     }
 
     id->name = strdup(token);
@@ -138,15 +158,7 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
     }
   }
 
-  if (readonly) {
-    fc->i = i;
-  }
-
-  free(token);
-  // printf("p:%s\n", id->package);
-  // printf("n:%s\n", id->namespace);
-  // printf("nn:%s\n", id->name);
-
+  // Check for new namespaces
   if (allow_new_namespaces) {
     PkgCompiler* pkc = fc->nsc->pkc;
     if (id->package != NULL) {
@@ -156,6 +168,27 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
       pkc_create_namespace(pkc, id->namespace);
     }
   }
+
+  // Check for generic
+  Scope* idf_scope = fc_get_identifier_scope(fc, fc->scope, id);
+  IdentifierFor* idf = idf_find_in_scope(idf_scope, id);
+  if (idf && idf->type == idfor_class) {
+    Class* class = idf->item;
+    if (class->generic_names != NULL) {
+      Class* gclass = fc_get_generic_class(fc, class);
+      id->generic_hash = strdup(gclass->generic_hash);
+    }
+  }
+
+  //
+  if (readonly) {
+    fc->i = i;
+  }
+
+  free(token);
+  // printf("p:%s\n", id->package);
+  // printf("n:%s\n", id->namespace);
+  // printf("nn:%s\n", id->name);
 
   return id;
 }
@@ -181,5 +214,5 @@ IdentifierFor* fc_read_and_get_idf(FileCompiler* fc, Scope* scope,
                                    bool allow_space) {
   Identifier* id = fc_read_identifier(fc, readonly, sameline, allow_space);
   Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
-  return idf_find_in_scope(idf_scope, id->name);
+  return idf_find_in_scope(idf_scope, id);
 }

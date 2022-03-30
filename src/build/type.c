@@ -179,7 +179,7 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
       strcmp(id->namespace, "type") == 0) {
     if (strcmp(id->name, "ptr") == 0) {
       t->type = type_void_pointer;
-      IdentifierFor* idf = idf_find_in_scope(scope, id->name);
+      IdentifierFor* idf = idf_find_in_scope(scope, id);
       if (idf == NULL) {
         fc_error(fc, "Compiler bug, cant find ptr class", NULL);
       }
@@ -190,7 +190,7 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
     }
     if (strcmp(id->name, "bool") == 0) {
       t->type = type_bool;
-      IdentifierFor* idf = idf_find_in_scope(scope, id->name);
+      IdentifierFor* idf = idf_find_in_scope(scope, id);
       if (idf == NULL) {
         fc_error(fc, "Compiler bug, cant find ptr class", NULL);
       }
@@ -200,8 +200,8 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
   }
 
   if (t->type == type_unknown) {
-    // Check other types
-    IdentifierFor* idf = idf_find_in_scope(scope, id->name);
+    //
+    IdentifierFor* idf = idf_find_in_scope(scope, id);
 
     if (idf == NULL) {
       free_type(t);
@@ -223,6 +223,9 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
         t->allow_math = true;
         t->bytes = t->class->size;
       }
+    } else if (idf->type == idfor_type) {
+      free_type(t);
+      t = idf->item;
     }
   }
 

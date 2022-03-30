@@ -61,6 +61,9 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     } else if (idf->type == idfor_var) {
       Type* type = idf->item;
       size = type->bytes;
+    } else if (idf->type == idfor_type) {
+      Type* type = idf->item;
+      size = type->bytes;
     } else {
       fc_error(fc, "cannot determine sizeof this value", NULL);
     }
@@ -296,7 +299,7 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
   } else if (strcmp(token, "get_threaded") == 0) {
     Identifier* id = fc_read_identifier(fc, false, true, true);
     Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
-    IdentifierFor* idf = idf_find_in_scope(idf_scope, id->name);
+    IdentifierFor* idf = idf_find_in_scope(idf_scope, id);
 
     if (!idf || idf->type != idfor_threaded_var) {
       fc_error(fc, "Cannot find threaded global variable: %s", id->name);
@@ -326,9 +329,11 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     fc->i -= strlen(token);
     Identifier* id = fc_read_identifier(fc, false, true, true);
     Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
-    idf = idf_find_in_scope(idf_scope, id->name);
+    idf = idf_find_in_scope(idf_scope, id);
     // }
     if (idf == NULL) {
+      printf("ns: %s , name:%s , hash: %s\n", id->namespace, id->name,
+             id->generic_hash);
       fc_error(fc, "Unknown variable/function/class/enum: %s", id->name);
     }
 
