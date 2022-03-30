@@ -122,9 +122,9 @@ class Server {
 							con._RC++;
 
 							if(connections.has(new_fd)){
-								ptr conptr = connections.get(new_fd);
-								Connection conx = cast conptr as Connection;
-								//conx._RC--;
+								// ptr conptr = connections.get(new_fd);
+								// Connection conx = cast conptr as Connection;
+								// conx._RC--;
 							}
 
 							connections.set(new_fd, con);
@@ -155,7 +155,7 @@ class Server {
 						// So we need to set back all the fds
 						fd:add_to_set(read_set, fd);
 						#else
-						bool has_incoming_data = event.events bitAND main:main:EPOLL.EPOLLIN > 0;
+						bool has_incoming_data = (event.events bitAND main:main:EPOLL.EPOLLIN) > 0;
 						#end
 
 						if(has_incoming_data == false){

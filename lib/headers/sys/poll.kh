@@ -3,8 +3,8 @@ namespace main;
 
 class epoll_event norfc {
 	public u32 events;
-	public u32 data;
 	public u32 fd;
+	public u32 data;
 }
 
 func epoll_create(i32 size) i32;
