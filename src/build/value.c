@@ -347,6 +347,26 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       t->func_return_type = func->return_type;
       t->func_can_error = func->can_error;
       value->return_type = t;
+    } else if (idf->type == idfor_enum) {
+      fc_expect_token(fc, ".", false, true, false);
+      fc_next_token(fc, token, false, true, false);
+      if (!is_valid_varname(token)) {
+        fc_error(fc, "Invalid enum property: '%s'", token);
+      }
+      char* prop_name = strdup(token);
+
+      // Enum
+      Enum* enu = idf->item;
+      char* enuv = map_get(enu->values, prop_name);
+      if (!enuv) {
+        fc_error(fc, "Unknown enum property: '%s'", prop_name);
+      }
+
+      value->type = vt_number;
+      value->item = enuv;
+      value->return_type =
+          fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"));
+
     } else if (idf->type == idfor_var) {
       value->type = vt_var;
       value->item = strdup(token);

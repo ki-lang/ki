@@ -1,0 +1,21 @@
+
+namespace main;
+
+class epoll_event norfc {
+	public u32 events;
+	public u32 data;
+	public u32 fd;
+}
+
+func epoll_create(i32 size) i32;
+func epoll_ctl(i32 epfd, i32 op, i32 fd, epoll_event event) i32;
+func epoll_wait(i32 epfd, epoll_event events, i32 maxevents, i32 timeout) i32;
+
+enum EPOLL {
+	EPOLL_CTL_ADD: 1,
+	EPOLLIN: 1,
+	EPOLLHUP: 16, // 0x010,
+	EPOLLOUT: 64, // 0x040,
+	EPOLLRDHUP: 8192, // 0x2000,
+	EPOLLET: 2147483648, // 0x80000000,
+}

@@ -220,7 +220,7 @@ void fc_write_c(FileCompiler* fc) {
   fc->create_o_file = false;
   if (strlen(code) > 0 || strlen(code_gen) > 0) {
     fc->create_o_file = true;
-    if (false) {
+    if (true) {
       write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
 
       // char* incl = malloc(KI_PATH_MAX + 50);
@@ -356,14 +356,14 @@ void fc_write_c_enum(FileCompiler* fc, Enum* enu) {
     char* name = array_get_index(enu->values->keys, i);
     char* value = array_get_index(enu->values->values, i);
     str_append_chars(fc->h_code, name);
-    str_append_chars(fc->h_code, " ");
+    str_append_chars(fc->h_code, " = ");
     str_append_chars(fc->h_code, value);
     str_append_chars(fc->h_code, ",\n");
   }
 
   str_append_chars(fc->h_code, "} ");
   str_append_chars(fc->h_code, enu->cname);
-  str_append_chars(fc->h_code, ";");
+  str_append_chars(fc->h_code, ";\n");
 }
 
 void fc_write_c_static_var_global(FileCompiler* fc, TokenStaticDeclare* decl) {

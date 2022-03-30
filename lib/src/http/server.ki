@@ -3,6 +3,7 @@ namespace http;
 
 #header "sys/net"
 #header "sys/io"
+#header "sys/poll"
 
 use type {PtrArray};
 
@@ -29,9 +30,16 @@ class Server {
 		io:print("\n");
 
 		@ task_list = mem:alloc(this.max_connections * 8);
-		@ read_set = mem:calloc(this.max_connections); // todo : too much memory, divide by 8
 
+		#if OS_WIN
+		@ read_set = mem:calloc(this.max_connections); // todo : too much memory, divide by 8
 		fd:add_to_set(read_set, sock.listenfd);
+		#else
+		@ epfd = main:main:epoll_create(1);
+		@ buf_ev = mem:calloc(sizeof(main:main:epoll_event)); 
+		this.epoll_ctl_add(buf_ev, epfd, sock.listenfd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLOUT bitOR main:main:EPOLL.EPOLLET);
+		ptr events = mem:calloc(this.max_connections * sizeof(main:main:epoll_event));
+		#end
 
 		@ alc = allocator 48;
 		//@ clientaddr = main:main:sockaddr_in {
@@ -45,57 +53,86 @@ class Server {
 		//
 		i32 maxfd = sock.listenfd;
 		i32 new_fd = 0;
+		i32 select_result = 0;
 		while(true){
-			i32 result = main:main:select(maxfd + 1, read_set, null, null, null);
-			if(result > 0){
 
-				// Check new socket connection
-				if(fd:isset(read_set, sock.listenfd) == true){
-					// New connection
-  			      	i32 new_fd = main:main:accept4(sock.listenfd, clientaddr, getptr addrlen, 0);
+			#if OS_WIN
+			select_result = main:main:select(maxfd + 1, read_set, null, null, null);
+			fd:add_to_set(read_set, sock.listenfd);
+			#else
+			i32 event_count = main:main:epoll_wait(epfd, events, maxfd, -1);
+			select_result = 1;
+			#end
 
-					if (new_fd == -1){
-						io:print("Failed to accept connection\n");
-						continue;
-					}
+			if(select_result > 0){
 
-					if(new_fd > maxfd){
-						maxfd = new_fd;
-					}
+				#if OS_WIN
+				i32 i = 3;
+				i32 max = maxfd + 2;
+				#else
+				i32 i = 0;
+				i32 max = event_count;
+				#end
 
-					// SOL_SOCKET: 1
-					// SO_KEEPALIVE: 9
-					i32 keep_alive = 1;
-					i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
+				while(i < max){
 
-					// O_NONBLOCK
-					//i32 flags = main:main:fcntl(new_fd, 3, 0);
-					//i32 x = main:main:fcntl(new_fd, 4, flags | 04000);
+					#if OS_WIN
+					@ fd = i;
+					@ isset = fd:isset(read_set, sock.listenfd);
+					#else
+					@ event = cast (events + (i * sizeof(main:main:epoll_event))) as main:main:epoll_event;
+					@ fd = event.fd;
+					@ isset = true;
+					#end
 
-					fd:add_to_set(read_set, new_fd);
-
-					Connection con = Connection{ fd: new_fd };
-					con._RC++;
-
-					if(connections.has(new_fd)){
-						ptr conptr = connections.get(new_fd);
-						Connection conx = cast conptr as Connection;
-						//conx._RC--;
-					}
-
-					connections.set(new_fd, con);
-					io:print("New connection: ");
-					io:print(new_fd.to_string());
-					io:print("\n");
-				}
-
-				fd:add_to_set(read_set, sock.listenfd);
-
-				i32 fd = maxfd + 2;
-				while(fd > 3){
-					fd--;
+					i++;
 
 					if(fd == sock.listenfd){
+
+						// Check new socket connection
+						if(isset){
+							// New connection
+  					      	i32 new_fd = main:main:accept4(sock.listenfd, clientaddr, getptr addrlen, 0);
+
+							if (new_fd == -1){
+								io:print("Failed to accept connection\n");
+								continue;
+							}
+
+							if(new_fd > maxfd){
+								maxfd = new_fd;
+							}
+
+							// SOL_SOCKET: 1
+							// SO_KEEPALIVE: 9
+							i32 keep_alive = 1;
+							i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
+
+							// O_NONBLOCK
+							//i32 flags = main:main:fcntl(new_fd, 3, 0);
+							//i32 x = main:main:fcntl(new_fd, 4, flags | 04000);
+
+							#if OS_WIN
+							fd:add_to_set(read_set, new_fd);
+							#else
+							this.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
+							#end
+
+							Connection con = Connection{ fd: new_fd };
+							con._RC++;
+
+							if(connections.has(new_fd)){
+								ptr conptr = connections.get(new_fd);
+								Connection conx = cast conptr as Connection;
+								//conx._RC--;
+							}
+
+							connections.set(new_fd, con);
+							io:print("New connection: ");
+							io:print(new_fd.to_string());
+							io:print("\n");
+						}
+
 						continue;
 					}
 
@@ -111,11 +148,15 @@ class Server {
 							}
 						}
 
+						#if OS_WIN
 						bool has_incoming_data = fd:isset(read_set, fd) == true;
 
 						// After select() has returned, readfds will be cleared of all file descriptors except for those that are ready for reading.
 						// So we need to set back all the fds
 						fd:add_to_set(read_set, fd);
+						#else
+						bool has_incoming_data = event.events bitAND main:main:EPOLL.EPOLLIN > 0;
+						#end
 
 						if(has_incoming_data == false){
 							continue;
@@ -133,7 +174,9 @@ class Server {
 								io:print("Disconnect\n");
 								con._ALLOCATOR.free(con);
 								connections.clear(fd);
+								#if OS_WIN
 								fd:remove_from_set(read_set, fd);
+								#end
 								i32 result = main:main:shutdown(fd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
 								result = main:main:close(fd);
 								continue;
@@ -142,8 +185,6 @@ class Server {
 							con.task.continue();
 						}
 						con.task._RC++;
-					}else{
-						//fd:remove_from_set(read_set, fd);
 					}
 
 				} // END FD LOOP
@@ -152,6 +193,12 @@ class Server {
 		} // END LOOP
 
 		alc.free(clientaddr);
+	}
+
+	func epoll_ctl_add(main:main:epoll_event ev, i32 epfd, i32 fd, u32 events) {
+		ev.events = events;
+		ev.fd = fd;
+		@ check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_ADD, fd, ev);
 	}
 
 	func respond(i32 fd){
