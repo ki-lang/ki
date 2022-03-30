@@ -24,7 +24,7 @@ trait Number {
 //	strrev(str);
 //	return 0;
 // }
-	public func to_string() type:string {
+	public func str() type:string {
 		ki:type:cstring x = this.to_cstring();
 		string res = x.to_string();
 		ki:mem:free(x);

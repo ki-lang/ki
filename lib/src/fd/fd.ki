@@ -44,3 +44,11 @@ func remove_from_set(ptr set, i32 fd){
 	u64 allones = cast -1 as u64;
 	setptrv set to (current bitAND (allones bitXOR v));
 }
+
+func set_non_block(i32 fd) {
+	// O_NONBLOCK
+	i32 flags = main:main:fcntl(fd, 3, 0);
+	i32 x = main:main:fcntl(fd, 4, flags bitOR 04000);
+}
+
+

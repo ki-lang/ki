@@ -4,6 +4,10 @@ namespace async;
 threaded Taskman LOCAL_TM = null;
 mutex mutex_add_task;
 
+class TaskPos {
+	i32 value = 0;
+}
+
 class TaskList {
 
 	type:PtrArray tasks;
@@ -101,10 +105,13 @@ class Taskman {
 
 						i32 task_index = this.current_task_index;
 						task.handler_func(task);
+
+						this.tasks.clear(task_index);
 						this.tasks_run_count--;
 
-						if(task.suspended == false) {
-							this.tasks.clear(task_index);
+						if(task.suspended == true) {
+							// Add back to the stack
+							Taskman.add_task(task);
 						}
 
 						if(max_one_task) { return; }
@@ -165,22 +172,22 @@ class Taskman {
 		i32 pos = 0;
 		@ task_list = TaskList.get();
 
-		static i32 task_pos {
-			return 0;
+		static TaskPos task_pos {
+			return TaskPos {};
 		}
 
 		while(true){
-			task_pos++;
-			if(task_pos == 1024) {
-				task_pos = 0;
+			task_pos.value++;
+			if(task_pos.value == 1024) {
+				task_pos.value = 0;
 			}
-			?Task t = task_list.tasks.get(task_pos);
+			?Task t = task_list.tasks.get(task_pos.value);
 			if(t == null){
 				break;
 			}
 		}
 
-		task_list.tasks.set(task_pos, task);
+		task_list.tasks.set(task_pos.value, task);
 
 		// Unsuspend thread
 		@ list = Taskman.get_task_managers();
