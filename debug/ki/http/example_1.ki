@@ -26,11 +26,9 @@ func main() i32 {
 	ki:io:print(k);
 	ki:io:print(x);
 
+	@ s = ki:http:Server { port: 9000, handler: ki:http:response_handler };
+	s.start();
+
 	return 0;
-
-	//@ s = ki:http:Server { port: 9000, handler: ki:http:response_handler };
-	//s.start();
-
-	//return 0;
 }
 

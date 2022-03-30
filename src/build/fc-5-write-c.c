@@ -165,6 +165,13 @@ void fc_write_c_inits() {
         str_append_chars(code, " = ");
         str_append_chars(code, decl->global_name);
         str_append_chars(code, "_init();\n");
+
+        Class* class = decl->type->class;
+        bool nullable = decl->type->nullable;
+        if (class && class->ref_count) {
+          str_append_chars(code, decl->global_name);
+          str_append_chars(code, "->_RC++;\n");
+        }
       }
 
       for (int x = 0; x < fc->threaded_globals->length; x++) {
@@ -213,7 +220,7 @@ void fc_write_c(FileCompiler* fc) {
   fc->create_o_file = false;
   if (strlen(code) > 0 || strlen(code_gen) > 0) {
     fc->create_o_file = true;
-    if (true) {
+    if (false) {
       write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
 
       // char* incl = malloc(KI_PATH_MAX + 50);
@@ -499,20 +506,6 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     str_append_chars(fc->tkn_buffer, " = ");
     str_append_chars(fc->tkn_buffer, decl->global_name);
     str_append_chars(fc->tkn_buffer, ";\n");
-
-    // Class* class = decl->value->return_type->class;
-    // bool nullable = decl->value->return_type->nullable;
-    // if (class && class->ref_count) {
-    //   if (nullable) {
-    //     str_append_chars(fc->tkn_buffer, "if(");
-    //     str_append_chars(fc->tkn_buffer, decl->name);
-    //     str_append_chars(fc->tkn_buffer, ") ");
-    //   }
-    //   str_append_chars(fc->tkn_buffer, decl->name);
-    //   str_append_chars(fc->tkn_buffer, "->_RC++;\n");
-
-    //   array_push(fc->local_var_names, decl);
-    // }
 
   } else if (token->type == tkn_declare) {
     TokenDeclare* decl = token->item;
