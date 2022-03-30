@@ -216,7 +216,6 @@ class Server {
 							//io:print("CON\n");
 							con.task.continue();
 						}
-						con.task._RC++;
 					} else {
 						#if OS_WIN
 						#else

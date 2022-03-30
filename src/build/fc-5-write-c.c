@@ -1298,13 +1298,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     // str_append_chars(fc->tkn_buffer, ");\n");
     //
     str_append_chars(fc->tkn_buffer, var_name);
-    str_append_chars(fc->tkn_buffer, "->_RC = 2;\n");
-    str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->jmpbuf = 0;\n");
-    str_append_chars(fc->tkn_buffer, var_name);
-    str_append_chars(fc->tkn_buffer, "->_ALLOCATOR = ");
-    str_append_chars(fc->tkn_buffer, allocator_name);
-    str_append_chars(fc->tkn_buffer, "();\n");
     //
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->handler_func = ");
@@ -1358,12 +1352,6 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(fc->tkn_buffer, "ki__async__Taskman__add_task(");
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, ");\n");
-
-    VarInfo* vi = malloc(sizeof(VarInfo));
-    vi->name = var_name;
-    vi->return_type = value->return_type;
-
-    array_push(fc->var_bufs, vi);
 
     // Set cache back
     fc->value_buffer->length = 0;

@@ -1,7 +1,7 @@
 
 namespace async;
 
-class Task {
+class Task norfc {
 	funcref (Task) void handler_func;
 	ptr func;
 	ptr args = 0;
@@ -10,10 +10,10 @@ class Task {
 	bool ready = false;
 	bool suspended = false;
 
-	public func __free(){
-		if(this.args != null){ mem:free_flat(this.args); }
-		this._ALLOCATOR.free(this);
-	}
+	//public func __free(){
+	//	if(this.args != null){ mem:free_flat(this.args); }
+	//	this._ALLOCATOR.free(this);
+	//}
 
 	public func continue (){
 		this.suspended = false;

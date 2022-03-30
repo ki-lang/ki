@@ -101,21 +101,18 @@ class Taskman {
 				Task task = this.tasks.get(this.current_task_index);
 				if(task != null && task.suspended == false) {
 					// Run task
-					if(main:main:setjmp(this.jmpbuf) == 0) {
+					i32 task_index = this.current_task_index;
+					task.handler_func(task);
 
-						i32 task_index = this.current_task_index;
-						task.handler_func(task);
+					this.tasks.clear(task_index);
+					this.tasks_run_count--;
 
-						this.tasks.clear(task_index);
-						this.tasks_run_count--;
-
-						if(task.suspended == true) {
-							// Add back to the stack
-							Taskman.add_task(task);
-						}
-
-						if(max_one_task) { return; }
+					if(task.suspended == true) {
+						// Add back to the stack
+						Taskman.add_task(task);
 					}
+
+					if(max_one_task) { return; }
 				} else {
 					// Check next task
 					this.current_task_index++;
