@@ -37,7 +37,7 @@ class Server {
 		#else
 		@ epfd = main:main:epoll_create(1);
 		@ buf_ev = mem:calloc(sizeof(main:main:epoll_event)); 
-		Server.epoll_ctl_add(buf_ev, epfd, sock.listenfd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET);
+		Server.epoll_ctl_add(buf_ev, epfd, sock.listenfd, main:main:EPOLL.EPOLLIN);
 		ptr events = mem:calloc(this.max_connections * sizeof(main:main:epoll_event));
 
 		fd:set_non_block(sock.listenfd);
@@ -57,13 +57,14 @@ class Server {
 		i32 new_fd = 0;
 		i32 select_result = 0;
 		i32 err_check = 0;
+        i32 fdcount = 1;
 		while(true){
 
 			#if OS_WIN
 			select_result = main:main:select(maxfd + 1, read_set, null, null, null);
 			fd:add_to_set(read_set, sock.listenfd);
 			#else
-			i32 event_count = main:main:epoll_wait(epfd, events, maxfd + 32, 100);
+			i32 event_count = main:main:epoll_wait(epfd, events, fdcount, 100);
 			select_result = 1;
 			#end
 
@@ -115,12 +116,13 @@ class Server {
 							i32 keep_alive = 1;
 							i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
 
-							// fd:set_non_block(new_fd);
+							fd:set_non_block(new_fd);
 
 							#if OS_WIN
 							fd:add_to_set(read_set, new_fd);
 							#else
-							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
+							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
+                            fdcount++;
 							#end
 
 							Connection con = Connection{ fd: new_fd };
@@ -131,11 +133,13 @@ class Server {
 								Connection conx = cast conptr as Connection;
 								if(conx.task.suspended == false){
 									// Wait for existing task to end
+                                    io:println("Waiting for task to end");
 									while(true){
 										if(conx.task.suspended == true){
 											break;
 										}
 									}
+                                    io:println("Ended");
 								}
 							}
 
@@ -147,7 +151,7 @@ class Server {
 
 						#if OS_WIN
 						#else
-						if ((event.events bitAND (main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
+						if ((event.events bitAND (main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
 							io:print("[+] main connection trying to close\n");
 						}
 						#end
@@ -159,19 +163,21 @@ class Server {
 
 						ptr conptr = connections.get(fd);
 						Connection con = cast conptr as Connection;
+						con._RC++;
 
 						#if OS_WIN
 						#else
 						// Check if the connection is closing
-						if ((event.events bitAND (main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
+						if ((event.events bitAND (main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
 							io:print("[+] connection closed: ");
 							io:println(fd.str());
-							// err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
 
 							con._ALLOCATOR.free(con);
 							connections.clear(fd);
 
+							err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
 							err_check = main:main:close(fd);
+                            fdcount--;
 							continue;
 						}
 						#end
@@ -180,7 +186,14 @@ class Server {
 							if(con.task.suspended == false){
 								// Task is still busy handling a request
 								io:println("Busy");
-								continue;
+								io:println(fd.str());
+                                while(true){
+									if(con.task.suspended == true){
+										break;
+									}
+								}
+								io:println("Not busy");
+								//continue;
 							}
 						}
 
@@ -205,14 +218,16 @@ class Server {
 						#if OS_WIN
 						#else
 						// Remove from epoll while handling the connection
-						err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
+						//err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
 						#end
 
 						this._RC++;
 						if(con.task == null){
-							io:print("NEW\n");
+							io:print("NEW TASK: ");
+							io:println(fd.str());
 							con.task = async Server.respond(buf_ev, epfd, con.fd);
 						} else {
+						    #if OS_WIN
 							// Peek recv to detect disconnects
 							u8 buffer = ' ';
 							// MSG_PEEK = 0x2
@@ -227,13 +242,16 @@ class Server {
 								err_check = main:main:close(fd);
 								continue;
 							}
-							io:print("CON\n");
+                            #end
+							//io:print("CON\n");
 							con.task.continue();
 						}
 					} else {
 						#if OS_WIN
 						#else
+                            err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
 							err_check = main:main:close(fd);
+                            fdcount--;
 							io:print("Connection not found\n");
 						#end
 					}
@@ -254,23 +272,28 @@ class Server {
 
 	public static func respond(ptr buf_ev, i32 epfd, i32 fd){
 
+		@ alc = allocator 65535;
+		ptr buf = alc.get_chunk();
+
 		while(true){
 
-			@ alc = allocator 65535;
-			ptr buf = alc.get_chunk();
 			i32 rcvd = main:main:recv(fd, buf, 65535, 0);
-			alc.free(buf);
 
 			if(rcvd <= 0){
 				//io:println("Add");
-				Server.epoll_ctl_add(buf_ev, epfd, fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
+			    alc.free(buf);
+				//Server.epoll_ctl_add(buf_ev, epfd, fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
 				async_task_suspend;
 			}
 
 			//io:println("Resp");
 			@ str = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
 			// MSG_NOSIGNAL: 0x4000
-			@ check = main:main:send(fd, str.data, str.length, 0x4000);
+			@ check = main:main:send(fd, str.data, str.length, 0);
+
+			alc.free(buf);
+			//Server.epoll_ctl_add(buf_ev, epfd, fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
+			async_task_suspend;
 		}
 
 		return;

@@ -187,8 +187,7 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
       t->class = idf->item;
       t->bytes = pointer_size;
       t->allow_math = true;
-    }
-    if (strcmp(id->name, "bool") == 0) {
+    } else if (strcmp(id->name, "bool") == 0) {
       t->type = type_bool;
       IdentifierFor* idf = idf_find_in_scope(scope, id);
       if (idf == NULL) {

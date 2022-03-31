@@ -6,7 +6,7 @@ class PtrArray {
 	private ptr data; 
 
 	static func make(u64 size) PtrArray {
-		@ arr = PtrArray { size: size, data: mem:calloc(size * 8) };
+		@ arr = PtrArray { size: size, data: mem:calloc(size * sizeof(ptr)) };
 		//c:printf(c"p1:%p\n", arr.data);
 		return arr;
 	}

@@ -116,7 +116,7 @@ class Taskman norfc {
 				} else {
 					// Check next task
 					this.current_task_index++;
-					if(this.current_task_index > 32){
+					if(this.current_task_index == 32){
 						this.current_task_index = 0;
 					}
 				}

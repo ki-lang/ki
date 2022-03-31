@@ -17,7 +17,7 @@ class Task norfc {
 
 	public func continue (){
 		this.suspended = false;
-		// todo unsuspend RM threads
+		// Continue threads
 		@ tms = Taskman.get_task_managers();
 		@ i = 0;
 		while(i < 8){
