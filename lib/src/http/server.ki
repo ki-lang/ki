@@ -171,7 +171,6 @@ class Server {
 							con._ALLOCATOR.free(con);
 							connections.clear(fd);
 
-							err_check = main:main:shutdown(fd, 2);
 							err_check = main:main:close(fd);
 							continue;
 						}
@@ -180,7 +179,7 @@ class Server {
 						if(con.task != null){
 							if(con.task.suspended == false){
 								// Task is still busy handling a request
-								//io:println("Busy");
+								io:println("Busy");
 								continue;
 							}
 						}
@@ -211,7 +210,7 @@ class Server {
 
 						this._RC++;
 						if(con.task == null){
-							//io:print("NEW\n");
+							io:print("NEW\n");
 							con.task = async Server.respond(buf_ev, epfd, con.fd);
 						} else {
 							// Peek recv to detect disconnects
@@ -225,19 +224,17 @@ class Server {
 								#if OS_WIN
 								fd:remove_from_set(read_set, fd);
 								#end
-								err_check = main:main:shutdown(fd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
 								err_check = main:main:close(fd);
 								continue;
 							}
-							//io:print("CON\n");
+							io:print("CON\n");
 							con.task.continue();
 						}
 					} else {
 						#if OS_WIN
 						#else
-							err_check = main:main:shutdown(fd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
 							err_check = main:main:close(fd);
-							//io:print("Connection not found\n");
+							io:print("Connection not found\n");
 						#end
 					}
 
@@ -270,6 +267,7 @@ class Server {
 				async_task_suspend;
 			}
 
+			//io:println("Resp");
 			@ str = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
 			// MSG_NOSIGNAL: 0x4000
 			@ check = main:main:send(fd, str.data, str.length, 0x4000);
