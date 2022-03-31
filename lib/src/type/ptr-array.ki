@@ -14,18 +14,22 @@ class PtrArray {
 	func set(u64 index, ptr value){
 		if(index >= this.size){
 			// increase size
-			ptr new_data = mem:alloc(this.size * 2);
+			u64 new_size = this.size * 2;
+			ptr new_data = mem:alloc(new_size);
+			mem:copy(this.data, new_data, this.size);
+			this.size = new_size;
+			this.data = new_data;
+			mem:free(this.data);
 		}
 
 		ptr adr = this.data;
-		//c:printf(c"p:%p\n", adr);
-		adr += index * sizeof(adr);
+		adr += (index * sizeof(adr));
 		//mem:copy(value, adr, sizeof(adr));
-		setptrv adr to (cast value as uxx);
+		setptrv adr to value;
 	}
 	func get(u64 index) ptr {
 		ptr adr = this.data;
-		adr += index * sizeof(adr);
+		adr += (index * sizeof(adr));
 		return getptrv adr as ptr;
 	}
 	func clear(u64 index) {

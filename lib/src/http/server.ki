@@ -257,7 +257,8 @@ class Server {
 			alc.free(buf);
 
 			if(rcvd <= 0){
-				Server.epoll_ctl_add(buf_ev, epfd, fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
+				//io:println("Add");
+				Server.epoll_ctl_add(buf_ev, epfd, fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
 				async_task_suspend;
 			}
 

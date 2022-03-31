@@ -45,4 +45,6 @@ func pthread_key_create(pthread_key_t key, funcref (ptr) void destructor) i32;
 func pthread_setspecific(NPT pthread_key_t pk, ptr value) i32;
 func pthread_getspecific(NPT pthread_key_t pk) ptr;
 
+func sleep(u32 seconds);
+
 func setjmp(ptr buf) i32;

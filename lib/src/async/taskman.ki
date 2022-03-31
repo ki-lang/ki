@@ -20,8 +20,8 @@ class TaskList {
 	}
 }
 
-class Taskman {
-  	public i32 nr = 0;
+class Taskman norfc {
+  	public uxx nr = 0;
   	public ?Thread thread = null;
   	public bool suspended = false;
   	public i32 tasks_run_count = 0;
@@ -41,15 +41,15 @@ class Taskman {
 		@ tms = type:PtrArray.make(64);
 		@ list = Taskman.get_task_managers();
 
-		i32 i = 0;
+		uxx i = 0;
 		while(i < 8){
 
 			Taskman tm = Taskman { nr: i, tasks: type:PtrArray.make(100) };
 
-			tm.thread = Thread.start(Taskman.init_thread, tm);
-
 			tms.set(i, tm);
 			list.set(i, tm);
+
+			tm.thread = Thread.start(Taskman.init_thread, tm);
 
 			i++;
 		}
