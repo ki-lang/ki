@@ -37,7 +37,7 @@ class Server {
 		#else
 		@ epfd = main:main:epoll_create(1);
 		@ buf_ev = mem:calloc(sizeof(main:main:epoll_event)); 
-		Server.epoll_ctl_add(buf_ev, epfd, sock.listenfd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLOUT bitOR main:main:EPOLL.EPOLLET);
+		Server.epoll_ctl_add(buf_ev, epfd, sock.listenfd, main:main:EPOLL.EPOLLIN);
 		ptr events = mem:calloc(this.max_connections * sizeof(main:main:epoll_event));
 
 		fd:set_non_block(sock.listenfd);
@@ -67,7 +67,9 @@ class Server {
 			select_result = 1;
 			#end
 
-			if(select_result > 0){
+			if(select_result <= 0){
+				io:print("epoll error\n");
+			}else {
 
 				#if OS_WIN
 				i32 i = 3;
@@ -87,6 +89,8 @@ class Server {
 					@ fd = event.fd;
 					@ isset = true;
 					#end
+
+					//io:println(fd.str());
 
 					i++;
 
@@ -116,7 +120,7 @@ class Server {
 							#if OS_WIN
 							fd:add_to_set(read_set, new_fd);
 							#else
-							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
+							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
 							#end
 
 							Connection con = Connection{ fd: new_fd };
@@ -134,11 +138,11 @@ class Server {
 							io:print("\n");
 						}
 
-						//if ((event.events bitAND (main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
-						//	io:print("[+] main connection closed\n");
-						//	err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
-						//	err_check = main:main:close(fd);
-						//}
+						if ((event.events bitAND (main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
+							io:print("[+] main connection closed\n");
+							err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
+							err_check = main:main:close(fd);
+						}
 
 						continue;
 					}
@@ -148,10 +152,26 @@ class Server {
 						ptr conptr = connections.get(fd);
 						Connection con = cast conptr as Connection;
 
+						#if OS_WIN
+						#else
+						// Check if the connection is closing
+						if ((event.events bitAND (main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
+							io:print("[+] connection closed\n");
+							err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
+
+							con._ALLOCATOR.free(con);
+							connections.clear(fd);
+
+							err_check = main:main:shutdown(fd, 2);
+							err_check = main:main:close(fd);
+							continue;
+						}
+						#end
+
 						if(con.task != null){
 							if(con.task.suspended == false){
 								// Task is still busy handling a request
-								// io:println("Busy");
+								io:println("Busy");
 								continue;
 							}
 						}
@@ -163,19 +183,6 @@ class Server {
 						// So we need to set back all the fds
 						fd:add_to_set(read_set, fd);
 						#else
-
-						// Check if the connection is closing
-						if ((event.events bitAND (main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
-							io:print("[+] connection closed\n");
-							err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
-
-							con._ALLOCATOR.free(con);
-							connections.clear(fd);
-
-							err_check = main:main:close(fd);
-							continue;
-						}
-
 						bool has_incoming_data = (event.events bitAND main:main:EPOLL.EPOLLIN) > 0;
 						#end
 
@@ -219,6 +226,8 @@ class Server {
 					} else {
 						#if OS_WIN
 						#else
+							err_check = main:main:shutdown(fd, 2); // SHUT_RD=0, SHUT_WR=1, SHUT_RDWR=2
+							err_check = main:main:close(fd);
 							io:print("Connection not found\n");
 						#end
 					}

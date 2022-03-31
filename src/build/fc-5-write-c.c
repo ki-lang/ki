@@ -1353,6 +1353,13 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, ");\n");
 
+    // free (if Task has ref counting enabled)
+    // VarInfo* vi = malloc(sizeof(VarInfo));
+    // vi->name = var_name;
+    // vi->return_type = value->return_type;
+
+    // array_push(fc->var_bufs, vi);
+
     // Set cache back
     fc->value_buffer->length = 0;
     str_append_chars(fc->value_buffer, cache);
