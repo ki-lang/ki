@@ -127,9 +127,16 @@ class Server {
 							con._RC++;
 
 							if(connections.has(new_fd)){
-								// ptr conptr = connections.get(new_fd);
-								// Connection conx = cast conptr as Connection;
-								// conx._RC--;
+								ptr conptr = connections.get(new_fd);
+								Connection conx = cast conptr as Connection;
+								if(conx.task.suspended == false){
+									// Wait for existing task to end
+									while(true){
+										if(conx.task.suspended == true){
+											break;
+										}
+									}
+								}
 							}
 
 							connections.set(new_fd, con);
