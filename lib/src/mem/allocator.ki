@@ -80,6 +80,26 @@ class Allocator norfc {
 		u8 len = getptrv block_ptr as u8;
 		block_ptr++;
 		u8 empty_count = getptrv block_ptr as u8;
+
+		while((empty_count == len) && (this.block_i > 0)){
+			this.block_i--;
+			block_ptr = this.blocks_ptr + ((this.block_i) * 8);
+			block_ptr = getptrv block_ptr as ptr;
+			len = getptrv block_ptr as u8;
+			block_ptr++;
+			empty_count = getptrv block_ptr as u8;
+
+			if(empty_count == 0){
+				this.block_i++;
+				block_ptr = this.blocks_ptr + ((this.block_i) * 8);
+				block_ptr = getptrv block_ptr as ptr;
+				len = getptrv block_ptr as u8;
+				block_ptr++;
+				empty_count = getptrv block_ptr as u8;
+				break;
+			}
+		}
+
 		if(empty_count > 0){
 			// Set new empty_count
 			empty_count--;
@@ -128,15 +148,15 @@ class Allocator norfc {
 		setptrv adr to empty_count;
 		adr--;
 		u8 len = getptrv adr as u8;
-		if(empty_count == len){
-			if(this.block_i > 0){
-				this.block_i--;
-				//if(this.block_c > this.block_i + 10){
-				//	this.block_c--;
-				//	free_flat(this.blocks_ptr + ((this.block_c) * 8));
-				//}
-			}
-		}
+		//if(empty_count == len){
+		//	if(this.block_i > 0){
+		//		this.block_i--;
+		//		//if(this.block_c > this.block_i + 10){
+		//		//	this.block_c--;
+		//		//	free_flat(this.blocks_ptr + ((this.block_c) * 8));
+		//		//}
+		//	}
+		//}
 
 		this.mut.unlock();
 	}
