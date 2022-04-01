@@ -11,24 +11,23 @@ class string {
 	static func make(ptr data, uxx length) string {
 		uxx mem_size = length + 10;
 		@ str = string { data: alloc(mem_size), mem_size: mem_size };
-		copy(data, str.data, length + 1);
+		copy(data, str.data, length);
 		str.length = length;
 		return str;
 	}
 
 	func __add(string str) string {
-		uxx new_length = this.length;
-		new_length += str.length;
+		uxx new_length = this.length + str.length;
 		while(new_length > this.mem_size){
 			this.mem_size *= 2;
 		}
 		ptr adr = alloc(this.mem_size);
 		copy(this.data, adr, this.length);
+		free(this.data);
+		this.data = adr;
 		adr += this.length;
 		copy(str.data, adr, str.length);
 		this.length = new_length;
-		free(this.data);
-		this.data = adr;
 		return this;
 	}
 

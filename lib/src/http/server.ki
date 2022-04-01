@@ -10,7 +10,7 @@ use type {PtrArray};
 func request_handler(Request req) Response {
 	
 	return Response {
-		body: "Hello!",
+		body: "Hello world",
 	};
 }
 
@@ -25,7 +25,7 @@ class Server {
 		@ sock = ki:net:Socket { port: this.port };
 		sock.listen();
 		//
-		io:print("Running http server on port ");
+		io:print("[+] Running http server on port ");
 		io:print(this.port.str());
 		io:print("\n");
 

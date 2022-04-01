@@ -1,32 +1,12 @@
 
-func x() string {
-	return "hello world\n";
-}
+func handler(ki:http:Request req) ki:http:Response{
 
-func hi() string {
-	ki:io:print("hello world\n");
-	return "ready";
+	return ki:http:Response{ body: "Hello from example" };
 }
 
 func main() i32 {
 	
-	//@ a = x(); 
-	//print(a);
-
-	//@ c = async hi();
-	//@ a = await c;
-	//ki:io:print(a);
-	// return 0;
-
-	//@ k = "hello";
-	//@ m = ki:type:Map<string>{};
-	//m.set(k, " is it me you're looking for\n");
-	//@ x = m.get(k);
-
-	//ki:io:print(k);
-	//ki:io:print(x);
-
-	@ s = ki:http:Server { port: 9000 };
+	@ s = ki:http:Server { port: 9000, handler: handler };
 	s.start();
 
 	return 0;
