@@ -6,7 +6,14 @@ class Response {
 	public string body;
 
 	public func output() string {
-		return "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
+		@ data = "";
+
+		data.__add("HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:");
+		data.__add(this.body.str());
+		data.__add("\r\n\r\n");
+		data.__add(this.body);
+
+		return data;
 	}
 
 	public func __free(){
