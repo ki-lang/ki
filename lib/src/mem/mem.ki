@@ -50,7 +50,6 @@ func alloc(uxx size) ptr {
 
 	ptr adr = alc.get_chunk();
 	setptrv adr to pow; // store pow for free()
-
 	return adr + 1;
 }
 
@@ -64,6 +63,7 @@ func free(ptr adr) {
 
 	if(alc == null){
 		// Something went wrong
+		return;
 	}
 
 	alc.free(adr);
@@ -168,7 +168,7 @@ func free_pure(ptr adr, uxx size) {
 }
 
 func copy(ptr from, ptr to, u32 len) {
-  while (len > 8){
+  while (len > 7){
 	  len-=8;
 	  u64 byte = getptrv from as u64;
 	  setptrv to to byte;

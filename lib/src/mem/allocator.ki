@@ -10,7 +10,7 @@ class Allocator norfc {
 
 	// 1(10x)1(20x)15(40x)0(80x)102(160x)7(256x)13(256x)
 	// 1(10x) example
-	// (len:10,empty-count:1,empty-pos:1)|(pos){...}|(pos){NULL}|(pos){...}
+	// (block_i,len:10,empty-count:1,empty-pos:1)|(pos){...}|(pos){NULL}|(pos){...}
 
 	func get_chunk() ptr {
 
@@ -24,24 +24,21 @@ class Allocator norfc {
 		ptr result = 0;
 		u8 pos = 0;
 
-		if(this.block_i < this.block_c){
-			while(this.block_i < this.block_c){
-				ptr result = this.get_chunk_from_block();
-				if(result != null){
-					this.mut.unlock();
-					return result;
-				}
-				// No empty slots, check next block
-				this.block_i++;
+		while(this.block_i < this.block_c){
+			result = this.get_chunk_from_block();
+			if(result != null){
+				this.mut.unlock();
+				return result;
 			}
-			this.block_i--;
+			// No empty slots, check next block
+			this.block_i++;
 		}
 
 		if(this.block_c > 0) {
-
 			// Get length from previous block
 			ptr block_ptr = this.blocks_ptr + ((this.block_c - 1) * 8);
 			block_ptr = getptrv block_ptr as ptr;
+			block_ptr += 4;
 			len = getptrv block_ptr as u8;
 		}
 
@@ -52,16 +49,19 @@ class Allocator norfc {
 		}
 		u8 new_len = cast new_len_16 as u8;
 
-		ptr new_block = alloc_flat(new_len * (this.size + 1) + 3);
+		ptr new_block = alloc_flat(new_len * (this.size + 1) + 7);
 		ptr block_list_adr = this.blocks_ptr + ((this.block_c - 1) * 8);
 		setptrv block_list_adr to new_block;
 
-		setptrv new_block to new_len;
+		setptrv new_block to this.block_i;
+		new_block += 4;
+		setptrv new_block to new_len; // Set item count
 		new_block++;
-		setptrv new_block to new_len;
+		new_len--;
+		setptrv new_block to new_len; // Set empty count
 		new_block++;
-		empty_pos = 1;
-		setptrv new_block to empty_pos;
+		empty_pos = 2;
+		setptrv new_block to empty_pos; // Set next empty index
 
 		this.mut.unlock();
 
@@ -77,27 +77,19 @@ class Allocator norfc {
 	func get_chunk_from_block() ptr {
 		ptr block_ptr = this.blocks_ptr + ((this.block_i) * 8);
 		block_ptr = getptrv block_ptr as ptr;
+		block_ptr += 4;
 		u8 len = getptrv block_ptr as u8;
 		block_ptr++;
 		u8 empty_count = getptrv block_ptr as u8;
 
-		while((empty_count == len) && (this.block_i > 0)){
-			this.block_i--;
+		while(empty_count == 0 && this.block_i < (this.block_c - 1)){
+			this.block_i++;
 			block_ptr = this.blocks_ptr + ((this.block_i) * 8);
 			block_ptr = getptrv block_ptr as ptr;
+			block_ptr += 4;
 			len = getptrv block_ptr as u8;
 			block_ptr++;
 			empty_count = getptrv block_ptr as u8;
-
-			if(empty_count == 0){
-				this.block_i++;
-				block_ptr = this.blocks_ptr + ((this.block_i) * 8);
-				block_ptr = getptrv block_ptr as ptr;
-				len = getptrv block_ptr as u8;
-				block_ptr++;
-				empty_count = getptrv block_ptr as u8;
-				break;
-			}
 		}
 
 		if(empty_count > 0){
@@ -108,14 +100,14 @@ class Allocator norfc {
 			block_ptr++;
 			u8 empty_pos = getptrv block_ptr as u8;
 			block_ptr++;
-			ptr result = block_ptr + ((this.size + 1) * empty_pos);
+			ptr result = block_ptr + ((this.size + 1) * (empty_pos - 1));
 			setptrv result to empty_pos;
 			result++;
 			// find next empty pos
 			u8 pos = empty_pos + 1;
 			u8 zb = 0;
-			while(pos < len){
-				empty_pos = getptrv (block_ptr + ((this.size + 1) * pos)) as u8;
+			while((pos - 1) < len){
+				empty_pos = getptrv (block_ptr + ((this.size + 1) * (pos - 1))) as u8;
 				if(empty_pos == zb){
 					break;
 				}
@@ -135,8 +127,15 @@ class Allocator norfc {
 		adr--;
 		u8 pos = getptrv adr as u8;
 		u8 zb = 0;
+
+		if(pos == zb){
+			// Nothing allocated here
+			this.mut.unlock();
+			return;
+		}
+
 		setptrv adr to zb;
-		adr -= (pos * (this.size + 1));
+		adr -= ((pos - 1) * (this.size + 1));
 		adr--;
 		u8 empty_pos = getptrv adr as u8;
 		if(pos < empty_pos){
@@ -148,14 +147,18 @@ class Allocator norfc {
 		setptrv adr to empty_count;
 		adr--;
 		u8 len = getptrv adr as u8;
-		//if(empty_count == len){
-		//	if(this.block_i > 0){
-		//		this.block_i--;
-		//		//if(this.block_c > this.block_i + 10){
-		//		//	this.block_c--;
-		//		//	free_flat(this.blocks_ptr + ((this.block_c) * 8));
-		//		//}
-		//	}
+
+		adr -= 4;
+		u32 block_i = getptrv adr as u32;
+		if(block_i < this.block_i){
+			this.block_i = block_i;
+		}
+		//if(this.block_i > 0){
+			//this.block_i--;
+			//if(this.block_c > this.block_i + 10){
+			//	this.block_c--;
+			//	free_flat(this.blocks_ptr + ((this.block_c) * 8));
+			//}
 		//}
 
 		this.mut.unlock();
