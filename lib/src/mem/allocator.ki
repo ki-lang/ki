@@ -53,7 +53,7 @@ class Allocator norfc {
 		ptr block_list_adr = this.blocks_ptr + ((this.block_c - 1) * 8);
 		setptrv block_list_adr to new_block;
 
-		setptrv new_block to this.block_i;
+		setptrv new_block to this.block_i; // Set block index
 		new_block += 4;
 		setptrv new_block to new_len; // Set item count
 		new_block++;

@@ -668,6 +668,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       str_append_chars(fc->tkn_buffer, "return 0;\n");
     }
   } else if (token->type == tkn_task_suspend) {
+    deref_local_vars(fc);
     str_append_chars(fc->tkn_buffer,
                      "ki__async__Taskman__suspend_task(); return;\n");
   } else if (token->type == tkn_set_threaded) {
