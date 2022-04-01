@@ -7,10 +7,10 @@ namespace http;
 
 use type {PtrArray};
 
-func response_handler(Request req) Response {
+func request_handler(Request req) Response {
 	
 	return Response {
-		body: "Hello",
+		body: "Hello!",
 	};
 }
 
@@ -18,7 +18,7 @@ class Server {
 	u32 port;
 	i32 max_connections = 64000;
 	ki:net:Socket socket;
-	funcref (Request) Response handler = response_handler;
+	funcref (Request) Response handler = request_handler;
 
 	func start() ! {
 
@@ -199,7 +199,7 @@ class Server {
 
 						this._RC++;
 						if(con.task == null){
-							con.task = async Server.respond(buf_ev, epfd, con.fd);
+							con.task = async Server.respond(buf_ev, epfd, con.fd, this);
 						} else {
 						    #if OS_WIN
 							// Peek recv to detect disconnects
@@ -243,52 +243,29 @@ class Server {
 		@ check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_ADD, fd, ev);
 	}
 
-	public static func respond(ptr buf_ev, i32 epfd, i32 fd){
+	public static func respond(ptr buf_ev, i32 epfd, i32 fd, ptr server_ptr){
 
-		@ alc = allocator 65535;
-		ptr buf = alc.get_chunk();
+        @ server = cast server_ptr as Server;
 
 		while(true){
 
-			i32 rcvd = main:main:recv(fd, buf, 65535, 0);
-
-			if(rcvd <= 0){
-			    alc.free(buf);
-				async_task_suspend;
-			}
-
 			//@ str = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
 			//@ check = main:main:send(fd, str.data, str.length, 0);
+			//alc.free(buf);
+			//async_task_suspend;
 
             @ req = Request.read_request(fd);
             if(req == null){
-			    alc.free(buf);
 			    async_task_suspend;
             }
 
-            string output = response.output();
-		    io:write(con.fd, output);
+		    @ response = server.handler(req);
 
-			alc.free(buf);
+            string output = response.output();
+		    io:write(fd, output);
+
 			async_task_suspend;
 		}
-
-		return;
-
-		//@ req = Request.read_request(con.fd);
-
-		//if(req == null){
-		//	con.busy = false;
-		//	con.disconnected = true;
-		//	return;
-		//}
-
-		//@ response = this.handler(req);
-
-		//string output = response.output();
-		//io:write(con.fd, output);
-
-		//con.busy = false;
 	}
 
 }
