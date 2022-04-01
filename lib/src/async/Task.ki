@@ -26,4 +26,13 @@ class Task norfc {
 			i++;
 		}
 	}
+
+	public func waitForSuspendStatus (bool status){
+        while(true){
+			if(this.suspended == status){
+				break;
+			}
+            main:main:usleep(1);
+		}
+	}
 }

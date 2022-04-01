@@ -3,7 +3,7 @@ namespace async;
 
 #header "sys/thread"
 
-class Mutex {
+class Mutex norfc {
 
 	public main:main:pthread_mutex_t mutex;
 

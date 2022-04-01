@@ -46,5 +46,6 @@ func pthread_setspecific(NPT pthread_key_t pk, ptr value) i32;
 func pthread_getspecific(NPT pthread_key_t pk) ptr;
 
 func sleep(u32 seconds);
+func usleep(u32 usec);
 
 func setjmp(ptr buf) i32;

@@ -9,7 +9,7 @@ int status = 0;
 
 char* fc_compile_basic_args() {
   //
-  return " -g -O2 -fcommon -c";
+  return " -g -O0 -fcommon -c";
 }
 
 void fc_compile_local_c_files() {

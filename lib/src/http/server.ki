@@ -134,12 +134,8 @@ class Server {
 								if(conx.task.suspended == false){
 									// Wait for existing task to end
                                     io:println("Waiting for task to end");
-									while(true){
-										if(conx.task.suspended == true){
-											break;
-										}
-									}
-                                    io:println("Ended");
+                                    con.task.waitForSuspendStatus(true);
+                                    //io:println("Ended");
 								}
 							}
 
@@ -185,14 +181,8 @@ class Server {
 						if(con.task != null){
 							if(con.task.suspended == false){
 								// Task is still busy handling a request
-								io:println("Busy");
-								io:println(fd.str());
-                                while(true){
-									if(con.task.suspended == true){
-										break;
-									}
-								}
-								io:println("Not busy");
+								// io:println("Busy");
+                                con.task.waitForSuspendStatus(true);
 								//continue;
 							}
 						}

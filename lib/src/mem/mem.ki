@@ -225,7 +225,7 @@ func clear(ptr adrc, uxx size){
 		size -= 4;
 	}
 	while(size > 0){
-		setptrv adrc to zero;
+		setptrv adrc to zerob;
 		adrc++;
 		size--;
 	}

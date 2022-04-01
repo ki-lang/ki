@@ -2,7 +2,6 @@
 namespace async;
 
 threaded Taskman LOCAL_TM = null;
-mutex mutex_add_task;
 
 class TaskPos {
 	i32 value = 0;
@@ -28,10 +27,11 @@ class Taskman norfc {
   	public i32 current_task_index = 0;
   	public ptr jmpbuf = mem:alloc_flat(100);
   	public type:PtrArray tasks;
+	public Mutex mut_get_task;
 
 	public static func get_task_managers() type:PtrArray {
 		static type:PtrArray list {
-			return type:PtrArray.make(1024);
+			return type:PtrArray.make(256);
 		}
 		return list;
 	}
@@ -41,10 +41,12 @@ class Taskman norfc {
 		@ tms = type:PtrArray.make(64);
 		@ list = Taskman.get_task_managers();
 
+		@ mut_get_task = Mutex.make();
+
 		uxx i = 0;
 		while(i < 8){
 
-			Taskman tm = Taskman { nr: i, tasks: type:PtrArray.make(100) };
+			Taskman tm = Taskman { nr: i, tasks: type:PtrArray.make(100), mut_get_task: mut_get_task };
 
 			tms.set(i, tm);
 			list.set(i, tm);
@@ -122,10 +124,14 @@ class Taskman norfc {
 				}
 			} else {
 				// Get a new task from the list
-				i32 pos = this.nr;
+
+				this.mut_get_task.lock();
+
+				u32 pos = 0;
 				bool found = false;
 				while(pos < 1024) {
-					?Task task = task_list.tasks.get(pos); 
+					//?Task task = task_list.tasks.get(pos); 
+					?Task task = Taskman.tmp(task_list, pos); 
 					if(task != null && task.suspended == false){
 						// Found a task, assign to slot
 						i32 slot = 0;
@@ -146,8 +152,10 @@ class Taskman norfc {
 						break;
 					}
 
-					pos += 8;
+					pos++;
 				}
+
+				this.mut_get_task.unlock();
 
 				if(found == false){
 					// No new tasks found
@@ -162,11 +170,25 @@ class Taskman norfc {
 		}
 	}
 
+	public static func tmp(TaskList task_list, u32 pos) ?Task {
+					?Task task = task_list.tasks.get(pos); 
+					if(task != null && Taskman.is_sus(task)){
+						return task;
+					}
+					return task;
+	}
+	public static func is_sus(Task task) bool {
+		return task.suspended;
+	}
+
 	public static func add_task(Task task) {
 
-		mutex_lock mutex_add_task;
+		static Mutex mut_add_task {
+			return Mutex.make();
+		} 
 
-		i32 pos = 0;
+		mut_add_task.lock();
+
 		@ task_list = TaskList.get();
 
 		static TaskPos task_pos {
@@ -199,7 +221,7 @@ class Taskman norfc {
 		}
 
 		//
-		mutex_unlock mutex_add_task;
+		mut_add_task.unlock();
 	}
 
 	public static func run_another_task() {
