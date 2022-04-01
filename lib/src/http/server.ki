@@ -257,8 +257,17 @@ class Server {
 				async_task_suspend;
 			}
 
-			@ str = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
-			@ check = main:main:send(fd, str.data, str.length, 0);
+			//@ str = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
+			//@ check = main:main:send(fd, str.data, str.length, 0);
+
+            @ req = Request.read_request(fd);
+            if(req == null){
+			    alc.free(buf);
+			    async_task_suspend;
+            }
+
+            string output = response.output();
+		    io:write(con.fd, output);
 
 			alc.free(buf);
 			async_task_suspend;
