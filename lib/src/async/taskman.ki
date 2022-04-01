@@ -125,7 +125,8 @@ class Taskman norfc {
 			} else {
 				// Get a new task from the list
 
-				this.mut_get_task.lock();
+				@ mut = Taskman.get_mutex();
+				mut.lock();
 
 				u32 pos = 0;
 				bool found = false;
@@ -155,7 +156,7 @@ class Taskman norfc {
 					pos++;
 				}
 
-				this.mut_get_task.unlock();
+				mut.unlock();
 
 				if(found == false){
 					// No new tasks found
@@ -181,13 +182,17 @@ class Taskman norfc {
 		return task.suspended;
 	}
 
-	public static func add_task(Task task) {
-
-		static Mutex mut_add_task {
+	public static func get_mutex() Mutex {
+		static Mutex mut {
 			return Mutex.make();
 		} 
+		return mut;
+	}
 
-		mut_add_task.lock();
+	public static func add_task(Task task) {
+
+		@ mut = Taskman.get_mutex();
+		mut.lock();
 
 		@ task_list = TaskList.get();
 
@@ -221,7 +226,7 @@ class Taskman norfc {
 		}
 
 		//
-		mut_add_task.unlock();
+		mut.unlock();
 	}
 
 	public static func run_another_task() {

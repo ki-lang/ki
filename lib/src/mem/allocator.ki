@@ -63,13 +63,13 @@ class Allocator norfc {
 		empty_pos = 1;
 		setptrv new_block to empty_pos;
 
-		if(this.block_c > 250){
-			//io:print("max block_c reached in allocator: ");
-			//io:print(this.size.str());
-			//io:print("\n");
-		}
-
 		this.mut.unlock();
+
+		if(this.block_c > 200){
+			io:print("max block_c reached in allocator: ");
+			io:print(this.size.str());
+			io:print("\n");
+		}
 		
 		return new_block + 1 + 1; // skip empty_pos byte & skip value pos byte
 	}

@@ -12,7 +12,7 @@ func get_mutex() async:Mutex {
 
 func get_allocators() ptr {
 	static ptr allocators {
-		return mem:alloc_flat(64 * 8);
+		return mem:calloc_flat(64 * 8);
 	}
 	return allocators;
 }

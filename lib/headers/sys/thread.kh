@@ -49,3 +49,5 @@ func sleep(u32 seconds);
 func usleep(u32 usec);
 
 func setjmp(ptr buf) i32;
+
+func raise(i32 sig);

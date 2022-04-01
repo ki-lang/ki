@@ -12,10 +12,10 @@ class PtrArray {
 	}
 
 	func set(u64 index, ptr value){
-		if(index >= this.size){
+		while(index >= this.size){
 			// increase size
 			u64 new_size = this.size * 2;
-			ptr new_data = mem:alloc(new_size);
+			ptr new_data = mem:calloc(new_size);
 			mem:copy(this.data, new_data, this.size * sizeof(ptr));
 			this.size = new_size;
 			this.data = new_data;
@@ -26,20 +26,30 @@ class PtrArray {
 		adr += (index * sizeof(adr));
 		//mem:copy(value, adr, sizeof(adr));
 		setptrv adr to value;
+
+		@ x = this.get(index);
 	}
 	func get(u64 index) ptr {
 		if(index >= this.size){
-			io:print("yo\n");
+			return null;
 		}
 		ptr adr = this.data;
 		adr += (index * sizeof(adr));
-		return getptrv adr as ptr;
+		ptr result = getptrv adr as ptr;
+		if(result != null && result < 24680587) {
+			io:println(this.size.str());
+			io:println(index.str());
+			main:main:raise(11);
+		}
+		return result;
 	}
 	func clear(u64 index) {
 		ptr adr = this.data;
 		adr += (index * sizeof(adr));
 		uxx v = 0;
 		setptrv adr to v;
+
+		@ x = this.get(index);
 	}
 	func has(u64 index) bool {
 		ptr adr = this.data;
