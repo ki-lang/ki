@@ -28,6 +28,9 @@ class PtrArray {
 		setptrv adr to value;
 	}
 	func get(u64 index) ptr {
+		if(index >= this.size){
+			io:print("yo\n");
+		}
 		ptr adr = this.data;
 		adr += (index * sizeof(adr));
 		return getptrv adr as ptr;
