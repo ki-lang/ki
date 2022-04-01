@@ -133,24 +133,16 @@ class Server {
 								Connection conx = cast conptr as Connection;
 								if(conx.task.suspended == false){
 									// Wait for existing task to end
-                                    io:println("Waiting for task to end");
+                                    io:println("[+] waiting for old connection to end");
                                     con.task.waitForSuspendStatus(true);
-                                    //io:println("Ended");
 								}
 							}
 
 							connections.set(new_fd, con);
-							io:print("New connection: ");
+							io:print("[+] new connection: ");
 							io:print(new_fd.str());
 							io:print("\n");
 						}
-
-						#if OS_WIN
-						#else
-						if ((event.events bitAND (main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
-							io:print("[+] main connection trying to close\n");
-						}
-						#end
 
 						continue;
 					}
@@ -181,7 +173,7 @@ class Server {
 						if(con.task != null){
 							if(con.task.suspended == false){
 								// Task is still busy handling a request
-								// io:println("Busy");
+								// io:println("[+] waiting for previous task to end");
                                 con.task.waitForSuspendStatus(true);
 								//continue;
 							}
@@ -200,21 +192,13 @@ class Server {
 						if(has_incoming_data == false){
 							#if OS_WIN
 							#else
-								io:print("Unexpected\n");
+								io:print("[+] unknown epoll event (bug)\n");
 							#end
 							continue;
 						}
 
-						#if OS_WIN
-						#else
-						// Remove from epoll while handling the connection
-						//err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
-						#end
-
 						this._RC++;
 						if(con.task == null){
-							io:print("NEW TASK: ");
-							io:println(fd.str());
 							con.task = async Server.respond(buf_ev, epfd, con.fd);
 						} else {
 						    #if OS_WIN
@@ -223,7 +207,7 @@ class Server {
 							// MSG_PEEK = 0x2
   							i32 err_check = main:main:recv(fd, getptr buffer, 1, 2);
 							if(err_check <= 0){
-								io:print("Disconnect\n");
+								io:print("[+] disconnect\n");
 								con._ALLOCATOR.free(con);
 								connections.clear(fd);
 								#if OS_WIN
@@ -233,7 +217,6 @@ class Server {
 								continue;
 							}
                             #end
-							//io:print("CON\n");
 							con.task.continue();
 						}
 					} else {
@@ -242,7 +225,7 @@ class Server {
                             err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
 							err_check = main:main:close(fd);
                             fdcount--;
-							io:print("Connection not found\n");
+							io:print("[+] epoll event on non-existing connection (bug)\n");
 						#end
 					}
 
@@ -270,19 +253,14 @@ class Server {
 			i32 rcvd = main:main:recv(fd, buf, 65535, 0);
 
 			if(rcvd <= 0){
-				//io:println("Add");
 			    alc.free(buf);
-				//Server.epoll_ctl_add(buf_ev, epfd, fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
 				async_task_suspend;
 			}
 
-			//io:println("Resp");
 			@ str = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
-			// MSG_NOSIGNAL: 0x4000
 			@ check = main:main:send(fd, str.data, str.length, 0);
 
 			alc.free(buf);
-			//Server.epoll_ctl_add(buf_ev, epfd, fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
 			async_task_suspend;
 		}
 
