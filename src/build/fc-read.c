@@ -87,7 +87,8 @@ void fc_next_token(FileCompiler *fc, char *token, bool readonly, bool sameline,
           (ch == '-' && nch == '-') || (ch == '+' && nch == '=') ||
           (ch == '-' && nch == '=') || (ch == '*' && nch == '=') ||
           (ch == '&' && nch == '&') || (ch == '|' && nch == '|') ||
-          (ch == '/' && nch == '=')) {
+          (ch == '/' && nch == '=') || (ch == '<' && nch == '<') ||
+          (ch == '>' && nch == '>')) {
         token[ti] = nch;
         ti++;
         index++;

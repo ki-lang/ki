@@ -298,7 +298,7 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
   } else if (strcmp(token, "get_threaded") == 0) {
     Identifier* id = fc_read_identifier(fc, false, true, true);
-    Scope* idf_scope = fc_get_identifier_scope(fc, scope, id);
+    Scope* idf_scope = fc_get_identifier_scope(fc, fc->scope, id);
     IdentifierFor* idf = idf_find_in_scope(idf_scope, id);
 
     if (!idf || idf->type != idfor_threaded_var) {
@@ -477,6 +477,7 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
   while (ch == '.' || ch == '(' || strcmp(token, "+") == 0 ||
          strcmp(token, "-") == 0 || strcmp(token, "*") == 0 ||
          strcmp(token, "/") == 0 || strcmp(token, "%") == 0 ||
+         strcmp(token, "<<") == 0 || strcmp(token, ">>") == 0 ||
          strcmp(token, "bitOR") == 0 || strcmp(token, "bitAND") == 0 ||
          strcmp(token, "bitXOR") == 0 || strcmp(token, "++") == 0 ||
          strcmp(token, "--") == 0 || strcmp(token, "<=") == 0 ||
@@ -541,6 +542,7 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       value = fc_read_func_call(fc, scope, value);
     } else if (strcmp(token, "+") == 0 || strcmp(token, "-") == 0 ||
                strcmp(token, "*") == 0 || strcmp(token, "/") == 0 ||
+               strcmp(token, "<<") == 0 || strcmp(token, ">>") == 0 ||
                strcmp(token, "%") == 0 || strcmp(token, "bitOR") == 0 ||
                strcmp(token, "bitAND") == 0 || strcmp(token, "bitXOR") == 0) {
       ValueOperator* op = malloc(sizeof(ValueOperator));
@@ -563,6 +565,10 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
         op->type = op_bit_AND;
       } else if (strcmp(token, "bitXOR") == 0) {
         op->type = op_bit_XOR;
+      } else if (strcmp(token, "<<") == 0) {
+        op->type = op_bit_shift_left;
+      } else if (strcmp(token, ">>") == 0) {
+        op->type = op_bit_shift_right;
       }
 
       Type* return_type =
