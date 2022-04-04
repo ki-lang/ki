@@ -18,13 +18,7 @@ class Task norfc {
 	public func continue (){
 		this.suspended = false;
 		// Continue threads
-		@ tms = Taskman.get_task_managers();
-		@ i = 0;
-		while(i < 8){
-			Taskman tm = tms.get(i);
-			tm.thread.continue();
-			i++;
-		}
+		Taskman.continue_threads();
 	}
 
 	public func waitForSuspendStatus (bool status){

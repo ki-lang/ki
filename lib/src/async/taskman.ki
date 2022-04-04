@@ -13,7 +13,7 @@ class TaskList {
 
 	public static func get() TaskList {
 		static TaskList mx {
-			return TaskList { tasks: type:PtrArray.make(1024) };
+			return TaskList { tasks: type:PtrArray.make(256) };
 		}
 		return mx;
 	}
@@ -22,7 +22,6 @@ class TaskList {
 class Taskman norfc {
   	public uxx nr = 0;
   	public ?Thread thread = null;
-  	public bool suspended = false;
   	public i32 tasks_run_count = 0;
   	public i32 current_task_index = 0;
   	public ptr jmpbuf = mem:alloc_flat(100);
@@ -130,7 +129,7 @@ class Taskman norfc {
 
 				u32 pos = 0;
 				bool found = false;
-				while(pos < 1024) {
+				while(pos < 256) {
 					//?Task task = task_list.tasks.get(pos); 
 					?Task task = Taskman.tmp(task_list, pos); 
 					if(task != null && task.suspended == false){
@@ -163,11 +162,23 @@ class Taskman norfc {
 					if(max_one_task){ return; }
 					// Suspend task manager
 					if(this.thread != null) {
-						this.suspended = true;
 						this.thread.suspend();
 					}
 				}
 			}
+		}
+	}
+
+	public static func continue_threads(){
+		@ tms = Taskman.get_task_managers();
+		@ i = 0;
+		while(i < 8){
+			Taskman tm = tms.get(i);
+			if(tm.thread.suspended){
+				tm.thread.continue();
+				break;
+			}
+			i++;
 		}
 	}
 
@@ -191,8 +202,8 @@ class Taskman norfc {
 
 	public static func add_task(Task task) {
 
-		@ mut = Taskman.get_mutex();
-		mut.lock();
+		//@ mut = Taskman.get_mutex();
+		//mut.lock();
 
 		@ task_list = TaskList.get();
 
@@ -202,7 +213,7 @@ class Taskman norfc {
 
 		while(true){
 			task_pos.value++;
-			if(task_pos.value == 1024) {
+			if(task_pos.value == 256) {
 				task_pos.value = 0;
 			}
 			?Task t = task_list.tasks.get(task_pos.value);
@@ -213,20 +224,11 @@ class Taskman norfc {
 
 		task_list.tasks.set(task_pos.value, task);
 
-		// Unsuspend thread
-		@ list = Taskman.get_task_managers();
-		i32 i = 0;
-		while(i < list.size){
-			?Taskman tm = list.get(i);
-			if(tm == null){
-				break;
-			}
-			tm.thread.continue();
-			i++;
-		}
-
 		//
-		mut.unlock();
+		//mut.unlock();
+
+		// Unsuspend thread
+		Taskman.continue_threads();
 	}
 
 	public static func run_another_task() {
