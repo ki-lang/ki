@@ -271,13 +271,14 @@ class Server {
 
 		i32 rcvd = main:main:recv(fd, buf, 65535, 0);
 		if (rcvd <= 0){
-			io:print("receive error\n");
+			alc.free(buf);
 			return;
 		}
 
 		@ out = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
 		@ check = main:main:send(fd, out.data, out.length, 0);
 
+		alc.free(buf);
 		return;
 	}
 
