@@ -174,7 +174,7 @@ class Server {
 						if(con.task != null){
 							if(con.task.suspended == false){
 								// Task is still busy handling a request
-								// io:println("[+] waiting for previous task to end");
+								io:println("[+] waiting for previous task to end");
                                 con.task.waitForSuspendStatus(true);
 								//continue;
 							}
@@ -201,6 +201,8 @@ class Server {
 						this._RC++;
 						if(con.task == null){
 							io:print("new\n");
+							io:print(fd.str());
+							io:print("\n");
 							con.task = async Server.respond(buf_ev, epfd, con.fd, this);
 							//Server.respond_fast(buf_ev, epfd, con.fd, this);
 						} else {
@@ -220,7 +222,9 @@ class Server {
 								continue;
 							}
                             #end
-							io:print("con\n");
+							//io:print("con\n");
+							//io:print(fd.str());
+							//io:print("\n");
 							con.task.continue();
 						}
 					} else {
@@ -249,14 +253,12 @@ class Server {
 
 	public static func respond(ptr buf_ev, i32 epfd, i32 fd, ptr server_ptr){
 
-		io:print("start\n");
         @ server = cast server_ptr as Server;
 
 		while(true){
 
             @ req = Request.read_request(fd);
             if(req == null){
-				io:print("sus\n");
 			    async_task_suspend;
             }
 
@@ -265,7 +267,6 @@ class Server {
             string output = response.output();
 			@ check = main:main:send(fd, output.data, output.length, 0);
 
-			io:print("sent\n");
 			async_task_suspend;
 		}
 	}

@@ -8,7 +8,10 @@ class TaskList {
 	//type:PtrArray tasks;
 	public ?Task first = null;
 	public ?Task last = null;
-	public bool skip_first = false;
+	public i32 nr = 0;
+	public i32 head = 0;
+	public i32 tail = 0;
+	public type:PtrArray tasks = type:PtrArray.make(256);
 
 	public static func get() TaskList {
 		static TaskList mx {
@@ -94,6 +97,7 @@ class Taskman norfc {
 
 		@ task_list = TaskList.get();
 		@ mut = Taskman.get_mutex();
+		@ add_mut = Taskman.get_add_mutex();
 
 		while(true){
 			if(this.current_task != null) {
@@ -105,48 +109,37 @@ class Taskman norfc {
 
 				this.current_task = null;
 
-				if(task.suspended == true) {
-					// Add back to the stack
-					Taskman.add_task(task);
-				}
-
 				if(max_one_task) { return; }
 
 			} else {
 				// Get a new task from the list
 				mut.lock();
 
-				?Task prev_task = null;
 				?Task task = null;
 				while(true){
-					task = task_list.first;
-					if(task_list.skip_first){
-						task = task.next;
-					}
-					while(task != null && task.suspended == true){
-						prev_task = task;
-						task = task.next;
-					}
+					task = task_list.tasks.get(task_list.tail);
 					if(task != null){
 						break;
 					}
 					// No task found
 					// Use sleep to allow threads to swap
-					main:main:usleep(1000);
+					main:main:usleep(1);
 					//
 					if(max_one_task) { return; }
 				}
 
-				if(prev_task != null) {
-					prev_task.next = task.next;
-				} else {
-					if(task.next == null){
-						task_list.skip_first = true;
-					} else {
-						task_list.first = task.next;
-						task_list.skip_first = false;
-					}
+				task_list.tasks.clear(task_list.tail);
+				task_list.tail++;
+				if(task_list.tail == 256){
+					task_list.tail = 0;
 				}
+
+				//io:print("-->> ");
+				//io:println(task.nr.str());
+
+				//add_mut.unlock();
+
+				task.executed = true;
 
 				mut.unlock();
 
@@ -184,26 +177,30 @@ class Taskman norfc {
 
 	public static func add_task(Task task) {
 
+		task.next = null;
+		task.executed = false;
+
 		@ mut = Taskman.get_add_mutex();
 		mut.lock();
 
 		@ task_list = TaskList.get();
 
-		?Task lt = task_list.last;
-
-		if(lt == null){
-			task_list.first = task;
-		} else {
-			// Prevent infinite loop
-			if(lt != task){
-				lt.next = task;
-			}
+		if(task.nr == 0){
+			task_list.nr++;
+			task.nr = task_list.nr;
 		}
 
-		task_list.last = task;
+		task_list.tasks.set(task_list.head, task);
 
-		if(task_list.first == task_list.last){
-			task_list.skip_first = false;
+		//io:print("<<<<< ");
+		//io:println(task.nr.str());
+
+		task_list.head++;
+		if(task_list.head == 256){
+			task_list.head = 0;
+		}
+		while(task_list.head == task_list.tail){
+			main:main:usleep(1);
 		}
 
 		//

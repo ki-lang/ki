@@ -1303,9 +1303,6 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     // str_append_chars(fc->tkn_buffer, ");\n");
     //
     str_append_chars(fc->tkn_buffer, var_name);
-    str_append_chars(fc->tkn_buffer, "->jmpbuf = 0;\n");
-    //
-    str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->handler_func = ");
     str_append_chars(fc->tkn_buffer, handler_name);
     str_append_chars(fc->tkn_buffer, ";\n");
