@@ -200,9 +200,6 @@ class Server {
 
 						this._RC++;
 						if(con.task == null){
-							io:print("new\n");
-							io:print(fd.str());
-							io:print("\n");
 							con.task = async Server.respond(buf_ev, epfd, con.fd, this);
 							//Server.respond_fast(buf_ev, epfd, con.fd, this);
 						} else {
@@ -222,9 +219,6 @@ class Server {
 								continue;
 							}
                             #end
-							//io:print("con\n");
-							//io:print(fd.str());
-							//io:print("\n");
 							con.task.continue();
 						}
 					} else {
