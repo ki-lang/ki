@@ -160,6 +160,7 @@ class Server {
 							io:print("[+] connection closed: ");
 							io:println(fd.str());
 
+							con.task = null;
 							con._ALLOCATOR.free(con);
 							connections.clear(fd);
 
@@ -199,6 +200,7 @@ class Server {
 
 						this._RC++;
 						if(con.task == null){
+							io:print("new\n");
 							con.task = async Server.respond(buf_ev, epfd, con.fd, this);
 							//Server.respond_fast(buf_ev, epfd, con.fd, this);
 						} else {
@@ -218,6 +220,7 @@ class Server {
 								continue;
 							}
                             #end
+							io:print("con\n");
 							con.task.continue();
 						}
 					} else {
@@ -246,12 +249,14 @@ class Server {
 
 	public static func respond(ptr buf_ev, i32 epfd, i32 fd, ptr server_ptr){
 
+		io:print("start\n");
         @ server = cast server_ptr as Server;
 
 		while(true){
 
             @ req = Request.read_request(fd);
             if(req == null){
+				io:print("sus\n");
 			    async_task_suspend;
             }
 
@@ -260,6 +265,7 @@ class Server {
             string output = response.output();
 			@ check = main:main:send(fd, output.data, output.length, 0);
 
+			io:print("sent\n");
 			async_task_suspend;
 		}
 	}

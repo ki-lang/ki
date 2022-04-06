@@ -3,17 +3,16 @@ namespace async;
 
 threaded Taskman LOCAL_TM = null;
 
-class TaskPos {
-	i32 value = 0;
-}
-
 class TaskList {
 
-	type:PtrArray tasks;
+	//type:PtrArray tasks;
+	public ?Task first = null;
+	public ?Task last = null;
+	public bool skip_first = false;
 
 	public static func get() TaskList {
 		static TaskList mx {
-			return TaskList { tasks: type:PtrArray.make(256) };
+			return TaskList {};
 		}
 		return mx;
 	}
@@ -22,11 +21,9 @@ class TaskList {
 class Taskman norfc {
   	public uxx nr = 0;
   	public ?Thread thread = null;
-  	public i32 tasks_run_count = 0;
-  	public i32 current_task_index = 0;
-  	public ptr jmpbuf = mem:alloc_flat(100);
-  	public type:PtrArray tasks;
 	public Mutex mut_get_task;
+
+	public ?Task current_task = null;
 
 	public static func get_task_managers() type:PtrArray {
 		static type:PtrArray list {
@@ -45,7 +42,7 @@ class Taskman norfc {
 		uxx i = 0;
 		while(i < 8){
 
-			Taskman tm = Taskman { nr: i, tasks: type:PtrArray.make(100), mut_get_task: mut_get_task };
+			Taskman tm = Taskman { nr: i, mut_get_task: mut_get_task };
 
 			tms.set(i, tm);
 			list.set(i, tm);
@@ -80,7 +77,7 @@ class Taskman norfc {
 				if(tm == null){
 					break;
 				}
-				if(tm.tasks_run_count > 0) {
+				if(tm.current_task != null) {
 					run_count++;
 					break;
 				}
@@ -89,82 +86,71 @@ class Taskman norfc {
 			if(run_count == 0) {
 				break;
 			}
+			main:main:usleep(1);
 		}
 	}
 
 	public func run_tasks(bool max_one_task) {
 
 		@ task_list = TaskList.get();
+		@ mut = Taskman.get_mutex();
 
 		while(true){
-			if(this.tasks_run_count > 0) {
+			if(this.current_task != null) {
 				// If there is a task to run
-				Task task = this.tasks.get(this.current_task_index);
-				if(task != null && task.suspended == false) {
-					// Run task
-					i32 task_index = this.current_task_index;
-					task.handler_func(task);
+				Task task = this.current_task;
 
-					this.tasks.clear(task_index);
-					this.tasks_run_count--;
+				// Run task
+				task.handler_func(task);
 
-					if(task.suspended == true) {
-						// Add back to the stack
-						Taskman.add_task(task);
-					}
+				this.current_task = null;
 
-					if(max_one_task) { return; }
-				} else {
-					// Check next task
-					this.current_task_index++;
-					if(this.current_task_index == 32){
-						this.current_task_index = 0;
-					}
+				if(task.suspended == true) {
+					// Add back to the stack
+					Taskman.add_task(task);
 				}
+
+				if(max_one_task) { return; }
+
 			} else {
 				// Get a new task from the list
-
-				@ mut = Taskman.get_mutex();
 				mut.lock();
 
-				u32 pos = 0;
-				bool found = false;
-				while(pos < 256) {
-					//?Task task = task_list.tasks.get(pos); 
-					?Task task = Taskman.tmp(task_list, pos); 
-					if(task != null && task.suspended == false){
-						// Found a task, assign to slot
-						i32 slot = 0;
-						while(slot < 32){
-							?Task task_slot = this.tasks.get(slot);
-							if(task_slot == null) {
-								this.tasks.set(slot, task);
-								this.tasks_run_count++;
-								task_list.tasks.clear(pos);
-								found = true;
-								break;
-							}
-							slot++;
-						}
+				?Task prev_task = null;
+				?Task task = null;
+				while(true){
+					task = task_list.first;
+					if(task_list.skip_first){
+						task = task.next;
 					}
-
-					if(found == true){
+					while(task != null && task.suspended == true){
+						prev_task = task;
+						task = task.next;
+					}
+					if(task != null){
 						break;
 					}
+					// No task found
+					// Use sleep to allow threads to swap
+					main:main:usleep(1000);
+					//
+					if(max_one_task) { return; }
+				}
 
-					pos++;
+				if(prev_task != null) {
+					prev_task.next = task.next;
+				} else {
+					if(task.next == null){
+						task_list.skip_first = true;
+					} else {
+						task_list.first = task.next;
+						task_list.skip_first = false;
+					}
 				}
 
 				mut.unlock();
 
-				if(found == false){
-					// No new tasks found
-					if(max_one_task){ return; }
-					// Suspend task manager
-					if(this.thread != null) {
-						this.thread.suspend();
-					}
-				}
+				this.current_task = task;
 			}
 		}
 	}
@@ -182,18 +168,14 @@ class Taskman norfc {
 		}
 	}
 
-	public static func tmp(TaskList task_list, u32 pos) ?Task {
-					?Task task = task_list.tasks.get(pos); 
-					if(task != null && Taskman.is_sus(task)){
-						return task;
-					}
-					return task;
-	}
-	public static func is_sus(Task task) bool {
-		return task.suspended;
+	public static func get_mutex() Mutex {
+		static Mutex mut {
+			return Mutex.make();
+		} 
+		return mut;
 	}
 
-	public static func get_mutex() Mutex {
+	public static func get_add_mutex() Mutex {
 		static Mutex mut {
 			return Mutex.make();
 		} 
@@ -202,50 +184,48 @@ class Taskman norfc {
 
 	public static func add_task(Task task) {
 
-		//@ mut = Taskman.get_mutex();
-		//mut.lock();
+		@ mut = Taskman.get_add_mutex();
+		mut.lock();
 
 		@ task_list = TaskList.get();
 
-		static TaskPos task_pos {
-			return TaskPos {};
-		}
+		?Task lt = task_list.last;
 
-		while(true){
-			task_pos.value++;
-			if(task_pos.value == 256) {
-				task_pos.value = 0;
-			}
-			?Task t = task_list.tasks.get(task_pos.value);
-			if(t == null){
-				break;
+		if(lt == null){
+			task_list.first = task;
+		} else {
+			// Prevent infinite loop
+			if(lt != task){
+				lt.next = task;
 			}
 		}
 
-		task_list.tasks.set(task_pos.value, task);
+		task_list.last = task;
+
+		if(task_list.first == task_list.last){
+			task_list.skip_first = false;
+		}
 
 		//
-		//mut.unlock();
+		mut.unlock();
 
 		// Unsuspend thread
-		Taskman.continue_threads();
+		//Taskman.continue_threads();
 	}
 
 	public static func run_another_task() {
 
 		Taskman tm = get_threaded LOCAL_TM;
-		Task task = tm.tasks.get(tm.current_task_index);
-
-		task.suspended = true;
+		Task task = tm.current_task;
 
 		tm.run_tasks(true);
 
-		task.suspended = false;
+		tm.current_task = task;
 	}
 
 	public static func suspend_task() {
 		Taskman tm = get_threaded LOCAL_TM;
-		Task task = tm.tasks.get(tm.current_task_index);
+		Task task = tm.current_task;
 		task.suspended = true;
 	}
 }
