@@ -8,9 +8,6 @@ class Task norfc {
 	ptr result = 0;
 	bool ready = false;
 	bool suspended = false;
-	bool executed = false;
-	i32 nr = 0;
-	?Task next = null;
 
 	//public func __free(){
 	//	io:print("free-task\n");

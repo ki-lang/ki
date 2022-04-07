@@ -8,7 +8,6 @@ class TaskList {
 	//type:PtrArray tasks;
 	public ?Task first = null;
 	public ?Task last = null;
-	public i32 nr = 0;
 	public i32 head = 0;
 	public i32 tail = 0;
 	public type:PtrArray tasks = type:PtrArray.make(256);
@@ -97,7 +96,7 @@ class Taskman norfc {
 	public func run_tasks(bool max_one_task) {
 
 		@ task_list = TaskList.get();
-		@ mut = Taskman.get_mutex();
+		@ mut = this.mut_get_task;
 
 		while(true){
 			if(this.current_task != null) {
@@ -134,8 +133,6 @@ class Taskman norfc {
 					task_list.tail = 0;
 				}
 
-				task.executed = true;
-
 				mut.unlock();
 
 				this.current_task = task;
@@ -156,13 +153,6 @@ class Taskman norfc {
 		}
 	}
 
-	public static func get_mutex() Mutex {
-		static Mutex mut {
-			return Mutex.make();
-		} 
-		return mut;
-	}
-
 	public static func get_add_mutex() Mutex {
 		static Mutex mut {
 			return Mutex.make();
@@ -172,23 +162,12 @@ class Taskman norfc {
 
 	public static func add_task(Task task) {
 
-		task.next = null;
-		task.executed = false;
-
 		@ mut = Taskman.get_add_mutex();
 		mut.lock();
 
 		@ task_list = TaskList.get();
 
-		if(task.nr == 0){
-			task_list.nr++;
-			task.nr = task_list.nr;
-		}
-
 		task_list.tasks.set(task_list.head, task);
-
-		//io:print("<<<<< ");
-		//io:println(task.nr.str());
 
 		task_list.head++;
 		if(task_list.head == 256){
@@ -198,13 +177,9 @@ class Taskman norfc {
 			main:main:usleep(1);
 		}
 
-		//
 		mut.unlock();
 
 		task_list.waiter.continue();
-
-		// Unsuspend thread
-		//Taskman.continue_threads();
 	}
 
 	public static func run_another_task() {
