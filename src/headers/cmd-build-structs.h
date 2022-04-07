@@ -303,6 +303,8 @@ typedef enum OperatorType {
   op_bit_XOR,  // 15
   op_and,
   op_or,
+  op_bit_shift_left,
+  op_bit_shift_right,
 } OperatorType;
 
 typedef struct ValueCast {

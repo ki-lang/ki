@@ -1,20 +1,46 @@
 
 namespace mem;
 
-class Allocator norfc {
-	u64 size;
+class AllocatorSettings norfc {
 	u32 block_i = 0;
 	u32 block_c = 0;
 	ptr blocks_ptr = alloc_flat(256 * 8);
+}
+
+class Allocator norfc {
+	u64 size;
 	ki:async:Mutex mut = ki:async:Mutex.make();
+	?ki:async:Threaded<AllocatorSettings> settings = ki:async:Threaded<AllocatorSettings>.make();
+
+	public static func make(u64 size) Allocator {
+		@ alc = cast (alloc_flat(64)) as Allocator;
+		alc.size = size;
+		alc.mut = ki:async:Mutex.make();
+		alc.settings = ki:async:Threaded<AllocatorSettings>.make();
+		return alc;
+	}
 
 	// 1(10x)1(20x)15(40x)0(80x)102(160x)7(256x)13(256x)
 	// 1(10x) example
 	// (block_i,len:10,empty-count:1,empty-pos:1)|(pos){...}|(pos){NULL}|(pos){...}
 
+	func get_settings() AllocatorSettings {
+		?AllocatorSettings settings = this.settings.get();
+		if(settings == null){
+			settings = cast (alloc_flat(64)) as AllocatorSettings;
+			settings.block_i = 0;
+			settings.block_c = 0;
+			settings.blocks_ptr = alloc_flat(256 * 8);
+			this.settings.set(settings);
+		}
+		return settings;
+	}
+
 	func get_chunk() ptr {
 
-		this.mut.lock();
+		@ settings = this.get_settings();
+
+		//this.mut.lock();
 
 		u8 len = 10;
 		ptr block_ptr = 0;
@@ -24,36 +50,38 @@ class Allocator norfc {
 		ptr result = 0;
 		u8 pos = 0;
 
-		while(this.block_i < this.block_c){
-			result = this.get_chunk_from_block();
+		while(settings.block_i < settings.block_c){
+			result = this.get_chunk_from_block(settings);
 			if(result != null){
-				this.mut.unlock();
+				//this.mut.unlock();
 				return result;
 			}
 			// No empty slots, check next block
-			this.block_i++;
+			settings.block_i++;
 		}
 
-		if(this.block_c > 0) {
+		if(settings.block_c > 0) {
 			// Get length from previous block
-			ptr block_ptr = this.blocks_ptr + ((this.block_c - 1) * 8);
+			ptr block_ptr = settings.blocks_ptr + ((settings.block_c - 1) * 8);
 			block_ptr = getptrv block_ptr as ptr;
-			block_ptr += 4;
+			block_ptr += 12;
 			len = getptrv block_ptr as u8;
 		}
 
-		this.block_c++;
+		settings.block_c++;
 		u16 new_len_16 = len * 2;
 		if(new_len_16 > 250){
 			new_len_16 = 250;
 		}
 		u8 new_len = cast new_len_16 as u8;
 
-		ptr new_block = alloc_flat(new_len * (this.size + 1) + 7);
-		ptr block_list_adr = this.blocks_ptr + ((this.block_c - 1) * 8);
+		ptr new_block = alloc_flat(new_len * (this.size + 1) + 15);
+		ptr block_list_adr = settings.blocks_ptr + ((settings.block_c - 1) * 8);
 		setptrv block_list_adr to new_block;
 
-		setptrv new_block to this.block_i; // Set block index
+		setptrv new_block to settings; // Set block settings
+		new_block += 8;
+		setptrv new_block to settings.block_i; // Set block index
 		new_block += 4;
 		setptrv new_block to new_len; // Set item count
 		new_block++;
@@ -63,9 +91,9 @@ class Allocator norfc {
 		empty_pos = 2;
 		setptrv new_block to empty_pos; // Set next empty index
 
-		this.mut.unlock();
+		//this.mut.unlock();
 
-		if(this.block_c > 200){
+		if(settings.block_c > 200){
 			io:print("max block_c reached in allocator: ");
 			io:print(this.size.str());
 			io:print("\n");
@@ -74,19 +102,19 @@ class Allocator norfc {
 		return new_block + 1 + 1; // skip empty_pos byte & skip value pos byte
 	}
 
-	func get_chunk_from_block() ptr {
-		ptr block_ptr = this.blocks_ptr + ((this.block_i) * 8);
+	func get_chunk_from_block(AllocatorSettings settings) ptr {
+		ptr block_ptr = settings.blocks_ptr + ((settings.block_i) * 8);
 		block_ptr = getptrv block_ptr as ptr;
-		block_ptr += 4;
+		block_ptr += 12;
 		u8 len = getptrv block_ptr as u8;
 		block_ptr++;
 		u8 empty_count = getptrv block_ptr as u8;
 
-		while(empty_count == 0 && this.block_i < (this.block_c - 1)){
-			this.block_i++;
-			block_ptr = this.blocks_ptr + ((this.block_i) * 8);
+		while(empty_count == 0 && settings.block_i < (settings.block_c - 1)){
+			settings.block_i++;
+			block_ptr = settings.blocks_ptr + ((settings.block_i) * 8);
 			block_ptr = getptrv block_ptr as ptr;
-			block_ptr += 4;
+			block_ptr += 12;
 			len = getptrv block_ptr as u8;
 			block_ptr++;
 			empty_count = getptrv block_ptr as u8;
@@ -122,7 +150,7 @@ class Allocator norfc {
 
 	func free(ptr adr) {
 
-		this.mut.lock();
+		//this.mut.lock();
 
 		adr--;
 		u8 pos = getptrv adr as u8;
@@ -130,7 +158,7 @@ class Allocator norfc {
 
 		if(pos == zb){
 			// Nothing allocated here
-			this.mut.unlock();
+			//this.mut.unlock();
 			return;
 		}
 
@@ -150,9 +178,13 @@ class Allocator norfc {
 
 		adr -= 4;
 		u32 block_i = getptrv adr as u32;
-		if(block_i < this.block_i){
-			this.block_i = block_i;
+		adr -= 8;
+
+		@ settings = getptrv adr as AllocatorSettings;
+		if(block_i < settings.block_i){
+			settings.block_i = block_i;
 		}
+
 		//if(this.block_i > 0){
 			//this.block_i--;
 			//if(this.block_c > this.block_i + 10){
@@ -161,6 +193,6 @@ class Allocator norfc {
 			//}
 		//}
 
-		this.mut.unlock();
+		//this.mut.unlock();
 	}
 }

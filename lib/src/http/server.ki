@@ -131,7 +131,7 @@ class Server {
 							if(connections.has(new_fd)){
 								ptr conptr = connections.get(new_fd);
 								Connection conx = cast conptr as Connection;
-								if(conx.task.suspended == false){
+								if(conx.task != null && conx.task.suspended == false){
 									// Wait for existing task to end
                                     io:println("[+] waiting for old connection to end");
                                     con.task.waitForSuspendStatus(true);
@@ -160,6 +160,7 @@ class Server {
 							io:print("[+] connection closed: ");
 							io:println(fd.str());
 
+							con.task = null;
 							con._ALLOCATOR.free(con);
 							connections.clear(fd);
 
@@ -173,7 +174,7 @@ class Server {
 						if(con.task != null){
 							if(con.task.suspended == false){
 								// Task is still busy handling a request
-								// io:println("[+] waiting for previous task to end");
+								io:println("[+] waiting for previous task to end");
                                 con.task.waitForSuspendStatus(true);
 								//continue;
 							}
@@ -200,6 +201,7 @@ class Server {
 						this._RC++;
 						if(con.task == null){
 							con.task = async Server.respond(buf_ev, epfd, con.fd, this);
+							//Server.respond_fast(buf_ev, epfd, con.fd, this);
 						} else {
 						    #if OS_WIN
 							// Peek recv to detect disconnects
@@ -249,11 +251,6 @@ class Server {
 
 		while(true){
 
-			//@ str = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
-			//@ check = main:main:send(fd, str.data, str.length, 0);
-			//alc.free(buf);
-			//async_task_suspend;
-
             @ req = Request.read_request(fd);
             if(req == null){
 			    async_task_suspend;
@@ -262,10 +259,28 @@ class Server {
 		    @ response = server.handler(req);
 
             string output = response.output();
-		    io:write(fd, output);
+			@ check = main:main:send(fd, output.data, output.length, 0);
 
 			async_task_suspend;
 		}
+	}
+
+	public static func respond_fast(ptr buf_ev, i32 epfd, i32 fd, ptr server_ptr){
+
+		@ alc = allocator 65535;
+		ptr buf = alc.get_chunk();
+
+		i32 rcvd = main:main:recv(fd, buf, 65535, 0);
+		if (rcvd <= 0){
+			alc.free(buf);
+			return;
+		}
+
+		@ out = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
+		@ check = main:main:send(fd, out.data, out.length, 0);
+
+		alc.free(buf);
+		return;
 	}
 
 }

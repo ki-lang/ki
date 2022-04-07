@@ -864,6 +864,10 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(result, " & ");
     } else if (op->type == op_bit_XOR) {
       str_append_chars(result, " ^ ");
+    } else if (op->type == op_bit_shift_left) {
+      str_append_chars(result, "<<");
+    } else if (op->type == op_bit_shift_right) {
+      str_append_chars(result, ">>");
       //
     } else if (op->type == op_and) {
       str_append_chars(result, " && ");
@@ -1299,9 +1303,6 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     // str_append_chars(fc->tkn_buffer, ");\n");
     //
     str_append_chars(fc->tkn_buffer, var_name);
-    str_append_chars(fc->tkn_buffer, "->jmpbuf = 0;\n");
-    //
-    str_append_chars(fc->tkn_buffer, var_name);
     str_append_chars(fc->tkn_buffer, "->handler_func = ");
     str_append_chars(fc->tkn_buffer, handler_name);
     str_append_chars(fc->tkn_buffer, ";\n");
@@ -1643,16 +1644,9 @@ char* fc_write_c_get_allocator(FileCompiler* fc, int size, bool threaded) {
 
   str_append_chars(fc->c_code_after, "if(a){ return a; }\n");
 
-  str_append_chars(fc->c_code_after, "a = ki__mem__alloc_flat(64);\n");
-  str_append_chars(fc->c_code_after, "a->size = ");
+  str_append_chars(fc->c_code_after, "a = ki__mem__Allocator__make(");
   str_append_chars(fc->c_code_after, fc->sprintf);
-  str_append_chars(fc->c_code_after, ";\n");
-
-  str_append_chars(fc->c_code_after, "a->block_i = 0;\n");
-  str_append_chars(fc->c_code_after, "a->block_c = 0;\n");
-  str_append_chars(fc->c_code_after,
-                   "a->blocks_ptr = ki__mem__alloc_flat(256 * 8);\n");
-  str_append_chars(fc->c_code_after, "a->mut = ki__async__Mutex__make();\n");
+  str_append_chars(fc->c_code_after, ");\n");
 
   if (threaded) {
     str_append_chars(fc->c_code_after, "pthread_setspecific(");

@@ -5,26 +5,16 @@ class Task norfc {
 	funcref (Task) void handler_func;
 	ptr func;
 	ptr args = 0;
-	ptr jmpbuf = 0;
 	ptr result = 0;
 	bool ready = false;
 	bool suspended = false;
 
 	//public func __free(){
-	//	if(this.args != null){ mem:free_flat(this.args); }
-	//	this._ALLOCATOR.free(this);
+	//	io:print("free-task\n");
 	//}
 
 	public func continue (){
-		this.suspended = false;
-		// Continue threads
-		@ tms = Taskman.get_task_managers();
-		@ i = 0;
-		while(i < 8){
-			Taskman tm = tms.get(i);
-			tm.thread.continue();
-			i++;
-		}
+		Taskman.add_task(this);
 	}
 
 	public func waitForSuspendStatus (bool status){

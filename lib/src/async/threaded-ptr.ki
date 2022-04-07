@@ -1,0 +1,24 @@
+
+namespace async;
+
+class Threaded<T> {
+
+	public main:main:pthread_key_t key;
+
+	static func make() Threaded<T> {
+		@ adr = mem:alloc_flat(sizeof(main:main:pthread_key_t));
+		@ check = main:main:pthread_key_create(adr, null);
+		Threaded<T> v = mem:alloc_flat(sizeof(Threaded<T>));
+		v.key = adr;
+		return v;
+	}
+
+	func get() ?T {
+		return main:main:pthread_getspecific(getptrv this.key as NPT main:main:pthread_key_t);
+	}
+
+	func set(T value) {
+		@ check = main:main:pthread_setspecific(getptrv this.key as NPT main:main:pthread_key_t, value);
+	}
+
+}

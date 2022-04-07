@@ -5,6 +5,7 @@ namespace async;
 
 class Thread {
 
+	public bool suspended = false;
 	public main:main:pthread_t pt;
 	public Mutex mut;
 	public main:main:pthread_cond_t cond;
@@ -25,12 +26,14 @@ class Thread {
 	}
 
 	public func suspend(){
+		this.suspended = true;
 		@ check = main:main:pthread_cond_wait(this.cond, this.mut.mutex);
 	}
 
 	public func continue(){
 		@ check = main:main:pthread_cond_signal(this.cond);
 		check = main:main:pthread_mutex_unlock(this.mut.mutex);
+		this.suspended = false;
 	}
 
 }
