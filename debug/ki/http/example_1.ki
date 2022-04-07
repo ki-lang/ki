@@ -1,7 +1,9 @@
 
 func handler(ki:http:Request req) ki:http:Response{
 
-	return ki:http:Response{ body: "Hello from example" };
+	return ki:http:Response{
+		body: "Hello from example"
+	};
 }
 
 func main() i32 {
