@@ -83,7 +83,6 @@ void fc_write_c_all() {
         path,
         "void ki__async__Taskman__add_task(struct ki__async__Task* task);\n",
         true);
-    write_file(path, "void ki__async__Taskman__suspend_task();\n", true);
     write_file(path, "void ki__async__Taskman__run_another_task();\n", true);
   }
   write_file(path, "void KI_INITS();\n", true);
@@ -667,10 +666,6 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     } else {
       str_append_chars(fc->tkn_buffer, "return 0;\n");
     }
-  } else if (token->type == tkn_task_suspend) {
-    deref_local_vars(fc);
-    str_append_chars(fc->tkn_buffer,
-                     "ki__async__Taskman__suspend_task(); return;\n");
   } else if (token->type == tkn_set_threaded) {
     TokenIdValue* iv = token->item;
 
@@ -1258,7 +1253,6 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(fc->c_code_after, ret_name);
       str_append_chars(fc->c_code_after, ";\n");
     }
-    str_append_chars(fc->c_code_after, "if(!task->suspended){\n");
     str_append_chars(fc->c_code_after, "task->ready = 1;\n");
     // Deref args if needed
     for (int i = 0; i < fcall->arg_values->length; i++) {
@@ -1275,7 +1269,6 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       }
     }
     array_free(arg_strings);
-    str_append_chars(fc->c_code_after, "}\n");
     // End body
     str_append_chars(fc->c_code_after, "}\n\n");
 

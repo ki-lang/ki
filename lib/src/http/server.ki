@@ -128,16 +128,6 @@ class Server {
 							Connection con = Connection{ fd: new_fd };
 							con._RC++;
 
-							if(connections.has(new_fd)){
-								ptr conptr = connections.get(new_fd);
-								Connection conx = cast conptr as Connection;
-								if(conx.task != null && conx.task.suspended == false){
-									// Wait for existing task to end
-                                    io:println("[+] waiting for old connection to end");
-                                    con.task.waitForSuspendStatus(true);
-								}
-							}
-
 							connections.set(new_fd, con);
 							io:print("[+] new connection: ");
 							io:print(new_fd.str());
@@ -171,15 +161,6 @@ class Server {
 						}
 						#end
 
-						if(con.task != null){
-							if(con.task.suspended == false){
-								// Task is still busy handling a request
-								io:println("[+] waiting for previous task to end");
-                                con.task.waitForSuspendStatus(true);
-								//continue;
-							}
-						}
-
 						#if OS_WIN
 						bool has_incoming_data = fd:isset(read_set, fd) == true;
 
@@ -200,8 +181,8 @@ class Server {
 
 						this._RC++;
 						if(con.task == null){
-							con.task = async Server.respond(buf_ev, epfd, con.fd, this);
-							//Server.respond_fast(buf_ev, epfd, con.fd, this);
+							con.task = async Server.respond(con.fd, this);
+							//Server.respond_fast(con.fd, this);
 						} else {
 						    #if OS_WIN
 							// Peek recv to detect disconnects
@@ -245,27 +226,25 @@ class Server {
 		@ check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_ADD, fd, ev);
 	}
 
-	public static func respond(ptr buf_ev, i32 epfd, i32 fd, ptr server_ptr){
+	public static func respond(i32 fd, ptr server_ptr){
 
         @ server = cast server_ptr as Server;
+		server._RC++;
 
-		while(true){
+        @ req = Request.read_request(fd);
+        if(req == null){
+			return;
+        }
 
-            @ req = Request.read_request(fd);
-            if(req == null){
-			    async_task_suspend;
-            }
+		@ response = server.handler(req);
 
-		    @ response = server.handler(req);
+        string output = response.output();
+		@ check = main:main:send(fd, output.data, output.length, 0);
 
-            string output = response.output();
-			@ check = main:main:send(fd, output.data, output.length, 0);
-
-			async_task_suspend;
-		}
+		return;
 	}
 
-	public static func respond_fast(ptr buf_ev, i32 epfd, i32 fd, ptr server_ptr){
+	public static func respond_fast(i32 fd, ptr server_ptr){
 
 		@ alc = allocator 65535;
 		ptr buf = alc.get_chunk();

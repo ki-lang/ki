@@ -118,10 +118,6 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
       token_mutex_unlock(fc, scope);
       continue;
     }
-    if (strcmp(token, "async_task_suspend") == 0) {
-      token_task_suspend(fc, scope);
-      continue;
-    }
 
     // if (strcmp(token, "free") == 0) {
     //   token_free(fc, scope);

@@ -167,15 +167,18 @@ class Taskman norfc {
 
 		@ task_list = TaskList.get();
 
-		task_list.tasks.set(task_list.head, task);
+		@ pos = task_list.head;
 
 		task_list.head++;
 		if(task_list.head == 256){
 			task_list.head = 0;
 		}
 		while(task_list.head == task_list.tail){
+			io:print("wait for tail\n");
 			main:main:usleep(1);
 		}
+
+		task_list.tasks.set(pos, task);
 
 		mut.unlock();
 
@@ -190,11 +193,5 @@ class Taskman norfc {
 		tm.run_tasks(true);
 
 		tm.current_task = task;
-	}
-
-	public static func suspend_task() {
-		Taskman tm = get_threaded LOCAL_TM;
-		Task task = tm.current_task;
-		task.suspended = true;
 	}
 }

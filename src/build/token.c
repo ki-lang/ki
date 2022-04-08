@@ -141,15 +141,6 @@ void token_throw(FileCompiler* fc, Scope* scope) {
   fc_expect_token(fc, ";", false, true, true);
 }
 
-void token_task_suspend(FileCompiler* fc, Scope* scope) {
-  //
-  Token* t = init_token();
-  t->type = tkn_task_suspend;
-  array_push(scope->ast, t);
-
-  fc_expect_token(fc, ";", false, true, true);
-}
-
 void token_static(FileCompiler* fc, Scope* scope) {
   // Get type
   Type* left_type = fc_read_type(fc);

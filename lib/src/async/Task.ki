@@ -7,7 +7,6 @@ class Task norfc {
 	ptr args = 0;
 	ptr result = 0;
 	bool ready = false;
-	bool suspended = false;
 
 	//public func __free(){
 	//	io:print("free-task\n");
@@ -17,12 +16,4 @@ class Task norfc {
 		Taskman.add_task(this);
 	}
 
-	public func waitForSuspendStatus (bool status){
-        while(true){
-			if(this.suspended == status){
-				break;
-			}
-            main:main:usleep(1);
-		}
-	}
 }

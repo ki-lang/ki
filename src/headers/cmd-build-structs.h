@@ -352,7 +352,6 @@ typedef enum TokenTypeEnum {
   tkn_mutex_init,
   tkn_mutex_lock,
   tkn_mutex_unlock,
-  tkn_task_suspend,
   // Global ast only
   tkn_func,
   tkn_class,
