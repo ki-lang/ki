@@ -4,4 +4,4 @@
 # PATH=$PATH:~/.cargo/bin
 
 mkdir -p flame
-sudo bash -i -c 'cd flame && flamegraph -o graph.svg ../test'
+sudo bash -i -c 'cd flame && flamegraph -o graph.svg -- ../test'
