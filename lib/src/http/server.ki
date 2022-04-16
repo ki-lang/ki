@@ -17,7 +17,6 @@ func request_handler(Request req) Response {
 class Server {
 	u32 port;
 	i32 max_connections = 64000;
-	ki:net:Socket socket;
 	funcref (Request) Response handler = request_handler;
 
 	func start() ! {
