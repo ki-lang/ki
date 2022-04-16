@@ -86,6 +86,8 @@ void fc_write_c_all() {
     write_file(path, "void ki__async__Taskman__run_another_task();\n", true);
   }
   write_file(path, "void KI_INITS();\n", true);
+  write_file(path, "void* KI_ALLOCATORS;\n", true);
+  write_file(path, "void* KI_ALLOCATORS_MUT;\n", true);
 }
 
 void fc_write_c_pre(FileCompiler* fc) {
@@ -439,6 +441,10 @@ void fc_write_c_func(FileCompiler* fc, Function* func) {
     fc->indent++;
 
     if (strcmp(func->cname, "main") == 0) {
+      str_append_chars(fc->tkn_buffer,
+                       "KI_ALLOCATORS = ki__mem__calloc_flat(64 * 8);\n");
+      str_append_chars(fc->tkn_buffer,
+                       "KI_ALLOCATORS_MUT = ki__async__Mutex__make();\n");
       str_append_chars(fc->tkn_buffer, "KI_INITS();\n");
     }
     if (uses_async && strcmp(func->cname, "main") == 0) {

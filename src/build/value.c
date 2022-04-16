@@ -30,6 +30,16 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     value->item = subv;
     value->return_type = subv->return_type;
     fc_expect_token(fc, ")", false, false, true);
+  } else if (strcmp(token, "KI_ALLOCATORS") == 0) {
+    value->type = vt_var;
+    value->item = strdup("KI_ALLOCATORS");
+    value->return_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "ptr"));
+  } else if (strcmp(token, "KI_ALLOCATORS_MUT") == 0) {
+    value->type = vt_var;
+    value->item = strdup("KI_ALLOCATORS_MUT");
+    value->return_type =
+        fc_identifier_to_type(fc, create_identifier("ki", "async", "Mutex"));
   } else if (strcmp(token, "null") == 0) {
     value->type = vt_null;
     Type* type = init_type();

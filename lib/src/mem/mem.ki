@@ -3,20 +3,6 @@ namespace mem;
 
 #header "sys/memory"
 
-func get_mutex() async:Mutex {
-	static async:Mutex m {
-		return ki:async:Mutex.make();
-	}
-	return m;
-}
-
-func get_allocators() ptr {
-	static ptr allocators {
-		return mem:calloc_flat(64 * 8);
-	}
-	return allocators;
-}
-
 func alloc(uxx size) ptr {
 	u8 pow = 0;
 	uxx psize = 1;
@@ -25,11 +11,11 @@ func alloc(uxx size) ptr {
 		psize = psize << 1;
 	}
 
-	ptr allocators = get_allocators();
+	ptr allocators = KI_ALLOCATORS;
 
 	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
 	if(alc == null){
-		@ mut = get_mutex();
+		@ mut = KI_ALLOCATORS_MUT;
 		mut.lock();
 
 		alc = getptrv (allocators + pow * 8) as ?Allocator;
@@ -51,7 +37,7 @@ func free(ptr adr) {
 	adr -= 1;
 	u8 pow = getptrv adr as u8;
 
-	ptr allocators = get_allocators();
+	ptr allocators = KI_ALLOCATORS;
 
 	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
 
