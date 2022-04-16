@@ -8,3 +8,15 @@
 <h1>Working on it...</h1>
 
 </div>
+
+## Demo
+
+```
+git clone git@github.com:ki-lang/ki.git
+cd ki
+make
+
+# Example
+./test.sh
+./test
+```
