@@ -126,6 +126,8 @@ typedef struct Class {
   char* cname;
   char* name;
   struct FileCompiler* fc;
+  //
+  struct Scope* scope;
   bool ref_count;
   bool is_number;
   bool is_float;

@@ -6,6 +6,7 @@ Class* init_class() {
   class->name = NULL;
   class->cname = NULL;
   class->fc = NULL;
+  class->scope = NULL;
   class->ref_count = true;
   class->is_number = false;
   class->is_float = false;
@@ -56,9 +57,9 @@ Class* fc_make_generic_class(Class* class) {
   return gclass;
 }
 
-Class* fc_get_generic_class(FileCompiler* fc, Class* class) {
+Class* fc_get_generic_class(FileCompiler* fc, Class* class, Scope* scope) {
   int fci = fc->i;
-  char* uid = fc_class_read_generic_unique_id(fc);
+  char* uid = fc_class_read_generic_unique_id(fc, scope);
   char* cname = malloc(KI_TOKEN_MAX);
   strcpy(cname, class->cname);
   strcat(cname, "__");
@@ -78,7 +79,7 @@ Class* fc_get_generic_class(FileCompiler* fc, Class* class) {
     fc_expect_token(fc, "<", false, true, true);
     int generic_c = 0;
     while (generic_c < class->generic_names->length) {
-      Type* gen_t = fc_read_type(fc);
+      Type* gen_t = fc_read_type(fc, scope);
       char* name = array_get_index(class->generic_names, generic_c);
       IdentifierFor* idf = init_idf();
       idf->type = idfor_type;
@@ -143,7 +144,7 @@ Map* fc_class_restore_generic_identifiers(Class* gclass,
   map_free(prev_identifiers, false);
 }
 
-char* fc_class_read_generic_unique_id(FileCompiler* fc) {
+char* fc_class_read_generic_unique_id(FileCompiler* fc, Scope* scope) {
   //
   Str* uid = str_make("|");
   char* token = malloc(KI_TOKEN_MAX);
@@ -152,10 +153,12 @@ char* fc_class_read_generic_unique_id(FileCompiler* fc) {
 
   fc_next_token(fc, token, true, true, true);
   while (strcmp(token, ">") != 0) {
-    Identifier* id = fc_read_identifier(fc, false, true, true);
-    char* gname = fc_create_identifier_global_cname(fc, id);
-    str_append_chars(uid, gname);
-    free(gname);
+    // Identifier* id = fc_read_identifier(fc, false, true, true);
+    Type* gen_t = fc_read_type(fc, scope);
+    if (gen_t->nullable) {
+      str_append_chars(uid, '?');
+    }
+    str_append_chars(uid, gen_t->class->cname);
 
     fc_next_token(fc, token, true, true, true);
     if (strcmp(token, ">") != 0) {
@@ -333,7 +336,7 @@ void fc_scan_class_props(Class* class) {
 
       Function* func = init_func();
       func->fc = fc;
-      func->scope = init_scope();
+      func->scope = init_sub_scope(class->scope);
       func->scope->parent = fc->scope;
       func->scope->is_func = true;
 
@@ -375,7 +378,7 @@ void fc_scan_class_props(Class* class) {
         }
         FunctionArg* arg = init_func_arg();
         arg->name = "this";
-        arg->type = fc_identifier_to_type(fc, fid);
+        arg->type = fc_identifier_to_type(fc, fid, NULL);
 
         array_push(func->args, arg);
         IdentifierFor* thisidf = init_idf();
@@ -410,7 +413,7 @@ void fc_scan_class_props(Class* class) {
     fc->i -= strlen(token);
 
     // Not a function, look for type
-    Type* type = fc_read_type(fc);
+    Type* type = fc_read_type(fc, class->scope);
     prop->return_type = type;
 
     class->size += type->bytes;
@@ -445,7 +448,7 @@ void fc_scan_class_props(Class* class) {
     prop->is_static = false;
 
     Type* type =
-        fc_identifier_to_type(fc, create_identifier("ki", "type", "u16"));
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "u16"), NULL);
     prop->return_type = type;
 
     Value* def_value = init_value();
@@ -462,8 +465,8 @@ void fc_scan_class_props(Class* class) {
     prop->access_type = acct_public;
     prop->is_static = false;
 
-    type =
-        fc_identifier_to_type(fc, create_identifier("ki", "mem", "Allocator"));
+    type = fc_identifier_to_type(
+        fc, create_identifier("ki", "mem", "Allocator"), NULL);
     prop->return_type = type;
 
     // def_value = init_value();

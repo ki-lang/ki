@@ -144,7 +144,7 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
 
     if (strcmp(token, "?") == 0) {
       fc->i--;
-      Type* type = fc_read_type(fc);
+      Type* type = fc_read_type(fc, scope);
       token_declare(fc, scope, type);
       continue;
     }
@@ -153,6 +153,14 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
     fc->i -= strlen(token);
     int current_i = fc->i;
     IdentifierFor* idf = fc_read_and_get_idf(fc, scope, false, true, true);
+
+    // If generic read/skip generic types
+    if (idf && idf->type == idfor_class) {
+      Class* class = idf->item;
+      if (class->generic_names != NULL) {
+        Class* gclass = fc_get_generic_class(fc, class, scope);
+      }
+    }
 
     // Check if declare
     if (idf &&
@@ -163,7 +171,7 @@ void fc_build_ast(FileCompiler* fc, Scope* scope) {
       if (is_valid_varname(token)) {
         // Var declaration
         fc->i = current_i;
-        Type* type = fc_read_type(fc);
+        Type* type = fc_read_type(fc, scope);
         token_declare(fc, scope, type);
         continue;
       }

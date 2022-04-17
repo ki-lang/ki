@@ -69,7 +69,7 @@ void fc_scan_threaded_globals(FileCompiler* fc) {
   for (int i = 0; i < fc->threaded_globals->length; i++) {
     ThreadedGlobal* tg = array_get_index(fc->threaded_globals, i);
     fc->i = tg->i;
-    tg->type = fc_read_type(fc);
+    tg->type = fc_read_type(fc, fc->scope);
     fc_next_token(fc, token, false, true, true);
 
     // Name

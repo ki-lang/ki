@@ -83,9 +83,9 @@ void free_class(Class* class);
 ClassProp* init_class_prop();
 void free_class_prop(ClassProp* prop);
 void fc_scan_class(FileCompiler* fc, Class* class);
-char* fc_class_read_generic_unique_id(FileCompiler* fc);
 Class* fc_make_generic_class(Class* class);
-Class* fc_get_generic_class(FileCompiler* fc, Class* class);
+Class* fc_get_generic_class(FileCompiler* fc, Class* class, Scope* scope);
+char* fc_class_read_generic_unique_id(FileCompiler* fc, Scope* scope);
 
 // Trait
 Trait* init_trait();
@@ -108,8 +108,8 @@ ContentChunk* content_chunk_create_for_fc(Array* chunks, FileCompiler* fc);
 // Type
 Type* init_type();
 void free_type(Type* type);
-Type* fc_read_type(FileCompiler* fc);
-Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id);
+Type* fc_read_type(FileCompiler* fc, Scope* scope);
+Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id, Scope* scope);
 bool type_compatible(Type* t1, Type* t2);
 void fc_type_compatible(FileCompiler* fc, Type* t1, Type* t2);
 Type* fc_create_type_for_enum(Enum* enu);

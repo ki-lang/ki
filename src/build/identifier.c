@@ -167,17 +167,6 @@ Identifier* fc_read_identifier(FileCompiler* fc, bool readonly, bool sameline,
     if (id->namespace != NULL) {
       pkc_create_namespace(pkc, id->namespace);
     }
-  } else {
-    // Check for generic
-    Scope* idf_scope = fc_get_identifier_scope(fc, fc->scope, id);
-    IdentifierFor* idf = idf_find_in_scope(idf_scope, id);
-    if (idf && idf->type == idfor_class) {
-      Class* class = idf->item;
-      if (class->generic_names != NULL) {
-        Class* gclass = fc_get_generic_class(fc, class);
-        id->generic_hash = strdup(gclass->generic_hash);
-      }
-    }
   }
 
   //

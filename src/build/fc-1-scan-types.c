@@ -103,6 +103,7 @@ void fc_scan_types(FileCompiler* fc) {
       class->name = name;
       class->fc = fc;
       class->generic_names = generic_names;
+      class->scope = init_sub_scope(fc->scope);
 
       array_push(fc->classes, class);
 
