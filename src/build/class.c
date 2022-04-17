@@ -84,6 +84,7 @@ Class* fc_get_generic_class(FileCompiler* fc, Class* class, Scope* scope) {
       IdentifierFor* idf = init_idf();
       idf->type = idfor_type;
       idf->item = gen_t;
+      map_set(gclass->scope->identifiers, name, idf);
       map_set(gclass->generic_types, name, idf);
       generic_c++;
       if (generic_c < class->generic_names->length) {
@@ -112,36 +113,6 @@ Class* fc_get_generic_class(FileCompiler* fc, Class* class, Scope* scope) {
   free(cname);
 
   return gclass;
-}
-
-Map* fc_class_set_generic_identifiers(Class* gclass) {
-  //
-  Map* fcidfs = gclass->fc->scope->identifiers;
-  Map* prev_identifiers = map_make();
-  for (int i = 0; i < gclass->generic_types->keys->length; i++) {
-    char* key = array_get_index(gclass->generic_types->keys, i);
-    IdentifierFor* tidf = array_get_index(gclass->generic_types->values, i);
-    IdentifierFor* pidf = map_get(fcidfs, key);
-    if (pidf) {
-      map_set(prev_identifiers, key, pidf);
-    }
-    map_set(fcidfs, key, tidf);
-  }
-
-  return prev_identifiers;
-}
-Map* fc_class_restore_generic_identifiers(Class* gclass,
-                                          Map* prev_identifiers) {
-  // Set old identifiers
-  Map* fcidfs = gclass->fc->scope->identifiers;
-  //
-  for (int i = 0; i < prev_identifiers->keys->length; i++) {
-    char* key = array_get_index(prev_identifiers->keys, i);
-    IdentifierFor* pidf = array_get_index(prev_identifiers->values, i);
-    map_set(fcidfs, key, pidf);
-  }
-  //
-  map_free(prev_identifiers, false);
 }
 
 char* fc_class_read_generic_unique_id(FileCompiler* fc, Scope* scope) {
@@ -252,11 +223,6 @@ void fc_scan_class_props(Class* class) {
     return;
   }
   //
-  Map* prev_identifiers = NULL;
-  if (class->generic_hash) {
-    prev_identifiers = fc_class_set_generic_identifiers(class);
-  }
-  //
   char* token = malloc(KI_TOKEN_MAX);
   FileCompiler* fc = class->fc;
   fc->i = class->body_i;
@@ -337,7 +303,6 @@ void fc_scan_class_props(Class* class) {
       Function* func = init_func();
       func->fc = fc;
       func->scope = init_sub_scope(class->scope);
-      func->scope->parent = fc->scope;
       func->scope->is_func = true;
 
       Type* type = init_type();
@@ -484,10 +449,6 @@ void fc_scan_class_props(Class* class) {
     class->size += type->bytes;
     map_set(class->props, "_ALLOCATOR", prop);
   }
-
-  if (prev_identifiers) {
-    fc_class_restore_generic_identifiers(class, prev_identifiers);
-  }
 }
 
 void fc_scan_class_prop_values(Class* class) {
@@ -496,10 +457,6 @@ void fc_scan_class_prop_values(Class* class) {
     return;
   }
   //
-  Map* prev_identifiers = NULL;
-  if (class->generic_hash) {
-    prev_identifiers = fc_class_set_generic_identifiers(class);
-  }
 
   FileCompiler* fc = class->fc;
 
@@ -512,9 +469,5 @@ void fc_scan_class_prop_values(Class* class) {
       prop->default_value = fc_read_value(fc, fc->scope, false, true, true);
       fc_expect_token(fc, ";", false, true, true);
     }
-  }
-
-  if (prev_identifiers) {
-    fc_class_restore_generic_identifiers(class, prev_identifiers);
   }
 }
