@@ -16,7 +16,6 @@ Class* init_class() {
   class->props = map_make();
   class->traits = array_make(2);
   class->generic_names = NULL;
-  class->generic_types = NULL;
   class->generic_hash = NULL;
   return class;
 }
@@ -51,7 +50,6 @@ void free_class_prop(ClassProp* prop) {
 Class* fc_make_generic_class(Class* class) {
   Class* gclass = malloc(sizeof(Class));
   memcpy(gclass, class, sizeof(Class));
-  gclass->generic_types = map_make();
   gclass->props = map_make();
   gclass->traits = array_make(2);
   return gclass;
@@ -85,7 +83,6 @@ Class* fc_get_generic_class(FileCompiler* fc, Class* class, Scope* scope) {
       idf->type = idfor_type;
       idf->item = gen_t;
       map_set(gclass->scope->identifiers, name, idf);
-      map_set(gclass->generic_types, name, idf);
       generic_c++;
       if (generic_c < class->generic_names->length) {
         fc_expect_token(fc, ",", false, true, true);
