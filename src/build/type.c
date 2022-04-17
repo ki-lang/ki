@@ -31,7 +31,7 @@ void free_type(Type* type) {
   free(type);
 }
 
-Type* fc_read_type(FileCompiler* fc) {
+Type* fc_read_type(FileCompiler* fc, Scope* scope) {
   //
   char* token = malloc(KI_TOKEN_MAX);
   bool nullable = false;
@@ -64,13 +64,18 @@ Type* fc_read_type(FileCompiler* fc) {
   fc->i -= strlen(token);
   Identifier* id = fc_read_identifier(fc, false, true, false);
 
-  Type* t = fc_identifier_to_type(fc, id);
+  Type* t = fc_identifier_to_type(fc, id, scope);
   if (t == NULL) {
     fc_error(fc, "Unknown type/class/enum: '%s'", token);
   }
 
   // enum
   if (t->class) {
+    if (t->class->generic_names != NULL) {
+      // Generic class
+      Class* gclass = fc_get_generic_class(fc, t->class, scope);
+      t->class = gclass;
+    }
     if (fc_get_char(fc, 0) == '.') {
       // Enum type
       fc->i++;
@@ -125,10 +130,8 @@ Type* fc_read_type(FileCompiler* fc) {
   return t;
 }
 
-Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
+Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id, Scope* scope) {
   Type* t = init_type();
-
-  Scope* scope = fc->scope;
 
   PkgCompiler* pkc = fc->nsc->pkc;
   if (id->package != NULL) {
@@ -152,7 +155,7 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
       t->func_arg_types = array_make(4);
       fc_next_token(fc, token, true, true, true);
       while (strcmp(token, ")") != 0) {
-        Type* arg_type = fc_read_type(fc);
+        Type* arg_type = fc_read_type(fc, scope);
         array_push(t->func_arg_types, arg_type);
         fc_next_token(fc, token, true, true, true);
         if (strcmp(token, ",") == 0) {
@@ -169,7 +172,7 @@ Type* fc_identifier_to_type(FileCompiler* fc, Identifier* id) {
         t->func_can_error = true;
         fc_next_token(fc, token, false, true, true);
       }
-      t->func_return_type = fc_read_type(fc);
+      t->func_return_type = fc_read_type(fc, scope);
 
       free(token);
     }

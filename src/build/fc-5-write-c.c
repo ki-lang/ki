@@ -819,8 +819,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     VarInfo* vi = malloc(sizeof(VarInfo));
     vi->name = buf_var_name;
     // todo: this leaks memory
-    vi->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "type", "string"));
+    vi->return_type = fc_identifier_to_type(
+        fc, create_identifier("ki", "type", "string"), NULL);
     //
 
     array_push(fc->var_bufs, vi);
@@ -1188,8 +1188,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     Value* on = fcall->on;
     char* size = malloc(10);
     //
-    Type* task_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "async", "Task"));
+    Type* task_type = fc_identifier_to_type(
+        fc, create_identifier("ki", "async", "Task"), NULL);
     // Cache current value
     char* cache = str_to_chars(fc->value_buffer);
 

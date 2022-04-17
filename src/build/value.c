@@ -34,12 +34,12 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     value->type = vt_var;
     value->item = strdup("KI_ALLOCATORS");
     value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "type", "ptr"));
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "ptr"), NULL);
   } else if (strcmp(token, "KI_ALLOCATORS_MUT") == 0) {
     value->type = vt_var;
     value->item = strdup("KI_ALLOCATORS_MUT");
-    value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "async", "Mutex"));
+    value->return_type = fc_identifier_to_type(
+        fc, create_identifier("ki", "async", "Mutex"), NULL);
   } else if (strcmp(token, "null") == 0) {
     value->type = vt_null;
     Type* type = init_type();
@@ -47,22 +47,26 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     value->return_type = type;
   } else if (strcmp(token, "true") == 0) {
     value->type = vt_true;
-    value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"));
+    value->return_type = fc_identifier_to_type(
+        fc, create_identifier("ki", "type", "bool"), NULL);
   } else if (strcmp(token, "false") == 0) {
     value->type = vt_false;
-    value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"));
+    value->return_type = fc_identifier_to_type(
+        fc, create_identifier("ki", "type", "bool"), NULL);
   } else if (strcmp(token, "sizeof") == 0) {
     value->type = vt_sizeof;
     value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "type", "u32"));
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "u32"), NULL);
     fc_expect_token(fc, "(", false, true, false);
     // type or type of var
     IdentifierFor* idf = fc_read_and_get_idf(fc, scope, false, true, true);
     int size = 0;
     if (idf->type == idfor_class) {
       Class* class = idf->item;
+      if (class->generic_names != NULL) {
+        // Generic class
+        class = fc_get_generic_class(fc, class, scope);
+      }
       size = class->size;
     } else if (idf->type == idfor_enum) {
       size = 4;
@@ -89,7 +93,7 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     fc_expect_token(fc, "as", false, true, true);
 
-    cast->as_type = fc_read_type(fc);
+    cast->as_type = fc_read_type(fc, scope);
 
     value->item = cast;
     value->return_type = cast->as_type;
@@ -101,7 +105,7 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     fc_expect_token(fc, "as", false, true, true);
 
-    cast->as_type = fc_read_type(fc);
+    cast->as_type = fc_read_type(fc, scope);
 
     value->item = cast;
     value->return_type = cast->as_type;
@@ -109,7 +113,7 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     value->type = vt_getptr;
     value->item = fc_read_value(fc, scope, false, true, true);
     value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "type", "ptr"));
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "ptr"), NULL);
   } else if (strcmp(token, "setptrv") == 0) {
     value->type = vt_setptrv;
 
@@ -142,8 +146,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     value->item = strbody;
     value->type = vt_string;
-    value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "type", "string"));
+    value->return_type = fc_identifier_to_type(
+        fc, create_identifier("ki", "type", "string"), NULL);
   } else if (strcmp(token, "'") == 0) {
     char* str = malloc(3);
     strcpy(str, "");
@@ -161,7 +165,7 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     value->type = vt_char;
     value->item = str;
     value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "type", "u8"));
+        fc_identifier_to_type(fc, create_identifier("ki", "type", "u8"), NULL);
 
     fc_expect_token(fc, "'", false, true, false);
     // } else if (strcmp(token, "_") == 0 && fc_get_char(fc, 0) == ':') {
@@ -252,15 +256,15 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       fl[x] = '\0';
       value->type = vt_number;
       value->item = fl;
-      value->return_type =
-          fc_identifier_to_type(fc, create_identifier("ki", "type", "f32"));
+      value->return_type = fc_identifier_to_type(
+          fc, create_identifier("ki", "type", "f32"), NULL);
 
     } else {
       // Int
       value->type = vt_number;
       value->item = strdup(token);
-      value->return_type =
-          fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"));
+      value->return_type = fc_identifier_to_type(
+          fc, create_identifier("ki", "type", "i32"), NULL);
     }
   } else if (strcmp(token, "async") == 0) {
     Value* fcall = fc_read_value(fc, scope, false, true, true);
@@ -271,14 +275,14 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
     value->type = vt_async;
     value->item = fcall;
-    value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "async", "Task"));
+    value->return_type = fc_identifier_to_type(
+        fc, create_identifier("ki", "async", "Task"), NULL);
     value->return_type->func_return_type = fcall->return_type;
 
   } else if (strcmp(token, "await") == 0) {
     Value* task = fc_read_value(fc, scope, false, true, true);
-    Type* expect_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "async", "Task"));
+    Type* expect_type = fc_identifier_to_type(
+        fc, create_identifier("ki", "async", "Task"), NULL);
 
     if (task->return_type->class != expect_type->class) {
       fc_error(fc, "Expected a 'channel' value after 'await'", NULL);
@@ -303,8 +307,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     }
 
     value->type = vt_allocator;
-    value->return_type =
-        fc_identifier_to_type(fc, create_identifier("ki", "mem", "Allocator"));
+    value->return_type = fc_identifier_to_type(
+        fc, create_identifier("ki", "mem", "Allocator"), NULL);
 
   } else if (strcmp(token, "get_threaded") == 0) {
     Identifier* id = fc_read_identifier(fc, false, true, true);
@@ -342,8 +346,6 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     idf = idf_find_in_scope(idf_scope, id);
     // }
     if (idf == NULL) {
-      printf("ns: %s , name:%s , hash: %s\n", id->namespace, id->name,
-             id->generic_hash);
       fc_error(fc, "Unknown variable/function/class/enum: %s", id->name);
     }
 
@@ -374,8 +376,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
 
       value->type = vt_number;
       value->item = enuv;
-      value->return_type =
-          fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"));
+      value->return_type = fc_identifier_to_type(
+          fc, create_identifier("ki", "type", "i32"), NULL);
 
     } else if (idf->type == idfor_var) {
       value->type = vt_var;
@@ -391,10 +393,15 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
       value->type = vt_mutex;
       value->item = fc_create_identifier_global_cname(fc, id);
       value->return_type = fc_identifier_to_type(
-          fc, create_identifier("main", "main", "pthread_mutex_t"));
+          fc, create_identifier("main", "main", "pthread_mutex_t"), NULL);
     } else if (idf->type == idfor_class) {
       // class init or static func or prop access
       Class* class = idf->item;
+      if (class->generic_names != NULL) {
+        // Generic class
+        Class* gclass = fc_get_generic_class(fc, class, scope);
+        class = gclass;
+      }
       if (fc_get_char(fc, 0) == '.') {
         // Prop access
 
@@ -520,8 +527,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
         value = init_value();
         value->type = vt_number;
         value->item = enuv;
-        value->return_type =
-            fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"));
+        value->return_type = fc_identifier_to_type(
+            fc, create_identifier("ki", "type", "i32"), NULL);
 
       } else if (value->return_type->class) {
         // Class
@@ -581,8 +588,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
         op->type = op_bit_shift_right;
       }
 
-      Type* return_type =
-          fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"));
+      Type* return_type = fc_identifier_to_type(
+          fc, create_identifier("ki", "type", "i32"), NULL);
 
       value = init_value();
       value->type = vt_operator;
@@ -609,8 +616,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
         op->type = op_gt;
       }
 
-      Type* return_type =
-          fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"));
+      Type* return_type = fc_identifier_to_type(
+          fc, create_identifier("ki", "type", "bool"), NULL);
 
       value = init_value();
       value->type = vt_operator;
@@ -643,8 +650,8 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
         op->type = op_or;
       }
 
-      Type* return_type =
-          fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"));
+      Type* return_type = fc_identifier_to_type(
+          fc, create_identifier("ki", "type", "bool"), NULL);
 
       value = init_value();
       value->type = vt_operator;

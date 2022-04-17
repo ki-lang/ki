@@ -88,7 +88,6 @@ typedef struct Identifier {
   char* package;
   char* namespace;
   char* name;
-  char* generic_hash;
 } Identifier;
 
 typedef struct IdentifierFor {
@@ -126,6 +125,8 @@ typedef struct Class {
   char* cname;
   char* name;
   struct FileCompiler* fc;
+  //
+  struct Scope* scope;
   bool ref_count;
   bool is_number;
   bool is_float;
@@ -140,7 +141,6 @@ typedef struct Class {
   //
   Array* traits;
   Array* generic_names;
-  Map* generic_types;
   char* generic_hash;
 } Class;
 

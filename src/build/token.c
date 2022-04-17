@@ -143,7 +143,7 @@ void token_throw(FileCompiler* fc, Scope* scope) {
 
 void token_static(FileCompiler* fc, Scope* scope) {
   // Get type
-  Type* left_type = fc_read_type(fc);
+  Type* left_type = fc_read_type(fc, scope);
 
   // Get var name
   char* token = malloc(KI_TOKEN_MAX);

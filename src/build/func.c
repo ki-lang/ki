@@ -77,7 +77,7 @@ void fc_scan_func_args(Function* func) {
       break;
     }
 
-    Type* type = fc_read_type(fc);
+    Type* type = fc_read_type(fc, func->scope->parent);
 
     fc_next_token(fc, token, false, false, true);
     if (!is_valid_varname(token)) {
@@ -120,7 +120,7 @@ void fc_scan_func_args(Function* func) {
       func->can_error = true;
     }
     if (strcmp(token, fc->is_header ? ";" : "{") != 0) {
-      Type* return_type = fc_read_type(fc);
+      Type* return_type = fc_read_type(fc, func->scope->parent);
       func->return_type = return_type;
       func->scope->return_type = return_type;
       func->scope->must_return = true;
