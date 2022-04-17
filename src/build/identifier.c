@@ -6,7 +6,6 @@ Identifier* init_id() {
   id->package = NULL;
   id->namespace = NULL;
   id->name = NULL;
-  id->generic_hash = NULL;
   return id;
 }
 
@@ -28,7 +27,7 @@ void free_idf(IdentifierFor* idf) {
 }
 
 char* create_c_identifier_with_strings(char* package, char* namespace,
-                                       char* name, char* generic_hash) {
+                                       char* name) {
   char* result = malloc(KI_TOKEN_MAX);
   strcpy(result, "");
 
@@ -42,11 +41,6 @@ char* create_c_identifier_with_strings(char* package, char* namespace,
   }
   strcat(result, name);
 
-  if (generic_hash) {
-    strcat(result, "__");
-    strcat(result, generic_hash);
-  }
-
   return result;
 }
 
@@ -59,8 +53,7 @@ char* fc_create_identifier_global_cname(FileCompiler* fc, Identifier* id) {
   if (id->namespace != NULL) {
     nsc = pkc_get_namespace_by_name(pkc, id->namespace);
   }
-  return create_c_identifier_with_strings(pkc->name, nsc->name, id->name,
-                                          id->generic_hash);
+  return create_c_identifier_with_strings(pkc->name, nsc->name, id->name);
 }
 
 Identifier* create_identifier(char* package, char* namespace, char* name) {
@@ -73,24 +66,12 @@ Identifier* create_identifier(char* package, char* namespace, char* name) {
 
 IdentifierFor* idf_find_in_scope(Scope* scope, Identifier* id) {
   char* vn = id->name;
-  if (id->generic_hash) {
-    vn = malloc(KI_TOKEN_MAX);
-    strcpy(vn, id->name);
-    strcat(vn, "__");
-    strcat(vn, id->generic_hash);
-  }
   while (scope != NULL) {
     void* x = map_get(scope->identifiers, vn);
     if (x != NULL) {
-      if (id->generic_hash) {
-        free(vn);
-      }
       return x;
     }
     scope = scope->parent;
-  }
-  if (id->generic_hash) {
-    free(vn);
   }
   return NULL;
 }

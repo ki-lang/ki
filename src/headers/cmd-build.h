@@ -61,7 +61,7 @@ void free_id(Identifier* id);
 IdentifierFor* init_idf();
 void free_idf(IdentifierFor* idf);
 char* create_c_identifier_with_strings(char* package, char* namespace,
-                                       char* name, char* generic_hash);
+                                       char* name);
 char* fc_create_identifier_global_cname(FileCompiler* fc, Identifier* id);
 Identifier* create_identifier(char* package, char* namespace, char* name);
 IdentifierFor* idf_find_in_scope(Scope* scope, Identifier* id);

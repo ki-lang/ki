@@ -346,8 +346,6 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
     idf = idf_find_in_scope(idf_scope, id);
     // }
     if (idf == NULL) {
-      printf("ns: %s , name:%s , hash: %s\n", id->namespace, id->name,
-             id->generic_hash);
       fc_error(fc, "Unknown variable/function/class/enum: %s", id->name);
     }
 

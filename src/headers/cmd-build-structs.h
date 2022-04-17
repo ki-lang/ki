@@ -88,7 +88,6 @@ typedef struct Identifier {
   char* package;
   char* namespace;
   char* name;
-  char* generic_hash;
 } Identifier;
 
 typedef struct IdentifierFor {

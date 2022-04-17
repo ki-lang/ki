@@ -63,8 +63,8 @@ void fc_scan_types(FileCompiler* fc) {
       Scope* scope = fc->nsc->scope;
       map_set(scope->identifiers, enu->name, idf);
 
-      char* cname = create_c_identifier_with_strings(
-          fc->nsc->pkc->name, fc->nsc->name, enu->name, NULL);
+      char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
+                                                     fc->nsc->name, enu->name);
       enu->cname = cname;
       map_set(c_identifiers, cname, idf);
 
@@ -159,7 +159,7 @@ void fc_scan_types(FileCompiler* fc) {
       map_set(scope->identifiers, name, idf);
 
       char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
-                                                     fc->nsc->name, name, NULL);
+                                                     fc->nsc->name, name);
       class->cname = cname;
       map_set(c_identifiers, cname, idf);
 
@@ -174,7 +174,7 @@ void fc_scan_types(FileCompiler* fc) {
       fc_expect_token(fc, "{", false, true, true);
 
       char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
-                                                     fc->nsc->name, name, NULL);
+                                                     fc->nsc->name, name);
       Trait* trait = init_trait();
       trait->fc = fc;
       trait->cname = cname;
@@ -215,7 +215,7 @@ void fc_scan_types(FileCompiler* fc) {
       map_set(scope->identifiers, name, idf);
 
       char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
-                                                     fc->nsc->name, name, NULL);
+                                                     fc->nsc->name, name);
       func->cname = cname;
       map_set(c_identifiers, cname, idf);
 
@@ -303,8 +303,8 @@ void fc_scan_types(FileCompiler* fc) {
       Scope* scope = fc->nsc->scope;
       map_set(scope->identifiers, mut->name, idf);
 
-      char* cname = create_c_identifier_with_strings(
-          fc->nsc->pkc->name, fc->nsc->name, mut->name, NULL);
+      char* cname = create_c_identifier_with_strings(fc->nsc->pkc->name,
+                                                     fc->nsc->name, mut->name);
       mut->cname = cname;
       map_set(c_identifiers, cname, idf);
 

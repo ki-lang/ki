@@ -371,14 +371,20 @@ void fc_scan_class_props(Class* class) {
 
       if (!prop->is_static) {
         // first arg is "this"
-        Identifier* fid = create_identifier(class->fc->nsc->pkc->name,
-                                            class->fc->nsc->name, class->name);
-        if (class->generic_hash) {
-          fid->generic_hash = strdup(class->generic_hash);
+        Type* t = init_type();
+        t->type = type_struct;
+        t->class = class;
+        t->is_pointer = true;
+        t->bytes = pointer_size;
+        if (t->class->is_number) {
+          t->is_pointer = false;
+          t->allow_math = true;
+          t->bytes = class->size;
         }
+
         FunctionArg* arg = init_func_arg();
         arg->name = "this";
-        arg->type = fc_identifier_to_type(fc, fid, NULL);
+        arg->type = t;
 
         array_push(func->args, arg);
         IdentifierFor* thisidf = init_idf();
