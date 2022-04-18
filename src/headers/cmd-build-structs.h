@@ -47,10 +47,9 @@ typedef struct FileCompiler {
   Str* before_tkn_buffer;
   Str* value_buffer;
   int indent;
+  struct Scope* current_scope;
   int var_bufc;
   char* var_buf;
-  Array* var_bufs;
-  Array* local_var_names;
   // Misc
   char* sprintf;
   // Local identifiers
@@ -83,6 +82,9 @@ typedef struct Scope {
   struct Array* ast;
   struct Scope* parent;
   struct Type* return_type;
+  //
+  Array* var_bufs;
+  Array* local_var_names;
 } Scope;
 
 typedef struct Identifier {
@@ -280,6 +282,7 @@ typedef struct ValueFuncCall {
   int error_type;
   Value* or_value;
   char* throw_msg;
+  Scope* func_scope;
 } ValueFuncCall;
 
 typedef enum OrType {

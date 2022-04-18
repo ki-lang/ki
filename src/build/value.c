@@ -267,17 +267,25 @@ Value* fc_read_value(FileCompiler* fc, Scope* scope, bool readonly,
           fc, create_identifier("ki", "type", "i32"), NULL);
     }
   } else if (strcmp(token, "async") == 0) {
-    Value* fcall = fc_read_value(fc, scope, false, true, true);
+    Value* v = fc_read_value(fc, scope, false, true, true);
 
-    if (fcall->type != vt_func_call) {
+    if (v->type != vt_func_call) {
       fc_error(fc, "Expected a function call after 'async'", NULL);
     }
 
+    ValueFuncCall* fcall = v->item;
+    if (fcall->on->return_type->func_can_error) {
+      fc_error(
+          fc,
+          "Cannot do async on function that can throw errors (future feature)",
+          NULL);
+    }
+
     value->type = vt_async;
-    value->item = fcall;
+    value->item = v;
     value->return_type = fc_identifier_to_type(
         fc, create_identifier("ki", "async", "Task"), NULL);
-    value->return_type->func_return_type = fcall->return_type;
+    value->return_type->func_return_type = v->return_type;
 
   } else if (strcmp(token, "await") == 0) {
     Value* task = fc_read_value(fc, scope, false, true, true);
@@ -686,6 +694,7 @@ Value* fc_read_func_call(FileCompiler* fc, Scope* scope, Value* on) {
   fcall->arg_values = array_make(2);
   fcall->error_type = or_none;
   fcall->or_value = NULL;
+  fcall->func_scope = NULL;
 
   Value* value = init_value();
   value->type = vt_func_call;
@@ -734,7 +743,10 @@ Value* fc_read_func_call(FileCompiler* fc, Scope* scope, Value* on) {
   fc_next_token(fc, token, false, false, true);
 
   // Check error handling
-  if (value->return_type && on->return_type->func_can_error) {
+  if (on->return_type->func_can_error) {
+    //
+    fcall->func_scope = func_scope;
+    //
     fc_expect_token(fc, "or", false, true, true);
     fc_next_token(fc, token, false, true, true);
     if (strcmp(token, "pass") == 0) {

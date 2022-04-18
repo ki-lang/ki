@@ -22,7 +22,7 @@ class Server {
 	func start() ! {
 
 		@ sock = ki:net:Socket { port: this.port };
-		sock.listen();
+		sock.listen() or pass;
 		//
 		io:print("[+] Running http server on port ");
 		io:print(this.port.str());

@@ -16,6 +16,10 @@ Scope* init_scope() {
   scope->ast = array_make(4);
   scope->parent = NULL;
   scope->return_type = NULL;
+  //
+  scope->var_bufs = array_make(8);
+  scope->local_var_names = array_make(8);
+  //
   return scope;
 }
 

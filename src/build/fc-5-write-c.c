@@ -394,9 +394,6 @@ void fc_write_c_mutex(FileCompiler* fc, Mutex* mut) {
 }
 
 void fc_write_c_func(FileCompiler* fc, Function* func) {
-  // Clear local var names array
-  fc->local_var_names->length = 0;
-
   //
   fc_write_c_type(fc->tkn_buffer, func->return_type, NULL);
   fc_write_c_type(fc->h_code, func->return_type, NULL);
@@ -468,11 +465,8 @@ void fc_write_c_func(FileCompiler* fc, Function* func) {
 }
 
 void fc_write_c_ast(FileCompiler* fc, Scope* scope) {
-  Array* prev_local_vars = fc->local_var_names;
-  Array* prev_var_bufs = fc->var_bufs;
-
-  fc->local_var_names = array_make(8);
-  fc->var_bufs = array_make(8);
+  Scope* prev_scope = fc->current_scope;
+  fc->current_scope = scope;
 
   int c = 0;
   Array* ast = scope->ast;
@@ -483,13 +477,10 @@ void fc_write_c_ast(FileCompiler* fc, Scope* scope) {
   }
 
   if (!scope->did_return) {
-    deref_local_vars(fc);
+    deref_local_vars(fc, NULL);
   }
 
-  free(fc->local_var_names);
-  free(fc->var_bufs);
-  fc->local_var_names = prev_local_vars;
-  fc->var_bufs = prev_var_bufs;
+  fc->current_scope = prev_scope;
 }
 
 void fc_write_c_token(FileCompiler* fc, Token* token) {
@@ -533,7 +524,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       str_append_chars(fc->tkn_buffer, decl->name);
       str_append_chars(fc->tkn_buffer, "->_RC++;\n");
 
-      array_push(fc->local_var_names, decl);
+      array_push(fc->current_scope->local_var_names, decl);
     }
   } else if (token->type == tkn_assign) {
     TokenAssign* ta = token->item;
@@ -621,23 +612,8 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
       fc_write_c_value(fc, token->item, true);
     }
 
-    if (fc->local_var_names->length > 0 || fc->var_bufs->length > 0) {
-      bool refc = false;
-      if (retv && retv->return_type->class &&
-          retv->return_type->class->ref_count) {
-        refc = true;
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, "->_RC++;\n");
-      }
-
-      // Deref local vars + Check if var_bufs RC == 0 (if so free)
-      deref_local_vars(fc);
-
-      if (refc) {
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, "->_RC--;\n");
-      }
-    }
+    // Deref local vars + Check if var_bufs RC == 0 (if so free)
+    deref_local_vars(fc, retv);
 
     //
     str_append_chars(fc->tkn_buffer, "return ");
@@ -823,7 +799,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
         fc, create_identifier("ki", "type", "string"), NULL);
     //
 
-    array_push(fc->var_bufs, vi);
+    array_push(fc->current_scope->var_bufs, vi);
 
   } else if (value->type == vt_null) {
     str_append_chars(result, "(void*)0");
@@ -927,13 +903,80 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
     }
     free(arg_strings);
 
-    if (fa->on->return_type->func_can_error) {
+    if (fa->error_type != or_none) {
       if (fa->arg_values->length > 0) {
         str_append_chars(result, ", ");
       }
       str_append_chars(result, "_KI_THROW_MSG_BUF");
     }
     str_append_chars(result, ")");
+
+    if (fa->error_type != or_none) {
+      char* buf_var_name = NULL;
+      if (value->return_type) {
+        buf_var_name = strdup(var_buf(fc));
+        fc_write_c_type(fc->tkn_buffer, value->return_type, buf_var_name);
+        str_append_chars(fc->tkn_buffer, " = ");
+      }
+      str_append(fc->tkn_buffer, result);
+      str_append_chars(fc->tkn_buffer, ";\n");
+      //
+      result->length = 0;
+      // Check error
+      str_append_chars(fc->tkn_buffer, "if(_KI_THROW_MSG_BUF){\n");
+      //
+      if (fa->error_type == or_pass) {
+        str_append_chars(fc->tkn_buffer,
+                         "_KI_THROW_MSG = _KI_THROW_MSG_BUF;\n");
+        Type* rett = fa->func_scope->func->return_type;
+        if (rett == NULL) {
+          str_append_chars(fc->tkn_buffer, "return;\n");
+        } else if (rett->is_pointer) {
+          str_append_chars(fc->tkn_buffer, "return (void*)0;\n");
+        } else {
+          str_append_chars(fc->tkn_buffer, "return 0;\n");
+        }
+      } else if (fa->error_type == or_return) {
+        Value* orv = fa->or_value;
+        fc_write_c_value(fc, orv, false);
+        //
+        deref_local_vars(fc, orv);
+        //
+        str_append_chars(fc->tkn_buffer, "return ");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+      } else if (fa->error_type == or_value) {
+        Value* orv = fa->or_value;
+        fc_write_c_value(fc, orv, false);
+        if (value->return_type) {
+          str_append_chars(fc->tkn_buffer, buf_var_name);
+          str_append_chars(fc->tkn_buffer, " = ");
+        }
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+      } else if (fa->error_type == or_throw) {
+        str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = \"");
+        str_append_chars(fc->tkn_buffer, fa->throw_msg);
+        str_append_chars(fc->tkn_buffer, "\";\n");
+        Type* rett = fa->func_scope->func->return_type;
+        if (rett == NULL) {
+          str_append_chars(fc->tkn_buffer, "return;\n");
+        } else if (rett->is_pointer) {
+          str_append_chars(fc->tkn_buffer, "return (void*)0;\n");
+        } else {
+          str_append_chars(fc->tkn_buffer, "return 0;\n");
+        }
+      }
+      //
+      str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
+      str_append_chars(fc->tkn_buffer, "}\n");
+      // Update result
+      result->length = 0;
+      if (value->return_type) {
+        str_append_chars(result, buf_var_name);
+        free(buf_var_name);
+      }
+    }
 
     if (value->return_type) {
       Class* retClass = value->return_type->class;
@@ -963,7 +1006,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
         vi->name = buf_var_name;
         vi->return_type = value->return_type;
 
-        array_push(fc->var_bufs, vi);
+        array_push(fc->current_scope->var_bufs, vi);
       }
     }
 
@@ -1109,11 +1152,8 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       str_append_chars(fc->c_code_after, "();\n");
     }
 
-    Array* prev_local_vars = fc->local_var_names;
-    Array* prev_var_bufs = fc->var_bufs;
-
-    fc->local_var_names = array_make(8);
-    fc->var_bufs = array_make(8);
+    Scope* prev_scope = fc->current_scope;
+    fc->current_scope = init_scope();
 
     Str* prevbuf = fc->tkn_buffer;
     fc->tkn_buffer = str_make("");
@@ -1146,16 +1186,14 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       free(defv);
     }
 
-    deref_local_vars(fc);
+    deref_local_vars(fc, NULL);
 
     str_append(fc->c_code_after, fc->tkn_buffer);
     free_str(fc->tkn_buffer);
     fc->tkn_buffer = prevbuf;
 
-    free(fc->local_var_names);
-    free(fc->var_bufs);
-    fc->local_var_names = prev_local_vars;
-    fc->var_bufs = prev_var_bufs;
+    free_scope(fc->current_scope);
+    fc->current_scope = prev_scope;
 
     str_append_chars(fc->c_code_after, "return KI_RET_V;\n");
     str_append_chars(fc->c_code_after, "}\n\n");
@@ -1548,10 +1586,20 @@ char* var_buf(FileCompiler* fc) {
   return fc->var_buf;
 }
 
-void deref_local_vars(FileCompiler* fc) {
+void deref_local_vars(FileCompiler* fc, Value* retv) {
+  //
+  bool refc = false;
+  if (retv && retv->return_type->class && retv->return_type->class->ref_count) {
+    refc = true;
+    str_append(fc->tkn_buffer, fc->value_buffer);
+    str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+  }
+  //
+  Scope* scope = fc->current_scope;
+
   // Write + Clear var bufs
-  for (int i = 0; i < fc->var_bufs->length; i++) {
-    VarInfo* vi = array_get_index(fc->var_bufs, i);
+  for (int i = 0; i < scope->var_bufs->length; i++) {
+    VarInfo* vi = array_get_index(scope->var_bufs, i);
     char* vb = vi->name;
     Type* rt = vi->return_type;
 
@@ -1572,10 +1620,10 @@ void deref_local_vars(FileCompiler* fc) {
     free(vi);
   }
 
-  fc->var_bufs->length = 0;
+  scope->var_bufs->length = 0;
 
   // Clear local vars
-  Array* local_vars = fc->local_var_names;
+  Array* local_vars = scope->local_var_names;
   for (int i = 0; i < local_vars->length; i++) {
     TokenDeclare* decl = array_get_index(local_vars, i);
     Class* class = decl->type->class;
@@ -1598,6 +1646,11 @@ void deref_local_vars(FileCompiler* fc) {
       str_append_chars(fc->tkn_buffer, " }");
     }
     str_append_chars(fc->tkn_buffer, "\n");
+  }
+
+  if (refc) {
+    str_append(fc->tkn_buffer, fc->value_buffer);
+    str_append_chars(fc->tkn_buffer, "->_RC--;\n");
   }
 }
 

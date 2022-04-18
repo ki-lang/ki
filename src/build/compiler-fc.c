@@ -30,10 +30,9 @@ FileCompiler* init_fc() {
   fc->before_tkn_buffer = NULL;
   fc->value_buffer = str_make("");
   fc->indent = 0;
+  fc->current_scope = NULL;
   fc->var_bufc = 0;
   fc->var_buf = malloc(12);
-  fc->var_bufs = array_make(8);
-  fc->local_var_names = array_make(8);
   //
   fc->sprintf = malloc(100);
   //
