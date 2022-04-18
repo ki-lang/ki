@@ -34,6 +34,7 @@ func read(string path) !string {
 		mem:copy(buf, full_, 10240);
 		alc.free(buf);
 		full_ += 10240;
+		count++;
 	}
 	@ result = string.make(full, readcount);
 	mem:free(full);
