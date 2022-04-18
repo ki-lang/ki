@@ -41,9 +41,10 @@ class Taskman norfc {
 		@ list = Taskman.get_task_managers();
 
 		@ mut_get_task = Mutex.make();
+		@ core_count = sys:CpuInfo.core_count();
 
 		uxx i = 0;
-		while(i < 8){
+		while(i < core_count){
 
 			Taskman tm = Taskman { nr: i, mut_get_task: mut_get_task };
 
