@@ -2,9 +2,10 @@
 namespace fs;
 
 func read(string path) !string {
-	@ fd = main:main:open(path.to_cstring(), 0);
+	@ fd = main:main:open(path.to_cstring(), 0, 0);
 	if(fd == -1) {
 		//throw could_not_open_file;
+		return "";
 	}
 	uxx len = 0;
 	@ chunks = type:PtrArray.make(5);
@@ -17,6 +18,11 @@ func read(string path) !string {
 		len += readcount;
 		chunks.set(chunkc, buf);
 		chunkc++;
+	}
+
+	@ check = main:main:close(fd);
+	if(check != 0){
+		io:println("failed to close fd in read()");
 	}
 
 	if(chunkc == 1){
@@ -39,4 +45,34 @@ func read(string path) !string {
 	@ result = string.make(full, readcount);
 	mem:free(full);
 	return result;
+}
+
+func write(string path, string content, bool append) ! {
+	i32 flags = 1 bitOR 64;
+	if(append){
+		flags = flags bitOR 1024;
+	}
+	@ fd = main:main:open(path.to_cstring(), flags, 256 bitOR 128 bitOR 32 bitOR 4); // permissions: 644 rw,r,r
+	if(fd == -1) {
+		//throw could_not_create_or_open_file;
+		io:println("failed to open fd in write()");
+		return;
+	}
+	main:main:write(fd, content.data, content.length);
+	@ check = main:main:close(fd);
+	if(check == -1){
+		io:println("failed to close fd in write()");
+	}
+}
+
+func exists(string path) bool {
+	@ fd = main:main:open(path.to_cstring(), 0, 0);
+	if(fd == -1) {
+		return false;
+	}
+	@ check = main:main:close(fd);
+	if(check != 0){
+		io:println("failed to close fd in exists()");
+	}
+	return true;
 }

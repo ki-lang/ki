@@ -40,6 +40,10 @@ void fc_scan_func(FileCompiler* fc, Function* func) {
   func->args_i_end = fc->i;
   // Return type
   fc_next_token(fc, token, true, false, true);
+  if (strcmp(token, "!") == 0) {
+    fc_next_token(fc, token, false, false, true);
+    fc_next_token(fc, token, true, false, true);
+  }
   if (fc->is_header) {
     // Header
     if (strcmp(token, ";") != 0) {
