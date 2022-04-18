@@ -140,19 +140,6 @@ class Taskman norfc {
 		}
 	}
 
-	public static func continue_threads(){
-		@ tms = Taskman.get_task_managers();
-		@ i = 0;
-		while(i < 8){
-			Taskman tm = tms.get(i);
-			if(tm.thread.suspended){
-				tm.thread.continue();
-				break;
-			}
-			i++;
-		}
-	}
-
 	public static func get_add_mutex() Mutex {
 		static Mutex mut {
 			return Mutex.make();
