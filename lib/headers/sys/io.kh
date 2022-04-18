@@ -2,6 +2,8 @@
 namespace main;
 
 func write(i32 fd, ptr buf, u64 length);
+func read(i32 fd, ptr buf, u64 length) ixx;
+func open(cstring path, i32 flags) i32;
 
 // Values for the second argument to `fcntl'.
 // #define        F_DUPFD                0        Duplicate file descriptor.
@@ -16,4 +18,5 @@ func write(i32 fd, ptr buf, u64 length);
 func fcntl(i32 fd, i32 cmd, i32 flags) i32;
 
 func dup2(i32 oldfd, i32 newfd) i32;
+
 

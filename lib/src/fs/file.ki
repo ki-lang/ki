@@ -1,0 +1,41 @@
+
+namespace fs;
+
+func read(string path) !string {
+	@ fd = main:main:open(path.to_cstring(), 0);
+	if(fd == -1) {
+		//throw could_not_open_file;
+	}
+	uxx len = 0;
+	@ chunks = type:PtrArray.make(5);
+	@ alc = allocator 10240;
+	i32 chunkc = 0;
+	uxx readcount = 10240;
+	while(readcount == 10240){
+		ptr buf = alc.get_chunk();
+		readcount = main:main:read(fd, buf, 10240);
+		len += readcount;
+		chunks.set(chunkc, buf);
+		chunkc++;
+	}
+
+	if(chunkc == 1){
+		ptr buf = chunks.get(0);
+		@ result = string.make(buf, readcount);
+		alc.free(buf);
+		return result;
+	}
+
+	ptr full = mem:alloc(readcount);
+	ptr full_ = full;
+	i32 count = 0;
+	while(count < chunkc){
+		ptr buf = chunks.get(count);
+		mem:copy(buf, full_, 10240);
+		alc.free(buf);
+		full_ += 10240;
+	}
+	@ result = string.make(full, readcount);
+	mem:free(full);
+	return result;
+}

@@ -5,6 +5,7 @@
 		"type_trait": "src/type/trait",
 		"io": "src/io",
 		"fd": "src/fd",
+		"fs": "src/fs",
 		"net": "src/net",
 		"http": "src/http",
 		"async": "src/async"
