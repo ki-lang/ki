@@ -77,6 +77,7 @@ typedef struct Scope {
   bool did_return;
   bool catch_errors;
   bool autofill_return_type;
+  struct Function* func;
   int body_i;
   int body_i_end;
   struct Array* ast;

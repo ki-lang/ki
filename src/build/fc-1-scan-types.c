@@ -199,9 +199,9 @@ void fc_scan_types(FileCompiler* fc) {
 
       Function* func = init_func();
       func->fc = fc;
-      func->scope = init_scope();
-      func->scope->parent = fc->scope;
+      func->scope = init_sub_scope(fc->scope);
       func->scope->is_func = true;
+      func->scope->func = func;
 
       array_push(fc->functions, func);
 

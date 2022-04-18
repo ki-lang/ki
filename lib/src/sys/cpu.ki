@@ -36,8 +36,7 @@ class CpuInfo {
 			}
 			v.append_char(ch);
 		}
-		// throw failed_to_read_core_count;
-		return 1;
+		throw failed_to_read_core_count;
 	}
 
 }

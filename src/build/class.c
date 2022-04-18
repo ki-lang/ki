@@ -301,6 +301,7 @@ void fc_scan_class_props(Class* class) {
       func->fc = fc;
       func->scope = init_sub_scope(class->scope);
       func->scope->is_func = true;
+      func->scope->func = func;
 
       Type* type = init_type();
       type->type = type_funcref;

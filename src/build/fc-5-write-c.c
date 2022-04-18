@@ -668,7 +668,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     if (tt->return_type == NULL) {
       str_append_chars(fc->tkn_buffer, "return;\n");
     } else if (tt->return_type->is_pointer) {
-      str_append_chars(fc->tkn_buffer, "return 0;\n");
+      str_append_chars(fc->tkn_buffer, "return (void*)0;\n");
     } else {
       str_append_chars(fc->tkn_buffer, "return 0;\n");
     }

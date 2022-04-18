@@ -5,23 +5,23 @@ threaded Taskman LOCAL_TM = null;
 
 class TaskList {
 
-	//type:PtrArray tasks;
 	public ?Task first = null;
 	public ?Task last = null;
 	public i32 head = 0;
 	public i32 tail = 0;
-	public type:PtrArray tasks = type:PtrArray.make(256);
-	public Wait waiter = Wait.make();
+	public type:PtrArray tasks;
+	public Wait waiter;
 
 	public static func get() TaskList {
 		static TaskList mx {
-			return TaskList {};
+			return TaskList { tasks: type:PtrArray.make(256), waiter: Wait.make() };
 		}
 		return mx;
 	}
 }
 
 class Taskman norfc {
+
   	public uxx nr = 0;
   	public ?Thread thread = null;
 	public Mutex mut_get_task;

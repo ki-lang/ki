@@ -131,9 +131,23 @@ void token_throw(FileCompiler* fc, Scope* scope) {
   char* msg = malloc(KI_TOKEN_MAX);
   fc_next_token(fc, msg, false, true, true);
 
+  Scope* throw_scope = scope;
+  while (throw_scope && throw_scope->is_func == false) {
+    throw_scope = throw_scope->parent;
+  }
+
+  if (throw_scope == NULL) {
+    fc_error(fc, "Trying to throw inside a non function space", NULL);
+  }
+  if (throw_scope->func->can_error == false) {
+    fc_error(fc,
+             "Trying to throw inside a function that cannot return an error",
+             NULL);
+  }
+
   TokenThrow* tt = malloc(sizeof(TokenThrow));
   tt->msg = msg;
-  tt->return_type = scope->return_type;
+  tt->return_type = throw_scope->return_type;
 
   t->item = tt;
   array_push(scope->ast, t);

@@ -690,7 +690,15 @@ Value* fc_read_func_call(FileCompiler* fc, Scope* scope, Value* on) {
   value->item = fcall;
   value->return_type = on->return_type->func_return_type;
 
-  if (on->return_type->func_can_error) scope->catch_errors = true;
+  Scope* func_scope = scope;
+  while (func_scope && func_scope->is_func == false) {
+    func_scope = func_scope->parent;
+  }
+  if (func_scope == NULL) {
+    fc_error(fc, "Trying to call function outside a function scope", NULL);
+  }
+
+  if (on->return_type->func_can_error) func_scope->catch_errors = true;
 
   if (on->type == vt_prop_access) {
     ValueClassPropAccess* pa = on->item;
