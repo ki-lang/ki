@@ -684,6 +684,8 @@ Value* fc_read_func_call(FileCompiler* fc, Scope* scope, Value* on) {
   ValueFuncCall* fcall = malloc(sizeof(ValueFuncCall));
   fcall->on = on;
   fcall->arg_values = array_make(2);
+  fcall->error_type = or_none;
+  fcall->or_value = NULL;
 
   Value* value = init_value();
   value->type = vt_func_call;
@@ -731,5 +733,44 @@ Value* fc_read_func_call(FileCompiler* fc, Scope* scope, Value* on) {
   }
   fc_next_token(fc, token, false, false, true);
 
+  // Check error handling
+  if (value->return_type && on->return_type->func_can_error) {
+    fc_expect_token(fc, "or", false, true, true);
+    fc_next_token(fc, token, false, true, true);
+    if (strcmp(token, "pass") == 0) {
+      if (func_scope->func->can_error == false) {
+        fc_error(fc,
+                 "Trying to pass an error in a function that has no error "
+                 "return type",
+                 NULL);
+      }
+      fcall->error_type = or_pass;
+    } else if (strcmp(token, "value") == 0) {
+      fcall->error_type = or_value;
+      fcall->or_value = fc_read_value(fc, scope, false, true, true);
+      if (fcall->or_value->return_type->nullable) {
+        value->return_type->nullable = true;
+      }
+      fc_type_compatible(fc, value->return_type, fcall->or_value->return_type);
+    } else if (strcmp(token, "return") == 0) {
+      fcall->error_type = or_return;
+      fcall->or_value = fc_read_value(fc, scope, false, true, true);
+      if (fcall->or_value->return_type->nullable) {
+        value->return_type->nullable = true;
+      }
+      fc_type_compatible(fc, value->return_type, fcall->or_value->return_type);
+    } else if (strcmp(token, "throw") == 0) {
+      fcall->error_type = or_throw;
+      fc_next_token(fc, token, false, true, true);
+      fcall->throw_msg = strdup(token);
+    } else {
+      fc_error(fc,
+               "Invalid error handling method: '%s' , valid options: pass, "
+               "throw, value, return",
+               token);
+    }
+  }
+
+  //
   return value;
 }

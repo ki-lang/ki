@@ -277,7 +277,18 @@ typedef enum ValueType {
 typedef struct ValueFuncCall {
   Array* arg_values;
   Value* on;
+  int error_type;
+  Value* or_value;
+  char* throw_msg;
 } ValueFuncCall;
+
+typedef enum OrType {
+  or_none,
+  or_pass,
+  or_value,
+  or_return,
+  or_throw,
+} OrType;
 
 typedef struct ValueOperator {
   int type;

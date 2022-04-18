@@ -208,7 +208,7 @@ class StringChunker{
 	}
 
 	public func get_chunk(bool skip_break_bytes_at_end) string {
-		this.end = this.find_char_index(this.break_on);
+		this.end = this.find_char_index(this.break_on) or return "";
 		@ result = this.str.substring(this.start, this.end - this.start);
 		this.start = this.end;
 		if(skip_break_bytes_at_end){
