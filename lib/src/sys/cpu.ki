@@ -1,0 +1,43 @@
+
+namespace sys;
+
+class CpuInfo {
+
+	public static func init() {
+		@ ci = CpuInfo{};
+	}
+
+	public static func core_count() !i32 {
+		@ content = fs:read("/proc/cpuinfo");
+		string v = "";
+		i32 pos = 0;
+		i32 len = content.length;
+		bool found_key = false;
+		while(pos < len){
+			u8 ch = content.get_index(pos);
+			pos++;
+			if(string:is_newline(ch)){
+				if(found_key){
+					i32 result = v.i32();
+					return result;
+				}
+				v.clear();
+				continue;
+			}
+			if(string:is_whitespace(ch)){
+				continue;
+			}
+			if(ch == ':'){
+				if(v.__eq("cpucores")){
+					found_key = true;
+				}
+				v.clear();
+				continue;
+			}
+			v.append_char(ch);
+		}
+		// throw failed_to_read_core_count;
+		return 1;
+	}
+
+}

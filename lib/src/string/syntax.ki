@@ -1,0 +1,10 @@
+
+namespace string;
+
+func is_whitespace(u8 ch) bool {
+	return ch <= 32;
+}
+
+func is_newline(u8 ch) bool {
+	return ch == 10;
+}

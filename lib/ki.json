@@ -1,12 +1,15 @@
 {
 	"namespaces": {
+		"sys": "src/sys",
 		"mem": "src/mem",
 		"type": "src/type",
 		"type_trait": "src/type/trait",
 		"io": "src/io",
 		"fd": "src/fd",
+		"fs": "src/fs",
 		"net": "src/net",
 		"http": "src/http",
+		"string": "src/string",
 		"async": "src/async"
 	},
 	"headers": {

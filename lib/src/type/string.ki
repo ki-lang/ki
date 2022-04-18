@@ -44,6 +44,25 @@ class string {
 		a.free(this);
 	}
 
+	func append_char(u8 ch) {
+		uxx new_length = this.length + 1;
+		ptr adr = this.data;
+		if(new_length > this.mem_size){
+			this.mem_size *= 2;
+			adr = alloc(this.mem_size);
+			copy(this.data, adr, this.length);
+			free(this.data);
+			this.data = adr;
+		}
+		adr += this.length;
+		this.length = new_length;
+		setptrv adr to ch;
+	}
+
+	func clear() {
+		this.length = 0;
+	}
+
 	func index_of(string str) uxx {
 		if(str.length == 0){
 			return -1;
@@ -80,6 +99,26 @@ class string {
 		x += this.length;
 		x = '\0';
 		return cstr;
+	}
+
+	func i32() !i32{
+		i32 i = this.length;
+		i32 result = 0;
+		i32 mult = 1;
+		while(i > 0){
+			i--;
+			u8 ch = this.get_index(i);
+			if(ch < 48 || ch > 57){
+				// throw invalid_syntax;
+				continue;
+			}
+			i32 num = cast ch as i32;
+			num -= 48;
+			num *= mult;
+			result += num;
+			mult *= 10;
+		}
+		return result;
 	}
 
 	func get_index(uxx index) u8 {
