@@ -159,7 +159,7 @@ void fc_write_c_type(Str *append_to, Type *type, char *varname);
 void fc_write_c_if(FileCompiler *fc, TokenIf *ift);
 Str *value_buf(FileCompiler *fc);
 char *var_buf(FileCompiler *fc);
-void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop);
+void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once);
 char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded);
 void fc_write_c_inits();
 

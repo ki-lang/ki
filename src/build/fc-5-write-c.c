@@ -466,8 +466,8 @@ void fc_write_c_ast(FileCompiler *fc, Scope *scope) {
         c++;
     }
 
-    if (scope->is_func && !scope->did_return) {
-        deref_local_vars(fc, NULL, false);
+    if (!scope->did_return) {
+        deref_local_vars(fc, NULL, false, true);
     }
 
     fc->current_scope = prev_scope;
@@ -603,7 +603,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         }
 
         // Deref local vars + Check if var_bufs RC == 0 (if so free)
-        deref_local_vars(fc, retv, false);
+        deref_local_vars(fc, retv, false, false);
 
         //
         str_append_chars(fc->tkn_buffer, "return ");
@@ -929,7 +929,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                 Value *orv = fa->or_value;
                 fc_write_c_value(fc, orv, false);
                 //
-                deref_local_vars(fc, orv, false);
+                deref_local_vars(fc, orv, false, false);
                 //
                 str_append_chars(fc->tkn_buffer, "return ");
                 str_append(fc->tkn_buffer, fc->value_buffer);
@@ -1174,7 +1174,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             free(defv);
         }
 
-        deref_local_vars(fc, NULL, false);
+        deref_local_vars(fc, NULL, false, false);
 
         str_append(fc->c_code_after, fc->tkn_buffer);
         free_str(fc->tkn_buffer);
@@ -1571,7 +1571,7 @@ char *var_buf(FileCompiler *fc) {
     return fc->var_buf;
 }
 
-void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop) {
+void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once) {
     //
     char *ignore_vbuf = NULL;
     if (retv && retv->return_type->class && retv->return_type->class->ref_count) {
@@ -1652,6 +1652,10 @@ void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop) {
         if (ignore_vbuf) {
             free(ignore_vbuf);
             ignore_vbuf = NULL;
+        }
+
+        if (once && c == 1) {
+            break;
         }
 
         if (scope->is_func) {
