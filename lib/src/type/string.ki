@@ -109,8 +109,7 @@ class string {
 			i--;
 			u8 ch = this.get_index(i);
 			if(ch < 48 || ch > 57){
-				// throw invalid_syntax;
-				continue;
+				throw invalid_syntax;
 			}
 			i32 num = cast ch as i32;
 			num -= 48;
@@ -209,7 +208,7 @@ class StringChunker{
 	}
 
 	public func get_chunk(bool skip_break_bytes_at_end) string {
-		this.end = this.find_char_index(this.break_on);
+		this.end = this.find_char_index(this.break_on) or return "";
 		@ result = this.str.substring(this.start, this.end - this.start);
 		this.start = this.end;
 		if(skip_break_bytes_at_end){

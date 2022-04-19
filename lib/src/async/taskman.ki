@@ -5,14 +5,10 @@ threaded Taskman LOCAL_TM = null;
 
 class TaskList {
 
-	//type:PtrArray tasks;
-	public ?Task first = null;
-	public ?Task last = null;
 	public u32 head = 0;
 	public u32 tail = 0;
 	public u32 max = 256;
-	public type:PtrArray tasks = type:PtrArray.make(256);
-	public Wait waiter = Wait.make();
+	public type:PtrArray tasks;
 	public i32 pipe_read_fd;
 	public i32 pipe_write_fd;
 
@@ -25,13 +21,14 @@ class TaskList {
 			pipes_ptr += sizeof(i32);
 			i32 write_fd = getptrv pipes_ptr as i32;
 
-			return TaskList { pipe_read_fd: read_fd, pipe_write_fd: write_fd };
+			return TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
 		}
 		return mx;
 	}
 }
 
 class Taskman norfc {
+
   	public uxx nr = 0;
   	public ?Thread thread = null;
 	public Mutex mut_get_task;
@@ -51,7 +48,7 @@ class Taskman norfc {
 		@ list = Taskman.get_task_managers();
 
 		@ mut_get_task = Mutex.make();
-		@ core_count = sys:CpuInfo.core_count();
+		@ core_count = sys:CpuInfo.core_count() or value 1;
 
 		uxx i = 0;
 		while(i < core_count){

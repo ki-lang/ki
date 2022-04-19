@@ -8,7 +8,7 @@ class CpuInfo {
 	}
 
 	public static func core_count() !i32 {
-		@ content = fs:read("/proc/cpuinfo");
+		@ content = fs:read("/proc/cpuinfo") or throw failed_to_read_core_count;
 		string v = "";
 		i32 pos = 0;
 		i32 len = content.length;
@@ -18,7 +18,7 @@ class CpuInfo {
 			pos++;
 			if(string:is_newline(ch)){
 				if(found_key){
-					i32 result = v.i32();
+					i32 result = v.i32() or throw failed_to_read_core_count;
 					return result;
 				}
 				v.clear();
@@ -36,8 +36,7 @@ class CpuInfo {
 			}
 			v.append_char(ch);
 		}
-		// throw failed_to_read_core_count;
-		return 1;
+		throw failed_to_read_core_count;
 	}
 
 }
