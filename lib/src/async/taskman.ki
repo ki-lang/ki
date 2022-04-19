@@ -8,14 +8,24 @@ class TaskList {
 	//type:PtrArray tasks;
 	public ?Task first = null;
 	public ?Task last = null;
-	public i32 head = 0;
-	public i32 tail = 0;
+	public u32 head = 0;
+	public u32 tail = 0;
+	public u32 max = 256;
 	public type:PtrArray tasks = type:PtrArray.make(256);
 	public Wait waiter = Wait.make();
+	public i32 pipe_read_fd;
+	public i32 pipe_write_fd;
 
 	public static func get() TaskList {
 		static TaskList mx {
-			return TaskList {};
+			uxx pipes = 0;
+			ptr pipes_ptr = getptr pipes;
+			@ check = main:main:pipe(pipes_ptr);
+			i32 read_fd = getptrv pipes_ptr as i32;
+			pipes_ptr += sizeof(i32);
+			i32 write_fd = getptrv pipes_ptr as i32;
+
+			return TaskList { pipe_read_fd: read_fd, pipe_write_fd: write_fd };
 		}
 		return mx;
 	}
@@ -30,7 +40,7 @@ class Taskman norfc {
 
 	public static func get_task_managers() type:PtrArray {
 		static type:PtrArray list {
-			return type:PtrArray.make(256);
+			return type:PtrArray.make(64);
 		}
 		return list;
 	}
@@ -113,28 +123,21 @@ class Taskman norfc {
 
 			} else {
 				// Get a new task from the list
-				mut.lock();
+				//mut.lock();
 
-				?Task task = null;
-				while(true){
-					task = task_list.tasks.get(task_list.tail);
-					if(task != null){
-						break;
-					}
-					// No task found
-					if(max_one_task) { return; }
-					// Use sleep to allow threads to swap
-					//main:main:usleep(1);
-					task_list.waiter.wait();
-				}
+				u32 ti = 0;
+				@ check = main:main:read(task_list.pipe_read_fd, getptr ti, sizeof(u32));
+				?Task task = task_list.tasks.get(ti);
 
-				task_list.tasks.clear(task_list.tail);
-				task_list.tail++;
-				if(task_list.tail == 256){
-					task_list.tail = 0;
-				}
+				task_list.tasks.clear(ti);
+				//if(ti == task_list.tail){
+				//	task_list.tail++;
+				//	if(task_list.tail == task_list.max){
+				//		task_list.tail = 0;
+				//	}
+				//}
 
-				mut.unlock();
+				//mut.unlock();
 
 				this.current_task = task;
 			}
@@ -158,10 +161,14 @@ class Taskman norfc {
 		@ pos = task_list.head;
 
 		task_list.head++;
-		if(task_list.head == 256){
+		//io:print("head: ");
+		//io:println(task_list.head.str());
+		if(task_list.head == task_list.max){
 			task_list.head = 0;
 		}
-		while(task_list.head == task_list.tail){
+		while(task_list.tasks.get(task_list.head) != null){
+			// todo: set tail to 0, and head to max
+			// then increase max * 2;
 			io:print("wait for tail\n");
 			main:main:usleep(1);
 		}
@@ -170,7 +177,7 @@ class Taskman norfc {
 
 		mut.unlock();
 
-		task_list.waiter.continue();
+		main:main:write(task_list.pipe_write_fd, getptr pos, sizeof(u32));
 	}
 
 	public static func run_another_task() {

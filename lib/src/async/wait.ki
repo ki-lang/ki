@@ -19,10 +19,14 @@ class Wait norfc {
 	}
 
 	func wait() {
-		@ check = main:main:pthread_cond_wait(this.cond, this.mutex);
+		@ check = main:main:pthread_mutex_lock(this.mutex);
+		check = main:main:pthread_cond_wait(this.cond, this.mutex);
+		check = main:main:pthread_mutex_unlock(this.mutex);
 	}
 
 	func continue() {
-		@ check = main:main:pthread_cond_signal(this.cond);
+		@ check = main:main:pthread_mutex_lock(this.mutex);
+		check = main:main:pthread_cond_signal(this.cond);
+		check = main:main:pthread_mutex_unlock(this.mutex);
 	}
 }
