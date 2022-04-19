@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>  // might be linux only?
+#include <sys/stat.h> // might be linux only?
 //#include <sys/wait.h>
 #include <unistd.h>
 
