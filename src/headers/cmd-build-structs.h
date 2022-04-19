@@ -71,6 +71,7 @@ typedef struct FileCompiler {
 typedef struct Scope {
   struct Map* identifiers;
   bool is_func;
+  bool is_loop;
   bool in_loop;
   bool must_return;
   bool did_return;

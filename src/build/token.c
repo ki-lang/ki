@@ -111,6 +111,7 @@ void token_while(FileCompiler* fc, Scope* scope) {
   fc_expect_token(fc, "{", false, true, true);
   Scope* wscope = init_sub_scope(scope);
   wscope->body_i = fc->i;
+  wscope->is_loop = true;
   wscope->in_loop = true;
   Token* t = init_token();
   t->type = tkn_while;

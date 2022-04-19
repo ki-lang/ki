@@ -476,8 +476,8 @@ void fc_write_c_ast(FileCompiler* fc, Scope* scope) {
     c++;
   }
 
-  if (!scope->did_return) {
-    deref_local_vars(fc, NULL);
+  if (scope->is_func && !scope->did_return) {
+    deref_local_vars(fc, NULL, false);
   }
 
   fc->current_scope = prev_scope;
@@ -613,7 +613,7 @@ void fc_write_c_token(FileCompiler* fc, Token* token) {
     }
 
     // Deref local vars + Check if var_bufs RC == 0 (if so free)
-    deref_local_vars(fc, retv);
+    deref_local_vars(fc, retv, false);
 
     //
     str_append_chars(fc->tkn_buffer, "return ");
@@ -924,6 +924,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       result->length = 0;
       // Check error
       str_append_chars(fc->tkn_buffer, "if(_KI_THROW_MSG_BUF){\n");
+      str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
       //
       if (fa->error_type == or_pass) {
         str_append_chars(fc->tkn_buffer,
@@ -940,7 +941,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
         Value* orv = fa->or_value;
         fc_write_c_value(fc, orv, false);
         //
-        deref_local_vars(fc, orv);
+        deref_local_vars(fc, orv, false);
         //
         str_append_chars(fc->tkn_buffer, "return ");
         str_append(fc->tkn_buffer, fc->value_buffer);
@@ -968,7 +969,6 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
         }
       }
       //
-      str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
       str_append_chars(fc->tkn_buffer, "}\n");
       // Update result
       result->length = 0;
@@ -1186,7 +1186,7 @@ void fc_write_c_value(FileCompiler* fc, Value* value, bool new_value) {
       free(defv);
     }
 
-    deref_local_vars(fc, NULL);
+    deref_local_vars(fc, NULL, false);
 
     str_append(fc->c_code_after, fc->tkn_buffer);
     free_str(fc->tkn_buffer);
@@ -1586,71 +1586,101 @@ char* var_buf(FileCompiler* fc) {
   return fc->var_buf;
 }
 
-void deref_local_vars(FileCompiler* fc, Value* retv) {
+void deref_local_vars(FileCompiler* fc, Value* retv, bool until_loop) {
   //
-  bool refc = false;
+  char* ignore_vbuf = NULL;
   if (retv && retv->return_type->class && retv->return_type->class->ref_count) {
-    refc = true;
-    str_append(fc->tkn_buffer, fc->value_buffer);
-    str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+    ignore_vbuf = str_to_chars(fc->value_buffer);
   }
   //
   Scope* scope = fc->current_scope;
 
   // Write + Clear var bufs
-  for (int i = 0; i < scope->var_bufs->length; i++) {
-    VarInfo* vi = array_get_index(scope->var_bufs, i);
-    char* vb = vi->name;
-    Type* rt = vi->return_type;
+  int c = 0;
+  while (true) {
+    c++;
 
-    str_append_chars(fc->tkn_buffer, "if(");
-    if (rt->nullable) {
-      str_append_chars(fc->tkn_buffer, vb);
-      str_append_chars(fc->tkn_buffer, " && ");
-    }
-    str_append_chars(fc->tkn_buffer, "--");
-    str_append_chars(fc->tkn_buffer, vb);
-    str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
-    str_append_chars(fc->tkn_buffer, rt->class->cname);
-    str_append_chars(fc->tkn_buffer, "____free(");
-    str_append_chars(fc->tkn_buffer, vb);
-    str_append_chars(fc->tkn_buffer, ");\n");
+    for (int i = 0; i < scope->var_bufs->length; i++) {
+      VarInfo* vi = array_get_index(scope->var_bufs, i);
+      char* vb = vi->name;
+      Type* rt = vi->return_type;
 
-    free(vb);
-    free(vi);
-  }
-
-  scope->var_bufs->length = 0;
-
-  // Clear local vars
-  Array* local_vars = scope->local_var_names;
-  for (int i = 0; i < local_vars->length; i++) {
-    TokenDeclare* decl = array_get_index(local_vars, i);
-    Class* class = decl->type->class;
-    bool nullable = decl->type->nullable;
-    char* lv = decl->name;
-
-    if (nullable) {
       str_append_chars(fc->tkn_buffer, "if(");
-      str_append_chars(fc->tkn_buffer, lv);
-      str_append_chars(fc->tkn_buffer, "){ ");
-    }
-    str_append_chars(fc->tkn_buffer, "if(--");
-    str_append_chars(fc->tkn_buffer, lv);
-    str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
-    str_append_chars(fc->tkn_buffer, class->cname);
-    str_append_chars(fc->tkn_buffer, "____free(");
-    str_append_chars(fc->tkn_buffer, lv);
-    str_append_chars(fc->tkn_buffer, ");");
-    if (nullable) {
-      str_append_chars(fc->tkn_buffer, " }");
-    }
-    str_append_chars(fc->tkn_buffer, "\n");
-  }
+      if (rt->nullable) {
+        str_append_chars(fc->tkn_buffer, vb);
+        str_append_chars(fc->tkn_buffer, " && ");
+      }
+      str_append_chars(fc->tkn_buffer, "--");
+      str_append_chars(fc->tkn_buffer, vb);
+      str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
+      if (ignore_vbuf && strcmp(ignore_vbuf, vb) == 0) {
+        str_append_chars(fc->tkn_buffer, "{}\n");
+      } else {
+        str_append_chars(fc->tkn_buffer, rt->class->cname);
+        str_append_chars(fc->tkn_buffer, "____free(");
+        str_append_chars(fc->tkn_buffer, vb);
+        str_append_chars(fc->tkn_buffer, ");\n");
+      }
 
-  if (refc) {
-    str_append(fc->tkn_buffer, fc->value_buffer);
-    str_append_chars(fc->tkn_buffer, "->_RC--;\n");
+      if (c == 1) {
+        free(vb);
+        free(vi);
+      }
+    }
+
+    if (c == 1) {
+      scope->var_bufs->length = 0;
+    }
+
+    // Clear local vars
+    Array* local_vars = scope->local_var_names;
+    for (int i = 0; i < local_vars->length; i++) {
+      TokenDeclare* decl = array_get_index(local_vars, i);
+      Class* class = decl->type->class;
+      bool nullable = decl->type->nullable;
+      char* lv = decl->name;
+
+      if (nullable) {
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, lv);
+        str_append_chars(fc->tkn_buffer, "){ ");
+      }
+      str_append_chars(fc->tkn_buffer, "if(--");
+      str_append_chars(fc->tkn_buffer, lv);
+      str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
+
+      if (ignore_vbuf && strcmp(ignore_vbuf, lv) == 0) {
+        str_append_chars(fc->tkn_buffer, "{}");
+      } else {
+        str_append_chars(fc->tkn_buffer, class->cname);
+        str_append_chars(fc->tkn_buffer, "____free(");
+        str_append_chars(fc->tkn_buffer, lv);
+        str_append_chars(fc->tkn_buffer, ");");
+      }
+
+      if (nullable) {
+        str_append_chars(fc->tkn_buffer, " }");
+      }
+      str_append_chars(fc->tkn_buffer, "\n");
+    }
+
+    if (ignore_vbuf) {
+      free(ignore_vbuf);
+      ignore_vbuf = NULL;
+    }
+
+    if (scope->is_func) {
+      break;
+    }
+    if (until_loop && scope->in_loop) {
+      break;
+    }
+
+    scope = scope->parent;
+
+    if (scope == NULL) {
+      break;
+    }
   }
 }
 

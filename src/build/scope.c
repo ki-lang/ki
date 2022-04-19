@@ -5,6 +5,7 @@ Scope* init_scope() {
   Scope* scope = malloc(sizeof(Scope));
   scope->identifiers = map_make();
   scope->is_func = false;
+  scope->is_loop = false;
   scope->in_loop = false;
   scope->must_return = false;
   scope->did_return = false;
