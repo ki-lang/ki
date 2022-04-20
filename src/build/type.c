@@ -253,5 +253,35 @@ void fc_type_compatible(FileCompiler *fc, Type *t1, Type *t2) {
 
 bool type_compatible(Type *t1, Type *t2) {
     //
+    if (t1 == NULL || t2 == NULL) {
+        return false;
+    }
+    if (t1->nullable && t2->type == type_null) {
+        return true;
+    }
+    if (t1->type == type_void_pointer && t2->npt == false) {
+        return true;
+    }
+    if (t2->nullable && !t1->nullable) {
+        return false;
+    }
+    if (t1->is_pointer != t2->is_pointer) {
+        return false;
+    }
+    if (t1->type != t2->type) {
+        return false;
+    }
+    if (t1->type == type_enum) {
+        if (t1->enu != t2->enu)
+            return false;
+    } else if (t1->type == type_struct) {
+        if (t1->class->is_number) {
+            if (!t2->class->is_number) {
+                return false;
+            }
+        } else if (t1->class != t2->class) {
+            return false;
+        }
+    }
     return true;
 }

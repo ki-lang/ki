@@ -10,7 +10,7 @@ class Mutex norfc {
 	static func make() Mutex {
 		@ pm = mem:alloc_flat(sizeof(main:main:pthread_mutex_t));
 		@ check = main:main:pthread_mutex_init(pm, null);
-		Mutex m = mem:alloc_flat(sizeof(Mutex));
+		Mutex m = cast mem:alloc_flat(sizeof(Mutex)) as Mutex;
 		m.mutex = pm;
 		return m;
 	}

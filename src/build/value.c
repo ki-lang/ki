@@ -156,7 +156,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
         value->type = vt_char;
         value->item = str;
-        value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "u8"), NULL);
+        value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "u32"), NULL);
 
         fc_expect_token(fc, "'", false, true, false);
         // } else if (strcmp(token, "_") == 0 && fc_get_char(fc, 0) == ':') {
@@ -314,7 +314,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
         value->type = vt_get_threaded;
         value->item = fc_create_identifier_global_cname(fc, id);
-        value->return_type = tg->default_value->return_type;
+        value->return_type = tg->type;
 
     } else if (is_valid_varname(token)) {
         IdentifierFor *idf = NULL;
@@ -730,7 +730,7 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
             if (fcall->or_value->return_type->nullable) {
                 value->return_type->nullable = true;
             }
-            fc_type_compatible(fc, value->return_type, fcall->or_value->return_type);
+            fc_type_compatible(fc, func_scope->return_type, fcall->or_value->return_type);
         } else if (strcmp(token, "throw") == 0) {
             fcall->error_type = or_throw;
             fc_next_token(fc, token, false, true, true);

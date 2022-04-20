@@ -17,7 +17,7 @@ class Thread {
 		@ cond = mem:alloc_flat(sizeof(main:main:pthread_cond_t));
 		@ check = main:main:pthread_create(pt, null, start_func, data);
 
-		Thread t = mem:alloc_flat(sizeof(Thread));
+		Thread t = cast mem:alloc_flat(sizeof(Thread)) as Thread;
 		t.pt = pt;
 		t.mut = mut;
 		t.cond = cond;

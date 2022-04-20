@@ -24,13 +24,14 @@ class Allocator norfc {
 
 	func get_settings() AllocatorSettings {
 		?AllocatorSettings settings = this.settings.get();
-		if(settings == null){
-			settings = cast (alloc_flat(64)) as AllocatorSettings;
+
+		ifnull settings set cast (alloc_flat(16)) as AllocatorSettings then {
 			settings.block_i = 0;
 			settings.block_c = 0;
 			settings.blocks_ptr = alloc_flat(256 * 8);
 			this.settings.set(settings);
 		}
+
 		return settings;
 	}
 

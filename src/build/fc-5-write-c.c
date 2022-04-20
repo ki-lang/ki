@@ -613,6 +613,25 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, ";\n");
     } else if (token->type == tkn_if) {
         fc_write_c_if(fc, token->item);
+    } else if (token->type == tkn_ifnull) {
+        //
+        TokenIfNull *ifn = token->item;
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, ifn->name);
+        str_append_chars(fc->tkn_buffer, " == (void*)0) {\n");
+
+        fc_write_c_value(fc, ifn->value, true);
+
+        str_append_chars(fc->tkn_buffer, ifn->name);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+
+        if (ifn->then_scope) {
+            fc_write_c_ast(fc, ifn->then_scope);
+        }
+        str_append_chars(fc->tkn_buffer, " }\n");
+        //
     } else if (token->type == tkn_while) {
         //
         TokenWhile *wt = token->item;

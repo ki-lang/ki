@@ -100,6 +100,65 @@ TokenIf *token_if(FileCompiler *fc, Scope *scope, bool is_else, bool has_conditi
     return ift;
 }
 
+void token_ifnull(FileCompiler *fc, Scope *scope) {
+    //
+    char *token = malloc(KI_TOKEN_MAX);
+    fc_next_token(fc, token, false, true, true);
+
+    Identifier *id = init_id();
+    id->name = strdup(token);
+    IdentifierFor *idf = idf_find_in_scope(scope, id);
+    if (!idf || idf->type != idfor_var) {
+        fc_error(fc, "Unknown variable '%s'", token);
+    }
+
+    TokenIfNull *ifn = malloc(sizeof(TokenIfNull));
+    ifn->name = strdup(id->name);
+    ifn->value = NULL;
+    ifn->then_scope = NULL;
+
+    Token *t = init_token();
+    t->type = tkn_ifnull;
+    t->item = ifn;
+
+    Type *type = idf->item;
+
+    if (!type->nullable) {
+        fc_error(fc, "Using ifnull on variable that doesnt have a nullable type", NULL);
+    }
+    //
+    fc_next_token(fc, token, false, true, true);
+    if (strcmp(token, "set") == 0) {
+        ifn->value = fc_read_value(fc, scope, false, true, true);
+        // Type check
+        fc_type_compatible(fc, type, ifn->value->return_type);
+        if (ifn->value->return_type->nullable) {
+            fc_error(fc, "The 'set' value cannot be nullable", NULL);
+        }
+        // Remove nullable from var type
+        type->nullable = false;
+        // then { ... }
+        fc_next_token(fc, token, true, true, true);
+        if (strcmp(token, "then") == 0) {
+
+            fc_next_token(fc, token, false, true, true);
+            fc_expect_token(fc, "{", false, false, true);
+
+            ifn->then_scope = init_sub_scope(scope);
+            ifn->then_scope->body_i = fc->i;
+            fc_build_ast(fc, ifn->then_scope);
+        }
+
+    } else {
+        fc_error(fc, "Expected 'set' but found '%s'", token);
+    }
+
+    array_push(scope->ast, t);
+    //
+    free(token);
+    free_id(id);
+}
+
 void token_while(FileCompiler *fc, Scope *scope) {
     //
     fc_expect_token(fc, "(", false, true, true);
