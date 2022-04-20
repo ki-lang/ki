@@ -4,6 +4,7 @@ namespace type;
 use mem {alloc,copy,equal,free};
 
 class string {
+
 	public uxx length = 0;
 	private uxx mem_size = 0;
 	private ptr data = 0;
