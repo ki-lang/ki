@@ -314,7 +314,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
         value->type = vt_get_threaded;
         value->item = fc_create_identifier_global_cname(fc, id);
-        value->return_type = tg->default_value->return_type;
+        value->return_type = tg->type;
 
     } else if (is_valid_varname(token)) {
         IdentifierFor *idf = NULL;

@@ -356,8 +356,9 @@ typedef enum TokenTypeEnum {
     tkn_return,
     tkn_while,
     tkn_if,
+    tkn_ifnull,
     tkn_throw,
-    tkn_break, // 5
+    tkn_break,
     tkn_continue,
     tkn_free,
     tkn_value,
@@ -380,6 +381,12 @@ typedef struct TokenIf {
     struct TokenIf *next;
     struct Scope *scope;
 } TokenIf;
+
+typedef struct TokenIfNull {
+    char *name;
+    Value *value;
+    struct Scope *then_scope;
+} TokenIfNull;
 
 typedef struct TokenWhile {
     Value *condition;

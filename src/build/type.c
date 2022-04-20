@@ -256,6 +256,12 @@ bool type_compatible(Type *t1, Type *t2) {
     if (t1 == NULL || t2 == NULL) {
         return false;
     }
+    if (t1->nullable && t2->type == type_null) {
+        return true;
+    }
+    if (t1->type == type_void_pointer && t2->npt == false) {
+        return true;
+    }
     if (t2->nullable && !t1->nullable) {
         return false;
     }

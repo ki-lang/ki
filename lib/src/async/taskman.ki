@@ -84,7 +84,7 @@ class Taskman norfc {
 			run_count = 0;
 			i32 i = 0;
 			while(i < tms.size){
-				?Taskman tm = tms.get(i);
+				?Taskman tm = cast tms.get(i) as ?Taskman;
 				if(tm == null){
 					break;
 				}
@@ -109,7 +109,7 @@ class Taskman norfc {
 		while(true){
 			if(this.current_task != null) {
 				// If there is a task to run
-				Task task = this.current_task;
+				@ task = this.current_task;
 
 				// Run task
 				task.handler_func(task);
@@ -124,7 +124,7 @@ class Taskman norfc {
 
 				u32 ti = 0;
 				@ check = main:main:read(task_list.pipe_read_fd, getptr ti, sizeof(u32));
-				?Task task = task_list.tasks.get(ti);
+				@ task = cast task_list.tasks.get(ti) as ?Task;
 
 				task_list.tasks.clear(ti);
 				//if(ti == task_list.tail){
@@ -180,7 +180,7 @@ class Taskman norfc {
 	public static func run_another_task() {
 
 		Taskman tm = get_threaded LOCAL_TM;
-		Task task = tm.current_task;
+		@ task = tm.current_task;
 
 		tm.run_tasks(true);
 

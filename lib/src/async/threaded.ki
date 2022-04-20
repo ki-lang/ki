@@ -8,13 +8,13 @@ class Threaded<T> {
 	static func make() Threaded<T> {
 		@ adr = mem:alloc_flat(sizeof(main:main:pthread_key_t));
 		@ check = main:main:pthread_key_create(adr, null);
-		Threaded<T> v = mem:alloc_flat(sizeof(Threaded<T>));
+		Threaded<T> v = cast mem:alloc_flat(sizeof(Threaded<T>)) as Threaded<T>;
 		v.key = adr;
 		return v;
 	}
 
 	func get() ?T {
-		return main:main:pthread_getspecific(getptrv this.key as NPT main:main:pthread_key_t);
+		return cast main:main:pthread_getspecific(getptrv this.key as NPT main:main:pthread_key_t) as T;
 	}
 
 	func set(T value) {

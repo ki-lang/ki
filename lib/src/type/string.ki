@@ -93,7 +93,7 @@ class string {
 	}
 
 	func to_cstring() cstring {
-		cstring cstr = alloc(this.length + 1);
+		cstring cstr = cast alloc(this.length + 1) as cstring;
 		copy(this.data, cstr, this.length);
 		ptr x = cstr;
 		x += this.length;
