@@ -24,7 +24,7 @@ class Request {
 			return null;
 		}
 
-		@ payload = string.make(buf, rcvd);
+		@ payload = string.make(buf, rcvd, true);
 
 		// Read HTTP request line
 		@ chunker = payload.chunker();

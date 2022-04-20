@@ -8,24 +8,40 @@ class string {
 	public uxx length = 0;
 	private uxx mem_size = 0;
 	private ptr data = 0;
+	private bool is_const = false;
 
-	static func make(ptr data, uxx length) string {
-		uxx mem_size = length + 10;
-		@ str = string { data: alloc(mem_size), mem_size: mem_size };
-		copy(data, str.data, length);
-		str.length = length;
+	static func make(ptr data, uxx length, bool is_const) string {
+		uxx mem_size = length;
+		ptr new_data = data;
+		if(is_const == false){
+			mem_size += 4;
+			new_data = alloc(mem_size);
+		}
+		@ str = string { data: new_data, mem_size: mem_size, length: length, is_const: is_const };
+		if(is_const == false){
+			copy(data, new_data, length);
+		}
 		return str;
 	}
 
 	func __add(string str) string {
-		uxx new_length = this.length + str.length;
-		while(new_length > this.mem_size){
-			this.mem_size *= 2;
+		if(this.is_const){
+			this = string.make(this.data, this.length, false);
 		}
-		ptr adr = alloc(this.mem_size);
-		copy(this.data, adr, this.length);
-		free(this.data);
-		this.data = adr;
+
+		uxx new_length = this.length + str.length;
+		uxx new_size = this.mem_size;
+		while(new_size < new_length){
+			new_size *= 2;
+		}
+		ptr adr = this.data;
+		if(new_size != this.mem_size){
+			adr = alloc(new_size);
+			this.mem_size = new_size;
+			copy(this.data, adr, this.length);
+			free(this.data);
+			this.data = adr;
+		}
 		adr += this.length;
 		copy(str.data, adr, str.length);
 		this.length = new_length;
@@ -40,12 +56,17 @@ class string {
 	}
 
 	func __free() {
-		free(this.data);
+		if(this.is_const == false){
+			free(this.data);
+		}
 		@ a = allocator sizeof(string);
 		a.free(this);
 	}
 
-	func append_char(u8 ch) {
+	func append_char(u8 ch) string {
+		if(this.is_const){
+			this = string.make(this.data, this.length, false);
+		}
 		uxx new_length = this.length + 1;
 		ptr adr = this.data;
 		if(new_length > this.mem_size){
@@ -58,10 +79,15 @@ class string {
 		adr += this.length;
 		this.length = new_length;
 		setptrv adr to ch;
+		return this;
 	}
 
-	func clear() {
+	func clear() string {
+		if(this.is_const){
+			this = "";
+		}
 		this.length = 0;
+		return this;
 	}
 
 	func index_of(string str) uxx {
@@ -146,7 +172,7 @@ class string {
 		ptr y = x;
 		y += length;
 		y = '\0';
-		@ res = string.make(x, length);
+		@ res = string.make(x, length, false);
 		free(x);
 		return res;
 	}

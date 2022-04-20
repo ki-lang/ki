@@ -390,6 +390,7 @@ void fc_write_c_mutex(FileCompiler *fc, Mutex *mut) {
 }
 
 void fc_write_c_func(FileCompiler *fc, Function *func) {
+
     //
     fc_write_c_type(fc->tkn_buffer, func->return_type, NULL);
     fc_write_c_type(fc->h_code, func->return_type, NULL);
@@ -428,10 +429,29 @@ void fc_write_c_func(FileCompiler *fc, Function *func) {
 
     if (!fc->is_header) {
         str_append_chars(fc->tkn_buffer, ") {\n");
+        fc->indent++;
+
         if (func->scope->catch_errors) {
             str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG_BUF = 0;\n");
         }
-        fc->indent++;
+
+        int x = 0;
+        while (x < arg_len) {
+            FunctionArg *arg = array_get_index(func->args, x);
+            char *name = arg->name;
+            Type *type = arg->type;
+            x++;
+            Class *class = type->class;
+            if (class && class->ref_count) {
+                if (type->nullable) {
+                    str_append_chars(fc->tkn_buffer, "if(");
+                    str_append_chars(fc->tkn_buffer, name);
+                    str_append_chars(fc->tkn_buffer, ") ");
+                }
+                str_append_chars(fc->tkn_buffer, name);
+                str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+            }
+        }
 
         if (strcmp(func->cname, "main") == 0) {
             str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS = ki__mem__calloc_flat(64 * 8);\n");
@@ -794,7 +814,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         char lenstr[20];
         sprintf(lenstr, "%zu", len);
         str_append_chars(fc->tkn_buffer, lenstr);
-        str_append_chars(fc->tkn_buffer, ");\n");
+        str_append_chars(fc->tkn_buffer, ", 1);\n");
 
         str_append_chars(fc->tkn_buffer, buf_var_name);
         str_append_chars(fc->tkn_buffer, "->_RC++;\n");
@@ -1599,6 +1619,11 @@ void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once)
     //
     Scope *scope = fc->current_scope;
 
+    Scope *func_scope = scope;
+    while (func_scope && !func_scope->func) {
+        func_scope = func_scope->parent;
+    }
+
     // Write + Clear var bufs
     int c = 0;
     while (true) {
@@ -1688,6 +1713,31 @@ void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once)
 
         if (scope == NULL) {
             break;
+        }
+    }
+
+    // Deref func args
+    if (!once || scope->func) {
+        if (func_scope) {
+            Function *func = func_scope->func;
+            int arg_len = func->args->length;
+            int x = 0;
+            while (x < arg_len) {
+                FunctionArg *arg = array_get_index(func->args, x);
+                char *name = arg->name;
+                Type *type = arg->type;
+                x++;
+                Class *class = type->class;
+                if (class && class->ref_count) {
+                    if (type->nullable) {
+                        str_append_chars(fc->tkn_buffer, "if(");
+                        str_append_chars(fc->tkn_buffer, name);
+                        str_append_chars(fc->tkn_buffer, ") ");
+                    }
+                    str_append_chars(fc->tkn_buffer, name);
+                    str_append_chars(fc->tkn_buffer, "->_RC--;\n");
+                }
+            }
         }
     }
 }
