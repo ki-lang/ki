@@ -4,11 +4,11 @@ namespace http;
 #header "sys/net"
 
 class Request {
-	public string method;
-	public string uri;
-	public string protocol;
+	public String method;
+	public String uri;
+	public String protocol;
 	public i64 body_length = 0;
-	public string body;
+	public String body;
 
 	public static func read_request(i32 clientfd) ?Request {
 
@@ -24,7 +24,7 @@ class Request {
 			return null;
 		}
 
-		@ payload = string.make(buf, rcvd, true);
+		@ payload = String.make(buf, rcvd, true);
 
 		// Read HTTP request line
 		@ chunker = payload.chunker();
@@ -39,7 +39,7 @@ class Request {
 		// Read headers
 		while(chunker.start < payload.length){
 			u32 new_line_count = 0;
-			while(payload.get_index(chunker.start) == '\r'){
+			while(payload.char(chunker.start) == '\r'){
 				chunker.start += 2;
 				new_line_count++;
 				if(chunker.start >= payload.length){
@@ -57,7 +57,7 @@ class Request {
 			@ value = chunker.get_chunk(false);
 		}
 
-		string body = "";
+		String body = "";
 
 		// Read body
 		if(body_length > 0){

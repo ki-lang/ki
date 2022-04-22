@@ -1,14 +1,14 @@
 
 namespace async;
 
-// func channel_handler(string msg) {}
+// func channel_handler(String msg) {}
 // 
 // class Channel allow_race_conditions {
-// 	public funcref (string) {} handler = channel_handler;
+// 	public funcref (String) {} handler = channel_handler;
 // 	private Mutex mutex = Mutex {};
-// 	private Array<string> messages = Array<string> {};
+// 	private Array<String> messages = Array<String> {};
 // 
-// 	func send(string msg) {
+// 	func send(String msg) {
 // 		this.mutex.lock();
 // 		this.messages.push(msg);
 // 		this.mutex.unlock();
@@ -19,7 +19,7 @@ namespace async;
 // 		//
 // 
 // 		//
-// 		this.messages = Array<string> {};
+// 		this.messages = Array<String> {};
 // 		this.mutex.unlock();
 // 	}
 // }

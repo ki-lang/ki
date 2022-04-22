@@ -1,0 +1,20 @@
+
+namespace http;
+
+class RouteEntry{
+	public Route route = null;
+	public type:Map<Route> routes;
+}
+
+class Router{
+
+	private RouteEntry tree;
+
+	public func add(String method, String url, funcref (Request) Response handler) {
+		if(url.length == 0 || url.char(0) != '/'){
+			io:println("Invalid route: ");
+			exit 1;
+		}
+
+	}
+}

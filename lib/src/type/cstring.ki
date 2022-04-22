@@ -3,7 +3,7 @@ namespace type;
 
 class cstring norfc {
 
-	public func to_string() string {
+	public func to_string() String {
 		u64 len = 0;
 		ptr adr = cast this as ptr;
 		while(true){
@@ -14,7 +14,7 @@ class cstring norfc {
 			len++;
 			adr++;
 		}
-		return string.make(this, len, false);
+		return String.make(this, len, false);
 	}
 
 }

@@ -3,15 +3,15 @@ namespace io;
 
 #header "sys/io"
 
-func println(string str) {
+func println(String str) {
 	main:main:write(1, str.data, str.length);
 	print("\n");
 }
 
-func print(string str) {
+func print(String str) {
 	main:main:write(1, str.data, str.length);
 }
 
-func write(i32 fd, string str) {
+func write(i32 fd, String str) {
 	main:main:write(fd, str.data, str.length);
 }

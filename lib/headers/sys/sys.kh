@@ -1,0 +1,4 @@
+
+namespace main;
+
+func exit(i32 code);

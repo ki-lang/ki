@@ -1,7 +1,7 @@
 
 namespace fs;
 
-func read(string path) !string {
+func read(String path) !String {
 	@ fd = main:main:open(path.to_cstring(), 0, 0);
 	if(fd == -1) {
 		throw could_not_open_file;
@@ -32,7 +32,7 @@ func read(string path) !string {
 
 	if(chunkc == 1){
 		ptr buf = chunks.get(0);
-		@ result = string.make(buf, readcount, false);
+		@ result = String.make(buf, readcount, false);
 		alc.free(buf);
 		return result;
 	}
@@ -47,12 +47,12 @@ func read(string path) !string {
 		full_ += 10240;
 		count++;
 	}
-	@ result = string.make(full, readcount, false);
+	@ result = String.make(full, readcount, false);
 	mem:free(full);
 	return result;
 }
 
-func write(string path, string content, bool append) ! {
+func write(String path, String content, bool append) ! {
 	i32 flags = 1 bitOR 64;
 	if(append){
 		flags = flags bitOR 1024;
@@ -68,7 +68,7 @@ func write(string path, string content, bool append) ! {
 	}
 }
 
-func exists(string path) !bool {
+func exists(String path) !bool {
 	@ fd = main:main:open(path.to_cstring(), 0, 0);
 	if(fd == -1) {
 		return false;

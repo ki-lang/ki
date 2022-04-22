@@ -9,12 +9,12 @@ class CpuInfo {
 
 	public static func core_count() !i32 {
 		@ content = fs:read("/proc/cpuinfo") or throw failed_to_read_core_count;
-		string v = "";
+		String v = "";
 		i32 pos = 0;
 		i32 len = content.length;
 		bool found_key = false;
 		while(pos < len){
-			u8 ch = content.get_index(pos);
+			u8 ch = content.char(pos);
 			pos++;
 			if(string:is_newline(ch)){
 				if(found_key){

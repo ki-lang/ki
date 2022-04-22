@@ -1,0 +1,8 @@
+
+namespace sys;
+
+#header "sys/sys"
+
+func exit(i32 code) {
+	main:main:exit(code);
+}

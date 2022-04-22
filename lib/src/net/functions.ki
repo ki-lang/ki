@@ -1,6 +1,6 @@
 
 
 // int getaddrinfo (const char *name, const char *service, const struct addrinfo *hints, struct addrinfo **pai)
-//func getaddrinfo (string name, string service, addrinfo hints, addrinfo pai) i32 {
+//func getaddrinfo (String name, String service, addrinfo hints, addrinfo pai) i32 {
 //
 //}

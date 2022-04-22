@@ -152,7 +152,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
         value->item = globname;
         value->type = vt_var;
-        value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "string"), NULL);
+        value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "String"), NULL);
 
     } else if (strcmp(token, "'") == 0) {
         char *str = malloc(3);

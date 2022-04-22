@@ -237,7 +237,7 @@ class Server {
 
 		@ response = server.handler(req);
 
-        string output = response.output();
+        String output = response.output();
 		@ check = main:main:send(fd, output.data, output.length, 0);
 
 		return;

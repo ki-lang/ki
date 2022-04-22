@@ -97,8 +97,9 @@ void cmd_build_init_static() {
     array_push(internal_types, "u64");
     array_push(internal_types, "ptr");
     array_push(internal_types, "bool");
-    array_push(internal_types, "string");
+    array_push(internal_types, "String");
     array_push(internal_types, "cstring");
+    array_push(internal_types, "Array");
 }
 
 #ifdef WIN32

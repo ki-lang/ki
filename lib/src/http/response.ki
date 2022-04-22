@@ -3,10 +3,10 @@ namespace http;
 
 class Response {
 	public u32 status = 200;
-	public string body;
+	public String body;
 
-	public func output() string {
-		@ data = string.make_empty(1024);
+	public func output() String {
+		@ data = String.make_empty(1024);
 
 		data = data.__add("HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:");
 		data = data.__add(this.body.length.str());

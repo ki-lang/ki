@@ -52,6 +52,9 @@ Class *fc_make_generic_class(Class *class) {
     memcpy(gclass, class, sizeof(Class));
     gclass->props = map_make();
     gclass->traits = array_make(2);
+    gclass->scope = init_sub_scope(class->fc->scope);
+    gclass->scope->type = sct_class;
+    gclass->scope->class = gclass;
     return gclass;
 }
 

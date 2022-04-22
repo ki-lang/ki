@@ -3,39 +3,39 @@ namespace type;
 
 use mem {alloc,copy,equal,free};
 
-class string {
+class String {
 
 	readonly uxx length = 0;
 	readonly uxx mem_size = 0;
 	readonly ptr data = 0;
 	readonly bool is_const = false;
 
-	public static func make(ptr data, uxx length, bool is_const) string {
+	public static func make(ptr data, uxx length, bool is_const) String {
 		uxx mem_size = length;
 		ptr new_data = data;
 		if(is_const == false){
 			mem_size += 4;
 			new_data = alloc(mem_size);
 		}
-		@ str = string { data: new_data, mem_size: mem_size, length: length, is_const: is_const };
+		@ str = String { data: new_data, mem_size: mem_size, length: length, is_const: is_const };
 		if(is_const == false){
 			copy(data, new_data, length);
 		}
 		return str;
 	}
 
-	public static func make_empty(uxx mem_size) string {
+	public static func make_empty(uxx mem_size) String {
 		ptr data = alloc(mem_size);
-		@ str = string { data: data, mem_size: mem_size, length: 0, is_const: false };
+		@ str = String { data: data, mem_size: mem_size, length: 0, is_const: false };
 		return str;
 	}
 
-	public func __add(string str) string {
+	public func __add(String str) String {
 
 		@ s = this;
 
 		if(s.is_const){
-			s = string.make(this.data, this.length, false);
+			s = String.make(this.data, this.length, false);
 		}
 
 		uxx new_length = s.length + str.length;
@@ -57,7 +57,7 @@ class string {
 		return s;
 	}
 
-	public func __eq(string str) bool {
+	public func __eq(String str) bool {
 		if(this.length != str.length){
 			return false;
 		}
@@ -68,16 +68,16 @@ class string {
 		if(this.is_const == false){
 			free(this.data);
 		}
-		@ a = allocator sizeof(string);
+		@ a = allocator sizeof(String);
 		a.free(this);
 	}
 
-	public func append_char(u8 ch) string {
+	public func append_char(u8 ch) String {
 
 		@ s = this;
 
 		if(s.is_const){
-			s = string.make(s.data, s.length, false);
+			s = String.make(s.data, s.length, false);
 		}
 		uxx new_length = s.length + 1;
 		ptr adr = s.data;
@@ -94,7 +94,7 @@ class string {
 		return s;
 	}
 
-	public func clear() string {
+	public func clear() String {
 
 		@ s = this;
 
@@ -105,7 +105,7 @@ class string {
 		return s;
 	}
 
-	public func index_of(string str) uxx {
+	public func index_of(String str) uxx {
 		if(str.length == 0){
 			return -1;
 		}
@@ -149,7 +149,7 @@ class string {
 		i32 mult = 1;
 		while(i > 0){
 			i--;
-			u8 ch = this.get_index(i);
+			u8 ch = this.char(i);
 			if(ch < 48 || ch > 57){
 				throw invalid_syntax;
 			}
@@ -162,7 +162,7 @@ class string {
 		return result;
 	}
 
-	public func get_index(uxx index) u8 {
+	public func char(uxx index) u8 {
 		if(index >= this.length){
 			return '\0';
 		}
@@ -176,7 +176,7 @@ class string {
 		return StringChunker { str: this, start: 0 };
 	}
 
-	public func substring(uxx start, uxx length) string {
+	public func substring(uxx start, uxx length) String {
 		if(length == 0){
 			return "";
 		}
@@ -187,37 +187,37 @@ class string {
 		ptr y = x;
 		y += length;
 		y = '\0';
-		@ res = string.make(x, length, false);
+		@ res = String.make(x, length, false);
 		free(x);
 		return res;
 	}
 }
 
 class StringChunker{
-	public string str;
+	public String str;
 	public uxx start = 0;
 	public uxx end = 0;
 	public bool on_bytes = false;
-	public ?string break_on = null;
+	public ?String break_on = null;
 
 	public func reset(){
 		this.start = 0;
 		this.end = 0;
 	}
 
-	public func break_on_bytes(string bytes) StringChunker {
+	public func break_on_bytes(String bytes) StringChunker {
 		this.on_bytes = true;
 		this.break_on = bytes;
 		return this;
 	}
 
-	public func find_char_index(string bytes) !uxx {
+	public func find_char_index(String bytes) !uxx {
 		uxx pos = this.start;
 		uxx bytes_pos = 0;
 		while(pos < this.str.length){
-			u8 a = this.str.get_index(pos);
+			u8 a = this.str.char(pos);
 			while(bytes_pos < bytes.length){
-				u8 b = bytes.get_index(bytes_pos);
+				u8 b = bytes.char(bytes_pos);
 				if(a == b){
 					return pos;
 				}
@@ -229,13 +229,13 @@ class StringChunker{
 		throw not_found;
 	}
 
-	public func skip_bytes(string bytes){
+	public func skip_bytes(String bytes){
 		while(this.start < this.str.length){
-			u8 a = this.str.get_index(this.start);
+			u8 a = this.str.char(this.start);
 			uxx bytes_pos = 0;
 			bool found = false;
 			while(bytes_pos < bytes.length){
-				u8 b = bytes.get_index(bytes_pos);
+				u8 b = bytes.char(bytes_pos);
 				if(a == b){
 					found = true;
 					break;
@@ -249,7 +249,7 @@ class StringChunker{
 		}
 	}
 
-	public func get_chunk(bool skip_break_bytes_at_end) string {
+	public func get_chunk(bool skip_break_bytes_at_end) String {
 		this.end = this.find_char_index(this.break_on) or return "";
 		@ result = this.str.substring(this.start, this.end - this.start);
 		this.start = this.end;

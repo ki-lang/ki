@@ -59,7 +59,7 @@ void fc_write_c_all() {
             }
             for (int x = 0; x < fc->strings->length; x++) {
                 ValueString *vstr = array_get_index(fc->strings, x);
-                str_append_chars(fc->h_code, "struct ki__type__string* ");
+                str_append_chars(fc->h_code, "struct ki__type__String* ");
                 str_append_chars(fc->h_code, vstr->name);
                 str_append_chars(fc->h_code, ";\n");
             }
@@ -167,7 +167,7 @@ void fc_write_c_inits() {
                 char *gname = vstr->name;
 
                 str_append_chars(code, gname);
-                str_append_chars(code, " = ki__type__string__make(\"");
+                str_append_chars(code, " = ki__type__String__make(\"");
                 char *str = vstr->body;
                 str_append_chars(code, str);
                 str_append_chars(code, "\", ");
@@ -549,6 +549,10 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
     fc_indent(fc, fc->tkn_buffer);
     if (token->type == tkn_func) {
         fc_write_c_func(fc, token->item);
+    } else if (token->type == tkn_exit) {
+        str_append_chars(fc->tkn_buffer, "ki__sys__exit(");
+        str_append_chars(fc->tkn_buffer, token->item);
+        str_append_chars(fc->tkn_buffer, ");\n");
     } else if (token->type == tkn_static) {
         TokenStaticDeclare *decl = token->item;
 
