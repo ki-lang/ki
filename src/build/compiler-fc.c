@@ -46,6 +46,7 @@ FileCompiler *init_fc() {
     fc->threaded_globals = array_make(4);
     fc->mutexes = array_make(4);
     fc->static_vars = array_make(2);
+    fc->strings = array_make(8);
     //
     fc->include_headers_from = array_make(10);
     return fc;

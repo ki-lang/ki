@@ -32,7 +32,7 @@ func read(string path) !string {
 
 	if(chunkc == 1){
 		ptr buf = chunks.get(0);
-		@ result = string.make(buf, readcount);
+		@ result = string.make(buf, readcount, false);
 		alc.free(buf);
 		return result;
 	}
@@ -47,7 +47,7 @@ func read(string path) !string {
 		full_ += 10240;
 		count++;
 	}
-	@ result = string.make(full, readcount);
+	@ result = string.make(full, readcount, false);
 	mem:free(full);
 	return result;
 }

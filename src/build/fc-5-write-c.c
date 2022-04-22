@@ -57,6 +57,12 @@ void fc_write_c_all() {
             for (int x = 0; x < fc->enums->length; x++) {
                 fc_write_c_enum(fc, array_get_index(fc->enums, x));
             }
+            for (int x = 0; x < fc->strings->length; x++) {
+                ValueString *vstr = array_get_index(fc->strings, x);
+                str_append_chars(fc->h_code, "struct ki__type__string* ");
+                str_append_chars(fc->h_code, vstr->name);
+                str_append_chars(fc->h_code, ";\n");
+            }
 
             for (int x = 0; x < fc->static_vars->length; x++) {
                 fc_write_c_static_var_global(fc, array_get_index(fc->static_vars, x));
@@ -154,6 +160,42 @@ void fc_write_c_inits() {
         PkgCompiler *pkc = array_get_index(packages->values, i);
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+
+            for (int x = 0; x < fc->strings->length; x++) {
+                ValueString *vstr = array_get_index(fc->strings, x);
+
+                char *gname = vstr->name;
+
+                str_append_chars(code, gname);
+                str_append_chars(code, " = ki__type__string__make(\"");
+                char *str = vstr->body;
+                str_append_chars(code, str);
+                str_append_chars(code, "\", ");
+                size_t len = strlen(str);
+                int count = 0;
+                int diff = 0;
+                char ch = '\0';
+                char pch = '\0';
+                // Dont count backslashes
+                while (count < len) {
+                    pch = ch;
+                    ch = str[count];
+                    if (pch == '\\') {
+                        diff++;
+                        count++;
+                        if (count < len) {
+                            ch = str[count];
+                        }
+                    }
+                    count++;
+                }
+
+                len -= diff;
+                char lenstr[20];
+                sprintf(lenstr, "%zu", len);
+                str_append_chars(code, lenstr);
+                str_append_chars(code, ", 1);\n");
+            }
 
             for (int x = 0; x < fc->static_vars->length; x++) {
                 TokenStaticDeclare *decl = array_get_index(fc->static_vars, x);
@@ -390,6 +432,7 @@ void fc_write_c_mutex(FileCompiler *fc, Mutex *mut) {
 }
 
 void fc_write_c_func(FileCompiler *fc, Function *func) {
+
     //
     fc_write_c_type(fc->tkn_buffer, func->return_type, NULL);
     fc_write_c_type(fc->h_code, func->return_type, NULL);
@@ -428,10 +471,31 @@ void fc_write_c_func(FileCompiler *fc, Function *func) {
 
     if (!fc->is_header) {
         str_append_chars(fc->tkn_buffer, ") {\n");
+        fc->indent++;
+
         if (func->scope->catch_errors) {
             str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG_BUF = 0;\n");
         }
-        fc->indent++;
+
+        // If we want to assign new values to argument variables, this code is required
+        // Currently we dont allow this, because of performance (extra ref counting)
+        // int x = 0;
+        // while (x < arg_len) {
+        //     FunctionArg *arg = array_get_index(func->args, x);
+        //     char *name = arg->name;
+        //     Type *type = arg->type;
+        //     x++;
+        //     Class *class = type->class;
+        //     if (class && class->ref_count) {
+        //         if (type->nullable) {
+        //             str_append_chars(fc->tkn_buffer, "if(");
+        //             str_append_chars(fc->tkn_buffer, name);
+        //             str_append_chars(fc->tkn_buffer, ") ");
+        //         }
+        //         str_append_chars(fc->tkn_buffer, name);
+        //         str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+        //     }
+        // }
 
         if (strcmp(func->cname, "main") == 0) {
             str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS = ki__mem__calloc_flat(64 * 8);\n");
@@ -762,54 +826,8 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
 
     //
     // printf("Type: %d\n", value->type);
-    if (value->type == vt_string) {
-        char *buf_var_name = strdup(var_buf(fc));
 
-        str_append_chars(fc->tkn_buffer, "struct ki__type__string* ");
-        str_append_chars(fc->tkn_buffer, buf_var_name);
-        str_append_chars(fc->tkn_buffer, " = ki__type__string__make(\"");
-        char *str = value->item;
-        str_append_chars(fc->tkn_buffer, str);
-        str_append_chars(fc->tkn_buffer, "\", ");
-        size_t len = strlen(str);
-        int count = 0;
-        int diff = 0;
-        char ch = '\0';
-        char pch = '\0';
-        // Dont count backslashes
-        while (count < len) {
-            pch = ch;
-            ch = str[count];
-            if (pch == '\\') {
-                diff++;
-                count++;
-                if (count < len) {
-                    ch = str[count];
-                }
-            }
-            count++;
-        }
-
-        len -= diff;
-        char lenstr[20];
-        sprintf(lenstr, "%zu", len);
-        str_append_chars(fc->tkn_buffer, lenstr);
-        str_append_chars(fc->tkn_buffer, ");\n");
-
-        str_append_chars(fc->tkn_buffer, buf_var_name);
-        str_append_chars(fc->tkn_buffer, "->_RC++;\n");
-
-        str_append_chars(result, buf_var_name);
-
-        VarInfo *vi = malloc(sizeof(VarInfo));
-        vi->name = buf_var_name;
-        // todo: this leaks memory
-        vi->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "string"), NULL);
-        //
-
-        array_push(fc->current_scope->var_bufs, vi);
-
-    } else if (value->type == vt_null) {
+    if (value->type == vt_null) {
         str_append_chars(result, "(void*)0");
         // Bools
     } else if (value->type == vt_false) {
@@ -821,6 +839,8 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         fc_write_c_value(fc, value->item, false);
         str_append_chars(result, ")");
     } else if (value->type == vt_var) {
+        str_append_chars(result, value->item);
+    } else if (value->type == vt_arg) {
         str_append_chars(result, value->item);
     } else if (value->type == vt_mutex) {
         str_append_chars(result, value->item);
@@ -1599,6 +1619,13 @@ void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once)
     //
     Scope *scope = fc->current_scope;
 
+    // If we want to assign new values to argument variables, this code is required
+    // Currently we dont allow this, because of performance (extra ref counting)
+    // Scope *func_scope = scope;
+    // while (func_scope && !func_scope->func) {
+    //     func_scope = func_scope->parent;
+    // }
+
     // Write + Clear var bufs
     int c = 0;
     while (true) {
@@ -1690,6 +1717,33 @@ void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once)
             break;
         }
     }
+
+    // If we want to assign new values to argument variables, this code is required
+    // Currently we dont allow this, because of performance (extra ref counting)
+    // // Deref func args
+    // if (!once || scope->func) {
+    //     if (func_scope) {
+    //         Function *func = func_scope->func;
+    //         int arg_len = func->args->length;
+    //         int x = 0;
+    //         while (x < arg_len) {
+    //             FunctionArg *arg = array_get_index(func->args, x);
+    //             char *name = arg->name;
+    //             Type *type = arg->type;
+    //             x++;
+    //             Class *class = type->class;
+    //             if (class && class->ref_count) {
+    //                 if (type->nullable) {
+    //                     str_append_chars(fc->tkn_buffer, "if(");
+    //                     str_append_chars(fc->tkn_buffer, name);
+    //                     str_append_chars(fc->tkn_buffer, ") ");
+    //                 }
+    //                 str_append_chars(fc->tkn_buffer, name);
+    //                 str_append_chars(fc->tkn_buffer, "->_RC--;\n");
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded) {

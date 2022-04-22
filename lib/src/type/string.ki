@@ -4,31 +4,57 @@ namespace type;
 use mem {alloc,copy,equal,free};
 
 class string {
+
 	public uxx length = 0;
 	private uxx mem_size = 0;
 	private ptr data = 0;
+	private bool is_const = false;
 
-	static func make(ptr data, uxx length) string {
-		uxx mem_size = length + 10;
-		@ str = string { data: alloc(mem_size), mem_size: mem_size };
-		copy(data, str.data, length);
-		str.length = length;
+	static func make(ptr data, uxx length, bool is_const) string {
+		uxx mem_size = length;
+		ptr new_data = data;
+		if(is_const == false){
+			mem_size += 4;
+			new_data = alloc(mem_size);
+		}
+		@ str = string { data: new_data, mem_size: mem_size, length: length, is_const: is_const };
+		if(is_const == false){
+			copy(data, new_data, length);
+		}
+		return str;
+	}
+
+	static func make_empty(uxx mem_size) string {
+		ptr data = alloc(mem_size);
+		@ str = string { data: data, mem_size: mem_size, length: 0, is_const: false };
 		return str;
 	}
 
 	func __add(string str) string {
-		uxx new_length = this.length + str.length;
-		while(new_length > this.mem_size){
-			this.mem_size *= 2;
+
+		@ s = this;
+
+		if(s.is_const){
+			s = string.make(this.data, this.length, false);
 		}
-		ptr adr = alloc(this.mem_size);
-		copy(this.data, adr, this.length);
-		free(this.data);
-		this.data = adr;
-		adr += this.length;
+
+		uxx new_length = s.length + str.length;
+		uxx new_size = s.mem_size;
+		while(new_size < new_length){
+			new_size *= 2;
+		}
+		ptr adr = s.data;
+		if(new_size != s.mem_size){
+			adr = alloc(new_size);
+			s.mem_size = new_size;
+			copy(s.data, adr, s.length);
+			free(s.data);
+			s.data = adr;
+		}
+		adr += s.length;
 		copy(str.data, adr, str.length);
-		this.length = new_length;
-		return this;
+		s.length = new_length;
+		return s;
 	}
 
 	func __eq(string str) bool {
@@ -39,28 +65,44 @@ class string {
 	}
 
 	func __free() {
-		free(this.data);
+		if(this.is_const == false){
+			free(this.data);
+		}
 		@ a = allocator sizeof(string);
 		a.free(this);
 	}
 
-	func append_char(u8 ch) {
-		uxx new_length = this.length + 1;
-		ptr adr = this.data;
-		if(new_length > this.mem_size){
-			this.mem_size *= 2;
-			adr = alloc(this.mem_size);
-			copy(this.data, adr, this.length);
-			free(this.data);
-			this.data = adr;
+	func append_char(u8 ch) string {
+
+		@ s = this;
+
+		if(s.is_const){
+			s = string.make(s.data, s.length, false);
 		}
-		adr += this.length;
-		this.length = new_length;
+		uxx new_length = s.length + 1;
+		ptr adr = s.data;
+		if(new_length > s.mem_size){
+			s.mem_size *= 2;
+			adr = alloc(s.mem_size);
+			copy(s.data, adr, s.length);
+			free(s.data);
+			s.data = adr;
+		}
+		adr += s.length;
+		s.length = new_length;
 		setptrv adr to ch;
+		return s;
 	}
 
-	func clear() {
-		this.length = 0;
+	func clear() string {
+
+		@ s = this;
+
+		if(s.is_const){
+			s = "";
+		}
+		s.length = 0;
+		return s;
 	}
 
 	func index_of(string str) uxx {
@@ -145,7 +187,7 @@ class string {
 		ptr y = x;
 		y += length;
 		y = '\0';
-		@ res = string.make(x, length);
+		@ res = string.make(x, length, false);
 		free(x);
 		return res;
 	}

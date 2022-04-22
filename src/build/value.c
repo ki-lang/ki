@@ -69,6 +69,9 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         } else if (idf->type == idfor_var) {
             Type *type = idf->item;
             size = type->bytes;
+        } else if (idf->type == idfor_arg) {
+            Type *type = idf->item;
+            size = type->bytes;
         } else if (idf->type == idfor_type) {
             Type *type = idf->item;
             size = type->bytes;
@@ -137,9 +140,20 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         char *strbody = str_to_chars(str);
         free_str(str);
 
-        value->item = strbody;
-        value->type = vt_string;
+        char *globname = malloc(64);
+        GEN_C++;
+        sprintf(globname, "_KI_STRING_%s_%d", fc->hash, GEN_C);
+
+        ValueString *vstr = malloc(sizeof(ValueString));
+        vstr->name = globname;
+        vstr->body = strbody;
+
+        array_push(fc->strings, vstr);
+
+        value->item = globname;
+        value->type = vt_var;
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "string"), NULL);
+
     } else if (strcmp(token, "'") == 0) {
         char *str = malloc(3);
         strcpy(str, "");
@@ -371,6 +385,10 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
         } else if (idf->type == idfor_var) {
             value->type = vt_var;
+            value->item = strdup(token);
+            value->return_type = idf->item;
+        } else if (idf->type == idfor_arg) {
+            value->type = vt_arg;
             value->item = strdup(token);
             value->return_type = idf->item;
         } else if (idf->type == idfor_static_var) {
@@ -701,6 +719,10 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
         }
     }
     fc_next_token(fc, token, false, false, true);
+
+    if (fcall->arg_values->length < fcall->on->return_type->func_arg_types->length) {
+        fc_error(fc, "Too few arguments", NULL);
+    }
 
     // Check error handling
     if (on->return_type->func_can_error) {

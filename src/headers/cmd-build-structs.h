@@ -64,6 +64,7 @@ typedef struct FileCompiler {
     struct Array *threaded_globals;
     struct Array *mutexes;
     struct Array *static_vars;
+    struct Array *strings;
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
@@ -111,6 +112,7 @@ typedef enum IdentifierForType {
     idfor_threaded_var,
     idfor_static_var,
     idfor_mutex,
+    idfor_arg,
 } IdentifierForType;
 
 //////////
@@ -275,6 +277,7 @@ typedef enum ValueType {
     vt_allocator, // 20
     vt_get_threaded,
     vt_mutex,
+    vt_arg,
 } ValueType;
 
 typedef struct ValueFuncCall {
@@ -343,6 +346,11 @@ typedef struct ValueClassPropAccess {
     char *name;
     bool is_static;
 } ValueClassPropAccess;
+
+typedef struct ValueString {
+    char *name;
+    char *body;
+} ValueString;
 
 //////////
 
