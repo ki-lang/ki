@@ -24,6 +24,12 @@ class string {
 		return str;
 	}
 
+	static func make_empty(uxx mem_size) string {
+		ptr data = alloc(mem_size);
+		@ str = string { data: data, mem_size: mem_size, length: 0, is_const: false };
+		return str;
+	}
+
 	func __add(string str) string {
 
 		@ s = this;
