@@ -395,6 +395,10 @@ void token_declare(FileCompiler *fc, Scope *scope, Type *left_type) {
 
 void token_assign(FileCompiler *fc, Scope *scope, char *sign, Value *left) {
     //
+    if (left->type == vt_arg && left->return_type->class && left->return_type->class->ref_count) {
+        fc_error(fc, "Assigning new values to argument variables is not allowed. We disabled this because it reduces performance. Use a separate variable.", NULL);
+    }
+    //
     TokenAssign *ta = malloc(sizeof(TokenAssign));
     ta->left = left;
 

@@ -350,7 +350,7 @@ void fc_scan_class_props(Class *class) {
 
                 array_push(func->args, arg);
                 IdentifierFor *thisidf = init_idf();
-                thisidf->type = idfor_var;
+                thisidf->type = idfor_arg;
                 thisidf->item = arg->type;
                 map_set(func->scope->identifiers, "this", thisidf);
             }

@@ -435,23 +435,25 @@ void fc_write_c_func(FileCompiler *fc, Function *func) {
             str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG_BUF = 0;\n");
         }
 
-        int x = 0;
-        while (x < arg_len) {
-            FunctionArg *arg = array_get_index(func->args, x);
-            char *name = arg->name;
-            Type *type = arg->type;
-            x++;
-            Class *class = type->class;
-            if (class && class->ref_count) {
-                if (type->nullable) {
-                    str_append_chars(fc->tkn_buffer, "if(");
-                    str_append_chars(fc->tkn_buffer, name);
-                    str_append_chars(fc->tkn_buffer, ") ");
-                }
-                str_append_chars(fc->tkn_buffer, name);
-                str_append_chars(fc->tkn_buffer, "->_RC++;\n");
-            }
-        }
+        // If we want to assign new values to argument variables, this code is required
+        // Currently we dont allow this, because of performance (extra ref counting)
+        // int x = 0;
+        // while (x < arg_len) {
+        //     FunctionArg *arg = array_get_index(func->args, x);
+        //     char *name = arg->name;
+        //     Type *type = arg->type;
+        //     x++;
+        //     Class *class = type->class;
+        //     if (class && class->ref_count) {
+        //         if (type->nullable) {
+        //             str_append_chars(fc->tkn_buffer, "if(");
+        //             str_append_chars(fc->tkn_buffer, name);
+        //             str_append_chars(fc->tkn_buffer, ") ");
+        //         }
+        //         str_append_chars(fc->tkn_buffer, name);
+        //         str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+        //     }
+        // }
 
         if (strcmp(func->cname, "main") == 0) {
             str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS = ki__mem__calloc_flat(64 * 8);\n");
@@ -841,6 +843,8 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         fc_write_c_value(fc, value->item, false);
         str_append_chars(result, ")");
     } else if (value->type == vt_var) {
+        str_append_chars(result, value->item);
+    } else if (value->type == vt_arg) {
         str_append_chars(result, value->item);
     } else if (value->type == vt_mutex) {
         str_append_chars(result, value->item);
@@ -1619,10 +1623,12 @@ void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once)
     //
     Scope *scope = fc->current_scope;
 
-    Scope *func_scope = scope;
-    while (func_scope && !func_scope->func) {
-        func_scope = func_scope->parent;
-    }
+    // If we want to assign new values to argument variables, this code is required
+    // Currently we dont allow this, because of performance (extra ref counting)
+    // Scope *func_scope = scope;
+    // while (func_scope && !func_scope->func) {
+    //     func_scope = func_scope->parent;
+    // }
 
     // Write + Clear var bufs
     int c = 0;
@@ -1716,30 +1722,32 @@ void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once)
         }
     }
 
-    // Deref func args
-    if (!once || scope->func) {
-        if (func_scope) {
-            Function *func = func_scope->func;
-            int arg_len = func->args->length;
-            int x = 0;
-            while (x < arg_len) {
-                FunctionArg *arg = array_get_index(func->args, x);
-                char *name = arg->name;
-                Type *type = arg->type;
-                x++;
-                Class *class = type->class;
-                if (class && class->ref_count) {
-                    if (type->nullable) {
-                        str_append_chars(fc->tkn_buffer, "if(");
-                        str_append_chars(fc->tkn_buffer, name);
-                        str_append_chars(fc->tkn_buffer, ") ");
-                    }
-                    str_append_chars(fc->tkn_buffer, name);
-                    str_append_chars(fc->tkn_buffer, "->_RC--;\n");
-                }
-            }
-        }
-    }
+    // If we want to assign new values to argument variables, this code is required
+    // Currently we dont allow this, because of performance (extra ref counting)
+    // // Deref func args
+    // if (!once || scope->func) {
+    //     if (func_scope) {
+    //         Function *func = func_scope->func;
+    //         int arg_len = func->args->length;
+    //         int x = 0;
+    //         while (x < arg_len) {
+    //             FunctionArg *arg = array_get_index(func->args, x);
+    //             char *name = arg->name;
+    //             Type *type = arg->type;
+    //             x++;
+    //             Class *class = type->class;
+    //             if (class && class->ref_count) {
+    //                 if (type->nullable) {
+    //                     str_append_chars(fc->tkn_buffer, "if(");
+    //                     str_append_chars(fc->tkn_buffer, name);
+    //                     str_append_chars(fc->tkn_buffer, ") ");
+    //                 }
+    //                 str_append_chars(fc->tkn_buffer, name);
+    //                 str_append_chars(fc->tkn_buffer, "->_RC--;\n");
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded) {

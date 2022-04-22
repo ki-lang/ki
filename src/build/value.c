@@ -69,6 +69,9 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         } else if (idf->type == idfor_var) {
             Type *type = idf->item;
             size = type->bytes;
+        } else if (idf->type == idfor_arg) {
+            Type *type = idf->item;
+            size = type->bytes;
         } else if (idf->type == idfor_type) {
             Type *type = idf->item;
             size = type->bytes;
@@ -371,6 +374,10 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
         } else if (idf->type == idfor_var) {
             value->type = vt_var;
+            value->item = strdup(token);
+            value->return_type = idf->item;
+        } else if (idf->type == idfor_arg) {
+            value->type = vt_arg;
             value->item = strdup(token);
             value->return_type = idf->item;
         } else if (idf->type == idfor_static_var) {

@@ -111,6 +111,7 @@ typedef enum IdentifierForType {
     idfor_threaded_var,
     idfor_static_var,
     idfor_mutex,
+    idfor_arg,
 } IdentifierForType;
 
 //////////
@@ -275,6 +276,7 @@ typedef enum ValueType {
     vt_allocator, // 20
     vt_get_threaded,
     vt_mutex,
+    vt_arg,
 } ValueType;
 
 typedef struct ValueFuncCall {

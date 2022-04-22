@@ -101,7 +101,7 @@ void fc_scan_func_args(Function *func) {
         array_push(func->args, arg);
 
         IdentifierFor *idf = init_idf();
-        idf->type = idfor_var;
+        idf->type = idfor_arg;
         idf->item = type;
 
         map_set(scope->identifiers, name, idf);
