@@ -2,7 +2,7 @@
 <div align="center">
 
 <p>
-    <img width="118" src="https://raw.githubusercontent.com/ki-lang/ki/master/misc/logo.jpg">
+    <img width="118" src="https://raw.githubusercontent.com/ki-lang/ki/master/misc/logo.png">
 </p>
 
 <h1>Working on it...</h1>
