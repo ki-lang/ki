@@ -64,6 +64,7 @@ typedef struct FileCompiler {
     struct Array *threaded_globals;
     struct Array *mutexes;
     struct Array *static_vars;
+    struct Array *strings;
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
@@ -345,6 +346,11 @@ typedef struct ValueClassPropAccess {
     char *name;
     bool is_static;
 } ValueClassPropAccess;
+
+typedef struct ValueString {
+    char *name;
+    char *body;
+} ValueString;
 
 //////////
 

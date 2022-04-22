@@ -57,6 +57,12 @@ void fc_write_c_all() {
             for (int x = 0; x < fc->enums->length; x++) {
                 fc_write_c_enum(fc, array_get_index(fc->enums, x));
             }
+            for (int x = 0; x < fc->strings->length; x++) {
+                ValueString *vstr = array_get_index(fc->strings, x);
+                str_append_chars(fc->h_code, "struct ki__type__string* ");
+                str_append_chars(fc->h_code, vstr->name);
+                str_append_chars(fc->h_code, ";\n");
+            }
 
             for (int x = 0; x < fc->static_vars->length; x++) {
                 fc_write_c_static_var_global(fc, array_get_index(fc->static_vars, x));
@@ -154,6 +160,42 @@ void fc_write_c_inits() {
         PkgCompiler *pkc = array_get_index(packages->values, i);
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+
+            for (int x = 0; x < fc->strings->length; x++) {
+                ValueString *vstr = array_get_index(fc->strings, x);
+
+                char *gname = vstr->name;
+
+                str_append_chars(code, gname);
+                str_append_chars(code, " = ki__type__string__make(\"");
+                char *str = vstr->body;
+                str_append_chars(code, str);
+                str_append_chars(code, "\", ");
+                size_t len = strlen(str);
+                int count = 0;
+                int diff = 0;
+                char ch = '\0';
+                char pch = '\0';
+                // Dont count backslashes
+                while (count < len) {
+                    pch = ch;
+                    ch = str[count];
+                    if (pch == '\\') {
+                        diff++;
+                        count++;
+                        if (count < len) {
+                            ch = str[count];
+                        }
+                    }
+                    count++;
+                }
+
+                len -= diff;
+                char lenstr[20];
+                sprintf(lenstr, "%zu", len);
+                str_append_chars(code, lenstr);
+                str_append_chars(code, ", 1);\n");
+            }
 
             for (int x = 0; x < fc->static_vars->length; x++) {
                 TokenStaticDeclare *decl = array_get_index(fc->static_vars, x);
@@ -784,54 +826,8 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
 
     //
     // printf("Type: %d\n", value->type);
-    if (value->type == vt_string) {
-        char *buf_var_name = strdup(var_buf(fc));
 
-        str_append_chars(fc->tkn_buffer, "struct ki__type__string* ");
-        str_append_chars(fc->tkn_buffer, buf_var_name);
-        str_append_chars(fc->tkn_buffer, " = ki__type__string__make(\"");
-        char *str = value->item;
-        str_append_chars(fc->tkn_buffer, str);
-        str_append_chars(fc->tkn_buffer, "\", ");
-        size_t len = strlen(str);
-        int count = 0;
-        int diff = 0;
-        char ch = '\0';
-        char pch = '\0';
-        // Dont count backslashes
-        while (count < len) {
-            pch = ch;
-            ch = str[count];
-            if (pch == '\\') {
-                diff++;
-                count++;
-                if (count < len) {
-                    ch = str[count];
-                }
-            }
-            count++;
-        }
-
-        len -= diff;
-        char lenstr[20];
-        sprintf(lenstr, "%zu", len);
-        str_append_chars(fc->tkn_buffer, lenstr);
-        str_append_chars(fc->tkn_buffer, ", 1);\n");
-
-        str_append_chars(fc->tkn_buffer, buf_var_name);
-        str_append_chars(fc->tkn_buffer, "->_RC++;\n");
-
-        str_append_chars(result, buf_var_name);
-
-        VarInfo *vi = malloc(sizeof(VarInfo));
-        vi->name = buf_var_name;
-        // todo: this leaks memory
-        vi->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "string"), NULL);
-        //
-
-        array_push(fc->current_scope->var_bufs, vi);
-
-    } else if (value->type == vt_null) {
+    if (value->type == vt_null) {
         str_append_chars(result, "(void*)0");
         // Bools
     } else if (value->type == vt_false) {
