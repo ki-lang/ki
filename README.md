@@ -21,3 +21,22 @@ make
 ./test.sh
 ./test
 ```
+
+## Http server example
+
+```
+func handler(ki:http:Request req) ki:http:Response{
+
+	return ki:http:Response{
+		body: "Hello from example"
+	};
+}
+
+func main() i32 {
+
+	@ s = ki:http:Server { port: 9000, handler: handler };
+	s.start() or return 1;
+
+	return 0;
+}
+```
