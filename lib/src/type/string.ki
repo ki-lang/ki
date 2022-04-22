@@ -191,6 +191,11 @@ class String {
 		free(x);
 		return res;
 	}
+
+	public func split(String on) Array<String> {
+		@ arr = Array<String>.make(2);
+		return arr;
+	}
 }
 
 class StringChunker{

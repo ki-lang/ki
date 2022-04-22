@@ -2,51 +2,61 @@
 namespace type;
 
 class Array<T> {
-	private u32 length = 0;
-	private u32 max_length = 0;
+	private i64 length = 0;
+	private i64 max_length = 0;
 	private ptr data;
-	private u32 graves = 0;
+	private i64 graves = 0;
 
-	public func push(T item) array<T> {
+	public static func make(i32 suggested_length) Array<T> {
+		if(suggested_length < 1){
+			suggested_length = 1;
+		}
+		return Array<T> { max_length: suggested_length, data: mem:alloc(suggested_length * 8) };
+	}
+
+	public func push(T item) Array<T> {
 		if(this.length == this.max_length){
 			if(this.max_length > 0){
 				this.max_length *= 2;
 			} else {
 				this.max_length = 1;
 			}
-			this.data = alloc(this.max_length * @PTR_SIZE);
+			this.data = mem:alloc(this.max_length * 8);
 		}
 		ptr adr = this.data;
-		adr += (this.length - 1) * @PTR_SIZE;
-		copy(*item, @PTR_SIZE, adr);
+		adr += (this.length - 1) * 8;
+		mem:copy(getptr item, adr, 8);
 		this.length++;
 
 		return this;
 	}
 
-	public func remove_index(uint index) {
-		if(this.index >= this.length){
+	public func remove(i64 index) {
+		if(index < 0){
+			return;
+		}
+		if(index >= this.length){
 			return;
 		}
 		ptr adr = this.data;
-		adr += index * @PTR_SIZE;
+		adr += index * 8;
 		ptr grave = 0;
-		copy(grave, @PTR_SIZE, adr);
+		mem:copy(grave, adr, 8);
 		this.graves++;
 		// todo: count graves and delete them if too many
 	}
 
-	public func index_of(T item) ?uint {
-		ptr find = *item;
-		unit index = 0;
+	public func index_of(T item) i64 {
+		ptr find = cast item as ptr;
+		i64 index = 0;
 		while(index < this.length){
-			var adr = this.data + (index * @PTR_SIZE);
-			ptr x = cast adr to ptr
+			ptr adr = this.data + (index * 8);
+			ptr x = getptrv adr as ptr;
 			if ( x == find ) {
 				return index;
 			}
 			index++;
 		}
-		return null;
+		return -1;
 	}
 }

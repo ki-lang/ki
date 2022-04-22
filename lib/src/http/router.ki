@@ -6,6 +6,11 @@ class RouteEntry{
 	public type:Map<Route> routes;
 }
 
+class RouteArg{
+	public i32 i;
+	public String name;
+}
+
 class Router{
 
 	private RouteEntry tree;
@@ -16,5 +21,10 @@ class Router{
 			exit 1;
 		}
 
+		@ url_tmp = url.substring(1, url.length - 1);
+		@ parts = url_tmp.split("/");
+		parts.remove(0);
+
+		@ ref = this.tree;
 	}
 }
