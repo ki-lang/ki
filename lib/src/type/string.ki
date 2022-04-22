@@ -6,9 +6,9 @@ use mem {alloc,copy,equal,free};
 class string {
 
 	readonly uxx length = 0;
-	private uxx mem_size = 0;
-	private ptr data = 0;
-	private bool is_const = false;
+	readonly uxx mem_size = 0;
+	readonly ptr data = 0;
+	readonly bool is_const = false;
 
 	public static func make(ptr data, uxx length, bool is_const) string {
 		uxx mem_size = length;

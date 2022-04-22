@@ -2,7 +2,7 @@
 namespace type;
 
 class PtrArray {
-	private u64 size;
+	readonly u64 size;
 	private ptr data; 
 
 	public static func make(u64 size) PtrArray {

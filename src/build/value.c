@@ -537,6 +537,16 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                     fc_error(fc, "Property is static: '%s'", prop_name);
                 }
 
+                Scope *class_scope = scope;
+                while (class_scope && class_scope->type != sct_class) {
+                    class_scope = class_scope->parent;
+                }
+                if (!class_scope || class_scope->class != class) {
+                    if (prop->access_type == acct_private) {
+                        fc_error(fc, "Cannot access private property outside its class", NULL);
+                    }
+                }
+
                 ValueClassPropAccess *pa = malloc(sizeof(ValueClassPropAccess));
                 pa->on = value;
                 pa->name = prop_name;
