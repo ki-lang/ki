@@ -3,6 +3,7 @@
 
 Scope *init_scope() {
     Scope *scope = malloc(sizeof(Scope));
+    scope->type = sct_unknown;
     scope->identifiers = map_make();
     scope->is_func = false;
     scope->is_loop = false;
@@ -11,6 +12,7 @@ Scope *init_scope() {
     scope->did_return = false;
     scope->catch_errors = false;
     scope->autofill_return_type = false;
+    scope->class = NULL;
     scope->func = NULL;
     scope->body_i = 0;
     scope->body_i_end = 0;

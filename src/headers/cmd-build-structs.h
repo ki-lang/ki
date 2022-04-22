@@ -70,6 +70,7 @@ typedef struct FileCompiler {
 } FileCompiler;
 
 typedef struct Scope {
+    int type;
     struct Map *identifiers;
     bool is_func;
     bool is_loop;
@@ -78,6 +79,7 @@ typedef struct Scope {
     bool did_return;
     bool catch_errors;
     bool autofill_return_type;
+    struct Class *class;
     struct Function *func;
     int body_i;
     int body_i_end;
@@ -88,6 +90,11 @@ typedef struct Scope {
     Array *var_bufs;
     Array *local_var_names;
 } Scope;
+
+typedef enum ScopeType {
+    sct_unknown,
+    sct_class,
+} ScopeType;
 
 typedef struct Identifier {
     char *package;

@@ -191,7 +191,20 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
             if (value->type == vt_prop_access) {
                 ValueClassPropAccess *pa = value->item;
                 if (pa->is_static || value->return_type->type == type_funcref) {
-                    fc_error(fc, "Cannot assign value to this", NULL);
+                    fc_error(fc, "Cannot assign a value to this property", NULL);
+                }
+                // Check if prop is public
+                Value *class_instance_value = pa->on;
+                Class *class = class_instance_value->return_type->class;
+                Scope *class_scope = scope;
+                while (class_scope && class_scope->type != sct_class) {
+                    class_scope = class_scope->parent;
+                }
+                if (!class_scope || class_scope->class != class) {
+                    ClassProp *prop = map_get(class->props, pa->name);
+                    if (prop->access_type != acct_public) {
+                        fc_error(fc, "Cannot assign a value to a private or readonly property", NULL);
+                    }
                 }
             }
 
