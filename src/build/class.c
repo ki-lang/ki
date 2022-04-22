@@ -266,9 +266,10 @@ void fc_scan_class_props(Class *class) {
             continue;
         }
 
-        int acc_type = acct_public;
+        int acc_type = acct_unknown;
         if (strcmp(token, "public") == 0) {
             fc_next_token(fc, token, false, true, true);
+            acc_type = acct_public;
         }
         if (strcmp(token, "private") == 0) {
             fc_next_token(fc, token, false, true, true);
@@ -277,6 +278,9 @@ void fc_scan_class_props(Class *class) {
         if (strcmp(token, "readonly") == 0) {
             fc_next_token(fc, token, false, true, true);
             acc_type = acct_readonly;
+        }
+        if (acc_type == acct_unknown) {
+            fc_error(fc, "Missing access type: public, private or readonly", NULL);
         }
 
         bool is_static = false;

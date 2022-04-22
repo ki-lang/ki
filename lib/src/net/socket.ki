@@ -105,7 +105,7 @@ class Socket {
 		//main:main:fcntl(this.listenfd, 4, 4001);
 	}
 
-	func set_keep_alive(i32 fd){
+	public func set_keep_alive(i32 fd){
 		i32 keep_idle = 180;  // Keep alive time in seconds
 		i32 keep_intvl = 60; // Keep alive interval in seconds
 		i32 keep_pcnt = 20; // Keep alive retry count
@@ -124,10 +124,6 @@ class Socket {
 
 		i32 reuseaddr = 1;
 		//success = main:main:setsockopt(fd, 1, 2, getptr reuseaddr, sizeof(i32));
-	}
-
-	public func accept() ! {
-		//return c:accept(this.listenfd, clientaddr, &addrlen);
 	}
 
 }

@@ -5,12 +5,12 @@ class PtrArray {
 	private u64 size;
 	private ptr data; 
 
-	static func make(u64 size) PtrArray {
+	public static func make(u64 size) PtrArray {
 		@ arr = PtrArray { size: size, data: mem:calloc(size * sizeof(ptr)) };
 		return arr;
 	}
 
-	func set(u64 index, ptr value){
+	public func set(u64 index, ptr value){
 		while(index >= this.size){
 			// increase size
 			u64 new_size = this.size * 2;
@@ -26,7 +26,7 @@ class PtrArray {
 		//mem:copy(value, adr, sizeof(adr));
 		setptrv adr to value;
 	}
-	func get(u64 index) ptr {
+	public func get(u64 index) ptr {
 		if(index >= this.size){
 			return null;
 		}
@@ -36,13 +36,13 @@ class PtrArray {
 		
 		return result;
 	}
-	func clear(u64 index) {
+	public func clear(u64 index) {
 		ptr adr = this.data;
 		adr += (index * sizeof(adr));
 		uxx v = 0;
 		setptrv adr to v;
 	}
-	func has(u64 index) bool {
+	public func has(u64 index) bool {
 		ptr adr = this.data;
 		adr += index * sizeof(adr);
 		ptr x = cast (getptrv adr as uxx) as ptr;

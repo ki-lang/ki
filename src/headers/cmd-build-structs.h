@@ -168,6 +168,7 @@ typedef struct ClassProp {
 } ClassProp;
 
 typedef enum ClassPropAccType {
+    acct_unknown,
     acct_public,
     acct_readonly,
     acct_private,

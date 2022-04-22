@@ -6,31 +6,31 @@ namespace main;
 //}
 
 class sockaddr_in norfc {
-	i16 sin_family;
-	u16 sin_port;
-	ixx sin_addr;
-	i8 sin_zero;
+    public i16 sin_family;
+    public u16 sin_port;
+    public ixx sin_addr;
+    public i8 sin_zero;
 }
 
 class sockaddr norfc {
-	u16 sa_family;
-	i8[14] sa_data;
+    public u16 sa_family;
+    public i8[14] sa_data;
 }
 
 class addrinfo norfc {
-	i32 ai_flags;
-    i32 ai_family;
-    i32 ai_socktype;
-    i32 ai_protocol;
-    ixx ai_addrlen;
-    sockaddr ai_addr;
-    ptr ai_canonname;
-    addrinfo ai_next;
+    public i32 ai_flags;
+    public i32 ai_family;
+    public i32 ai_socktype;
+    public i32 ai_protocol;
+    public ixx ai_addrlen;
+    public sockaddr ai_addr;
+    public ptr ai_canonname;
+    public addrinfo ai_next;
 }
 
 class os_fd_set norfc {
-	i32 count;
-	ptr list;
+    public i32 count;
+    public ptr list;
 }
 
 func select(i32 fdcount, ptr readfdset, ptr writefdset, ptr expectfdset, ptr timeout) i32;

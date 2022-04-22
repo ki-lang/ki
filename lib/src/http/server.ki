@@ -15,11 +15,11 @@ func request_handler(Request req) Response {
 }
 
 class Server {
-	u32 port;
-	i32 max_connections = 64000;
-	funcref (Request) Response handler = request_handler;
+	readonly u32 port;
+	readonly i32 max_connections = 64000;
+	public funcref (Request) Response handler = request_handler;
 
-	func start() ! {
+	public func start() ! {
 
 		@ sock = ki:net:Socket { port: this.port };
 		sock.listen() or pass;

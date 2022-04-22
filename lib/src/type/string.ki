@@ -5,12 +5,12 @@ use mem {alloc,copy,equal,free};
 
 class string {
 
-	public uxx length = 0;
+	readonly uxx length = 0;
 	private uxx mem_size = 0;
 	private ptr data = 0;
 	private bool is_const = false;
 
-	static func make(ptr data, uxx length, bool is_const) string {
+	public static func make(ptr data, uxx length, bool is_const) string {
 		uxx mem_size = length;
 		ptr new_data = data;
 		if(is_const == false){
@@ -24,13 +24,13 @@ class string {
 		return str;
 	}
 
-	static func make_empty(uxx mem_size) string {
+	public static func make_empty(uxx mem_size) string {
 		ptr data = alloc(mem_size);
 		@ str = string { data: data, mem_size: mem_size, length: 0, is_const: false };
 		return str;
 	}
 
-	func __add(string str) string {
+	public func __add(string str) string {
 
 		@ s = this;
 
@@ -57,14 +57,14 @@ class string {
 		return s;
 	}
 
-	func __eq(string str) bool {
+	public func __eq(string str) bool {
 		if(this.length != str.length){
 			return false;
 		}
 		return equal(this.data, str.data, this.length);
 	}
 
-	func __free() {
+	public func __free() {
 		if(this.is_const == false){
 			free(this.data);
 		}
@@ -72,7 +72,7 @@ class string {
 		a.free(this);
 	}
 
-	func append_char(u8 ch) string {
+	public func append_char(u8 ch) string {
 
 		@ s = this;
 
@@ -94,7 +94,7 @@ class string {
 		return s;
 	}
 
-	func clear() string {
+	public func clear() string {
 
 		@ s = this;
 
@@ -105,7 +105,7 @@ class string {
 		return s;
 	}
 
-	func index_of(string str) uxx {
+	public func index_of(string str) uxx {
 		if(str.length == 0){
 			return -1;
 		}
@@ -134,7 +134,7 @@ class string {
 		return -1;
 	}
 
-	func to_cstring() cstring {
+	public func to_cstring() cstring {
 		cstring cstr = cast alloc(this.length + 1) as cstring;
 		copy(this.data, cstr, this.length);
 		ptr x = cstr;
@@ -143,7 +143,7 @@ class string {
 		return cstr;
 	}
 
-	func i32() !i32{
+	public func i32() !i32{
 		i32 i = this.length;
 		i32 result = 0;
 		i32 mult = 1;
@@ -162,7 +162,7 @@ class string {
 		return result;
 	}
 
-	func get_index(uxx index) u8 {
+	public func get_index(uxx index) u8 {
 		if(index >= this.length){
 			return '\0';
 		}
@@ -172,11 +172,11 @@ class string {
 		return result;
 	}
 
-	func chunker() StringChunker {
+	public func chunker() StringChunker {
 		return StringChunker { str: this, start: 0 };
 	}
 
-	func substring(uxx start, uxx length) string {
+	public func substring(uxx start, uxx length) string {
 		if(length == 0){
 			return "";
 		}

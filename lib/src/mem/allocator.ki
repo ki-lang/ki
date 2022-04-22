@@ -2,14 +2,14 @@
 namespace mem;
 
 class AllocatorSettings norfc {
-	u32 block_i = 0;
-	u32 block_c = 0;
-	ptr blocks_ptr;
+	public u32 block_i = 0;
+	public u32 block_c = 0;
+	public ptr blocks_ptr;
 }
 
 class Allocator norfc {
-	u64 size;
-	?ki:async:Threaded<AllocatorSettings> settings;
+	private u64 size;
+	private ?ki:async:Threaded<AllocatorSettings> settings;
 
 	public static func make(u64 size) Allocator {
 		@ alc = cast (alloc_flat(64)) as Allocator;
@@ -22,7 +22,7 @@ class Allocator norfc {
 	// 1(10x) example
 	// (block_i,len:10,empty-count:1,empty-pos:1)|(pos){...}|(pos){NULL}|(pos){...}
 
-	func get_settings() AllocatorSettings {
+	private func get_settings() AllocatorSettings {
 		?AllocatorSettings settings = this.settings.get();
 
 		ifnull settings set cast (alloc_flat(16)) as AllocatorSettings then {
@@ -35,7 +35,7 @@ class Allocator norfc {
 		return settings;
 	}
 
-	func get_chunk() ptr {
+	public func get_chunk() ptr {
 
 		@ settings = this.get_settings();
 
@@ -96,7 +96,7 @@ class Allocator norfc {
 		return new_block + 1 + 1; // skip empty_pos byte & skip value pos byte
 	}
 
-	func get_chunk_from_block(AllocatorSettings settings) ptr {
+	private func get_chunk_from_block(AllocatorSettings settings) ptr {
 		ptr block_ptr = settings.blocks_ptr + ((settings.block_i) * 8);
 		block_ptr = getptrv block_ptr as ptr;
 		block_ptr += 12;
@@ -142,7 +142,7 @@ class Allocator norfc {
 		return null;
 	}
 
-	func free(ptr adr) {
+	public func free(ptr adr) {
 
 		adr--;
 		u8 pos = getptrv adr as u8;

@@ -7,7 +7,7 @@ class Mutex norfc {
 
 	public main:main:pthread_mutex_t mutex;
 
-	static func make() Mutex {
+	public static func make() Mutex {
 		@ pm = mem:alloc_flat(sizeof(main:main:pthread_mutex_t));
 		@ check = main:main:pthread_mutex_init(pm, null);
 		Mutex m = cast mem:alloc_flat(sizeof(Mutex)) as Mutex;
@@ -15,11 +15,11 @@ class Mutex norfc {
 		return m;
 	}
 
-	func lock() {
+	public func lock() {
 		mutex_lock getptrv this.mutex as NPT main:main:pthread_mutex_t;
 	}
 
-	func unlock() {
+	public func unlock() {
 		mutex_unlock getptrv this.mutex as NPT main:main:pthread_mutex_t;
 	}
 }

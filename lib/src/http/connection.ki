@@ -2,8 +2,8 @@
 namespace http;
 
 class Connection {
-	i32 fd;
-	ptr read_set;
-	bool disconnected = false;
-	?async:Task task = null;
+	public i32 fd;
+	public ptr read_set;
+	public bool disconnected = false;
+	public ?async:Task task = null;
 }

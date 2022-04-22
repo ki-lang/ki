@@ -1,0 +1,14 @@
+
+namespace async;
+
+class Task norfc {
+	public funcref (Task) void handler_func;
+	public ptr func;
+	public ptr args = 0;
+	public ptr result = 0;
+	public bool ready = false;
+
+	public func continue (){
+		Taskman.add_task(this);
+	}
+}
