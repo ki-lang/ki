@@ -35,8 +35,16 @@ trait Number {
 		ptr str = mem:alloc(20);
 		ptr strp = str;
 
+		bool negative = false;
+		#if IS_SIGNED_NUMBER_CLASS CLASS
+			if(this < 0){
+				negative = true;
+				this = this * -1;
+			}
+		#end
+
 		@ value = this;
-		u32 rest = 0;
+		u64 rest = 0;
 		u8 pos = sizeof(this) - 1;
 		i8 len = 0;
 		uxx mult = 1;
@@ -45,7 +53,7 @@ trait Number {
 			rest = value % (mult * 10);
 			//io:print("2\n");
 			value -= rest;
-			u32 r = rest / mult;
+			u64 r = rest / mult;
 			u8 b = cast r as u8;
 			b += 48; // ascii
 
@@ -62,6 +70,10 @@ trait Number {
 		setptrv strp to '\0';
 		ptr result = mem:alloc(20);
 		ptr tmp = result;
+		if(negative){
+			setptrv result to '-';
+			result++;
+		}
 		while(len >= 0){
 			strp = str;
 			strp += len;

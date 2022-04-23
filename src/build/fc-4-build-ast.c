@@ -69,7 +69,7 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
         }
 
         if (strcmp(token, "#") == 0) {
-            fc_parse_macro(fc, token);
+            fc_parse_macro(fc, scope, token);
             continue;
         }
 
@@ -211,10 +211,7 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
                 // Check if prop is public
                 Value *class_instance_value = pa->on;
                 Class *class = class_instance_value->return_type->class;
-                Scope *class_scope = scope;
-                while (class_scope && class_scope->type != sct_class) {
-                    class_scope = class_scope->parent;
-                }
+                Scope *class_scope = get_class_scope(scope);
                 if (!class_scope || class_scope->class != class) {
                     ClassProp *prop = map_get(class->props, pa->name);
                     if (prop->access_type != acct_public) {

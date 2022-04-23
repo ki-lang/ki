@@ -55,6 +55,13 @@ Class *fc_make_generic_class(Class *class) {
     gclass->scope = init_sub_scope(class->fc->scope);
     gclass->scope->type = sct_class;
     gclass->scope->class = gclass;
+
+    IdentifierFor *idf = init_idf();
+    idf->type = idfor_class;
+    idf->item = gclass;
+
+    map_set(gclass->scope->identifiers, "CLASS", idf);
+
     return gclass;
 }
 

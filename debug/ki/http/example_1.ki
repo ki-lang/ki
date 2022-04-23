@@ -8,6 +8,19 @@ func handler(ki:http:Request req) ki:http:Response{
 
 func main() i32 {
 
+	@ arr = Array<String>.make(2);
+	arr.push("000");
+	arr.push("111");
+	arr.push("222");
+	arr.push("333");
+
+	ki:io:println(arr.length.str());
+	ki:io:println(arr.index_of("222").str());
+	arr.remove(0);
+	ki:io:println(arr.index_of("222").str());
+
+	return 0;
+
 	@ s = ki:http:Server { port: 9000, handler: handler };
 	s.start() or return 1;
 

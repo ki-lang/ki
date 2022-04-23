@@ -36,6 +36,7 @@ double get_time();
 Scope *init_scope();
 void free_scope(Scope *scope);
 Scope *init_sub_scope(Scope *parent);
+Scope *get_class_scope(Scope *scope);
 
 // Token
 Token *init_token();
@@ -138,8 +139,8 @@ void fc_skip_assign_value(FileCompiler *fc);
 void fc_read_header_token(FileCompiler *fc);
 
 // Macro
-void fc_parse_macro(FileCompiler *fc, char *token);
-bool fc_resolve_macro_if_value(FileCompiler *fc);
+void fc_parse_macro(FileCompiler *fc, Scope *scope, char *token);
+bool fc_resolve_macro_if_value(FileCompiler *fc, Scope *scope);
 
 // Write c
 void fc_write_c_all();

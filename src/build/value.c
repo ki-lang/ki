@@ -83,7 +83,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         //
         fc_expect_token(fc, ")", false, true, true);
     } else if (strcmp(token, "cast") == 0) {
-        value->type = vt_cast;
 
         ValueCast *cast = malloc(sizeof(ValueCast));
         cast->value = fc_read_value(fc, scope, false, true, true);
@@ -92,6 +91,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
         cast->as_type = fc_read_type(fc, scope);
 
+        value->type = vt_cast;
         value->item = cast;
         value->return_type = cast->as_type;
     } else if (strcmp(token, "getptrv") == 0) {
@@ -269,6 +269,18 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->item = strdup(token);
             value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"), NULL);
         }
+
+        ch = fc_get_char(fc, 0);
+        if (ch == '#') {
+            fc->i++;
+            // Cast
+            Type *type = fc_read_type(fc, scope);
+            if (!type->class || !type->class->is_number) {
+                fc_error(fc, "Not a number type", NULL);
+            }
+            value->return_type = type;
+        }
+
     } else if (strcmp(token, "async") == 0) {
         Value *v = fc_read_value(fc, scope, false, true, true);
 
@@ -329,6 +341,14 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         value->type = vt_get_threaded;
         value->item = fc_create_identifier_global_cname(fc, id);
         value->return_type = tg->type;
+
+    } else if (strcmp(token, "PTRSIZE") == 0) {
+        char *num = malloc(16);
+        sprintf(num, "%d", pointer_size);
+
+        value->type = vt_number;
+        value->item = num;
+        value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "u16"), NULL);
 
     } else if (is_valid_varname(token)) {
         IdentifierFor *idf = NULL;
@@ -537,10 +557,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                     fc_error(fc, "Property is static: '%s'", prop_name);
                 }
 
-                Scope *class_scope = scope;
-                while (class_scope && class_scope->type != sct_class) {
-                    class_scope = class_scope->parent;
-                }
+                Scope *class_scope = get_class_scope(scope);
                 if (!class_scope || class_scope->class != class) {
                     if (prop->access_type == acct_private) {
                         fc_error(fc, "Cannot access private property outside its class", NULL);

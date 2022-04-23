@@ -42,7 +42,7 @@ void fc_scan_types(FileCompiler *fc) {
         }
 
         if (strcmp(token, "#") == 0) {
-            fc_parse_macro(fc, token);
+            fc_parse_macro(fc, fc->scope, token);
 
         } else if (strcmp(token, "enum") == 0) {
             fc_next_token(fc, token, false, true, true);
@@ -156,6 +156,7 @@ void fc_scan_types(FileCompiler *fc) {
 
             Scope *scope = fc->nsc->scope;
             map_set(scope->identifiers, name, idf);
+            map_set(class->scope->identifiers, "CLASS", idf);
 
             char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, name);
             class->cname = cname;

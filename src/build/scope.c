@@ -37,3 +37,12 @@ Scope *init_sub_scope(Scope *parent) {
     scope->in_loop = parent->in_loop;
     return scope;
 }
+
+Scope *get_class_scope(Scope *scope) {
+    //
+    Scope *class_scope = scope;
+    while (class_scope && class_scope->type != sct_class) {
+        class_scope = class_scope->parent;
+    }
+    return class_scope;
+}

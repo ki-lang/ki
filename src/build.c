@@ -123,6 +123,11 @@ double get_time() {
 #endif
 
 void cmd_build_init_before_build() {
+
+    map_set(macro_defines, "OS_WIN", "0");
+    map_set(macro_defines, "OS_MAC", "0");
+    map_set(macro_defines, "OS_LINUX", "0");
+
 #if defined _WIN32
     map_set(macro_defines, "OS_WIN", "1");
 #elif defined __APPLE__
