@@ -6,6 +6,10 @@ class Map<T> {
 	private ptr indexes;// = mem:alloc(128);
 	private PtrArray arrays;// = PtrArray.make(1);
 
+	public static func make() CLASS {
+		return CLASS { indexes: mem:alloc(128), arrays: PtrArray.make(1) };
+	}
+
 	public func set(String key, T value) {
 
 		u8 rest = this.get_rest(key);

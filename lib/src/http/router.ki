@@ -25,11 +25,46 @@ class Router{
 		@ parts = url_tmp.split("/");
 		parts.remove(0);
 
-		@ ref = this.tree;
+		@ entry = this.tree;
 		@ args = Array<RouteArg>.make(2);
-		@ wcard_index = 0#i32;
+		@ wcard_index = -1#i32;
 
 		each parts as part i {
+			if(part.length == 0){
+				continue;
+			}
+
+			@ routes = entry.routes;
+
+			@ is_arg = part.char(0) == ':';
+			@ is_wcard = part == "*";
+			@ key = part;
+
+			if(is_arg){
+				@ name = part.substring(1, part.length - 1);
+				if(name.length == 0){
+					throw invalid_route_parameter_syntax;
+				}
+				args.push(RouteArg { i: i, name: name });
+				key = "@";
+			} else if(is_wcard){
+				key = "*";
+				wcard_index = i;
+			}
+
+			if(wcard_index >= 0 && is_wcard == false){
+				throw incorrect_wildcard_usage;
+			}
+
+			@ find = routes.get(key) or value null;
+			if(find == null){
+				find = RouteEntry{ routes: type:Map<Route>.make() };
+				routes.set(key, find);
+			}
+
+			notnull find do {
+				entry = find;
+			}
 		}
 	}
 }
