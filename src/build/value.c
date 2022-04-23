@@ -612,30 +612,77 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->item = op;
             value->return_type = return_type;
         } else if (strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "<") == 0 || strcmp(token, ">") == 0) {
-            ValueOperator *op = malloc(sizeof(ValueOperator));
-            op->left = value;
-            op->right = fc_read_value(fc, scope, false, false, true);
+            Value *right = fc_read_value(fc, scope, false, false, true);
 
+            int optype = -1;
+            char *fn = NULL;
             if (strcmp(token, "==") == 0) {
-                op->type = op_eq;
+                optype = op_eq;
+                fn = "__eq";
             } else if (strcmp(token, "!=") == 0) {
-                op->type = op_neq;
+                optype = op_neq;
+                fn = "__neq";
             } else if (strcmp(token, "<=") == 0) {
-                op->type = op_lte;
+                optype = op_lte;
+                fn = "__lte";
             } else if (strcmp(token, ">=") == 0) {
-                op->type = op_gte;
+                optype = op_gte;
+                fn = "__gte";
             } else if (strcmp(token, "<") == 0) {
-                op->type = op_lt;
+                optype = op_lt;
+                fn = "__lt";
             } else if (strcmp(token, ">") == 0) {
-                op->type = op_gt;
+                optype = op_gt;
+                fn = "__gt";
             }
 
-            Type *return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"), NULL);
+            ClassProp *eq_prop = NULL;
+            if (value->return_type->class && right->return_type->class == value->return_type->class) {
+                eq_prop = map_get(value->return_type->class->props, fn);
+            }
 
-            value = init_value();
-            value->type = vt_operator;
-            value->item = op;
-            value->return_type = return_type;
+            if (eq_prop) {
+                if (!eq_prop->is_func) {
+                    fc_error(fc, "%s is not a function", fn);
+                }
+
+                Function *func = eq_prop->func;
+                Value *on = init_value();
+                on->type = vt_var;
+                on->item = func->cname;
+                Type *t = init_type();
+                t->type = type_funcref;
+                t->func_arg_types = func->args;
+                t->func_return_type = func->return_type;
+                t->func_can_error = func->can_error;
+                on->return_type = t;
+
+                ValueFuncCall *fcall = malloc(sizeof(ValueFuncCall));
+                fcall->on = on;
+                fcall->arg_values = array_make(2);
+                fcall->error_type = or_none;
+                fcall->or_value = NULL;
+                fcall->func_scope = NULL;
+
+                array_push(fcall->arg_values, value);
+                array_push(fcall->arg_values, right);
+
+                value = init_value();
+                value->type = vt_func_call;
+                value->item = fcall;
+                value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"), NULL);
+            } else {
+                ValueOperator *op = malloc(sizeof(ValueOperator));
+                op->left = value;
+                op->right = right;
+                op->type = optype;
+
+                value = init_value();
+                value->type = vt_operator;
+                value->item = op;
+                value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"), NULL);
+            }
+
         } else if (strcmp(token, "++") == 0 || strcmp(token, "--") == 0) {
             ValueOperator *op = malloc(sizeof(ValueOperator));
             op->left = value;

@@ -47,13 +47,12 @@ class Array<T> {
 	}
 
 	public func index_of(T item) i64 {
-		ptr find = cast item as ptr;
 		i64 index = 0;
 		ptr adr = this.data;
 		while(index < this.length){
 
-			@ x = getptrv adr as ?T;
-			if ( x == find ) {
+			@ x = getptrv adr as T;
+			if ( x == item ) {
 				return index;
 			}
 			index++;
