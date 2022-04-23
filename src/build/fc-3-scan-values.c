@@ -26,6 +26,8 @@ void fc_scan_values() {
         IdentifierFor *idf = array_get_index(c_identifiers->values, x);
         if (idf->type == idfor_class) {
             Class *class = idf->item;
+            if (class->self_scan)
+                continue;
             fc_scan_class_props(class);
             // printf("%s\n", class->cname);
             // map_print_keys(class->props);
@@ -36,6 +38,8 @@ void fc_scan_values() {
         IdentifierFor *idf = array_get_index(c_identifiers->values, x);
         if (idf->type == idfor_class) {
             Class *class = idf->item;
+            if (class->self_scan)
+                continue;
             fc_scan_class_prop_values(class);
         }
     }

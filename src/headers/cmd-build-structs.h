@@ -143,6 +143,7 @@ typedef struct Class {
     bool is_float;
     bool is_unsigned;
     bool is_ctype;
+    bool self_scan;
     int size;
     //
     Map *props;

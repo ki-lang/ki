@@ -22,6 +22,7 @@ void cmd_build(Array *files, Map *options) {
     c_enum_identifiers = map_make();
     c_union_identifiers = map_make();
     allow_new_namespaces = true;
+    build_ast_stage = false;
     uses_async = false;
     last_readonly_i = 0;
     GEN_C = 0;
@@ -47,6 +48,8 @@ void cmd_build(Array *files, Map *options) {
     // Step 3. Scan values
     printf("# SCAN ARGS/PROPS\n");
     fc_scan_values();
+
+    build_ast_stage = true;
 
     // Step 4. Build ASTs
     printf("# BUILD AST\n");

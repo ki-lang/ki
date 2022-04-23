@@ -26,7 +26,7 @@ class Router{
 		parts.remove(0);
 
 		@ ref = this.tree;
-		//@ args = Array<RouteArg>.make(2);
+		@ args = Array<RouteArg>.make(2);
 		@ wcard_index = 0#i32;
 
 		each parts as part i {

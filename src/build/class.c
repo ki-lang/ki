@@ -12,6 +12,7 @@ Class *init_class() {
     class->is_float = false;
     class->is_unsigned = false;
     class->is_ctype = false;
+    class->self_scan = false;
     class->size = 0;
     class->props = map_make();
     class->traits = array_make(2);
@@ -49,7 +50,7 @@ void free_class_prop(ClassProp *prop) {
 
 Class *fc_make_generic_class(Class *class) {
     Class *gclass = malloc(sizeof(Class));
-    memcpy(gclass, class, sizeof(Class));
+    *gclass = *class;
     gclass->props = map_make();
     gclass->traits = array_make(2);
     gclass->scope = init_sub_scope(class->fc->scope);
@@ -61,6 +62,10 @@ Class *fc_make_generic_class(Class *class) {
     idf->item = gclass;
 
     map_set(gclass->scope->identifiers, "CLASS", idf);
+
+    if (build_ast_stage) {
+        gclass->self_scan = true;
+    }
 
     return gclass;
 }
@@ -115,6 +120,27 @@ Class *fc_get_generic_class(FileCompiler *fc, Class *class, Scope *scope) {
         strcat(vn, uid);
 
         map_set(gclass->fc->nsc->scope->identifiers, vn, idf);
+
+        // Scan class
+        if (gclass->self_scan) {
+            fc_scan_class_props(gclass);
+            fc_scan_class_prop_values(gclass);
+            map_print_keys(gclass->props);
+
+            for (int y = 0; y < gclass->props->values->length; y++) {
+                ClassProp *prop = array_get_index(gclass->props->values, y);
+                if (prop->is_func) {
+                    Function *func = prop->func;
+                    if (!gclass->fc->is_header) {
+                        fc_build_ast(func->fc, func->scope);
+                    }
+                    Token *t = init_token();
+                    t->type = tkn_func;
+                    t->item = func;
+                    array_push(gclass->fc->scope->ast, t);
+                }
+            }
+        }
     }
 
     free(cname);
@@ -134,7 +160,7 @@ char *fc_class_read_generic_unique_id(FileCompiler *fc, Scope *scope) {
         // Identifier* id = fc_read_identifier(fc, false, true, true);
         Type *gen_t = fc_read_type(fc, scope);
         if (gen_t->nullable) {
-            str_append_chars(uid, '?');
+            str_append_chars(uid, "?");
         }
         str_append_chars(uid, gen_t->class->cname);
 

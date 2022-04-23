@@ -28,6 +28,9 @@ void fc_build_asts() {
             for (int x = 0; x < fc->classes->length; x++) {
                 Class *class = array_get_index(fc->classes, x);
 
+                if (class->self_scan) {
+                    continue;
+                }
                 if (class->generic_names != NULL && class->generic_hash == NULL) {
                     continue;
                 }

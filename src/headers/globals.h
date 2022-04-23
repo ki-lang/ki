@@ -18,6 +18,7 @@ Map *c_enum_identifiers;
 Map *c_union_identifiers;
 
 bool allow_new_namespaces;
+bool build_ast_stage;
 bool uses_async;
 
 Array *internal_types;
