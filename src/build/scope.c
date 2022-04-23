@@ -11,14 +11,12 @@ Scope *init_scope() {
     scope->must_return = false;
     scope->did_return = false;
     scope->catch_errors = false;
-    scope->autofill_return_type = false;
     scope->class = NULL;
     scope->func = NULL;
     scope->body_i = 0;
     scope->body_i_end = 0;
     scope->ast = array_make(4);
     scope->parent = NULL;
-    scope->return_type = NULL;
     //
     scope->var_bufs = array_make(8);
     scope->local_var_names = array_make(8);
@@ -45,4 +43,13 @@ Scope *get_class_scope(Scope *scope) {
         class_scope = class_scope->parent;
     }
     return class_scope;
+}
+
+Scope *get_func_scope(Scope *scope) {
+    //
+    Scope *func_scope = scope;
+    while (func_scope && !func_scope->is_func) {
+        func_scope = func_scope->parent;
+    }
+    return func_scope;
 }

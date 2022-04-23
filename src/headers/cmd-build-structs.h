@@ -78,14 +78,12 @@ typedef struct Scope {
     bool must_return;
     bool did_return;
     bool catch_errors;
-    bool autofill_return_type;
     struct Class *class;
     struct Function *func;
     int body_i;
     int body_i_end;
     struct Array *ast;
     struct Scope *parent;
-    struct Type *return_type;
     //
     Array *var_bufs;
     Array *local_var_names;
@@ -386,11 +384,19 @@ typedef enum TokenTypeEnum {
     tkn_mutex_lock,
     tkn_mutex_unlock,
     tkn_exit,
+    tkn_each,
     // Global ast only
     tkn_func,
     tkn_class,
     //
 } TokenTypeEnum;
+
+typedef struct TokenEach {
+    Value *value;
+    char *kname;
+    char *vname;
+    Scope *scope;
+} TokenEach;
 
 typedef struct TokenIf {
     Value *condition;
@@ -400,9 +406,11 @@ typedef struct TokenIf {
 } TokenIf;
 
 typedef struct TokenIfNull {
+    int type;
     char *name;
     Value *value;
     struct Scope *then_scope;
+    char *throw_msg;
 } TokenIfNull;
 
 typedef struct TokenWhile {

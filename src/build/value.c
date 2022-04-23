@@ -415,7 +415,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             TokenStaticDeclare *decl = idf->item;
             value->type = vt_var;
             value->item = decl->name;
-            value->return_type = decl->scope->return_type;
+            value->return_type = decl->scope->func->return_type;
         } else if (idf->type == idfor_mutex) {
             // todo: check idf_scope is global
             value->type = vt_mutex;
@@ -826,7 +826,7 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
             if (fcall->or_value->return_type->nullable) {
                 value->return_type->nullable = true;
             }
-            fc_type_compatible(fc, func_scope->return_type, fcall->or_value->return_type);
+            fc_type_compatible(fc, func_scope->func->return_type, fcall->or_value->return_type);
         } else if (strcmp(token, "throw") == 0) {
             fcall->error_type = or_throw;
             fc_next_token(fc, token, false, true, true);

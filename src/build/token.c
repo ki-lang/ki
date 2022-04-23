@@ -19,11 +19,11 @@ void token_return(FileCompiler *fc, Scope *scope) {
     t->type = tkn_return;
 
     Scope *func_scope = scope;
-    while (func_scope->is_func == false && func_scope->parent != NULL) {
+    while (func_scope && func_scope->is_func == false) {
         func_scope = func_scope->parent;
     }
 
-    if (!func_scope->is_func) {
+    if (!func_scope || !func_scope->is_func) {
         fc_error(fc, "Trying to return in a non function scope", NULL);
     }
 
@@ -33,15 +33,11 @@ void token_return(FileCompiler *fc, Scope *scope) {
     if (strcmp(token, ";") != 0) {
         Value *value = fc_read_value(fc, scope, false, true, true);
 
-        if (func_scope->autofill_return_type && func_scope->return_type == NULL) {
-            func_scope->return_type = value->return_type;
-        }
-
-        if (func_scope->return_type == NULL) {
+        if (func_scope->func->return_type == NULL) {
             fc_error(fc, "Function has no return type, but you are returning a value.", NULL);
         }
 
-        fc_type_compatible(fc, func_scope->return_type, value->return_type);
+        fc_type_compatible(fc, func_scope->func->return_type, value->return_type);
 
         t->item = value;
     }
@@ -113,9 +109,11 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     }
 
     TokenIfNull *ifn = malloc(sizeof(TokenIfNull));
+    ifn->type = or_none;
     ifn->name = strdup(id->name);
     ifn->value = NULL;
     ifn->then_scope = NULL;
+    ifn->throw_msg = NULL;
 
     Token *t = init_token();
     t->type = tkn_ifnull;
@@ -129,28 +127,47 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     //
     fc_next_token(fc, token, false, true, true);
     if (strcmp(token, "set") == 0) {
+        ifn->type = or_value;
         ifn->value = fc_read_value(fc, scope, false, true, true);
         // Type check
         fc_type_compatible(fc, type, ifn->value->return_type);
         if (ifn->value->return_type->nullable) {
             fc_error(fc, "The 'set' value cannot be nullable", NULL);
         }
-        // Remove nullable from var type
-        type->nullable = false;
-        // then { ... }
-        fc_next_token(fc, token, true, true, true);
-        if (strcmp(token, "then") == 0) {
-
-            fc_next_token(fc, token, false, true, true);
-            fc_expect_token(fc, "{", false, false, true);
-
-            ifn->then_scope = init_sub_scope(scope);
-            ifn->then_scope->body_i = fc->i;
-            fc_build_ast(fc, ifn->then_scope);
-        }
-
+    } else if (strcmp(token, "throw") == 0) {
+        ifn->type = or_throw;
+        fc_next_token(fc, token, false, true, true);
+        ifn->throw_msg = strdup(token);
     } else {
         fc_error(fc, "Expected 'set' but found '%s'", token);
+    }
+
+    // Create new type within scope
+    IdentifierFor *idfs = map_get(scope->identifiers, id->name);
+    if (!idfs) {
+        idfs = init_idf();
+        idfs->type = idfor_var;
+        Type *ntype = init_type();
+        *ntype = *type;
+        idfs->item = ntype;
+        type = ntype;
+    }
+
+    // Remove nullable from var type
+    type->nullable = false;
+
+    // then { ... }
+    fc_next_token(fc, token, true, true, true);
+    if (ifn->type == or_value && strcmp(token, "then") == 0) {
+
+        fc_next_token(fc, token, false, true, true);
+        fc_expect_token(fc, "{", false, false, true);
+
+        ifn->then_scope = init_sub_scope(scope);
+        ifn->then_scope->body_i = fc->i;
+        fc_build_ast(fc, ifn->then_scope);
+    } else {
+        fc_expect_token(fc, ";", false, true, true);
     }
 
     array_push(scope->ast, t);
@@ -202,7 +219,7 @@ void token_throw(FileCompiler *fc, Scope *scope) {
 
     TokenThrow *tt = malloc(sizeof(TokenThrow));
     tt->msg = msg;
-    tt->return_type = throw_scope->return_type;
+    tt->return_type = throw_scope->func->return_type;
 
     t->item = tt;
     array_push(scope->ast, t);
@@ -212,9 +229,83 @@ void token_throw(FileCompiler *fc, Scope *scope) {
     scope->did_return = true;
 }
 
+void token_each(FileCompiler *fc, Scope *scope) {
+    //
+    Token *t = init_token();
+    t->type = tkn_each;
+
+    TokenEach *te = malloc(sizeof(TokenEach));
+    te->value = fc_read_value(fc, scope, false, true, true);
+
+    fc_expect_token(fc, "as", false, true, true);
+
+    char *token = malloc(KI_TOKEN_MAX);
+    fc_next_token(fc, token, false, true, true);
+
+    if (!is_valid_varname(token)) {
+        fc_error(fc, "Invalid item var name: '%s'", token);
+    }
+
+    te->vname = strdup(token);
+    fc_next_token(fc, token, true, true, true);
+
+    if (is_valid_varname(token)) {
+        fc_next_token(fc, token, false, true, true);
+        te->kname = strdup(token);
+    }
+
+    if (!te->value->return_type->class) {
+        fc_error(fc, "Invalid each value", NULL);
+    }
+    Class *class = te->value->return_type->class;
+    ClassProp *countf = map_get(class->props, "__each_count");
+    ClassProp *getf = map_get(class->props, "__each_get");
+    if (!countf || !getf || !countf->is_func || !getf->is_func || getf->is_static || countf->is_static) {
+        fc_error(fc, "Invalid each value: Missing __each_count / __each_get non-static functions", NULL);
+    }
+    if (countf->func->args->length != 1) {
+        fc_error(fc, "__each_count has too many arguments", NULL);
+    }
+    if (getf->func->args->length != 2) {
+        fc_error(fc, "__each_get must have 1 argument of type 'uxx'", NULL);
+    }
+    Type *ret = countf->func->return_type;
+    if (!ret || !ret->class || strcmp(ret->class->cname, "ki__type__uxx") != 0 || countf->func->can_error) {
+        fc_error(fc, "__each_count must have the return type 'uxx'", NULL);
+    }
+    ret = getf->func->return_type;
+    if (!ret || !getf->func->can_error) {
+        fc_error(fc, "__each_get must have a return type and allow errors", NULL);
+    }
+
+    fc_expect_token(fc, "{", false, true, true);
+
+    te->scope = init_sub_scope(scope);
+    te->scope->body_i = fc->i;
+    te->scope->is_loop = true;
+
+    IdentifierFor *idf = init_idf();
+    idf->type = idfor_var;
+    idf->item = ret;
+    map_set(te->scope->identifiers, te->vname, idf);
+    IdentifierFor *idfk = init_idf();
+    idfk->type = idfor_var;
+    idfk->item = fc_identifier_to_type(fc, create_identifier("ki", "type", "uxx"), NULL);
+    map_set(te->scope->identifiers, te->kname, idfk);
+
+    fc_build_ast(fc, te->scope);
+
+    t->item = te;
+    array_push(scope->ast, t);
+    free(token);
+}
+
 void token_static(FileCompiler *fc, Scope *scope) {
     // Get type
     Type *left_type = fc_read_type(fc, scope);
+    if (left_type == NULL) {
+        fc_error(fc, "Missing type", NULL);
+    }
 
     // Get var name
     char *token = malloc(KI_TOKEN_MAX);
@@ -224,31 +315,34 @@ void token_static(FileCompiler *fc, Scope *scope) {
     //
     fc_expect_token(fc, "{", false, true, true);
     //
-    Scope *val_scope = init_sub_scope(fc->scope);
-    val_scope->body_i = fc->i;
-    val_scope->is_func = true;
-    val_scope->autofill_return_type = true;
+    Function *func = init_func();
+    func->fc = fc;
+    func->return_type = left_type;
+    func->scope = init_sub_scope(fc->scope);
+    func->scope->is_func = true;
+    func->scope->func = func;
+    func->scope->body_i = fc->i;
+    func->scope->is_func = true;
 
-    fc_build_ast(fc, val_scope);
+    char *gname = malloc(128);
+    sprintf(gname, "_KI_STATIC_%s_%d", fc->hash, fc->static_vars->length);
+    char *fn = malloc(128);
+    sprintf(fn, "%s_init", fc->hash, fc->var_bufc);
+    func->cname = fn;
 
-    if (!left_type && !scope->return_type) {
+    array_push(fc->functions, func);
+
+    fc_build_ast(fc, func->scope);
+
+    if (!left_type && !scope->did_return) {
         fc_error(fc, "Scope must return a value", NULL);
     }
-
-    if (left_type) {
-        if (!type_compatible(left_type, scope->return_type)) {
-            fc_error(fc, "Types are not compatible", NULL);
-        }
-    }
-
-    char *gname = malloc(KI_TOKEN_MAX);
-    sprintf(gname, "_KI_STATIC_VAR_%d_%s", fc->static_vars->length, fc->hash);
 
     TokenStaticDeclare *decl = malloc(sizeof(TokenStaticDeclare));
     decl->name = token;
     decl->global_name = gname;
-    decl->scope = val_scope;
-    decl->type = left_type ? left_type : scope->return_type;
+    decl->scope = func->scope;
+    decl->type = left_type;
 
     Token *t = init_token();
     t->type = tkn_static;

@@ -2,13 +2,13 @@
 namespace type;
 
 class Array<T> {
-	readonly i64 length = 0;
-	private i64 max_length = 0;
+	readonly u32 length = 0;
+	private u32 max_length = 0;
 	private ptr data;
 
 	public static func make(i32 suggested_length) Array<T> {
 		if(suggested_length < 1){
-			suggested_length = 1;
+			suggested_length = 2;
 		}
 		return Array<T> { max_length: suggested_length, data: mem:calloc(suggested_length * sizeof(T)) };
 	}
@@ -30,7 +30,7 @@ class Array<T> {
 		this.length++;
 	}
 
-	public func remove(i64 index) {
+	public func remove(u32 index) {
 		if(index < 0){
 			return;
 		}
@@ -46,8 +46,18 @@ class Array<T> {
 		}
 	}
 
-	public func index_of(T item) i64 {
-		i64 index = 0;
+	public func get(u32 index) ?T {
+		if(index >= this.length){
+			return null;
+		}
+		ptr adr = this.data;
+		adr += index * sizeof(T);
+		@ result = getptrv adr as T;
+		return result;
+	}
+
+	public func index_of(T item) !uxx {
+		u32 index = 0;
 		ptr adr = this.data;
 		while(index < this.length){
 
@@ -58,6 +68,15 @@ class Array<T> {
 			index++;
 			adr += sizeof(T);
 		}
-		return -1;
+		throw not_found;
+	}
+
+	public func __each_count() uxx {
+		return this.length;
+	}
+	public func __each_get(uxx index) !T {
+		@ item = this.get(index);
+		ifnull item throw not_found;
+		return item;
 	}
 }

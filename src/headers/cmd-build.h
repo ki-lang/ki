@@ -37,10 +37,12 @@ Scope *init_scope();
 void free_scope(Scope *scope);
 Scope *init_sub_scope(Scope *parent);
 Scope *get_class_scope(Scope *scope);
+Scope *get_func_scope(Scope *scope);
 
 // Token
 Token *init_token();
 void free_token(Token *token);
+void token_each(FileCompiler *fc, Scope *scope);
 void token_return(FileCompiler *fc, Scope *scope);
 TokenIf *token_if(FileCompiler *fc, Scope *scope, bool is_else, bool has_condition);
 void token_ifnull(FileCompiler *fc, Scope *scope);

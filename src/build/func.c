@@ -126,7 +126,6 @@ void fc_scan_func_args(Function *func) {
         if (strcmp(token, fc->is_header ? ";" : "{") != 0) {
             Type *return_type = fc_read_type(fc, func->scope->parent);
             func->return_type = return_type;
-            func->scope->return_type = return_type;
             func->scope->must_return = true;
         }
     }

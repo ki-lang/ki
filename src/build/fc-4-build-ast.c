@@ -73,6 +73,11 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
             continue;
         }
 
+        if (strcmp(token, "each") == 0) {
+            token_each(fc, scope);
+            continue;
+        }
+
         if (strcmp(token, "exit") == 0) {
             fc_next_token(fc, token, false, true, true);
             if (!is_valid_number(token)) {

@@ -124,7 +124,7 @@ void fc_write_c_inits() {
             for (int x = 0; x < fc->static_vars->length; x++) {
                 TokenStaticDeclare *decl = array_get_index(fc->static_vars, x);
 
-                fc_write_c_type(code, decl->scope->return_type, NULL);
+                fc_write_c_type(code, decl->scope->func->return_type, NULL);
                 str_append_chars(code, " ");
                 str_append_chars(code, decl->global_name);
                 str_append_chars(code, "_init(){\n");
@@ -406,7 +406,7 @@ void fc_write_c_enum(FileCompiler *fc, Enum *enu) {
 }
 
 void fc_write_c_static_var_global(FileCompiler *fc, TokenStaticDeclare *decl) {
-    fc_write_c_type(fc->h_code, decl->scope->return_type, NULL);
+    fc_write_c_type(fc->h_code, decl->scope->func->return_type, NULL);
     str_append_chars(fc->h_code, " ");
     str_append_chars(fc->h_code, decl->global_name);
     str_append_chars(fc->h_code, "_init();\n");
@@ -553,6 +553,68 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, "ki__sys__exit(");
         str_append_chars(fc->tkn_buffer, token->item);
         str_append_chars(fc->tkn_buffer, ");\n");
+    } else if (token->type == tkn_each) {
+        TokenEach *te = token->item;
+        fc_write_c_value(fc, te->value, true);
+        Class *class = te->value->return_type->class;
+        ClassProp *fcountp = map_get(class->props, "__each_count");
+        ClassProp *fgetp = map_get(class->props, "__each_get");
+        Function *fcount = fcountp->func;
+        Function *fget = fgetp->func;
+
+        char *buf_count_name = strdup(var_buf(fc));
+        char *buf_max_name = strdup(var_buf(fc));
+        char *buf_item_name = strdup(var_buf(fc));
+        char *buf_error_name = strdup(var_buf(fc));
+        str_append_chars(fc->tkn_buffer, "unsigned long int ");
+        str_append_chars(fc->tkn_buffer, buf_count_name);
+        str_append_chars(fc->tkn_buffer, " = 0;\n");
+        str_append_chars(fc->tkn_buffer, "unsigned long int ");
+        str_append_chars(fc->tkn_buffer, buf_max_name);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append_chars(fc->tkn_buffer, fcount->cname);
+        str_append_chars(fc->tkn_buffer, "(");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ");\n");
+        // While loop
+        str_append_chars(fc->tkn_buffer, "while(");
+        str_append_chars(fc->tkn_buffer, buf_count_name);
+        str_append_chars(fc->tkn_buffer, " < ");
+        str_append_chars(fc->tkn_buffer, buf_max_name);
+        str_append_chars(fc->tkn_buffer, "){\n");
+        // Get item
+        str_append_chars(fc->tkn_buffer, "char* ");
+        str_append_chars(fc->tkn_buffer, buf_error_name);
+        str_append_chars(fc->tkn_buffer, " = (void*)0;");
+
+        fc_write_c_type(fc->tkn_buffer, fget->return_type, buf_item_name);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append_chars(fc->tkn_buffer, fget->cname);
+        str_append_chars(fc->tkn_buffer, "(");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ",");
+        str_append_chars(fc->tkn_buffer, buf_count_name);
+        str_append_chars(fc->tkn_buffer, ",");
+        str_append_chars(fc->tkn_buffer, buf_error_name);
+        str_append_chars(fc->tkn_buffer, ");\n");
+        // Increase index
+        str_append_chars(fc->tkn_buffer, buf_count_name);
+        str_append_chars(fc->tkn_buffer, "++;\n");
+        // Check error
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, buf_error_name);
+        str_append_chars(fc->tkn_buffer, "){ continue; }\n");
+
+        // Scope AST
+        fc_write_c_ast(fc, te->scope);
+
+        str_append_chars(fc->tkn_buffer, "}\n");
+
+        free(buf_count_name);
+        free(buf_max_name);
+        free(buf_item_name);
+        free(buf_error_name);
+
     } else if (token->type == tkn_static) {
         TokenStaticDeclare *decl = token->item;
 
@@ -688,12 +750,26 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, ifn->name);
         str_append_chars(fc->tkn_buffer, " == (void*)0) {\n");
 
-        fc_write_c_value(fc, ifn->value, true);
-
-        str_append_chars(fc->tkn_buffer, ifn->name);
-        str_append_chars(fc->tkn_buffer, " = ");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ";\n");
+        if (ifn->type == or_value) {
+            fc_write_c_value(fc, ifn->value, true);
+            str_append_chars(fc->tkn_buffer, ifn->name);
+            str_append_chars(fc->tkn_buffer, " = ");
+            str_append(fc->tkn_buffer, fc->value_buffer);
+            str_append_chars(fc->tkn_buffer, ";\n");
+        } else if (ifn->type == or_throw) {
+            str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = \"");
+            str_append_chars(fc->tkn_buffer, ifn->throw_msg);
+            str_append_chars(fc->tkn_buffer, "\";\n");
+            Scope *scope = fc->current_scope;
+            scope = get_func_scope(scope);
+            if (scope->func->return_type == NULL) {
+                str_append_chars(fc->tkn_buffer, "return;\n");
+            } else if (scope->func->return_type->is_pointer) {
+                str_append_chars(fc->tkn_buffer, "return (void*)0;\n");
+            } else {
+                str_append_chars(fc->tkn_buffer, "return 0;\n");
+            }
+        }
 
         if (ifn->then_scope) {
             fc_write_c_ast(fc, ifn->then_scope);

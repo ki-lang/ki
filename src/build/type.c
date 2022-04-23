@@ -63,8 +63,10 @@ Type *fc_read_type(FileCompiler *fc, Scope *scope) {
     //
     fc->i -= strlen(token);
     Identifier *id = fc_read_identifier(fc, false, true, false);
-
     Type *t = fc_identifier_to_type(fc, id, scope);
+    // if (t && t->class) {
+    //     printf("%s\n", t->class->cname);
+    // }
     if (t == NULL) {
         fc_error(fc, "Unknown type/class/enum: '%s'", token);
     }
@@ -223,8 +225,8 @@ Type *fc_identifier_to_type(FileCompiler *fc, Identifier *id, Scope *scope) {
                 t->bytes = t->class->size;
             }
         } else if (idf->type == idfor_type) {
-            free_type(t);
-            t = idf->item;
+            Type *idt = idf->item;
+            *t = *idt;
         }
     }
 
