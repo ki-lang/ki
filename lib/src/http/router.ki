@@ -57,14 +57,12 @@ class Router{
 			}
 
 			@ find = routes.get(key) or value |err| {
-				@ v = RouteEntry{ routes: type:Map<Route>.make() };
+				@ v = RouteEntry{ routes: type:Map<RouteEntry>.make() };
 				routes.set(key, v);
 				return v;
 			};
 
-			notnull find do {
-				entry = find;
-			}
+			entry = find;
 		}
 	}
 }

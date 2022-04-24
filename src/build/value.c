@@ -480,6 +480,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
                     Value *value = fc_read_value(fc, scope, false, true, true);
 
+                    fc_type_compatible(fc, prop->return_type, value->return_type);
+
                     fc_next_token(fc, token, false, false, true);
                     if (strcmp(token, ",") == 0) {
                         fc_next_token(fc, token, false, false, true);

@@ -288,8 +288,13 @@ bool type_compatible(Type *t1, Type *t2) {
             if (!t2->class->is_number) {
                 return false;
             }
-        } else if (t1->class != t2->class) {
-            return false;
+        } else {
+            if (t1->class != t2->class) {
+                return false;
+            }
+            if (t1->class->generic_hash != t2->class->generic_hash) {
+                return false;
+            }
         }
     }
     return true;

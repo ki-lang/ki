@@ -41,9 +41,7 @@ class Socket {
 			 ai_family: Socket.IPTYPE.ipv4,
 			 ai_socktype: Socket.TYPE.stream,
 			 ai_protocol: Socket.PROTOCOL.http,
-			 //ai_protocol: 6,
 			 ai_addrlen: 16,
-			 ai_addr: null,
 			 ai_addr: main:main:sockaddr {
 				 sa_family: Socket.IPTYPE.ipv4,
 			 },
