@@ -545,7 +545,19 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 value = init_value();
                 value->type = vt_number;
                 value->item = enuv;
-                value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"), NULL);
+
+                if (fc_get_char(fc, 0) == '#') {
+                    fc->i++;
+                    value->return_type = fc_read_type(fc, scope);
+                    if (value->return_type->type == type_number) {
+                        fc_error(fc, "Must be a number type", NULL);
+                    }
+                } else {
+                    Type *type = init_type();
+                    type->type = type_enum;
+                    type->enu = enu;
+                    value->return_type = type;
+                }
 
             } else if (value->return_type->class) {
                 // Class

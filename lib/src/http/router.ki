@@ -2,7 +2,7 @@
 namespace http;
 
 class RouteBlock{
-	public Route route = null;
+	public ?Route route = null;
 	public type:Map<RouteBlock> blocks;
 }
 
@@ -14,6 +14,10 @@ class RouteArg{
 class Router{
 
 	private RouteBlock block;
+
+	public static func make() Router {
+		return Router{ block: RouteBlock{ blocks: type:Map<RouteBlock>.make() } };
+	}
 
 	public func add(String method, String url, funcref (Request) Response handler) ! {
 		if(url.length == 0 || url.char(0) != '/'){
@@ -56,7 +60,7 @@ class Router{
 				throw incorrect_wildcard_usage;
 			}
 
-			@ find = blocks.get(key) or value |err| {
+			RouteBlock find = blocks.get(key) or value |err| {
 				@ v = RouteBlock{ blocks: type:Map<RouteBlock>.make() };
 				blocks.set(key, v);
 				return v;
@@ -74,10 +78,10 @@ class Router{
 		parts.prepend(method);
 		@ arg_c = parts.length;
 
-		return null;
+		return Router.find_route(this.block, 0, arg_c, parts);
 	}
 
-	private func find_route(RouteBlock block, u8 index, u8 arg_c, Array<String> parts) ?Route {
+	private static func find_route(RouteBlock block, u8 index, u8 arg_c, Array<String> parts) ?Route {
 		if(index == arg_c){
 			return block.route;
 		}
@@ -93,10 +97,17 @@ class Router{
 				continue;
 			}
 			@ sub_block = block.blocks.get(part) or value null;
-			if(sub_block != null){
+			notnull sub_block do {
+				@ route = Router.find_route(block.blocks, index + 1, arg_c, parts);
+				notnull route do {
+					return route;
+				}
 			}
+		}
 
-			return null;
+		@ sub_block = block.blocks.get("*") or value null;
+		notnull sub_block do {
+			return sub_block.route;
 		}
 
 		return null;

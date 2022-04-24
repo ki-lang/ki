@@ -463,8 +463,8 @@ void fc_write_c_func(FileCompiler *fc, Function *func) {
             str_append_chars(fc->tkn_buffer, ", ");
             str_append_chars(fc->h_code, ", ");
         }
-        str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG");
-        str_append_chars(fc->h_code, "char* _KI_THROW_MSG");
+        str_append_chars(fc->tkn_buffer, "char** _KI_THROW_MSG");
+        str_append_chars(fc->h_code, "char** _KI_THROW_MSG");
     }
     //
     str_append_chars(fc->h_code, ");\n");
@@ -593,7 +593,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ",");
         str_append_chars(fc->tkn_buffer, buf_count_name);
-        str_append_chars(fc->tkn_buffer, ",");
+        str_append_chars(fc->tkn_buffer, ", &");
         str_append_chars(fc->tkn_buffer, buf_error_name);
         str_append_chars(fc->tkn_buffer, ");\n");
         //
@@ -659,40 +659,53 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         char *left = str_to_chars(fc->value_buffer);
         fc_write_c_value(fc, ta->right, true);
 
-        bool refc = false;
-        bool refc_nullable = false;
+        bool lrefc = false;
+        bool lrefc_nullable = false;
+        bool rrefc = false;
+        bool rrefc_nullable = false;
         Class *class = NULL;
         if (ta->type == op_eq) {
             Value *left = ta->left;
+            Value *right = ta->right;
             class = left->return_type->class;
+            Class *rclass = right->return_type->class;
+
             if (class && class->ref_count) {
-                refc = true;
+                lrefc = true;
                 if (left->return_type->nullable) {
-                    refc_nullable = true;
+                    lrefc_nullable = true;
+                }
+            }
+            if (rclass && rclass->ref_count) {
+                rrefc = true;
+                if (right->return_type->nullable) {
+                    rrefc_nullable = true;
                 }
             }
         }
 
         // RC++ the new value first
-        if (refc) {
-            if (refc_nullable) {
+        if (rrefc) {
+            if (rrefc_nullable) {
                 str_append_chars(fc->tkn_buffer, "if(");
                 str_append(fc->tkn_buffer, fc->value_buffer);
                 str_append_chars(fc->tkn_buffer, "){ ");
             }
             str_append(fc->tkn_buffer, fc->value_buffer);
             str_append_chars(fc->tkn_buffer, "->_RC++;");
-            if (refc_nullable) {
+            if (rrefc_nullable) {
                 str_append_chars(fc->tkn_buffer, " }");
             }
             str_append_chars(fc->tkn_buffer, "\n");
         }
 
         // RC-- the old value
-        if (refc) {
-            str_append_chars(fc->tkn_buffer, "if(");
-            str_append_chars(fc->tkn_buffer, left);
-            str_append_chars(fc->tkn_buffer, "){ ");
+        if (lrefc) {
+            if (lrefc_nullable) {
+                str_append_chars(fc->tkn_buffer, "if(");
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, "){ ");
+            }
             str_append_chars(fc->tkn_buffer, left);
             str_append_chars(fc->tkn_buffer, "->_RC--;\n");
             str_append_chars(fc->tkn_buffer, "if(");
@@ -702,7 +715,9 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             str_append_chars(fc->tkn_buffer, "____free(");
             str_append_chars(fc->tkn_buffer, left);
             str_append_chars(fc->tkn_buffer, ");");
-            str_append_chars(fc->tkn_buffer, " }");
+            if (lrefc_nullable) {
+                str_append_chars(fc->tkn_buffer, " }");
+            }
             str_append_chars(fc->tkn_buffer, "\n");
         }
 
@@ -773,7 +788,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             str_append(fc->tkn_buffer, fc->value_buffer);
             str_append_chars(fc->tkn_buffer, ";\n");
         } else if (ifn->type == or_throw) {
-            str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = \"");
+            str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = \"");
             str_append_chars(fc->tkn_buffer, ifn->throw_msg);
             str_append_chars(fc->tkn_buffer, "\";\n");
             Scope *scope = fc->current_scope;
@@ -792,6 +807,18 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         }
         str_append_chars(fc->tkn_buffer, " }\n");
         //
+    } else if (token->type == tkn_notnull) {
+        //
+        TokenNotNull *inn = token->item;
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, inn->name);
+        str_append_chars(fc->tkn_buffer, " != (void*)0) {\n");
+
+        if (inn->type == or_do) {
+            fc_write_c_ast(fc, inn->scope);
+        }
+
+        str_append_chars(fc->tkn_buffer, " }\n");
     } else if (token->type == tkn_while) {
         //
         TokenWhile *wt = token->item;
@@ -807,7 +834,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, "continue;\n");
     } else if (token->type == tkn_throw) {
         TokenThrow *tt = token->item;
-        str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = \"");
+        str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = \"");
         str_append_chars(fc->tkn_buffer, tt->msg);
         str_append_chars(fc->tkn_buffer, "\";\n");
         if (tt->return_type == NULL) {
@@ -1031,7 +1058,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             if (fa->arg_values->length > 0) {
                 str_append_chars(result, ", ");
             }
-            str_append_chars(result, "_KI_THROW_MSG_BUF");
+            str_append_chars(result, "&_KI_THROW_MSG_BUF");
         }
         str_append_chars(result, ")");
 
@@ -1047,11 +1074,17 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             //
             result->length = 0;
             // Check error
+
+            if (fa->error_type == or_value && fa->or_scope) {
+                fc_write_c_type(fc->tkn_buffer, fa->or_scope->vscope_return_type, fa->or_scope->vscope_vname);
+                str_append_chars(fc->tkn_buffer, ";\n");
+            }
+
             str_append_chars(fc->tkn_buffer, "if(_KI_THROW_MSG_BUF){\n");
             str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
             //
             if (fa->error_type == or_pass) {
-                str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = _KI_THROW_MSG_BUF;\n");
+                str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = _KI_THROW_MSG_BUF;\n");
                 Type *rett = fa->func_scope->func->return_type;
                 if (rett == NULL) {
                     str_append_chars(fc->tkn_buffer, "return;\n");
@@ -1075,12 +1108,9 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                     str_append_chars(fc->tkn_buffer, fa->or_error_vn);
                     str_append_chars(fc->tkn_buffer, " = _KI_THROW_MSG_BUF;\n");
 
-                    fc_write_c_type(fc->tkn_buffer, fa->or_scope->vscope_return_type, fa->or_scope->vscope_vname);
-                    str_append_chars(fc->tkn_buffer, ";\n");
-
                     fc_write_c_ast(fc, fa->or_scope);
 
-                    str_append(fc->tkn_buffer, fc->value_buffer);
+                    str_append_chars(fc->tkn_buffer, buf_var_name);
                     str_append_chars(fc->tkn_buffer, " = ");
                     str_append_chars(fc->tkn_buffer, fa->or_scope->vscope_vname);
                     str_append_chars(fc->tkn_buffer, ";\n");
@@ -1093,7 +1123,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                     str_append_chars(fc->tkn_buffer, ";\n");
                 }
             } else if (fa->error_type == or_throw) {
-                str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = \"");
+                str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = \"");
                 str_append_chars(fc->tkn_buffer, fa->throw_msg);
                 str_append_chars(fc->tkn_buffer, "\";\n");
                 Type *rett = fa->func_scope->func->return_type;

@@ -1,12 +1,22 @@
 
 func handler(ki:http:Request req) ki:http:Response{
-
 	return ki:http:Response{
 		body: "Hello from example"
 	};
 }
 
+func hello(ki:http:Request req) ki:http:Response{
+	return ki:http:Response{
+		body: "Hello from /hello"
+	};
+}
+
 func main() i32 {
+
+	//@ r = ki:http:Router.make();
+
+	//r.add("GET", "/", handler) or return 1;
+	//r.add("GET", "/hello", hello) or return 1;
 
 	@ s = ki:http:Server { port: 9000, handler: handler };
 	s.start() or return 1;

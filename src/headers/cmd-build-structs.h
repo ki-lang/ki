@@ -380,6 +380,7 @@ typedef enum TokenTypeEnum {
     tkn_while,
     tkn_if,
     tkn_ifnull,
+    tkn_notnull,
     tkn_throw,
     tkn_break,
     tkn_continue,

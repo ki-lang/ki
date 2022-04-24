@@ -215,7 +215,6 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
 
 void token_notnull(FileCompiler *fc, Scope *scope) {
     //
-    //
     char *token = malloc(KI_TOKEN_MAX);
     fc_next_token(fc, token, false, true, true);
 
@@ -232,7 +231,7 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
     ifn->scope = NULL;
 
     Token *t = init_token();
-    t->type = tkn_ifnull;
+    t->type = tkn_notnull;
     t->item = ifn;
 
     Type *type = idf->item;
@@ -244,8 +243,6 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
     fc_next_token(fc, token, false, true, true);
     if (strcmp(token, "do") == 0) {
         ifn->type = or_do;
-
-        fc_expect_token(fc, "do", false, true, true);
 
         fc_expect_token(fc, "{", false, false, true);
 

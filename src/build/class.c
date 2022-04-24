@@ -503,6 +503,8 @@ void fc_scan_class_prop_values(Class *class) {
             fc->i = prop->value_i;
             prop->default_value = fc_read_value(fc, fc->scope, false, true, true);
             fc_expect_token(fc, ";", false, true, true);
+
+            fc_type_compatible(fc, prop->return_type, prop->default_value->return_type);
         }
     }
 }
