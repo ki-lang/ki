@@ -7,7 +7,7 @@ class Map<T> {
 	private PtrArray arrays;// = PtrArray.make(1);
 
 	public static func make() CLASS {
-		return CLASS { indexes: mem:alloc(128), arrays: PtrArray.make(1) };
+		return CLASS { indexes: mem:alloc(128), arrays: PtrArray.make(128) };
 	}
 
 	public func set(String key, T value) {
@@ -23,6 +23,7 @@ class Map<T> {
 		}
 
 		uxx arr_size = getptrv array as uxx;
+		@ array_start = array;
 		array += sizeof(uxx);
 		uxx pos = 0;
 		while(true){
@@ -38,7 +39,7 @@ class Map<T> {
 				// Need more space, Resize
 				arr_size *= 2;
 				array = mem:calloc(((sizeof(String) + sizeof(T)) * arr_size) + sizeof(uxx));
-				setptrv array to arr_size;
+				setptrv array_start to arr_size;
 				this.arrays.set(rest, array);
 			}
 		}
@@ -66,6 +67,7 @@ class Map<T> {
 				return val;
 			}
 			array += sizeof(T);
+			pos++;
 		}
 
 		throw not_found;
