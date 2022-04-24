@@ -2,5 +2,6 @@
 namespace http;
 
 class Route {
-
+	public funcref(Request) !Response handler;
+	public Array<RouteArg> args;
 }

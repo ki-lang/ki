@@ -13,7 +13,7 @@ class Array<T> {
 		return Array<T> { max_length: suggested_length, data: mem:calloc(suggested_length * sizeof(T)) };
 	}
 
-	public func push(T item) {
+	public func check_max_length() {
 		if(this.length == this.max_length){
 			if(this.max_length > 0){
 				this.max_length *= 2;
@@ -22,8 +22,35 @@ class Array<T> {
 			}
 			ptr new_data = mem:calloc(this.max_length * sizeof(T));
 			mem:copy(this.data, new_data, this.length * sizeof(T));
+			mem:free(this.data);
 			this.data = new_data;
 		}
+	}
+
+	public func push(T item) {
+		this.check_max_length();
+		ptr adr = this.data;
+		adr += this.length * sizeof(T);
+		setptrv adr to item;
+		this.length++;
+	}
+
+	// Function can be improve by keeping the same data ptr, but mem-copying backwards
+	public func prepend(T item) {
+
+		if(this.length == this.max_length){
+			if(this.max_length > 0){
+				this.max_length *= 2;
+			} else {
+				this.max_length = 1;
+			}
+		}
+
+		ptr new_data = mem:calloc(this.max_length * sizeof(T));
+		mem:copy(this.data, new_data + sizeof(T), this.length * sizeof(T));
+		mem:free(this.data);
+		this.data = new_data;
+
 		ptr adr = this.data;
 		adr += this.length * sizeof(T);
 		setptrv adr to item;

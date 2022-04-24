@@ -23,7 +23,7 @@ class Router{
 
 		@ url_tmp = url.substring(1, url.length - 1);
 		@ parts = url_tmp.split("/");
-		parts.remove(0);
+		parts.prepend(method);
 
 		@ entry = this.tree;
 		@ args = Array<RouteArg>.make(2);
@@ -64,5 +64,12 @@ class Router{
 
 			entry = find;
 		}
+
+		entry.route = Route{ handler: handler, args: args };
+	}
+
+
+	public func get_route_by_url(String method, String url){
+
 	}
 }
