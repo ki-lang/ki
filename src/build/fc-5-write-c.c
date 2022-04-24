@@ -725,6 +725,16 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         }
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ";\n");
+    } else if (token->type == tkn_set_vscope_value) {
+
+        TokenSetVscopeValue *sv = token->item;
+        fc_write_c_value(fc, sv->value, true);
+        //
+        str_append_chars(fc->tkn_buffer, sv->vname);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+
     } else if (token->type == tkn_return) {
         Value *retv = NULL;
         if (token->item) {
@@ -1054,14 +1064,20 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                 str_append(fc->tkn_buffer, fc->value_buffer);
                 str_append_chars(fc->tkn_buffer, ";\n");
             } else if (fa->error_type == or_value) {
-                Value *orv = fa->or_value;
-                fc_write_c_value(fc, orv, false);
-                if (value->return_type) {
+                if (fa->or_scope) {
+                    str_append_chars(fc->tkn_buffer, "char* ");
+                    fc_write_c_type(fc->tkn_buffer, value->return_type, fa->or_error_vn);
+                    str_append_chars(fc->tkn_buffer, " = _KI_THROW_MSG_BUF;\n");
+
+                    fc_write_c_ast(fc, fa->or_scope);
+                } else {
+                    Value *orv = fa->or_value;
+                    fc_write_c_value(fc, orv, false);
                     str_append_chars(fc->tkn_buffer, buf_var_name);
                     str_append_chars(fc->tkn_buffer, " = ");
+                    str_append(fc->tkn_buffer, fc->value_buffer);
+                    str_append_chars(fc->tkn_buffer, ";\n");
                 }
-                str_append(fc->tkn_buffer, fc->value_buffer);
-                str_append_chars(fc->tkn_buffer, ";\n");
             } else if (fa->error_type == or_throw) {
                 str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = \"");
                 str_append_chars(fc->tkn_buffer, fa->throw_msg);
@@ -1074,19 +1090,6 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                 } else {
                     str_append_chars(fc->tkn_buffer, "return 0;\n");
                 }
-            }
-            //
-            if (fa->then_scope) {
-                fc_write_c_type(fc->tkn_buffer, value->return_type, fa->then_value_vn);
-                str_append_chars(fc->tkn_buffer, " = ");
-                str_append_chars(fc->tkn_buffer, buf_var_name);
-                str_append_chars(fc->tkn_buffer, ";\n");
-
-                str_append_chars(fc->tkn_buffer, "char* ");
-                fc_write_c_type(fc->tkn_buffer, value->return_type, fa->then_error_vn);
-                str_append_chars(fc->tkn_buffer, " = _KI_THROW_MSG_BUF;\n");
-
-                fc_write_c_ast(fc, fa->then_scope);
             }
             //
             str_append_chars(fc->tkn_buffer, "}\n");

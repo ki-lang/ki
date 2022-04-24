@@ -84,6 +84,9 @@ typedef struct Scope {
     int body_i_end;
     struct Array *ast;
     struct Scope *parent;
+    // Value scope
+    char *vscope_vname;
+    struct Type *vscope_return_type;
     //
     Array *var_bufs;
     Array *local_var_names;
@@ -253,6 +256,7 @@ typedef enum TypeType {
     type_enum,
     type_number,
     type_wildcard_args,
+    type_throw_msg,
 } TypeType;
 
 typedef struct Value {
@@ -294,9 +298,8 @@ typedef struct ValueFuncCall {
     Value *or_value;
     char *throw_msg;
     Scope *func_scope;
-    Scope *then_scope;
-    char *then_value_vn;
-    char *then_error_vn;
+    Scope *or_scope;
+    char *or_error_vn;
 } ValueFuncCall;
 
 typedef enum OrType {
@@ -372,6 +375,7 @@ typedef struct Token {
 typedef enum TokenTypeEnum {
     tkn_unknown,
     tkn_return,
+    tkn_set_vscope_value,
     tkn_while,
     tkn_if,
     tkn_ifnull,
@@ -394,6 +398,11 @@ typedef enum TokenTypeEnum {
     tkn_class,
     //
 } TokenTypeEnum;
+
+typedef struct TokenSetVscopeValue {
+    char *vname;
+    Value *value;
+} TokenSetVscopeValue;
 
 typedef struct TokenEach {
     Value *value;

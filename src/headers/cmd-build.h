@@ -109,6 +109,7 @@ Type *init_type();
 void free_type(Type *type);
 Type *fc_read_type(FileCompiler *fc, Scope *scope);
 Type *fc_identifier_to_type(FileCompiler *fc, Identifier *id, Scope *scope);
+void fc_type_make_nullable(FileCompiler *fc, Type *t);
 bool type_compatible(Type *t1, Type *t2);
 void fc_type_compatible(FileCompiler *fc, Type *t1, Type *t2);
 Type *fc_create_type_for_enum(Enum *enu);

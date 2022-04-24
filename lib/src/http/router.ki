@@ -56,8 +56,10 @@ class Router{
 				throw incorrect_wildcard_usage;
 			}
 
-			@ find = routes.get(key) or value RouteEntry{ routes: type:Map<Route>.make() } then value,err {
-				routes.set(key, value);
+			@ find = routes.get(key) or value |err| {
+				@ v = RouteEntry{ routes: type:Map<Route>.make() };
+				routes.set(key, v);
+				return v;
 			};
 
 			notnull find do {

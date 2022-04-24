@@ -18,6 +18,41 @@ void token_return(FileCompiler *fc, Scope *scope) {
     Token *t = init_token();
     t->type = tkn_return;
 
+    // Check value scope
+    Scope *vscope = scope;
+    while (vscope && vscope->vscope_vname == NULL) {
+        vscope = vscope->parent;
+    }
+
+    if (vscope) {
+        t->type = tkn_set_vscope_value;
+        Value *value = fc_read_value(fc, scope, false, true, true);
+        Type *rt = vscope->vscope_return_type;
+        if (rt == NULL) {
+            vscope->vscope_return_type = value->return_type;
+        } else if (rt->type == type_null) {
+            fc_type_make_nullable(fc, value->return_type);
+            vscope->vscope_return_type = value->return_type;
+        } else if (value->return_type->type == type_null) {
+            fc_type_make_nullable(fc, rt);
+        } else {
+            fc_type_compatible(fc, rt, value->return_type);
+        }
+
+        TokenSetVscopeValue *vt = malloc(sizeof(TokenSetVscopeValue));
+        vt->vname = vscope->vscope_vname;
+        vt->value = value;
+
+        t->item = vt;
+
+        fc_expect_token(fc, ";", false, true, true);
+        scope->did_return = true;
+        array_push(scope->ast, t);
+
+        return;
+    }
+
+    // Check func scope
     Scope *func_scope = scope;
     while (func_scope && func_scope->is_func == false) {
         func_scope = func_scope->parent;

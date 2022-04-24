@@ -18,6 +18,9 @@ Scope *init_scope() {
     scope->ast = array_make(4);
     scope->parent = NULL;
     //
+    scope->vscope_vname = NULL;
+    scope->vscope_return_type = NULL;
+    //
     scope->var_bufs = array_make(8);
     scope->local_var_names = array_make(8);
     //

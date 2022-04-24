@@ -747,9 +747,9 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
     fcall->error_type = or_none;
     fcall->or_value = NULL;
     fcall->func_scope = NULL;
-    fcall->then_scope = NULL;
-    fcall->then_value_vn = NULL;
-    fcall->then_error_vn = NULL;
+    fcall->throw_msg = NULL;
+    fcall->or_scope = NULL;
+    fcall->or_error_vn = NULL;
 
     Value *value = init_value();
     value->type = vt_func_call;
@@ -819,11 +819,62 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
             fcall->error_type = or_pass;
         } else if (strcmp(token, "value") == 0) {
             fcall->error_type = or_value;
-            fcall->or_value = fc_read_value(fc, scope, false, true, true);
-            if (fcall->or_value->return_type->nullable) {
-                value->return_type->nullable = true;
+
+            fc_next_token(fc, token, true, true, true);
+            if (strcmp(token, "|") == 0) {
+                // Value scope
+
+                fc_next_token(fc, token, false, true, true);
+                fc_next_token(fc, token, false, true, true);
+
+                if (!is_valid_varname(token)) {
+                    fc_error(fc, "Invalid variable name for the error", NULL);
+                }
+                fc_name_taken(fc, scope->identifiers, token);
+                fcall->or_error_vn = strdup(token);
+
+                fc_expect_token(fc, "|", false, false, true);
+                fc_expect_token(fc, "{", false, false, true);
+
+                GEN_C++;
+                char *vname = malloc(64);
+                sprintf(vname, "_KI_VSCOPE_VN_%d", GEN_C);
+
+                Scope *or_scope = init_sub_scope(scope);
+                or_scope->body_i = fc->i;
+                or_scope->vscope_vname = vname;
+                fcall->or_scope = or_scope;
+
+                Type *errtype = init_type();
+                errtype->type = type_throw_msg;
+
+                IdentifierFor *idf = init_idf();
+                idf->type = idfor_var;
+                idf->item = errtype;
+
+                map_set(or_scope->identifiers, fcall->or_error_vn, idf);
+
+                fc_build_ast(fc, fcall->or_scope);
+
+                // Check types
+                if (fcall->or_scope->vscope_return_type == NULL) {
+                    fc_error(fc, "Scope did not return a value", NULL);
+                }
+
+                if (fcall->or_scope->vscope_return_type->nullable) {
+                    fc_type_make_nullable(fc, value->return_type);
+                }
+
+                fc_type_compatible(fc, value->return_type, fcall->or_scope->vscope_return_type);
+
+            } else {
+                // Just a value
+                fcall->or_value = fc_read_value(fc, scope, false, true, true);
+                if (fcall->or_value->return_type->nullable) {
+                    value->return_type->nullable = true;
+                }
+                fc_type_compatible(fc, value->return_type, fcall->or_value->return_type);
             }
-            fc_type_compatible(fc, value->return_type, fcall->or_value->return_type);
         } else if (strcmp(token, "return") == 0) {
             fcall->error_type = or_return;
             fcall->or_value = fc_read_value(fc, scope, false, true, true);
@@ -840,42 +891,6 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                      "Invalid error handling method: '%s' , valid options: pass, "
                      "throw, value, return",
                      token);
-        }
-
-        // then { ... }
-        fc_next_token(fc, token, true, true, true);
-        if (fcall->error_type == or_value && strcmp(token, "then") == 0) {
-
-            fc_next_token(fc, token, false, true, true);
-            fc_next_token(fc, token, false, true, true);
-
-            if (!is_valid_varname(token)) {
-                fc_error(fc, "Invalid variable name for the then value", NULL);
-            }
-            fc_name_taken(fc, scope->identifiers, token);
-            fcall->then_value_vn = strdup(token);
-
-            fc_expect_token(fc, ",", false, false, true);
-
-            fc_next_token(fc, token, false, true, true);
-            if (!is_valid_varname(token)) {
-                fc_error(fc, "Invalid variable name for the then error", NULL);
-            }
-            fc_name_taken(fc, scope->identifiers, token);
-            fcall->then_error_vn = strdup(token);
-
-            fc_expect_token(fc, "{", false, false, true);
-
-            fcall->then_scope = init_sub_scope(scope);
-            fcall->then_scope->body_i = fc->i;
-
-            IdentifierFor *idf = init_idf();
-            idf->type = idfor_var;
-            idf->item = value->return_type;
-
-            map_set(fcall->then_scope->identifiers, fcall->then_value_vn, idf);
-
-            fc_build_ast(fc, fcall->then_scope);
         }
     }
 
