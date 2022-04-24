@@ -186,6 +186,7 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
         *ntype = *type;
         idfs->item = ntype;
         type = ntype;
+        map_set(scope->identifiers, ifn->name, idfs);
     }
 
     // Remove nullable from var type
@@ -200,6 +201,7 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
 
         ifn->then_scope = init_sub_scope(scope);
         ifn->then_scope->body_i = fc->i;
+
         fc_build_ast(fc, ifn->then_scope);
     } else {
         fc_expect_token(fc, ";", false, true, true);
@@ -209,6 +211,63 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     //
     free(token);
     free_id(id);
+}
+
+void token_notnull(FileCompiler *fc, Scope *scope) {
+    //
+    //
+    char *token = malloc(KI_TOKEN_MAX);
+    fc_next_token(fc, token, false, true, true);
+
+    Identifier *id = init_id();
+    id->name = strdup(token);
+    IdentifierFor *idf = idf_find_in_scope(scope, id);
+    if (!idf || idf->type != idfor_var) {
+        fc_error(fc, "Unknown variable '%s'", token);
+    }
+
+    TokenNotNull *ifn = malloc(sizeof(TokenNotNull));
+    ifn->type = or_none;
+    ifn->name = strdup(id->name);
+    ifn->scope = NULL;
+
+    Token *t = init_token();
+    t->type = tkn_ifnull;
+    t->item = ifn;
+
+    Type *type = idf->item;
+
+    if (!type->nullable) {
+        fc_error(fc, "Using ifnull on variable that doesnt have a nullable type", NULL);
+    }
+
+    fc_next_token(fc, token, false, true, true);
+    if (strcmp(token, "do") == 0) {
+        ifn->type = or_do;
+
+        fc_expect_token(fc, "do", false, true, true);
+
+        fc_expect_token(fc, "{", false, false, true);
+
+        ifn->scope = init_sub_scope(scope);
+        ifn->scope->body_i = fc->i;
+
+        // Create new type within scope
+        Type *ntype = init_type();
+        *ntype = *type;
+        type = ntype;
+        type->nullable = false;
+
+        IdentifierFor *idfs = init_idf();
+        idfs->type = idfor_var;
+        idfs->item = ntype;
+
+        map_set(ifn->scope->identifiers, ifn->name, idfs);
+
+        fc_build_ast(fc, ifn->scope);
+    } else {
+        fc_error(fc, "Expected 'do' but found '%s'", token);
+    }
 }
 
 void token_while(FileCompiler *fc, Scope *scope) {
@@ -271,6 +330,7 @@ void token_each(FileCompiler *fc, Scope *scope) {
 
     TokenEach *te = malloc(sizeof(TokenEach));
     te->value = fc_read_value(fc, scope, false, true, true);
+    te->kname = NULL;
 
     fc_expect_token(fc, "as", false, true, true);
 
@@ -324,10 +384,13 @@ void token_each(FileCompiler *fc, Scope *scope) {
     idf->type = idfor_var;
     idf->item = ret;
     map_set(te->scope->identifiers, te->vname, idf);
-    IdentifierFor *idfk = init_idf();
-    idfk->type = idfor_var;
-    idfk->item = fc_identifier_to_type(fc, create_identifier("ki", "type", "uxx"), NULL);
-    map_set(te->scope->identifiers, te->kname, idfk);
+
+    if (te->kname) {
+        IdentifierFor *idfk = init_idf();
+        idfk->type = idfor_var;
+        idfk->item = fc_identifier_to_type(fc, create_identifier("ki", "type", "uxx"), NULL);
+        map_set(te->scope->identifiers, te->kname, idfk);
+    }
 
     fc_build_ast(fc, te->scope);
 

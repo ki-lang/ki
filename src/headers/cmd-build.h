@@ -46,6 +46,7 @@ void token_each(FileCompiler *fc, Scope *scope);
 void token_return(FileCompiler *fc, Scope *scope);
 TokenIf *token_if(FileCompiler *fc, Scope *scope, bool is_else, bool has_condition);
 void token_ifnull(FileCompiler *fc, Scope *scope);
+void token_notnull(FileCompiler *fc, Scope *scope);
 void token_while(FileCompiler *fc, Scope *scope);
 void token_throw(FileCompiler *fc, Scope *scope);
 void token_set_threaded(FileCompiler *fc, Scope *scope);

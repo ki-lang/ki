@@ -308,6 +308,7 @@ typedef enum OrType {
     or_value,
     or_return,
     or_throw,
+    or_do,
 } OrType;
 
 typedef struct ValueOperator {
@@ -425,6 +426,12 @@ typedef struct TokenIfNull {
     struct Scope *then_scope;
     char *throw_msg;
 } TokenIfNull;
+
+typedef struct TokenNotNull {
+    int type;
+    char *name;
+    struct Scope *scope;
+} TokenNotNull;
 
 typedef struct TokenWhile {
     Value *condition;

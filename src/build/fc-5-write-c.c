@@ -597,11 +597,13 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, buf_error_name);
         str_append_chars(fc->tkn_buffer, ");\n");
         //
-        str_append_chars(fc->tkn_buffer, "unsigned long int ");
-        str_append_chars(fc->tkn_buffer, te->kname);
-        str_append_chars(fc->tkn_buffer, " = ");
-        str_append_chars(fc->tkn_buffer, buf_count_name);
-        str_append_chars(fc->tkn_buffer, ";\n");
+        if (te->kname) {
+            str_append_chars(fc->tkn_buffer, "unsigned long int ");
+            str_append_chars(fc->tkn_buffer, te->kname);
+            str_append_chars(fc->tkn_buffer, " = ");
+            str_append_chars(fc->tkn_buffer, buf_count_name);
+            str_append_chars(fc->tkn_buffer, ";\n");
+        }
         // Increase index
         str_append_chars(fc->tkn_buffer, buf_count_name);
         str_append_chars(fc->tkn_buffer, "++;\n");

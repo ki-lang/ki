@@ -114,6 +114,10 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
             token_ifnull(fc, scope);
             continue;
         }
+        if (strcmp(token, "notnull") == 0) {
+            token_notnull(fc, scope);
+            continue;
+        }
 
         if (strcmp(token, "while") == 0) {
             token_while(fc, scope);
