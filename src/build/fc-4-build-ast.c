@@ -186,7 +186,7 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
         // If generic read/skip generic types
         if (idf && idf->type == idfor_class) {
             Class *class = idf->item;
-            if (class->generic_names != NULL) {
+            if (class->generic_names != NULL && class->generic_hash == NULL) {
                 Class *gclass = fc_get_generic_class(fc, class, scope);
             }
         }

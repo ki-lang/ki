@@ -283,6 +283,7 @@ void token_each(FileCompiler *fc, Scope *scope) {
     te->scope = init_sub_scope(scope);
     te->scope->body_i = fc->i;
     te->scope->is_loop = true;
+    te->scope->in_loop = true;
 
     IdentifierFor *idf = init_idf();
     idf->type = idfor_var;

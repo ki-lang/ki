@@ -1076,6 +1076,19 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                 }
             }
             //
+            if (fa->then_scope) {
+                fc_write_c_type(fc->tkn_buffer, value->return_type, fa->then_value_vn);
+                str_append_chars(fc->tkn_buffer, " = ");
+                str_append_chars(fc->tkn_buffer, buf_var_name);
+                str_append_chars(fc->tkn_buffer, ";\n");
+
+                str_append_chars(fc->tkn_buffer, "char* ");
+                fc_write_c_type(fc->tkn_buffer, value->return_type, fa->then_error_vn);
+                str_append_chars(fc->tkn_buffer, " = _KI_THROW_MSG_BUF;\n");
+
+                fc_write_c_ast(fc, fa->then_scope);
+            }
+            //
             str_append_chars(fc->tkn_buffer, "}\n");
             // Update result
             result->length = 0;

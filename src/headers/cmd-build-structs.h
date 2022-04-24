@@ -294,6 +294,9 @@ typedef struct ValueFuncCall {
     Value *or_value;
     char *throw_msg;
     Scope *func_scope;
+    Scope *then_scope;
+    char *then_value_vn;
+    char *then_error_vn;
 } ValueFuncCall;
 
 typedef enum OrType {

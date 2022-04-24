@@ -41,6 +41,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         value->type = vt_null;
         Type *type = init_type();
         type->type = type_null;
+        type->nullable = true;
         value->return_type = type;
     } else if (strcmp(token, "true") == 0) {
         value->type = vt_true;
@@ -57,7 +58,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         int size = 0;
         if (idf->type == idfor_class) {
             Class *class = idf->item;
-            if (class->generic_names != NULL) {
+            if (class->generic_names != NULL && class->generic_hash == NULL) {
                 // Generic class
                 class = fc_get_generic_class(fc, class, scope);
             }
@@ -424,7 +425,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         } else if (idf->type == idfor_class) {
             // class init or static func or prop access
             Class *class = idf->item;
-            if (class->generic_names != NULL) {
+            if (class->generic_names != NULL && class->generic_hash == NULL) {
                 // Generic class
                 Class *gclass = fc_get_generic_class(fc, class, scope);
                 class = gclass;
@@ -746,6 +747,9 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
     fcall->error_type = or_none;
     fcall->or_value = NULL;
     fcall->func_scope = NULL;
+    fcall->then_scope = NULL;
+    fcall->then_value_vn = NULL;
+    fcall->then_error_vn = NULL;
 
     Value *value = init_value();
     value->type = vt_func_call;
@@ -836,6 +840,42 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                      "Invalid error handling method: '%s' , valid options: pass, "
                      "throw, value, return",
                      token);
+        }
+
+        // then { ... }
+        fc_next_token(fc, token, true, true, true);
+        if (fcall->error_type == or_value && strcmp(token, "then") == 0) {
+
+            fc_next_token(fc, token, false, true, true);
+            fc_next_token(fc, token, false, true, true);
+
+            if (!is_valid_varname(token)) {
+                fc_error(fc, "Invalid variable name for the then value", NULL);
+            }
+            fc_name_taken(fc, scope->identifiers, token);
+            fcall->then_value_vn = strdup(token);
+
+            fc_expect_token(fc, ",", false, false, true);
+
+            fc_next_token(fc, token, false, true, true);
+            if (!is_valid_varname(token)) {
+                fc_error(fc, "Invalid variable name for the then error", NULL);
+            }
+            fc_name_taken(fc, scope->identifiers, token);
+            fcall->then_error_vn = strdup(token);
+
+            fc_expect_token(fc, "{", false, false, true);
+
+            fcall->then_scope = init_sub_scope(scope);
+            fcall->then_scope->body_i = fc->i;
+
+            IdentifierFor *idf = init_idf();
+            idf->type = idfor_var;
+            idf->item = value->return_type;
+
+            map_set(fcall->then_scope->identifiers, fcall->then_value_vn, idf);
+
+            fc_build_ast(fc, fcall->then_scope);
         }
     }
 

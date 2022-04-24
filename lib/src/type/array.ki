@@ -46,9 +46,9 @@ class Array<T> {
 		}
 	}
 
-	public func get(u32 index) ?T {
+	public func get(u32 index) !T {
 		if(index >= this.length){
-			return null;
+			throw not_found;
 		}
 		ptr adr = this.data;
 		adr += index * sizeof(T);
@@ -75,8 +75,7 @@ class Array<T> {
 		return this.length;
 	}
 	public func __each_get(uxx index) !T {
-		@ item = this.get(index);
-		ifnull item throw not_found;
+		@ item = this.get(index) or pass;
 		return item;
 	}
 }

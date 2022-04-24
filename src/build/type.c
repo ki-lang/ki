@@ -73,7 +73,7 @@ Type *fc_read_type(FileCompiler *fc, Scope *scope) {
 
     // enum
     if (t->class) {
-        if (t->class->generic_names != NULL) {
+        if (t->class->generic_names != NULL && t->class->generic_hash == NULL) {
             // Generic class
             Class *gclass = fc_get_generic_class(fc, t->class, scope);
             t->class = gclass;
@@ -96,7 +96,9 @@ Type *fc_read_type(FileCompiler *fc, Scope *scope) {
     }
 
     //
-    t->nullable = nullable;
+    if (nullable) {
+        t->nullable = true;
+    }
     t->npt = npt;
 
     if (t->npt && t->type != type_struct) {
@@ -189,6 +191,7 @@ Type *fc_identifier_to_type(FileCompiler *fc, Identifier *id, Scope *scope) {
             t->class = idf->item;
             t->bytes = pointer_size;
             t->allow_math = true;
+            t->nullable = true;
         } else if (strcmp(id->name, "bool") == 0) {
             t->type = type_bool;
             IdentifierFor *idf = idf_find_in_scope(scope, id);

@@ -48,14 +48,12 @@ class Map<T> {
 		setptrv array to value;
 	}
 
-	public func get(String key) ?T {
+	public func get(String key) !T {
 
 		u8 rest = this.get_rest(key);
 
 		ptr array = this.arrays.get(rest);
-		if(array == null){
-			return null;
-		}
+		ifnull array throw not_found;
 
 		uxx arr_size = getptrv array as uxx;
 		array += sizeof(uxx);
@@ -64,13 +62,13 @@ class Map<T> {
 			@ k = getptrv array as ?String;
 			array += sizeof(String);
 			if(k != null && key == k){
-				@ val = getptrv array as ?T;
+				@ val = getptrv array as T;
 				return val;
 			}
 			array += sizeof(T);
 		}
 
-		return null;
+		throw not_found;
 	}
 
 	private func get_rest(String key) u8 {

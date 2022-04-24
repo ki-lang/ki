@@ -3,7 +3,7 @@ namespace http;
 
 class RouteEntry{
 	public Route route = null;
-	public type:Map<Route> routes;
+	public type:Map<RouteEntry> routes;
 }
 
 class RouteArg{
@@ -15,7 +15,7 @@ class Router{
 
 	private RouteEntry tree;
 
-	public func add(String method, String url, funcref (Request) Response handler) {
+	public func add(String method, String url, funcref (Request) Response handler) ! {
 		if(url.length == 0 || url.char(0) != '/'){
 			io:println("Invalid route: ");
 			exit 1;
@@ -56,11 +56,9 @@ class Router{
 				throw incorrect_wildcard_usage;
 			}
 
-			@ find = routes.get(key) or value null;
-			if(find == null){
-				find = RouteEntry{ routes: type:Map<Route>.make() };
-				routes.set(key, find);
-			}
+			@ find = routes.get(key) or value RouteEntry{ routes: type:Map<Route>.make() } then value,err {
+				routes.set(key, value);
+			};
 
 			notnull find do {
 				entry = find;

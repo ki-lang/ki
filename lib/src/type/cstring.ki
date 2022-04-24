@@ -17,4 +17,32 @@ class cstring norfc {
 		return String.make(this, len, false);
 	}
 
+	public func length() uxx {
+		ptr adr = this;
+		@ ch = getptrv adr as u8;
+		uxx count = 0;
+		while(ch != '\0'){
+			adr += 1;
+			ch = getptrv adr as u8;
+			count++;
+		}
+
+		return count;
+	}
+
+	public func clone() cstring {
+		uxx len = this.length();
+		ptr from = this;
+		ptr to = mem:alloc(len + 1);
+		ptr to_result = to;
+		uxx pos = 0;
+		while(pos < len){
+			@ ch = getptrv from as u8;
+			setptrv to to ch;
+			pos++;
+		}
+		setptrv to to 0#u8;
+		return cast to_result as cstring;
+	}
+
 }
