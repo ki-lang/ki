@@ -173,24 +173,20 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
         ifn->type = or_throw;
         fc_next_token(fc, token, false, true, true);
         ifn->throw_msg = strdup(token);
+    } else if (strcmp(token, "return") == 0) {
+        ifn->type = or_return;
+        ifn->value = fc_read_value(fc, scope, false, true, true);
+        Scope *func_scope = get_func_scope(scope);
+        fc_type_compatible(fc, func_scope->func->return_type, ifn->value->return_type);
     } else {
-        fc_error(fc, "Expected 'set' but found '%s'", token);
+        fc_error(fc, "Expected 'set, throw or return' but found '%s'", token);
     }
 
     // Create new type within scope
-    IdentifierFor *idfs = map_get(scope->identifiers, id->name);
-    if (!idfs) {
-        idfs = init_idf();
-        idfs->type = idfor_var;
-        Type *ntype = init_type();
-        *ntype = *type;
-        idfs->item = ntype;
-        type = ntype;
-        map_set(scope->identifiers, ifn->name, idfs);
-    }
-
-    // Remove nullable from var type
-    type->nullable = false;
+    Type *ntype = init_type();
+    *ntype = *type;
+    ntype->nullable = false;
+    idf->item = ntype;
 
     // then { ... }
     fc_next_token(fc, token, true, true, true);

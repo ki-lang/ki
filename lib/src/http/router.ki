@@ -60,7 +60,7 @@ class Router{
 				throw incorrect_wildcard_usage;
 			}
 
-			RouteBlock find = blocks.get(key) or value |err| {
+			@ find = blocks.get(key) or value |err| {
 				@ v = RouteBlock{ blocks: type:Map<RouteBlock>.make() };
 				blocks.set(key, v);
 				return v;
@@ -73,7 +73,7 @@ class Router{
 	}
 
 
-	public func get_route_by_url(String method, String url) ?Route {
+	public func find(String method, String url) ?Route {
 		@ parts = url.split("/");
 		parts.prepend(method);
 		@ arg_c = parts.length;
@@ -93,6 +93,9 @@ class Router{
 		check_parts.push("@");
 
 		each parts as part {
+			if(part.length == 0){
+				continue;
+			}
 			if(part == "*"){
 				continue;
 			}

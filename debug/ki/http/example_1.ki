@@ -1,7 +1,13 @@
 
-func handler(ki:http:Request req) ki:http:Response{
+func err500(ki:http:Request req) ki:http:Response{
 	return ki:http:Response{
-		body: "Hello from example"
+		body: "ERROR 500"
+	};
+}
+
+func home(ki:http:Request req) ki:http:Response{
+	return ki:http:Response{
+		body: "Hello from /"
 	};
 }
 
@@ -11,12 +17,22 @@ func hello(ki:http:Request req) ki:http:Response{
 	};
 }
 
-func main() i32 {
+func handler(ki:http:Request req) ki:http:Response{
 
 	@ r = ki:http:Router.make();
 
-	r.add("GET", "/", handler) or return 1;
-	r.add("GET", "/hello", hello) or return 1;
+	r.add("GET", "/", home) or return err500(req);
+	r.add("GET", "/hello", hello) or return err500(req);
+
+	@ route = r.find("GET", "/hello");
+	ifnull route return ki:http:Response{
+		body: "Hello from example"
+	};
+
+	return route.handler(req);
+}
+
+func main() i32 {
 
 	@ s = ki:http:Server { port: 9000, handler: handler };
 	s.start() or return 1;

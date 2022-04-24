@@ -800,6 +800,11 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             } else {
                 str_append_chars(fc->tkn_buffer, "return 0;\n");
             }
+        } else if (ifn->type == or_return) {
+            fc_write_c_value(fc, ifn->value, true);
+            str_append_chars(fc->tkn_buffer, "return ");
+            str_append(fc->tkn_buffer, fc->value_buffer);
+            str_append_chars(fc->tkn_buffer, ";\n");
         }
 
         if (ifn->then_scope) {
