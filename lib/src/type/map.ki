@@ -119,10 +119,10 @@ class Map<T> {
 			array += sizeof(uxx);
 			while(ic < count){
 				@ key = getptrv array as ?String;
-				ic++;
-				array += sizeof(T);
 
 				if(key == null){
+					ic++;
+					array += sizeof(T);
 					continue;
 				}
 
@@ -147,6 +147,8 @@ class Map<T> {
 			}
 			#end
 
+			ic++;
+			array += sizeof(T);
 			mem:free(array);
 		}
 

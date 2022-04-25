@@ -6,8 +6,11 @@ class RouteBlock{
 	public type:Map<RouteBlock> blocks;
 
 	public func __free(){
-		io:println("1\n");
 
+		@ r = this.route;
+		notnull r do {
+			this.route.__free();
+		}
 		this.blocks.__free();
 
 		@ a = allocator sizeof(CLASS);
@@ -131,7 +134,6 @@ class Router{
 	}
 
 	public func __free(){
-		io:println("2\n");
 
 		this.block.__free();
 
