@@ -261,6 +261,11 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
     } else {
         fc_error(fc, "Expected 'do' but found '%s'", token);
     }
+
+    array_push(scope->ast, t);
+    //
+    free(token);
+    free_id(id);
 }
 
 void token_while(FileCompiler *fc, Scope *scope) {

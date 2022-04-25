@@ -24,9 +24,9 @@ func handler(ki:http:Request req) ki:http:Response{
 	r.add("GET", "/", home) or return err500(req);
 	r.add("GET", "/hello", hello) or return err500(req);
 
-	@ route = r.find("GET", "/hello");
+	@ route = r.find("GET", "/z");
 	ifnull route return ki:http:Response{
-		body: "Hello from example"
+		body: "ERROR 404"
 	};
 
 	return route.handler(req);

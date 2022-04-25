@@ -33,6 +33,10 @@ class Array<T> {
 		adr += this.length * sizeof(T);
 		setptrv adr to item;
 		this.length++;
+
+		#if IS_REFCOUNTED_TYPE T
+		item._RC++;
+		#end
 	}
 
 	// Function can be improve by keeping the same data ptr, but mem-copying backwards
@@ -52,9 +56,12 @@ class Array<T> {
 		this.data = new_data;
 
 		ptr adr = this.data;
-		adr += this.length * sizeof(T);
 		setptrv adr to item;
 		this.length++;
+
+		#if IS_REFCOUNTED_TYPE T
+		item._RC++;
+		#end
 	}
 
 	public func remove(u32 index) {
@@ -67,6 +74,15 @@ class Array<T> {
 		this.length--;
 		ptr adr = this.data;
 		adr += index * sizeof(T);
+
+		@ item = getptrv adr as T;
+		#if IS_REFCOUNTED_TYPE T
+		item._RC--;
+		if(item._RC == 0){
+			item.__free();
+		}
+		#end
+
 		i32 size = (this.length - index) * sizeof(T);
 		if(size > 0){
 			mem:copy(adr + sizeof(T), adr, size);

@@ -163,6 +163,7 @@ typedef struct ClassProp {
     int access_type;
     bool is_static;
     bool is_func;
+    bool generate_code;
     struct Type *return_type;
     struct Value *default_value;
     int value_i;
@@ -180,6 +181,7 @@ typedef struct Function {
     char *cname;
     struct FileCompiler *fc;
     bool can_error;
+    bool generate_code;
     //
     struct Array *args;
     struct Type *return_type;

@@ -332,7 +332,7 @@ void fc_write_c_class(FileCompiler *fc, Class *class) {
 
     // Free func
     ClassProp *prop = map_get(class->props, "__free");
-    if (!prop) {
+    if (!prop || prop->generate_code == false) {
         str_append_chars(fc->h_code, "void ");
         str_append_chars(fc->h_code, class->cname);
         str_append_chars(fc->h_code, "____free(struct ");
@@ -1086,10 +1086,13 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             }
 
             str_append_chars(fc->tkn_buffer, "if(_KI_THROW_MSG_BUF){\n");
-            str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
+            if (fa->error_type != or_pass) {
+                str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
+            }
             //
             if (fa->error_type == or_pass) {
                 str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = _KI_THROW_MSG_BUF;\n");
+                str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
                 Type *rett = fa->func_scope->func->return_type;
                 if (rett == NULL) {
                     str_append_chars(fc->tkn_buffer, "return;\n");

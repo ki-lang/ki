@@ -177,23 +177,32 @@ class String {
 	}
 
 	public func substring(uxx start, uxx length) String {
+		if((start + length) > this.length){
+			length = this.length - start;
+		}
 		if(length == 0){
 			return "";
 		}
-		ptr x = alloc(length + 1);
-		ptr from = this.data;
-		from += start;
-		copy(from, x, length);
-		ptr y = x;
-		y += length;
-		y = '\0';
+		ptr x = this.data;
+		x += start;
 		@ res = String.make(x, length, false);
-		free(x);
 		return res;
 	}
 
-	public func split(String on) Array<String> {
+	public func split_char(u8 on) Array<String> {
 		@ arr = Array<String>.make(2);
+		u32 len = this.length;
+		u32 s = 0;
+		u32 e = 0;
+		while(e < len){
+			@ ch = this.char(e);
+			if(ch == on){
+				arr.push(this.substring(s, e-s));
+				s = e + 1;
+			}
+			e++;
+		}
+		arr.push(this.substring(s, e-s));
 		return arr;
 	}
 }

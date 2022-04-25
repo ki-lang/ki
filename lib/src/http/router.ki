@@ -26,7 +26,7 @@ class Router{
 		}
 
 		@ url_tmp = url.substring(1, url.length - 1);
-		@ parts = url_tmp.split("/");
+		@ parts = url_tmp.split_char('/');
 		parts.prepend(method);
 
 		@ block = this.block;
@@ -74,7 +74,15 @@ class Router{
 
 
 	public func find(String method, String url) ?Route {
-		@ parts = url.split("/");
+		@ parts_ = url.split_char('/');
+		@ parts = Array<String>.make(2);
+		each parts_ as part i {
+			if(part.length == 0){
+				continue;
+			}
+			parts.push(part);
+		}
+
 		parts.prepend(method);
 		@ arg_c = parts.length;
 
@@ -92,16 +100,13 @@ class Router{
 		check_parts.push(p);
 		check_parts.push("@");
 
-		each parts as part {
-			if(part.length == 0){
-				continue;
-			}
+		each check_parts as part i {
 			if(part == "*"){
 				continue;
 			}
 			@ sub_block = block.blocks.get(part) or value null;
 			notnull sub_block do {
-				@ route = Router.find_route(block.blocks, index + 1, arg_c, parts);
+				@ route = Router.find_route(sub_block, index + 1, arg_c, parts);
 				notnull route do {
 					return route;
 				}
