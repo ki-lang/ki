@@ -896,6 +896,8 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                 value->return_type->nullable = true;
             }
             fc_type_compatible(fc, func_scope->func->return_type, fcall->or_value->return_type);
+            Scope *or_scope = init_sub_scope(scope);
+            fcall->or_scope = or_scope;
         } else if (strcmp(token, "throw") == 0) {
             fcall->error_type = or_throw;
             fc_next_token(fc, token, false, true, true);

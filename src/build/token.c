@@ -151,6 +151,7 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     ifn->value = NULL;
     ifn->then_scope = NULL;
     ifn->throw_msg = NULL;
+    ifn->return_scope = NULL;
 
     Token *t = init_token();
     t->type = tkn_ifnull;
@@ -180,6 +181,7 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
         ifn->value = fc_read_value(fc, scope, false, true, true);
         Scope *func_scope = get_func_scope(scope);
         fc_type_compatible(fc, func_scope->func->return_type, ifn->value->return_type);
+        ifn->return_scope = init_sub_scope(scope);
     } else {
         fc_error(fc, "Expected 'set, throw or return' but found '%s'", token);
     }

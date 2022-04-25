@@ -4,6 +4,15 @@ namespace http;
 class RouteBlock{
 	public ?Route route = null;
 	public type:Map<RouteBlock> blocks;
+
+	public func __free(){
+		io:println("1\n");
+
+		this.blocks.__free();
+
+		@ a = allocator sizeof(CLASS);
+		a.free(this);
+	}
 }
 
 class RouteArg{
@@ -119,5 +128,14 @@ class Router{
 		}
 
 		return null;
+	}
+
+	public func __free(){
+		io:println("2\n");
+
+		this.block.__free();
+
+		@ a = allocator sizeof(CLASS);
+		a.free(this);
 	}
 }

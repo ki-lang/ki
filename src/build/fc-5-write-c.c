@@ -801,9 +801,11 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
                 str_append_chars(fc->tkn_buffer, "return 0;\n");
             }
         } else if (ifn->type == or_return) {
-            fc_write_c_value(fc, ifn->value, true);
 
+            fc->current_scope = ifn->return_scope;
+            fc_write_c_value(fc, ifn->value, true);
             deref_local_vars(fc, ifn->value, false, false);
+            fc->current_scope = ifn->return_scope->parent;
 
             str_append_chars(fc->tkn_buffer, "return ");
             str_append(fc->tkn_buffer, fc->value_buffer);
@@ -1106,9 +1108,11 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                 }
             } else if (fa->error_type == or_return) {
                 Value *orv = fa->or_value;
-                fc_write_c_value(fc, orv, false);
                 //
+                fc->current_scope = fa->or_scope;
+                fc_write_c_value(fc, orv, false);
                 deref_local_vars(fc, orv, false, false);
+                fc->current_scope = fa->or_scope->parent;
                 //
                 str_append_chars(fc->tkn_buffer, "return ");
                 str_append(fc->tkn_buffer, fc->value_buffer);

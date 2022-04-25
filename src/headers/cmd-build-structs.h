@@ -427,6 +427,7 @@ typedef struct TokenIfNull {
     char *name;
     Value *value;
     struct Scope *then_scope;
+    struct Scope *return_scope;
     char *throw_msg;
 } TokenIfNull;
 

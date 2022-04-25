@@ -120,9 +120,12 @@ class Map<T> {
 			while(ic < count){
 				@ key = getptrv array as ?String;
 				ic++;
+				array += sizeof(T);
+
 				if(key == null){
 					continue;
 				}
+
 				notnull key do {
 
 					key._RC--;
