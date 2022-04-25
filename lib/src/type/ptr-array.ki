@@ -48,4 +48,10 @@ class PtrArray {
 		ptr x = cast (getptrv adr as uxx) as ptr;
 		return x != null;
 	}
+
+	public func __free(){
+		mem:free(this.data);
+		@ a = allocator sizeof(CLASS);
+		a.free(this);
+	}
 }

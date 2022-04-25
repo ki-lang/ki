@@ -116,13 +116,15 @@ class Map<T> {
 			#if IS_REFCOUNTED_TYPE T
 			uxx count = getptrv array as uxx;
 			uxx ic = 0;
-			array += sizeof(uxx);
+			@ adr = array;
+			adr += sizeof(uxx);
 			while(ic < count){
-				@ key = getptrv array as ?String;
+				@ key = getptrv adr as ?String;
+				adr += sizeof(String);
 
 				if(key == null){
 					ic++;
-					array += sizeof(T);
+					adr += sizeof(T);
 					continue;
 				}
 
@@ -131,24 +133,22 @@ class Map<T> {
 					key._RC--;
 					if(key._RC == 0) { key.__free(); }
 
-					@ val = getptrv array as T;
+					@ val = getptrv adr as T;
 
 					#if IS_NULLABLE_TYPE T
 					if(val != null) {
 					#end
 					val._RC--;
-					if(val._RC == 0){
-						val.__free();
-					}
 					#if IS_NULLABLE_TYPE T
 					}
 					#end
 				}
+
+				ic++;
+				adr += sizeof(T);
 			}
 			#end
 
-			ic++;
-			array += sizeof(T);
 			mem:free(array);
 		}
 
