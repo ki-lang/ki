@@ -17,15 +17,16 @@ func hello(ki:http:Request req) ki:http:Response{
 	};
 }
 
-threaded ?ki:http:Router RR = null;
+threaded_global ?ki:http:Router g_router;
 
 func handler(ki:http:Request req) ki:http:Response{
 
-	@ r = get_threaded RR;
-	if(r == null){
+	@ r = g_router;
+	ifnull r set {
 		r = ki:http:Router.make();
 		r._RC++;
-		set_threaded RR = r;
+		g_router = r;
+		return r;
 	}
 
 	if(r.inited == false){

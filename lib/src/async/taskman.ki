@@ -3,6 +3,8 @@ namespace async;
 
 threaded Taskman LOCAL_TM = null;
 
+unsafe_global ?TaskList g_tasklist;
+
 class TaskList {
 
 	public u32 head = 0;
@@ -13,7 +15,7 @@ class TaskList {
 	public i32 pipe_write_fd;
 
 	public static func get() TaskList {
-		static TaskList mx {
+		ifnull g_tasklist set {
 			uxx pipes = 0;
 			ptr pipes_ptr = getptr pipes;
 			@ check = main:main:pipe(pipes_ptr);
@@ -23,7 +25,7 @@ class TaskList {
 
 			return TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
 		}
-		return mx;
+		return g_tasklist;
 	}
 }
 
