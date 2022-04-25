@@ -17,7 +17,6 @@ void fc_scan_values() {
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
             fc_scan_args_and_props(fc);
-            fc_scan_threaded_globals(fc);
         }
     }
 
@@ -33,6 +32,16 @@ void fc_scan_values() {
             // map_print_keys(class->props);
         }
     }
+    //
+    for (int i = 0; i < packages->keys->length; i++) {
+        PkgCompiler *pkc = array_get_index(packages->values, i);
+
+        for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+            FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+            fc_scan_threaded_globals(fc);
+        }
+    }
+
     // Scan class prop values
     for (int x = 0; x < c_identifiers->keys->length; x++) {
         IdentifierFor *idf = array_get_index(c_identifiers->values, x);
@@ -74,16 +83,16 @@ void fc_scan_threaded_globals(FileCompiler *fc) {
         ThreadedGlobal *tg = array_get_index(fc->threaded_globals, i);
         fc->i = tg->i;
         tg->type = fc_read_type(fc, fc->scope);
-        fc_next_token(fc, token, false, true, true);
 
         // Name
-        char *name = strdup(token);
-        IdentifierFor *idf = map_get(fc->nsc->scope->identifiers, name);
+        Identifier *id = fc_read_identifier(fc, false, true, true);
+        IdentifierFor *idf = map_get(fc->nsc->scope->identifiers, id->name);
         if (idf) {
-            fc_error(fc, "Name already used: %s", name);
+            fc_error(fc, "Name already used: %s", id->name);
         }
 
-        tg->name = name;
+        tg->name = fc_create_identifier_global_cname(fc, id);
+
         fc_expect_token(fc, "=", false, true, true);
         // Value
         tg->default_value = fc_read_value(fc, fc->nsc->scope, false, true, true);
@@ -94,7 +103,8 @@ void fc_scan_threaded_globals(FileCompiler *fc) {
         idf = init_idf();
         idf->type = idfor_threaded_var;
         idf->item = tg;
-        map_set(fc->nsc->scope->identifiers, name, idf);
+        map_set(fc->nsc->scope->identifiers, id->name, idf);
+        map_set(c_identifiers, tg->name, idf);
     }
 
     free(token);

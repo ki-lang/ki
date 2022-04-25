@@ -222,10 +222,6 @@ void fc_write_c_inits() {
                 free_str(fc->tkn_buffer);
 
                 str_append_chars(code, "pthread_key_create(&");
-                str_append_chars(code, fc->nsc->pkc->name);
-                str_append_chars(code, "__");
-                str_append_chars(code, fc->nsc->name);
-                str_append_chars(code, "__");
                 str_append_chars(code, tg->name);
                 str_append_chars(code, ", ");
                 str_append(code, fc->value_buffer);
@@ -417,10 +413,6 @@ void fc_write_c_static_var_global(FileCompiler *fc, TokenStaticDeclare *decl) {
 
 void fc_write_c_threaded_globals(FileCompiler *fc, ThreadedGlobal *tg) {
     str_append_chars(fc->h_code, "struct pthread_key_t ");
-    str_append_chars(fc->h_code, fc->nsc->pkc->name);
-    str_append_chars(fc->h_code, "__");
-    str_append_chars(fc->h_code, fc->nsc->name);
-    str_append_chars(fc->h_code, "__");
     str_append_chars(fc->h_code, tg->name);
     str_append_chars(fc->h_code, ";\n");
 }

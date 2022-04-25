@@ -1,5 +1,5 @@
 
-func err500(ki:http:Request req) ki:http:Response{
+func err500() ki:http:Response{
 	return ki:http:Response{
 		body: "ERROR 500"
 	};
@@ -17,14 +17,24 @@ func hello(ki:http:Request req) ki:http:Response{
 	};
 }
 
+threaded ?ki:http:Router RR = null;
+
 func handler(ki:http:Request req) ki:http:Response{
 
-	@ r = ki:http:Router.make();
+	@ r = get_threaded RR;
+	if(r == null){
+		r = ki:http:Router.make();
+		r._RC++;
+		set_threaded RR = r;
+	}
 
-	r.add("GET", "/", home) or return err500(req);
-	//r.add("GET", "/hello", hello) or return err500(req);
+	if(r.inited == false){
+		r.add("GET", "/", home) or return err500();
+		r.add("GET", "/hello", hello) or return err500();
+		r.inited = true;
+	}
 
-	@ route = r.find("GET", "/z");
+	@ route = r.find("GET", req.uri);
 	ifnull route return ki:http:Response{
 		body: "ERROR 404"
 	};

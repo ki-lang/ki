@@ -428,7 +428,7 @@ void token_static(FileCompiler *fc, Scope *scope) {
     char *gname = malloc(128);
     sprintf(gname, "_KI_STATIC_%s_%d", fc->hash, fc->static_vars->length);
     char *fn = malloc(128);
-    sprintf(fn, "%s_init", fc->hash, fc->var_bufc);
+    sprintf(fn, "_KI_STATIC_%s_%d_init", fc->hash, fc->var_bufc);
     func->cname = fn;
 
     array_push(fc->functions, func);

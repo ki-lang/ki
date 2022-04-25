@@ -26,6 +26,7 @@ class RouteArg{
 class Router{
 
 	private RouteBlock block;
+	public bool inited = false;
 
 	public static func make() Router {
 		return Router{ block: RouteBlock{ blocks: type:Map<RouteBlock>.make() } };
