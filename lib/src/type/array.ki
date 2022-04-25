@@ -35,7 +35,13 @@ class Array<T> {
 		this.length++;
 
 		#if IS_REFCOUNTED_TYPE T
+		#if IS_NULLABLE_TYPE T
+		if(item != null) {
+		#end
 		item._RC++;
+		#if IS_NULLABLE_TYPE T
+		}
+		#end
 		#end
 	}
 
@@ -60,7 +66,13 @@ class Array<T> {
 		this.length++;
 
 		#if IS_REFCOUNTED_TYPE T
+		#if IS_NULLABLE_TYPE T
+		if(item != null) {
+		#end
 		item._RC++;
+		#if IS_NULLABLE_TYPE T
+		}
+		#end
 		#end
 	}
 
@@ -77,10 +89,16 @@ class Array<T> {
 
 		@ item = getptrv adr as T;
 		#if IS_REFCOUNTED_TYPE T
+		#if IS_NULLABLE_TYPE T
+		if(item != null) {
+		#end
 		item._RC--;
 		if(item._RC == 0){
 			item.__free();
 		}
+		#if IS_NULLABLE_TYPE T
+		}
+		#end
 		#end
 
 		i32 size = (this.length - index) * sizeof(T);
@@ -112,6 +130,35 @@ class Array<T> {
 			adr += sizeof(T);
 		}
 		throw not_found;
+	}
+
+	public func __free() {
+		uxx i = 0;
+		#if IS_REFCOUNTED_TYPE T
+		ptr adr = this.data;
+		while(i < this.length){
+			@ val = getptrv adr as T;
+
+			#if IS_NULLABLE_TYPE T
+			if(val != null) {
+			#end
+			val._RC--;
+			if(val._RC == 0){
+				val.__free();
+			}
+			#if IS_NULLABLE_TYPE T
+			}
+			#end
+
+			adr += sizeof(T);
+			i++;
+		}
+		#end
+
+		mem:free(this.data);
+
+		@ a = allocator sizeof(CLASS);
+		a.free(this);
 	}
 
 	public func __each_count() uxx {

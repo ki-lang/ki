@@ -46,7 +46,9 @@ void token_return(FileCompiler *fc, Scope *scope) {
         t->item = vt;
 
         fc_expect_token(fc, ";", false, true, true);
+
         scope->did_return = true;
+
         array_push(scope->ast, t);
 
         return;
@@ -523,8 +525,6 @@ void token_break(FileCompiler *fc, Scope *scope) {
     array_push(scope->ast, t);
 
     fc_expect_token(fc, ";", false, true, true);
-
-    scope->did_return = true;
 }
 
 void token_continue(FileCompiler *fc, Scope *scope) {
@@ -534,8 +534,6 @@ void token_continue(FileCompiler *fc, Scope *scope) {
     array_push(scope->ast, t);
 
     fc_expect_token(fc, ";", false, true, true);
-
-    scope->did_return = true;
 }
 
 void token_free(FileCompiler *fc, Scope *scope) {

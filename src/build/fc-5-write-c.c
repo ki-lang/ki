@@ -802,6 +802,9 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             }
         } else if (ifn->type == or_return) {
             fc_write_c_value(fc, ifn->value, true);
+
+            deref_local_vars(fc, ifn->value, false, false);
+
             str_append_chars(fc->tkn_buffer, "return ");
             str_append(fc->tkn_buffer, fc->value_buffer);
             str_append_chars(fc->tkn_buffer, ";\n");
@@ -1117,6 +1120,10 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                     str_append_chars(fc->tkn_buffer, " = _KI_THROW_MSG_BUF;\n");
 
                     fc_write_c_ast(fc, fa->or_scope);
+
+                    fc->current_scope = fa->or_scope;
+                    deref_local_vars(fc, value, false, true);
+                    fc->current_scope = fa->or_scope->parent;
 
                     str_append_chars(fc->tkn_buffer, buf_var_name);
                     str_append_chars(fc->tkn_buffer, " = ");

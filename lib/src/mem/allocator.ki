@@ -1,6 +1,8 @@
 
 namespace mem;
 
+#header "sys/thread"
+
 class AllocatorSettings norfc {
 	public u32 block_i = 0;
 	public u32 block_c = 0;
@@ -91,6 +93,7 @@ class Allocator norfc {
 			io:print("max block_c reached in allocator: ");
 			io:print(this.size.str());
 			io:print("\n");
+			main:main:raise(11);
 		}
 		
 		return new_block + 1 + 1; // skip empty_pos byte & skip value pos byte
