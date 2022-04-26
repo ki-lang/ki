@@ -261,6 +261,10 @@ void fc_scan_types(FileCompiler *fc) {
 
             fc_expect_token(fc, ";", false, true, true);
 
+        } else if (strcmp(token, "unsafe_shared_global") == 0) {
+            fc_define_global(fc, gv_shared, token);
+        } else if (strcmp(token, "threaded_global") == 0) {
+            fc_define_global(fc, gv_threaded, token);
         } else {
             fc_error(fc, "Unexpected token: '%s'", token);
         }
@@ -271,4 +275,42 @@ void fc_scan_types(FileCompiler *fc) {
     }
 
     free(token);
+}
+
+void fc_define_global(FileCompiler *fc, int type, char *token) {
+
+    GlobalVar *gv = malloc(sizeof(GlobalVar));
+    gv->fc_i = fc->i;
+    gv->type = type;
+
+    fc_skip_type(fc);
+    fc_next_token(fc, token, false, true, true);
+    fc_name_taken(fc, fc->nsc->scope->identifiers, token);
+    //
+    gv->name = strdup(token);
+
+    if (type == gv_shared) {
+        if (!starts_with(gv->name, "sg_")) {
+            fc_error(fc, "Shared global variable names must start with 'sg_'", NULL);
+        }
+    } else if (type == gv_threaded) {
+        if (!starts_with(gv->name, "tg_")) {
+            fc_error(fc, "Shared global variable names must start with 'tg_'", NULL);
+        }
+    }
+
+    char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, gv->name);
+    gv->cname = cname;
+
+    IdentifierFor *idf = init_idf();
+    idf->type = idfor_global;
+    idf->item = gv;
+
+    Scope *scope = fc->nsc->scope;
+    map_set(scope->identifiers, gv->name, idf);
+    map_set(c_identifiers, cname, idf);
+
+    array_push(fc->globals, gv);
+
+    fc_expect_token(fc, ";", false, true, true);
 }

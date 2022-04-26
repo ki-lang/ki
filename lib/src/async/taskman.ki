@@ -1,7 +1,7 @@
 
 namespace async;
 
-threaded Taskman LOCAL_TM = null;
+threaded_global Taskman tg_taskmanager;
 
 unsafe_shared_global TaskList sg_tasklist;
 
@@ -36,6 +36,10 @@ class Taskman norfc {
 	public Mutex mut_get_task;
 
 	public ?Task current_task = null;
+
+	public static func get_local_taskman() type:PtrArray {
+		return tg_taskmanager or crash missing_local_taskmanager_instance;
+	}
 
 	public static func get_task_managers() type:PtrArray {
 		static type:PtrArray list {
@@ -72,11 +76,11 @@ class Taskman norfc {
 
 		Taskman tm = cast tm_ptr as Taskman; 
 
-		LOCAL_TM = tm;
+		tg_taskmanager = tm;
 
 		tm.run_tasks(false);
 
-		LOCAL_TM = null;
+		tg_taskmanager = null;
 	}
 
 	public static func wait_for_tasks_to_end(type:PtrArray tms) {
@@ -167,7 +171,7 @@ class Taskman norfc {
 
 	public static func run_another_task() {
 
-		Taskman tm = LOCAL_TM;
+		Taskman tm = get_local_taskman();
 		@ task = tm.current_task;
 
 		tm.run_tasks(true);

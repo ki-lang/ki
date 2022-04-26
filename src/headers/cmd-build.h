@@ -29,6 +29,8 @@ void fc_scan_class_props(Class *class);
 void fc_scan_class_prop_values(Class *class);
 void fc_build_asts();
 void fc_build_ast(FileCompiler *fc, Scope *scope);
+void fc_define_global(FileCompiler *fc, int type, char *token);
+void fc_scan_globals(FileCompiler *fc);
 double get_time();
 
 // Scope

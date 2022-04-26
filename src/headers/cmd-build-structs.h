@@ -62,8 +62,7 @@ typedef struct FileCompiler {
     struct Array *classes;
     struct Array *enums;
     struct Array *strings;
-    struct Array *threaded_globals;
-    struct Array *shared_globals;
+    struct Array *globals;
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
@@ -116,10 +115,8 @@ typedef enum IdentifierForType {
     idfor_type, // 5
     idfor_property,
     idfor_trait,
-    idfor_threaded_var,
-    idfor_static_var,
-    idfor_mutex,
     idfor_arg,
+    idfor_global,
 } IdentifierForType;
 
 //////////
@@ -196,6 +193,21 @@ typedef struct FunctionArg {
     struct Type *type;
     struct Value *default_value;
 } FunctionArg;
+
+typedef struct GlobalVar {
+    int fc_i;
+    int type;
+    struct Type *return_type;
+    char *name;
+    char *cname;
+    int *or_type;
+    Scope *vscope;
+} GlobalVar;
+
+typedef enum GlobalVarType {
+    gv_shared,
+    gv_threaded,
+} GlobalVarType;
 
 typedef struct Trait {
     char *cname;
@@ -275,9 +287,8 @@ typedef enum ValueType {
     vt_async,
     vt_await,
     vt_allocator, // 20
-    vt_get_threaded,
-    vt_mutex,
     vt_arg,
+    vt_global
 } ValueType;
 
 typedef struct ValueFuncCall {

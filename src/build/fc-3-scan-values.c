@@ -43,6 +43,15 @@ void fc_scan_values() {
             fc_scan_class_prop_values(class);
         }
     }
+
+    // Scan globals
+    for (int i = 0; i < packages->keys->length; i++) {
+        PkgCompiler *pkc = array_get_index(packages->values, i);
+        for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+            FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+            fc_scan_globals(fc);
+        }
+    }
 }
 
 void fc_scan_args_and_props(FileCompiler *fc) {
@@ -64,5 +73,16 @@ void fc_scan_args_and_props(FileCompiler *fc) {
     for (int x = 0; x < fc->functions->length; x++) {
         Function *func = array_get_index(fc->functions, x);
         fc_scan_func_args(func);
+    }
+}
+
+void fc_scan_globals(FileCompiler *fc) {
+    //
+    for (int x = 0; x < fc->globals->length; x++) {
+        GlobalVar *gv = array_get_index(fc->globals, x);
+
+        fc->i = gv->fc_i;
+
+        gv->return_type = fc_read_type(fc, fc->scope);
     }
 }

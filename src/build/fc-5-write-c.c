@@ -869,9 +869,47 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         str_append_chars(result, ")");
     } else if (value->type == vt_var) {
         str_append_chars(result, value->item);
+    } else if (value->type == vt_global) {
+        //
+        GlobalVar *gv = value->item;
+
+        str_append_chars(fc->tkn_buffer, "if(!");
+        if (gv->type == gv_threaded) {
+            str_append_chars(fc->tkn_buffer, "pthread_getspecific(");
+        }
+        str_append_chars(fc->tkn_buffer, gv->cname);
+        str_append_chars(fc->tkn_buffer, "_KI_ISSET");
+        if (gv->type == gv_threaded) {
+            str_append_chars(fc->tkn_buffer, ")");
+        }
+        str_append_chars(fc->tkn_buffer, ") {\n");
+
+        fc_write_c_ast(fc, gv->vscope);
+
+        if (gv->type == gv_threaded) {
+            str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
+            str_append_chars(fc->tkn_buffer, gv->cname);
+            str_append_chars(fc->tkn_buffer, ", ");
+            str_append_chars(fc->tkn_buffer, gv->vscope->vscope_vname);
+            str_append_chars(fc->tkn_buffer, ");\n");
+        } else if (gv->type == gv_shared) {
+            str_append_chars(fc->tkn_buffer, gv->cname);
+            str_append_chars(fc->tkn_buffer, " = ");
+            str_append_chars(fc->tkn_buffer, gv->vscope->vscope_vname);
+            str_append_chars(fc->tkn_buffer, ";\n");
+        }
+
+        str_append_chars(fc->tkn_buffer, "}\n");
+
+        if (gv->type == gv_threaded) {
+            str_append_chars(result, "pthread_getspecific(");
+        }
+        str_append_chars(result, gv->cname);
+        if (gv->type == gv_threaded) {
+            str_append_chars(result, ")");
+        }
+        //
     } else if (value->type == vt_arg) {
-        str_append_chars(result, value->item);
-    } else if (value->type == vt_mutex) {
         str_append_chars(result, value->item);
     } else if (value->type == vt_number) {
         str_append_chars(result, value->item);

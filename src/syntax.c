@@ -139,3 +139,9 @@ bool is_valid_macro_number(char *str) {
     }
     return true;
 }
+
+bool starts_with(const char *a, const char *b) {
+    if (strncmp(a, b, strlen(b)) == 0)
+        return 1;
+    return 0;
+}
