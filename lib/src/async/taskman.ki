@@ -1,9 +1,10 @@
 
 namespace async;
 
-threaded_global Taskman tg_taskmanager;
+threaded_global ?Taskman tg_taskmanager;
 
-unsafe_shared_global TaskList sg_tasklist;
+unsafe_shared_global ?TaskList sg_tasklist;
+unsafe_shared_global ?type:PtrArray sg_taskmanagers;
 
 class TaskList {
 
@@ -37,15 +38,18 @@ class Taskman norfc {
 
 	public ?Task current_task = null;
 
-	public static func get_local_taskman() type:PtrArray {
-		return tg_taskmanager or crash missing_local_taskmanager_instance;
+	public static func get_local_taskman() Taskman {
+		@ tm = tg_taskmanager;
+		ifnull tm crash missing_taskmanager;
+		return tm;
 	}
 
 	public static func get_task_managers() type:PtrArray {
-		static type:PtrArray list {
+		@ tms = sg_taskmanagers;
+		ifnull tms set {
 			return type:PtrArray.make(64);
-		}
-		return list;
+		};
+		return tms;
 	}
 
 	public static func setup_task_managers() type:PtrArray {

@@ -153,6 +153,7 @@ void fc_write_c_pre(FileCompiler *fc);
 void fc_write_c(FileCompiler *fc);
 void fc_write_c_predefine_class(FileCompiler *fc, Class *class);
 void fc_write_c_class(FileCompiler *fc, Class *class);
+void fc_write_c_global(FileCompiler *fc, GlobalVar *gv);
 void fc_write_c_enum(FileCompiler *fc, Enum *enu);
 void fc_write_c_func(FileCompiler *fc, Function *func);
 void fc_write_c_ast(FileCompiler *fc, Scope *scope);

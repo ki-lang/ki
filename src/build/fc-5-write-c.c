@@ -57,6 +57,9 @@ void fc_write_c_all() {
             for (int x = 0; x < fc->enums->length; x++) {
                 fc_write_c_enum(fc, array_get_index(fc->enums, x));
             }
+            for (int x = 0; x < fc->globals->length; x++) {
+                fc_write_c_global(fc, array_get_index(fc->globals, x));
+            }
             for (int x = 0; x < fc->strings->length; x++) {
                 ValueString *vstr = array_get_index(fc->strings, x);
                 str_append_chars(fc->h_code, "struct ki__type__String* ");
@@ -125,6 +128,18 @@ void fc_write_c_inits() {
         PkgCompiler *pkc = array_get_index(packages->values, i);
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+
+            for (int x = 0; x < fc->globals->length; x++) {
+                GlobalVar *gv = array_get_index(fc->globals, x);
+                if (gv->type == gv_threaded) {
+                    str_append_chars(code, "pthread_key_create(&");
+                    str_append_chars(code, gv->cname);
+                    str_append_chars(code, ", (void*)0);\n");
+                } else if (gv->type == gv_shared) {
+                    str_append_chars(code, gv->cname);
+                    str_append_chars(code, " = (void*)0;\n");
+                }
+            }
 
             for (int x = 0; x < fc->strings->length; x++) {
                 ValueString *vstr = array_get_index(fc->strings, x);
@@ -333,6 +348,18 @@ void fc_write_c_enum(FileCompiler *fc, Enum *enu) {
     str_append_chars(fc->h_code, "} ");
     str_append_chars(fc->h_code, enu->cname);
     str_append_chars(fc->h_code, ";\n");
+}
+
+void fc_write_c_global(FileCompiler *fc, GlobalVar *gv) {
+    //
+    if (gv->type == gv_threaded) {
+        str_append_chars(fc->h_code, "struct pthread_key_t ");
+        str_append_chars(fc->h_code, gv->cname);
+        str_append_chars(fc->h_code, ";\n");
+    } else if (gv->type == gv_shared) {
+        fc_write_c_type(fc->h_code, gv->return_type, gv->cname);
+        str_append_chars(fc->h_code, ";\n");
+    }
 }
 
 void fc_write_c_func(FileCompiler *fc, Function *func) {
@@ -873,31 +900,37 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         //
         GlobalVar *gv = value->item;
 
-        str_append_chars(fc->tkn_buffer, "if(!");
+        str_append_chars(fc->tkn_buffer, "if(");
         if (gv->type == gv_threaded) {
             str_append_chars(fc->tkn_buffer, "pthread_getspecific(");
         }
         str_append_chars(fc->tkn_buffer, gv->cname);
-        str_append_chars(fc->tkn_buffer, "_KI_ISSET");
         if (gv->type == gv_threaded) {
             str_append_chars(fc->tkn_buffer, ")");
         }
-        str_append_chars(fc->tkn_buffer, ") {\n");
+        str_append_chars(fc->tkn_buffer, " == (void*)0) {\n");
 
-        fc_write_c_ast(fc, gv->vscope);
+        // if (gv->type == or_set) {
+        //     fc_write_c_ast(fc, gv->vscope);
 
-        if (gv->type == gv_threaded) {
-            str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
-            str_append_chars(fc->tkn_buffer, gv->cname);
-            str_append_chars(fc->tkn_buffer, ", ");
-            str_append_chars(fc->tkn_buffer, gv->vscope->vscope_vname);
-            str_append_chars(fc->tkn_buffer, ");\n");
-        } else if (gv->type == gv_shared) {
-            str_append_chars(fc->tkn_buffer, gv->cname);
-            str_append_chars(fc->tkn_buffer, " = ");
-            str_append_chars(fc->tkn_buffer, gv->vscope->vscope_vname);
-            str_append_chars(fc->tkn_buffer, ";\n");
-        }
+        //     if (gv->type == gv_threaded) {
+        //         str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
+        //         str_append_chars(fc->tkn_buffer, gv->cname);
+        //         str_append_chars(fc->tkn_buffer, ", ");
+        //         str_append_chars(fc->tkn_buffer, gv->vscope->vscope_vname);
+        //         str_append_chars(fc->tkn_buffer, ");\n");
+        //     } else if (gv->type == gv_shared) {
+        //         str_append_chars(fc->tkn_buffer, gv->cname);
+        //         str_append_chars(fc->tkn_buffer, " = ");
+        //         str_append_chars(fc->tkn_buffer, gv->vscope->vscope_vname);
+        //         str_append_chars(fc->tkn_buffer, ";\n");
+        //     }
+        // } else if (gv->type == or_crash) {
+        //     str_append_chars(fc->tkn_buffer, "ki__io__println(\"");
+        //     str_append_chars(fc->tkn_buffer, gv->error_msg);
+        //     str_append_chars(fc->tkn_buffer, "\");");
+        //     str_append_chars(fc->tkn_buffer, "exit(1);\n");
+        // }
 
         str_append_chars(fc->tkn_buffer, "}\n");
 
@@ -1547,11 +1580,6 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         char *name = fc_write_c_get_allocator(fc, sizei, true);
         str_append_chars(result, name);
         str_append_chars(result, "()");
-    } else if (value->type == vt_get_threaded) {
-        char *name = value->item;
-        str_append_chars(result, "pthread_getspecific(");
-        str_append_chars(result, name);
-        str_append_chars(result, ")");
     } else {
         fc_error(fc, "Unhandled value token (compiler bug)", NULL);
     }

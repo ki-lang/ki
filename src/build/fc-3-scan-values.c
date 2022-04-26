@@ -84,5 +84,9 @@ void fc_scan_globals(FileCompiler *fc) {
         fc->i = gv->fc_i;
 
         gv->return_type = fc_read_type(fc, fc->scope);
+
+        if (!gv->return_type->nullable) {
+            fc_error(fc, "Global variables must be nullable (null is their default value)", NULL);
+        }
     }
 }

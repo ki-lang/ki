@@ -17,21 +17,23 @@ func hello(ki:http:Request req) ki:http:Response{
 	};
 }
 
-threaded_global ki:http:Router tg_router;
+threaded_global ?ki:http:Router tg_router;
 
 func handler(ki:http:Request req) ki:http:Response{
 
-	@ r = tg_router or set {
-		r = ki:http:Router.make();
-		r._RC++;
-		return r;
-	};
+	@ r = tg_router;
 
-	if(r.inited == false){
+	ifnull r set {
+		@ r = ki:http:Router.make();
+		r._RC++;
+
+		tg_router = r;
+
 		r.add("GET", "/", home) or return err500();
 		r.add("GET", "/hello", hello) or return err500();
-		r.inited = true;
-	}
+
+		return r;
+	};
 
 	@ route = r.find("GET", req.uri);
 	ifnull route return ki:http:Response{

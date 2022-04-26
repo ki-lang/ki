@@ -200,8 +200,9 @@ typedef struct GlobalVar {
     struct Type *return_type;
     char *name;
     char *cname;
-    int *or_type;
+    int or_type;
     Scope *vscope;
+    char *error_msg;
 } GlobalVar;
 
 typedef enum GlobalVarType {
@@ -309,6 +310,8 @@ typedef enum OrType {
     or_return,
     or_throw,
     or_do,
+    or_set,
+    or_crash,
 } OrType;
 
 typedef struct ValueOperator {
