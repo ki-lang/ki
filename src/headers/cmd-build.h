@@ -45,6 +45,7 @@ Token *init_token();
 void free_token(Token *token);
 void token_each(FileCompiler *fc, Scope *scope);
 void token_return(FileCompiler *fc, Scope *scope);
+void token_setvalue(FileCompiler *fc, Scope *scope);
 TokenIf *token_if(FileCompiler *fc, Scope *scope, bool is_else, bool has_condition);
 void token_ifnull(FileCompiler *fc, Scope *scope);
 void token_notnull(FileCompiler *fc, Scope *scope);

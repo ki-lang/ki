@@ -101,6 +101,11 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
             continue;
         }
 
+        if (strcmp(token, "setvalue") == 0) {
+            token_setvalue(fc, scope);
+            continue;
+        }
+
         if (strcmp(token, "if") == 0) {
             TokenIf *ift = token_if(fc, scope, false, true);
             Token *tk = init_token();
@@ -185,7 +190,7 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
 
         // Check if assign
         fc_next_token(fc, token, true, true, true);
-        if ((value->type == vt_arg || value->type == vt_var || value->type == vt_global || value->type == vt_prop_access) && (strcmp(token, "=") == 0 || strcmp(token, "-=") == 0 || strcmp(token, "+=") == 0 || strcmp(token, "*=") == 0 || strcmp(token, "/=") == 0 || strcmp(token, "\%=") == 0)) {
+        if ((value->type == vt_arg || value->type == vt_var || value->type == vt_shared_global || value->type == vt_threaded_global || value->type == vt_prop_access) && (strcmp(token, "=") == 0 || strcmp(token, "-=") == 0 || strcmp(token, "+=") == 0 || strcmp(token, "*=") == 0 || strcmp(token, "/=") == 0 || strcmp(token, "\%=") == 0)) {
             //
             if (value->type == vt_prop_access) {
                 ValueClassPropAccess *pa = value->item;

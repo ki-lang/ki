@@ -1,10 +1,11 @@
 
 namespace async;
 
-threaded_global ?Taskman tg_taskmanager;
+threaded_global ?Taskman tg_KI_taskmanager;
 
-unsafe_shared_global ?TaskList sg_tasklist;
-unsafe_shared_global ?type:PtrArray sg_taskmanagers;
+unsafe_shared_global ?Mutex sg_KI_add_mutex;
+unsafe_shared_global ?TaskList sg_KI_tasklist;
+unsafe_shared_global ?type:PtrArray sg_KI_taskmanagers;
 
 class TaskList {
 
@@ -16,7 +17,7 @@ class TaskList {
 	public i32 pipe_write_fd;
 
 	public static func get() TaskList {
-		return sg_tasklist or set {
+		ifnull sg_KI_tasklist set {
 
 			uxx pipes = 0;
 			ptr pipes_ptr = getptr pipes;
@@ -25,8 +26,9 @@ class TaskList {
 			pipes_ptr += sizeof(i32);
 			i32 write_fd = getptrv pipes_ptr as i32;
 
-			return TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
+			setvalue TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
 		};
+		return sg_KI_tasklist;
 	}
 }
 
@@ -39,15 +41,15 @@ class Taskman norfc {
 	public ?Task current_task = null;
 
 	public static func get_local_taskman() Taskman {
-		@ tm = tg_taskmanager;
+		@ tm = tg_KI_taskmanager;
 		ifnull tm crash missing_taskmanager;
 		return tm;
 	}
 
 	public static func get_task_managers() type:PtrArray {
-		@ tms = sg_taskmanagers;
+		@ tms = sg_KI_taskmanagers;
 		ifnull tms set {
-			return type:PtrArray.make(64);
+			setvalue type:PtrArray.make(64);
 		};
 		return tms;
 	}
@@ -80,11 +82,11 @@ class Taskman norfc {
 
 		Taskman tm = cast tm_ptr as Taskman; 
 
-		tg_taskmanager = tm;
+		tg_KI_taskmanager = tm;
 
 		tm.run_tasks(false);
 
-		tg_taskmanager = null;
+		tg_KI_taskmanager = null;
 	}
 
 	public static func wait_for_tasks_to_end(type:PtrArray tms) {
@@ -113,7 +115,7 @@ class Taskman norfc {
 
 	public func run_tasks(bool max_one_task) {
 
-		@ task_list = sg_tasklist;
+		@ task_list = sg_KI_tasklist;
 		@ mut = this.mut_get_task;
 
 		while(true){
@@ -142,9 +144,8 @@ class Taskman norfc {
 	}
 
 	public static func get_add_mutex() Mutex {
-		static Mutex mut {
-			return Mutex.make();
-		} 
+		@ mut = sg_KI_add_mutex;
+		ifnull mut set  Mutex.make();
 		return mut;
 	}
 
@@ -175,7 +176,7 @@ class Taskman norfc {
 
 	public static func run_another_task() {
 
-		Taskman tm = get_local_taskman();
+		Taskman tm = Taskman.get_local_taskman();
 		@ task = tm.current_task;
 
 		tm.run_tasks(true);

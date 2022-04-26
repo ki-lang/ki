@@ -76,7 +76,7 @@ class Router{
 			@ find = blocks.get(key) or value |err| {
 				@ v = RouteBlock{ blocks: type:Map<RouteBlock>.make() };
 				blocks.set(key, v);
-				return v;
+				setvalue v;
 			};
 
 			block = find;

@@ -32,7 +32,7 @@ func handler(ki:http:Request req) ki:http:Response{
 		r.add("GET", "/", home) or return err500();
 		r.add("GET", "/hello", hello) or return err500();
 
-		return r;
+		setvalue r;
 	};
 
 	@ route = r.find("GET", req.uri);

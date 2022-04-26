@@ -18,42 +18,6 @@ void token_return(FileCompiler *fc, Scope *scope) {
     Token *t = init_token();
     t->type = tkn_return;
 
-    // Check value scope
-    Scope *vscope = scope;
-    while (vscope && vscope->vscope_vname == NULL) {
-        vscope = vscope->parent;
-    }
-
-    if (vscope) {
-        t->type = tkn_set_vscope_value;
-        Value *value = fc_read_value(fc, scope, false, true, true);
-        Type *rt = vscope->vscope_return_type;
-        if (rt == NULL) {
-            vscope->vscope_return_type = value->return_type;
-        } else if (rt->type == type_null) {
-            fc_type_make_nullable(fc, value->return_type);
-            vscope->vscope_return_type = value->return_type;
-        } else if (value->return_type->type == type_null) {
-            fc_type_make_nullable(fc, rt);
-        } else {
-            fc_type_compatible(fc, rt, value->return_type);
-        }
-
-        TokenSetVscopeValue *vt = malloc(sizeof(TokenSetVscopeValue));
-        vt->vname = vscope->vscope_vname;
-        vt->value = value;
-
-        t->item = vt;
-
-        fc_expect_token(fc, ";", false, true, true);
-
-        scope->did_return = true;
-
-        array_push(scope->ast, t);
-
-        return;
-    }
-
     // Check func scope
     Scope *func_scope = scope;
     while (func_scope && func_scope->is_func == false) {
@@ -82,6 +46,46 @@ void token_return(FileCompiler *fc, Scope *scope) {
     fc_expect_token(fc, ";", false, true, true);
 
     free(token);
+
+    scope->did_return = true;
+
+    array_push(scope->ast, t);
+}
+
+void token_setvalue(FileCompiler *fc, Scope *scope) {
+    // Check value scope
+    Token *t = init_token();
+    t->type = tkn_set_vscope_value;
+
+    Scope *vscope = scope;
+    while (vscope && vscope->vscope_vname == NULL) {
+        vscope = vscope->parent;
+    }
+
+    if (!vscope) {
+        fc_error(fc, "Using 'setvalue' outside a set-scope", NULL);
+    }
+
+    Value *value = fc_read_value(fc, scope, false, true, true);
+    Type *rt = vscope->vscope_return_type;
+    if (rt == NULL) {
+        vscope->vscope_return_type = value->return_type;
+    } else if (rt->type == type_null) {
+        fc_type_make_nullable(fc, value->return_type);
+        vscope->vscope_return_type = value->return_type;
+    } else if (value->return_type->type == type_null) {
+        fc_type_make_nullable(fc, rt);
+    } else {
+        fc_type_compatible(fc, rt, value->return_type);
+    }
+
+    TokenSetVscopeValue *vt = malloc(sizeof(TokenSetVscopeValue));
+    vt->vname = vscope->vscope_vname;
+    vt->value = value;
+
+    t->item = vt;
+
+    fc_expect_token(fc, ";", false, true, true);
 
     scope->did_return = true;
 
@@ -141,23 +145,29 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     Identifier *id = init_id();
     id->name = strdup(token);
     IdentifierFor *idf = idf_find_in_scope(scope, id);
-    if (!idf || idf->type != idfor_var) {
+    if (!idf || (idf->type != idfor_var && idf->type != idfor_threaded_global && idf->type != idfor_shared_global)) {
         fc_error(fc, "Unknown variable '%s'", token);
     }
 
     TokenIfNull *ifn = malloc(sizeof(TokenIfNull));
     ifn->type = or_none;
     ifn->name = strdup(id->name);
-    ifn->value = NULL;
+    ifn->idf = idf;
+    ifn->set_value = NULL;
     ifn->then_scope = NULL;
     ifn->throw_msg = NULL;
     ifn->return_scope = NULL;
+    ifn->vscope = NULL;
 
     Token *t = init_token();
     t->type = tkn_ifnull;
     t->item = ifn;
 
     Type *type = idf->item;
+    if (idf->type != idfor_var) {
+        GlobalVar *gv = idf->item;
+        type = gv->return_type;
+    }
 
     if (!type->nullable) {
         fc_error(fc, "Using ifnull on variable that doesnt have a nullable type", NULL);
@@ -166,21 +176,47 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     fc_next_token(fc, token, false, true, true);
     if (strcmp(token, "set") == 0) {
         ifn->type = or_value;
-        ifn->value = fc_read_value(fc, scope, false, true, true);
-        // Type check
-        fc_type_compatible(fc, type, ifn->value->return_type);
-        if (ifn->value->return_type->nullable) {
-            fc_error(fc, "The 'set' value cannot be nullable", NULL);
+
+        fc_next_token(fc, token, true, true, true);
+        if (strcmp(token, "{") == 0) {
+            fc_next_token(fc, token, false, true, true);
+
+            GEN_C++;
+            char *vname = malloc(64);
+            sprintf(vname, "_KI_VSCOPE_VN_%d", GEN_C);
+
+            Scope *vscope = init_sub_scope(scope);
+            vscope->body_i = fc->i;
+            vscope->vscope_vname = vname;
+            ifn->vscope = vscope;
+
+            fc_build_ast(fc, ifn->vscope);
+
+            if (ifn->vscope->vscope_return_type->nullable) {
+                fc_error(fc, "The set-scope return type cannot be nullable", NULL);
+            }
+            fc_type_compatible(fc, type, ifn->vscope->vscope_return_type);
+        } else {
+            ifn->set_value = fc_read_value(fc, scope, false, true, true);
+            // Type check
+            fc_type_compatible(fc, type, ifn->set_value->return_type);
+            if (ifn->set_value->return_type->nullable) {
+                fc_error(fc, "The 'set' value cannot be nullable", NULL);
+            }
         }
+    } else if (strcmp(token, "crash") == 0) {
+        ifn->type = or_crash;
+        fc_next_token(fc, token, false, true, true);
+        ifn->throw_msg = strdup(token);
     } else if (strcmp(token, "throw") == 0) {
         ifn->type = or_throw;
         fc_next_token(fc, token, false, true, true);
         ifn->throw_msg = strdup(token);
     } else if (strcmp(token, "return") == 0) {
         ifn->type = or_return;
-        ifn->value = fc_read_value(fc, scope, false, true, true);
+        ifn->set_value = fc_read_value(fc, scope, false, true, true);
         Scope *func_scope = get_func_scope(scope);
-        fc_type_compatible(fc, func_scope->func->return_type, ifn->value->return_type);
+        fc_type_compatible(fc, func_scope->func->return_type, ifn->set_value->return_type);
         ifn->return_scope = init_sub_scope(scope);
     } else {
         fc_error(fc, "Expected 'set, throw or return' but found '%s'", token);
@@ -190,7 +226,21 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     Type *ntype = init_type();
     *ntype = *type;
     ntype->nullable = false;
-    idf->item = ntype;
+    if (idf->type == idfor_var) {
+        idf->item = ntype;
+    } else {
+        // Make local identifier
+        GlobalVar *gv = idf->item;
+        GlobalVar *ngv = malloc(sizeof(GlobalVar));
+        *ngv = *gv;
+        ngv->return_type = ntype;
+
+        IdentifierFor *idf = init_idf();
+        idf->type = ngv->type == gv_threaded ? idfor_threaded_global : idfor_shared_global;
+        idf->item = ngv;
+
+        map_set(scope->identifiers, ngv->name, idf);
+    }
 
     // then { ... }
     fc_next_token(fc, token, true, true, true);

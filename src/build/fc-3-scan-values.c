@@ -85,6 +85,14 @@ void fc_scan_globals(FileCompiler *fc) {
 
         gv->return_type = fc_read_type(fc, fc->scope);
 
+        IdentifierFor *idf = init_idf();
+        idf->type = gv->type == gv_threaded ? idfor_threaded_global : idfor_shared_global;
+        idf->item = gv;
+
+        Scope *scope = fc->nsc->scope;
+        map_set(scope->identifiers, gv->name, idf);
+        map_set(c_identifiers, gv->cname, idf);
+
         if (!gv->return_type->nullable) {
             fc_error(fc, "Global variables must be nullable (null is their default value)", NULL);
         }

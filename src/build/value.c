@@ -380,44 +380,16 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->type = vt_var;
             value->item = strdup(token);
             value->return_type = idf->item;
-        } else if (idf->type == idfor_global) {
+        } else if (idf->type == idfor_threaded_global) {
             GlobalVar *gv = idf->item;
-            value->type = vt_global;
+            value->type = vt_threaded_global;
             value->item = gv;
             value->return_type = gv->return_type;
-
-            // fc_expect_token(fc, "or", false, true, true);
-            // fc_next_token(fc, token, false, true, true);
-
-            // if (strcmp(token, "set") == 0) {
-            //     gv->or_type = or_set;
-            //     fc_expect_token(fc, "{", false, true, true);
-
-            //     GEN_C++;
-            //     char *vname = malloc(64);
-            //     sprintf(vname, "_KI_VSCOPE_VN_%d", GEN_C);
-
-            //     Scope *vscope = init_sub_scope(scope);
-            //     vscope->body_i = fc->i;
-            //     vscope->vscope_vname = vname;
-            //     gv->vscope = vscope;
-
-            //     fc_build_ast(fc, gv->vscope);
-
-            //     // Check types
-            //     if (gv->vscope->vscope_return_type == NULL) {
-            //         fc_error(fc, "Scope did not return a value", NULL);
-            //     }
-
-            //     fc_type_compatible(fc, value->return_type, gv->vscope->vscope_return_type);
-            // } else if (strcmp(token, "crash") == 0) {
-            //     gv->or_type = or_crash;
-            //     fc_next_token(fc, token, false, true, true);
-            //     gv->error_msg = strdup(token);
-            // } else {
-            //     fc_error(fc, "Expected 'set' or 'crash'", NULL);
-            // }
-
+        } else if (idf->type == idfor_shared_global) {
+            GlobalVar *gv = idf->item;
+            value->type = vt_shared_global;
+            value->item = gv;
+            value->return_type = gv->return_type;
         } else if (idf->type == idfor_arg) {
             value->type = vt_arg;
             value->item = strdup(token);

@@ -302,14 +302,6 @@ void fc_define_global(FileCompiler *fc, int type, char *token) {
     char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, gv->name);
     gv->cname = cname;
 
-    IdentifierFor *idf = init_idf();
-    idf->type = idfor_global;
-    idf->item = gv;
-
-    Scope *scope = fc->nsc->scope;
-    map_set(scope->identifiers, gv->name, idf);
-    map_set(c_identifiers, cname, idf);
-
     array_push(fc->globals, gv);
 
     fc_expect_token(fc, ";", false, true, true);

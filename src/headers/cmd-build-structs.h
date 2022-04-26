@@ -116,7 +116,8 @@ typedef enum IdentifierForType {
     idfor_property,
     idfor_trait,
     idfor_arg,
-    idfor_global,
+    idfor_threaded_global,
+    idfor_shared_global,
 } IdentifierForType;
 
 //////////
@@ -289,7 +290,8 @@ typedef enum ValueType {
     vt_await,
     vt_allocator, // 20
     vt_arg,
-    vt_global
+    vt_threaded_global,
+    vt_shared_global,
 } ValueType;
 
 typedef struct ValueFuncCall {
@@ -382,12 +384,12 @@ typedef enum TokenTypeEnum {
     tkn_set_vscope_value,
     tkn_while,
     tkn_if,
-    tkn_ifnull,
+    tkn_ifnull, // 5
     tkn_notnull,
     tkn_throw,
     tkn_break,
     tkn_continue,
-    tkn_free,
+    tkn_free, // 10
     tkn_value,
     tkn_declare,
     tkn_assign,
@@ -426,9 +428,11 @@ typedef struct TokenIf {
 typedef struct TokenIfNull {
     int type;
     char *name;
-    Value *value;
+    IdentifierFor *idf;
+    Value *set_value;
     struct Scope *then_scope;
     struct Scope *return_scope;
+    struct Scope *vscope;
     char *throw_msg;
 } TokenIfNull;
 

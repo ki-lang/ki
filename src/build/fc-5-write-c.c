@@ -578,8 +578,13 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
     } else if (token->type == tkn_assign) {
         TokenAssign *ta = token->item;
 
-        fc_write_c_value(fc, ta->left, true);
-        char *left = str_to_chars(fc->value_buffer);
+        char *left;
+        if (ta->left->type == vt_threaded_global) {
+            left = strdup(var_buf(fc));
+        } else {
+            fc_write_c_value(fc, ta->left, true);
+            left = str_to_chars(fc->value_buffer);
+        }
         fc_write_c_value(fc, ta->right, true);
 
         bool lrefc = false;
@@ -645,7 +650,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         }
 
         str_append_chars(fc->tkn_buffer, left);
-        free(left);
+
         if (ta->type == op_eq) {
             str_append_chars(fc->tkn_buffer, " = ");
         } else if (ta->type == op_add) {
@@ -667,8 +672,21 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         } else {
             fc_error(fc, "Unhandled assign operator translation", NULL);
         }
+
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ";\n");
+
+        if (ta->left->type == vt_threaded_global) {
+            char *name = ta->left->item;
+            str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
+            str_append_chars(fc->tkn_buffer, name);
+            str_append_chars(fc->tkn_buffer, ", ");
+            str_append_chars(fc->tkn_buffer, left);
+            str_append_chars(fc->tkn_buffer, ");\n");
+        }
+
+        free(left);
+
     } else if (token->type == tkn_set_vscope_value) {
 
         TokenSetVscopeValue *sv = token->item;
@@ -700,16 +718,49 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
     } else if (token->type == tkn_ifnull) {
         //
         TokenIfNull *ifn = token->item;
+
+        char *left = ifn->name;
+        if (ifn->idf->type == idfor_threaded_global) {
+            left = strdup(var_buf(fc));
+            Type *type = ifn->idf->item;
+            fc_write_c_type(fc->tkn_buffer, type, left);
+            str_append_chars(fc->tkn_buffer, " = pthread_getspecific(");
+            str_append_chars(fc->tkn_buffer, ifn->name);
+            str_append_chars(fc->tkn_buffer, ");");
+        }
+
         str_append_chars(fc->tkn_buffer, "if(");
-        str_append_chars(fc->tkn_buffer, ifn->name);
+        str_append_chars(fc->tkn_buffer, left);
         str_append_chars(fc->tkn_buffer, " == (void*)0) {\n");
 
         if (ifn->type == or_value) {
-            fc_write_c_value(fc, ifn->value, true);
-            str_append_chars(fc->tkn_buffer, ifn->name);
-            str_append_chars(fc->tkn_buffer, " = ");
-            str_append(fc->tkn_buffer, fc->value_buffer);
-            str_append_chars(fc->tkn_buffer, ";\n");
+            if (ifn->vscope) {
+                fc_write_c_type(fc->tkn_buffer, ifn->vscope->vscope_return_type, ifn->vscope->vscope_vname);
+                str_append_chars(fc->tkn_buffer, ";\n");
+
+                fc_write_c_ast(fc, ifn->vscope);
+
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, " = ");
+                str_append_chars(fc->tkn_buffer, ifn->vscope->vscope_vname);
+                str_append_chars(fc->tkn_buffer, ";\n");
+            } else {
+                fc_write_c_value(fc, ifn->set_value, true);
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, " = ");
+                str_append(fc->tkn_buffer, fc->value_buffer);
+                str_append_chars(fc->tkn_buffer, ";\n");
+            }
+
+            if (ifn->idf->type == idfor_threaded_global) {
+                str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
+                str_append_chars(fc->tkn_buffer, ifn->name);
+                str_append_chars(fc->tkn_buffer, ",");
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, ");\n");
+            }
+        } else if (ifn->type == or_crash) {
+            str_append_chars(fc->tkn_buffer, "exit(1);\n");
         } else if (ifn->type == or_throw) {
             str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = \"");
             str_append_chars(fc->tkn_buffer, ifn->throw_msg);
@@ -726,8 +777,8 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         } else if (ifn->type == or_return) {
 
             fc->current_scope = ifn->return_scope;
-            fc_write_c_value(fc, ifn->value, true);
-            deref_local_vars(fc, ifn->value, false, false);
+            fc_write_c_value(fc, ifn->set_value, true);
+            deref_local_vars(fc, ifn->set_value, false, false);
             fc->current_scope = ifn->return_scope->parent;
 
             str_append_chars(fc->tkn_buffer, "return ");
@@ -777,52 +828,6 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         } else {
             str_append_chars(fc->tkn_buffer, "return 0;\n");
         }
-    } else if (token->type == tkn_set_threaded) {
-        TokenIdValue *iv = token->item;
-
-        fc_write_c_value(fc, iv->value, true);
-
-        str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
-        str_append_chars(fc->tkn_buffer, iv->name);
-        str_append_chars(fc->tkn_buffer, ",");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ");\n");
-
-    } else if (token->type == tkn_mutex_init) {
-        Value *val = token->item;
-
-        fc_write_c_value(fc, val, true);
-
-        // str_append_chars(fc->tkn_buffer, "pthread_mutexattr_t ma;\n");
-        // str_append_chars(fc->tkn_buffer, "pthread_mutexattr_init(&ma);\n");
-        // str_append_chars(
-        //     fc->tkn_buffer,
-        //     "pthread_mutexattr_setpshared(&ma, PTHREAD_PROCESS_SHARED);\n");
-        // str_append_chars(
-        //     fc->tkn_buffer,
-        //     "pthread_mutexattr_setpshared(&ma, PTHREAD_MUTEX_ROBUST);\n");
-
-        str_append_chars(fc->tkn_buffer, "pthread_mutex_init(");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ", (void*)0);\n");
-
-    } else if (token->type == tkn_mutex_lock) {
-        Value *val = token->item;
-
-        fc_write_c_value(fc, val, true);
-
-        str_append_chars(fc->tkn_buffer, "pthread_mutex_lock(&");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ");\n");
-
-    } else if (token->type == tkn_mutex_unlock) {
-        Value *val = token->item;
-
-        fc_write_c_value(fc, val, true);
-
-        str_append_chars(fc->tkn_buffer, "pthread_mutex_unlock(&");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ");\n");
 
     } else if (token->type == tkn_free) {
         fc_write_c_value(fc, token->item, true);
@@ -830,6 +835,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ");\n");
     } else if (token->type == tkn_value) {
+        Value *val = token->item;
         fc_write_c_value(fc, token->item, true);
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ";\n");
@@ -896,51 +902,18 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         str_append_chars(result, ")");
     } else if (value->type == vt_var) {
         str_append_chars(result, value->item);
-    } else if (value->type == vt_global) {
+    } else if (value->type == vt_threaded_global) {
         //
         GlobalVar *gv = value->item;
 
-        str_append_chars(fc->tkn_buffer, "if(");
-        if (gv->type == gv_threaded) {
-            str_append_chars(fc->tkn_buffer, "pthread_getspecific(");
-        }
-        str_append_chars(fc->tkn_buffer, gv->cname);
-        if (gv->type == gv_threaded) {
-            str_append_chars(fc->tkn_buffer, ")");
-        }
-        str_append_chars(fc->tkn_buffer, " == (void*)0) {\n");
-
-        // if (gv->type == or_set) {
-        //     fc_write_c_ast(fc, gv->vscope);
-
-        //     if (gv->type == gv_threaded) {
-        //         str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
-        //         str_append_chars(fc->tkn_buffer, gv->cname);
-        //         str_append_chars(fc->tkn_buffer, ", ");
-        //         str_append_chars(fc->tkn_buffer, gv->vscope->vscope_vname);
-        //         str_append_chars(fc->tkn_buffer, ");\n");
-        //     } else if (gv->type == gv_shared) {
-        //         str_append_chars(fc->tkn_buffer, gv->cname);
-        //         str_append_chars(fc->tkn_buffer, " = ");
-        //         str_append_chars(fc->tkn_buffer, gv->vscope->vscope_vname);
-        //         str_append_chars(fc->tkn_buffer, ";\n");
-        //     }
-        // } else if (gv->type == or_crash) {
-        //     str_append_chars(fc->tkn_buffer, "ki__io__println(\"");
-        //     str_append_chars(fc->tkn_buffer, gv->error_msg);
-        //     str_append_chars(fc->tkn_buffer, "\");");
-        //     str_append_chars(fc->tkn_buffer, "exit(1);\n");
-        // }
-
-        str_append_chars(fc->tkn_buffer, "}\n");
-
-        if (gv->type == gv_threaded) {
-            str_append_chars(result, "pthread_getspecific(");
-        }
+        str_append_chars(result, "pthread_getspecific(");
         str_append_chars(result, gv->cname);
-        if (gv->type == gv_threaded) {
-            str_append_chars(result, ")");
-        }
+        str_append_chars(result, ")");
+        //
+    } else if (value->type == vt_shared_global) {
+        //
+        GlobalVar *gv = value->item;
+        str_append_chars(result, gv->cname);
         //
     } else if (value->type == vt_arg) {
         str_append_chars(result, value->item);
