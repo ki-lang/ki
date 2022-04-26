@@ -3,7 +3,7 @@ namespace async;
 
 threaded Taskman LOCAL_TM = null;
 
-unsafe_global ?TaskList g_tasklist;
+unsafe_shared_global TaskList sg_tasklist;
 
 class TaskList {
 
@@ -15,7 +15,8 @@ class TaskList {
 	public i32 pipe_write_fd;
 
 	public static func get() TaskList {
-		ifnull g_tasklist set {
+		return sg_tasklist or set {
+
 			uxx pipes = 0;
 			ptr pipes_ptr = getptr pipes;
 			@ check = main:main:pipe(pipes_ptr);
@@ -24,8 +25,7 @@ class TaskList {
 			i32 write_fd = getptrv pipes_ptr as i32;
 
 			return TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
-		}
-		return g_tasklist;
+		};
 	}
 }
 
@@ -72,11 +72,11 @@ class Taskman norfc {
 
 		Taskman tm = cast tm_ptr as Taskman; 
 
-		set_threaded LOCAL_TM = tm;
+		LOCAL_TM = tm;
 
 		tm.run_tasks(false);
 
-		//set_threaded LOCAL_TM = null;
+		LOCAL_TM = null;
 	}
 
 	public static func wait_for_tasks_to_end(type:PtrArray tms) {
@@ -105,7 +105,7 @@ class Taskman norfc {
 
 	public func run_tasks(bool max_one_task) {
 
-		@ task_list = TaskList.get();
+		@ task_list = sg_tasklist;
 		@ mut = this.mut_get_task;
 
 		while(true){
@@ -121,22 +121,12 @@ class Taskman norfc {
 				if(max_one_task) { return; }
 
 			} else {
-				// Get a new task from the list
-				//mut.lock();
-
+				// Get a new task
 				u32 ti = 0;
 				@ check = main:main:read(task_list.pipe_read_fd, getptr ti, sizeof(u32));
 				@ task = cast task_list.tasks.get(ti) as ?Task;
 
 				task_list.tasks.clear(ti);
-				//if(ti == task_list.tail){
-				//	task_list.tail++;
-				//	if(task_list.tail == task_list.max){
-				//		task_list.tail = 0;
-				//	}
-				//}
-
-				//mut.unlock();
 
 				this.current_task = task;
 			}
@@ -160,14 +150,10 @@ class Taskman norfc {
 		@ pos = task_list.head;
 
 		task_list.head++;
-		//io:print("head: ");
-		//io:println(task_list.head.str());
 		if(task_list.head == task_list.max){
 			task_list.head = 0;
 		}
 		while(task_list.tasks.get(task_list.head) != null){
-			// todo: set tail to 0, and head to max
-			// then increase max * 2;
 			io:print("wait for tail\n");
 			main:main:usleep(1);
 		}
@@ -181,7 +167,7 @@ class Taskman norfc {
 
 	public static func run_another_task() {
 
-		Taskman tm = get_threaded LOCAL_TM;
+		Taskman tm = LOCAL_TM;
 		@ task = tm.current_task;
 
 		tm.run_tasks(true);

@@ -16,10 +16,10 @@ class Mutex norfc {
 	}
 
 	public func lock() {
-		mutex_lock getptrv this.mutex as NPT main:main:pthread_mutex_t;
+		main:main:pthread_mutex_lock(getptrv this.mutex as NPT main:main:pthread_mutex_t);
 	}
 
 	public func unlock() {
-		mutex_unlock getptrv this.mutex as NPT main:main:pthread_mutex_t;
+		main:main:pthread_mutex_unlock(getptrv this.mutex as NPT main:main:pthread_mutex_t);
 	}
 }

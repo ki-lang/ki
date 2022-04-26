@@ -32,15 +32,6 @@ void fc_scan_values() {
             // map_print_keys(class->props);
         }
     }
-    //
-    for (int i = 0; i < packages->keys->length; i++) {
-        PkgCompiler *pkc = array_get_index(packages->values, i);
-
-        for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
-            FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
-            fc_scan_threaded_globals(fc);
-        }
-    }
 
     // Scan class prop values
     for (int x = 0; x < c_identifiers->keys->length; x++) {
@@ -74,38 +65,4 @@ void fc_scan_args_and_props(FileCompiler *fc) {
         Function *func = array_get_index(fc->functions, x);
         fc_scan_func_args(func);
     }
-}
-
-void fc_scan_threaded_globals(FileCompiler *fc) {
-    char *token = malloc(KI_TOKEN_MAX);
-
-    for (int i = 0; i < fc->threaded_globals->length; i++) {
-        ThreadedGlobal *tg = array_get_index(fc->threaded_globals, i);
-        fc->i = tg->i;
-        tg->type = fc_read_type(fc, fc->scope);
-
-        // Name
-        Identifier *id = fc_read_identifier(fc, false, true, true);
-        IdentifierFor *idf = map_get(fc->nsc->scope->identifiers, id->name);
-        if (idf) {
-            fc_error(fc, "Name already used: %s", id->name);
-        }
-
-        tg->name = fc_create_identifier_global_cname(fc, id);
-
-        fc_expect_token(fc, "=", false, true, true);
-        // Value
-        tg->default_value = fc_read_value(fc, fc->nsc->scope, false, true, true);
-        //
-        fc_expect_token(fc, ";", false, true, true);
-
-        // Set identifier
-        idf = init_idf();
-        idf->type = idfor_threaded_var;
-        idf->item = tg;
-        map_set(fc->nsc->scope->identifiers, id->name, idf);
-        map_set(c_identifiers, tg->name, idf);
-    }
-
-    free(token);
 }

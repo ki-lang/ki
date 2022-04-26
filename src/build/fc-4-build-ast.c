@@ -129,34 +129,6 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
             continue;
         }
 
-        if (strcmp(token, "static") == 0) {
-            token_static(fc, scope);
-            continue;
-        }
-
-        if (strcmp(token, "set_threaded") == 0) {
-            token_set_threaded(fc, scope);
-            continue;
-        }
-
-        if (strcmp(token, "mutex_init") == 0) {
-            token_mutex_init(fc, scope);
-            continue;
-        }
-        if (strcmp(token, "mutex_lock") == 0) {
-            token_mutex_lock(fc, scope);
-            continue;
-        }
-        if (strcmp(token, "mutex_unlock") == 0) {
-            token_mutex_unlock(fc, scope);
-            continue;
-        }
-
-        // if (strcmp(token, "free") == 0) {
-        //   token_free(fc, scope);
-        //   continue;
-        // }
-
         if (scope->in_loop) {
             if (strcmp(token, "break") == 0) {
                 token_break(fc, scope);

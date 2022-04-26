@@ -61,10 +61,9 @@ typedef struct FileCompiler {
     struct Array *functions;
     struct Array *classes;
     struct Array *enums;
-    struct Array *threaded_globals;
-    struct Array *mutexes;
-    struct Array *static_vars;
     struct Array *strings;
+    struct Array *threaded_globals;
+    struct Array *shared_globals;
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
@@ -209,18 +208,6 @@ typedef struct Enum {
     char *name;
     struct Map *values;
 } Enum;
-
-typedef struct ThreadedGlobal {
-    int i;
-    struct Type *type;
-    char *name;
-    struct Value *default_value;
-} ThreadedGlobal;
-
-typedef struct Mutex {
-    char *name;
-    char *cname;
-} Mutex;
 
 //////////
 
@@ -442,12 +429,6 @@ typedef struct TokenWhile {
     struct Scope *scope;
 } TokenWhile;
 
-typedef struct TokenStaticDeclare {
-    char *name;
-    char *global_name;
-    struct Scope *scope;
-    struct Type *type;
-} TokenStaticDeclare;
 typedef struct TokenDeclare {
     char *name;
     struct Value *value;

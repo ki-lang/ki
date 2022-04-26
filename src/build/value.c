@@ -328,22 +328,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         value->type = vt_allocator;
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "mem", "Allocator"), NULL);
 
-    } else if (strcmp(token, "get_threaded") == 0) {
-        Identifier *id = fc_read_identifier(fc, false, true, true);
-        Scope *idf_scope = fc_get_identifier_scope(fc, fc->scope, id);
-        IdentifierFor *idf = idf_find_in_scope(idf_scope, id);
-
-        if (!idf || idf->type != idfor_threaded_var) {
-            fc_error(fc, "Cannot find threaded global variable: %s", id->name);
-        }
-
-        ThreadedGlobal *tg = idf->item;
-
-        value->type = vt_get_threaded;
-        value->item = fc_create_identifier_global_cname(fc, id);
-        printf("%s\n", (char *)value->item);
-        value->return_type = tg->type;
-
     } else if (strcmp(token, "PTRSIZE") == 0) {
         char *num = malloc(16);
         sprintf(num, "%d", pointer_size);
@@ -353,25 +337,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "u16"), NULL);
 
     } else if (is_valid_varname(token)) {
+
         IdentifierFor *idf = NULL;
-        // if (strcmp(token, "c") == 0 && fc_get_char(fc, 0) == ':') {
-        //   // C namespace
-        //   fc->i++;  // skip ":"
-        //   fc_next_token(fc, token, false, true, false);
-
-        //   if (strcmp(token, "struct") == 0) {
-        //     fc_next_token(fc, token, false, true, true);
-        //     idf = map_get(c_struct_identifiers, token);
-        //   } else {
-        //     idf = map_get(c_identifiers, token);
-        //   }
-
-        // } else {
         fc->i -= strlen(token);
         Identifier *id = fc_read_identifier(fc, false, true, true);
         Scope *idf_scope = fc_get_identifier_scope(fc, scope, id);
         idf = idf_find_in_scope(idf_scope, id);
-        // }
         if (idf == NULL) {
             fc_error(fc, "Unknown variable/function/class/enum: %s", id->name);
         }
@@ -413,16 +384,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->type = vt_arg;
             value->item = strdup(token);
             value->return_type = idf->item;
-        } else if (idf->type == idfor_static_var) {
-            TokenStaticDeclare *decl = idf->item;
-            value->type = vt_var;
-            value->item = decl->name;
-            value->return_type = decl->scope->func->return_type;
-        } else if (idf->type == idfor_mutex) {
-            // todo: check idf_scope is global
-            value->type = vt_mutex;
-            value->item = fc_create_identifier_global_cname(fc, id);
-            value->return_type = fc_identifier_to_type(fc, create_identifier("main", "main", "pthread_mutex_t"), NULL);
         } else if (idf->type == idfor_class) {
             // class init or static func or prop access
             Class *class = idf->item;
