@@ -59,11 +59,13 @@ void fc_scan_args_and_props(FileCompiler *fc) {
     for (int x = 0; x < fc->uses->keys->length; x++) {
         char *name = array_get_index(fc->uses->keys, x);
         FcUse *fcu = array_get_index(fc->uses->values, x);
+        fc->i = fcu->fc_i;
 
         IdentifierFor *idf = map_get(fcu->nsc->scope->identifiers, name);
 
         if (!idf) {
-            fc_error(fc, "Not found: '%s'\n", name);
+            map_print_keys(fcu->nsc->scope->identifiers);
+            fc_error(fc, "Use not found: '%s'\n", name);
         }
 
         map_set(fc->scope->identifiers, name, idf);

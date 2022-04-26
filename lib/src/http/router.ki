@@ -9,7 +9,7 @@ class RouteBlock{
 
 		@ r = this.route;
 		notnull r do {
-			this.route.__free();
+			r.__free();
 		}
 		this.blocks.__free();
 

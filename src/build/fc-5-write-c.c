@@ -580,7 +580,10 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
 
         char *left;
         if (ta->left->type == vt_threaded_global) {
+            GlobalVar *gv = ta->left->item;
             left = strdup(var_buf(fc));
+            fc_write_c_type(fc->tkn_buffer, ta->left->return_type, left);
+            str_append_chars(fc->tkn_buffer, ";");
         } else {
             fc_write_c_value(fc, ta->left, true);
             left = str_to_chars(fc->value_buffer);
@@ -677,9 +680,9 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, ";\n");
 
         if (ta->left->type == vt_threaded_global) {
-            char *name = ta->left->item;
+            GlobalVar *gv = ta->left->item;
             str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
-            str_append_chars(fc->tkn_buffer, name);
+            str_append_chars(fc->tkn_buffer, gv->cname);
             str_append_chars(fc->tkn_buffer, ", ");
             str_append_chars(fc->tkn_buffer, left);
             str_append_chars(fc->tkn_buffer, ");\n");
@@ -753,8 +756,9 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             }
 
             if (ifn->idf->type == idfor_threaded_global) {
+                GlobalVar *gv = ifn->idf->item;
                 str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
-                str_append_chars(fc->tkn_buffer, ifn->name);
+                str_append_chars(fc->tkn_buffer, gv->cname);
                 str_append_chars(fc->tkn_buffer, ",");
                 str_append_chars(fc->tkn_buffer, left);
                 str_append_chars(fc->tkn_buffer, ");\n");
@@ -776,14 +780,22 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             }
         } else if (ifn->type == or_return) {
 
-            fc->current_scope = ifn->return_scope;
-            fc_write_c_value(fc, ifn->set_value, true);
+            if (ifn->set_value) {
+                fc_write_c_value(fc, ifn->set_value, true);
+            }
             deref_local_vars(fc, ifn->set_value, false, false);
-            fc->current_scope = ifn->return_scope->parent;
 
             str_append_chars(fc->tkn_buffer, "return ");
-            str_append(fc->tkn_buffer, fc->value_buffer);
+            if (ifn->set_value) {
+                str_append(fc->tkn_buffer, fc->value_buffer);
+            }
             str_append_chars(fc->tkn_buffer, ";\n");
+        } else if (ifn->type == or_break) {
+            deref_local_vars(fc, NULL, true, false);
+            str_append_chars(fc->tkn_buffer, "break;\n");
+        } else if (ifn->type == or_continue) {
+            deref_local_vars(fc, NULL, true, false);
+            str_append_chars(fc->tkn_buffer, "continue;\n");
         }
 
         if (ifn->then_scope) {
@@ -813,8 +825,10 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         fc_write_c_ast(fc, wt->scope);
         str_append_chars(fc->tkn_buffer, "}\n\n");
     } else if (token->type == tkn_break) {
+        deref_local_vars(fc, NULL, true, false);
         str_append_chars(fc->tkn_buffer, "break;\n");
     } else if (token->type == tkn_continue) {
+        deref_local_vars(fc, NULL, true, false);
         str_append_chars(fc->tkn_buffer, "continue;\n");
     } else if (token->type == tkn_throw) {
         TokenThrow *tt = token->item;

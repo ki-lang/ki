@@ -130,6 +130,7 @@ typedef struct ContentChunk {
 typedef struct FcUse {
     PkgCompiler *pkc;
     NsCompiler *nsc;
+    int fc_i;
 } FcUse;
 
 typedef struct Class {
@@ -314,6 +315,8 @@ typedef enum OrType {
     or_do,
     or_set,
     or_crash,
+    or_break,
+    or_continue,
 } OrType;
 
 typedef struct ValueOperator {
@@ -431,8 +434,8 @@ typedef struct TokenIfNull {
     IdentifierFor *idf;
     Value *set_value;
     struct Scope *then_scope;
-    struct Scope *return_scope;
     struct Scope *vscope;
+    struct Scope *context_scope;
     char *throw_msg;
 } TokenIfNull;
 

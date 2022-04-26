@@ -199,7 +199,10 @@ class Server {
 								continue;
 							}
                             #end
-							con.task.continue();
+							@ task = con.task;
+							notnull task do {
+								task.continue();
+							}
 						}
 					} else {
 						#if OS_WIN

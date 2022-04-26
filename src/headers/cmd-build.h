@@ -39,6 +39,7 @@ void free_scope(Scope *scope);
 Scope *init_sub_scope(Scope *parent);
 Scope *get_class_scope(Scope *scope);
 Scope *get_func_scope(Scope *scope);
+Scope *get_loop_scope(Scope *scope);
 
 // Token
 Token *init_token();

@@ -11,7 +11,7 @@ class AllocatorSettings norfc {
 
 class Allocator norfc {
 	private u64 size;
-	private ?ki:async:Threaded<AllocatorSettings> settings;
+	private ki:async:Threaded<AllocatorSettings> settings;
 
 	public static func make(u64 size) Allocator {
 		@ alc = cast (alloc_flat(64)) as Allocator;
@@ -25,7 +25,7 @@ class Allocator norfc {
 	// (block_i,len:10,empty-count:1,empty-pos:1)|(pos){...}|(pos){NULL}|(pos){...}
 
 	private func get_settings() AllocatorSettings {
-		?AllocatorSettings settings = this.settings.get();
+		@ settings = this.settings.get();
 
 		ifnull settings set cast (alloc_flat(16)) as AllocatorSettings then {
 			settings.block_i = 0;

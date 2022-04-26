@@ -203,8 +203,6 @@ void fc_scan_types(FileCompiler *fc) {
 
             array_push(fc->functions, func);
 
-            fc_scan_func(fc, func);
-
             IdentifierFor *idf = init_idf();
             idf->type = idfor_func;
             idf->item = func;
@@ -215,6 +213,8 @@ void fc_scan_types(FileCompiler *fc) {
             char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, name);
             func->cname = cname;
             map_set(c_identifiers, cname, idf);
+
+            fc_scan_func(fc, func);
 
         } else if (strcmp(token, "use") == 0) {
             fc_next_token(fc, token, false, true, true);
@@ -249,6 +249,7 @@ void fc_scan_types(FileCompiler *fc) {
                 FcUse *fcu = malloc(sizeof(FcUse));
                 fcu->pkc = pkc;
                 fcu->nsc = nsc;
+                fcu->fc_i = fc->i;
 
                 map_set(fc->uses, strdup(token), fcu);
 

@@ -149,14 +149,21 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
         fc_error(fc, "Unknown variable '%s'", token);
     }
 
+    char *name;
+    if (idf->type != idfor_var) {
+        GlobalVar *gv = idf->item;
+        name = gv->cname;
+    } else {
+        name = strdup(id->name);
+    }
+
     TokenIfNull *ifn = malloc(sizeof(TokenIfNull));
     ifn->type = or_none;
-    ifn->name = strdup(id->name);
+    ifn->name = name;
     ifn->idf = idf;
     ifn->set_value = NULL;
     ifn->then_scope = NULL;
     ifn->throw_msg = NULL;
-    ifn->return_scope = NULL;
     ifn->vscope = NULL;
 
     Token *t = init_token();
@@ -214,10 +221,23 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
         ifn->throw_msg = strdup(token);
     } else if (strcmp(token, "return") == 0) {
         ifn->type = or_return;
-        ifn->set_value = fc_read_value(fc, scope, false, true, true);
         Scope *func_scope = get_func_scope(scope);
-        fc_type_compatible(fc, func_scope->func->return_type, ifn->set_value->return_type);
-        ifn->return_scope = init_sub_scope(scope);
+        if (func_scope->func->return_type) {
+            ifn->set_value = fc_read_value(fc, scope, false, true, true);
+            fc_type_compatible(fc, func_scope->func->return_type, ifn->set_value->return_type);
+        }
+    } else if (strcmp(token, "break") == 0) {
+        ifn->type = or_break;
+        Scope *loop_scope = get_loop_scope(scope);
+        if (!loop_scope) {
+            fc_error(fc, "Using break without being inside a loop", NULL);
+        }
+    } else if (strcmp(token, "continue") == 0) {
+        ifn->type = or_continue;
+        Scope *loop_scope = get_loop_scope(scope);
+        if (!loop_scope) {
+            fc_error(fc, "Using break without being inside a loop", NULL);
+        }
     } else {
         fc_error(fc, "Expected 'set, throw or return' but found '%s'", token);
     }

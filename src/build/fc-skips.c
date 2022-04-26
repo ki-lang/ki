@@ -55,6 +55,7 @@ void fc_skip_body(FileCompiler *fc, char *start, char *end, char *alt_end, bool 
 
         if (alt_end != NULL && strcmp(token, alt_end) == 0) {
             if (scope_depth == 1) {
+                scope_depth--;
                 break;
             }
             continue;
@@ -75,6 +76,10 @@ void fc_skip_body(FileCompiler *fc, char *start, char *end, char *alt_end, bool 
                 continue;
             }
         }
+    }
+
+    if (scope_depth != 0) {
+        fc_error(fc, "Missing a '}' somewhere", NULL);
     }
 
     free(token);

@@ -97,9 +97,7 @@ class Taskman norfc {
 			i32 i = 0;
 			while(i < tms.size){
 				?Taskman tm = cast tms.get(i) as ?Taskman;
-				if(tm == null){
-					break;
-				}
+				ifnull tm break;
 				if(tm.current_task != null) {
 					run_count++;
 					break;
@@ -115,13 +113,14 @@ class Taskman norfc {
 
 	public func run_tasks(bool max_one_task) {
 
-		@ task_list = sg_KI_tasklist;
+		@ task_list = TaskList.get();
 		@ mut = this.mut_get_task;
 
 		while(true){
 			if(this.current_task != null) {
 				// If there is a task to run
 				@ task = this.current_task;
+				ifnull task continue;
 
 				// Run task
 				task.handler_func(task);

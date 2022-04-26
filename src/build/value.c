@@ -543,6 +543,9 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 if (prop->is_static) {
                     fc_error(fc, "Property is static: '%s'", prop_name);
                 }
+                if (value->return_type->nullable) {
+                    fc_error(fc, "Accessing property on value with nullable type is not allowed", NULL);
+                }
 
                 Scope *class_scope = get_class_scope(scope);
                 if (!class_scope || class_scope->class != class) {

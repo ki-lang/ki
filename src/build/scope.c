@@ -56,3 +56,12 @@ Scope *get_func_scope(Scope *scope) {
     }
     return func_scope;
 }
+
+Scope *get_loop_scope(Scope *scope) {
+    //
+    Scope *loop_scope = scope;
+    while (loop_scope && !loop_scope->is_loop) {
+        loop_scope = loop_scope->parent;
+    }
+    return loop_scope;
+}
