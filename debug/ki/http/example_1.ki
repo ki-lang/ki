@@ -39,7 +39,8 @@ func handler(ki:http:Request req) ki:http:Response{
 
 	ifnull r set {
 		@ r = ki:http:Router.make();
-		r._RC++;
+
+		//defer return Response.error(500);
 
 		r.add("GET", "/", home) or return Response.error(500);
 		r.add("GET", "/hello", hello) or return Response.error(500);
