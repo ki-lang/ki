@@ -17,7 +17,8 @@ class TaskList {
 	public i32 pipe_write_fd;
 
 	public static func get() TaskList {
-		ifnull GS_KI_tasklist set {
+		@ tl = GS_KI_tasklist;
+		ifnull tl set {
 
 			uxx pipes = 0;
 			ptr pipes_ptr = getptr pipes;
@@ -26,9 +27,11 @@ class TaskList {
 			pipes_ptr += sizeof(i32);
 			i32 write_fd = getptrv pipes_ptr as i32;
 
-			return TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
+			@ tl = TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
+			GS_KI_tasklist = tl;
+			return tl;
 		}
-		return GS_KI_tasklist;
+		return tl;
 	}
 }
 
@@ -144,7 +147,11 @@ class Taskman norfc {
 
 	public static func get_add_mutex() Mutex {
 		@ mut = GS_KI_add_mutex;
-		ifnull mut set  Mutex.make();
+		ifnull mut set {
+			@ mut = Mutex.make();
+			GS_KI_add_mutex = mut;
+			return mut;
+		}
 		return mut;
 	}
 

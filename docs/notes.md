@@ -3,7 +3,7 @@
 
 ## Todo
 
-- panic
+- setvalue tkn , deref until vscope, not only local scope
 - same 'or' parser for fcalls and ifnull
 - speed up req parser
 

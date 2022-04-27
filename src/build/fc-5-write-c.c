@@ -707,6 +707,8 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
 
         TokenSetVscopeValue *sv = token->item;
         fc_write_c_value(fc, sv->value, true);
+
+        deref_local_vars(fc, sv->value, false, true);
         //
         str_append_chars(fc->tkn_buffer, sv->vname);
         str_append_chars(fc->tkn_buffer, " = ");
@@ -740,14 +742,6 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         TokenIfNull *ifn = token->item;
 
         char *left = ifn->name;
-        if (ifn->idf->type == idfor_threaded_global) {
-            left = strdup(var_buf(fc));
-            Type *type = ifn->idf->item;
-            fc_write_c_type(fc->tkn_buffer, type, left);
-            str_append_chars(fc->tkn_buffer, " = pthread_getspecific(");
-            str_append_chars(fc->tkn_buffer, ifn->name);
-            str_append_chars(fc->tkn_buffer, ");");
-        }
 
         str_append_chars(fc->tkn_buffer, "if(");
         str_append_chars(fc->tkn_buffer, left);
@@ -760,17 +754,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             str_append_chars(fc->tkn_buffer, " = ");
             str_append_chars(fc->tkn_buffer, buf);
             str_append_chars(fc->tkn_buffer, ";\n");
-
             free(buf);
-
-            if (ifn->idf->type == idfor_threaded_global) {
-                GlobalVar *gv = ifn->idf->item;
-                str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
-                str_append_chars(fc->tkn_buffer, gv->cname);
-                str_append_chars(fc->tkn_buffer, ",");
-                str_append_chars(fc->tkn_buffer, left);
-                str_append_chars(fc->tkn_buffer, ");\n");
-            }
         }
 
         str_append_chars(fc->tkn_buffer, " }\n");

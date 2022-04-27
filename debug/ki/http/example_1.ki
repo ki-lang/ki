@@ -39,6 +39,7 @@ func handler(ki:http:Request req) ki:http:Response{
 
 	ifnull r set {
 		@ r = ki:http:Router.make();
+		r._RC++;
 
 		r.add("GET", "/", home);
 		r.add("GET", "/hello", hello);

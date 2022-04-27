@@ -140,17 +140,11 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     Identifier *id = init_id();
     id->name = strdup(token);
     IdentifierFor *idf = idf_find_in_scope(scope, id);
-    if (!idf || (idf->type != idfor_var && idf->type != idfor_threaded_global && idf->type != idfor_shared_global)) {
-        fc_error(fc, "Unknown variable '%s'", token);
+    if (!idf || idf->type != idfor_var) {
+        fc_error(fc, "Only local variables are allowed, found: '%s'", token);
     }
 
-    char *name;
-    if (idf->type != idfor_var) {
-        GlobalVar *gv = idf->item;
-        name = gv->cname;
-    } else {
-        name = strdup(id->name);
-    }
+    char *name = strdup(id->name);
 
     TokenIfNull *ifn = malloc(sizeof(TokenIfNull));
     ifn->type = or_none;
@@ -163,10 +157,6 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     t->item = ifn;
 
     Type *type = idf->item;
-    if (idf->type != idfor_var) {
-        GlobalVar *gv = idf->item;
-        type = gv->return_type;
-    }
 
     if (!type->nullable) {
         fc_error(fc, "Using ifnull on variable that doesnt have a nullable type", NULL);
@@ -207,21 +197,17 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     Type *ntype = init_type();
     *ntype = *type;
     ntype->nullable = false;
-    if (idf->type == idfor_var) {
-        idf->item = ntype;
-    } else {
-        // Make local identifier
-        GlobalVar *gv = idf->item;
-        GlobalVar *ngv = malloc(sizeof(GlobalVar));
-        *ngv = *gv;
-        ngv->return_type = ntype;
 
-        IdentifierFor *idf = init_idf();
-        idf->type = ngv->type == gv_threaded ? idfor_threaded_global : idfor_shared_global;
-        idf->item = ngv;
-
-        map_set(scope->identifiers, ngv->name, idf);
+    // local idf
+    idf = map_get(scope->identifiers, name);
+    if (!idf) {
+        // create local identifier
+        idf = init_idf();
+        idf->type = idfor_var;
+        map_set(scope->identifiers, name, idf);
     }
+
+    idf->item = ntype;
 
     if (!ort->vscope) {
         fc_expect_token(fc, ";", false, true, true);
