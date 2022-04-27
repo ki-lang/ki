@@ -1,10 +1,24 @@
 
 threaded_global ?ki:http:Router GT_router;
 
-func err500() ki:http:Response{
-	return ki:http:Response{
-		body: "ERROR 500"
-	};
+class Response{
+
+	public static func error(i32 code) ki:http:Response {
+		if(code == 404){
+			return ki:http:Response{
+				body: "ERROR 404"
+			};
+		}
+		if(code == 500){
+			return ki:http:Response{
+				body: "ERROR 500"
+			};
+		}
+
+		return ki:http:Response{
+			body: "Unknown error :("
+		};
+	}
 }
 
 func home(ki:http:Request req) ki:http:Response{
@@ -27,8 +41,8 @@ func handler(ki:http:Request req) ki:http:Response{
 		@ r = ki:http:Router.make();
 		r._RC++;
 
-		r.add("GET", "/", home) or return err500();
-		r.add("GET", "/hello", hello) or return err500();
+		r.add("GET", "/", home) or return Response.error(500);
+		r.add("GET", "/hello", hello) or return Response.error(500);
 
 		GT_router = r;
 
@@ -36,9 +50,7 @@ func handler(ki:http:Request req) ki:http:Response{
 	};
 
 	@ route = r.find("GET", req.uri);
-	ifnull route return ki:http:Response{
-		body: "ERROR 404"
-	};
+	ifnull route return Response.error(404);
 
 	return route.handler(req);
 }
