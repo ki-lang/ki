@@ -740,28 +740,20 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             if (ifn->vscope) {
                 fc_write_c_type(fc->tkn_buffer, ifn->vscope->vscope_return_type, ifn->vscope->vscope_vname);
                 str_append_chars(fc->tkn_buffer, ";\n");
+            }
+        }
 
+        str_append_chars(fc->tkn_buffer, "if(1){");
+
+        if (ifn->type == or_value) {
+            if (ifn->vscope) {
                 fc_write_c_ast(fc, ifn->vscope);
-
-                str_append_chars(fc->tkn_buffer, left);
-                str_append_chars(fc->tkn_buffer, " = ");
-                str_append_chars(fc->tkn_buffer, ifn->vscope->vscope_vname);
-                str_append_chars(fc->tkn_buffer, ";\n");
             } else {
                 fc_write_c_value(fc, ifn->set_value, true);
                 str_append_chars(fc->tkn_buffer, left);
                 str_append_chars(fc->tkn_buffer, " = ");
                 str_append(fc->tkn_buffer, fc->value_buffer);
                 str_append_chars(fc->tkn_buffer, ";\n");
-            }
-
-            if (ifn->idf->type == idfor_threaded_global) {
-                GlobalVar *gv = ifn->idf->item;
-                str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
-                str_append_chars(fc->tkn_buffer, gv->cname);
-                str_append_chars(fc->tkn_buffer, ",");
-                str_append_chars(fc->tkn_buffer, left);
-                str_append_chars(fc->tkn_buffer, ");\n");
             }
         } else if (ifn->type == or_crash) {
             str_append_chars(fc->tkn_buffer, "exit(1);\n");
@@ -801,6 +793,26 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         if (ifn->then_scope) {
             fc_write_c_ast(fc, ifn->then_scope);
         }
+        str_append_chars(fc->tkn_buffer, " }\n");
+
+        if (ifn->type == or_value) {
+            if (ifn->vscope) {
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, " = ");
+                str_append_chars(fc->tkn_buffer, ifn->vscope->vscope_vname);
+                str_append_chars(fc->tkn_buffer, ";\n");
+            }
+
+            if (ifn->idf->type == idfor_threaded_global) {
+                GlobalVar *gv = ifn->idf->item;
+                str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
+                str_append_chars(fc->tkn_buffer, gv->cname);
+                str_append_chars(fc->tkn_buffer, ",");
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, ");\n");
+            }
+        }
+
         str_append_chars(fc->tkn_buffer, " }\n");
         //
     } else if (token->type == tkn_notnull) {
