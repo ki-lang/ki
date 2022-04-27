@@ -23,12 +23,12 @@ func alloc(uxx size) ptr {
 		ifnull alc set {
 			@ x = Allocator.make(psize + 1);
 			setptrv (allocators + pow * 8) to x;
-			setvalue x;
+			return x;
 		};
 
 		mut.unlock();
 
-		setvalue alc;
+		return alc;
 	};
 
 	ptr adr = alc.get_chunk();

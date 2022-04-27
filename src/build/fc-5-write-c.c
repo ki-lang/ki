@@ -700,6 +700,10 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ";\n");
 
+        str_append_chars(fc->tkn_buffer, "goto ");
+        str_append_chars(fc->tkn_buffer, sv->vname);
+        str_append_chars(fc->tkn_buffer, "_GOTO;\n");
+
     } else if (token->type == tkn_return) {
         Value *retv = NULL;
         if (token->item) {
@@ -797,6 +801,9 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
 
         if (ifn->type == or_value) {
             if (ifn->vscope) {
+                str_append_chars(fc->tkn_buffer, ifn->vscope->vscope_vname);
+                str_append_chars(fc->tkn_buffer, "_GOTO:\n");
+
                 str_append_chars(fc->tkn_buffer, left);
                 str_append_chars(fc->tkn_buffer, " = ");
                 str_append_chars(fc->tkn_buffer, ifn->vscope->vscope_vname);
@@ -1094,6 +1101,9 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                     fc->current_scope = fa->or_scope;
                     deref_local_vars(fc, value, false, true);
                     fc->current_scope = fa->or_scope->parent;
+
+                    str_append_chars(fc->tkn_buffer, fa->or_scope->vscope_vname);
+                    str_append_chars(fc->tkn_buffer, "_GOTO:\n");
 
                     str_append_chars(fc->tkn_buffer, buf_var_name);
                     str_append_chars(fc->tkn_buffer, " = ");

@@ -101,11 +101,6 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
             continue;
         }
 
-        if (strcmp(token, "setvalue") == 0) {
-            token_setvalue(fc, scope);
-            continue;
-        }
-
         if (strcmp(token, "if") == 0) {
             TokenIf *ift = token_if(fc, scope, false, true);
             Token *tk = init_token();

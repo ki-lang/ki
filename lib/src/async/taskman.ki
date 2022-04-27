@@ -26,7 +26,7 @@ class TaskList {
 			pipes_ptr += sizeof(i32);
 			i32 write_fd = getptrv pipes_ptr as i32;
 
-			setvalue TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
+			return TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
 		};
 		return sg_KI_tasklist;
 	}
@@ -49,7 +49,7 @@ class Taskman norfc {
 	public static func get_task_managers() type:PtrArray {
 		@ tms = sg_KI_taskmanagers;
 		ifnull tms set {
-			setvalue type:PtrArray.make(64);
+			return type:PtrArray.make(64);
 		};
 		return tms;
 	}

@@ -34,9 +34,8 @@ class Allocator norfc {
 			x.block_c = 0;
 			x.blocks_ptr = alloc_flat(256 * 8);
 
-			setvalue x;
-
 			settings_t.set(x);
+			return x;
 		};
 
 		return settings;

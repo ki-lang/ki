@@ -27,12 +27,12 @@ func handler(ki:http:Request req) ki:http:Response{
 		@ r = ki:http:Router.make();
 		r._RC++;
 
-		tg_router = r;
-
 		r.add("GET", "/", home) or return err500();
 		r.add("GET", "/hello", hello) or return err500();
 
-		setvalue r;
+		tg_router = r;
+
+		return r;
 	};
 
 	@ route = r.find("GET", req.uri);
