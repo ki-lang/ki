@@ -40,7 +40,7 @@ func handler(ki:http:Request req) ki:http:Response{
 	ifnull r set {
 		@ r = ki:http:Router.make();
 
-		//defer return Response.error(500);
+		// or_default return Response.error(500);
 
 		r.add("GET", "/", home) or return Response.error(500);
 		r.add("GET", "/hello", hello) or return Response.error(500);
