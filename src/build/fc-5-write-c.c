@@ -175,6 +175,9 @@ void fc_write_c_inits() {
                 sprintf(lenstr, "%zu", len);
                 str_append_chars(code, lenstr);
                 str_append_chars(code, ", 1);\n");
+                // Keep in memory
+                str_append_chars(code, gname);
+                str_append_chars(code, "->_RC++;\n");
             }
         }
     }
