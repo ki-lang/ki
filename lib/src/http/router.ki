@@ -32,7 +32,7 @@ class Router{
 		return Router{ block: RouteBlock{ blocks: type:Map<RouteBlock>.make() } };
 	}
 
-	public func add(String method, String url, funcref (Request) Response handler) ! {
+	public func add(String method, String url, funcref (Request) Response handler) {
 		if(url.length == 0 || url.char(0) != '/'){
 			io:println("Invalid route: ");
 			exit 1;
@@ -60,7 +60,7 @@ class Router{
 			if(is_arg){
 				@ name = part.substring(1, part.length - 1);
 				if(name.length == 0){
-					throw invalid_route_parameter_syntax;
+					panic invalid_route_parameter_syntax;
 				}
 				args.push(RouteArg { i: i, name: name });
 				key = "@";
@@ -70,7 +70,7 @@ class Router{
 			}
 
 			if(wcard_index >= 0 && is_wcard == false){
-				throw incorrect_wildcard_usage;
+				panic incorrect_wildcard_usage;
 			}
 
 			@ find = blocks.get(key) or value |err| {

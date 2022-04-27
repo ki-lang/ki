@@ -36,7 +36,7 @@ class Allocator norfc {
 
 			settings_t.set(x);
 			return x;
-		};
+		}
 
 		return settings;
 	}

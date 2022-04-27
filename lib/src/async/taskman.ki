@@ -27,7 +27,7 @@ class TaskList {
 			i32 write_fd = getptrv pipes_ptr as i32;
 
 			return TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
-		};
+		}
 		return GS_KI_tasklist;
 	}
 }
@@ -42,7 +42,7 @@ class Taskman norfc {
 
 	public static func get_local_taskman() Taskman {
 		@ tm = GT_KI_taskmanager;
-		ifnull tm crash missing_taskmanager;
+		ifnull tm panic missing_taskmanager;
 		return tm;
 	}
 
@@ -50,7 +50,7 @@ class Taskman norfc {
 		@ tms = GS_KI_taskmanagers;
 		ifnull tms set {
 			return type:PtrArray.make(64);
-		};
+		}
 		return tms;
 	}
 

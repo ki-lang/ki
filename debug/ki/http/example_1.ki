@@ -40,15 +40,13 @@ func handler(ki:http:Request req) ki:http:Response{
 	ifnull r set {
 		@ r = ki:http:Router.make();
 
-		// or_default return Response.error(500);
-
-		r.add("GET", "/", home) or return Response.error(500);
-		r.add("GET", "/hello", hello) or return Response.error(500);
+		r.add("GET", "/", home);
+		r.add("GET", "/hello", hello);
 
 		GT_router = r;
 
 		return r;
-	};
+	}
 
 	@ route = r.find("GET", req.uri);
 	ifnull route return Response.error(404);

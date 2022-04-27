@@ -82,16 +82,19 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
         }
 
         if (strcmp(token, "exit") == 0) {
-            fc_next_token(fc, token, false, true, true);
-            if (!is_valid_number(token)) {
-                fc_error(fc, "Invalid exit code '%s', allowed characters: [0-9]", token);
-            }
-
             Token *tk = init_token();
             tk->type = tkn_exit;
-            tk->item = strdup(token);
+            tk->item = fc_read_error_token(fc, err_exit, token);
             array_push(scope->ast, tk);
+            fc_expect_token(fc, ";", false, true, true);
+            continue;
+        }
 
+        if (strcmp(token, "panic") == 0) {
+            Token *tk = init_token();
+            tk->type = tkn_panic;
+            tk->item = fc_read_error_token(fc, err_panic, token);
+            array_push(scope->ast, tk);
             fc_expect_token(fc, ";", false, true, true);
             continue;
         }

@@ -156,10 +156,7 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     ifn->type = or_none;
     ifn->name = name;
     ifn->idf = idf;
-    ifn->set_value = NULL;
-    ifn->then_scope = NULL;
-    ifn->throw_msg = NULL;
-    ifn->vscope = NULL;
+    ifn->ort = NULL;
 
     Token *t = init_token();
     t->type = tkn_ifnull;
@@ -175,66 +172,35 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
         fc_error(fc, "Using ifnull on variable that doesnt have a nullable type", NULL);
     }
     //
-    fc_next_token(fc, token, false, true, true);
-    if (strcmp(token, "set") == 0) {
-        ifn->type = or_value;
+    OrToken *ort = fc_read_or_token(fc, scope, type, token);
+    ifn->ort = ort;
 
-        fc_next_token(fc, token, true, true, true);
-        if (strcmp(token, "{") == 0) {
-            fc_next_token(fc, token, false, true, true);
-
-            GEN_C++;
-            char *vname = malloc(64);
-            sprintf(vname, "_KI_VSCOPE_VN_%d", GEN_C);
-
-            Scope *vscope = init_sub_scope(scope);
-            vscope->body_i = fc->i;
-            vscope->vscope_vname = vname;
-            ifn->vscope = vscope;
-
-            fc_build_ast(fc, ifn->vscope);
-
-            if (ifn->vscope->vscope_return_type->nullable) {
+    if (ort->vscope) {
+        // type check scope
+        if (ort->type == or_value) {
+            // or value
+            if (ort->vscope->vscope_return_type->nullable) {
                 fc_error(fc, "The set-scope return type cannot be nullable", NULL);
             }
-            fc_type_compatible(fc, type, ifn->vscope->vscope_return_type);
+            fc_type_compatible(fc, type, ort->vscope->vscope_return_type);
         } else {
-            ifn->set_value = fc_read_value(fc, scope, false, true, true);
-            // Type check
-            fc_type_compatible(fc, type, ifn->set_value->return_type);
-            if (ifn->set_value->return_type->nullable) {
+            // or return
+            // ast builder does the type checking
+        }
+    } else if (ort->value) {
+        if (ort->type == or_value) {
+            // or value
+            fc_type_compatible(fc, type, ort->value->return_type);
+            if (ort->value->return_type->nullable) {
                 fc_error(fc, "The 'set' value cannot be nullable", NULL);
             }
+        } else {
+            // or return
+            Scope *func_scope = get_func_scope(scope);
+            if (func_scope->func->return_type) {
+                fc_type_compatible(fc, func_scope->func->return_type, ort->value->return_type);
+            }
         }
-    } else if (strcmp(token, "crash") == 0) {
-        ifn->type = or_crash;
-        fc_next_token(fc, token, false, true, true);
-        ifn->throw_msg = strdup(token);
-    } else if (strcmp(token, "throw") == 0) {
-        ifn->type = or_throw;
-        fc_next_token(fc, token, false, true, true);
-        ifn->throw_msg = strdup(token);
-    } else if (strcmp(token, "return") == 0) {
-        ifn->type = or_return;
-        Scope *func_scope = get_func_scope(scope);
-        if (func_scope->func->return_type) {
-            ifn->set_value = fc_read_value(fc, scope, false, true, true);
-            fc_type_compatible(fc, func_scope->func->return_type, ifn->set_value->return_type);
-        }
-    } else if (strcmp(token, "break") == 0) {
-        ifn->type = or_break;
-        Scope *loop_scope = get_loop_scope(scope);
-        if (!loop_scope) {
-            fc_error(fc, "Using break without being inside a loop", NULL);
-        }
-    } else if (strcmp(token, "continue") == 0) {
-        ifn->type = or_continue;
-        Scope *loop_scope = get_loop_scope(scope);
-        if (!loop_scope) {
-            fc_error(fc, "Using break without being inside a loop", NULL);
-        }
-    } else {
-        fc_error(fc, "Expected 'set, throw or return' but found '%s'", token);
     }
 
     // Create new type within scope
@@ -257,18 +223,7 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
         map_set(scope->identifiers, ngv->name, idf);
     }
 
-    // then { ... }
-    fc_next_token(fc, token, true, true, true);
-    if (ifn->type == or_value && strcmp(token, "then") == 0) {
-
-        fc_next_token(fc, token, false, true, true);
-        fc_expect_token(fc, "{", false, false, true);
-
-        ifn->then_scope = init_sub_scope(scope);
-        ifn->then_scope->body_i = fc->i;
-
-        fc_build_ast(fc, ifn->then_scope);
-    } else {
+    if (!ort->vscope) {
         fc_expect_token(fc, ";", false, true, true);
     }
 
@@ -276,6 +231,100 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     //
     free(token);
     free_id(id);
+}
+
+OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, char *token) {
+
+    OrToken *ort = malloc(sizeof(OrToken));
+    ort->type = or_none;
+    ort->vscope = NULL;
+    ort->value = NULL;
+    ort->error = NULL;
+    ort->primary_type = primary_type;
+
+    fc_next_token(fc, token, false, true, true);
+    if (strcmp(token, "set") == 0) {
+        ort->type = or_value;
+    } else if (strcmp(token, "value") == 0) {
+        ort->type = or_value;
+        if (!primary_type) {
+            fc_error(fc, "Left side has no type, did not expect a value here", NULL);
+        }
+    } else if (strcmp(token, "return") == 0) {
+        ort->type = or_return;
+        Scope *func_scope = get_func_scope(scope);
+        ort->primary_type = func_scope->func->return_type;
+    } else if (strcmp(token, "throw") == 0) {
+        ort->type = or_throw;
+        ort->error = fc_read_error_token(fc, err_throw, token);
+    } else if (strcmp(token, "panic") == 0) {
+        ort->type = or_panic;
+        ort->error = fc_read_error_token(fc, err_panic, token);
+    } else if (strcmp(token, "exit") == 0) {
+        ort->type = or_exit;
+        ort->error = fc_read_error_token(fc, err_exit, token);
+    } else if (strcmp(token, "break") == 0) {
+        ort->type = or_break;
+        Scope *loop_scope = get_loop_scope(scope);
+        if (!loop_scope) {
+            fc_error(fc, "Using break without being inside a loop", NULL);
+        }
+    } else if (strcmp(token, "continue") == 0) {
+        ort->type = or_continue;
+        Scope *loop_scope = get_loop_scope(scope);
+        if (!loop_scope) {
+            fc_error(fc, "Using break without being inside a loop", NULL);
+        }
+    } else {
+        fc_error(fc, "Expected 'set|return|throw|continue|break|panic|exit' but found '%s'", token);
+    }
+
+    if (ort->primary_type && (ort->type == or_value || ort->type == or_return)) {
+        fc_next_token(fc, token, true, true, true);
+        if (strcmp(token, "{") == 0) {
+            fc_next_token(fc, token, false, true, true);
+
+            GEN_C++;
+            char *vname = malloc(64);
+            sprintf(vname, "_KI_VSCOPE_VN_%d", GEN_C);
+
+            Scope *vscope = init_sub_scope(scope);
+            vscope->body_i = fc->i;
+            if (ort->type == or_value) {
+                vscope->vscope_vname = vname;
+            }
+            ort->vscope = vscope;
+
+            fc_build_ast(fc, ort->vscope);
+
+        } else {
+            ort->value = fc_read_value(fc, scope, false, true, true);
+        }
+    }
+
+    return ort;
+}
+
+ErrorToken *fc_read_error_token(FileCompiler *fc, int errtype, char *token) {
+    //
+    ErrorToken *err = malloc(sizeof(ErrorToken));
+    err->type = errtype;
+
+    fc_next_token(fc, token, false, true, true);
+    err->msg = strdup(token);
+
+    if (err->type == err_exit) {
+        // Number
+        if (!is_valid_number(token)) {
+            fc_error(fc, "Invalid exit code number: '%s'", token);
+        }
+    }
+
+    // Trace details
+    err->filepath = fc->ki_filepath;
+    // Todo: get row & col via fc->i
+
+    return err;
 }
 
 void token_notnull(FileCompiler *fc, Scope *scope) {

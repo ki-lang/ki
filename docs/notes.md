@@ -3,11 +3,9 @@
 
 ## Todo
 
-- remove static & threaded tokens
-- add threaded_global & unsafe_global
-- allow ifnull & notnull on globals
-- rename notnull to ifvalue
-- clear memory allocating funcs in mem allocator
+- panic
+- same 'or' parser for fcalls and ifnull
+- speed up req parser
 
 ## Compile cache
 

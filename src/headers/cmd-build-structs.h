@@ -306,6 +306,28 @@ typedef struct ValueFuncCall {
     char *or_error_vn;
 } ValueFuncCall;
 
+typedef struct ErrorToken {
+    int type;
+    char *msg;
+    char *filepath;
+    int line;
+    int col;
+} ErrorToken;
+
+typedef enum ErrorType {
+    err_throw,
+    err_exit,
+    err_panic,
+} ErrorType;
+
+typedef struct OrToken {
+    int type;
+    Scope *vscope;
+    Value *value;
+    ErrorToken *error;
+    Type *primary_type;
+} OrToken;
+
 typedef enum OrType {
     or_none,
     or_pass,
@@ -314,7 +336,8 @@ typedef enum OrType {
     or_throw,
     or_do,
     or_set,
-    or_crash,
+    or_exit,
+    or_panic,
     or_break,
     or_continue,
 } OrType;
@@ -402,6 +425,7 @@ typedef enum TokenTypeEnum {
     tkn_mutex_lock,
     tkn_mutex_unlock,
     tkn_exit,
+    tkn_panic,
     tkn_each,
     // Global ast only
     tkn_func,
@@ -432,11 +456,12 @@ typedef struct TokenIfNull {
     int type;
     char *name;
     IdentifierFor *idf;
-    Value *set_value;
-    struct Scope *then_scope;
-    struct Scope *vscope;
-    struct Scope *context_scope;
-    char *throw_msg;
+    struct OrToken *ort;
+    // Value *set_value;
+    // struct Scope *then_scope;
+    // struct Scope *vscope;
+    // struct Scope *context_scope;
+    // char *throw_msg;
 } TokenIfNull;
 
 typedef struct TokenNotNull {

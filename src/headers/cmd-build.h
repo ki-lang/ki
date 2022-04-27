@@ -61,6 +61,10 @@ void token_declare(FileCompiler *fc, Scope *scope, Type *left_type);
 void token_assign(FileCompiler *fc, Scope *scope, char *sign, Value *value);
 void token_free(FileCompiler *fc, Scope *scope);
 
+// Token / Value
+OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, char *token);
+ErrorToken *fc_read_error_token(FileCompiler *fc, int errtype, char *token);
+
 // Identifier
 Identifier *init_id();
 void free_id(Identifier *id);
@@ -168,6 +172,7 @@ char *var_buf(FileCompiler *fc);
 void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once);
 char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded);
 void fc_write_c_inits();
+char *fc_write_c_ort(FileCompiler *fc, OrToken *ort);
 
 // Compile
 void compile_all();
