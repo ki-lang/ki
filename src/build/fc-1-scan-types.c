@@ -291,12 +291,12 @@ void fc_define_global(FileCompiler *fc, int type, char *token) {
     gv->name = strdup(token);
 
     if (type == gv_shared) {
-        if (!starts_with(gv->name, "sg_")) {
-            fc_error(fc, "Shared global variable names must start with 'sg_'", NULL);
+        if (!starts_with(gv->name, "GS_")) {
+            fc_error(fc, "Shared global variable names must start with 'GS_'", NULL);
         }
     } else if (type == gv_threaded) {
-        if (!starts_with(gv->name, "tg_")) {
-            fc_error(fc, "Shared global variable names must start with 'tg_'", NULL);
+        if (!starts_with(gv->name, "GT_")) {
+            fc_error(fc, "Shared global variable names must start with 'GT_'", NULL);
         }
     }
 

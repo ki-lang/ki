@@ -1,4 +1,6 @@
 
+threaded_global ?ki:http:Router GT_router;
+
 func err500() ki:http:Response{
 	return ki:http:Response{
 		body: "ERROR 500"
@@ -17,11 +19,9 @@ func hello(ki:http:Request req) ki:http:Response{
 	};
 }
 
-threaded_global ?ki:http:Router tg_router;
-
 func handler(ki:http:Request req) ki:http:Response{
 
-	@ r = tg_router;
+	@ r = GT_router;
 
 	ifnull r set {
 		@ r = ki:http:Router.make();
@@ -30,7 +30,7 @@ func handler(ki:http:Request req) ki:http:Response{
 		r.add("GET", "/", home) or return err500();
 		r.add("GET", "/hello", hello) or return err500();
 
-		tg_router = r;
+		GT_router = r;
 
 		return r;
 	};
