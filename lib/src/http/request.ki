@@ -7,7 +7,6 @@ class Request {
 	public String method;
 	public String uri;
 	public String protocol;
-	public i64 body_length = 0;
 	public String body;
 
 	public static func read_request(i32 clientfd) ?Request {
@@ -24,57 +23,63 @@ class Request {
 			return null;
 		}
 
-		@ payload = String.make(buf, rcvd, true);
-
-		// Read HTTP request line
-		@ chunker = payload.chunker();
-		chunker = chunker.break_on_bytes(" \t");
-		@ method = chunker.get_chunk(true);
-		@ uri = chunker.get_chunk(true);
-		chunker = chunker.break_on_bytes("\r\n");
-		@ protocol = chunker.get_chunk(false);
-
-		u64 body_length = 0;
-
-		// Read headers
-		while(chunker.start < payload.length){
-			u32 new_line_count = 0;
-			while(payload.char(chunker.start) == '\r'){
-				chunker.start += 2;
-				new_line_count++;
-				if(chunker.start >= payload.length){
-					break;
-				}
-			}
-			if(new_line_count > 1){
-				break;
-			}
-
-			chunker = chunker.break_on_bytes(":");
-			@ name = chunker.get_chunk(true);
-			chunker.skip_bytes(" \t");
-			chunker = chunker.break_on_bytes("\r\n");
-			@ value = chunker.get_chunk(false);
-		}
-
-		String body = "";
-
-		// Read body
-		if(body_length > 0){
-			// Todo
-		}
-
-		@ req = Request {
-			method: method,
-			uri: uri,
-			protocol: protocol,
-			body: body,
-			body_length: body_length,
-		};
+		@ req = Request.parse(buf, rcvd);
 
 		alc.free(buf);
 
 		return req;
 	}
 
+	public static func parse(ptr buf, i32 rcvd) ?Request {
+
+		// Read first line: method{space}path{space}protocol\r\n
+		ptr adr = buf;
+		cstring cstr = cast adr as cstring;
+		adr += rcvd;
+		setptrv adr to 0#u8;
+
+		i32 pos = 0;
+
+		String method = cstr.get_string_until_char(pos, ' ');
+		pos += method.length + 1;
+
+		String path = cstr.get_string_until_char(pos, ' ');
+		pos += path.length + 1;
+
+		String protocol = cstr.get_string_until_char(pos, '\r');
+		pos += protocol.length + 2;
+
+		if(method.length == 0){ return null; }
+		if(path.length == 0){ return null; }
+		if(protocol.length == 0){ return null; }
+
+		// Read headers
+		while(pos < rcvd){
+
+			ptr adr = buf + pos;
+			u8 ch = getptrv adr as u8;
+			if(ch == 0 || ch == '\r'){
+				// End of headers
+				break;
+			}
+
+			String key = cstr.get_string_until_char(pos, ':');
+			pos += key.length + 2;
+
+			String value = cstr.get_string_until_char(pos, '\r');
+			pos += value.length + 2;
+		}
+
+		// Read body
+		String body = cstr.get_string_until_char(pos, 0);
+
+		@ req = Request {
+			method: method,
+			uri: path,
+			protocol: protocol,
+			body: body,
+		};
+
+		return req;
+	}
 }

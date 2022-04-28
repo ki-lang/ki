@@ -45,4 +45,21 @@ class cstring norfc {
 		return cast to_result as cstring;
 	}
 
+	public func get_string_until_char(u64 start_index, u8 until_ch) String {
+		ptr start_adr = cast this as ptr;
+		start_adr += start_index;
+		ptr adr = start_adr;
+		u64 pos = 0;
+		while(true){
+			u8 ch = getptrv adr as u8;
+			if(ch == 0 || ch == until_ch){
+				break;
+			}
+			adr++;
+		}
+		u64 len = adr - start_adr;
+		@ result = String.make_empty(len);
+		result.append_bytes_from_ptr(start_adr, len);
+		return result;
+	}
 }

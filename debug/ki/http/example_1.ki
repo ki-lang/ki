@@ -57,7 +57,7 @@ func handler(ki:http:Request req) ki:http:Response{
 
 func main() i32 {
 
-	@ s = ki:http:Server { port: 9000, handler: handler };
+	@ s = ki:http:Server { port: 9000, handler: hello };
 	s.start() or return 1;
 
 	return 0;

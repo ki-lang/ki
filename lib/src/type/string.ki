@@ -94,6 +94,31 @@ class String {
 		return s;
 	}
 
+	public func append_bytes_from_ptr(ptr adr, u64 len) {
+		uxx length = this.length;
+		uxx new_length = length + len;
+		this.increase_mem_size(len);
+		ptr to = this.data + length;
+		copy(adr, to, len);
+		this.length = new_length;
+	}
+
+	public func increase_mem_size(u64 len){
+		uxx size = this.mem_size;
+		uxx new_size = size;
+		uxx expect_size = this.mem_size + len;
+		while(new_size < expect_size){
+			new_size *= 2;
+		}
+		if(new_size != size){
+			ptr adr = alloc(new_size);
+			this.mem_size = new_size;
+			copy(this.data, adr, this.length);
+			free(this.data);
+			this.data = adr;
+		}
+	}
+
 	public func clear() String {
 
 		@ s = this;
