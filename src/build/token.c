@@ -42,6 +42,7 @@ void token_return(FileCompiler *fc, Scope *scope) {
         TokenSetVscopeValue *vt = malloc(sizeof(TokenSetVscopeValue));
         vt->vname = vscope->vscope_vname;
         vt->value = value;
+        vt->vscope = vscope;
 
         t->item = vt;
 

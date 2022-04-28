@@ -4,9 +4,7 @@
 ## Todo
 
 - const types
-- setvalue tkn , deref until vscope, not only local scope
 - same 'or' parser for fcalls and ifnull
-- speed up req parser
 - check if && and || is handled correctly e.g. if(true || myfunc()) should not execute myfunc
 
 ## Compile cache

@@ -65,3 +65,12 @@ Scope *get_loop_scope(Scope *scope) {
     }
     return loop_scope;
 }
+
+Scope *get_vscope_scope(Scope *scope) {
+    //
+    Scope *vs_scope = scope;
+    while (vs_scope && vs_scope->vscope_vname == NULL) {
+        vs_scope = vs_scope->parent;
+    }
+    return vs_scope;
+}

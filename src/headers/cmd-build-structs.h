@@ -436,6 +436,7 @@ typedef enum TokenTypeEnum {
 typedef struct TokenSetVscopeValue {
     char *vname;
     Value *value;
+    Scope *vscope;
 } TokenSetVscopeValue;
 
 typedef struct TokenEach {

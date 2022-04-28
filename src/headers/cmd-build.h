@@ -40,6 +40,7 @@ Scope *init_sub_scope(Scope *parent);
 Scope *get_class_scope(Scope *scope);
 Scope *get_func_scope(Scope *scope);
 Scope *get_loop_scope(Scope *scope);
+Scope *get_vscope_scope(Scope *scope);
 
 // Token
 Token *init_token();
@@ -169,7 +170,7 @@ void fc_write_c_type(Str *append_to, Type *type, char *varname);
 void fc_write_c_if(FileCompiler *fc, TokenIf *ift);
 Str *value_buf(FileCompiler *fc);
 char *var_buf(FileCompiler *fc);
-void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once);
+void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope);
 char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded);
 void fc_write_c_inits();
 char *fc_write_c_ort(FileCompiler *fc, OrToken *ort);

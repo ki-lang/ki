@@ -465,7 +465,7 @@ void fc_write_c_ast(FileCompiler *fc, Scope *scope) {
     }
 
     if (!scope->did_return) {
-        deref_local_vars(fc, NULL, false, true);
+        deref_local_vars(fc, NULL, fc->current_scope);
     }
 
     fc->current_scope = prev_scope;
@@ -708,7 +708,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         TokenSetVscopeValue *sv = token->item;
         fc_write_c_value(fc, sv->value, true);
 
-        deref_local_vars(fc, sv->value, false, true);
+        deref_local_vars(fc, sv->value, sv->vscope);
         //
         str_append_chars(fc->tkn_buffer, sv->vname);
         str_append_chars(fc->tkn_buffer, " = ");
@@ -727,7 +727,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         }
 
         // Deref local vars + Check if var_bufs RC == 0 (if so free)
-        deref_local_vars(fc, retv, false, false);
+        deref_local_vars(fc, retv, NULL);
 
         //
         str_append_chars(fc->tkn_buffer, "return ");
@@ -781,10 +781,14 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         fc_write_c_ast(fc, wt->scope);
         str_append_chars(fc->tkn_buffer, "}\n\n");
     } else if (token->type == tkn_break) {
-        deref_local_vars(fc, NULL, true, false);
+        Scope *scope = fc->current_scope;
+        scope = get_loop_scope(scope);
+        deref_local_vars(fc, NULL, scope);
         str_append_chars(fc->tkn_buffer, "break;\n");
     } else if (token->type == tkn_continue) {
-        deref_local_vars(fc, NULL, true, false);
+        Scope *scope = fc->current_scope;
+        scope = get_loop_scope(scope);
+        deref_local_vars(fc, NULL, scope);
         str_append_chars(fc->tkn_buffer, "continue;\n");
     } else if (token->type == tkn_throw) {
         TokenThrow *tt = token->item;
@@ -864,7 +868,8 @@ char *fc_write_c_ort(FileCompiler *fc, OrToken *ort) {
             if (ort->value) {
                 fc_write_c_value(fc, ort->value, true);
             }
-            deref_local_vars(fc, ort->value, false, false);
+            Scope *fscope = get_func_scope(fc->current_scope);
+            deref_local_vars(fc, ort->value, fscope);
             str_append_chars(fc->tkn_buffer, "return ");
             if (ort->value) {
                 str_append(fc->tkn_buffer, fc->value_buffer);
@@ -889,10 +894,12 @@ char *fc_write_c_ort(FileCompiler *fc, OrToken *ort) {
             str_append_chars(fc->tkn_buffer, "return 0;\n");
         }
     } else if (ort->type == or_break) {
-        deref_local_vars(fc, NULL, true, false);
+        Scope *scope = get_loop_scope(fc->current_scope);
+        deref_local_vars(fc, NULL, scope);
         str_append_chars(fc->tkn_buffer, "break;\n");
     } else if (ort->type == or_continue) {
-        deref_local_vars(fc, NULL, true, false);
+        Scope *scope = get_loop_scope(fc->current_scope);
+        deref_local_vars(fc, NULL, scope);
         str_append_chars(fc->tkn_buffer, "continue;\n");
     }
 
@@ -1106,7 +1113,8 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                 //
                 fc->current_scope = fa->or_scope;
                 fc_write_c_value(fc, orv, false);
-                deref_local_vars(fc, orv, false, false);
+                Scope *fscope = get_func_scope(fc->current_scope);
+                deref_local_vars(fc, orv, fscope);
                 fc->current_scope = fa->or_scope->parent;
                 //
                 str_append_chars(fc->tkn_buffer, "return ");
@@ -1121,7 +1129,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                     fc_write_c_ast(fc, fa->or_scope);
 
                     fc->current_scope = fa->or_scope;
-                    deref_local_vars(fc, value, false, true);
+                    deref_local_vars(fc, value, fa->or_scope);
                     fc->current_scope = fa->or_scope->parent;
 
                     str_append_chars(fc->tkn_buffer, fa->or_scope->vscope_vname);
@@ -1370,7 +1378,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             free(defv);
         }
 
-        deref_local_vars(fc, NULL, false, false);
+        deref_local_vars(fc, NULL, fc->current_scope);
 
         str_append(fc->c_code_after, fc->tkn_buffer);
         free_str(fc->tkn_buffer);
@@ -1762,7 +1770,7 @@ char *var_buf(FileCompiler *fc) {
     return fc->var_buf;
 }
 
-void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once) {
+void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
     //
     char *ignore_vbuf = NULL;
     if (retv && retv->return_type->class && retv->return_type->class->ref_count) {
@@ -1852,14 +1860,10 @@ void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once)
             ignore_vbuf = NULL;
         }
 
-        if (once && c == 1) {
-            break;
-        }
-
         if (scope->is_func) {
             break;
         }
-        if (until_loop && scope->in_loop) {
+        if (until_scope && scope == until_scope) {
             break;
         }
 
