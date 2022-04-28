@@ -35,11 +35,10 @@ func hello(ki:http:Request req) ki:http:Response{
 
 func handler(ki:http:Request req) ki:http:Response{
 
-	@ r = GT_router;
+	@ router = GT_router;
 
-	ifnull r set {
+	ifnull router set {
 		@ r = ki:http:Router.make();
-		r._RC++;
 
 		r.add("GET", "/", home);
 		r.add("GET", "/hello", hello);
@@ -49,7 +48,7 @@ func handler(ki:http:Request req) ki:http:Response{
 		return r;
 	}
 
-	@ route = r.find("GET", req.uri);
+	@ route = router.find("GET", req.uri);
 	ifnull route return Response.error(404);
 
 	return route.handler(req);

@@ -755,6 +755,13 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             str_append_chars(fc->tkn_buffer, buf);
             str_append_chars(fc->tkn_buffer, ";\n");
             free(buf);
+
+            Type *type = ifn->idf->item;
+
+            if (type->class && type->class->ref_count) {
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+            }
         }
 
         str_append_chars(fc->tkn_buffer, " }\n");
