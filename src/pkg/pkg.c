@@ -4,14 +4,35 @@
 void cmd_pkg(Array *args, Map *options) {
     //
     if (map_get(options, "-h")) {
-        cmd_pkg_help();
+        pkg_help();
         return;
     }
 
-    cmd_pkg_help();
+    // Check args
+    if (args->length >= 1) {
+        char *action = array_get_index(args, 0);
+        if (strcmp(action, "install") == 0 && args->length >= 3) {
+            char *pkgname = array_get_index(args, 1);
+            char *version = array_get_index(args, 2);
+            pkg_install(pkgname, version);
+            return;
+        } else if (strcmp(action, "remove") == 0 && args->length >= 2) {
+            char *pkgname = array_get_index(args, 1);
+            pkg_remove(pkgname);
+            return;
+        } else if (strcmp(action, "upgrade") == 0 && args->length >= 3) {
+            char *pkgname = array_get_index(args, 1);
+            char *version = array_get_index(args, 2);
+            pkg_upgrade(pkgname, version);
+            return;
+        }
+    }
+
+    // Default
+    pkg_help();
 }
 
-void cmd_pkg_help() {
+void pkg_help() {
     //
     printf("Usage: ki pkg {command}\n\n");
 
