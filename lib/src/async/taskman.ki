@@ -169,7 +169,7 @@ class Taskman norfc {
 			task_list.head = 0;
 		}
 		while(task_list.tasks.get(task_list.head) != null){
-			io:print("wait for tail\n");
+			//io:print("[+] waiting on task manager\n");
 			main:main:usleep(1);
 		}
 
