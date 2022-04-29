@@ -12,21 +12,25 @@ int main(int argc, char *argv[]) {
 
     char *cmd = argv[1];
 
+    Map *option_has_value = map_make();
+    map_set(option_has_value, "-h", false);
+    Map *params = get_options_and_args(argc, argv, option_has_value);
+    Array *args = map_get(params, "args");
+    Map *options = map_get(params, "options");
+
     if (strcmp(cmd, "build") == 0) {
         // Build
-        Map *option_has_value = map_make();
-        map_set(option_has_value, "-h", false);
-        Map *params = get_options_and_args(argc, argv, option_has_value);
-        Array *args = map_get(params, "args");
-        Map *options = map_get(params, "options");
         cmd_build(args, options);
+    } else if (strcmp(cmd, "pkg") == 0) {
+        // fmt
+        cmd_pkg(args, options);
     } else if (strcmp(cmd, "fmt") == 0) {
         // fmt
-        // Map* option_has_value = map_make();
-        // Map* params = get_options_and_args(argc, argv, option_has_value);
-        // Array* args = map_get(params, "args");
-        // Map* options = map_get(params, "options");
         // cmd_fmt(args, options);
+    } else if (strcmp(cmd, "version") == 0) {
+        printf("ki version 0.0.1");
+        // Todo: print os-target and cpu-arch
+        printf("\n");
     } else {
         // Invalid command
         main_print_help();
@@ -73,6 +77,14 @@ Map *get_options_and_args(int argc, char *argv[], Map *option_has_value) {
 }
 
 void main_print_help() {
-    printf("Usage: ki [command] -h\n");
-    printf("Commands: build\n");
+    printf("Usage: ki [command] -h\n\n");
+
+    printf("Commands: build|pkg|fmt|version\n\n");
+
+    printf("> build    :  compile .ki code to executable\n");
+    printf("> pkg      :  install/remove packages from github or other sources\n");
+    printf("> fmt      :  format .ki code: indenting, newlines, etc...\n");
+    printf("> version  :  prints the ki compiler version\n");
+
+    printf("\n");
 }
