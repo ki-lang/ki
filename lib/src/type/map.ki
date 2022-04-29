@@ -3,8 +3,11 @@ namespace type;
 
 class Map<T> {
 
-	private ptr indexes;// = mem:alloc(128);
-	private PtrArray arrays;// = PtrArray.make(1);
+	private PtrArray arrays;
+
+	public static func make() CLASS {
+		return CLASS { arrays: PtrArray.make(128) };
+	}
 
 	public func set(String key, T value) {
 
@@ -19,6 +22,7 @@ class Map<T> {
 		}
 
 		uxx arr_size = getptrv array as uxx;
+		@ array_start = array;
 		array += sizeof(uxx);
 		uxx pos = 0;
 		while(true){
@@ -34,7 +38,7 @@ class Map<T> {
 				// Need more space, Resize
 				arr_size *= 2;
 				array = mem:calloc(((sizeof(String) + sizeof(T)) * arr_size) + sizeof(uxx));
-				setptrv array to arr_size;
+				setptrv array_start to arr_size;
 				this.arrays.set(rest, array);
 			}
 		}
@@ -42,16 +46,26 @@ class Map<T> {
 		setptrv array to key;
 		array += sizeof(String);
 		setptrv array to value;
+
+		key._RC++;
+
+		#if IS_REFCOUNTED_TYPE T
+		#if IS_NULLABLE_TYPE T
+		if(value != null) {
+		#end
+		value._RC++;
+		#if IS_NULLABLE_TYPE T
+		}
+		#end
+		#end
 	}
 
-	public func get(String key) ?T {
+	public func get(String key) !T {
 
 		u8 rest = this.get_rest(key);
 
 		ptr array = this.arrays.get(rest);
-		if(array == null){
-			return null;
-		}
+		ifnull array throw not_found;
 
 		uxx arr_size = getptrv array as uxx;
 		array += sizeof(uxx);
@@ -60,13 +74,14 @@ class Map<T> {
 			@ k = getptrv array as ?String;
 			array += sizeof(String);
 			if(k != null && key == k){
-				@ val = getptrv array as ?T;
+				@ val = getptrv array as T;
 				return val;
 			}
 			array += sizeof(T);
+			pos++;
 		}
 
-		return null;
+		throw not_found;
 	}
 
 	private func get_rest(String key) u8 {
@@ -88,5 +103,58 @@ class Map<T> {
 		u8 rest = total % 128;
 
 		return rest;
+	}
+
+	public func __free() {
+		u8 i = 0;
+		while(i < 128){
+			ptr array = this.arrays.get(i);
+			i++;
+			if(array == null){
+				continue;
+			}
+			#if IS_REFCOUNTED_TYPE T
+			uxx count = getptrv array as uxx;
+			uxx ic = 0;
+			@ adr = array;
+			adr += sizeof(uxx);
+			while(ic < count){
+				@ key = getptrv adr as ?String;
+				adr += sizeof(String);
+
+				if(key == null){
+					ic++;
+					adr += sizeof(T);
+					continue;
+				}
+
+				notnull key do {
+
+					key._RC--;
+					if(key._RC == 0) { key.__free(); }
+
+					@ val = getptrv adr as T;
+
+					#if IS_NULLABLE_TYPE T
+					if(val != null) {
+					#end
+					val._RC--;
+					#if IS_NULLABLE_TYPE T
+					}
+					#end
+				}
+
+				ic++;
+				adr += sizeof(T);
+			}
+			#end
+
+			mem:free(array);
+		}
+
+		this.arrays.__free();
+
+		@ a = allocator sizeof(CLASS);
+		a.free(this);
 	}
 }

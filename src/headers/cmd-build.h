@@ -19,6 +19,7 @@ void free_fc(FileCompiler *fc);
 FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file);
 void fc_scan_types(FileCompiler *fc);
 void fc_include_headers_from(FileCompiler *fc, FileCompiler *from);
+char *fc_localvar(FileCompiler *fc, char *name, Type *type);
 
 // Build
 void cmd_build_init_static();
@@ -27,9 +28,10 @@ void fc_scan_values();
 void fc_scan_args_and_props(FileCompiler *fc);
 void fc_scan_class_props(Class *class);
 void fc_scan_class_prop_values(Class *class);
-void fc_scan_threaded_globals(FileCompiler *fc);
 void fc_build_asts();
 void fc_build_ast(FileCompiler *fc, Scope *scope);
+void fc_define_global(FileCompiler *fc, int type, char *token);
+void fc_scan_globals(FileCompiler *fc);
 double get_time();
 
 // Scope
@@ -38,6 +40,8 @@ void free_scope(Scope *scope);
 Scope *init_sub_scope(Scope *parent);
 Scope *get_class_scope(Scope *scope);
 Scope *get_func_scope(Scope *scope);
+Scope *get_loop_scope(Scope *scope);
+Scope *get_vscope_scope(Scope *scope);
 
 // Token
 Token *init_token();
@@ -46,6 +50,7 @@ void token_each(FileCompiler *fc, Scope *scope);
 void token_return(FileCompiler *fc, Scope *scope);
 TokenIf *token_if(FileCompiler *fc, Scope *scope, bool is_else, bool has_condition);
 void token_ifnull(FileCompiler *fc, Scope *scope);
+void token_notnull(FileCompiler *fc, Scope *scope);
 void token_while(FileCompiler *fc, Scope *scope);
 void token_throw(FileCompiler *fc, Scope *scope);
 void token_set_threaded(FileCompiler *fc, Scope *scope);
@@ -57,6 +62,10 @@ void token_continue(FileCompiler *fc, Scope *scope);
 void token_declare(FileCompiler *fc, Scope *scope, Type *left_type);
 void token_assign(FileCompiler *fc, Scope *scope, char *sign, Value *value);
 void token_free(FileCompiler *fc, Scope *scope);
+
+// Token / Value
+OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, char *token);
+ErrorToken *fc_read_error_token(FileCompiler *fc, int errtype, char *token);
 
 // Identifier
 Identifier *init_id();
@@ -109,6 +118,7 @@ Type *init_type();
 void free_type(Type *type);
 Type *fc_read_type(FileCompiler *fc, Scope *scope);
 Type *fc_identifier_to_type(FileCompiler *fc, Identifier *id, Scope *scope);
+void fc_type_make_nullable(FileCompiler *fc, Type *t);
 bool type_compatible(Type *t1, Type *t2);
 void fc_type_compatible(FileCompiler *fc, Type *t1, Type *t2);
 Type *fc_create_type_for_enum(Enum *enu);
@@ -149,10 +159,8 @@ void fc_write_c_all();
 void fc_write_c_pre(FileCompiler *fc);
 void fc_write_c(FileCompiler *fc);
 void fc_write_c_predefine_class(FileCompiler *fc, Class *class);
-void fc_write_c_threaded_globals(FileCompiler *fc, ThreadedGlobal *tg);
-void fc_write_c_static_var_global(FileCompiler *fc, TokenStaticDeclare *decl);
-void fc_write_c_mutex(FileCompiler *fc, Mutex *mut);
 void fc_write_c_class(FileCompiler *fc, Class *class);
+void fc_write_c_global(FileCompiler *fc, GlobalVar *gv);
 void fc_write_c_enum(FileCompiler *fc, Enum *enu);
 void fc_write_c_func(FileCompiler *fc, Function *func);
 void fc_write_c_ast(FileCompiler *fc, Scope *scope);
@@ -163,9 +171,10 @@ void fc_write_c_type(Str *append_to, Type *type, char *varname);
 void fc_write_c_if(FileCompiler *fc, TokenIf *ift);
 Str *value_buf(FileCompiler *fc);
 char *var_buf(FileCompiler *fc);
-void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once);
+void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope);
 char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded);
 void fc_write_c_inits();
+char *fc_write_c_ort(FileCompiler *fc, OrToken *ort);
 
 // Compile
 void compile_all();

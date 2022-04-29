@@ -18,6 +18,9 @@ Scope *init_scope() {
     scope->ast = array_make(4);
     scope->parent = NULL;
     //
+    scope->vscope_vname = NULL;
+    scope->vscope_return_type = NULL;
+    //
     scope->var_bufs = array_make(8);
     scope->local_var_names = array_make(8);
     //
@@ -52,4 +55,22 @@ Scope *get_func_scope(Scope *scope) {
         func_scope = func_scope->parent;
     }
     return func_scope;
+}
+
+Scope *get_loop_scope(Scope *scope) {
+    //
+    Scope *loop_scope = scope;
+    while (loop_scope && !loop_scope->is_loop) {
+        loop_scope = loop_scope->parent;
+    }
+    return loop_scope;
+}
+
+Scope *get_vscope_scope(Scope *scope) {
+    //
+    Scope *vs_scope = scope;
+    while (vs_scope && vs_scope->vscope_vname == NULL) {
+        vs_scope = vs_scope->parent;
+    }
+    return vs_scope;
 }

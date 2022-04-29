@@ -203,8 +203,6 @@ void fc_scan_types(FileCompiler *fc) {
 
             array_push(fc->functions, func);
 
-            fc_scan_func(fc, func);
-
             IdentifierFor *idf = init_idf();
             idf->type = idfor_func;
             idf->item = func;
@@ -215,6 +213,8 @@ void fc_scan_types(FileCompiler *fc) {
             char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, name);
             func->cname = cname;
             map_set(c_identifiers, cname, idf);
+
+            fc_scan_func(fc, func);
 
         } else if (strcmp(token, "use") == 0) {
             fc_next_token(fc, token, false, true, true);
@@ -249,6 +249,7 @@ void fc_scan_types(FileCompiler *fc) {
                 FcUse *fcu = malloc(sizeof(FcUse));
                 fcu->pkc = pkc;
                 fcu->nsc = nsc;
+                fcu->fc_i = fc->i;
 
                 map_set(fc->uses, strdup(token), fcu);
 
@@ -261,51 +262,10 @@ void fc_scan_types(FileCompiler *fc) {
 
             fc_expect_token(fc, ";", false, true, true);
 
-        } else if (strcmp(token, "threaded") == 0) {
-            //
-            ThreadedGlobal *tg = malloc(sizeof(ThreadedGlobal));
-            tg->i = fc->i;
-            tg->type = NULL;
-            tg->name = NULL;
-            tg->default_value = NULL;
-
-            array_push(fc->threaded_globals, tg);
-
-            fc_skip_type(fc);
-            // Skip name
-            fc_next_token(fc, token, false, true, true);
-            fc_expect_token(fc, "=", false, true, true);
-            fc_skip_assign_value(fc);
-            fc_expect_token(fc, ";", false, true, true);
-
-        } else if (strcmp(token, "mutex") == 0) {
-            //
-            Mutex *mut = malloc(sizeof(Mutex));
-            mut->name = NULL;
-
-            array_push(fc->mutexes, mut);
-
-            fc_next_token(fc, token, false, true, true);
-
-            if (!is_valid_varname(token)) {
-                fc_error(fc, "Invalid mutex name: '%s'", token);
-            }
-
-            mut->name = strdup(token);
-
-            IdentifierFor *idf = init_idf();
-            idf->type = idfor_mutex;
-            idf->item = mut;
-
-            Scope *scope = fc->nsc->scope;
-            map_set(scope->identifiers, mut->name, idf);
-
-            char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, mut->name);
-            mut->cname = cname;
-            map_set(c_identifiers, cname, idf);
-
-            fc_expect_token(fc, ";", false, true, true);
-
+        } else if (strcmp(token, "unsafe_shared_global") == 0) {
+            fc_define_global(fc, gv_shared, token);
+        } else if (strcmp(token, "threaded_global") == 0) {
+            fc_define_global(fc, gv_threaded, token);
         } else {
             fc_error(fc, "Unexpected token: '%s'", token);
         }
@@ -316,4 +276,34 @@ void fc_scan_types(FileCompiler *fc) {
     }
 
     free(token);
+}
+
+void fc_define_global(FileCompiler *fc, int type, char *token) {
+
+    GlobalVar *gv = malloc(sizeof(GlobalVar));
+    gv->fc_i = fc->i;
+    gv->type = type;
+
+    fc_skip_type(fc);
+    fc_next_token(fc, token, false, true, true);
+    fc_name_taken(fc, fc->nsc->scope->identifiers, token);
+    //
+    gv->name = strdup(token);
+
+    if (type == gv_shared) {
+        if (!starts_with(gv->name, "GS_")) {
+            fc_error(fc, "Shared global variable names must start with 'GS_'", NULL);
+        }
+    } else if (type == gv_threaded) {
+        if (!starts_with(gv->name, "GT_")) {
+            fc_error(fc, "Shared global variable names must start with 'GT_'", NULL);
+        }
+    }
+
+    char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, gv->name);
+    gv->cname = cname;
+
+    array_push(fc->globals, gv);
+
+    fc_expect_token(fc, ";", false, true, true);
 }

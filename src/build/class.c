@@ -34,6 +34,7 @@ ClassProp *init_class_prop() {
     prop->access_type = acct_public;
     prop->is_static = false;
     prop->is_func = false;
+    prop->generate_code = true;
     prop->return_type = NULL;
     prop->default_value = NULL;
     prop->value_i = 0;
@@ -484,6 +485,72 @@ void fc_scan_class_props(Class *class) {
         class->size += type->bytes;
         map_set(class->props, "_ALLOCATOR", prop);
     }
+
+    ClassProp *fp = map_get(class->props, "__free");
+    if (!fp) {
+        Function *func = init_func();
+        func->fc = fc;
+        func->scope = init_sub_scope(class->scope);
+        func->scope->is_func = true;
+        func->scope->func = func;
+
+        Type *type = init_type();
+        type->type = type_funcref;
+
+        ClassProp *prop = init_class_prop();
+        prop->access_type = acct_public;
+        prop->is_static = false;
+        prop->return_type = type;
+        prop->is_func = true;
+        prop->func = func;
+        prop->generate_code = false;
+
+        char *cname = malloc(strlen(class->cname) + 10);
+        strcpy(cname, class->cname);
+        strcat(cname, "____free");
+
+        IdentifierFor *find = map_get(c_identifiers, cname);
+        if (find != NULL) {
+            fc_error(fc,
+                     "The function its exportable name is the same as a previous "
+                     "declaration: '%s'",
+                     cname);
+        }
+
+        IdentifierFor *idf = init_idf();
+        idf->type = idfor_func;
+        idf->item = func;
+
+        map_set(c_identifiers, cname, idf);
+        func->cname = cname;
+
+        Type *t = init_type();
+        t->type = type_struct;
+        t->class = class;
+        t->is_pointer = true;
+        t->bytes = pointer_size;
+        if (t->class->is_number) {
+            t->is_pointer = false;
+            t->allow_math = true;
+            t->bytes = class->size;
+        }
+
+        FunctionArg *arg = init_func_arg();
+        arg->name = "this";
+        arg->type = t;
+
+        array_push(func->args, arg);
+
+        type->func_arg_types = array_make(4);
+        for (int i = 0; i < func->args->length; i++) {
+            FunctionArg *arg = array_get_index(func->args, i);
+            array_push(type->func_arg_types, arg->type);
+        }
+        type->func_return_type = func->return_type;
+        type->func_can_error = func->can_error;
+
+        map_set(class->props, "__free", prop);
+    }
 }
 
 void fc_scan_class_prop_values(Class *class) {
@@ -503,6 +570,8 @@ void fc_scan_class_prop_values(Class *class) {
             fc->i = prop->value_i;
             prop->default_value = fc_read_value(fc, fc->scope, false, true, true);
             fc_expect_token(fc, ";", false, true, true);
+
+            fc_type_compatible(fc, prop->return_type, prop->default_value->return_type);
         }
     }
 }

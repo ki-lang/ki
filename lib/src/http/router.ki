@@ -1,9 +1,21 @@
 
 namespace http;
 
-class RouteEntry{
-	public Route route = null;
-	public type:Map<Route> routes;
+class RouteBlock{
+	public ?Route route = null;
+	public type:Map<RouteBlock> blocks;
+
+	public func __free(){
+
+		@ r = this.route;
+		notnull r do {
+			r.__free();
+		}
+		this.blocks.__free();
+
+		@ a = allocator sizeof(CLASS);
+		a.free(this);
+	}
 }
 
 class RouteArg{
@@ -13,7 +25,12 @@ class RouteArg{
 
 class Router{
 
-	private RouteEntry tree;
+	private RouteBlock block;
+	public bool inited = false;
+
+	public static func make() Router {
+		return Router{ block: RouteBlock{ blocks: type:Map<RouteBlock>.make() } };
+	}
 
 	public func add(String method, String url, funcref (Request) Response handler) {
 		if(url.length == 0 || url.char(0) != '/'){
@@ -22,14 +39,106 @@ class Router{
 		}
 
 		@ url_tmp = url.substring(1, url.length - 1);
-		@ parts = url_tmp.split("/");
-		parts.remove(0);
+		@ parts = url_tmp.split_char('/');
+		parts.prepend(method);
 
-		@ ref = this.tree;
+		@ block = this.block;
 		@ args = Array<RouteArg>.make(2);
-		@ wcard_index = 0#i32;
+		@ wcard_index = -1#i32;
 
 		each parts as part i {
+			if(part.length == 0){
+				continue;
+			}
+
+			@ blocks = block.blocks;
+
+			@ is_arg = part.char(0) == ':';
+			@ is_wcard = part == "*";
+			@ key = part;
+
+			if(is_arg){
+				@ name = part.substring(1, part.length - 1);
+				if(name.length == 0){
+					panic invalid_route_parameter_syntax;
+				}
+				args.push(RouteArg { i: i, name: name });
+				key = "@";
+			} else if(is_wcard){
+				key = "*";
+				wcard_index = i;
+			}
+
+			if(wcard_index >= 0 && is_wcard == false){
+				panic incorrect_wildcard_usage;
+			}
+
+			@ find = blocks.get(key) or value |err| {
+				@ v = RouteBlock{ blocks: type:Map<RouteBlock>.make() };
+				blocks.set(key, v);
+				return v;
+			};
+
+			block = find;
 		}
+
+		block.route = Route{ handler: handler, args: args };
+	}
+
+
+	public func find(String method, String url) ?Route {
+		@ parts_ = url.split_char('/');
+		@ parts = Array<String>.make(2);
+		each parts_ as part i {
+			if(part.length == 0){
+				continue;
+			}
+			parts.push(part);
+		}
+
+		parts.prepend(method);
+		@ arg_c = parts.length;
+
+		return Router.find_route(this.block, 0, arg_c, parts);
+	}
+
+	private static func find_route(RouteBlock block, u8 index, u8 arg_c, Array<String> parts) ?Route {
+		if(index == arg_c){
+			return block.route;
+		}
+
+		@ p = parts.get(index) or return null;
+
+		@ check_parts = Array<String>.make(2);
+		check_parts.push(p);
+		check_parts.push("@");
+
+		each check_parts as part i {
+			if(part == "*"){
+				continue;
+			}
+			@ sub_block = block.blocks.get(part) or value null;
+			notnull sub_block do {
+				@ route = Router.find_route(sub_block, index + 1, arg_c, parts);
+				notnull route do {
+					return route;
+				}
+			}
+		}
+
+		@ sub_block = block.blocks.get("*") or value null;
+		notnull sub_block do {
+			return sub_block.route;
+		}
+
+		return null;
+	}
+
+	public func __free(){
+
+		this.block.__free();
+
+		@ a = allocator sizeof(CLASS);
+		a.free(this);
 	}
 }

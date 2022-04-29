@@ -1,7 +1,11 @@
 
 namespace async;
 
-threaded Taskman LOCAL_TM = null;
+threaded_global ?Taskman GT_KI_taskmanager;
+
+unsafe_shared_global ?Mutex GS_KI_add_mutex;
+unsafe_shared_global ?TaskList GS_KI_tasklist;
+unsafe_shared_global ?type:PtrArray GS_KI_taskmanagers;
 
 class TaskList {
 
@@ -13,7 +17,9 @@ class TaskList {
 	public i32 pipe_write_fd;
 
 	public static func get() TaskList {
-		static TaskList mx {
+		@ tl = GS_KI_tasklist;
+		ifnull tl set {
+
 			uxx pipes = 0;
 			ptr pipes_ptr = getptr pipes;
 			@ check = main:main:pipe(pipes_ptr);
@@ -21,9 +27,11 @@ class TaskList {
 			pipes_ptr += sizeof(i32);
 			i32 write_fd = getptrv pipes_ptr as i32;
 
-			return TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
+			@ tl = TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
+			GS_KI_tasklist = tl;
+			return tl;
 		}
-		return mx;
+		return tl;
 	}
 }
 
@@ -35,11 +43,18 @@ class Taskman norfc {
 
 	public ?Task current_task = null;
 
+	public static func get_local_taskman() Taskman {
+		@ tm = GT_KI_taskmanager;
+		ifnull tm panic missing_taskmanager;
+		return tm;
+	}
+
 	public static func get_task_managers() type:PtrArray {
-		static type:PtrArray list {
+		@ tms = GS_KI_taskmanagers;
+		ifnull tms set {
 			return type:PtrArray.make(64);
 		}
-		return list;
+		return tms;
 	}
 
 	public static func setup_task_managers() type:PtrArray {
@@ -70,11 +85,11 @@ class Taskman norfc {
 
 		Taskman tm = cast tm_ptr as Taskman; 
 
-		set_threaded LOCAL_TM = tm;
+		GT_KI_taskmanager = tm;
 
 		tm.run_tasks(false);
 
-		//set_threaded LOCAL_TM = null;
+		GT_KI_taskmanager = null;
 	}
 
 	public static func wait_for_tasks_to_end(type:PtrArray tms) {
@@ -85,9 +100,7 @@ class Taskman norfc {
 			i32 i = 0;
 			while(i < tms.size){
 				?Taskman tm = cast tms.get(i) as ?Taskman;
-				if(tm == null){
-					break;
-				}
+				ifnull tm break;
 				if(tm.current_task != null) {
 					run_count++;
 					break;
@@ -110,6 +123,7 @@ class Taskman norfc {
 			if(this.current_task != null) {
 				// If there is a task to run
 				@ task = this.current_task;
+				ifnull task continue;
 
 				// Run task
 				task.handler_func(task);
@@ -119,22 +133,12 @@ class Taskman norfc {
 				if(max_one_task) { return; }
 
 			} else {
-				// Get a new task from the list
-				//mut.lock();
-
+				// Get a new task
 				u32 ti = 0;
 				@ check = main:main:read(task_list.pipe_read_fd, getptr ti, sizeof(u32));
 				@ task = cast task_list.tasks.get(ti) as ?Task;
 
 				task_list.tasks.clear(ti);
-				//if(ti == task_list.tail){
-				//	task_list.tail++;
-				//	if(task_list.tail == task_list.max){
-				//		task_list.tail = 0;
-				//	}
-				//}
-
-				//mut.unlock();
 
 				this.current_task = task;
 			}
@@ -142,9 +146,12 @@ class Taskman norfc {
 	}
 
 	public static func get_add_mutex() Mutex {
-		static Mutex mut {
-			return Mutex.make();
-		} 
+		@ mut = GS_KI_add_mutex;
+		ifnull mut set {
+			@ mut = Mutex.make();
+			GS_KI_add_mutex = mut;
+			return mut;
+		}
 		return mut;
 	}
 
@@ -158,14 +165,10 @@ class Taskman norfc {
 		@ pos = task_list.head;
 
 		task_list.head++;
-		//io:print("head: ");
-		//io:println(task_list.head.str());
 		if(task_list.head == task_list.max){
 			task_list.head = 0;
 		}
 		while(task_list.tasks.get(task_list.head) != null){
-			// todo: set tail to 0, and head to max
-			// then increase max * 2;
 			io:print("wait for tail\n");
 			main:main:usleep(1);
 		}
@@ -179,7 +182,7 @@ class Taskman norfc {
 
 	public static func run_another_task() {
 
-		Taskman tm = get_threaded LOCAL_TM;
+		Taskman tm = Taskman.get_local_taskman();
 		@ task = tm.current_task;
 
 		tm.run_tasks(true);

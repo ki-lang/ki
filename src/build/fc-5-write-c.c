@@ -57,23 +57,14 @@ void fc_write_c_all() {
             for (int x = 0; x < fc->enums->length; x++) {
                 fc_write_c_enum(fc, array_get_index(fc->enums, x));
             }
+            for (int x = 0; x < fc->globals->length; x++) {
+                fc_write_c_global(fc, array_get_index(fc->globals, x));
+            }
             for (int x = 0; x < fc->strings->length; x++) {
                 ValueString *vstr = array_get_index(fc->strings, x);
                 str_append_chars(fc->h_code, "struct ki__type__String* ");
                 str_append_chars(fc->h_code, vstr->name);
                 str_append_chars(fc->h_code, ";\n");
-            }
-
-            for (int x = 0; x < fc->static_vars->length; x++) {
-                fc_write_c_static_var_global(fc, array_get_index(fc->static_vars, x));
-            }
-
-            for (int x = 0; x < fc->threaded_globals->length; x++) {
-                fc_write_c_threaded_globals(fc, array_get_index(fc->threaded_globals, x));
-            }
-
-            for (int x = 0; x < fc->mutexes->length; x++) {
-                fc_write_c_mutex(fc, array_get_index(fc->mutexes, x));
             }
 
             fc_write_c_ast(fc, fc->scope);
@@ -116,29 +107,6 @@ void fc_write_c_inits() {
 
     FileCompiler *inits_fc = init_fc();
 
-    for (int i = 0; i < packages->keys->length; i++) {
-        PkgCompiler *pkc = array_get_index(packages->values, i);
-        for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
-            FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
-
-            for (int x = 0; x < fc->static_vars->length; x++) {
-                TokenStaticDeclare *decl = array_get_index(fc->static_vars, x);
-
-                fc_write_c_type(code, decl->scope->func->return_type, NULL);
-                str_append_chars(code, " ");
-                str_append_chars(code, decl->global_name);
-                str_append_chars(code, "_init(){\n");
-
-                inits_fc->tkn_buffer = str_make("");
-                fc_write_c_ast(inits_fc, decl->scope);
-                str_append(code, inits_fc->tkn_buffer);
-                free_str(inits_fc->tkn_buffer);
-
-                str_append_chars(code, "}\n");
-            }
-        }
-    }
-
     str_append(code, inits_fc->c_code_after);
     write_file(hpath, str_to_chars(inits_fc->h_code), true);
 
@@ -160,6 +128,18 @@ void fc_write_c_inits() {
         PkgCompiler *pkc = array_get_index(packages->values, i);
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+
+            for (int x = 0; x < fc->globals->length; x++) {
+                GlobalVar *gv = array_get_index(fc->globals, x);
+                if (gv->type == gv_threaded) {
+                    str_append_chars(code, "pthread_key_create(&");
+                    str_append_chars(code, gv->cname);
+                    str_append_chars(code, ", (void*)0);\n");
+                } else if (gv->type == gv_shared) {
+                    str_append_chars(code, gv->cname);
+                    str_append_chars(code, " = (void*)0;\n");
+                }
+            }
 
             for (int x = 0; x < fc->strings->length; x++) {
                 ValueString *vstr = array_get_index(fc->strings, x);
@@ -195,41 +175,9 @@ void fc_write_c_inits() {
                 sprintf(lenstr, "%zu", len);
                 str_append_chars(code, lenstr);
                 str_append_chars(code, ", 1);\n");
-            }
-
-            for (int x = 0; x < fc->static_vars->length; x++) {
-                TokenStaticDeclare *decl = array_get_index(fc->static_vars, x);
-
-                str_append_chars(code, decl->global_name);
-                str_append_chars(code, " = ");
-                str_append_chars(code, decl->global_name);
-                str_append_chars(code, "_init();\n");
-
-                Class *class = decl->type->class;
-                bool nullable = decl->type->nullable;
-                if (class && class->ref_count) {
-                    str_append_chars(code, decl->global_name);
-                    str_append_chars(code, "->_RC++;\n");
-                }
-            }
-
-            for (int x = 0; x < fc->threaded_globals->length; x++) {
-                ThreadedGlobal *tg = array_get_index(fc->threaded_globals, x);
-
-                fc->tkn_buffer = str_make("");
-                fc_write_c_value(fc, tg->default_value, true);
-                str_append(code, fc->tkn_buffer);
-                free_str(fc->tkn_buffer);
-
-                str_append_chars(code, "pthread_key_create(&");
-                str_append_chars(code, fc->nsc->pkc->name);
-                str_append_chars(code, "__");
-                str_append_chars(code, fc->nsc->name);
-                str_append_chars(code, "__");
-                str_append_chars(code, tg->name);
-                str_append_chars(code, ", ");
-                str_append(code, fc->value_buffer);
-                str_append_chars(code, ");\n");
+                // Keep in memory
+                str_append_chars(code, gname);
+                str_append_chars(code, "->_RC++;\n");
             }
         }
     }
@@ -332,7 +280,7 @@ void fc_write_c_class(FileCompiler *fc, Class *class) {
 
     // Free func
     ClassProp *prop = map_get(class->props, "__free");
-    if (!prop) {
+    if (!prop || prop->generate_code == false) {
         str_append_chars(fc->h_code, "void ");
         str_append_chars(fc->h_code, class->cname);
         str_append_chars(fc->h_code, "____free(struct ");
@@ -405,30 +353,16 @@ void fc_write_c_enum(FileCompiler *fc, Enum *enu) {
     str_append_chars(fc->h_code, ";\n");
 }
 
-void fc_write_c_static_var_global(FileCompiler *fc, TokenStaticDeclare *decl) {
-    fc_write_c_type(fc->h_code, decl->scope->func->return_type, NULL);
-    str_append_chars(fc->h_code, " ");
-    str_append_chars(fc->h_code, decl->global_name);
-    str_append_chars(fc->h_code, "_init();\n");
-
-    fc_write_c_type(fc->h_code, decl->type, decl->global_name);
-    str_append_chars(fc->h_code, ";\n");
-}
-
-void fc_write_c_threaded_globals(FileCompiler *fc, ThreadedGlobal *tg) {
-    str_append_chars(fc->h_code, "struct pthread_key_t ");
-    str_append_chars(fc->h_code, fc->nsc->pkc->name);
-    str_append_chars(fc->h_code, "__");
-    str_append_chars(fc->h_code, fc->nsc->name);
-    str_append_chars(fc->h_code, "__");
-    str_append_chars(fc->h_code, tg->name);
-    str_append_chars(fc->h_code, ";\n");
-}
-
-void fc_write_c_mutex(FileCompiler *fc, Mutex *mut) {
-    str_append_chars(fc->h_code, "struct pthread_mutex_t ");
-    str_append_chars(fc->h_code, mut->cname);
-    str_append_chars(fc->h_code, ";\n");
+void fc_write_c_global(FileCompiler *fc, GlobalVar *gv) {
+    //
+    if (gv->type == gv_threaded) {
+        str_append_chars(fc->h_code, "struct pthread_key_t ");
+        str_append_chars(fc->h_code, gv->cname);
+        str_append_chars(fc->h_code, ";\n");
+    } else if (gv->type == gv_shared) {
+        fc_write_c_type(fc->h_code, gv->return_type, gv->cname);
+        str_append_chars(fc->h_code, ";\n");
+    }
 }
 
 void fc_write_c_func(FileCompiler *fc, Function *func) {
@@ -463,8 +397,8 @@ void fc_write_c_func(FileCompiler *fc, Function *func) {
             str_append_chars(fc->tkn_buffer, ", ");
             str_append_chars(fc->h_code, ", ");
         }
-        str_append_chars(fc->tkn_buffer, "char* _KI_THROW_MSG");
-        str_append_chars(fc->h_code, "char* _KI_THROW_MSG");
+        str_append_chars(fc->tkn_buffer, "char** _KI_THROW_MSG");
+        str_append_chars(fc->h_code, "char** _KI_THROW_MSG");
     }
     //
     str_append_chars(fc->h_code, ");\n");
@@ -531,7 +465,7 @@ void fc_write_c_ast(FileCompiler *fc, Scope *scope) {
     }
 
     if (!scope->did_return) {
-        deref_local_vars(fc, NULL, false, true);
+        deref_local_vars(fc, NULL, fc->current_scope);
     }
 
     fc->current_scope = prev_scope;
@@ -550,9 +484,19 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
     if (token->type == tkn_func) {
         fc_write_c_func(fc, token->item);
     } else if (token->type == tkn_exit) {
+        ErrorToken *err = token->item;
         str_append_chars(fc->tkn_buffer, "ki__sys__exit(");
-        str_append_chars(fc->tkn_buffer, token->item);
+        str_append_chars(fc->tkn_buffer, err->msg);
         str_append_chars(fc->tkn_buffer, ");\n");
+    } else if (token->type == tkn_panic) {
+        ErrorToken *err = token->item;
+        str_append_chars(fc->tkn_buffer, "write(1, \"");
+        str_append_chars(fc->tkn_buffer, err->msg);
+        str_append_chars(fc->tkn_buffer, "\", ");
+        sprintf(fc->sprintf, "%ld", strlen(err->msg));
+        str_append_chars(fc->tkn_buffer, fc->sprintf);
+        str_append_chars(fc->tkn_buffer, ");\n");
+        str_append_chars(fc->tkn_buffer, "ki__sys__exit(1);\n");
     } else if (token->type == tkn_each) {
         TokenEach *te = token->item;
         fc_write_c_value(fc, te->value, true);
@@ -564,7 +508,6 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
 
         char *buf_count_name = strdup(var_buf(fc));
         char *buf_max_name = strdup(var_buf(fc));
-        char *buf_item_name = strdup(var_buf(fc));
         char *buf_error_name = strdup(var_buf(fc));
         str_append_chars(fc->tkn_buffer, "unsigned long int ");
         str_append_chars(fc->tkn_buffer, buf_count_name);
@@ -587,16 +530,24 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, buf_error_name);
         str_append_chars(fc->tkn_buffer, " = (void*)0;");
 
-        fc_write_c_type(fc->tkn_buffer, fget->return_type, buf_item_name);
+        fc_write_c_type(fc->tkn_buffer, fget->return_type, te->vvar->gen_name);
         str_append_chars(fc->tkn_buffer, " = ");
         str_append_chars(fc->tkn_buffer, fget->cname);
         str_append_chars(fc->tkn_buffer, "(");
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ",");
         str_append_chars(fc->tkn_buffer, buf_count_name);
-        str_append_chars(fc->tkn_buffer, ",");
+        str_append_chars(fc->tkn_buffer, ", &");
         str_append_chars(fc->tkn_buffer, buf_error_name);
         str_append_chars(fc->tkn_buffer, ");\n");
+        //
+        if (te->kvar) {
+            str_append_chars(fc->tkn_buffer, "unsigned long int ");
+            str_append_chars(fc->tkn_buffer, te->kvar->gen_name);
+            str_append_chars(fc->tkn_buffer, " = ");
+            str_append_chars(fc->tkn_buffer, buf_count_name);
+            str_append_chars(fc->tkn_buffer, ";\n");
+        }
         // Increase index
         str_append_chars(fc->tkn_buffer, buf_count_name);
         str_append_chars(fc->tkn_buffer, "++;\n");
@@ -612,16 +563,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
 
         free(buf_count_name);
         free(buf_max_name);
-        free(buf_item_name);
         free(buf_error_name);
-
-    } else if (token->type == tkn_static) {
-        TokenStaticDeclare *decl = token->item;
-
-        fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
-        str_append_chars(fc->tkn_buffer, " = ");
-        str_append_chars(fc->tkn_buffer, decl->global_name);
-        str_append_chars(fc->tkn_buffer, ";\n");
 
     } else if (token->type == tkn_declare) {
         TokenDeclare *decl = token->item;
@@ -649,44 +591,65 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
     } else if (token->type == tkn_assign) {
         TokenAssign *ta = token->item;
 
-        fc_write_c_value(fc, ta->left, true);
-        char *left = str_to_chars(fc->value_buffer);
+        char *left;
+        if (ta->left->type == vt_threaded_global) {
+            GlobalVar *gv = ta->left->item;
+            left = strdup(var_buf(fc));
+            fc_write_c_type(fc->tkn_buffer, ta->left->return_type, left);
+            str_append_chars(fc->tkn_buffer, " = 0;\n");
+        } else {
+            fc_write_c_value(fc, ta->left, true);
+            left = str_to_chars(fc->value_buffer);
+        }
         fc_write_c_value(fc, ta->right, true);
 
-        bool refc = false;
-        bool refc_nullable = false;
+        bool lrefc = false;
+        bool lrefc_nullable = false;
+        bool rrefc = false;
+        bool rrefc_nullable = false;
         Class *class = NULL;
         if (ta->type == op_eq) {
             Value *left = ta->left;
+            Value *right = ta->right;
             class = left->return_type->class;
+            Class *rclass = right->return_type->class;
+
             if (class && class->ref_count) {
-                refc = true;
+                lrefc = true;
                 if (left->return_type->nullable) {
-                    refc_nullable = true;
+                    lrefc_nullable = true;
+                }
+            }
+            if (rclass && rclass->ref_count) {
+                rrefc = true;
+                if (right->return_type->nullable) {
+                    rrefc_nullable = true;
                 }
             }
         }
 
         // RC++ the new value first
-        if (refc) {
-            if (refc_nullable) {
+        if (rrefc) {
+            if (rrefc_nullable) {
                 str_append_chars(fc->tkn_buffer, "if(");
                 str_append(fc->tkn_buffer, fc->value_buffer);
                 str_append_chars(fc->tkn_buffer, "){ ");
             }
             str_append(fc->tkn_buffer, fc->value_buffer);
             str_append_chars(fc->tkn_buffer, "->_RC++;");
-            if (refc_nullable) {
+            if (rrefc_nullable) {
                 str_append_chars(fc->tkn_buffer, " }");
             }
             str_append_chars(fc->tkn_buffer, "\n");
         }
 
         // RC-- the old value
-        if (refc) {
-            str_append_chars(fc->tkn_buffer, "if(");
-            str_append_chars(fc->tkn_buffer, left);
-            str_append_chars(fc->tkn_buffer, "){ ");
+        if (lrefc) {
+            if (lrefc_nullable) {
+                str_append_chars(fc->tkn_buffer, "if(");
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, "){ ");
+            }
             str_append_chars(fc->tkn_buffer, left);
             str_append_chars(fc->tkn_buffer, "->_RC--;\n");
             str_append_chars(fc->tkn_buffer, "if(");
@@ -696,12 +659,14 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             str_append_chars(fc->tkn_buffer, "____free(");
             str_append_chars(fc->tkn_buffer, left);
             str_append_chars(fc->tkn_buffer, ");");
-            str_append_chars(fc->tkn_buffer, " }");
+            if (lrefc_nullable) {
+                str_append_chars(fc->tkn_buffer, " }");
+            }
             str_append_chars(fc->tkn_buffer, "\n");
         }
 
         str_append_chars(fc->tkn_buffer, left);
-        free(left);
+
         if (ta->type == op_eq) {
             str_append_chars(fc->tkn_buffer, " = ");
         } else if (ta->type == op_add) {
@@ -723,8 +688,37 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         } else {
             fc_error(fc, "Unhandled assign operator translation", NULL);
         }
+
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ";\n");
+
+        if (ta->left->type == vt_threaded_global) {
+            GlobalVar *gv = ta->left->item;
+            str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
+            str_append_chars(fc->tkn_buffer, gv->cname);
+            str_append_chars(fc->tkn_buffer, ", ");
+            str_append_chars(fc->tkn_buffer, left);
+            str_append_chars(fc->tkn_buffer, ");\n");
+        }
+
+        free(left);
+
+    } else if (token->type == tkn_set_vscope_value) {
+
+        TokenSetVscopeValue *sv = token->item;
+        fc_write_c_value(fc, sv->value, true);
+
+        deref_local_vars(fc, sv->value, sv->vscope);
+        //
+        str_append_chars(fc->tkn_buffer, sv->vname);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+
+        str_append_chars(fc->tkn_buffer, "goto ");
+        str_append_chars(fc->tkn_buffer, sv->vname);
+        str_append_chars(fc->tkn_buffer, "_GOTO;\n");
+
     } else if (token->type == tkn_return) {
         Value *retv = NULL;
         if (token->item) {
@@ -733,7 +727,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         }
 
         // Deref local vars + Check if var_bufs RC == 0 (if so free)
-        deref_local_vars(fc, retv, false, false);
+        deref_local_vars(fc, retv, NULL);
 
         //
         str_append_chars(fc->tkn_buffer, "return ");
@@ -746,36 +740,45 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
     } else if (token->type == tkn_ifnull) {
         //
         TokenIfNull *ifn = token->item;
+
+        char *left = ifn->name;
+
         str_append_chars(fc->tkn_buffer, "if(");
-        str_append_chars(fc->tkn_buffer, ifn->name);
+        str_append_chars(fc->tkn_buffer, left);
         str_append_chars(fc->tkn_buffer, " == (void*)0) {\n");
 
-        if (ifn->type == or_value) {
-            fc_write_c_value(fc, ifn->value, true);
-            str_append_chars(fc->tkn_buffer, ifn->name);
+        char *buf = fc_write_c_ort(fc, ifn->ort);
+
+        if (buf) {
+            str_append_chars(fc->tkn_buffer, left);
             str_append_chars(fc->tkn_buffer, " = ");
-            str_append(fc->tkn_buffer, fc->value_buffer);
+            str_append_chars(fc->tkn_buffer, buf);
             str_append_chars(fc->tkn_buffer, ";\n");
-        } else if (ifn->type == or_throw) {
-            str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = \"");
-            str_append_chars(fc->tkn_buffer, ifn->throw_msg);
-            str_append_chars(fc->tkn_buffer, "\";\n");
-            Scope *scope = fc->current_scope;
-            scope = get_func_scope(scope);
-            if (scope->func->return_type == NULL) {
-                str_append_chars(fc->tkn_buffer, "return;\n");
-            } else if (scope->func->return_type->is_pointer) {
-                str_append_chars(fc->tkn_buffer, "return (void*)0;\n");
-            } else {
-                str_append_chars(fc->tkn_buffer, "return 0;\n");
+            free(buf);
+
+            LocalVar *lv = ifn->idf->item;
+            Type *type = lv->type;
+
+            if (type->class && type->class->ref_count) {
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, "->_RC++;\n");
             }
         }
 
-        if (ifn->then_scope) {
-            fc_write_c_ast(fc, ifn->then_scope);
-        }
         str_append_chars(fc->tkn_buffer, " }\n");
         //
+    } else if (token->type == tkn_notnull) {
+        //
+        TokenNotNull *inn = token->item;
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, inn->name);
+        str_append_chars(fc->tkn_buffer, " != (void*)0) {\n");
+
+        if (inn->type == or_do) {
+            fc_write_c_ast(fc, inn->scope);
+        }
+
+        str_append_chars(fc->tkn_buffer, " }\n");
     } else if (token->type == tkn_while) {
         //
         TokenWhile *wt = token->item;
@@ -786,12 +789,18 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         fc_write_c_ast(fc, wt->scope);
         str_append_chars(fc->tkn_buffer, "}\n\n");
     } else if (token->type == tkn_break) {
+        Scope *scope = fc->current_scope;
+        scope = get_loop_scope(scope);
+        deref_local_vars(fc, NULL, scope);
         str_append_chars(fc->tkn_buffer, "break;\n");
     } else if (token->type == tkn_continue) {
+        Scope *scope = fc->current_scope;
+        scope = get_loop_scope(scope);
+        deref_local_vars(fc, NULL, scope);
         str_append_chars(fc->tkn_buffer, "continue;\n");
     } else if (token->type == tkn_throw) {
         TokenThrow *tt = token->item;
-        str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = \"");
+        str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = \"");
         str_append_chars(fc->tkn_buffer, tt->msg);
         str_append_chars(fc->tkn_buffer, "\";\n");
         if (tt->return_type == NULL) {
@@ -801,52 +810,6 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         } else {
             str_append_chars(fc->tkn_buffer, "return 0;\n");
         }
-    } else if (token->type == tkn_set_threaded) {
-        TokenIdValue *iv = token->item;
-
-        fc_write_c_value(fc, iv->value, true);
-
-        str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
-        str_append_chars(fc->tkn_buffer, iv->name);
-        str_append_chars(fc->tkn_buffer, ",");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ");\n");
-
-    } else if (token->type == tkn_mutex_init) {
-        Value *val = token->item;
-
-        fc_write_c_value(fc, val, true);
-
-        // str_append_chars(fc->tkn_buffer, "pthread_mutexattr_t ma;\n");
-        // str_append_chars(fc->tkn_buffer, "pthread_mutexattr_init(&ma);\n");
-        // str_append_chars(
-        //     fc->tkn_buffer,
-        //     "pthread_mutexattr_setpshared(&ma, PTHREAD_PROCESS_SHARED);\n");
-        // str_append_chars(
-        //     fc->tkn_buffer,
-        //     "pthread_mutexattr_setpshared(&ma, PTHREAD_MUTEX_ROBUST);\n");
-
-        str_append_chars(fc->tkn_buffer, "pthread_mutex_init(");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ", (void*)0);\n");
-
-    } else if (token->type == tkn_mutex_lock) {
-        Value *val = token->item;
-
-        fc_write_c_value(fc, val, true);
-
-        str_append_chars(fc->tkn_buffer, "pthread_mutex_lock(&");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ");\n");
-
-    } else if (token->type == tkn_mutex_unlock) {
-        Value *val = token->item;
-
-        fc_write_c_value(fc, val, true);
-
-        str_append_chars(fc->tkn_buffer, "pthread_mutex_unlock(&");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ");\n");
 
     } else if (token->type == tkn_free) {
         fc_write_c_value(fc, token->item, true);
@@ -854,6 +817,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ");\n");
     } else if (token->type == tkn_value) {
+        Value *val = token->item;
         fc_write_c_value(fc, token->item, true);
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ";\n");
@@ -874,6 +838,94 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
     //
     fc->tkn_buffer = prev_buf;
     fc->before_tkn_buffer = prev_before_buf;
+}
+
+char *fc_write_c_ort(FileCompiler *fc, OrToken *ort) {
+    //
+    char *buf = NULL;
+    if (ort->type == or_value) {
+        buf = strdup(var_buf(fc));
+        fc_write_c_type(fc->tkn_buffer, ort->primary_type, buf);
+        str_append_chars(fc->tkn_buffer, ";\n");
+    }
+
+    if (ort->type == or_value) {
+        if (ort->vscope) {
+            fc_write_c_type(fc->tkn_buffer, ort->vscope->vscope_return_type, ort->vscope->vscope_vname);
+            str_append_chars(fc->tkn_buffer, ";\n");
+        }
+    }
+
+    str_append_chars(fc->tkn_buffer, "if(1){");
+
+    if (ort->type == or_value) {
+        if (ort->vscope) {
+            fc_write_c_ast(fc, ort->vscope);
+        } else {
+            fc_write_c_value(fc, ort->value, true);
+            str_append_chars(fc->tkn_buffer, buf);
+            str_append_chars(fc->tkn_buffer, " = ");
+            str_append(fc->tkn_buffer, fc->value_buffer);
+            str_append_chars(fc->tkn_buffer, ";\n");
+        }
+    } else if (ort->type == or_return) {
+
+        if (ort->vscope) {
+            fc_write_c_ast(fc, ort->vscope);
+        } else {
+            if (ort->value) {
+                fc_write_c_value(fc, ort->value, true);
+            }
+            Scope *fscope = get_func_scope(fc->current_scope);
+            deref_local_vars(fc, ort->value, fscope);
+            str_append_chars(fc->tkn_buffer, "return ");
+            if (ort->value) {
+                str_append(fc->tkn_buffer, fc->value_buffer);
+            }
+            str_append_chars(fc->tkn_buffer, ";\n");
+        }
+    } else if (ort->type == or_exit) {
+        str_append_chars(fc->tkn_buffer, "exit(1);\n");
+    } else if (ort->type == or_panic) {
+        str_append_chars(fc->tkn_buffer, "exit(1);\n");
+    } else if (ort->type == or_throw) {
+        str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = \"");
+        str_append_chars(fc->tkn_buffer, ort->error->msg);
+        str_append_chars(fc->tkn_buffer, "\";\n");
+        Scope *scope = fc->current_scope;
+        scope = get_func_scope(scope);
+        if (scope->func->return_type == NULL) {
+            str_append_chars(fc->tkn_buffer, "return;\n");
+        } else if (scope->func->return_type->is_pointer) {
+            str_append_chars(fc->tkn_buffer, "return (void*)0;\n");
+        } else {
+            str_append_chars(fc->tkn_buffer, "return 0;\n");
+        }
+    } else if (ort->type == or_break) {
+        Scope *scope = get_loop_scope(fc->current_scope);
+        deref_local_vars(fc, NULL, scope);
+        str_append_chars(fc->tkn_buffer, "break;\n");
+    } else if (ort->type == or_continue) {
+        Scope *scope = get_loop_scope(fc->current_scope);
+        deref_local_vars(fc, NULL, scope);
+        str_append_chars(fc->tkn_buffer, "continue;\n");
+    }
+
+    str_append_chars(fc->tkn_buffer, " }\n");
+
+    if (ort->type == or_value) {
+        if (ort->vscope) {
+            str_append_chars(fc->tkn_buffer, ort->vscope->vscope_vname);
+            str_append_chars(fc->tkn_buffer, "_GOTO:\n");
+
+            str_append_chars(fc->tkn_buffer, buf);
+            str_append_chars(fc->tkn_buffer, " = ");
+            str_append_chars(fc->tkn_buffer, ort->vscope->vscope_vname);
+            str_append_chars(fc->tkn_buffer, ";\n");
+        }
+    }
+
+    return buf;
 }
 
 char *indenter;
@@ -920,9 +972,20 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         str_append_chars(result, ")");
     } else if (value->type == vt_var) {
         str_append_chars(result, value->item);
+    } else if (value->type == vt_threaded_global) {
+        //
+        GlobalVar *gv = value->item;
+
+        str_append_chars(result, "pthread_getspecific(");
+        str_append_chars(result, gv->cname);
+        str_append_chars(result, ")");
+        //
+    } else if (value->type == vt_shared_global) {
+        //
+        GlobalVar *gv = value->item;
+        str_append_chars(result, gv->cname);
+        //
     } else if (value->type == vt_arg) {
-        str_append_chars(result, value->item);
-    } else if (value->type == vt_mutex) {
         str_append_chars(result, value->item);
     } else if (value->type == vt_number) {
         str_append_chars(result, value->item);
@@ -1015,7 +1078,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             if (fa->arg_values->length > 0) {
                 str_append_chars(result, ", ");
             }
-            str_append_chars(result, "_KI_THROW_MSG_BUF");
+            str_append_chars(result, "&_KI_THROW_MSG_BUF");
         }
         str_append_chars(result, ")");
 
@@ -1031,11 +1094,20 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             //
             result->length = 0;
             // Check error
+
+            if (fa->error_type == or_value && fa->or_scope) {
+                fc_write_c_type(fc->tkn_buffer, fa->or_scope->vscope_return_type, fa->or_scope->vscope_vname);
+                str_append_chars(fc->tkn_buffer, ";\n");
+            }
+
             str_append_chars(fc->tkn_buffer, "if(_KI_THROW_MSG_BUF){\n");
-            str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
+            if (fa->error_type != or_pass) {
+                str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
+            }
             //
             if (fa->error_type == or_pass) {
-                str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = _KI_THROW_MSG_BUF;\n");
+                str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = _KI_THROW_MSG_BUF;\n");
+                str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
                 Type *rett = fa->func_scope->func->return_type;
                 if (rett == NULL) {
                     str_append_chars(fc->tkn_buffer, "return;\n");
@@ -1046,24 +1118,45 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
                 }
             } else if (fa->error_type == or_return) {
                 Value *orv = fa->or_value;
-                fc_write_c_value(fc, orv, false);
                 //
-                deref_local_vars(fc, orv, false, false);
+                fc->current_scope = fa->or_scope;
+                fc_write_c_value(fc, orv, false);
+                Scope *fscope = get_func_scope(fc->current_scope);
+                deref_local_vars(fc, orv, fscope);
+                fc->current_scope = fa->or_scope->parent;
                 //
                 str_append_chars(fc->tkn_buffer, "return ");
                 str_append(fc->tkn_buffer, fc->value_buffer);
                 str_append_chars(fc->tkn_buffer, ";\n");
             } else if (fa->error_type == or_value) {
-                Value *orv = fa->or_value;
-                fc_write_c_value(fc, orv, false);
-                if (value->return_type) {
+                if (fa->or_scope) {
+                    str_append_chars(fc->tkn_buffer, "char* ");
+                    str_append_chars(fc->tkn_buffer, fa->or_error_vn);
+                    str_append_chars(fc->tkn_buffer, " = _KI_THROW_MSG_BUF;\n");
+
+                    fc_write_c_ast(fc, fa->or_scope);
+
+                    fc->current_scope = fa->or_scope;
+                    deref_local_vars(fc, value, fa->or_scope);
+                    fc->current_scope = fa->or_scope->parent;
+
+                    str_append_chars(fc->tkn_buffer, fa->or_scope->vscope_vname);
+                    str_append_chars(fc->tkn_buffer, "_GOTO:\n");
+
                     str_append_chars(fc->tkn_buffer, buf_var_name);
                     str_append_chars(fc->tkn_buffer, " = ");
+                    str_append_chars(fc->tkn_buffer, fa->or_scope->vscope_vname);
+                    str_append_chars(fc->tkn_buffer, ";\n");
+                } else {
+                    Value *orv = fa->or_value;
+                    fc_write_c_value(fc, orv, false);
+                    str_append_chars(fc->tkn_buffer, buf_var_name);
+                    str_append_chars(fc->tkn_buffer, " = ");
+                    str_append(fc->tkn_buffer, fc->value_buffer);
+                    str_append_chars(fc->tkn_buffer, ";\n");
                 }
-                str_append(fc->tkn_buffer, fc->value_buffer);
-                str_append_chars(fc->tkn_buffer, ";\n");
             } else if (fa->error_type == or_throw) {
-                str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG = \"");
+                str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = \"");
                 str_append_chars(fc->tkn_buffer, fa->throw_msg);
                 str_append_chars(fc->tkn_buffer, "\";\n");
                 Type *rett = fa->func_scope->func->return_type;
@@ -1293,7 +1386,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             free(defv);
         }
 
-        deref_local_vars(fc, NULL, false, false);
+        deref_local_vars(fc, NULL, fc->current_scope);
 
         str_append(fc->c_code_after, fc->tkn_buffer);
         free_str(fc->tkn_buffer);
@@ -1497,13 +1590,6 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         str_append_chars(fc->tkn_buffer, var_name);
         str_append_chars(fc->tkn_buffer, ");\n");
 
-        // free (if Task has ref counting enabled)
-        // VarInfo* vi = malloc(sizeof(VarInfo));
-        // vi->name = var_name;
-        // vi->return_type = value->return_type;
-
-        // array_push(fc->var_bufs, vi);
-
         // Set cache back
         fc->value_buffer->length = 0;
         str_append_chars(fc->value_buffer, cache);
@@ -1534,11 +1620,6 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         char *name = fc_write_c_get_allocator(fc, sizei, true);
         str_append_chars(result, name);
         str_append_chars(result, "()");
-    } else if (value->type == vt_get_threaded) {
-        char *name = value->item;
-        str_append_chars(result, "pthread_getspecific(");
-        str_append_chars(result, name);
-        str_append_chars(result, ")");
     } else {
         fc_error(fc, "Unhandled value token (compiler bug)", NULL);
     }
@@ -1690,7 +1771,7 @@ char *var_buf(FileCompiler *fc) {
     return fc->var_buf;
 }
 
-void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once) {
+void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
     //
     char *ignore_vbuf = NULL;
     if (retv && retv->return_type->class && retv->return_type->class->ref_count) {
@@ -1780,14 +1861,10 @@ void deref_local_vars(FileCompiler *fc, Value *retv, bool until_loop, bool once)
             ignore_vbuf = NULL;
         }
 
-        if (once && c == 1) {
-            break;
-        }
-
         if (scope->is_func) {
             break;
         }
-        if (until_loop && scope->in_loop) {
+        if (until_scope && scope == until_scope) {
             break;
         }
 

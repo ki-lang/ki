@@ -17,7 +17,6 @@ void fc_scan_values() {
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
             fc_scan_args_and_props(fc);
-            fc_scan_threaded_globals(fc);
         }
     }
 
@@ -33,6 +32,7 @@ void fc_scan_values() {
             // map_print_keys(class->props);
         }
     }
+
     // Scan class prop values
     for (int x = 0; x < c_identifiers->keys->length; x++) {
         IdentifierFor *idf = array_get_index(c_identifiers->values, x);
@@ -43,6 +43,15 @@ void fc_scan_values() {
             fc_scan_class_prop_values(class);
         }
     }
+
+    // Scan globals
+    for (int i = 0; i < packages->keys->length; i++) {
+        PkgCompiler *pkc = array_get_index(packages->values, i);
+        for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+            FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+            fc_scan_globals(fc);
+        }
+    }
 }
 
 void fc_scan_args_and_props(FileCompiler *fc) {
@@ -50,11 +59,13 @@ void fc_scan_args_and_props(FileCompiler *fc) {
     for (int x = 0; x < fc->uses->keys->length; x++) {
         char *name = array_get_index(fc->uses->keys, x);
         FcUse *fcu = array_get_index(fc->uses->values, x);
+        fc->i = fcu->fc_i;
 
         IdentifierFor *idf = map_get(fcu->nsc->scope->identifiers, name);
 
         if (!idf) {
-            fc_error(fc, "Not found: '%s'\n", name);
+            map_print_keys(fcu->nsc->scope->identifiers);
+            fc_error(fc, "Use not found: '%s'\n", name);
         }
 
         map_set(fc->scope->identifiers, name, idf);
@@ -67,35 +78,25 @@ void fc_scan_args_and_props(FileCompiler *fc) {
     }
 }
 
-void fc_scan_threaded_globals(FileCompiler *fc) {
-    char *token = malloc(KI_TOKEN_MAX);
+void fc_scan_globals(FileCompiler *fc) {
+    //
+    for (int x = 0; x < fc->globals->length; x++) {
+        GlobalVar *gv = array_get_index(fc->globals, x);
 
-    for (int i = 0; i < fc->threaded_globals->length; i++) {
-        ThreadedGlobal *tg = array_get_index(fc->threaded_globals, i);
-        fc->i = tg->i;
-        tg->type = fc_read_type(fc, fc->scope);
-        fc_next_token(fc, token, false, true, true);
+        fc->i = gv->fc_i;
 
-        // Name
-        char *name = strdup(token);
-        IdentifierFor *idf = map_get(fc->nsc->scope->identifiers, name);
-        if (idf) {
-            fc_error(fc, "Name already used: %s", name);
+        gv->return_type = fc_read_type(fc, fc->scope);
+
+        IdentifierFor *idf = init_idf();
+        idf->type = gv->type == gv_threaded ? idfor_threaded_global : idfor_shared_global;
+        idf->item = gv;
+
+        Scope *scope = fc->nsc->scope;
+        map_set(scope->identifiers, gv->name, idf);
+        map_set(c_identifiers, gv->cname, idf);
+
+        if (!gv->return_type->nullable) {
+            fc_error(fc, "Global variables must be nullable (null is their default value)", NULL);
         }
-
-        tg->name = name;
-        fc_expect_token(fc, "=", false, true, true);
-        // Value
-        tg->default_value = fc_read_value(fc, fc->nsc->scope, false, true, true);
-        //
-        fc_expect_token(fc, ";", false, true, true);
-
-        // Set identifier
-        idf = init_idf();
-        idf->type = idfor_threaded_var;
-        idf->item = tg;
-        map_set(fc->nsc->scope->identifiers, name, idf);
     }
-
-    free(token);
 }

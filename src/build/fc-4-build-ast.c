@@ -41,7 +41,7 @@ void fc_build_asts() {
                 for (int y = 0; y < class->props->values->length; y++) {
                     char *name = array_get_index(class->props->keys, y);
                     ClassProp *prop = array_get_index(class->props->values, y);
-                    if (prop->is_func) {
+                    if (prop->is_func && prop->generate_code) {
                         Function *func = prop->func;
                         if (!fc->is_header) {
                             fc_build_ast(func->fc, func->scope);
@@ -82,16 +82,19 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
         }
 
         if (strcmp(token, "exit") == 0) {
-            fc_next_token(fc, token, false, true, true);
-            if (!is_valid_number(token)) {
-                fc_error(fc, "Invalid exit code '%s', allowed characters: [0-9]", token);
-            }
-
             Token *tk = init_token();
             tk->type = tkn_exit;
-            tk->item = strdup(token);
+            tk->item = fc_read_error_token(fc, err_exit, token);
             array_push(scope->ast, tk);
+            fc_expect_token(fc, ";", false, true, true);
+            continue;
+        }
 
+        if (strcmp(token, "panic") == 0) {
+            Token *tk = init_token();
+            tk->type = tkn_panic;
+            tk->item = fc_read_error_token(fc, err_panic, token);
+            array_push(scope->ast, tk);
             fc_expect_token(fc, ";", false, true, true);
             continue;
         }
@@ -114,6 +117,10 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
             token_ifnull(fc, scope);
             continue;
         }
+        if (strcmp(token, "notnull") == 0) {
+            token_notnull(fc, scope);
+            continue;
+        }
 
         if (strcmp(token, "while") == 0) {
             token_while(fc, scope);
@@ -124,34 +131,6 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
             token_throw(fc, scope);
             continue;
         }
-
-        if (strcmp(token, "static") == 0) {
-            token_static(fc, scope);
-            continue;
-        }
-
-        if (strcmp(token, "set_threaded") == 0) {
-            token_set_threaded(fc, scope);
-            continue;
-        }
-
-        if (strcmp(token, "mutex_init") == 0) {
-            token_mutex_init(fc, scope);
-            continue;
-        }
-        if (strcmp(token, "mutex_lock") == 0) {
-            token_mutex_lock(fc, scope);
-            continue;
-        }
-        if (strcmp(token, "mutex_unlock") == 0) {
-            token_mutex_unlock(fc, scope);
-            continue;
-        }
-
-        // if (strcmp(token, "free") == 0) {
-        //   token_free(fc, scope);
-        //   continue;
-        // }
 
         if (scope->in_loop) {
             if (strcmp(token, "break") == 0) {
@@ -186,7 +165,7 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
         // If generic read/skip generic types
         if (idf && idf->type == idfor_class) {
             Class *class = idf->item;
-            if (class->generic_names != NULL) {
+            if (class->generic_names != NULL && class->generic_hash == NULL) {
                 Class *gclass = fc_get_generic_class(fc, class, scope);
             }
         }
@@ -209,7 +188,7 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
 
         // Check if assign
         fc_next_token(fc, token, true, true, true);
-        if ((value->type == vt_arg || value->type == vt_var || value->type == vt_prop_access) && (strcmp(token, "=") == 0 || strcmp(token, "-=") == 0 || strcmp(token, "+=") == 0 || strcmp(token, "*=") == 0 || strcmp(token, "/=") == 0 || strcmp(token, "\%=") == 0)) {
+        if ((value->type == vt_arg || value->type == vt_var || value->type == vt_shared_global || value->type == vt_threaded_global || value->type == vt_prop_access) && (strcmp(token, "=") == 0 || strcmp(token, "-=") == 0 || strcmp(token, "+=") == 0 || strcmp(token, "*=") == 0 || strcmp(token, "/=") == 0 || strcmp(token, "\%=") == 0)) {
             //
             if (value->type == vt_prop_access) {
                 ValueClassPropAccess *pa = value->item;

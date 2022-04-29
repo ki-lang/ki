@@ -73,7 +73,7 @@ Type *fc_read_type(FileCompiler *fc, Scope *scope) {
 
     // enum
     if (t->class) {
-        if (t->class->generic_names != NULL) {
+        if (t->class->generic_names != NULL && t->class->generic_hash == NULL) {
             // Generic class
             Class *gclass = fc_get_generic_class(fc, t->class, scope);
             t->class = gclass;
@@ -96,15 +96,13 @@ Type *fc_read_type(FileCompiler *fc, Scope *scope) {
     }
 
     //
-    t->nullable = nullable;
+    if (nullable) {
+        fc_type_make_nullable(fc, t);
+    }
     t->npt = npt;
 
     if (t->npt && t->type != type_struct) {
         fc_error(fc, "NPT (not pointer type) can only be applied to class instances", NULL);
-    }
-
-    if (t->nullable && !t->is_pointer) {
-        fc_error(fc, "Invalid type, only pointer types can be null: '%s'", token);
     }
 
     if (t->npt) {
@@ -128,6 +126,14 @@ Type *fc_read_type(FileCompiler *fc, Scope *scope) {
     free_id(id);
     free(token);
     return t;
+}
+
+void fc_type_make_nullable(FileCompiler *fc, Type *t) {
+    //
+    if (t->nullable && !t->is_pointer) {
+        fc_error(fc, "Invalid type, only pointer types can be null", NULL);
+    }
+    t->nullable = true;
 }
 
 Type *fc_identifier_to_type(FileCompiler *fc, Identifier *id, Scope *scope) {
@@ -189,6 +195,7 @@ Type *fc_identifier_to_type(FileCompiler *fc, Identifier *id, Scope *scope) {
             t->class = idf->item;
             t->bytes = pointer_size;
             t->allow_math = true;
+            t->nullable = true;
         } else if (strcmp(id->name, "bool") == 0) {
             t->type = type_bool;
             IdentifierFor *idf = idf_find_in_scope(scope, id);
@@ -281,8 +288,13 @@ bool type_compatible(Type *t1, Type *t2) {
             if (!t2->class->is_number) {
                 return false;
             }
-        } else if (t1->class != t2->class) {
-            return false;
+        } else {
+            if (t1->class != t2->class) {
+                return false;
+            }
+            if (t1->class->generic_hash != t2->class->generic_hash) {
+                return false;
+            }
         }
     }
     return true;

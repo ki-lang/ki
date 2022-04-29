@@ -68,6 +68,23 @@ bool fc_resolve_macro_if_value(FileCompiler *fc, Scope *scope) {
         } else {
             fc_skip_until_char(fc, '\n');
         }
+    } else if (strcmp(token, "IS_NULLABLE_TYPE") == 0) {
+        if (!allow_new_namespaces) {
+            Type *type = fc_read_type(fc, scope);
+            if (type->nullable)
+                return true;
+        } else {
+            fc_skip_until_char(fc, '\n');
+        }
+    } else if (strcmp(token, "IS_REFCOUNTED_TYPE") == 0) {
+        if (!allow_new_namespaces) {
+            Type *type = fc_read_type(fc, scope);
+            Class *class = type->class;
+            if (class && class->ref_count)
+                return true;
+        } else {
+            fc_skip_until_char(fc, '\n');
+        }
     } else {
         // Check if var exists and equals to "1"
         char *value = map_get(macro_defines, token);

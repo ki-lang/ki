@@ -5,6 +5,7 @@ Function *init_func() {
     Function *func = malloc(sizeof(Function));
     func->fc = NULL;
     func->can_error = false;
+    func->generate_code = true;
     func->args = array_make(2);
     func->args_i = 0;
     func->args_i_end = 0;

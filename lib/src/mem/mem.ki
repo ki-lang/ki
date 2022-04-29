@@ -14,18 +14,21 @@ func alloc(uxx size) ptr {
 	ptr allocators = KI_ALLOCATORS;
 
 	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
-	if(alc == null){
+	ifnull alc set {
 		@ mut = KI_ALLOCATORS_MUT;
 		mut.lock();
 
 		alc = getptrv (allocators + pow * 8) as ?Allocator;
 
-		if(alc == null){
-			alc = Allocator.make(psize + 1);
-			setptrv (allocators + pow * 8) to alc;
+		ifnull alc set {
+			@ x = Allocator.make(psize + 1);
+			setptrv (allocators + pow * 8) to x;
+			return x;
 		}
 
 		mut.unlock();
+
+		return alc;
 	}
 
 	ptr adr = alc.get_chunk();
@@ -41,10 +44,7 @@ func free(ptr adr) {
 
 	@ alc = getptrv (allocators + pow * 8) as ?Allocator;
 
-	if(alc == null){
-		// Something went wrong
-		return;
-	}
+	ifnull alc return;
 
 	alc.free(adr);
 }

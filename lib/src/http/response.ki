@@ -13,6 +13,8 @@ class Response {
 		data = data.__add("\r\n\r\n");
 		data = data.__add(this.body);
 
+		//@ data = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:" + this.body.length.str() + "\r\n\r\n" + this.body;
+
 		return data;
 	}
 

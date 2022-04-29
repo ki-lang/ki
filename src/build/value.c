@@ -41,6 +41,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         value->type = vt_null;
         Type *type = init_type();
         type->type = type_null;
+        type->nullable = true;
         value->return_type = type;
     } else if (strcmp(token, "true") == 0) {
         value->type = vt_true;
@@ -57,7 +58,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         int size = 0;
         if (idf->type == idfor_class) {
             Class *class = idf->item;
-            if (class->generic_names != NULL) {
+            if (class->generic_names != NULL && class->generic_hash == NULL) {
                 // Generic class
                 class = fc_get_generic_class(fc, class, scope);
             }
@@ -66,9 +67,9 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             size = 4;
         } else if (idf->type == idfor_func) {
             size = pointer_size;
-        } else if (idf->type == idfor_var) {
-            Type *type = idf->item;
-            size = type->bytes;
+        } else if (idf->type == idfor_local_var) {
+            LocalVar *lv = idf->item;
+            size = lv->type->bytes;
         } else if (idf->type == idfor_arg) {
             Type *type = idf->item;
             size = type->bytes;
@@ -173,38 +174,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "u32"), NULL);
 
         fc_expect_token(fc, "'", false, true, false);
-        // } else if (strcmp(token, "_") == 0 && fc_get_char(fc, 0) == ':') {
-        //   // imported global access
-        //   fc->i++;
-        //   fc_next_token(fc, token, false, true, false);
-        //   if (!is_valid_varname(token)) {
-        //     fc_error(fc, "Invalid identifier: '%s'", token);
-        //   }
-
-        //   if (strcmp(token, "struct") == 0) {
-        //   }
-
-        //   IdentifierFor* idf = map_get(c_identifiers, token);
-        //   if (idf == NULL) {
-        //     fc_error(fc, "Unknown variable/function: '%s'", token);
-        //   }
-
-        //   if (idf->type == idfor_func) {
-        //     Function* func = idf->item;
-        //     value->type = vt_var;
-        //     value->item = strdup(token);
-        //     Type* t = init_type();
-        //     t->type = type_funcref;
-        //     t->func = func;
-        //     value->return_type = t;
-        //   } else if (idf->type == idfor_var) {
-        //     value->type = vt_var;
-        //     value->item = strdup(token);
-        //     value->return_type = idf->item;
-        //   } else {
-        //     fc_error(fc, "Unhandled identifier (compiler import bug): '%s'",
-        //     token);
-        //   }
 
     } else if (is_valid_number(token) || strcmp(token, "-") == 0) {
         bool negative = strcmp(token, "-") == 0;
@@ -327,21 +296,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         value->type = vt_allocator;
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "mem", "Allocator"), NULL);
 
-    } else if (strcmp(token, "get_threaded") == 0) {
-        Identifier *id = fc_read_identifier(fc, false, true, true);
-        Scope *idf_scope = fc_get_identifier_scope(fc, fc->scope, id);
-        IdentifierFor *idf = idf_find_in_scope(idf_scope, id);
-
-        if (!idf || idf->type != idfor_threaded_var) {
-            fc_error(fc, "Cannot find threaded global variable: %s", id->name);
-        }
-
-        ThreadedGlobal *tg = idf->item;
-
-        value->type = vt_get_threaded;
-        value->item = fc_create_identifier_global_cname(fc, id);
-        value->return_type = tg->type;
-
     } else if (strcmp(token, "PTRSIZE") == 0) {
         char *num = malloc(16);
         sprintf(num, "%d", pointer_size);
@@ -351,25 +305,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "u16"), NULL);
 
     } else if (is_valid_varname(token)) {
+
         IdentifierFor *idf = NULL;
-        // if (strcmp(token, "c") == 0 && fc_get_char(fc, 0) == ':') {
-        //   // C namespace
-        //   fc->i++;  // skip ":"
-        //   fc_next_token(fc, token, false, true, false);
-
-        //   if (strcmp(token, "struct") == 0) {
-        //     fc_next_token(fc, token, false, true, true);
-        //     idf = map_get(c_struct_identifiers, token);
-        //   } else {
-        //     idf = map_get(c_identifiers, token);
-        //   }
-
-        // } else {
         fc->i -= strlen(token);
         Identifier *id = fc_read_identifier(fc, false, true, true);
         Scope *idf_scope = fc_get_identifier_scope(fc, scope, id);
         idf = idf_find_in_scope(idf_scope, id);
-        // }
         if (idf == NULL) {
             fc_error(fc, "Unknown variable/function/class/enum: %s", id->name);
         }
@@ -403,28 +344,29 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->item = enuv;
             value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"), NULL);
 
-        } else if (idf->type == idfor_var) {
+        } else if (idf->type == idfor_local_var) {
+            LocalVar *lv = idf->item;
             value->type = vt_var;
-            value->item = strdup(token);
-            value->return_type = idf->item;
+            value->item = lv->gen_name;
+            value->return_type = lv->type;
+        } else if (idf->type == idfor_threaded_global) {
+            GlobalVar *gv = idf->item;
+            value->type = vt_threaded_global;
+            value->item = gv;
+            value->return_type = gv->return_type;
+        } else if (idf->type == idfor_shared_global) {
+            GlobalVar *gv = idf->item;
+            value->type = vt_shared_global;
+            value->item = gv;
+            value->return_type = gv->return_type;
         } else if (idf->type == idfor_arg) {
             value->type = vt_arg;
             value->item = strdup(token);
             value->return_type = idf->item;
-        } else if (idf->type == idfor_static_var) {
-            TokenStaticDeclare *decl = idf->item;
-            value->type = vt_var;
-            value->item = decl->name;
-            value->return_type = decl->scope->func->return_type;
-        } else if (idf->type == idfor_mutex) {
-            // todo: check idf_scope is global
-            value->type = vt_mutex;
-            value->item = fc_create_identifier_global_cname(fc, id);
-            value->return_type = fc_identifier_to_type(fc, create_identifier("main", "main", "pthread_mutex_t"), NULL);
         } else if (idf->type == idfor_class) {
             // class init or static func or prop access
             Class *class = idf->item;
-            if (class->generic_names != NULL) {
+            if (class->generic_names != NULL && class->generic_hash == NULL) {
                 // Generic class
                 Class *gclass = fc_get_generic_class(fc, class, scope);
                 class = gclass;
@@ -478,6 +420,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                     fc_expect_token(fc, ":", false, true, true);
 
                     Value *value = fc_read_value(fc, scope, false, true, true);
+
+                    fc_type_compatible(fc, prop->return_type, value->return_type);
 
                     fc_next_token(fc, token, false, false, true);
                     if (strcmp(token, ",") == 0) {
@@ -542,7 +486,19 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 value = init_value();
                 value->type = vt_number;
                 value->item = enuv;
-                value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"), NULL);
+
+                if (fc_get_char(fc, 0) == '#') {
+                    fc->i++;
+                    value->return_type = fc_read_type(fc, scope);
+                    if (value->return_type->type == type_number) {
+                        fc_error(fc, "Must be a number type", NULL);
+                    }
+                } else {
+                    Type *type = init_type();
+                    type->type = type_enum;
+                    type->enu = enu;
+                    value->return_type = type;
+                }
 
             } else if (value->return_type->class) {
                 // Class
@@ -555,6 +511,9 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 }
                 if (prop->is_static) {
                     fc_error(fc, "Property is static: '%s'", prop_name);
+                }
+                if (value->return_type->nullable) {
+                    fc_error(fc, "Accessing property on value with nullable type is not allowed", NULL);
                 }
 
                 Scope *class_scope = get_class_scope(scope);
@@ -746,6 +705,9 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
     fcall->error_type = or_none;
     fcall->or_value = NULL;
     fcall->func_scope = NULL;
+    fcall->throw_msg = NULL;
+    fcall->or_scope = NULL;
+    fcall->or_error_vn = NULL;
 
     Value *value = init_value();
     value->type = vt_func_call;
@@ -815,11 +777,62 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
             fcall->error_type = or_pass;
         } else if (strcmp(token, "value") == 0) {
             fcall->error_type = or_value;
-            fcall->or_value = fc_read_value(fc, scope, false, true, true);
-            if (fcall->or_value->return_type->nullable) {
-                value->return_type->nullable = true;
+
+            fc_next_token(fc, token, true, true, true);
+            if (strcmp(token, "|") == 0) {
+                // Value scope
+
+                fc_next_token(fc, token, false, true, true);
+                fc_next_token(fc, token, false, true, true);
+
+                if (!is_valid_varname(token)) {
+                    fc_error(fc, "Invalid variable name for the error", NULL);
+                }
+                fc_name_taken(fc, scope->identifiers, token);
+                fcall->or_error_vn = strdup(token);
+
+                fc_expect_token(fc, "|", false, false, true);
+                fc_expect_token(fc, "{", false, false, true);
+
+                GEN_C++;
+                char *vname = malloc(64);
+                sprintf(vname, "_KI_VSCOPE_VN_%d", GEN_C);
+
+                Scope *or_scope = init_sub_scope(scope);
+                or_scope->body_i = fc->i;
+                or_scope->vscope_vname = vname;
+                fcall->or_scope = or_scope;
+
+                Type *errtype = init_type();
+                errtype->type = type_throw_msg;
+
+                IdentifierFor *idf = init_idf();
+                idf->type = idfor_local_var;
+                idf->item = fc_localvar(fc, fcall->or_error_vn, errtype);
+
+                map_set(or_scope->identifiers, fcall->or_error_vn, idf);
+
+                fc_build_ast(fc, fcall->or_scope);
+
+                // Check types
+                if (fcall->or_scope->vscope_return_type == NULL) {
+                    fc_error(fc, "Scope did not return a value", NULL);
+                }
+
+                if (fcall->or_scope->vscope_return_type->nullable) {
+                    fc_type_make_nullable(fc, value->return_type);
+                }
+
+                fc_type_compatible(fc, value->return_type, fcall->or_scope->vscope_return_type);
+
+            } else {
+                // Just a value
+                fcall->or_value = fc_read_value(fc, scope, false, true, true);
+                if (fcall->or_value->return_type->nullable) {
+                    value->return_type->nullable = true;
+                }
+                fc_type_compatible(fc, value->return_type, fcall->or_value->return_type);
             }
-            fc_type_compatible(fc, value->return_type, fcall->or_value->return_type);
         } else if (strcmp(token, "return") == 0) {
             fcall->error_type = or_return;
             fcall->or_value = fc_read_value(fc, scope, false, true, true);
@@ -827,6 +840,8 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                 value->return_type->nullable = true;
             }
             fc_type_compatible(fc, func_scope->func->return_type, fcall->or_value->return_type);
+            Scope *or_scope = init_sub_scope(scope);
+            fcall->or_scope = or_scope;
         } else if (strcmp(token, "throw") == 0) {
             fcall->error_type = or_throw;
             fc_next_token(fc, token, false, true, true);

@@ -9,3 +9,4 @@ bool is_valid_number(char *str);
 bool is_valid_macro_number(char *str);
 bool is_hex_char(char c);
 bool is_valid_hex_number(char *str);
+bool starts_with(const char *full, const char *chunk);

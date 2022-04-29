@@ -25,7 +25,7 @@ class addrinfo norfc {
     public ixx ai_addrlen;
     public sockaddr ai_addr;
     public ptr ai_canonname;
-    public addrinfo ai_next;
+    public ?addrinfo ai_next;
 }
 
 class os_fd_set norfc {

@@ -61,10 +61,8 @@ typedef struct FileCompiler {
     struct Array *functions;
     struct Array *classes;
     struct Array *enums;
-    struct Array *threaded_globals;
-    struct Array *mutexes;
-    struct Array *static_vars;
     struct Array *strings;
+    struct Array *globals;
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
@@ -84,6 +82,9 @@ typedef struct Scope {
     int body_i_end;
     struct Array *ast;
     struct Scope *parent;
+    // Value scope
+    char *vscope_vname;
+    struct Type *vscope_return_type;
     //
     Array *var_bufs;
     Array *local_var_names;
@@ -110,14 +111,13 @@ typedef enum IdentifierForType {
     idfor_func,
     idfor_class,
     idfor_enum,
-    idfor_var,
+    idfor_local_var,
     idfor_type, // 5
     idfor_property,
     idfor_trait,
-    idfor_threaded_var,
-    idfor_static_var,
-    idfor_mutex,
     idfor_arg,
+    idfor_threaded_global,
+    idfor_shared_global,
 } IdentifierForType;
 
 //////////
@@ -130,6 +130,7 @@ typedef struct ContentChunk {
 typedef struct FcUse {
     PkgCompiler *pkc;
     NsCompiler *nsc;
+    int fc_i;
 } FcUse;
 
 typedef struct Class {
@@ -160,6 +161,7 @@ typedef struct ClassProp {
     int access_type;
     bool is_static;
     bool is_func;
+    bool generate_code;
     struct Type *return_type;
     struct Value *default_value;
     int value_i;
@@ -177,6 +179,7 @@ typedef struct Function {
     char *cname;
     struct FileCompiler *fc;
     bool can_error;
+    bool generate_code;
     //
     struct Array *args;
     struct Type *return_type;
@@ -193,6 +196,22 @@ typedef struct FunctionArg {
     struct Value *default_value;
 } FunctionArg;
 
+typedef struct GlobalVar {
+    int fc_i;
+    int type;
+    struct Type *return_type;
+    char *name;
+    char *cname;
+    int or_type;
+    Scope *vscope;
+    char *error_msg;
+} GlobalVar;
+
+typedef enum GlobalVarType {
+    gv_shared,
+    gv_threaded,
+} GlobalVarType;
+
 typedef struct Trait {
     char *cname;
     struct FileCompiler *fc;
@@ -204,18 +223,6 @@ typedef struct Enum {
     char *name;
     struct Map *values;
 } Enum;
-
-typedef struct ThreadedGlobal {
-    int i;
-    struct Type *type;
-    char *name;
-    struct Value *default_value;
-} ThreadedGlobal;
-
-typedef struct Mutex {
-    char *name;
-    char *cname;
-} Mutex;
 
 //////////
 
@@ -253,6 +260,7 @@ typedef enum TypeType {
     type_enum,
     type_number,
     type_wildcard_args,
+    type_throw_msg,
 } TypeType;
 
 typedef struct Value {
@@ -282,9 +290,9 @@ typedef enum ValueType {
     vt_async,
     vt_await,
     vt_allocator, // 20
-    vt_get_threaded,
-    vt_mutex,
     vt_arg,
+    vt_threaded_global,
+    vt_shared_global,
 } ValueType;
 
 typedef struct ValueFuncCall {
@@ -294,7 +302,31 @@ typedef struct ValueFuncCall {
     Value *or_value;
     char *throw_msg;
     Scope *func_scope;
+    Scope *or_scope;
+    char *or_error_vn;
 } ValueFuncCall;
+
+typedef struct ErrorToken {
+    int type;
+    char *msg;
+    char *filepath;
+    int line;
+    int col;
+} ErrorToken;
+
+typedef enum ErrorType {
+    err_throw,
+    err_exit,
+    err_panic,
+} ErrorType;
+
+typedef struct OrToken {
+    int type;
+    Scope *vscope;
+    Value *value;
+    ErrorToken *error;
+    Type *primary_type;
+} OrToken;
 
 typedef enum OrType {
     or_none,
@@ -302,6 +334,12 @@ typedef enum OrType {
     or_value,
     or_return,
     or_throw,
+    or_do,
+    or_set,
+    or_exit,
+    or_panic,
+    or_break,
+    or_continue,
 } OrType;
 
 typedef struct ValueOperator {
@@ -369,13 +407,15 @@ typedef struct Token {
 typedef enum TokenTypeEnum {
     tkn_unknown,
     tkn_return,
+    tkn_set_vscope_value,
     tkn_while,
     tkn_if,
-    tkn_ifnull,
+    tkn_ifnull, // 5
+    tkn_notnull,
     tkn_throw,
     tkn_break,
     tkn_continue,
-    tkn_free,
+    tkn_free, // 10
     tkn_value,
     tkn_declare,
     tkn_assign,
@@ -385,6 +425,7 @@ typedef enum TokenTypeEnum {
     tkn_mutex_lock,
     tkn_mutex_unlock,
     tkn_exit,
+    tkn_panic,
     tkn_each,
     // Global ast only
     tkn_func,
@@ -392,10 +433,16 @@ typedef enum TokenTypeEnum {
     //
 } TokenTypeEnum;
 
+typedef struct TokenSetVscopeValue {
+    char *vname;
+    Value *value;
+    Scope *vscope;
+} TokenSetVscopeValue;
+
 typedef struct TokenEach {
     Value *value;
-    char *kname;
-    char *vname;
+    struct LocalVar *kvar;
+    struct LocalVar *vvar;
     Scope *scope;
 } TokenEach;
 
@@ -409,22 +456,26 @@ typedef struct TokenIf {
 typedef struct TokenIfNull {
     int type;
     char *name;
-    Value *value;
-    struct Scope *then_scope;
-    char *throw_msg;
+    IdentifierFor *idf;
+    struct OrToken *ort;
+    // Value *set_value;
+    // struct Scope *then_scope;
+    // struct Scope *vscope;
+    // struct Scope *context_scope;
+    // char *throw_msg;
 } TokenIfNull;
+
+typedef struct TokenNotNull {
+    int type;
+    char *name;
+    struct Scope *scope;
+} TokenNotNull;
 
 typedef struct TokenWhile {
     Value *condition;
     struct Scope *scope;
 } TokenWhile;
 
-typedef struct TokenStaticDeclare {
-    char *name;
-    char *global_name;
-    struct Scope *scope;
-    struct Type *type;
-} TokenStaticDeclare;
 typedef struct TokenDeclare {
     char *name;
     struct Value *value;
@@ -440,6 +491,12 @@ typedef struct TokenThrow {
     char *msg;
     Type *return_type;
 } TokenThrow;
+
+typedef struct LocalVar {
+    char *name;
+    char *gen_name;
+    Type *type;
+} LocalVar;
 
 typedef struct VarInfo {
     char *name;

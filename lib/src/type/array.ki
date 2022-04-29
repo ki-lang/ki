@@ -13,7 +13,7 @@ class Array<T> {
 		return Array<T> { max_length: suggested_length, data: mem:calloc(suggested_length * sizeof(T)) };
 	}
 
-	public func push(T item) {
+	public func check_max_length() {
 		if(this.length == this.max_length){
 			if(this.max_length > 0){
 				this.max_length *= 2;
@@ -22,12 +22,58 @@ class Array<T> {
 			}
 			ptr new_data = mem:calloc(this.max_length * sizeof(T));
 			mem:copy(this.data, new_data, this.length * sizeof(T));
+			mem:free(this.data);
 			this.data = new_data;
 		}
+	}
+
+	public func push(T item) {
+		this.check_max_length();
 		ptr adr = this.data;
 		adr += this.length * sizeof(T);
 		setptrv adr to item;
 		this.length++;
+
+		#if IS_REFCOUNTED_TYPE T
+		#if IS_NULLABLE_TYPE T
+		if(item != null) {
+		#end
+		item._RC++;
+		#if IS_NULLABLE_TYPE T
+		}
+		#end
+		#end
+	}
+
+	// Function can be improve by keeping the same data ptr, but mem-copying backwards
+	public func prepend(T item) {
+
+		if(this.length == this.max_length){
+			if(this.max_length > 0){
+				this.max_length *= 2;
+			} else {
+				this.max_length = 1;
+			}
+		}
+
+		ptr new_data = mem:calloc(this.max_length * sizeof(T));
+		mem:copy(this.data, new_data + sizeof(T), this.length * sizeof(T));
+		mem:free(this.data);
+		this.data = new_data;
+
+		ptr adr = this.data;
+		setptrv adr to item;
+		this.length++;
+
+		#if IS_REFCOUNTED_TYPE T
+		#if IS_NULLABLE_TYPE T
+		if(item != null) {
+		#end
+		item._RC++;
+		#if IS_NULLABLE_TYPE T
+		}
+		#end
+		#end
 	}
 
 	public func remove(u32 index) {
@@ -40,15 +86,30 @@ class Array<T> {
 		this.length--;
 		ptr adr = this.data;
 		adr += index * sizeof(T);
+
+		@ item = getptrv adr as T;
+		#if IS_REFCOUNTED_TYPE T
+		#if IS_NULLABLE_TYPE T
+		if(item != null) {
+		#end
+		item._RC--;
+		if(item._RC == 0){
+			item.__free();
+		}
+		#if IS_NULLABLE_TYPE T
+		}
+		#end
+		#end
+
 		i32 size = (this.length - index) * sizeof(T);
 		if(size > 0){
 			mem:copy(adr + sizeof(T), adr, size);
 		}
 	}
 
-	public func get(u32 index) ?T {
+	public func get(u32 index) !T {
 		if(index >= this.length){
-			return null;
+			throw not_found;
 		}
 		ptr adr = this.data;
 		adr += index * sizeof(T);
@@ -71,12 +132,40 @@ class Array<T> {
 		throw not_found;
 	}
 
+	public func __free() {
+		uxx i = 0;
+		#if IS_REFCOUNTED_TYPE T
+		ptr adr = this.data;
+		while(i < this.length){
+			@ val = getptrv adr as T;
+
+			#if IS_NULLABLE_TYPE T
+			if(val != null) {
+			#end
+			val._RC--;
+			if(val._RC == 0){
+				val.__free();
+			}
+			#if IS_NULLABLE_TYPE T
+			}
+			#end
+
+			adr += sizeof(T);
+			i++;
+		}
+		#end
+
+		mem:free(this.data);
+
+		@ a = allocator sizeof(CLASS);
+		a.free(this);
+	}
+
 	public func __each_count() uxx {
 		return this.length;
 	}
 	public func __each_get(uxx index) !T {
-		@ item = this.get(index);
-		ifnull item throw not_found;
+		@ item = this.get(index) or pass;
 		return item;
 	}
 }

@@ -1,6 +1,8 @@
 
 namespace mem;
 
+#header "sys/thread"
+
 class AllocatorSettings norfc {
 	public u32 block_i = 0;
 	public u32 block_c = 0;
@@ -12,7 +14,7 @@ class Allocator norfc {
 	private ?ki:async:Threaded<AllocatorSettings> settings;
 
 	public static func make(u64 size) Allocator {
-		@ alc = cast (alloc_flat(64)) as Allocator;
+		@ alc = cast (calloc_flat(64)) as Allocator;
 		alc.size = size;
 		alc.settings = ki:async:Threaded<AllocatorSettings>.make();
 		return alc;
@@ -23,13 +25,17 @@ class Allocator norfc {
 	// (block_i,len:10,empty-count:1,empty-pos:1)|(pos){...}|(pos){NULL}|(pos){...}
 
 	private func get_settings() AllocatorSettings {
-		?AllocatorSettings settings = this.settings.get();
+		@ settings_t = cast this.settings as ki:async:Threaded<AllocatorSettings>;
+		@ settings = settings_t.get();
 
-		ifnull settings set cast (alloc_flat(16)) as AllocatorSettings then {
-			settings.block_i = 0;
-			settings.block_c = 0;
-			settings.blocks_ptr = alloc_flat(256 * 8);
-			this.settings.set(settings);
+		ifnull settings set {
+			@ x = cast (alloc_flat(16)) as AllocatorSettings;
+			x.block_i = 0;
+			x.block_c = 0;
+			x.blocks_ptr = alloc_flat(256 * 8);
+
+			settings_t.set(x);
+			return x;
 		}
 
 		return settings;
@@ -91,6 +97,7 @@ class Allocator norfc {
 			io:print("max block_c reached in allocator: ");
 			io:print(this.size.str());
 			io:print("\n");
+			main:main:raise(11);
 		}
 		
 		return new_block + 1 + 1; // skip empty_pos byte & skip value pos byte

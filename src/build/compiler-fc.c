@@ -43,10 +43,8 @@ FileCompiler *init_fc() {
     fc->classes = array_make(2);
     fc->functions = array_make(8);
     fc->enums = array_make(4);
-    fc->threaded_globals = array_make(4);
-    fc->mutexes = array_make(4);
-    fc->static_vars = array_make(2);
     fc->strings = array_make(8);
+    fc->globals = array_make(4);
     //
     fc->include_headers_from = array_make(10);
     return fc;
@@ -141,4 +139,14 @@ void fc_include_headers_from(FileCompiler *fc, FileCompiler *from) {
     if (!array_contains(fc->include_headers_from, from, "address")) {
         array_push(fc->include_headers_from, from);
     }
+}
+
+char *fc_localvar(FileCompiler *fc, char *name, Type *type) {
+    LocalVar *lv = malloc(sizeof(LocalVar));
+    fc->var_bufc++;
+    sprintf(fc->var_buf, "_KI_LVAR_%d_%s", fc->var_bufc, name);
+    lv->name = name;
+    lv->gen_name = strdup(fc->var_buf);
+    lv->type = type;
+    return lv;
 }

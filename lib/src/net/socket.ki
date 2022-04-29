@@ -37,15 +37,13 @@ class Socket {
 		i32 success = 0;
 
  		@ hints = main:main:addrinfo {
-			 ai_flags: Socket.FLAGS.passive,
-			 ai_family: Socket.IPTYPE.ipv4,
-			 ai_socktype: Socket.TYPE.stream,
-			 ai_protocol: Socket.PROTOCOL.http,
-			 //ai_protocol: 6,
+			 ai_flags: Socket.FLAGS.passive#i32,
+			 ai_family: Socket.IPTYPE.ipv4#i32,
+			 ai_socktype: Socket.TYPE.stream#i32,
+			 ai_protocol: Socket.PROTOCOL.http#i32,
 			 ai_addrlen: 16,
-			 ai_addr: null,
 			 ai_addr: main:main:sockaddr {
-				 sa_family: Socket.IPTYPE.ipv4,
+				 sa_family: Socket.IPTYPE.ipv4#i32,
 			 },
 			 ai_canonname: null,
 			 ai_next: null,
