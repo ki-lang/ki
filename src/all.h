@@ -33,6 +33,7 @@
 #include "headers/cmd-build-structs.h"
 //
 #include "headers/cmd-build.h"
+#include "headers/cmd-cache.h"
 #include "headers/cmd-pkg.h"
 #include "headers/commands.h"
 #include "headers/files.h"

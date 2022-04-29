@@ -21,11 +21,14 @@ int main(int argc, char *argv[]) {
         // Build
         cmd_build(args, options);
     } else if (strcmp(cmd, "pkg") == 0) {
-        // fmt
+        // Packages
         cmd_pkg(args, options);
     } else if (strcmp(cmd, "fmt") == 0) {
         // fmt
         // cmd_fmt(args, options);
+    } else if (strcmp(cmd, "cache") == 0) {
+        // Cache
+        cmd_cache(args, options);
     } else if (strcmp(cmd, "version") == 0) {
         printf("ki version 0.0.1");
         // Todo: print os-target and cpu-arch
@@ -78,11 +81,12 @@ Map *get_options_and_args(int argc, char *argv[], Map *option_has_value) {
 void main_print_help() {
     printf("Usage: ki [command] -h\n\n");
 
-    printf("Commands: build|pkg|fmt|version\n\n");
+    printf("Commands: build|pkg|fmt|cache|version\n\n");
 
     printf("> build    :  compile .ki code to executable\n");
     printf("> pkg      :  install/remove packages from github or other sources\n");
     printf("> fmt      :  format .ki code: indenting, newlines, etc...\n");
+    printf("> cache    :  cache related operations. e.g. clean cache\n");
     printf("> version  :  prints the ki compiler version\n");
 
     printf("\n");
