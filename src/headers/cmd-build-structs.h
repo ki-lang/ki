@@ -111,7 +111,7 @@ typedef enum IdentifierForType {
     idfor_func,
     idfor_class,
     idfor_enum,
-    idfor_var,
+    idfor_local_var,
     idfor_type, // 5
     idfor_property,
     idfor_trait,
@@ -441,8 +441,8 @@ typedef struct TokenSetVscopeValue {
 
 typedef struct TokenEach {
     Value *value;
-    char *kname;
-    char *vname;
+    struct LocalVar *kvar;
+    struct LocalVar *vvar;
     Scope *scope;
 } TokenEach;
 
@@ -491,6 +491,12 @@ typedef struct TokenThrow {
     char *msg;
     Type *return_type;
 } TokenThrow;
+
+typedef struct LocalVar {
+    char *name;
+    char *gen_name;
+    Type *type;
+} LocalVar;
 
 typedef struct VarInfo {
     char *name;

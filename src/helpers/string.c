@@ -11,18 +11,22 @@ Str *str_make(char *data) {
 }
 
 void str_append(Str *str, Str *add) {
+    if (add->length == 0) {
+        return;
+    }
     int new_length = str->length + add->length;
     bool reloc = str->mem_size < new_length;
     while (str->mem_size < new_length) {
         str->mem_size *= 2;
     }
     if (reloc) {
-        str->data = realloc(str->data, str->mem_size);
-    }
-    if (add->length > 0) {
-        void *adr_sec = str->data;
-        adr_sec += str->length;
-        memcpy(adr_sec, add->data, add->length);
+        void *new_data = malloc(str->mem_size);
+        memcpy(new_data, str->data, str->length);
+        memcpy(new_data + str->length, add->data, add->length);
+        free(str->data);
+        str->data = new_data;
+    } else {
+        memcpy(str->data + str->length, add->data, add->length);
     }
     str->length = new_length;
 }

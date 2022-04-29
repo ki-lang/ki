@@ -141,15 +141,15 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     Identifier *id = init_id();
     id->name = strdup(token);
     IdentifierFor *idf = idf_find_in_scope(scope, id);
-    if (!idf || idf->type != idfor_var) {
+    if (!idf || idf->type != idfor_local_var) {
         fc_error(fc, "Only local variables are allowed, found: '%s'", token);
     }
 
-    char *name = strdup(id->name);
+    LocalVar *lv = idf->item;
 
     TokenIfNull *ifn = malloc(sizeof(TokenIfNull));
     ifn->type = or_none;
-    ifn->name = name;
+    ifn->name = lv->gen_name;
     ifn->idf = idf;
     ifn->ort = NULL;
 
@@ -157,7 +157,7 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     t->type = tkn_ifnull;
     t->item = ifn;
 
-    Type *type = idf->item;
+    Type *type = lv->type;
 
     if (!type->nullable) {
         fc_error(fc, "Using ifnull on variable that doesnt have a nullable type", NULL);
@@ -195,20 +195,26 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     }
 
     // Create new type within scope
+
     Type *ntype = init_type();
     *ntype = *type;
     ntype->nullable = false;
 
     // local idf
-    idf = map_get(scope->identifiers, name);
+    idf = map_get(scope->identifiers, lv->name);
+    LocalVar *nlv = lv;
     if (!idf) {
         // create local identifier
+        nlv = malloc(sizeof(LocalVar));
+        *nlv = *lv;
+
         idf = init_idf();
-        idf->type = idfor_var;
-        map_set(scope->identifiers, name, idf);
+        idf->type = idfor_local_var;
+        idf->item = nlv;
+        map_set(scope->identifiers, lv->name, idf);
     }
 
-    idf->item = ntype;
+    nlv->type = ntype;
 
     if (!ort->vscope) {
         fc_expect_token(fc, ";", false, true, true);
@@ -322,20 +328,22 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
     Identifier *id = init_id();
     id->name = strdup(token);
     IdentifierFor *idf = idf_find_in_scope(scope, id);
-    if (!idf || idf->type != idfor_var) {
-        fc_error(fc, "Unknown variable '%s'", token);
+    if (!idf || idf->type != idfor_local_var) {
+        fc_error(fc, "Unknown local variable '%s'", token);
     }
+
+    LocalVar *lv = idf->item;
 
     TokenNotNull *ifn = malloc(sizeof(TokenNotNull));
     ifn->type = or_none;
-    ifn->name = strdup(id->name);
+    ifn->name = lv->gen_name;
     ifn->scope = NULL;
 
     Token *t = init_token();
     t->type = tkn_notnull;
     t->item = ifn;
 
-    Type *type = idf->item;
+    Type *type = lv->type;
 
     if (!type->nullable) {
         fc_error(fc, "Using ifnull on variable that doesnt have a nullable type", NULL);
@@ -351,16 +359,21 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
         ifn->scope->body_i = fc->i;
 
         // Create new type within scope
+        LocalVar *nlv = malloc(sizeof(LocalVar));
+        *nlv = *lv;
+
         Type *ntype = init_type();
         *ntype = *type;
         type = ntype;
         type->nullable = false;
 
-        IdentifierFor *idfs = init_idf();
-        idfs->type = idfor_var;
-        idfs->item = ntype;
+        nlv->type = type;
 
-        map_set(ifn->scope->identifiers, ifn->name, idfs);
+        IdentifierFor *idfs = init_idf();
+        idfs->type = idfor_local_var;
+        idfs->item = nlv;
+
+        map_set(ifn->scope->identifiers, nlv->name, idfs);
 
         fc_build_ast(fc, ifn->scope);
     } else {
@@ -433,7 +446,7 @@ void token_each(FileCompiler *fc, Scope *scope) {
 
     TokenEach *te = malloc(sizeof(TokenEach));
     te->value = fc_read_value(fc, scope, false, true, true);
-    te->kname = NULL;
+    te->kvar = NULL;
 
     fc_expect_token(fc, "as", false, true, true);
 
@@ -444,12 +457,12 @@ void token_each(FileCompiler *fc, Scope *scope) {
         fc_error(fc, "Invalid item var name: '%s'", token);
     }
 
-    te->vname = strdup(token);
+    te->vvar = fc_localvar(fc, strdup(token), NULL);
     fc_next_token(fc, token, true, true, true);
 
     if (is_valid_varname(token)) {
         fc_next_token(fc, token, false, true, true);
-        te->kname = strdup(token);
+        te->kvar = fc_localvar(fc, strdup(token), fc_identifier_to_type(fc, create_identifier("ki", "type", "uxx"), NULL));
     }
 
     if (!te->value->return_type->class) {
@@ -476,6 +489,8 @@ void token_each(FileCompiler *fc, Scope *scope) {
         fc_error(fc, "__each_get must have a return type and allow errors", NULL);
     }
 
+    te->vvar->type = ret;
+
     fc_expect_token(fc, "{", false, true, true);
 
     te->scope = init_sub_scope(scope);
@@ -484,15 +499,16 @@ void token_each(FileCompiler *fc, Scope *scope) {
     te->scope->in_loop = true;
 
     IdentifierFor *idf = init_idf();
-    idf->type = idfor_var;
-    idf->item = ret;
-    map_set(te->scope->identifiers, te->vname, idf);
+    idf->type = idfor_local_var;
+    idf->item = te->vvar;
 
-    if (te->kname) {
+    map_set(te->scope->identifiers, te->vvar->name, idf);
+
+    if (te->kvar) {
         IdentifierFor *idfk = init_idf();
-        idfk->type = idfor_var;
-        idfk->item = fc_identifier_to_type(fc, create_identifier("ki", "type", "uxx"), NULL);
-        map_set(te->scope->identifiers, te->kname, idfk);
+        idfk->type = idfor_local_var;
+        idfk->item = te->kvar;
+        map_set(te->scope->identifiers, te->kvar->name, idfk);
     }
 
     fc_build_ast(fc, te->scope);
@@ -546,22 +562,23 @@ void token_declare(FileCompiler *fc, Scope *scope, Type *left_type) {
         }
     }
 
+    IdentifierFor *idf = init_idf();
+    idf->type = idfor_local_var;
+    LocalVar *lv = fc_localvar(fc, token, left_type ? left_type : value->return_type);
+    idf->item = lv;
+
+    map_set(scope->identifiers, lv->name, idf);
+
     TokenDeclare *decl = malloc(sizeof(TokenDeclare));
-    decl->name = token;
+    decl->name = lv->gen_name;
     decl->value = value;
-    decl->type = left_type ? left_type : value->return_type;
+    decl->type = lv->type;
 
     Token *t = init_token();
     t->type = tkn_declare;
     t->item = decl;
 
     array_push(scope->ast, t);
-
-    IdentifierFor *idf = init_idf();
-    idf->type = idfor_var;
-    idf->item = decl->type;
-
-    map_set(scope->identifiers, decl->name, idf);
 
     fc_expect_token(fc, ";", false, true, true);
 }

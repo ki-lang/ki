@@ -140,3 +140,13 @@ void fc_include_headers_from(FileCompiler *fc, FileCompiler *from) {
         array_push(fc->include_headers_from, from);
     }
 }
+
+char *fc_localvar(FileCompiler *fc, char *name, Type *type) {
+    LocalVar *lv = malloc(sizeof(LocalVar));
+    fc->var_bufc++;
+    sprintf(fc->var_buf, "_KI_LVAR_%d_%s", fc->var_bufc, name);
+    lv->name = name;
+    lv->gen_name = strdup(fc->var_buf);
+    lv->type = type;
+    return lv;
+}

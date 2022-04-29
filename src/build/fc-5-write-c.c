@@ -530,7 +530,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, buf_error_name);
         str_append_chars(fc->tkn_buffer, " = (void*)0;");
 
-        fc_write_c_type(fc->tkn_buffer, fget->return_type, te->vname);
+        fc_write_c_type(fc->tkn_buffer, fget->return_type, te->vvar->gen_name);
         str_append_chars(fc->tkn_buffer, " = ");
         str_append_chars(fc->tkn_buffer, fget->cname);
         str_append_chars(fc->tkn_buffer, "(");
@@ -541,9 +541,9 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, buf_error_name);
         str_append_chars(fc->tkn_buffer, ");\n");
         //
-        if (te->kname) {
+        if (te->kvar) {
             str_append_chars(fc->tkn_buffer, "unsigned long int ");
-            str_append_chars(fc->tkn_buffer, te->kname);
+            str_append_chars(fc->tkn_buffer, te->kvar->gen_name);
             str_append_chars(fc->tkn_buffer, " = ");
             str_append_chars(fc->tkn_buffer, buf_count_name);
             str_append_chars(fc->tkn_buffer, ";\n");
@@ -756,7 +756,8 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             str_append_chars(fc->tkn_buffer, ";\n");
             free(buf);
 
-            Type *type = ifn->idf->item;
+            LocalVar *lv = ifn->idf->item;
+            Type *type = lv->type;
 
             if (type->class && type->class->ref_count) {
                 str_append_chars(fc->tkn_buffer, left);
@@ -1588,13 +1589,6 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         str_append_chars(fc->tkn_buffer, "ki__async__Taskman__add_task(");
         str_append_chars(fc->tkn_buffer, var_name);
         str_append_chars(fc->tkn_buffer, ");\n");
-
-        // free (if Task has ref counting enabled)
-        // VarInfo* vi = malloc(sizeof(VarInfo));
-        // vi->name = var_name;
-        // vi->return_type = value->return_type;
-
-        // array_push(fc->var_bufs, vi);
 
         // Set cache back
         fc->value_buffer->length = 0;
