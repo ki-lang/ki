@@ -97,10 +97,10 @@ void array_free(Array *arr) {
     int x = arr->length;
     while (x > 0) {
         x--;
-        uintptr_t *adr = arr->data + (x * sizeof(void *));
-        // printf("%p: %p\n", adr, (void*)*adr);
-        // printf("%s\n", (char*)((void*)*adr));
-        free((void *)*adr);
+        void **adrx = arr->data + (x * sizeof(void *));
+        void *adr = *adrx;
+        // printf("free:%d | %p\n", x, adr);
+        free(adr);
     }
     free(arr->data);
     free(arr);

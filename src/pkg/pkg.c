@@ -38,7 +38,7 @@ void pkg_help() {
 
     printf("Commands: install|upgrade|remove\n\n");
 
-    printf("> ki pkg install {pkg-name|repo-url} {version|head|latest}\n");
+    printf("> ki pkg install github.com/{user}/{pkgname} {version|head|latest}\n");
     printf("## Install new package via package name or github URL\n\n");
 
     printf("> ki pkg remove {local-pkg-name}\n");
