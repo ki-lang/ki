@@ -1,10 +1,10 @@
 
 CC=gcc
-CFLAGS = -g -Wall -O0 -std=gnu99 -fcommon
+CFLAGS = -g -Wall -O0 -std=gnu99 -fcommon -lcurl
 #CFLAGS = -g -O0
 LDFLAGS = -lm
 
-SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/helpers/*.c) $(wildcard src/build/*.c) $(wildcard src/pkg/*.c) $(wildcard src/cache/*.c)
+SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/libs/http/*.c) $(wildcard src/helpers/*.c) $(wildcard src/build/*.c) $(wildcard src/pkg/*.c) $(wildcard src/cache/*.c)
 OBJECTS=$(patsubst %.c, build/%.o, $(SRC))
 TARGET=ki
 

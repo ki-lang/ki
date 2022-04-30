@@ -1,10 +1,13 @@
 
 #include "../all.h"
+#include "../libs/httpclient.h"
 
-void pkg_install(char *name, char *version) {
+void pkg_install(char *name, char *version_target, char *alias) {
     //
     char *url;
-    char *alias;
+    char *version;
+
+    char *url_buf = malloc(512);
 
     if (pkg_is_url(name)) {
         if (pkg_is_github_url(name)) {
@@ -18,7 +21,10 @@ void pkg_install(char *name, char *version) {
             alias = ghub->pkgname;
 
             // Get version
-            if (strcmp(version, "latest") == 0) {
+            if (strcmp(version_target, "latest") == 0) {
+                sprintf(url_buf, "/repos/%s/%s/tags", ghub->username, ghub->pkgname);
+                char *resp = request("GET", "api.github.com", url_buf);
+                printf("result: %s", resp);
             }
 
         } else {

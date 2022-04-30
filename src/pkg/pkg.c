@@ -14,7 +14,8 @@ void cmd_pkg(Array *args, Map *options) {
         if (strcmp(action, "install") == 0 && args->length >= 3) {
             char *pkgname = array_get_index(args, 1);
             char *version = array_get_index(args, 2);
-            pkg_install(pkgname, version);
+            char *alias = array_get_index(args, 3);
+            pkg_install(pkgname, version, alias);
             return;
         } else if (strcmp(action, "remove") == 0 && args->length >= 2) {
             char *pkgname = array_get_index(args, 1);
@@ -38,7 +39,7 @@ void pkg_help() {
 
     printf("Commands: install|upgrade|remove\n\n");
 
-    printf("> ki pkg install github.com/{user}/{pkgname} {version|head|latest}\n");
+    printf("> ki pkg install github.com/{user}/{pkgname} {version|head|latest} [optional:{local-pkg-name}]\n");
     printf("## Install new package via package name or github URL\n\n");
 
     printf("> ki pkg remove {local-pkg-name}\n");
@@ -47,4 +48,5 @@ void pkg_help() {
     printf("> ki pkg upgrade {local-pkg-name} {version|head|latest}\n");
     printf("> ki pkg upgrade all\n");
     printf("## Upgrade (or downgrade) the version of an installed package\n\n");
+    printf("## When using 'all' it will update all packages to the 'latest' version\n\n");
 }
