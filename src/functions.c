@@ -69,3 +69,32 @@ Array *explode(char *part, char *content) {
     // }
     return res;
 }
+
+void exec_simple(char *cmd, char *output) {
+    int link[2];
+    pid_t pid;
+    char out[4096];
+
+    if (pipe(link) == -1)
+        die("pipe");
+
+    if ((pid = fork()) == -1)
+        die("fork");
+
+    if (pid == 0) {
+        dup2(link[1], STDOUT_FILENO);
+        close(link[0]);
+        close(link[1]);
+        execl("/bin/sh", "/bin/sh", "-c", cmd, (char *)0);
+        die("execl");
+
+    } else {
+        close(link[1]);
+        int nbytes = read(link[0], out, sizeof(out));
+        out[nbytes] = 0;
+        if (output)
+            strcpy(output, out);
+        // printf("Output: (%.*s)\n", nbytes, out);
+        wait(NULL);
+    }
+}

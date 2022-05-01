@@ -1,7 +1,7 @@
 
-#include "../libs/http/HTTPClient.h"
-
 #include <curl/curl.h>
+#include <stdlib.h>
+#include <string.h>
 
 struct curlres {
     char *ptr;
@@ -78,4 +78,28 @@ char *request(char *method, char *host, char *path) {
     }
 
     return NULL;
+}
+
+size_t download_write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    size_t written = fwrite(ptr, size, nmemb, stream);
+    return written;
+}
+
+char download_file(char *url, char *outpath) {
+    CURL *curl;
+    FILE *fp;
+    CURLcode res;
+    curl = curl_easy_init();
+    if (curl) {
+        fp = fopen(outpath, "wb");
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+        res = curl_easy_perform(curl);
+        /* always cleanup */
+        curl_easy_cleanup(curl);
+        fclose(fp);
+    }
+    return 1;
 }
