@@ -10,6 +10,8 @@ struct GithubPkg *pkg_parse_github_url(char *name);
 struct Version *extract_version(char *content);
 int extract_version_next_nr(char *content, int *index, int len);
 bool is_higher_version_than(struct Version *new, struct Version *than);
+bool is_same_version(struct Version *a, struct Version *b);
+char *get_full_commit_hash(struct GithubPkg *ghub, char *shash);
 void unzip(char *zippath, char *dir);
 
 typedef struct GithubPkg {

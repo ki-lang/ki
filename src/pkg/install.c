@@ -55,6 +55,37 @@ void pkg_install(char *name, char *version, char *alias) {
                 if (!highest) {
                     die_token("No valid tags/versions found (format:x.x.x) for '%s'", name);
                 }
+            } else {
+                Version *fversion = extract_version(version);
+                if (fversion) {
+                    // Version x.x.x syntax
+                    for (int i = 0; i < json->children.length; i++) {
+                        const nx_json *v = nx_json_item(json, i);
+                        const nx_json *vn = nx_json_get(v, "name");
+                        char *vname = vn->text_value;
+                        Version *ex_version = extract_version(vname);
+                        if (is_same_version(fversion, ex_version)) {
+                            const nx_json *commit = nx_json_get(v, "commit");
+                            const nx_json *_hash = nx_json_get(commit, "sha");
+                            const nx_json *_url = nx_json_get(commit, "url");
+                            hash = strdup(_hash->text_value);
+                            free(ex_version);
+                            break;
+                        }
+                        free(ex_version);
+                    }
+                    if (!hash) {
+                        die_token("Version '%s' not found in the repository tags", version);
+                    }
+                } else {
+                    // Check if head syntax
+                    if (is_valid_varname(version)) {
+                        hash = get_full_commit_hash(ghub, version);
+                    } else {
+                        // Invalid syntax
+                        die_token("Invalid/unknown version syntax '%s'", version);
+                    }
+                }
             }
             free(json_body);
             nx_json_free(json);
@@ -129,7 +160,7 @@ void pkg_install(char *name, char *version, char *alias) {
 
     exec_simple(cmd, cmdout);
 
-    printf("[+] Installed '%s'\n", name);
+    printf("[+] Installed '%s' (%s)\n", name, hash);
 
     // strcpy(zippath, pkgpath);
     // strcat(zippath, "/pkg-files.zip");

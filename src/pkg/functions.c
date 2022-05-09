@@ -1,5 +1,6 @@
 
 #include "../all.h"
+#include "../libs/httpclient.h"
 
 bool pkg_is_url(char *name) {
     //
@@ -26,6 +27,27 @@ GithubPkg *pkg_parse_github_url(char *name) {
     return ghub;
 }
 
+char *get_full_commit_hash(struct GithubPkg *ghub, char *shash) {
+    //
+    char url_buf[512];
+    sprintf(url_buf, "/repos/%s/%s/commits/%s", ghub->username, ghub->pkgname, shash);
+    char *resp = request("GET", "api.github.com", url_buf);
+    if (!resp) {
+        die_token("Github API request failed when trying to find full commit hash for: '%s'", shash);
+    }
+    char *json_body = resp;
+    const nx_json *json = nx_json_parse(json_body, 0);
+    if (!json) {
+        die_token("Invalid json response for github API request: '%s'", url_buf);
+    }
+    const nx_json *sha = nx_json_get(json, "sha");
+    if (sha == NULL) {
+        die_token("Full hash not found for: '%s'", shash);
+    }
+    char *hash = sha->text_value;
+    return strdup(hash);
+}
+
 bool is_higher_version_than(Version *new, Version *than) {
     //
     if (new->v1 != than->v1) {
@@ -38,6 +60,11 @@ bool is_higher_version_than(Version *new, Version *than) {
         return new->v3 > than->v3;
     }
     return false;
+}
+
+bool is_same_version(struct Version *a, struct Version *b) {
+    //
+    return a->v1 == b->v1 && a->v2 == b->v2 && a->v3 == b->v3;
 }
 
 Version *extract_version(char *content) {
