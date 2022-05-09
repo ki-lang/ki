@@ -129,7 +129,7 @@ void pkg_install(char *name, char *version, char *alias) {
 
     exec_simple(cmd, cmdout);
 
-    printf("Installed '%s'\n", name);
+    printf("[+] Installed '%s'\n", name);
 
     // strcpy(zippath, pkgpath);
     // strcat(zippath, "/pkg-files.zip");
