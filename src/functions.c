@@ -77,7 +77,6 @@ void exec_simple(char *cmd, char *output) {
     char out[4096];
 
     strcpy(cmd_silent, cmd);
-    strcat(cmd_silent, " 2>&1 > /dev/null");
 
     if (pipe(link) == -1)
         die("pipe");
@@ -87,11 +86,11 @@ void exec_simple(char *cmd, char *output) {
 
     if (pid == 0) {
         dup2(link[1], STDOUT_FILENO);
+        dup2(link[1], STDERR_FILENO);
         close(link[0]);
         close(link[1]);
         execl("/bin/sh", "/bin/sh", "-c", cmd_silent, (char *)0);
-        die("execl");
-
+        exit(1);
     } else {
         close(link[1]);
         int nbytes = read(link[0], out, sizeof(out));
@@ -101,4 +100,10 @@ void exec_simple(char *cmd, char *output) {
         // printf("Output: (%.*s)\n", nbytes, out);
         wait(NULL);
     }
+}
+
+bool check_installed_git() {
+    char out[4096];
+    exec_simple("git --version", out);
+    return starts_with(out, "git version");
 }

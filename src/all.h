@@ -21,6 +21,7 @@
 #include <string.h>
 #include <sys/stat.h> // might be linux only?
 //#include <sys/wait.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #define KI_PATH_MAX 4096

@@ -8,6 +8,10 @@ void cmd_pkg(Array *args, Map *options) {
         return;
     }
 
+    if (!check_installed_git()) {
+        die("Please install 'git' in order to install/upgrade ki packages");
+    }
+
     // Check args
     if (args->length >= 1) {
         char *action = array_get_index(args, 0);
