@@ -73,10 +73,9 @@ Array *explode(char *part, char *content) {
 void exec_simple(char *cmd, char *output) {
     int link[2];
     pid_t pid;
-    char cmd_silent[KI_PATH_MAX];
     char out[4096];
 
-    strcpy(cmd_silent, cmd);
+    strcpy(cmd, cmd);
 
     if (pipe(link) == -1)
         die("pipe");
@@ -89,7 +88,8 @@ void exec_simple(char *cmd, char *output) {
         dup2(link[1], STDERR_FILENO);
         close(link[0]);
         close(link[1]);
-        execl("/bin/sh", "/bin/sh", "-c", cmd_silent, (char *)0);
+        system(cmd);
+        // execl("/bin/sh", "/bin/sh", "-c", cmd, (char *)0);
         exit(1);
     } else {
         close(link[1]);
@@ -98,7 +98,7 @@ void exec_simple(char *cmd, char *output) {
         if (output)
             strcpy(output, out);
         // printf("Output: (%.*s)\n", nbytes, out);
-        wait(NULL);
+        // wait(NULL);
     }
 }
 
