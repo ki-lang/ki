@@ -1,7 +1,8 @@
 
 void pkg_help();
-void pkg_install(char *name, char *version, char *alias);
+void pkg_add(char *name, char *version, char *alias);
 void pkg_remove(char *name);
+void pkg_install();
 void pkg_upgrade(char *name, char *version);
 
 bool pkg_is_url(char *name);

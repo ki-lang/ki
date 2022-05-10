@@ -20,6 +20,9 @@ int main(int argc, char *argv[]) {
     if (strcmp(cmd, "build") == 0) {
         // Build
         cmd_build(args, options);
+    } else if (strcmp(cmd, "cfg") == 0) {
+        // Config
+        cmd_cfg(args, options);
     } else if (strcmp(cmd, "pkg") == 0) {
         // Packages
         cmd_pkg(args, options);

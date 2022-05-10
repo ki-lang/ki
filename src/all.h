@@ -30,11 +30,16 @@
 #include "headers/array.h"
 #include "headers/map.h"
 #include "headers/string.h"
+#include "libs/cJSON.h"
+#include "libs/nxjson.h"
+//
+#include "headers/config.h"
 //
 #include "headers/cmd-build-structs.h"
 //
 #include "headers/cmd-build.h"
 #include "headers/cmd-cache.h"
+#include "headers/cmd-cfg.h"
 #include "headers/cmd-pkg.h"
 #include "headers/commands.h"
 #include "headers/files.h"
