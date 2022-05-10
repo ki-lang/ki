@@ -18,7 +18,23 @@ void pkg_add(char *name, char *version, char *alias) {
             }
 
             if (!alias) {
-                alias = ghub->pkgname;
+                alias = strdup(ghub->pkgname);
+                int len = strlen(alias);
+                int o = 0;
+                char lch = 0;
+                for (int i = 0; i < len; i++) {
+                    char ch = alias[i];
+                    if (!is_valid_varname_char(ch)) {
+                        ch = '_';
+                        if (lch == '_') {
+                            o--;
+                        }
+                    }
+                    alias[o] = ch;
+                    lch = ch;
+                    o++;
+                }
+                alias[o] = '\0';
             }
 
             sprintf(url_buf, "/repos/%s/%s/tags", ghub->username, ghub->pkgname);
@@ -62,6 +78,10 @@ void pkg_add(char *name, char *version, char *alias) {
                     for (int i = 0; i < json->children.length; i++) {
                         const nx_json *v = nx_json_item(json, i);
                         const nx_json *vn = nx_json_get(v, "name");
+                        if (vn == NULL) {
+                            printf("json:%s\n", json_body);
+                            die("Invalid json response from github API. Missing version 'name' field.");
+                        }
                         char *vname = vn->text_value;
                         Version *ex_version = extract_version(vname);
                         if (is_same_version(fversion, ex_version)) {
