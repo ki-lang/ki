@@ -19,7 +19,7 @@ void cfg_init() {
 
         cJSON_Delete(json);
 
-        printf("# Your ki.json config has been created\nPath: %s\n", path);
+        printf("# Your ki.json config has been created\n# Path: %s\n", path);
     } else {
         printf("# ki.json already exists\n");
     }
