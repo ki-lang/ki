@@ -84,12 +84,12 @@ Map *get_options_and_args(int argc, char *argv[], Map *option_has_value) {
 void main_print_help() {
     printf("Usage: ki [command] -h\n\n");
 
-    printf("Commands: build|pkg|fmt|cache|version\n\n");
+    printf("Commands: build|pkg|version\n\n");
 
     printf("> build    :  compile .ki code to executable\n");
     printf("> pkg      :  install/remove packages from github or other sources\n");
-    printf("> fmt      :  format .ki code: indenting, newlines, etc...\n");
-    printf("> cache    :  cache related operations. e.g. clean cache\n");
+    // printf("> fmt      :  format .ki code: indenting, newlines, etc...\n");
+    // printf("> cache    :  cache related operations. e.g. clean cache\n");
     printf("> version  :  prints the ki compiler version\n");
 
     printf("\n");
