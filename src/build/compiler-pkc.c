@@ -48,6 +48,69 @@ PkgCompiler *pkc_get_by_name(char *name) {
         return pkc;
     }
 
+    // Check config
+    char cwd[PATH_MAX];
+    getcwd(cwd, sizeof(cwd));
+    Config *cfg = cfg_get(cwd);
+    if (cfg != NULL) {
+        // Check packages
+        cJSON *pkgs = cJSON_GetObjectItemCaseSensitive(cfg->json, "packages");
+        if (pkgs != NULL) {
+            // Loop packages
+            cJSON *pkg = pkgs->child;
+            while (pkg) {
+
+                if (strcmp(pkg->string, name) == 0) {
+                    // Found
+                    PkgCompiler *pkc = init_pkc();
+                    pkc->name = strdup(name);
+                    map_set(packages, pkc->name, pkc);
+
+                    cJSON *_pkgname = cJSON_GetObjectItemCaseSensitive(pkg, "name");
+                    if (!_pkgname) {
+                        die_token("Missing 'name' in package config for '%s'", name);
+                    }
+                    cJSON *_version = cJSON_GetObjectItemCaseSensitive(pkg, "version");
+                    if (!_version) {
+                        die_token("Missing 'version' in package config for '%s'", name);
+                    }
+                    char *pkgname = _pkgname->valuestring;
+                    char *version = _version->valuestring;
+                    char *dirname = strdup(pkgname);
+                    // replace slashes
+                    int i = 0;
+                    while (true) {
+                        char ch = dirname[i];
+                        if (ch == 0)
+                            break;
+                        if (ch == '/')
+                            dirname[i] = '.';
+                        i++;
+                    }
+
+                    char pkgpath[KI_PATH_MAX];
+                    strcpy(pkgpath, cfg->dir);
+                    strcat(pkgpath, "/packages/");
+                    strcat(pkgpath, dirname);
+                    strcat(pkgpath, "/");
+                    strcat(pkgpath, version);
+
+                    if (!file_exists(pkgpath)) {
+                        die_token("Package files not found: '%s'", pkgpath);
+                    }
+
+                    pkc->dir = strdup(pkgpath);
+                    pkc_check_config(pkc);
+
+                    return pkc;
+                }
+
+                pkg = pkg->next;
+            }
+        }
+    }
+
+    //
     char *msg = malloc(1024);
     sprintf(msg, "Unknown package: %s", name);
     die(msg);
