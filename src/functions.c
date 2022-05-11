@@ -5,6 +5,12 @@ void die(char *msg) {
     printf("Error: %s\n", msg);
     exit(1);
 }
+void die_token(char *msg, char *token) {
+    printf("Error: ");
+    printf(msg, token);
+    printf("\n");
+    exit(1);
+}
 
 bool ends_with(const char *str, const char *suffix) {
     int str_len = strlen(str);
@@ -47,4 +53,57 @@ void prepend(char *s, const char *t) {
     size_t len = strlen(t);
     memmove(s + len, s, strlen(s) + 1);
     memcpy(s, t, len);
+}
+
+Array *explode(char *part, char *content) {
+    char *copy = strdup(content);
+    Array *res = array_make(2);
+    char *token = strtok(copy, part);
+    while (token != NULL) {
+        array_push(res, token);
+        token = strtok(NULL, part);
+    }
+    // for (int i = 0; i < res->length; i++) {
+    //     char *x = array_get_index(res, i);
+    //     printf(" %s\n", x); // printing each token
+    // }
+    return res;
+}
+
+void exec_simple(char *cmd, char *output) {
+    int link[2];
+    pid_t pid;
+    char out[4096];
+
+    strcpy(cmd, cmd);
+
+    if (pipe(link) == -1)
+        die("pipe");
+
+    if ((pid = fork()) == -1)
+        die("fork");
+
+    if (pid == 0) {
+        dup2(link[1], STDOUT_FILENO);
+        dup2(link[1], STDERR_FILENO);
+        close(link[0]);
+        close(link[1]);
+        system(cmd);
+        // execl("/bin/sh", "/bin/sh", "-c", cmd, (char *)0);
+        exit(1);
+    } else {
+        close(link[1]);
+        int nbytes = read(link[0], out, sizeof(out));
+        out[nbytes] = 0;
+        if (output)
+            strcpy(output, out);
+        // printf("Output: (%.*s)\n", nbytes, out);
+        // wait(NULL);
+    }
+}
+
+bool check_installed_git() {
+    char out[4096];
+    exec_simple("git --version", out);
+    return starts_with(out, "git version");
 }
