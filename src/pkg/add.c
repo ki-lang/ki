@@ -78,5 +78,5 @@ void pkg_add(char *name, char *version, char *alias) {
     cJSON_AddItemToObject(pkgs, alias, pkgob);
     cfg_save(cfg);
 
-    pkg_install_package(name, version, cloneurl, hash);
+    pkg_install_package(cfg->dir, name, version, cloneurl, hash);
 }

@@ -20,6 +20,7 @@ Config *cfg_get(char *dir) {
     free(content_str);
 
     Config *cfg = malloc(sizeof(Config));
+    cfg->dir = strdup(dir);
     cfg->path = path;
     cfg->content = content;
     cfg->json = json;

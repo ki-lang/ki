@@ -42,13 +42,13 @@ void pkg_install() {
             die_token("Invalid pacakge name: '%s'", name);
         }
 
-        pkg_install_package(name, version, clone_url, hash);
+        pkg_install_package(cfg->dir, name, version, clone_url, hash);
 
         pkg = pkg->next;
     }
 }
 
-void pkg_install_package(char *name, char *version, char *clone_url, char *hash) {
+void pkg_install_package(char *dir, char *name, char *version, char *clone_url, char *hash) {
     // Download files
     char *dirname = strdup(name);
     // replace slashes
@@ -62,10 +62,9 @@ void pkg_install_package(char *name, char *version, char *clone_url, char *hash)
         i++;
     }
 
-    char *bindir = get_binary_dir();
     char pkgpath[KI_PATH_MAX];
     char versionpath[KI_PATH_MAX];
-    strcpy(pkgpath, bindir);
+    strcpy(pkgpath, dir);
     strcat(pkgpath, "/packages");
 
     if (!file_exists(pkgpath)) {

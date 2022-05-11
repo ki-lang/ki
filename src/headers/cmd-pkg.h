@@ -22,7 +22,7 @@ typedef struct Version {
 bool pkg_is_url(char *name);
 bool pkg_is_github_url(char *name);
 // Install
-void pkg_install_package(char *name, char *version, char *clone_url, char *hash);
+void pkg_install_package(char *dir, char *name, char *version, char *clone_url, char *hash);
 // Functions
 struct Version *extract_version(char *content);
 int extract_version_next_nr(char *content, int *index, int len);

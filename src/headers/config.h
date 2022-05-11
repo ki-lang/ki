@@ -1,5 +1,6 @@
 
 typedef struct Config {
+    char *dir;
     char *path;
     char *content;
     cJSON *json;
