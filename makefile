@@ -1,6 +1,6 @@
 
 CC=gcc
-CFLAGS = -g -Wall -O0 -std=gnu99 -fcommon -lcurl
+CFLAGS = -g -Wall -O0 -std=gnu99 -fcommon
 #CFLAGS = -g -O0
 LDFLAGS = -lm -lcurl
 
