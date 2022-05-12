@@ -3,93 +3,47 @@ namespace type_trait;
 
 trait Number {
 
-// public func to_string() String {
-//	int sum = num;
-//	int i = 0;
-//	int digit;
-//	if (len == 0)
-//		return -1;
-//	do
-//	{
-//		digit = sum % base;
-//		if (digit < 0xA)
-//			str[i++] = '0' + digit;
-//		else
-//			str[i++] = 'A' + digit - 0xA;
-//		sum /= base;
-//	}while (sum && (i < (len - 1)));
-//	if (i == (len - 1) && sum)
-//		return -1;
-//	str[i] = '\0';
-//	strrev(str);
-//	return 0;
-// }
 	public func str() type:String {
-		ki:type:cstring x = this.to_cstring();
-		String res = x.to_string();
-		ki:mem:free(x);
-		return res;
-	}
-
-	public func to_cstring() type:cstring {
-		ptr str = mem:alloc(20);
-		ptr strp = str;
-
-		bool negative = false;
-		#if IS_SIGNED_NUMBER_CLASS CLASS
-			if(this < 0){
-				negative = true;
-				this = this * -1;
+	    @ result = type:String.make_empty(sizeof(CLASS) * 3 + 1);
+		u8 i = 0;
+		u8 base = 10;
+    	@ negative = false;
+		@ num = this;
+ 
+    	// Handle 0 explicitly, otherwise empty string is printed for 0
+    	if (num == 0) {
+			result = result.append_char('0');
+    	    return result;
+    	}
+ 
+    	// In standard itoa(), negative numbers are handled only with
+    	// base 10. Otherwise numbers are considered unsigned.
+    	if (num < 0 && base == 10) {
+    	    negative = true;
+    	    num *= -1;
+    	}
+ 
+    	// Process individual digits
+		u8 ch = 0;
+    	while (num != 0) {
+    	    i64 rem = num % base;
+			if(rem > 9){
+				ch = (rem-10) + 'a';
+			} else {
+    	    	ch = rem + '0';
 			}
-		#end
-
-		@ value = this;
-		u64 rest = 0;
-		u8 pos = sizeof(this) - 1;
-		i8 len = 0;
-		uxx mult = 1;
-
-		while(true){
-			rest = value % (mult * 10);
-			//io:print("2\n");
-			value -= rest;
-			u64 r = rest / mult;
-			u8 b = cast r as u8;
-			b += 48; // ascii
-
-			setptrv strp to b;
-			strp++;
-
-			if(value == 0){ break; }
-
-			mult = mult * 10;
-			pos--;
-			len++;
+			result = result.append_char(ch);
+    	    num = num/base;
+    	}
+ 
+    	if (negative) {
+			result = result.append_char('-');
 		}
-
-		setptrv strp to '\0';
-		ptr result = mem:alloc(20);
-		ptr tmp = result;
-		if(negative){
-			setptrv result to '-';
-			result++;
-		}
-		while(len >= 0){
-			strp = str;
-			strp += len;
-			u8 x = getptrv strp as u8;
-			len--;
-			setptrv result to x;
-			result++;
-		}
-		setptrv result to '\0';
-
-
-		ki:mem:free(str);
-
-		result = tmp;
-		@ r = cast result as type:cstring;
-
-		return r;
+ 
+    	// Reverse the string
+		result = result.reverse();
+ 
+    	return result;
 	}
+
 }

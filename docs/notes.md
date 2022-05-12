@@ -7,6 +7,8 @@
 - const types
 - same 'or' parser for fcalls and ifnull
 - check if && and || is handled correctly e.g. if(true || myfunc()) should not execute myfunc
+- or return {} scope;
+- dont allow class instances in async calls
 
 ## Compile cache
 

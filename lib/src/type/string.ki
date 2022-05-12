@@ -197,6 +197,22 @@ class String {
 		return result;
 	}
 
+	public func reverse() String {
+		@ c = String.make_empty(this.length);
+		@ len = this.length;
+		c.length = len;
+		ptr adr_from = this.data + len - 1;
+		ptr adr_to = c.data;
+		while(len > 0){
+			len--;
+			u8 ch = getptrv adr_from as u8;
+			setptrv adr_to to ch;
+			adr_to++;
+			adr_from--;
+		}
+		return c;
+	}
+
 	public func chunker() StringChunker {
 		return StringChunker { str: this, start: 0 };
 	}
