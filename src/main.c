@@ -1,9 +1,12 @@
 
 #include "all.h"
+#include <curl/curl.h>
 
 Map *get_options_and_args(int argc, char *argv[], Map *option_has_value);
 
 int main(int argc, char *argv[]) {
+    //
+    curl_global_init(CURL_GLOBAL_ALL);
     //
     if (argc < 2) {
         main_print_help();
