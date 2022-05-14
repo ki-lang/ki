@@ -33,22 +33,11 @@ char *request(char *method, char *host, char *path) {
     if (curl) {
         struct curl_slist *chunk = NULL;
 
-        /* Remove a header curl would otherwise add by itself */
+        // Headers
         chunk = curl_slist_append(chunk, "Accept: application/json");
-
-        /* Add a custom header */
-        // chunk = curl_slist_append(chunk, "Another: yes");
-
-        /* Modify a header curl otherwise adds differently */
-        // chunk = curl_slist_append(chunk, "Host: ");
-        // chunk = curl_slist_append(chunk, host);
-
         chunk = curl_slist_append(chunk, "User-Agent: ki package manager");
-
-        /* set our custom set of headers */
+        //
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
-
-        // curl_easy_setopt(curl, CURLOPT_URL, "localhost");
         curl_easy_setopt(curl, CURLOPT_URL, url);
         // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
@@ -66,10 +55,7 @@ char *request(char *method, char *host, char *path) {
             fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
         }
 
-        /* always cleanup */
         curl_easy_cleanup(curl);
-
-        /* free the custom headers */
         curl_slist_free_all(chunk);
 
         if (res == CURLE_OK) {
