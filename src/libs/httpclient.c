@@ -66,11 +66,6 @@ char *request(char *method, char *host, char *path) {
     return NULL;
 }
 
-size_t download_write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    size_t written = fwrite(ptr, size, nmemb, stream);
-    return written;
-}
-
 char download_file(char *url, char *outpath) {
     CURL *curl;
     FILE *fp;
