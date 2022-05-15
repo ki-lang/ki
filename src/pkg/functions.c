@@ -84,5 +84,5 @@ int on_extract_entry(const char *filename, void *arg) {
 
 void unzip(char *zippath, char *dir) {
     int arg = 2;
-    zip_extract(zippath, dir, on_extract_entry, &arg);
+    // zip_extract(zippath, dir, on_extract_entry, &arg);
 }

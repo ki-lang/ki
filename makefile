@@ -1,10 +1,16 @@
 
 CC=gcc
 CFLAGS = -g -Wall -O0 -std=gnu99 -fcommon
-#CFLAGS = -g -O0
-LDFLAGS = -lm -lcurl
+LDFLAGS += -lm -fstack-protector
 
-SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/libs/zip/*.c) $(wildcard src/helpers/*.c) $(wildcard src/build/*.c) $(wildcard src/cfg/*.c) $(wildcard src/pkg/*.c) $(wildcard src/cache/*.c)
+ifeq ($(OS),Windows_NT)
+	CFLAGS += -I./misc/curl/include
+    LDFLAGS += ./misc/curl/libcurl.dll.a
+else
+    LDFLAGS += -lcurl
+endif
+
+SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/helpers/*.c) $(wildcard src/build/*.c) $(wildcard src/cfg/*.c) $(wildcard src/pkg/*.c) $(wildcard src/cache/*.c)
 OBJECTS=$(patsubst %.c, build/%.o, $(SRC))
 TARGET=ki
 

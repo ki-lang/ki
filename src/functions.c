@@ -71,6 +71,9 @@ Array *explode(char *part, char *content) {
 }
 
 void exec_simple(char *cmd, char *output) {
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+    system(cmd);
+#else
     int link[2];
     pid_t pid;
     char out[4096];
@@ -100,6 +103,7 @@ void exec_simple(char *cmd, char *output) {
         // printf("Output: (%.*s)\n", nbytes, out);
         // wait(NULL);
     }
+#endif
 }
 
 bool check_installed_git() {
