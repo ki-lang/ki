@@ -20,6 +20,8 @@ Arch: `sudo pacman -S gcc`
 git clone git@github.com:ki-lang/ki.git
 cd ki
 make
+# install.sh copies executable to /usr/bin (linux) or /usr/loca/bin (osx)
+./install.sh
 ```
 
 ## Install (Windows)
@@ -30,6 +32,8 @@ Install `MinGW` and make sure to install the `mingw32-gcc-bin` and `mingw32-make
 git clone git@github.com:ki-lang/ki.git
 cd ki
 make
+# install.bat copies executable to c:/ki/ and adds it to PATH
+install.bat
 ```
 
 ## Http server example
