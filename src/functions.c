@@ -91,8 +91,6 @@ void exec_simple(char *cmd, char *output) {
     pid_t pid;
     char out[4096];
 
-    strcpy(cmd, cmd);
-
     if (pipe(link) == -1)
         die("pipe");
 
