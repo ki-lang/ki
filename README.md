@@ -12,9 +12,20 @@ ki is focussed on making applications and servers. We are not a system programmi
 
 ## Install (Linux)
 
-Currenctly `gcc` is required in order to compile. Ubuntu: `sudo apt install build-essential`, arch: `sudo pacman -S gcc`.
+Currently `gcc` is required in order to compile. Ubuntu: `sudo apt install build-essential`, arch: `sudo pacman -S gcc`.
 
 ```bash
+git clone git@github.com:ki-lang/ki.git
+cd ki
+make
+```
+
+## Install (Windows)
+
+Use MinGW to build ki.exe
+
+```bash
+# In cmd.exe while having MinGW installed
 git clone git@github.com:ki-lang/ki.git
 cd ki
 make
