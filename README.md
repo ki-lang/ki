@@ -25,7 +25,6 @@ make
 Install `MinGW` and make sure to install the `mingw32-gcc-bin` and `mingw32-make-bin` packages.
 
 ```bash
-# In cmd.exe while having MinGW installed
 git clone git@github.com:ki-lang/ki.git
 cd ki
 make
