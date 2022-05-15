@@ -10,16 +10,14 @@ ki is a programming language designed to be fast and easy to use. We want fast c
 
 ki is focussed on making applications and servers. We are not a system programming language.
 
-## Demo
+## Install (Linux)
 
-```
+Currenctly `gcc` is required in order to compile. Ubuntu: `sudo apt install build-essential`, arch: `sudo pacman -S gcc`.
+
+```bash
 git clone git@github.com:ki-lang/ki.git
 cd ki
 make
-
-# Example
-./test.sh
-./test
 ```
 
 ## Http server example
