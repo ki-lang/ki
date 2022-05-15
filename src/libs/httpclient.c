@@ -39,6 +39,7 @@ char *request(char *method, char *host, char *path) {
         //
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
         curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
         // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
         struct curlres cres;

@@ -72,7 +72,20 @@ Array *explode(char *part, char *content) {
 
 void exec_simple(char *cmd, char *output) {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-    system(cmd);
+    FILE *fp;
+    char buf[1035];
+
+    fp = popen(cmd, "r");
+    if (fp == NULL) {
+        die_token("Failed to run command: %s", cmd);
+    }
+
+    strcpy(output, "");
+    while (fgets(buf, sizeof(buf), fp) != NULL) {
+        strcat(output, buf);
+    }
+
+    pclose(fp);
 #else
     int link[2];
     pid_t pid;

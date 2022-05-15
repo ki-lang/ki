@@ -43,7 +43,7 @@ void array_shift(Array *arr, void *item) {
 }
 
 void *array_get_index(Array *arr, int index) {
-    if (index > arr->length) {
+    if (index >= arr->length) {
         return NULL;
     }
     uintptr_t *result = arr->data + (index * sizeof(void *));

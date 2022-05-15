@@ -37,7 +37,7 @@ void pkg_add(char *name, char *version, char *alias) {
 
             hash = github_find_version_hash(ghub, version);
 
-            sprintf(cloneurl, "git@github.com:%s/%s", ghub->username, ghub->pkgname);
+            sprintf(cloneurl, "https://github.com/%s/%s.git", ghub->username, ghub->pkgname);
             // sprintf(zipurl, "https://%s/archive/%s.zip", name, hash);
 
         } else {
@@ -52,7 +52,7 @@ void pkg_add(char *name, char *version, char *alias) {
     }
 
     // Add to ki.json
-    char cwd[PATH_MAX];
+    char cwd[KI_PATH_MAX];
     getcwd(cwd, sizeof(cwd));
     Config *cfg = cfg_get(cwd);
     if (cfg == NULL) {

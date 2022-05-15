@@ -92,6 +92,7 @@ void pkg_install_package(char *dir, char *name, char *version, char *clone_url, 
         strcat(cmd, clone_url);
         strcat(cmd, " ");
         strcat(cmd, version);
+        strcat(cmd, " 2>&1");
 
         exec_simple(cmd, cmdout);
         // makedir(pkgpath, 0755);
@@ -101,6 +102,7 @@ void pkg_install_package(char *dir, char *name, char *version, char *clone_url, 
     strcat(cmd, versionpath);
     strcat(cmd, " && git checkout ");
     strcat(cmd, hash);
+    strcat(cmd, " 2>&1");
 
     exec_simple(cmd, cmdout);
 
