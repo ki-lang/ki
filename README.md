@@ -32,7 +32,7 @@ Install `MinGW` and make sure to install the `mingw32-gcc-bin` and `mingw32-make
 git clone git@github.com:ki-lang/ki.git
 cd ki
 make
-# install.bat copies executable to c:/ki/ and adds it to PATH
+# install.bat copies executable to c:/ki/ and adds it to PATH (run as admin)
 install.bat
 ```
 
