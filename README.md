@@ -22,7 +22,7 @@ make
 
 ## Install (Windows)
 
-Use MinGW to build ki.exe
+Install `MinGW` and make sure to install the `mingw32-gcc-bin` and `mingw32-make-bin` packages.
 
 ```bash
 # In cmd.exe while having MinGW installed
