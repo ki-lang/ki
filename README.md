@@ -12,8 +12,8 @@ ki is focussed on making applications and servers. We are not a system programmi
 
 ## Install (Linux)
 
-Install dependencies: 
-Ubuntu/Debian: `sudo apt install build-essential`
+Install dependencies:  
+Ubuntu/Debian: `sudo apt install build-essential`  
 Arch: `sudo pacman -S gcc`
 
 ```bash
