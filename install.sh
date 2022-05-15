@@ -6,7 +6,7 @@ if [ "$UNAME" == "Linux" ] ; then
 	sudo cp ./ki /usr/bin/
 elif [ "$UNAME" == "Darwin" ] ; then
 	echo "# macOS install"
-	sudo cp ./ki /usr/local/bin/
+	sudo cp ./ki /usr/bin/
 else
 	echo "Install script currently doesnt support: $UNAME"
 fi
