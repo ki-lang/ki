@@ -5,7 +5,7 @@ LDFLAGS += -lm -fstack-protector
 
 ifeq ($(OS),Windows_NT)
 	CFLAGS += -I./misc/curl/include
-    LDFLAGS += ./misc/curl/libcurl.dll.a
+    LDFLAGS += -L./misc/curl/ -lcurl
 else
     LDFLAGS += -lcurl
 endif
