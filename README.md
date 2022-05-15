@@ -10,9 +10,9 @@ ki is a programming language designed to be fast and easy to use. We want fast c
 
 ki is focussed on making applications and servers. We are not a system programming language.
 
-## Install (Linux)
+## Install (Linux / macOS)
 
-Install dependencies:  
+Linux dependencies:  
 Ubuntu/Debian: `sudo apt install build-essential`  
 Arch: `sudo pacman -S gcc`
 
