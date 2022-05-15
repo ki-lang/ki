@@ -4,7 +4,7 @@
 
 void pkg_install() {
     //
-    char cwd[PATH_MAX];
+    char cwd[KI_PATH_MAX];
     getcwd(cwd, sizeof(cwd));
     Config *cfg = cfg_get(cwd);
     if (cfg == NULL) {
