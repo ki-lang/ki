@@ -12,7 +12,9 @@ ki is focussed on making applications and servers. We are not a system programmi
 
 ## Install (Linux)
 
-Currently `gcc` is required in order to compile. Ubuntu: `sudo apt install build-essential`, arch: `sudo pacman -S gcc`.
+Install dependencies: 
+Ubuntu/Debian: `sudo apt install build-essential`
+Arch: `sudo pacman -S gcc`
 
 ```bash
 git clone git@github.com:ki-lang/ki.git
