@@ -76,11 +76,11 @@ char *strip_ext(char *fn) {
 }
 
 void makedir(char *dir, int mod) {
-#ifdef __linux__
-    mkdir(dir, mod);
-#else
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     mkdir(dir);
     // _mkdir(dir);
+#else
+    mkdir(dir, mod);
 #endif
 }
 
@@ -91,11 +91,10 @@ char *get_binary_dir() {
     }
 
     char *buf = malloc(1000);
-#ifdef __linux__
-    // int rslt = readlink("/proc/self/exe", buf, 1000);
-    readlink("/proc/self/exe", buf, 1000);
-#else
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     GetModuleFileName(NULL, buf, 1000);
+#else
+    readlink("/proc/self/exe", buf, 1000);
 #endif
 
     int i = strlen(buf);
@@ -120,7 +119,7 @@ char *get_storage_path() {
     g_storage_path = malloc(KI_PATH_MAX);
     char *homedir;
 
-#ifdef _WIN32
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     homedir = getenv("USERPROFILE");
 #else
     homedir = getenv("HOME");
