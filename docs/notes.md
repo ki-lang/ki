@@ -10,6 +10,9 @@
 - or return {} scope;
 - dont allow class instances in async calls
 - utf8 support | keep strings as byte arrays | convert to runes for substr,indexof,char and convert back
+- shared globals allow non nullable, must have a default value and assign on startup
+- threaded globals must have default value, assign on new thread
+- more info when not finding a variable. namespace not found? or just var name?
 
 ## Compile cache
 
