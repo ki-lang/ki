@@ -20,7 +20,7 @@ Arch: `sudo pacman -S gcc`
 git clone git@github.com:ki-lang/ki.git
 cd ki
 make
-# install.sh copies executable to /usr/bin (linux) or /usr/loca/bin (osx)
+# install.sh copies executable to /usr/bin (linux) or /usr/local/bin (osx)
 ./install.sh
 ```
 
