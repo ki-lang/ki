@@ -20,7 +20,7 @@ Arch: `sudo pacman -S gcc`
 git clone git@github.com:ki-lang/ki.git
 cd ki
 make
-# install.sh copies executable to /usr/bin (linux) or /usr/local/bin (osx)
+# install.sh copies files to /opt/ki and puts executable in /usr/local/bin
 ./install.sh
 ```
 
@@ -29,10 +29,11 @@ make
 Install `MinGW` and make sure to install the `mingw32-gcc-bin` and `mingw32-make-bin` packages.
 
 ```bash
+c:
 git clone git@github.com:ki-lang/ki.git
 cd ki
 make
-# install.bat copies executable to c:/ki/ and adds it to PATH (run as admin)
+# install.bat will add c:/ki/ (install.bat directory) to your PATH (run as admin)
 install.bat
 ```
 
