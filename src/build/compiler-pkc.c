@@ -134,7 +134,7 @@ NsCompiler *pkc_create_namespace(PkgCompiler *pkc, char *name) {
         nsc->name = strdup(name);
         nsc->pkc = pkc;
 
-        // printf("Created namespace: '%s'\n", name);
+        // printf("Created namespace: '%s:%s'\n", pkc->name, name);
 
         map_set(pkc->namespaces, nsc->name, nsc);
 
@@ -168,6 +168,8 @@ void pkc_check_config(PkgCompiler *pkc) {
     strcat(path, "/ki.json");
     pkc->config_path = path;
 
+    // printf("Check config: %s\n", path);
+
     if (file_exists(path)) {
         Str *content_str = file_get_contents(path);
         char *content = str_to_chars(content_str);
@@ -191,6 +193,8 @@ void pkc_check_config(PkgCompiler *pkc) {
                     }
 
                     map_set(pkc->namespace_dirs, strdup(item->key), dir);
+
+                    // printf("namespace in config: %s\n", item->key);
                 }
             }
         }

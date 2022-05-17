@@ -210,6 +210,8 @@ void fc_scan_types(FileCompiler *fc) {
             Scope *scope = fc->nsc->scope;
             map_set(scope->identifiers, name, idf);
 
+            // printf("Adding func named '%s' to namespace '%s:%s'\n", name, fc->nsc->pkc->name, fc->nsc->name);
+
             char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, name);
             func->cname = cname;
             map_set(c_identifiers, cname, idf);

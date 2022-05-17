@@ -312,6 +312,17 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         Scope *idf_scope = fc_get_identifier_scope(fc, scope, id);
         idf = idf_find_in_scope(idf_scope, id);
         if (idf == NULL) {
+            if (id->namespace) {
+                printf("Found '%d' tokens within this namespace '%s' : ", idf_scope->identifiers->keys->length, id->namespace);
+                for (int i = 0; i < idf_scope->identifiers->keys->length; i++) {
+                    char *key = array_get_index(idf_scope->identifiers->keys, i);
+                    if (i > 0) {
+                        printf(", ");
+                    }
+                    printf("%s", key);
+                }
+                printf("\n");
+            }
             fc_error(fc, "Unknown variable/function/class/enum: %s", id->name);
         }
 

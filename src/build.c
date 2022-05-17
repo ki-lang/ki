@@ -33,6 +33,11 @@ void cmd_build(Array *files, Map *options) {
     pkc->name = "main";
     map_set(packages, pkc->name, pkc);
 
+    char cwd[PATH_MAX];
+    getcwd(cwd, sizeof(cwd));
+    pkc->dir = strdup(cwd);
+    pkc_check_config(pkc);
+
     pkc_create_namespace(pkc, "main");
 
     // Step 1. create fc and scan types
