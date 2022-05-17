@@ -16,6 +16,8 @@ int main(int argc, char *argv[]) {
     char *cmd = argv[1];
 
     Map *option_has_value = map_make();
+    map_set(option_has_value, "-o", true);
+
     Map *params = get_options_and_args(argc, argv, option_has_value);
     Array *args = map_get(params, "args");
     Map *options = map_get(params, "options");

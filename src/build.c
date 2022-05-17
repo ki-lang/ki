@@ -7,6 +7,13 @@ void cmd_build(Array *files, Map *options) {
     parse_time = get_time();
 
     printf("Build...\n");
+
+    if (!map_contains(options, "-o")) {
+        die("Please set output name/path. e.g. '-o mytool'");
+    }
+
+    g_output_name = map_get(options, "-o");
+
     //
     cmd_build_init_static();
     // Globals

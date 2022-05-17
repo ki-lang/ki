@@ -71,7 +71,8 @@ void compile_all() {
     // Compile executable
     char *cmd = malloc(3000);
     strcpy(cmd, get_compiler_path());
-    strcat(cmd, " -lpthread -pthread -o test");
+    strcat(cmd, " -lpthread -pthread -o ");
+    strcat(cmd, g_output_name);
 
     for (int i = 0; i < o_files->length; i++) {
         strcat(cmd, " ");

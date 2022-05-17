@@ -11,6 +11,7 @@ Array *o_files;
 Array *cmd_arg_files;
 Map *allocators;
 Map *macro_defines;
+char *g_output_name;
 
 Map *c_identifiers;
 Map *c_struct_identifiers;
