@@ -226,6 +226,7 @@ void fc_scan_types(FileCompiler *fc) {
             char *package = NULL;
             char *namespace = strdup(token);
             if (fc_get_char(fc, 0) == ':') {
+                fc->i++;
                 fc_next_token(fc, token, false, true, false);
                 if (!is_valid_varname(token)) {
                     fc_error(fc, "Invalid name: '%s'", token);

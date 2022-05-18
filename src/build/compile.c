@@ -69,7 +69,7 @@ void compile_all() {
     wait_cmd();
 
     // Compile executable
-    char *cmd = malloc(3000);
+    char *cmd = malloc(50000);
     strcpy(cmd, get_compiler_path());
     strcat(cmd, " -lpthread -static -o ");
     strcat(cmd, g_output_name);
