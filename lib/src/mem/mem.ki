@@ -51,13 +51,13 @@ func free(ptr adr) {
 
 func alloc_flat(uxx size) ptr {
 
-	#if OS_LINUX
+	#if OS_LINUX || OS_OSX
 	size += 8;
 	#end
 
 	ptr adr = alloc_pure(size);
 
-	#if OS_LINUX
+	#if OS_LINUX || OS_OSX
 	setptrv adr to size;
 	adr += 8;
 	#end
@@ -75,7 +75,7 @@ func free_flat(ptr adr) {
 
 	uxx size = 0;
 
-	#if OS_LINUX
+	#if OS_LINUX || OS_OSX
 	adr -= 8;
 	size = getptrv adr as uxx;
 	#end
@@ -110,7 +110,7 @@ func alloc_pure(uxx size) ptr {
 
 	return main:main:VirtualAlloc(null, size, 0x3000, 0x40);
 
-	#elif OS_LINUX
+	#elif OS_LINUX || OS_OSX
 
 	// PROT_NONE: 0x0, // 
 	// PROT_READ: 0x1, // Pages may be read
@@ -138,7 +138,7 @@ func free_pure(ptr adr, uxx size) {
 
 	main:main:VirtualFree(adr, 0, 0x8000);
 
-	#elif OS_LINUX
+	#elif OS_LINUX || OS_OSX
 
 	i32 result = main:main:munmap(adr, size);
 

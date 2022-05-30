@@ -109,7 +109,8 @@ bool fc_resolve_macro_if_value(FileCompiler *fc, Scope *scope) {
         result = result && fc_resolve_macro_if_value(fc, scope);
     } else if (strcmp(token, "||") == 0) {
         fc_next_token(fc, token, false, true, true);
-        result = result || fc_resolve_macro_if_value(fc, scope);
+        bool next = fc_resolve_macro_if_value(fc, scope);
+        result = result || next;
     }
 
     return result;
