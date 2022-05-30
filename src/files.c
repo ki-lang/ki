@@ -95,7 +95,7 @@ char *get_binary_dir() {
     GetModuleFileName(NULL, buf, 1000);
 #elif defined(__APPLE__)
     // Hardcode apple path... no good alternative for now
-    strcpy(g_binary_dir, "/opt/ki/ki");
+    strcpy(buf, "/opt/ki/ki");
 #else
     readlink("/proc/self/exe", buf, 1000);
 #endif
