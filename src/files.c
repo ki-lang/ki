@@ -93,6 +93,9 @@ char *get_binary_dir() {
     char *buf = malloc(1000);
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     GetModuleFileName(NULL, buf, 1000);
+#elif defined(__APPLE__)
+    // Hardcode apple path... no good alternative for now
+    strcpy(g_binary_dir, "/opt/ki/ki");
 #else
     readlink("/proc/self/exe", buf, 1000);
 #endif
