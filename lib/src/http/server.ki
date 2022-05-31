@@ -35,9 +35,9 @@ class Server {
 		fd:add_to_set(read_set, sock.listenfd);
 		#elif OS_OSX
 		i32 kq = main:main:kqueue();
-		@ evSet = main:main:kevent{};
+		@ evSet = main:main:kEvent{};
 		main:main:EV_SET(evSet, sock.listenfd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, null);
-		ptr evList = mem:alloc(this.max_connections * sizeof(main:main:kevent));
+		ptr evList = mem:alloc(this.max_connections * sizeof(main:main:kEvent));
 		#else
 		@ epfd = main:main:epoll_create(1);
 		@ buf_ev = mem:calloc(sizeof(main:main:epoll_event)); 
@@ -68,7 +68,7 @@ class Server {
 			select_result = main:main:select(maxfd + 1, read_set, null, null, null);
 			fd:add_to_set(read_set, sock.listenfd);
 			#elif OS_OSX
-			i32 event_count = main:main:_kevent(kq, null, 0, evList, this.max_connections, null);
+			i32 event_count = main:main:kevent(kq, null, 0, evList, this.max_connections, null);
 			select_result = 1;
 			#else
 			i32 event_count = main:main:epoll_wait(epfd, events, fdcount, 100);
@@ -94,8 +94,8 @@ class Server {
 					@ isset = fd:isset(read_set, sock.listenfd);
 					#elif OS_OSX
 					ptr kevptr = evList;
-					kevptr += i * sizeof(main:main:kevent);
-					@ kev = cast kevptr as main:main:kevent; 
+					kevptr += i * sizeof(main:main:kEvent);
+					@ kev = cast kevptr as main:main:kEvent; 
 					@ fd = kev.ident;
 					@ isset = true;
 					#else
@@ -136,10 +136,10 @@ class Server {
 							#elif OS_OSX
 							// Add to set
 							main:main:EV_SET(evSet, new_fd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, null);
-							err_check = main:main:_kevent(kq, evSet, 1, null, 0, null);
+							err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
 							// Schedule write event / detects when we can write
                 			// main:main:EV_SET(evSet, sock.listenfd, main:main:KEVFILT.WRITE, main:main:KEV.ADD bitOR main:main:KEV.ONESHOT, 0, 0, null);
-                			// err_check = main:main:_kevent(kq, evSet, 1, null, 0, null);
+                			// err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
 							#else
 							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
                             fdcount++;

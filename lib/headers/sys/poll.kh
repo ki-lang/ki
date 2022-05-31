@@ -60,7 +60,7 @@ enum KEV {
 //	uint64_t  ext[4];
 //};
 
-class kevent {
+class kEvent {
 	public uxx ident = 0#uxx;
 	public i16 filter = 0#i16;
 	public u16 flags = 0#u16;
