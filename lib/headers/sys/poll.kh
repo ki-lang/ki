@@ -1,6 +1,8 @@
 
 namespace main;
 
+#if OS_LINUX
+
 class epoll_event norfc {
 	public u32 events;
 	public u32 fd;
@@ -21,3 +23,63 @@ enum EPOLL {
 	EPOLLRDHUP: 8192, // 0x2000,
 	EPOLLET: 2147483648, // 0x80000000,
 }
+
+#elif OS_OSX
+
+enum KEVFILT {
+	READ: -1,
+	WRITE: -2,
+	AIO: -3,
+	VNODE: -4,
+	PROC: -5,
+	SIGNAL: -6,
+	TIMER: -7,
+	MACHPORT: -8,
+	FS: -9,
+}
+
+enum KEV {
+	ADD: 1,
+	DELETE: 2,
+	ENABLE: 3,
+	DISABLE: 4,
+
+	ONESHOT: 16, // 0x10,
+
+	EOF: 32768, // 0x8000,
+	ERROR: 16384, // 0x4000,
+}
+
+//struct kevent {
+//	uintptr_t ident;
+//	short     filter;
+//	u_short   flags;
+//	u_int     fflags;
+//	int64_t   data; 
+//	void      *udata;
+//	uint64_t  ext[4];
+//};
+
+class kevent {
+	public uxx ident = 0#uxx;
+	public i16 filter = 0#i16;
+	public u16 flags = 0#u16;
+	public u16 fflags = 0#u16;
+	public i64 data = 0#i64;
+	public ptr udata = null;
+	public u64 ext1 = 0#u64;
+	public u64 ext2 = 0#u64;
+	public u64 ext3 = 0#u64;
+	public u64 ext4 = 0#u64;
+}
+
+class _timespec{
+   i64 tv_sec;             // seconds
+   i64 tv_nsec;            // nanoseconds
+};
+
+func kqueue() i32;
+func _kevent(i32 kq, kevent changelist, i32 nchanges, kevent eventlist, i32 nevents, _timespec timeout) i32;
+func EV_SET(kevent kev, uxx ident, i16 filter, u16 flags, u16 fflags, i64 data, ptr udata);
+
+#end

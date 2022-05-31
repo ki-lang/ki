@@ -30,10 +30,18 @@ void fc_read_enum_values(FileCompiler *fc, Enum *enu) {
         if (strcmp(token, ":") == 0) {
             // Custom value
             fc_next_token(fc, token, false, true, true);
+            bool negative = false;
+            if (strcmp(token, "-") == 0) {
+                negative = true;
+                fc_next_token(fc, token, false, true, false);
+            }
             if (!is_valid_number(token)) {
                 fc_error(fc, "Invalid enum value: '%s'", token);
             }
-            map_set(enu->values, name, strdup(token));
+            char *vc = malloc(strlen(token) + 2);
+            strcpy(vc, negative ? "-" : "");
+            strcat(vc, token);
+            map_set(enu->values, name, vc);
             fc_next_token(fc, token, false, false, true);
         } else {
             // Auto value

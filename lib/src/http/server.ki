@@ -33,6 +33,11 @@ class Server {
 		#if OS_WIN
 		@ read_set = mem:calloc(this.max_connections); // todo : too much memory, divide by 8
 		fd:add_to_set(read_set, sock.listenfd);
+		#elif OS_OSX
+		i32 kq = main:main:kqueue();
+		@ evSet = main:main:kevent{};
+		main:main:EV_SET(evSet, sock.listenfd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, NULL);
+		ptr evList = mem:alloc(this.max_connections * sizeof(main:main:kevent));
 		#else
 		@ epfd = main:main:epoll_create(1);
 		@ buf_ev = mem:calloc(sizeof(main:main:epoll_event)); 
@@ -49,7 +54,7 @@ class Server {
 		@ clientaddr = alc.get_chunk();
 		i32 addrlen = 16;
 
-		PtrArray connections = PtrArray.make(this.max_connections);
+		@ connections = PtrArray.make(this.max_connections);
 
 		//
 		i32 maxfd = sock.listenfd;
@@ -62,6 +67,9 @@ class Server {
 			#if OS_WIN
 			select_result = main:main:select(maxfd + 1, read_set, null, null, null);
 			fd:add_to_set(read_set, sock.listenfd);
+			#elif OS_OSX
+			i32 event_count = main:main:_kevent(kq, NULL, 0, evList, this.max_connections, NULL);
+			select_result = 1;
 			#else
 			i32 event_count = main:main:epoll_wait(epfd, events, fdcount, 100);
 			select_result = 1;
@@ -84,6 +92,11 @@ class Server {
 					#if OS_WIN
 					@ fd = i;
 					@ isset = fd:isset(read_set, sock.listenfd);
+					#elif OS_OSX
+					ptr kevptr = evList;
+					kevptr += i * sizeof(main:main:kevent);
+					@ kev = cast kevptr as main:main:kevent; 
+					@ fd = kev.ident;
 					#else
 					@ event = cast (events + (i * sizeof(main:main:epoll_event))) as main:main:epoll_event;
 					@ fd = event.fd;
@@ -119,6 +132,13 @@ class Server {
 
 							#if OS_WIN
 							fd:add_to_set(read_set, new_fd);
+							#elif OS_OSX
+							// Add to set
+							main:main:EV_SET(evSet, new_fd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, NULL);
+							main:main:_kevent(kq, evSet, 1, NULL, 0, NULL);
+							// Schedule write event / detects when we can write
+                			// main:main:EV_SET(evSet, sock.listenfd, main:main:KEVFILT.WRITE, main:main:KEV.ADD bitOR main:main:KEV.ONESHOT, 0, 0, NULL);
+                			// main:main:_kevent(kq, evSet, 1, NULL, 0, NULL);
 							#else
 							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
                             fdcount++;
@@ -143,6 +163,20 @@ class Server {
 						con._RC++;
 
 						#if OS_WIN
+						#elif OS_OSX
+						// Check if the connection is closing
+						u16 eof_check = kev.flags bitAND main:main:KEV.EOF;
+						if(eof_check > 0){
+							io:print("[+] connection closed: ");
+							io:println(fd.str());
+
+							con.task = null;
+							con._ALLOCATOR.free(con);
+							connections.clear(fd);
+
+							err_check = main:main:close(fd);
+							continue;
+						}
 						#else
 						// Check if the connection is closing
 						if ((event.events bitAND (main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
@@ -166,12 +200,16 @@ class Server {
 						// After select() has returned, readfds will be cleared of all file descriptors except for those that are ready for reading.
 						// So we need to set back all the fds
 						fd:add_to_set(read_set, fd);
+						#elif OS_OSX
+						bool has_incoming_data = kev.filter == main:main:KEVFILT.READ;
 						#else
 						bool has_incoming_data = (event.events bitAND main:main:EPOLL.EPOLLIN) > 0;
 						#end
 
 						if(has_incoming_data == false){
 							#if OS_WIN
+							#elif OS_OSX
+								io:print("[+] unknown kqueue event (bug)\n");
 							#else
 								io:print("[+] unknown epoll event (bug)\n");
 							#end
@@ -206,11 +244,14 @@ class Server {
 						}
 					} else {
 						#if OS_WIN
+						#elif OS_OSX
+							err_check = main:main:close(fd);
+							io:print("[+] kqueue event on non-existing connection\n");
 						#else
                             err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
 							err_check = main:main:close(fd);
                             fdcount--;
-							io:print("[+] epoll event on non-existing connection (bug)\n");
+							io:print("[+] epoll event on non-existing connection\n");
 						#end
 					}
 
