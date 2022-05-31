@@ -209,6 +209,7 @@ void fc_write_c(FileCompiler *fc) {
         fc->create_o_file = true;
         if (true) {
             write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
+            write_file(fc->c_filepath, "int errno;\n\n", true);
 
             // char* incl = malloc(KI_PATH_MAX + 50);
             // for (int i = 0; i < fc->include_headers_from->length; i++) {
@@ -491,6 +492,9 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         sprintf(fc->sprintf, "%ld", strlen(msg) + 1);
         str_append_chars(fc->tkn_buffer, fc->sprintf);
         str_append_chars(fc->tkn_buffer, ");\n");
+        str_append_chars(fc->tkn_buffer, "write(1, \"errno:\", 6);\n");
+        str_append_chars(fc->tkn_buffer, "write(1, &errno, 4);\n");
+        str_append_chars(fc->tkn_buffer, "write(1, \"\\n\", 1);\n");
     } else if (token->type == tkn_exit) {
         ErrorToken *err = token->item;
         str_append_chars(fc->tkn_buffer, "ki__sys__exit(");
