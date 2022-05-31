@@ -79,7 +79,7 @@ class _timespec{
 }
 
 func kqueue() i32;
-func _kevent(i32 kq, kevent changelist, i32 nchanges, kevent eventlist, i32 nevents, _timespec timeout) i32;
+func kevent(i32 kq, kevent changelist, i32 nchanges, kevent eventlist, i32 nevents, _timespec timeout) i32;
 func EV_SET(kevent kev, uxx ident, i16 filter, u16 flags, u16 fflags, i64 data, ptr udata);
 
 #end
