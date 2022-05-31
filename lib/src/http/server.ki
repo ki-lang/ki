@@ -263,11 +263,13 @@ class Server {
 		alc.free(clientaddr);
 	}
 
+	#if OS_LINUX
 	public static func epoll_ctl_add(main:main:epoll_event ev, i32 epfd, i32 fd, u32 events) {
 		ev.events = events;
 		ev.fd = fd;
 		@ check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_ADD, fd, ev);
 	}
+	#end
 
 	public static func respond(i32 fd, ptr server_ptr){
 

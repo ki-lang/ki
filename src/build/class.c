@@ -276,6 +276,12 @@ void fc_scan_class_props(Class *class) {
             break;
         }
 
+        // Macro
+        if (strcmp(token, "#") == 0) {
+            fc_parse_macro(fc, fc->scope, token);
+            continue;
+        }
+
         // Skip enum
         if (strcmp(token, "enum") == 0) {
             fc_skip_until_char(fc, ';');
