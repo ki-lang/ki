@@ -430,6 +430,8 @@ typedef enum TokenTypeEnum {
     // Global ast only
     tkn_func,
     tkn_class,
+    // misc
+    tkn_debug_msg,
     //
 } TokenTypeEnum;
 

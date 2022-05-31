@@ -483,6 +483,14 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
     fc_indent(fc, fc->tkn_buffer);
     if (token->type == tkn_func) {
         fc_write_c_func(fc, token->item);
+    } else if (token->type == tkn_debug_msg) {
+        char *msg = token->item;
+        str_append_chars(fc->tkn_buffer, "write(1, \"");
+        str_append_chars(fc->tkn_buffer, msg);
+        str_append_chars(fc->tkn_buffer, "\\n\", ");
+        sprintf(fc->sprintf, "%ld", strlen(msg) + 1);
+        str_append_chars(fc->tkn_buffer, fc->sprintf);
+        str_append_chars(fc->tkn_buffer, ");\n");
     } else if (token->type == tkn_exit) {
         ErrorToken *err = token->item;
         str_append_chars(fc->tkn_buffer, "ki__sys__exit(");

@@ -81,6 +81,16 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
             continue;
         }
 
+        if (strcmp(token, "DEBUGMSG") == 0) {
+            Token *tk = init_token();
+            tk->type = tkn_debug_msg;
+            fc_next_token(fc, token, false, true, true);
+            tk->item = strdup(token);
+            array_push(scope->ast, tk);
+            fc_expect_token(fc, ";", false, true, true);
+            continue;
+        }
+
         if (strcmp(token, "exit") == 0) {
             Token *tk = init_token();
             tk->type = tkn_exit;
