@@ -210,6 +210,7 @@ void fc_write_c(FileCompiler *fc) {
         if (true) {
             write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
             write_file(fc->c_filepath, "\n#include <errno.h>\n\n", true);
+            write_file(fc->c_filepath, "\n#include <string.h>\n\n", true);
 
             // char* incl = malloc(KI_PATH_MAX + 50);
             // for (int i = 0; i < fc->include_headers_from->length; i++) {
@@ -493,7 +494,8 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, fc->sprintf);
         str_append_chars(fc->tkn_buffer, ");\n");
         str_append_chars(fc->tkn_buffer, "write(1, \"errno:\", 6);\n");
-        str_append_chars(fc->tkn_buffer, "write(1, &errno, 4);\n");
+        str_append_chars(fc->tkn_buffer, "char* ERRNOMSG =  strerror(errno);\n");
+        str_append_chars(fc->tkn_buffer, "write(1, ERRNOMSG, strlen(ERRNOMSG));\n");
         str_append_chars(fc->tkn_buffer, "write(1, \"\\n\", 1);\n");
     } else if (token->type == tkn_exit) {
         ErrorToken *err = token->item;
