@@ -97,6 +97,7 @@ class Server {
 					kevptr += i * sizeof(main:main:kevent);
 					@ kev = cast kevptr as main:main:kevent; 
 					@ fd = kev.ident;
+					@ isset = true;
 					#else
 					@ event = cast (events + (i * sizeof(main:main:epoll_event))) as main:main:epoll_event;
 					@ fd = event.fd;
