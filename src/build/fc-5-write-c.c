@@ -209,6 +209,7 @@ void fc_write_c(FileCompiler *fc) {
         fc->create_o_file = true;
         if (true) {
             write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
+            // TODO: Delete errno stuff
             write_file(fc->c_filepath, "\n#include <errno.h>\n\n", true);
             write_file(fc->c_filepath, "\n#include <string.h>\n\n", true);
 
@@ -493,6 +494,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         sprintf(fc->sprintf, "%ld", strlen(msg) + 1);
         str_append_chars(fc->tkn_buffer, fc->sprintf);
         str_append_chars(fc->tkn_buffer, ");\n");
+        // TODO: Delete errno stuff
         str_append_chars(fc->tkn_buffer, "write(1, \"errno:\", 6);\n");
         str_append_chars(fc->tkn_buffer, "char* ERRNOMSG =  strerror(errno);\n");
         str_append_chars(fc->tkn_buffer, "write(1, ERRNOMSG, strlen(ERRNOMSG));\n");
