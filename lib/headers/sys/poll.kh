@@ -74,8 +74,8 @@ class kevent {
 }
 
 class _timespec{
-   i64 tv_sec;             // seconds
-   i64 tv_nsec;            // nanoseconds
+   public i64 tv_sec;             // seconds
+   public i64 tv_nsec;            // nanoseconds
 }
 
 func kqueue() i32;
