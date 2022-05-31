@@ -76,7 +76,7 @@ class kevent {
 class _timespec{
    i64 tv_sec;             // seconds
    i64 tv_nsec;            // nanoseconds
-};
+}
 
 func kqueue() i32;
 func _kevent(i32 kq, kevent changelist, i32 nchanges, kevent eventlist, i32 nevents, _timespec timeout) i32;
