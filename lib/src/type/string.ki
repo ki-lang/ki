@@ -164,7 +164,7 @@ class String {
 		copy(this.data, cstr, this.length);
 		ptr x = cstr;
 		x += this.length;
-		x = '\0';
+		setptrv x to '\0';
 		return cstr;
 	}
 
