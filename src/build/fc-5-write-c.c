@@ -209,7 +209,7 @@ void fc_write_c(FileCompiler *fc) {
         fc->create_o_file = true;
         if (true) {
             write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
-            write_file(fc->c_filepath, "int errno;\n\n", true);
+            write_file(fc->c_filepath, "\n#include <errno.h>\n\n", true);
 
             // char* incl = malloc(KI_PATH_MAX + 50);
             // for (int i = 0; i < fc->include_headers_from->length; i++) {
