@@ -110,8 +110,13 @@ bool fc_resolve_macro_if_value(FileCompiler *fc, Scope *scope) {
     } else if (strcmp(token, "||") == 0) {
         fc_next_token(fc, token, false, true, true);
         bool next = fc_resolve_macro_if_value(fc, scope);
+        printf("file:%s\n", fc->ki_filepath);
+        printf("current:%s\n", result ? "1" : "0");
+        printf("next:%s\n", next ? "1" : "0");
         result = result || next;
     }
+
+    free(token);
 
     return result;
 }
