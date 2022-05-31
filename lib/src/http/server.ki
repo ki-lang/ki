@@ -8,7 +8,7 @@ namespace http;
 use type {PtrArray};
 
 #if OS_OSX
-func EV_SET(kEvent kev, uxx ident, i16 filter, u16 flags, u16 fflags, i64 data, ptr udata) {
+func EV_SET(main:main:kEvent kev, uxx ident, i16 filter, u16 flags, u16 fflags, i64 data, ptr udata) {
 	kev.ident = ident;
 	kev.filter = filter;
 	kev.flags = flags;
