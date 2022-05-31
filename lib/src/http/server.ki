@@ -136,10 +136,10 @@ class Server {
 							#elif OS_OSX
 							// Add to set
 							main:main:EV_SET(evSet, new_fd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, null);
-							main:main:_kevent(kq, evSet, 1, null, 0, null);
+							err_check = main:main:_kevent(kq, evSet, 1, null, 0, null);
 							// Schedule write event / detects when we can write
                 			// main:main:EV_SET(evSet, sock.listenfd, main:main:KEVFILT.WRITE, main:main:KEV.ADD bitOR main:main:KEV.ONESHOT, 0, 0, null);
-                			// main:main:_kevent(kq, evSet, 1, null, 0, null);
+                			// err_check = main:main:_kevent(kq, evSet, 1, null, 0, null);
 							#else
 							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
                             fdcount++;
