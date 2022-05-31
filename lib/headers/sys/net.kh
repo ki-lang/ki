@@ -34,7 +34,7 @@ class os_fd_set norfc {
 }
 
 func select(i32 fdcount, ptr readfdset, ptr writefdset, ptr expectfdset, ptr timeout) i32;
-func accept4(i32 sockfd, sockaddr_in addr, ptr addrlen, i32 flags) i32;
+func accept(i32 sockfd, sockaddr_in addr, ptr addrlen) i32;
 
 func recv(i32 sockfd, ptr buf, ixx len, i32 flags) i32;
 func send(i32 sockfd, ptr buf, ixx len, i32 flags) i32;

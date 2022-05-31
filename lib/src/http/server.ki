@@ -99,7 +99,7 @@ class Server {
 						// Check new socket connection
 						if(isset){
 							// New connection
-  					      	i32 new_fd = main:main:accept4(sock.listenfd, clientaddr, getptr addrlen, 0);
+  					      	i32 new_fd = main:main:accept(sock.listenfd, clientaddr, getptr addrlen);
 
 							if (new_fd == -1){
 								io:print("Failed to accept connection\n");
