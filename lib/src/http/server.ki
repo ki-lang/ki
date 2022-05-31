@@ -7,6 +7,17 @@ namespace http;
 
 use type {PtrArray};
 
+#if OS_OSX
+func EV_SET(kEvent kev, uxx ident, i16 filter, u16 flags, u16 fflags, i64 data, ptr udata) {
+	kev.ident = ident;
+	kev.filter = filter;
+	kev.flags = flags;
+	kev.fflags = fflags;
+	kev.data = data;
+	kev.udata = udata;
+}
+#end
+
 func request_handler(Request req) Response {
 	
 	return Response {
@@ -36,7 +47,7 @@ class Server {
 		#elif OS_OSX
 		i32 kq = main:main:kqueue();
 		@ evSet = main:main:kEvent{};
-		main:main:EV_SET(evSet, sock.listenfd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, null);
+		EV_SET(evSet, sock.listenfd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, null);
 		ptr evList = mem:alloc(this.max_connections * sizeof(main:main:kEvent));
 		#else
 		@ epfd = main:main:epoll_create(1);
@@ -135,10 +146,10 @@ class Server {
 							fd:add_to_set(read_set, new_fd);
 							#elif OS_OSX
 							// Add to set
-							main:main:EV_SET(evSet, new_fd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, null);
+							EV_SET(evSet, new_fd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, null);
 							err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
 							// Schedule write event / detects when we can write
-                			// main:main:EV_SET(evSet, sock.listenfd, main:main:KEVFILT.WRITE, main:main:KEV.ADD bitOR main:main:KEV.ONESHOT, 0, 0, null);
+                			// EV_SET(evSet, sock.listenfd, main:main:KEVFILT.WRITE, main:main:KEV.ADD bitOR main:main:KEV.ONESHOT, 0, 0, null);
                 			// err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
 							#else
 							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
