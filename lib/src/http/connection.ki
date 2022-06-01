@@ -6,4 +6,5 @@ class Connection {
 	public ptr read_set;
 	public bool disconnected = false;
 	public ?async:Task task = null;
+	public ?Request req = null;
 }

@@ -153,9 +153,10 @@ class Server {
 							EV_SET(evSet, new_fd, main:main:KEVFILT.READ, main:main:KEV.ADD bitOR main:main:KEV.ENABLE, 0, 0, null);
 							// Apply change to kq
 							err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
-							// Schedule write event / detects when we can write
-                			// EV_SET(evSet, sock.listenfd, main:main:KEVFILT.WRITE, main:main:KEV.ADD bitOR main:main:KEV.ONESHOT, 0, 0, null);
-                			// err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
+							// Schedule write event / detects when we are allowed to write
+                			EV_SET(evSet, sock.listenfd, main:main:KEVFILT.WRITE, main:main:KEV.ADD bitOR main:main:KEV.ONESHOT, 0, 0, null);
+							// Apply change to kq
+                			err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
 							#else
 							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
                             fdcount++;
@@ -211,22 +212,29 @@ class Server {
 						}
 						#end
 
+						#if OS_OSX
+						if(kev.filter == main:main:KEVFILT.READ){
+							Server.kq_read(con);
+						} else if(kev.filter == main:main:KEVFILT.WRITE){
+							Server.kq_write(con, this);
+						} else {
+							io:print("[+] unknown kqueue event (bug)\n");
+						}
+						continue;
+						#end
+
 						#if OS_WIN
 						bool has_incoming_data = fd:isset(read_set, fd) == true;
 
 						// After select() has returned, readfds will be cleared of all file descriptors except for those that are ready for reading.
 						// So we need to set back all the fds
 						fd:add_to_set(read_set, fd);
-						#elif OS_OSX
-						bool has_incoming_data = kev.filter == main:main:KEVFILT.READ;
 						#else
 						bool has_incoming_data = (event.events bitAND main:main:EPOLL.EPOLLIN) > 0;
 						#end
 
 						if(has_incoming_data == false){
 							#if OS_WIN
-							#elif OS_OSX
-								io:print("[+] unknown kqueue event (bug)\n");
 							#else
 								io:print("[+] unknown epoll event (bug)\n");
 							#end
@@ -287,6 +295,21 @@ class Server {
 		@ check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_ADD, fd, ev);
 	}
 	#end
+
+	public static func kq_read(Connection con){
+        con.req = Request.read_request(con.fd);
+	}
+	public static func kq_write(Connection con, Server server){
+		@ req = con.req;
+		ifnull req return;
+
+		@ response = server.handler(req);
+
+        String output = response.output();
+		@ check = main:main:send(con.fd, output.data, output.length, 0);
+
+		con.req = null;
+	}
 
 	public static func respond(i32 fd, ptr server_ptr){
 
