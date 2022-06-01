@@ -1,6 +1,8 @@
 
 #include "../all.h"
 
+void build_help();
+
 // PkgCompiler
 PkgCompiler *init_pkc();
 void free_pkc(PkgCompiler *pkc);

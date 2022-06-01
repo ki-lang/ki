@@ -2,6 +2,12 @@
 #include "all.h"
 
 void cmd_build(Array *files, Map *options) {
+
+    if (map_get(options, "-h") || files->length == 0) {
+        build_help();
+        return;
+    }
+
     LOC = 0;
     double parse_time, write_c_time, compile_time;
     parse_time = get_time();
@@ -150,4 +156,11 @@ void cmd_build_init_before_build() {
 #else
     map_set(macro_defines, "OS_LINUX", "1");
 #endif
+}
+
+void build_help() {
+    //
+    printf("Usage: ki build {files} -o {output name/path}\n\n");
+
+    printf("> Example: ki build src/*.ki -o myapp\n\n");
 }
