@@ -47,7 +47,7 @@ class Server {
 		#elif OS_OSX
 		i32 kq = main:main:kqueue();
 		@ evSet = main:main:kEvent{};
-		EV_SET(evSet, sock.listenfd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, null);
+		EV_SET(evSet, sock.listenfd, main:main:KEVFILT.READ, main:main:KEV.ADD bitOR main:main:KEV.ENABLE, 0, 0, cast sock.listenfd as ptr);
 		ptr evList = mem:alloc(this.max_connections * sizeof(main:main:kEvent));
 		#else
 		@ epfd = main:main:epoll_create(1);
@@ -79,8 +79,10 @@ class Server {
 			select_result = main:main:select(maxfd + 1, read_set, null, null, null);
 			fd:add_to_set(read_set, sock.listenfd);
 			#elif OS_OSX
+			io:print("check\n");
 			i32 event_count = main:main:kevent(kq, null, 0, evList, this.max_connections, null);
 			select_result = 1;
+			io:print("event\n");
 			#else
 			i32 event_count = main:main:epoll_wait(epfd, events, fdcount, 100);
 			select_result = 1;

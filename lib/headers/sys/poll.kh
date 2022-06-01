@@ -41,8 +41,8 @@ enum KEVFILT {
 enum KEV {
 	ADD: 1,
 	DELETE: 2,
-	ENABLE: 3,
-	DISABLE: 4,
+	ENABLE: 4,
+	DISABLE: 8,
 
 	ONESHOT: 16, // 0x10,
 
