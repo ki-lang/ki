@@ -43,18 +43,18 @@ class Server {
 
 		@ task_list = mem:alloc(this.max_connections * 8);
 
-		#if OS_WIN
+		#if OS_WIN || OS_OSX
 		@ read_set = mem:calloc(this.max_connections); // todo : too much memory, divide by 8
 		fd:add_to_set(read_set, sock.listenfd);
-		#elif OS_OSX
-		i32 kq = main:main:kqueue();
-		@ evSet = main:main:kEvent{};
-		// Update evSet
-		EV_SET(evSet, sock.listenfd, main:main:KEVFILT.READ, main:main:KEV.ADD bitOR main:main:KEV.ENABLE, 0, 0, cast sock.listenfd as ptr);
-		// Apply change to kq
-		err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
-		// Setup evSet foreach connection
-		ptr evList = mem:alloc(this.max_connections * sizeof(main:main:kEvent));
+		// #elif OS_OSX
+		// i32 kq = main:main:kqueue();
+		// @ evSet = main:main:kEvent{};
+		// // Update evSet
+		// EV_SET(evSet, sock.listenfd, main:main:KEVFILT.READ, main:main:KEV.ADD bitOR main:main:KEV.ENABLE, 0, 0, cast sock.listenfd as ptr);
+		// // Apply change to kq
+		// err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
+		// // Setup evSet foreach connection
+		// ptr evList = mem:alloc(this.max_connections * sizeof(main:main:kEvent));
 		#else
 		@ epfd = main:main:epoll_create(1);
 		@ buf_ev = mem:calloc(sizeof(main:main:epoll_event)); 
@@ -80,14 +80,14 @@ class Server {
         i32 fdcount = 1;
 		while(true){
 
-			#if OS_WIN
+			#if OS_WIN || OS_OSX
 			select_result = main:main:select(maxfd + 1, read_set, null, null, null);
 			fd:add_to_set(read_set, sock.listenfd);
-			#elif OS_OSX
-			io:print("check\n");
-			i32 event_count = main:main:kevent(kq, null, 0, evList, this.max_connections, null);
-			select_result = 1;
-			io:print("event\n");
+			//#elif OS_OSX
+			//io:print("check\n");
+			//i32 event_count = main:main:kevent(kq, null, 0, evList, this.max_connections, null);
+			//select_result = 1;
+			//io:print("event\n");
 			#else
 			i32 event_count = main:main:epoll_wait(epfd, events, fdcount, 100);
 			select_result = 1;
@@ -107,15 +107,15 @@ class Server {
 
 				while(i < max){
 
-					#if OS_WIN
+					#if OS_WIN || OS_OSX
 					@ fd = i;
 					@ isset = fd:isset(read_set, sock.listenfd);
-					#elif OS_OSX
-					ptr kevptr = evList;
-					kevptr += i * sizeof(main:main:kEvent);
-					@ kev = cast kevptr as main:main:kEvent; 
-					@ fd = kev.ident;
-					@ isset = true;
+					//#elif OS_OSX
+					//ptr kevptr = evList;
+					//kevptr += i * sizeof(main:main:kEvent);
+					//@ kev = cast kevptr as main:main:kEvent; 
+					//@ fd = kev.ident;
+					//@ isset = true;
 					#else
 					@ event = cast (events + (i * sizeof(main:main:epoll_event))) as main:main:epoll_event;
 					@ fd = event.fd;
@@ -146,17 +146,17 @@ class Server {
 
 							fd:set_non_block(new_fd);
 
-							#if OS_WIN
+							#if OS_WIN || OS_OSX
 							fd:add_to_set(read_set, new_fd);
-							#elif OS_OSX
-							// Add to set
-							EV_SET(evSet, new_fd, main:main:KEVFILT.READ, main:main:KEV.ADD bitOR main:main:KEV.ENABLE, 0, 0, null);
-							// Apply change to kq
-							err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
-							// Schedule write event / detects when we are allowed to write
-                			EV_SET(evSet, sock.listenfd, main:main:KEVFILT.WRITE, main:main:KEV.ADD bitOR main:main:KEV.ONESHOT, 0, 0, null);
-							// Apply change to kq
-                			err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
+							// #elif OS_OSX
+							// // Add to set
+							// EV_SET(evSet, new_fd, main:main:KEVFILT.READ, main:main:KEV.ADD bitOR main:main:KEV.ENABLE, 0, 0, null);
+							// // Apply change to kq
+							// err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
+							// // Schedule write event / detects when we are allowed to write
+                 			// EV_SET(evSet, sock.listenfd, main:main:KEVFILT.WRITE, main:main:KEV.ADD bitOR main:main:KEV.ONESHOT, 0, 0, null);
+							// // Apply change to kq
+                			// err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
 							#else
 							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
                             fdcount++;
@@ -180,21 +180,7 @@ class Server {
 						Connection con = cast conptr as Connection;
 						con._RC++;
 
-						#if OS_WIN
-						#elif OS_OSX
-						// Check if the connection is closing
-						u16 eof_check = kev.flags bitAND main:main:KEV.EOF;
-						if(eof_check > 0){
-							io:print("[+] connection closed: ");
-							io:println(fd.str());
-
-							con.task = null;
-							con._ALLOCATOR.free(con);
-							connections.clear(fd);
-
-							err_check = main:main:close(fd);
-							continue;
-						}
+						#if OS_WIN || OS_OSX
 						#else
 						// Check if the connection is closing
 						if ((event.events bitAND (main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
@@ -212,18 +198,7 @@ class Server {
 						}
 						#end
 
-						#if OS_OSX
-						if(kev.filter == main:main:KEVFILT.READ){
-							Server.kq_read(con);
-						} else if(kev.filter == main:main:KEVFILT.WRITE){
-							Server.kq_write(con, this);
-						} else {
-							io:print("[+] unknown kqueue event (bug)\n");
-						}
-						continue;
-						#end
-
-						#if OS_WIN
+						#if OS_WIN || OS_OSX
 						bool has_incoming_data = fd:isset(read_set, fd) == true;
 
 						// After select() has returned, readfds will be cleared of all file descriptors except for those that are ready for reading.
@@ -268,10 +243,7 @@ class Server {
 							}
 						}
 					} else {
-						#if OS_WIN
-						#elif OS_OSX
-							err_check = main:main:close(fd);
-							io:print("[+] kqueue event on non-existing connection\n");
+						#if OS_WIN || OS_OSX
 						#else
                             err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
 							err_check = main:main:close(fd);
