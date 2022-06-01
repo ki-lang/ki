@@ -135,10 +135,7 @@ class Server {
 								maxfd = new_fd;
 							}
 
-							// SOL_SOCKET: 1
-							// SO_KEEPALIVE: 9
-							i32 keep_alive = 1;
-							i32 success = main:main:setsockopt(new_fd, 1, 9, getptr keep_alive, sizeof(i32));
+							sock.set_keep_alive(new_fd);
 
 							fd:set_non_block(new_fd);
 

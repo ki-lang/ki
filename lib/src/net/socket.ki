@@ -75,10 +75,10 @@ class Socket {
 				io:print("Cant create socket\n");
 			}
 
-			i32 option = 1;
-        	success = main:main:setsockopt(this.listenfd, 1, 2, getptr option, sizeof(i32));
-
-			this.set_keep_alive(this.listenfd);
+			// SOL_SOCKET: 65535 // 0xFFFF
+			// SO_KEEPALIVE: 4
+			i32 reuseaddr = 1;
+			success = main:main:setsockopt(this.listenfd, 65535, 4, getptr reuseaddr, sizeof(i32));
 
         	if (this.listenfd == -1) { continue; }
 			success = main:main:bind(this.listenfd, p.ai_addr, p.ai_addrlen);
@@ -104,24 +104,30 @@ class Socket {
 	}
 
 	public func set_keep_alive(i32 fd){
-		i32 keep_idle = 180;  // Keep alive time in seconds
-		i32 keep_intvl = 60; // Keep alive interval in seconds
-		i32 keep_pcnt = 20; // Keep alive retry count
 
-		// SOL_TCP: 6
+		// https://stackoverflow.com/questions/31426420/configuring-tcp-keepalive-after-accept
+
+		i32 yes = 1;
+		i32 keep_idle = 30;  // Keep alive time in seconds
+		i32 keep_intvl = 60; // Keep alive interval in seconds
+		i32 keep_pcnt = 5; // Keep alive retry count
+		i32 success = 0;
+
+		// SOL_SOCKET: 65535 // 0xFFFF
+		// SO_KEEPALIVE: 8
+		success = main:main:setsockopt(fd, 65535, 8, getptr yes, sizeof(i32));
+
+		// SOL_TCP / IPPROTO_TCP: 6
 		// TCP_KEEPIDLE: 4
 		// TCP_KEEPINTVL: 5
 		// TCP_KEEPCNT: 6
-		i32 success = main:main:setsockopt(fd, 6, 4, getptr keep_idle, sizeof(i32));
+		success = main:main:setsockopt(fd, 6, 4, getptr keep_idle, sizeof(i32));
 		success = main:main:setsockopt(fd, 6, 5, getptr keep_intvl, sizeof(i32));
 		success = main:main:setsockopt(fd, 6, 6, getptr keep_pcnt, sizeof(i32));
 
 		// IPPROTO_TCP => TCP_NODELAY
 		i32 nodelay = 1;
 		//success = main:main:setsockopt(fd, 6, 1, getptr nodelay, sizeof(i32));
-
-		i32 reuseaddr = 1;
-		//success = main:main:setsockopt(fd, 1, 2, getptr reuseaddr, sizeof(i32));
 	}
 
 }
