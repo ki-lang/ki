@@ -150,7 +150,8 @@ class Server {
 							fd:add_to_set(read_set, new_fd);
 							#elif OS_OSX
 							// Add to set
-							EV_SET(evSet, new_fd, main:main:KEVFILT.READ, main:main:KEV.ADD, 0, 0, null);
+							EV_SET(evSet, new_fd, main:main:KEVFILT.READ, main:main:KEV.ADD bitOR main:main:KEV.ENABLE, 0, 0, null);
+							// Apply change to kq
 							err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
 							// Schedule write event / detects when we can write
                 			// EV_SET(evSet, sock.listenfd, main:main:KEVFILT.WRITE, main:main:KEV.ADD bitOR main:main:KEV.ONESHOT, 0, 0, null);
