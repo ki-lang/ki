@@ -32,6 +32,8 @@ class Server {
 
 	public func start() ! {
 
+		i32 err_check = 0;
+
 		@ sock = ki:net:Socket { port: this.port };
 		sock.listen() or pass;
 		//
@@ -47,7 +49,11 @@ class Server {
 		#elif OS_OSX
 		i32 kq = main:main:kqueue();
 		@ evSet = main:main:kEvent{};
+		// Update evSet
 		EV_SET(evSet, sock.listenfd, main:main:KEVFILT.READ, main:main:KEV.ADD bitOR main:main:KEV.ENABLE, 0, 0, cast sock.listenfd as ptr);
+		// Apply change to kq
+		err_check = main:main:kevent(kq, evSet, 1, null, 0, null);
+		// Setup evSet foreach connection
 		ptr evList = mem:alloc(this.max_connections * sizeof(main:main:kEvent));
 		#else
 		@ epfd = main:main:epoll_create(1);
@@ -71,7 +77,6 @@ class Server {
 		i32 maxfd = sock.listenfd;
 		i32 new_fd = 0;
 		i32 select_result = 0;
-		i32 err_check = 0;
         i32 fdcount = 1;
 		while(true){
 
