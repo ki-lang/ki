@@ -96,7 +96,7 @@ class Server {
 
 					#if OS_WIN || OS_OSX
 					@ fd = i;
-					@ isset = fd:isset(read_set, sock.listenfd);
+					@ isset = fd:isset(read_set, fd);
 					#else
 					@ event = cast (events + (i * sizeof(main:main:epoll_event))) as main:main:epoll_event;
 					@ fd = event.fd;
@@ -113,39 +113,36 @@ class Server {
 
 					if(fd == sock.listenfd){
 
-						// Check new socket connection
-						if(isset){
-							// New connection
-  					      	i32 new_fd = main:main:accept(sock.listenfd, clientaddr, getptr addrlen);
+						// New connection
+  				      	i32 new_fd = main:main:accept(sock.listenfd, clientaddr, getptr addrlen);
 
-							if (new_fd == -1){
-								io:print("Failed to accept connection\n");
-								continue;
-							}
-
-							if(new_fd > maxfd){
-								maxfd = new_fd;
-							}
-
-							sock.set_keep_alive(new_fd);
-
-							fd:set_non_block(new_fd);
-
-							#if OS_WIN || OS_OSX
-							fd:add_to_set(read_set, new_fd);
-							#else
-							Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
-                            fdcount++;
-							#end
-
-							Connection con = Connection{ fd: new_fd };
-							con._RC++;
-
-							connections.set(new_fd, con);
-							io:print("[+] new connection: ");
-							io:print(new_fd.str());
-							io:print("\n");
+						if (new_fd == -1){
+							io:print("Failed to accept connection\n");
+							continue;
 						}
+
+						if(new_fd > maxfd){
+							maxfd = new_fd;
+						}
+
+						sock.set_keep_alive(new_fd);
+
+						fd:set_non_block(new_fd);
+
+						#if OS_WIN || OS_OSX
+						fd:add_to_set(read_set, new_fd);
+						#else
+						Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
+                           fdcount++;
+						#end
+
+						Connection con = Connection{ fd: new_fd };
+						con._RC++;
+
+						connections.set(new_fd, con);
+						io:print("[+] new connection: ");
+						io:print(new_fd.str());
+						io:print("\n");
 
 						continue;
 					}
