@@ -269,6 +269,10 @@ class Server {
         String output = response.output();
 		@ check = main:main:send(fd, output.data, output.length, 0);
 
+		#if OS_WIN || OS_OSX
+		check = main:main:close(fd);
+		#end
+
 		return;
 	}
 
