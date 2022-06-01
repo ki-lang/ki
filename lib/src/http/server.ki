@@ -207,9 +207,7 @@ class Server {
 								io:print("[+] disconnect\n");
 								con._ALLOCATOR.free(con);
 								connections.clear(fd);
-								#if OS_WIN || OS_OSX
 								fd:remove_from_set(read_set, fd);
-								#end
 								err_check = main:main:close(fd);
 								continue;
 							}
