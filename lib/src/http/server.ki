@@ -81,6 +81,7 @@ class Server {
 
 			if(select_result <= 0){
 				io:print("poll/select error\n");
+				DEBUGMSG select_failed;
 			}else {
 
 				#if OS_WIN || OS_OSX
@@ -105,6 +106,10 @@ class Server {
 					//io:println(fd.str());
 
 					i++;
+
+					if(isset == false){
+						continue;
+					}
 
 					if(fd == sock.listenfd){
 
@@ -216,7 +221,7 @@ class Server {
 						}
 					} else {
 						#if OS_WIN || OS_OSX
-							io:print("[+] poll/select event on non-existing connection\n")
+							io:print("[+] poll/select event on non-existing connection\n");
 						#else
                             err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
 							err_check = main:main:close(fd);
