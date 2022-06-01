@@ -80,7 +80,7 @@ class Server {
 			#end
 
 			if(select_result <= 0){
-				io:print("epoll error\n");
+				io:print("poll/select error\n");
 			}else {
 
 				#if OS_WIN || OS_OSX
@@ -181,6 +181,7 @@ class Server {
 
 						if(has_incoming_data == false){
 							#if OS_WIN || OS_OSX
+								io:print("[+] no incoming data from connection\n");
 							#else
 								io:print("[+] unknown epoll event (bug)\n");
 							#end
@@ -215,6 +216,7 @@ class Server {
 						}
 					} else {
 						#if OS_WIN || OS_OSX
+							io:print("[+] poll/select event on non-existing connection\n")
 						#else
                             err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
 							err_check = main:main:close(fd);
