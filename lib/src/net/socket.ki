@@ -94,7 +94,7 @@ class Socket {
 		// c:freeaddrinfo(res);
 
 		// listen for incoming connections
-		success = main:main:listen(this.listenfd, 1000000);
+		success = main:main:listen(this.listenfd, 10000); // 10k max pending connections
  	    if (success != 0 ) {
         	io:print("listen_error");
 			throw listen_error;
