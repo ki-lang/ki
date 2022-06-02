@@ -213,19 +213,6 @@ void fc_write_c(FileCompiler *fc) {
         fc->create_o_file = true;
         if (true) {
             write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
-            // TODO: Delete errno stuff
-            write_file(fc->c_filepath, "\n#include <string.h>\n\n", true);
-
-            // char* incl = malloc(KI_PATH_MAX + 50);
-            // for (int i = 0; i < fc->include_headers_from->length; i++) {
-            //   FileCompiler* hfc = array_get_index(fc->include_headers_from, i);
-            //   strcpy(incl, "#include \"");
-            //   strcat(incl, hfc->h_filepath);
-            //   strcat(incl, "\"\n");
-            //   write_file(fc->c_filepath, incl, true);
-            // }
-            // free(incl);
-
             write_file(fc->c_filepath, "\n", true);
             if (!fc->is_header) {
                 write_file(fc->c_filepath, code, true);
