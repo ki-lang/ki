@@ -73,16 +73,19 @@ class String {
 	}
 
 	// Count amount of utf8 characters
-	public func chars() u64 {
-		u64 count = 0;
-		u64 pos = 0;
+	public func chars() uxx {
+		uxx count = 0;
+		uxx pos = 0;
 		ptr adr = this.data;
 		while(pos < this.bytes){
 			u8 bytec = 1;
 			u8 byte = getptrv adr as u8;
-			while( byte bitAND 128 > 0 ){
-				bytec++;
-				byte = byte << 1;
+			if((byte bitAND 128) > 0){
+				bytec = 0;
+				while((byte bitAND 128) > 0 ){
+					bytec++;
+					byte = byte << 1;
+				}
 			}
 			if(bytec > 4){
 				// Invalid utf8 char
@@ -117,7 +120,7 @@ class String {
 		return s;
 	}
 
-	public func append_bytes_from_ptr(ptr adr, u64 len) {
+	public func append_bytes_from_ptr(ptr adr, uxx len) {
 		uxx bytes = this.bytes;
 		uxx new_bytes = bytes + len;
 		this.increase_mem_size(len);
@@ -126,7 +129,7 @@ class String {
 		this.bytes = new_bytes;
 	}
 
-	public func increase_mem_size(u64 len){
+	public func increase_mem_size(uxx len){
 		uxx size = this.mem_size;
 		uxx new_size = size;
 		uxx expect_size = this.mem_size + len;
@@ -240,7 +243,72 @@ class String {
 		return StringChunker { str: this, start: 0 };
 	}
 
-	public func substring(uxx start, uxx bytes) String {
+	public func substr_chars(uxx start, uxx chars) String {
+		uxx count = 0;
+		uxx pos = 0;
+		ptr adr = this.data;
+
+		if(start > 0){
+			while(pos < this.bytes){
+				u8 bytec = 1;
+				u8 byte = getptrv adr as u8;
+				if((byte bitAND 128) > 0){
+					bytec = 0;
+					while((byte bitAND 128) > 0 ){
+						bytec++;
+						byte = byte << 1;
+					}
+				}
+				if(bytec > 4){
+					// Invalid utf8 char
+					bytec = 1;
+				}
+				count += 1;
+				pos += bytec;
+				adr += bytec;
+				if(count == start){
+					break;
+				}
+			}
+		}
+
+		uxx start_byte = pos;
+		count = 0;
+
+		if(chars > 0){
+			while(pos < this.bytes){
+				u8 bytec = 1;
+				u8 byte = getptrv adr as u8;
+				if((byte bitAND 128) > 0){
+					bytec = 0;
+					while((byte bitAND 128) > 0 ){
+						bytec++;
+						byte = byte << 1;
+					}
+				}
+				if(bytec > 4){
+					// Invalid utf8 char
+					bytec = 1;
+				}
+				count += 1;
+				pos += bytec;
+				adr += bytec;
+				if(count == chars){
+					break;
+				}
+			}
+		}
+
+		uxx bytelen = pos - start_byte;
+
+		if(bytelen == 0){
+			return "";
+		}
+
+		return this.substr_bytes(start_byte, bytelen);
+	}
+
+	public func substr_bytes(uxx start, uxx bytes) String {
 		if((start + bytes) > this.bytes){
 			bytes = this.bytes - start;
 		}
@@ -261,12 +329,12 @@ class String {
 		while(e < len){
 			@ ch = this.char(e);
 			if(ch == on){
-				arr.push(this.substring(s, e-s));
+				arr.push(this.substr_bytes(s, e-s));
 				s = e + 1;
 			}
 			e++;
 		}
-		arr.push(this.substring(s, e-s));
+		arr.push(this.substr_bytes(s, e-s));
 		return arr;
 	}
 }
@@ -329,7 +397,7 @@ class StringChunker{
 
 	public func get_chunk(bool skip_break_bytes_at_end) String {
 		this.end = this.find_char_index(this.break_on) or return "";
-		@ result = this.str.substring(this.start, this.end - this.start);
+		@ result = this.str.substr_bytes(this.start, this.end - this.start);
 		this.start = this.end;
 		if(skip_break_bytes_at_end){
 			this.skip_bytes(this.break_on);

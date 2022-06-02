@@ -38,7 +38,7 @@ class Router{
 			exit 1;
 		}
 
-		@ url_tmp = url.substring(1, url.bytes - 1);
+		@ url_tmp = url.substr_bytes(1, url.bytes - 1);
 		@ parts = url_tmp.split_char('/');
 		parts.prepend(method);
 
@@ -58,7 +58,7 @@ class Router{
 			@ key = part;
 
 			if(is_arg){
-				@ name = part.substring(1, part.bytes - 1);
+				@ name = part.substr_bytes(1, part.bytes - 1);
 				if(name.bytes == 0){
 					panic invalid_route_parameter_syntax;
 				}
