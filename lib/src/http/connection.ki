@@ -2,7 +2,7 @@
 namespace http;
 
 class Connection {
-	public i32 fd;
+	public i32 fd = 0;
 	public ptr read_set;
 	public bool disconnected = false;
 	public ?async:Task task = null;

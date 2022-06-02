@@ -45,7 +45,6 @@ class Server {
 
 		#if OS_WIN || OS_OSX
 		@ read_set = mem:calloc(this.max_connections); // todo : too much memory, divide by 8
-		fd:add_to_set(read_set, sock.listenfd);
 		#else
 		@ epfd = main:main:epoll_create(1);
 		@ buf_ev = mem:calloc(sizeof(main:main:epoll_event)); 
@@ -72,8 +71,17 @@ class Server {
 		while(true){
 
 			#if OS_WIN || OS_OSX
-			select_result = main:main:select(maxfd + 1, read_set, null, null, null);
+			mem:clear(read_set, this.max_connections);
 			fd:add_to_set(read_set, sock.listenfd);
+			i32 i = 3;
+			while(i < connections.size){
+				ptr con = connections.get(i);
+				if(con != null){
+					fd:add_to_set(read_set, i);
+				}
+				i++;
+			}
+			select_result = main:main:select(maxfd + 1, read_set, null, null, null);
 			#else
 			i32 event_count = main:main:epoll_wait(epfd, events, fdcount, 100);
 			select_result = 1;
@@ -130,7 +138,6 @@ class Server {
 						fd:set_non_block(new_fd);
 
 						#if OS_WIN || OS_OSX
-						fd:add_to_set(read_set, new_fd);
 						#else
 						Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
                            fdcount++;
@@ -172,11 +179,7 @@ class Server {
 						#end
 
 						#if OS_WIN || OS_OSX
-						bool has_incoming_data = fd:isset(read_set, fd) == true;
-
-						// After select() has returned, readfds will be cleared of all file descriptors except for those that are ready for reading.
-						// So we need to set back all the fds
-						fd:add_to_set(read_set, fd);
+						bool has_incoming_data = true;
 						#else
 						bool has_incoming_data = (event.events bitAND main:main:EPOLL.EPOLLIN) > 0;
 						#end
