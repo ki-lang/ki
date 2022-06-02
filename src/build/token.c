@@ -390,6 +390,11 @@ void token_while(FileCompiler *fc, Scope *scope) {
     //
     fc_expect_token(fc, "(", false, true, true);
     Value *value = fc_read_value(fc, scope, false, true, true);
+
+    if (value->return_type->type != type_bool) {
+        fc_error(fc, "while condition must return a bool", NULL);
+    }
+
     fc_expect_token(fc, ")", false, true, true);
     fc_expect_token(fc, "{", false, true, true);
     Scope *wscope = init_sub_scope(scope);
