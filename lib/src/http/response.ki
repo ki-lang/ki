@@ -9,11 +9,11 @@ class Response {
 		@ data = String.make_empty(1024);
 
 		data = data.__add("HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:");
-		data = data.__add(this.body.length.str());
+		data = data.__add(this.body.bytes.str());
 		data = data.__add("\r\n\r\n");
 		data = data.__add(this.body);
 
-		//@ data = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:" + this.body.length.str() + "\r\n\r\n" + this.body;
+		//@ data = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:" + this.body.bytes.str() + "\r\n\r\n" + this.body;
 
 		return data;
 	}

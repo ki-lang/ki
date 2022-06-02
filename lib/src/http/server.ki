@@ -244,21 +244,6 @@ class Server {
 	}
 	#end
 
-	public static func kq_read(Connection con){
-        con.req = Request.read_request(con.fd);
-	}
-	public static func kq_write(Connection con, Server server){
-		@ req = con.req;
-		ifnull req return;
-
-		@ response = server.handler(req);
-
-        String output = response.output();
-		@ check = main:main:send(con.fd, output.data, output.length, 0);
-
-		con.req = null;
-	}
-
 	public static func respond(i32 fd, ptr server_ptr){
 
         @ server = cast server_ptr as Server;
@@ -272,7 +257,7 @@ class Server {
 		@ response = server.handler(req);
 
         String output = response.output();
-		@ check = main:main:send(fd, output.data, output.length, 0);
+		@ check = main:main:send(fd, output.data, output.bytes, 0);
 
 		return;
 	}
@@ -289,7 +274,7 @@ class Server {
 		}
 
 		@ out = "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=utf-8\r\nContent-Length:11\r\n\r\nHello world";
-		@ check = main:main:send(fd, out.data, out.length, 0);
+		@ check = main:main:send(fd, out.data, out.bytes, 0);
 
 		alc.free(buf);
 		return;

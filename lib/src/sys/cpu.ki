@@ -11,7 +11,7 @@ class CpuInfo {
 		@ content = fs:read("/proc/cpuinfo") or throw failed_to_read_core_count;
 		String v = "";
 		i32 pos = 0;
-		i32 len = content.length;
+		i32 len = content.bytes;
 		bool found_key = false;
 		while(pos < len){
 			u8 ch = content.char(pos);

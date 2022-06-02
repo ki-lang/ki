@@ -134,6 +134,9 @@ Identifier *fc_read_identifier(FileCompiler *fc, bool readonly, bool sameline, b
         } else if (strcmp(token, "print") == 0) {
             id->package = strdup("ki");
             id->namespace = strdup("io");
+        } else if (strcmp(token, "println") == 0) {
+            id->package = strdup("ki");
+            id->namespace = strdup("io");
         }
     }
 

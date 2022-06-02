@@ -33,12 +33,12 @@ class Router{
 	}
 
 	public func add(String method, String url, funcref (Request) Response handler) {
-		if(url.length == 0 || url.char(0) != '/'){
+		if(url.bytes == 0 || url.char(0) != '/'){
 			io:println("Invalid route: ");
 			exit 1;
 		}
 
-		@ url_tmp = url.substring(1, url.length - 1);
+		@ url_tmp = url.substring(1, url.bytes - 1);
 		@ parts = url_tmp.split_char('/');
 		parts.prepend(method);
 
@@ -47,7 +47,7 @@ class Router{
 		@ wcard_index = -1#i32;
 
 		each parts as part i {
-			if(part.length == 0){
+			if(part.bytes == 0){
 				continue;
 			}
 
@@ -58,8 +58,8 @@ class Router{
 			@ key = part;
 
 			if(is_arg){
-				@ name = part.substring(1, part.length - 1);
-				if(name.length == 0){
+				@ name = part.substring(1, part.bytes - 1);
+				if(name.bytes == 0){
 					panic invalid_route_parameter_syntax;
 				}
 				args.push(RouteArg { i: i, name: name });
@@ -90,7 +90,7 @@ class Router{
 		@ parts_ = url.split_char('/');
 		@ parts = Array<String>.make(2);
 		each parts_ as part i {
-			if(part.length == 0){
+			if(part.bytes == 0){
 				continue;
 			}
 			parts.push(part);

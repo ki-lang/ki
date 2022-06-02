@@ -41,17 +41,17 @@ class Request {
 		i32 pos = 0;
 
 		String method = cstr.get_string_until_char(pos, ' ');
-		pos += method.length + 1;
+		pos += method.bytes + 1;
 
 		String path = cstr.get_string_until_char(pos, ' ');
-		pos += path.length + 1;
+		pos += path.bytes + 1;
 
 		String protocol = cstr.get_string_until_char(pos, '\r');
-		pos += protocol.length + 2;
+		pos += protocol.bytes + 2;
 
-		if(method.length == 0){ return null; }
-		if(path.length == 0){ return null; }
-		if(protocol.length == 0){ return null; }
+		if(method.bytes == 0){ return null; }
+		if(path.bytes == 0){ return null; }
+		if(protocol.bytes == 0){ return null; }
 
 		// Read headers
 		while(pos < rcvd){
@@ -64,10 +64,10 @@ class Request {
 			}
 
 			String key = cstr.get_string_until_char(pos, ':');
-			pos += key.length + 2;
+			pos += key.bytes + 2;
 
 			String value = cstr.get_string_until_char(pos, '\r');
-			pos += value.length + 2;
+			pos += value.bytes + 2;
 		}
 
 		// Read body

@@ -85,7 +85,7 @@ class Map<T> {
 	}
 
 	private func get_rest(String key) u8 {
-		uxx len = key.length;
+		uxx len = key.bytes;
 		ptr adr = cast key.data as ptr;
 		i32 total = 0;
 		while(len > 7) {

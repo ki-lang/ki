@@ -5,28 +5,28 @@ use mem {alloc,copy,equal,free};
 
 class String {
 
-	readonly uxx length = 0;
+	readonly uxx bytes = 0;
 	readonly uxx mem_size = 0;
 	readonly ptr data = 0;
 	readonly bool is_const = false;
 
-	public static func make(ptr data, uxx length, bool is_const) String {
-		uxx mem_size = length;
+	public static func make(ptr data, uxx bytes, bool is_const) String {
+		uxx mem_size = bytes;
 		ptr new_data = data;
 		if(is_const == false){
 			mem_size += 4;
 			new_data = alloc(mem_size);
 		}
-		@ str = String { data: new_data, mem_size: mem_size, length: length, is_const: is_const };
+		@ str = String { data: new_data, mem_size: mem_size, bytes: bytes, is_const: is_const };
 		if(is_const == false){
-			copy(data, new_data, length);
+			copy(data, new_data, bytes);
 		}
 		return str;
 	}
 
 	public static func make_empty(uxx mem_size) String {
 		ptr data = alloc(mem_size);
-		@ str = String { data: data, mem_size: mem_size, length: 0, is_const: false };
+		@ str = String { data: data, mem_size: mem_size, bytes: 0, is_const: false };
 		return str;
 	}
 
@@ -35,33 +35,33 @@ class String {
 		@ s = this;
 
 		if(s.is_const){
-			s = String.make(this.data, this.length, false);
+			s = String.make(this.data, this.bytes, false);
 		}
 
-		uxx new_length = s.length + str.length;
+		uxx new_bytes = s.bytes + str.bytes;
 		uxx new_size = s.mem_size;
-		while(new_size < new_length){
+		while(new_size < new_bytes){
 			new_size *= 2;
 		}
 		ptr adr = s.data;
 		if(new_size != s.mem_size){
 			adr = alloc(new_size);
 			s.mem_size = new_size;
-			copy(s.data, adr, s.length);
+			copy(s.data, adr, s.bytes);
 			free(s.data);
 			s.data = adr;
 		}
-		adr += s.length;
-		copy(str.data, adr, str.length);
-		s.length = new_length;
+		adr += s.bytes;
+		copy(str.data, adr, str.bytes);
+		s.bytes = new_bytes;
 		return s;
 	}
 
 	public func __eq(String str) bool {
-		if(this.length != str.length){
+		if(this.bytes != str.bytes){
 			return false;
 		}
-		return equal(this.data, str.data, this.length);
+		return equal(this.data, str.data, this.bytes);
 	}
 
 	public func __free() {
@@ -72,35 +72,58 @@ class String {
 		a.free(this);
 	}
 
+	// Count amount of utf8 characters
+	public func chars() u64 {
+		u64 count = 0;
+		u64 pos = 0;
+		ptr adr = this.data;
+		while(pos < this.bytes){
+			u8 bytec = 1;
+			u8 byte = getptrv adr as u8;
+			while( byte bitAND 128 > 0 ){
+				bytec++;
+				byte = byte << 1;
+			}
+			if(bytec > 4){
+				// Invalid utf8 char
+				bytec = 1;
+			}
+			count += 1;
+			pos += bytec;
+			adr += bytec;
+		}
+		return count;
+	}
+
 	public func append_char(u8 ch) String {
 
 		@ s = this;
 
 		if(s.is_const){
-			s = String.make(s.data, s.length, false);
+			s = String.make(s.data, s.bytes, false);
 		}
-		uxx new_length = s.length + 1;
+		uxx new_bytes = s.bytes + 1;
 		ptr adr = s.data;
-		if(new_length > s.mem_size){
+		if(new_bytes > s.mem_size){
 			s.mem_size *= 2;
 			adr = alloc(s.mem_size);
-			copy(s.data, adr, s.length);
+			copy(s.data, adr, s.bytes);
 			free(s.data);
 			s.data = adr;
 		}
-		adr += s.length;
-		s.length = new_length;
+		adr += s.bytes;
+		s.bytes = new_bytes;
 		setptrv adr to ch;
 		return s;
 	}
 
 	public func append_bytes_from_ptr(ptr adr, u64 len) {
-		uxx length = this.length;
-		uxx new_length = length + len;
+		uxx bytes = this.bytes;
+		uxx new_bytes = bytes + len;
 		this.increase_mem_size(len);
-		ptr to = this.data + length;
+		ptr to = this.data + bytes;
 		copy(adr, to, len);
-		this.length = new_length;
+		this.bytes = new_bytes;
 	}
 
 	public func increase_mem_size(u64 len){
@@ -113,7 +136,7 @@ class String {
 		if(new_size != size){
 			ptr adr = alloc(new_size);
 			this.mem_size = new_size;
-			copy(this.data, adr, this.length);
+			copy(this.data, adr, this.bytes);
 			free(this.data);
 			this.data = adr;
 		}
@@ -126,15 +149,15 @@ class String {
 		if(s.is_const){
 			s = "";
 		}
-		s.length = 0;
+		s.bytes = 0;
 		return s;
 	}
 
 	public func index_of(String str) uxx {
-		if(str.length == 0){
+		if(str.bytes == 0){
 			return -1;
 		}
-		uxx last_char_pos = this.length - str.length + 1;
+		uxx last_char_pos = this.bytes - str.bytes + 1;
 		uxx result = 0;
 		uxx eq_count = 0;
 		ptr adr1 = this.data;
@@ -146,7 +169,7 @@ class String {
 			u8 ch2 = getptrv adr2 as u8;
 			if(ch1 == ch2){
 				eq_count++;
-				if(eq_count == str.length){
+				if(eq_count == str.bytes){
 					return result;
 				}
 				continue;
@@ -160,16 +183,16 @@ class String {
 	}
 
 	public func to_cstring() cstring {
-		cstring cstr = cast alloc(this.length + 1) as cstring;
-		copy(this.data, cstr, this.length);
+		cstring cstr = cast alloc(this.bytes + 1) as cstring;
+		copy(this.data, cstr, this.bytes);
 		ptr x = cstr;
-		x += this.length;
+		x += this.bytes;
 		setptrv x to '\0';
 		return cstr;
 	}
 
 	public func i32() !i32{
-		i32 i = this.length;
+		i32 i = this.bytes;
 		i32 result = 0;
 		i32 mult = 1;
 		while(i > 0){
@@ -188,7 +211,7 @@ class String {
 	}
 
 	public func char(uxx index) u8 {
-		if(index >= this.length){
+		if(index >= this.bytes){
 			return '\0';
 		}
 		ptr x = this.data;
@@ -198,9 +221,9 @@ class String {
 	}
 
 	public func reverse() String {
-		@ c = String.make_empty(this.length);
-		@ len = this.length;
-		c.length = len;
+		@ c = String.make_empty(this.bytes);
+		@ len = this.bytes;
+		c.bytes = len;
 		ptr adr_from = this.data + len - 1;
 		ptr adr_to = c.data;
 		while(len > 0){
@@ -217,22 +240,22 @@ class String {
 		return StringChunker { str: this, start: 0 };
 	}
 
-	public func substring(uxx start, uxx length) String {
-		if((start + length) > this.length){
-			length = this.length - start;
+	public func substring(uxx start, uxx bytes) String {
+		if((start + bytes) > this.bytes){
+			bytes = this.bytes - start;
 		}
-		if(length == 0){
+		if(bytes == 0){
 			return "";
 		}
 		ptr x = this.data;
 		x += start;
-		@ res = String.make(x, length, false);
+		@ res = String.make(x, bytes, false);
 		return res;
 	}
 
 	public func split_char(u8 on) Array<String> {
 		@ arr = Array<String>.make(2);
-		u32 len = this.length;
+		u32 len = this.bytes;
 		u32 s = 0;
 		u32 e = 0;
 		while(e < len){
@@ -269,9 +292,9 @@ class StringChunker{
 	public func find_char_index(String bytes) !uxx {
 		uxx pos = this.start;
 		uxx bytes_pos = 0;
-		while(pos < this.str.length){
+		while(pos < this.str.bytes){
 			u8 a = this.str.char(pos);
-			while(bytes_pos < bytes.length){
+			while(bytes_pos < bytes.bytes){
 				u8 b = bytes.char(bytes_pos);
 				if(a == b){
 					return pos;
@@ -285,11 +308,11 @@ class StringChunker{
 	}
 
 	public func skip_bytes(String bytes){
-		while(this.start < this.str.length){
+		while(this.start < this.str.bytes){
 			u8 a = this.str.char(this.start);
 			uxx bytes_pos = 0;
 			bool found = false;
-			while(bytes_pos < bytes.length){
+			while(bytes_pos < bytes.bytes){
 				u8 b = bytes.char(bytes_pos);
 				if(a == b){
 					found = true;

@@ -487,7 +487,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         // TODO: Delete errno stuff
         str_append_chars(fc->tkn_buffer, "write(1, \"errno:\", 6);\n");
         str_append_chars(fc->tkn_buffer, "struct ki__type__String* ERRNOMSG = ki__type__i32__str(errno);\n");
-        str_append_chars(fc->tkn_buffer, "write(1, ERRNOMSG->data, ERRNOMSG->length);\n");
+        str_append_chars(fc->tkn_buffer, "write(1, ERRNOMSG->data, ERRNOMSG->bytes);\n");
         str_append_chars(fc->tkn_buffer, "write(1, \"\\n\", 1);\n");
     } else if (token->type == tkn_exit) {
         ErrorToken *err = token->item;
