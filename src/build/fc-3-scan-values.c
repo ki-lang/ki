@@ -95,7 +95,7 @@ void fc_scan_globals(FileCompiler *fc) {
         map_set(scope->identifiers, gv->name, idf);
         map_set(c_identifiers, gv->cname, idf);
 
-        if (!gv->return_type->nullable) {
+        if (gv->return_type->is_pointer && !gv->return_type->nullable) {
             fc_error(fc, "Global variables must be nullable (null is their default value)", NULL);
         }
     }

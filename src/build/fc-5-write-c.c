@@ -137,7 +137,11 @@ void fc_write_c_inits() {
                     str_append_chars(code, ", (void*)0);\n");
                 } else if (gv->type == gv_shared) {
                     str_append_chars(code, gv->cname);
-                    str_append_chars(code, " = (void*)0;\n");
+                    if (gv->return_type->is_pointer) {
+                        str_append_chars(code, " = (void*)0;\n");
+                    } else {
+                        str_append_chars(code, " = 0;\n");
+                    }
                 }
             }
 
@@ -210,7 +214,6 @@ void fc_write_c(FileCompiler *fc) {
         if (true) {
             write_file(fc->c_filepath, "\n#include \"project.h\"\n\n", false);
             // TODO: Delete errno stuff
-            write_file(fc->c_filepath, "\n#include <errno.h>\n\n", true);
             write_file(fc->c_filepath, "\n#include <string.h>\n\n", true);
 
             // char* incl = malloc(KI_PATH_MAX + 50);
@@ -496,8 +499,8 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, ");\n");
         // TODO: Delete errno stuff
         str_append_chars(fc->tkn_buffer, "write(1, \"errno:\", 6);\n");
-        str_append_chars(fc->tkn_buffer, "char* ERRNOMSG =  strerror(errno);\n");
-        str_append_chars(fc->tkn_buffer, "write(1, ERRNOMSG, strlen(ERRNOMSG));\n");
+        str_append_chars(fc->tkn_buffer, "struct ki__type__String* ERRNOMSG = ki__type__i32__str(errno);\n");
+        str_append_chars(fc->tkn_buffer, "write(1, ERRNOMSG->data, ERRNOMSG->length);\n");
         str_append_chars(fc->tkn_buffer, "write(1, \"\\n\", 1);\n");
     } else if (token->type == tkn_exit) {
         ErrorToken *err = token->item;
