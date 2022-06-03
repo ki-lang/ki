@@ -8,6 +8,7 @@ void fc_write_c_all() {
     strcpy(path, cache_dir);
     strcat(path, "/project.h");
     write_file(path, "", false);
+    write_file(path, "extern __thread int errno;\n", true);
 
     for (int i = 0; i < headers->length; i++) {
         // char* fn = array_get_index(headers->keys, i);

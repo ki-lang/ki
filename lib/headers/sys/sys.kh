@@ -2,5 +2,3 @@
 namespace main;
 
 func exit(i32 code);
-
-unsafe_shared_global i32 errno;
