@@ -17,7 +17,3 @@ func pipe(ptr pipes) i32;
 // File descriptor flags used with F_GETFD and F_SETFD.
 // #define        FD_CLOEXEC             1        Close on exec.
 
-func fcntl(i32 fd, i32 cmd, i32 flags) i32;
-
-func dup2(i32 oldfd, i32 newfd) i32;
-

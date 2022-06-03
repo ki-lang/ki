@@ -1,6 +1,8 @@
 
 namespace fs;
 
+#header "sys/fd"
+
 func read(String path) !String {
 	@ fd = main:main:open(path.to_cstring(), 0, 0);
 	if(fd == -1) {
