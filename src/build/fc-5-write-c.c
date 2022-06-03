@@ -8,7 +8,12 @@ void fc_write_c_all() {
     strcpy(path, cache_dir);
     strcat(path, "/project.h");
     write_file(path, "", false);
+
+#if defined __APPLE__ || defined _WIN32
+    write_file(path, "extern int errno;\n", true);
+#else
     write_file(path, "extern __thread int errno;\n", true);
+#endif
 
     for (int i = 0; i < headers->length; i++) {
         // char* fn = array_get_index(headers->keys, i);
