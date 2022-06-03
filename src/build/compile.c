@@ -72,7 +72,7 @@ void compile_all() {
     char *cmd = malloc(50000);
     strcpy(cmd, get_compiler_path());
 #ifndef __APPLE__
-    strcat(cmd, " -static");
+    // strcat(cmd, " -static");
 #endif
     strcat(cmd, " -lpthread -pthread -o ");
     strcat(cmd, g_output_name);
@@ -81,6 +81,8 @@ void compile_all() {
         strcat(cmd, " ");
         strcat(cmd, array_get_index(o_files, i));
     }
+
+    strcat(cmd, " -lssl -lcrypto");
 
     int result = run_cmd(cmd);
     if (result == -1) {

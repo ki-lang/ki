@@ -1,0 +1,75 @@
+
+namespace main;
+
+class SSL norfc {
+}
+
+class SSL_CTX norfc {
+}
+
+class SSL_METHOD norfc {
+}
+
+class SSL_X509 norfc {
+}
+
+class SSL_RSA norfc {
+}
+
+class SSL_EVP_PKEY norfc {
+}
+
+enum SSL_X509_FILETYPE {
+	PEM: 1,
+	ASN1: 2,
+	DEFAULT: 3,
+}
+
+enum SSL_MODE {
+	ENABLE_PARTIAL_WRITE: 1,
+	ACCEPT_MOVING_WRITE_BUFFER: 2,
+}
+
+func SSL_new(SSL_CTX ctx) ?SSL;
+func SSL_CTX_new(SSL_METHOD method) ?SSL_CTX;
+func SSL_CTX_free(SSL_CTX ctx);
+
+func TLS_server_method() SSL_METHOD;
+
+func SSL_set_fd(SSL ssl, i32 fd) i32;
+func SSL_set_connect_state(SSL ssl);
+func SSL_set_accept_state(SSL ssl);
+func SSL_is_server(SSL ssl) i32;
+
+func SSL_set_mode(SSL ssl, u64 mode) u64;
+func SSL_get_mode(SSL ssl) u64;
+func SSL_clear_mode(SSL ssl, u64 mode) u64;
+
+func SSL_CTX_set_mode(SSL_CTX ctx, u64 mode) u64;
+func SSL_CTX_get_mode(SSL_CTX ctx) u64;
+func SSL_CTX_clear_mode(SSL_CTX ctx, u64 mode) u64;
+
+func SSL_CTX_use_certificate(SSL_CTX ctx, SSL_X509 x) i32;
+func SSL_CTX_use_certificate_ASN1(SSL_CTX ctx, i32 len, cstring d) i32;
+func SSL_CTX_use_certificate_file(SSL_CTX ctx, cstring file, i32 type) i32;
+func SSL_use_certificate(SSL ssl, SSL_X509 x) i32;
+func SSL_use_certificate_ASN1(SSL ssl, cstring d, i32 len) i32;
+func SSL_use_certificate_file(SSL ssl, cstring file, i32 type) i32;
+
+func SSL_CTX_use_certificate_chain_file(SSL_CTX ctx, cstring file) i32;
+
+func SSL_CTX_use_PrivateKey(SSL_CTX ctx, SSL_EVP_PKEY pkey) i32;
+func SSL_CTX_use_PrivateKey_ASN1(i32 pk, SSL_CTX ctx, cstring d, u64 len) i32;
+func SSL_CTX_use_PrivateKey_file(SSL_CTX ctx, cstring file, i32 type) i32;
+func SSL_CTX_use_RSAPrivateKey(SSL_CTX ctx, SSL_RSA rsa) i32;
+func SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX ctx, cstring d, u64 len) i32;
+func SSL_CTX_use_RSAPrivateKey_file(SSL_CTX ctx, cstring file, i32 type) i32;
+func SSL_use_PrivateKey(SSL ssl, SSL_EVP_PKEY pkey) i32;
+func SSL_use_PrivateKey_ASN1(i32 pk,SSL ssl, cstring d, u64 len) i32;
+func SSL_use_PrivateKey_file(SSL ssl, cstring file, i32 type) i32;
+func SSL_use_RSAPrivateKey(SSL ssl, SSL_RSA rsa) i32;
+func SSL_use_RSAPrivateKey_ASN1(SSL ssl, cstring d, u64 len) i32;
+func SSL_use_RSAPrivateKey_file(SSL ssl, cstring file, i32 type) i32;
+
+func SSL_CTX_check_private_key(SSL_CTX ctx) i32;
+func SSL_check_private_key(SSL ssl) i32;

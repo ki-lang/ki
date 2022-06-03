@@ -5,6 +5,7 @@ namespace http;
 #header "sys/net"
 #header "sys/io"
 #header "sys/poll"
+#header "ssl/ssl"
 
 use type {PtrArray};
 
@@ -30,6 +31,9 @@ class Server {
 	readonly u32 port;
 	readonly i32 max_connections = 64000;
 	public funcref (Request) Response handler = request_handler;
+	private main:main:SSL ssl;
+	public ?String ssl_cert = null;
+	public ?String ssl_private_key = null;
 
 	public func start() ! {
 
@@ -279,6 +283,46 @@ class Server {
 
 		alc.free(buf);
 		return;
+	}
+
+	public func init_ssl(i32 fd) {
+
+		@ ssl_cert = this.ssl_cert;
+		@ ssl_private_key = this.ssl_private_key;
+
+		ifnull ssl_cert return; 
+		ifnull ssl_private_key return; 
+
+		@ certificate = ssl_cert.to_cstring();
+		@ private_key = ssl_private_key.to_cstring();
+
+		@ ctx = main:main:SSL_CTX_new(main:main:TLS_server_method());
+		ifnull ctx panic failed_to_init_ssl_context;
+
+  		@ e = main:main:SSL_CTX_use_certificate_file(ctx, certificate, main:main:SSL_X509_FILETYPE.PEM);
+  		if (e != 1) {
+  			main:main:SSL_CTX_free(ctx);
+  			return;
+  		}
+
+		e = main:main:SSL_CTX_use_PrivateKey_file(ctx, private_key, main:main:SSL_X509_FILETYPE.PEM);
+		if (e != 1) {
+			main:main:SSL_CTX_free(ctx);
+			return;
+		}
+
+ 		@ ssl = main:main:SSL_new(ctx);
+		ifnull ssl panic failed_to_init_ssl;
+
+  		@ err = main:main:SSL_set_fd(ssl, fd);
+  		if (main:main:SSL_is_server(ssl) > 0) {
+   			main:main:SSL_set_accept_state(ssl);
+		} else {
+    		main:main:SSL_set_connect_state(ssl);
+		}
+  		//e = main:main:SSL_set_mode(ssl, main:main:SSL_MODE.ENABLE_PARTIAL_WRITE bitOR main:main:SSL_MODE.ACCEPT_MOVING_WRITE_BUFFER);
+		
+		this.ssl = ssl;
 	}
 
 }
