@@ -13,3 +13,9 @@
 - signals
 - handle read/write errors e.g. EAGAIN
 - libvips for image manipulation
+- cross platform GUI library
+- allow compiling with clang & cross compilation with clang
+
+## Future
+
+- switch from gcc to LLVM : no more need for a c compiler
