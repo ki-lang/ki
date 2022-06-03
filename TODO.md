@@ -13,7 +13,7 @@
 - signals
 - handle read/write errors e.g. EAGAIN
 - libvips for image manipulation
-- cross platform GUI library
+- cross platform GUI library using SDL, GLFW, SFML or GLUT
 - allow compiling with clang & cross compilation with clang
 
 ## Future
