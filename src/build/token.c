@@ -18,6 +18,8 @@ void token_return(FileCompiler *fc, Scope *scope) {
     Token *t = init_token();
     t->type = tkn_return;
 
+    scope->did_return = true;
+
     Scope *vscope = scope;
     while (vscope && vscope->vscope_vname == NULL) {
         vscope = vscope->parent;
@@ -47,8 +49,6 @@ void token_return(FileCompiler *fc, Scope *scope) {
         t->item = vt;
 
         fc_expect_token(fc, ";", false, true, true);
-
-        scope->did_return = true;
 
         array_push(scope->ast, t);
         return;
@@ -82,8 +82,6 @@ void token_return(FileCompiler *fc, Scope *scope) {
     fc_expect_token(fc, ";", false, true, true);
 
     free(token);
-
-    scope->did_return = true;
 
     array_push(scope->ast, t);
 }
@@ -163,7 +161,7 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
         fc_error(fc, "Using ifnull on variable that doesnt have a nullable type", NULL);
     }
     //
-    OrToken *ort = fc_read_or_token(fc, scope, type, token);
+    OrToken *ort = fc_read_or_token(fc, scope, type, token, false);
     ifn->ort = ort;
 
     if (ort->vscope) {
@@ -226,7 +224,30 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     free_id(id);
 }
 
-OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, char *token) {
+char *fc_or_token_err_name(FileCompiler *fc, char *token) {
+    //
+    char *result = NULL;
+
+    fc_next_token(fc, token, true, true, true);
+    if (strcmp(token, "|") == 0) {
+        // Value scope
+
+        fc_next_token(fc, token, false, true, true);
+        fc_next_token(fc, token, false, true, true);
+
+        if (!is_valid_varname(token)) {
+            fc_error(fc, "Invalid variable name for the error", NULL);
+        }
+
+        result = strdup(token);
+
+        fc_expect_token(fc, "|", false, false, true);
+    }
+
+    return result;
+}
+
+OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, char *token, bool on_func_call) {
 
     OrToken *ort = malloc(sizeof(OrToken));
     ort->type = or_none;
@@ -234,16 +255,21 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
     ort->value = NULL;
     ort->error = NULL;
     ort->primary_type = primary_type;
+    ort->error_vn = NULL;
 
     fc_next_token(fc, token, false, true, true);
-    if (strcmp(token, "set") == 0) {
+    if (!on_func_call && strcmp(token, "set") == 0) {
         ort->type = or_value;
-    } else if (strcmp(token, "value") == 0) {
+    } else if (on_func_call && strcmp(token, "value") == 0) {
+        ort->error_vn = fc_or_token_err_name(fc, token);
         ort->type = or_value;
         if (!primary_type) {
             fc_error(fc, "Left side has no type, did not expect a value here", NULL);
         }
     } else if (strcmp(token, "return") == 0) {
+        if (on_func_call) {
+            ort->error_vn = fc_or_token_err_name(fc, token);
+        }
         ort->type = or_return;
         Scope *func_scope = get_func_scope(scope);
         ort->primary_type = func_scope->func->return_type;
@@ -268,11 +294,22 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
         if (!loop_scope) {
             fc_error(fc, "Using break without being inside a loop", NULL);
         }
+    } else if (on_func_call && strcmp(token, "pass") == 0) {
+        ort->type = or_pass;
     } else {
-        fc_error(fc, "Expected 'set|return|throw|continue|break|panic|exit' but found '%s'", token);
+        if (on_func_call) {
+            fc_error(fc, "Expected 'value|return|throw|pass|continue|break|panic|exit' but found '%s'", token);
+        } else {
+            fc_error(fc, "Expected 'set|return|throw|continue|break|panic|exit' but found '%s'", token);
+        }
     }
 
     if (ort->primary_type && (ort->type == or_value || ort->type == or_return)) {
+
+        if (ort->error_vn != NULL) {
+            fc_expect_token(fc, "{", true, true, true);
+        }
+
         fc_next_token(fc, token, true, true, true);
         if (strcmp(token, "{") == 0) {
             fc_next_token(fc, token, false, true, true);
@@ -286,7 +323,19 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
             if (ort->type == or_value) {
                 vscope->vscope_vname = vname;
             }
+            vscope->must_return = true;
             ort->vscope = vscope;
+
+            if (ort->error_vn != NULL) {
+                Type *errtype = init_type();
+                errtype->type = type_throw_msg;
+
+                IdentifierFor *idf = init_idf();
+                idf->type = idfor_local_var;
+                idf->item = fc_localvar(fc, ort->error_vn, errtype);
+
+                map_set(vscope->identifiers, ort->error_vn, idf);
+            }
 
             fc_build_ast(fc, ort->vscope);
 
@@ -346,7 +395,7 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
     Type *type = lv->type;
 
     if (!type->nullable) {
-        fc_error(fc, "Using ifnull on variable that doesnt have a nullable type", NULL);
+        fc_error(fc, "Using notnull on variable that doesnt have a nullable type", NULL);
     }
 
     fc_next_token(fc, token, false, true, true);

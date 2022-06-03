@@ -130,7 +130,7 @@ Type *fc_read_type(FileCompiler *fc, Scope *scope) {
 
 void fc_type_make_nullable(FileCompiler *fc, Type *t) {
     //
-    if (t->nullable && !t->is_pointer) {
+    if (!t->is_pointer) {
         fc_error(fc, "Invalid type, only pointer types can be null", NULL);
     }
     t->nullable = true;

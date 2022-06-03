@@ -895,6 +895,17 @@ char *fc_write_c_ort(FileCompiler *fc, OrToken *ort) {
         str_append_chars(fc->tkn_buffer, "exit(1);\n");
     } else if (ort->type == or_panic) {
         str_append_chars(fc->tkn_buffer, "exit(1);\n");
+    } else if (ort->type == or_pass) {
+        str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = _KI_THROW_MSG_BUF;\n");
+        str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
+        Type *rett = ort->primary_type;
+        if (rett == NULL) {
+            str_append_chars(fc->tkn_buffer, "return;\n");
+        } else if (rett->is_pointer) {
+            str_append_chars(fc->tkn_buffer, "return (void*)0;\n");
+        } else {
+            str_append_chars(fc->tkn_buffer, "return 0;\n");
+        }
     } else if (ort->type == or_throw) {
         str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = \"");
         str_append_chars(fc->tkn_buffer, ort->error->msg);
@@ -1081,7 +1092,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         }
         free(arg_strings);
 
-        if (fa->error_type != or_none) {
+        if (fa->ort != NULL) {
             if (fa->arg_values->length > 0) {
                 str_append_chars(result, ", ");
             }
@@ -1089,7 +1100,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         }
         str_append_chars(result, ")");
 
-        if (fa->error_type != or_none) {
+        if (fa->ort != NULL) {
             char *buf_var_name = NULL;
             if (value->return_type) {
                 buf_var_name = strdup(var_buf(fc));
@@ -1100,81 +1111,24 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             str_append_chars(fc->tkn_buffer, ";\n");
             //
             result->length = 0;
+
             // Check error
-
-            if (fa->error_type == or_value && fa->or_scope) {
-                fc_write_c_type(fc->tkn_buffer, fa->or_scope->vscope_return_type, fa->or_scope->vscope_vname);
-                str_append_chars(fc->tkn_buffer, ";\n");
-            }
-
             str_append_chars(fc->tkn_buffer, "if(_KI_THROW_MSG_BUF){\n");
-            if (fa->error_type != or_pass) {
+
+            if (fa->ort->type != or_pass) {
                 str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
             }
-            //
-            if (fa->error_type == or_pass) {
-                str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = _KI_THROW_MSG_BUF;\n");
-                str_append_chars(fc->tkn_buffer, "_KI_THROW_MSG_BUF = (void*)0;\n");
-                Type *rett = fa->func_scope->func->return_type;
-                if (rett == NULL) {
-                    str_append_chars(fc->tkn_buffer, "return;\n");
-                } else if (rett->is_pointer) {
-                    str_append_chars(fc->tkn_buffer, "return (void*)0;\n");
-                } else {
-                    str_append_chars(fc->tkn_buffer, "return 0;\n");
-                }
-            } else if (fa->error_type == or_return) {
-                Value *orv = fa->or_value;
-                //
-                fc->current_scope = fa->or_scope;
-                fc_write_c_value(fc, orv, false);
-                Scope *fscope = get_func_scope(fc->current_scope);
-                deref_local_vars(fc, orv, fscope);
-                fc->current_scope = fa->or_scope->parent;
-                //
-                str_append_chars(fc->tkn_buffer, "return ");
-                str_append(fc->tkn_buffer, fc->value_buffer);
+
+            char *buf = fc_write_c_ort(fc, fa->ort);
+
+            if (buf) {
+                str_append_chars(fc->tkn_buffer, buf_var_name);
+                str_append_chars(fc->tkn_buffer, " = ");
+                str_append_chars(fc->tkn_buffer, buf);
                 str_append_chars(fc->tkn_buffer, ";\n");
-            } else if (fa->error_type == or_value) {
-                if (fa->or_scope) {
-                    str_append_chars(fc->tkn_buffer, "char* ");
-                    str_append_chars(fc->tkn_buffer, fa->or_error_vn);
-                    str_append_chars(fc->tkn_buffer, " = _KI_THROW_MSG_BUF;\n");
-
-                    fc_write_c_ast(fc, fa->or_scope);
-
-                    fc->current_scope = fa->or_scope;
-                    deref_local_vars(fc, value, fa->or_scope);
-                    fc->current_scope = fa->or_scope->parent;
-
-                    str_append_chars(fc->tkn_buffer, fa->or_scope->vscope_vname);
-                    str_append_chars(fc->tkn_buffer, "_GOTO:\n");
-
-                    str_append_chars(fc->tkn_buffer, buf_var_name);
-                    str_append_chars(fc->tkn_buffer, " = ");
-                    str_append_chars(fc->tkn_buffer, fa->or_scope->vscope_vname);
-                    str_append_chars(fc->tkn_buffer, ";\n");
-                } else {
-                    Value *orv = fa->or_value;
-                    fc_write_c_value(fc, orv, false);
-                    str_append_chars(fc->tkn_buffer, buf_var_name);
-                    str_append_chars(fc->tkn_buffer, " = ");
-                    str_append(fc->tkn_buffer, fc->value_buffer);
-                    str_append_chars(fc->tkn_buffer, ";\n");
-                }
-            } else if (fa->error_type == or_throw) {
-                str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = \"");
-                str_append_chars(fc->tkn_buffer, fa->throw_msg);
-                str_append_chars(fc->tkn_buffer, "\";\n");
-                Type *rett = fa->func_scope->func->return_type;
-                if (rett == NULL) {
-                    str_append_chars(fc->tkn_buffer, "return;\n");
-                } else if (rett->is_pointer) {
-                    str_append_chars(fc->tkn_buffer, "return (void*)0;\n");
-                } else {
-                    str_append_chars(fc->tkn_buffer, "return 0;\n");
-                }
+                free(buf);
             }
+
             //
             str_append_chars(fc->tkn_buffer, "}\n");
             // Update result

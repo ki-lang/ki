@@ -630,9 +630,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 ValueFuncCall *fcall = malloc(sizeof(ValueFuncCall));
                 fcall->on = on;
                 fcall->arg_values = array_make(2);
-                fcall->error_type = or_none;
-                fcall->or_value = NULL;
-                fcall->func_scope = NULL;
+                fcall->ort = NULL;
 
                 array_push(fcall->arg_values, value);
                 array_push(fcall->arg_values, right);
@@ -713,12 +711,7 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
     ValueFuncCall *fcall = malloc(sizeof(ValueFuncCall));
     fcall->on = on;
     fcall->arg_values = array_make(2);
-    fcall->error_type = or_none;
-    fcall->or_value = NULL;
-    fcall->func_scope = NULL;
-    fcall->throw_msg = NULL;
-    fcall->or_scope = NULL;
-    fcall->or_error_vn = NULL;
+    fcall->ort = NULL;
 
     Value *value = init_value();
     value->type = vt_func_call;
@@ -774,94 +767,42 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
     // Check error handling
     if (on->return_type->func_can_error) {
         //
-        fcall->func_scope = func_scope;
-        //
         fc_expect_token(fc, "or", false, true, true);
-        fc_next_token(fc, token, false, true, true);
-        if (strcmp(token, "pass") == 0) {
-            if (func_scope->func->can_error == false) {
-                fc_error(fc,
-                         "Trying to pass an error in a function that has no error "
-                         "return type",
-                         NULL);
-            }
-            fcall->error_type = or_pass;
-        } else if (strcmp(token, "value") == 0) {
-            fcall->error_type = or_value;
 
-            fc_next_token(fc, token, true, true, true);
-            if (strcmp(token, "|") == 0) {
-                // Value scope
+        OrToken *ort = fc_read_or_token(fc, scope, value->return_type, token, true);
+        fcall->ort = ort;
 
-                fc_next_token(fc, token, false, true, true);
-                fc_next_token(fc, token, false, true, true);
-
-                if (!is_valid_varname(token)) {
-                    fc_error(fc, "Invalid variable name for the error", NULL);
-                }
-                fc_name_taken(fc, scope->identifiers, token);
-                fcall->or_error_vn = strdup(token);
-
-                fc_expect_token(fc, "|", false, false, true);
-                fc_expect_token(fc, "{", false, false, true);
-
-                GEN_C++;
-                char *vname = malloc(64);
-                sprintf(vname, "_KI_VSCOPE_VN_%d", GEN_C);
-
-                Scope *or_scope = init_sub_scope(scope);
-                or_scope->body_i = fc->i;
-                or_scope->vscope_vname = vname;
-                fcall->or_scope = or_scope;
-
-                Type *errtype = init_type();
-                errtype->type = type_throw_msg;
-
-                IdentifierFor *idf = init_idf();
-                idf->type = idfor_local_var;
-                idf->item = fc_localvar(fc, fcall->or_error_vn, errtype);
-
-                map_set(or_scope->identifiers, fcall->or_error_vn, idf);
-
-                fc_build_ast(fc, fcall->or_scope);
-
-                // Check types
-                if (fcall->or_scope->vscope_return_type == NULL) {
-                    fc_error(fc, "Scope did not return a value", NULL);
-                }
-
-                if (fcall->or_scope->vscope_return_type->nullable) {
-                    fc_type_make_nullable(fc, value->return_type);
-                }
-
-                fc_type_compatible(fc, value->return_type, fcall->or_scope->vscope_return_type);
-
-            } else {
-                // Just a value
-                fcall->or_value = fc_read_value(fc, scope, false, true, true);
-                if (fcall->or_value->return_type->nullable) {
+        if (ort->vscope) {
+            // type check scope
+            if (ort->type == or_value) {
+                // or value
+                if (ort->vscope->vscope_return_type->nullable) {
+                    if (!value->return_type->is_pointer) {
+                        fc_error(fc, "The or-value is nullable, but the function return type is not a pointer/class type", NULL);
+                    }
                     value->return_type->nullable = true;
                 }
-                fc_type_compatible(fc, value->return_type, fcall->or_value->return_type);
+                fc_type_compatible(fc, value->return_type, ort->vscope->vscope_return_type);
+            } else {
+                // or return
+                // ast builder does the type checking
             }
-        } else if (strcmp(token, "return") == 0) {
-            fcall->error_type = or_return;
-            fcall->or_value = fc_read_value(fc, scope, false, true, true);
-            if (fcall->or_value->return_type->nullable) {
-                value->return_type->nullable = true;
+        } else if (ort->value) {
+            if (ort->type == or_value) {
+                // or value
+                if (ort->value->return_type->nullable) {
+                    if (!value->return_type->is_pointer) {
+                        fc_error(fc, "The or-value is nullable, but the function return type is not a pointer/class type", NULL);
+                    }
+                    value->return_type->nullable = true;
+                }
+            } else {
+                // or return
+                Scope *func_scope = get_func_scope(scope);
+                if (func_scope->func->return_type) {
+                    fc_type_compatible(fc, func_scope->func->return_type, ort->value->return_type);
+                }
             }
-            fc_type_compatible(fc, func_scope->func->return_type, fcall->or_value->return_type);
-            Scope *or_scope = init_sub_scope(scope);
-            fcall->or_scope = or_scope;
-        } else if (strcmp(token, "throw") == 0) {
-            fcall->error_type = or_throw;
-            fc_next_token(fc, token, false, true, true);
-            fcall->throw_msg = strdup(token);
-        } else {
-            fc_error(fc,
-                     "Invalid error handling method: '%s' , valid options: pass, "
-                     "throw, value, return",
-                     token);
         }
     }
 

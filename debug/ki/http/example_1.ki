@@ -65,6 +65,12 @@ func main() i32 {
 
 	println(str.substr_chars(1,1));
 
+	?String x = null;
+
+	ifnull x return {
+		return 1;
+	}
+
 	@ s = ki:http:Server { port: 9000, handler: handler };
 	s.start() or return 1;
 

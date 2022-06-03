@@ -298,12 +298,7 @@ typedef enum ValueType {
 typedef struct ValueFuncCall {
     Array *arg_values;
     Value *on;
-    int error_type;
-    Value *or_value;
-    char *throw_msg;
-    Scope *func_scope;
-    Scope *or_scope;
-    char *or_error_vn;
+    struct OrToken* ort;
 } ValueFuncCall;
 
 typedef struct ErrorToken {
@@ -326,6 +321,7 @@ typedef struct OrToken {
     Value *value;
     ErrorToken *error;
     Type *primary_type;
+    char *error_vn;
 } OrToken;
 
 typedef enum OrType {

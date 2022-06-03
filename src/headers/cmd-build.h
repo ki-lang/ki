@@ -66,7 +66,7 @@ void token_assign(FileCompiler *fc, Scope *scope, char *sign, Value *value);
 void token_free(FileCompiler *fc, Scope *scope);
 
 // Token / Value
-OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, char *token);
+OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, char *token, bool on_func_call);
 ErrorToken *fc_read_error_token(FileCompiler *fc, int errtype, char *token);
 
 // Identifier
