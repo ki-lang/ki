@@ -71,7 +71,10 @@ void compile_all() {
     // Compile executable
     char *cmd = malloc(50000);
     strcpy(cmd, get_compiler_path());
-    strcat(cmd, " -lpthread -pthread -static -o ");
+#ifndef __APPLE__
+    strcat(cmd, " -static");
+#endif
+    strcat(cmd, " -lpthread -pthread -o ");
     strcat(cmd, g_output_name);
 
     for (int i = 0; i < o_files->length; i++) {
