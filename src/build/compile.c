@@ -119,8 +119,6 @@ void compile_all() {
     strcat(cmd, " -Wl,--disable-new-dtags");
 #endif
     strcat(cmd, " -lssl -lcrypto -lz -ldl -lpthread -pthread");
-    // strcat(cmd, " -Wl,-rpath=");
-    // strcat(cmd, lib_dir);
 
     // Run
     int result = run_cmd(cmd);
