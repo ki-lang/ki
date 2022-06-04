@@ -68,11 +68,6 @@ void compile_all() {
     //
     wait_cmd();
 
-    bool _static = false;
-#ifndef __APPLE__
-    _static = true;
-#endif
-
     char *lib_dir = malloc(KI_PATH_MAX);
 
     // strcpy(lib_dir, get_binary_dir());
@@ -84,14 +79,14 @@ void compile_all() {
 #else
     strcat(lib_dir, "linux-x64");
 #endif
-    strcat(lib_dir, _static ? "/static" : "/shared");
+    strcat(lib_dir, g_static ? "/static" : "/shared");
 
     // Compile executable
     char *cmd = malloc(50000);
     strcpy(cmd, "");
 
     // Set LD_RUN_PATH
-    if (!_static) {
+    if (!g_static) {
         strcat(cmd, "LD_RUN_PATH='$ORIGIN/");
         strcat(cmd, lib_dir);
         strcat(cmd, "' ");

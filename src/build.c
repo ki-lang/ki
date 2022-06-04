@@ -39,6 +39,16 @@ void cmd_build(Array *files, Map *options) {
     uses_async = false;
     last_readonly_i = 0;
     GEN_C = 0;
+
+    // -static option
+    g_static = false;
+#ifndef __APPLE__
+    g_static = true;
+#endif
+    if (!map_contains(options, "-static")) {
+        g_static = true;
+    }
+
     //
     cmd_build_init_before_build();
     //
