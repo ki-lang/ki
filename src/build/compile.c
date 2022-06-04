@@ -115,13 +115,12 @@ void compile_all() {
     strcat(cmd, lib_dir);
 
     // Link libraries
-    if (_static) {
-        strcat(cmd, " -Wl,-Bstatic -lssl -lcrypto -lz -Wl,-Bdynamic -ldl -lpthread -pthread");
-    } else {
-        strcat(cmd, " -Wl,--disable-new-dtags -lssl -lcrypto -lz -ldl -lpthread -pthread");
-        // strcat(cmd, " -Wl,-rpath=");
-        // strcat(cmd, lib_dir);
-    }
+#ifndef __APPLE__
+    strcat(cmd, " -Wl,--disable-new-dtags");
+#endif
+    strcat(cmd, " -lssl -lcrypto -lz -ldl -lpthread -pthread");
+    // strcat(cmd, " -Wl,-rpath=");
+    // strcat(cmd, lib_dir);
 
     // Run
     int result = run_cmd(cmd);
