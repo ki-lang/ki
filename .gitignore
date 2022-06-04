@@ -9,3 +9,4 @@
 perf.data
 /packages
 /ki.json
+.DS_STORE
