@@ -1,5 +1,5 @@
 
-FILES="./*"
+FILES="./*.dylib"
 for f in $FILES
 do
   echo "Fix $f"
