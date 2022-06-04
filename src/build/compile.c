@@ -68,32 +68,62 @@ void compile_all() {
     //
     wait_cmd();
 
+    bool _static = false;
+#ifndef __APPLE__
+    _static = true;
+#endif
+
+    char *lib_dir = malloc(KI_PATH_MAX);
+
+    // strcpy(lib_dir, get_binary_dir());
+    strcpy(lib_dir, "lib/binaries/");
+#if defined _WIN32
+    strcat(lib_dir, "win-x64");
+#elif defined __APPLE__
+    strcat(lib_dir, "osx-x64");
+#else
+    strcat(lib_dir, "linux-x64");
+#endif
+    strcat(lib_dir, _static ? "/static" : "/shared");
+
     // Compile executable
     char *cmd = malloc(50000);
-    strcpy(cmd, get_compiler_path());
-#ifndef __APPLE__
-    // strcat(cmd, " -static");
-#endif
-    strcat(cmd, " -lpthread -pthread -o ");
-    strcat(cmd, g_output_name);
+    strcpy(cmd, "");
 
+    // Set LD_RUN_PATH
+    if (!_static) {
+        strcat(cmd, "LD_RUN_PATH='$ORIGIN/");
+        strcat(cmd, lib_dir);
+        strcat(cmd, "' ");
+    }
+
+    // gcc/clang/...
+    strcat(cmd, get_compiler_path());
+
+    // Object files
     for (int i = 0; i < o_files->length; i++) {
         strcat(cmd, " ");
         strcat(cmd, array_get_index(o_files, i));
     }
 
-    strcat(cmd, " -L");
-    strcat(cmd, get_binary_dir());
-    strcat(cmd, "/lib/static/");
-#if defined _WIN32
-    strcat(cmd, "win-x64");
-#elif defined __APPLE__
-    strcat(cmd, "osx-x64");
-#else
-    strcat(cmd, "linux-x64");
-#endif
-    strcat(cmd, " -lssl -lcrypto");
+    // Output file
+    strcat(cmd, " -o ");
+    strcat(cmd, g_output_name);
 
+    // Link lib_dir
+    strcat(cmd, " -L ");
+    strcat(cmd, lib_dir);
+
+    // Link libraries
+    if (_static) {
+        strcat(cmd, " -Wl,-Bstatic -lssl -lcrypto -lz -Wl,-Bdynamic -ldl -lpthread -pthread");
+    } else {
+        strcat(cmd, " -Wl,--disable-new-dtags -lssl -lcrypto -lz -ldl -lpthread -pthread");
+        // strcat(cmd, " -Wl,-rpath=");
+        // strcat(cmd, lib_dir);
+    }
+
+    // Run
     int result = run_cmd(cmd);
     if (result == -1) {
         printf("Compile failed\n");
