@@ -41,9 +41,9 @@ void cmd_build(Array *files, Map *options) {
     GEN_C = 0;
 
     // -static option
-    g_static = false;
-#ifndef __APPLE__
     g_static = true;
+#if defined __APPLE__
+    g_static = false;
 #endif
     if (map_contains(options, "-static")) {
         g_static = true;
