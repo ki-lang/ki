@@ -82,6 +82,16 @@ void compile_all() {
         strcat(cmd, array_get_index(o_files, i));
     }
 
+    strcat(cmd, " -L");
+    strcat(cmd, get_binary_dir());
+    strcat(cmd, "/lib/static/");
+#if defined _WIN32
+    strcat(cmd, "win-x64");
+#elif defined __APPLE__
+    strcat(cmd, "osx-x64");
+#else
+    strcat(cmd, "linux-x64");
+#endif
     strcat(cmd, " -lssl -lcrypto");
 
     int result = run_cmd(cmd);
