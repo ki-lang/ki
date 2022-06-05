@@ -6,6 +6,7 @@ Scope *init_scope() {
     scope->type = sct_unknown;
     scope->identifiers = map_make();
     scope->is_func = false;
+    scope->is_vscope = false;
     scope->is_loop = false;
     scope->in_loop = false;
     scope->must_return = false;
@@ -69,7 +70,7 @@ Scope *get_loop_scope(Scope *scope) {
 Scope *get_vscope_scope(Scope *scope) {
     //
     Scope *vs_scope = scope;
-    while (vs_scope && vs_scope->vscope_vname == NULL) {
+    while (vs_scope && vs_scope->is_vscope == false) {
         vs_scope = vs_scope->parent;
     }
     return vs_scope;

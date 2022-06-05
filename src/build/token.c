@@ -21,7 +21,7 @@ void token_return(FileCompiler *fc, Scope *scope) {
     scope->did_return = true;
 
     Scope *vscope = scope;
-    while (vscope && vscope->vscope_vname == NULL) {
+    while (vscope && vscope->is_vscope == false) {
         vscope = vscope->parent;
     }
 
@@ -319,6 +319,7 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
             sprintf(vname, "_KI_VSCOPE_VN_%d", GEN_C);
 
             Scope *vscope = init_sub_scope(scope);
+            vscope->is_vscope = true;
             vscope->body_i = fc->i;
             if (ort->type == or_value) {
                 vscope->vscope_vname = vname;
@@ -376,9 +377,23 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
 
     Identifier *id = init_id();
     id->name = strdup(token);
-    IdentifierFor *idf = idf_find_in_scope(scope, id);
-    if (!idf || idf->type != idfor_local_var) {
+    Scope *var_scope = scope;
+    IdentifierFor *idf = NULL;
+    while (var_scope != NULL) {
+        idf = idf_find_in_scope(var_scope, id);
+        if (idf) {
+            break;
+        }
+        if (var_scope->is_func || var_scope->is_vscope) {
+            break;
+        }
+        var_scope = var_scope->parent;
+    }
+    if (!idf) {
         fc_error(fc, "Unknown local variable '%s'", token);
+    }
+    if (idf->type != idfor_local_var) {
+        fc_error(fc, "Not a local variable '%s'", token);
     }
 
     LocalVar *lv = idf->item;

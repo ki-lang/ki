@@ -71,6 +71,7 @@ typedef struct Scope {
     int type;
     struct Map *identifiers;
     bool is_func;
+    bool is_vscope;
     bool is_loop;
     bool in_loop;
     bool must_return;
@@ -232,6 +233,7 @@ typedef struct Type {
     bool npt;
     bool allow_math;
     bool is_pointer;
+    bool is_pointer_of_pointer;
     bool is_array;
     bool is_float;
     bool is_unsigned;

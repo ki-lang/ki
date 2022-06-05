@@ -1,10 +1,13 @@
 
 namespace http;
 
+#header "ssl/ssl"
+
 class Connection {
 	public i32 fd = 0;
 	public ptr read_set;
 	public bool disconnected = false;
 	public ?async:Task task = null;
 	public ?Request req = null;
+	public ?main:main:SSL ssl = null;
 }

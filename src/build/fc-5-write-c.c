@@ -1422,8 +1422,10 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             array_push(arg_strings, arg_name);
             fc_write_c_type(fc->c_code_after, v->return_type, arg_name);
             str_append_chars(fc->c_code_after, " = *(");
+            v->return_type->is_pointer_of_pointer = true;
             fc_write_c_type(fc->c_code_after, v->return_type, NULL);
-            str_append_chars(fc->c_code_after, "*)arg_pointer;\n");
+            v->return_type->is_pointer_of_pointer = false;
+            str_append_chars(fc->c_code_after, ")arg_pointer;\n");
             str_append_chars(fc->c_code_after, "arg_pointer += ");
             sprintf(size, "%d", v->return_type->bytes);
             str_append_chars(fc->c_code_after, size);
@@ -1532,8 +1534,10 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             fc_write_c_value(fc, v, false);
             //
             str_append_chars(fc->tkn_buffer, "*(");
+            v->return_type->is_pointer_of_pointer = true;
             fc_write_c_type(fc->tkn_buffer, v->return_type, NULL);
-            str_append_chars(fc->tkn_buffer, "*)");
+            v->return_type->is_pointer_of_pointer = false;
+            str_append_chars(fc->tkn_buffer, ")");
             str_append_chars(fc->tkn_buffer, argsptr_name);
             str_append_chars(fc->tkn_buffer, " = ");
             str_append(fc->tkn_buffer, fc->value_buffer);
@@ -1617,12 +1621,18 @@ void fc_write_c_type(Str *append_to, Type *type, char *varname) {
     //
     if (type->type == type_bool) {
         str_append_chars(append_to, "unsigned char");
+        if (type->is_pointer_of_pointer) {
+            str_append_chars(append_to, "*");
+        }
         fc_write_c_type_varname(append_to, type, varname);
         return;
     }
     //
     if (type->type == type_void_pointer) {
         str_append_chars(append_to, "void*");
+        if (type->is_pointer_of_pointer) {
+            str_append_chars(append_to, "*");
+        }
         fc_write_c_type_varname(append_to, type, varname);
         return;
     }
@@ -1631,6 +1641,9 @@ void fc_write_c_type(Str *append_to, Type *type, char *varname) {
         // {ret_type} (*{varname})({arg1_type}, {arg2_type}) = ...
         fc_write_c_type(append_to, type->func_return_type, NULL);
         str_append_chars(append_to, "(*");
+        if (type->is_pointer_of_pointer) {
+            str_append_chars(append_to, "*");
+        }
         fc_write_c_type_varname(append_to, type, varname);
         str_append_chars(append_to, ")(");
         for (int i = 0; i < type->func_arg_types->length; i++) {
@@ -1673,6 +1686,9 @@ void fc_write_c_type(Str *append_to, Type *type, char *varname) {
         }
 
         if (type->is_pointer) {
+            str_append_chars(append_to, "*");
+        }
+        if (type->is_pointer_of_pointer && type->type != type_funcref) {
             str_append_chars(append_to, "*");
         }
         fc_write_c_type_varname(append_to, type, varname);

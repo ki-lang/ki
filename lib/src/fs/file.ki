@@ -70,14 +70,14 @@ func write(String path, String content, bool append) ! {
 	}
 }
 
-func exists(String path) !bool {
+func exists(String path) bool {
 	@ fd = main:main:open(path.to_cstring(), 0, 0);
 	if(fd == -1) {
 		return false;
 	}
 	@ check = main:main:close(fd);
 	if(check == -1){
-		throw failed_to_close_handle;
+		//throw failed_to_close_handle;
 	}
 	return true;
 }

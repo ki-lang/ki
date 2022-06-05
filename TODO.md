@@ -13,6 +13,7 @@
 - libvips for image manipulation
 - cross platform GUI library using SDL, GLFW, SFML or GLUT
 - allow compiling with clang & cross compilation with clang
+- private & readonly checks
 
 ## Future
 

@@ -763,6 +763,9 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
     if (fcall->arg_values->length < fcall->on->return_type->func_arg_types->length) {
         fc_error(fc, "Too few arguments", NULL);
     }
+    if (fcall->arg_values->length > fcall->on->return_type->func_arg_types->length) {
+        fc_error(fc, "Too many arguments", NULL);
+    }
 
     // Check error handling
     if (on->return_type->func_can_error) {

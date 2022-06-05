@@ -31,7 +31,7 @@ class Server {
 	readonly u32 port;
 	readonly i32 max_connections = 64000;
 	public funcref (Request) Response handler = request_handler;
-	private main:main:SSL ssl;
+	private ?main:main:SSL_CTX ssl_ctx = null;
 	public ?String ssl_cert = null;
 	public ?String ssl_private_key = null;
 
@@ -59,6 +59,10 @@ class Server {
 		fd:set_non_block(sock.listenfd);
 		#end
 
+		// SSL
+		this.init_ssl(sock.listenfd);
+
+		// 
 		@ alc = allocator 48;
 		//@ clientaddr = main:main:sockaddr_in {
 		//	sin_addr: 0
@@ -129,6 +133,15 @@ class Server {
 						// New connection
   				      	i32 new_fd = main:main:accept(sock.listenfd, clientaddr, getptr addrlen);
 
+						?main:main:SSL ssl = null;
+						if(this.ssl_ctx != null){
+							ssl = this.accept_ssl(new_fd);
+							if(ssl == null) {
+								io:print("Failed to init SSL\n");
+								continue;
+							}
+						}
+
 						if (new_fd == -1){
 							io:print("Failed to accept connection\n");
 							continue;
@@ -148,7 +161,7 @@ class Server {
                            fdcount++;
 						#end
 
-						Connection con = Connection{ fd: new_fd };
+						Connection con = Connection{ fd: new_fd, ssl: ssl };
 						con._RC++;
 
 						connections.set(new_fd, con);
@@ -200,7 +213,7 @@ class Server {
 
 						this._RC++;
 						if(con.task == null){
-							con.task = async Server.respond(con.fd, this);
+							con.task = async Server.respond(cast con as ptr, this.handler);
 							//Server.respond_fast(con.fd, this);
 						} else {
 						    #if OS_WIN || OS_OSX
@@ -249,20 +262,28 @@ class Server {
 	}
 	#end
 
-	public static func respond(i32 fd, ptr server_ptr){
+	private static func respond(ptr con_ptr, funcref (Request) Response handler) {
 
-        @ server = cast server_ptr as Server;
-		server._RC++;
+		@ con = cast con_ptr as Connection; 
 
-        @ req = Request.read_request(fd);
+		i32 fd = con.fd;
+		@ ssl = con.ssl;
+
+        @ req = Request.read_request(fd, ssl);
         if(req == null){
 			return;
         }
 
-		@ response = server.handler(req);
+		@ response = handler(req);
 
         String output = response.output();
-		@ check = main:main:send(fd, output.data, output.bytes, 0);
+		if(ssl == null){
+			@ check = main:main:send(fd, output.data, output.bytes, 0);
+		} else {
+			//notnull ssl do {
+			//	@ n = main:main:SSL_write(ssl, output.data, output.bytes);
+			//}
+		}
 
 		return;
 	}
@@ -285,7 +306,39 @@ class Server {
 		return;
 	}
 
-	public func init_ssl(i32 fd) {
+	private func accept_ssl(i32 fd) ?main:main:SSL {
+
+		@ ctx = this.ssl_ctx;
+		ifnull ctx return null;
+
+ 		@ ssl = main:main:SSL_new(ctx);
+		ifnull ssl panic failed_to_init_ssl;
+
+  		@ err = main:main:SSL_set_fd(ssl, fd);
+  		if (main:main:SSL_is_server(ssl) > 0) {
+   			main:main:SSL_set_accept_state(ssl);
+		} else {
+    		main:main:SSL_set_connect_state(ssl);
+		}
+  		//e = main:main:SSL_set_mode(ssl, main:main:SSL_MODE.ENABLE_PARTIAL_WRITE bitOR main:main:SSL_MODE.ACCEPT_MOVING_WRITE_BUFFER);
+		
+		return ssl;
+	}
+
+	public func enable_ssl(String cert_path, String private_key_path) {
+
+		if(ki:fs:exists(cert_path) == false){
+			panic ssl_cert_file_not_found;
+		}
+		if(ki:fs:exists(private_key_path) == false){
+			panic ssl_private_key_file_not_found;
+		}
+
+		this.ssl_cert = cert_path;
+		this.ssl_private_key = private_key_path;
+	}
+
+	private func init_ssl(i32 fd) {
 
 		@ ssl_cert = this.ssl_cert;
 		@ ssl_private_key = this.ssl_private_key;
@@ -311,18 +364,7 @@ class Server {
 			return;
 		}
 
- 		@ ssl = main:main:SSL_new(ctx);
-		ifnull ssl panic failed_to_init_ssl;
-
-  		@ err = main:main:SSL_set_fd(ssl, fd);
-  		if (main:main:SSL_is_server(ssl) > 0) {
-   			main:main:SSL_set_accept_state(ssl);
-		} else {
-    		main:main:SSL_set_connect_state(ssl);
-		}
-  		//e = main:main:SSL_set_mode(ssl, main:main:SSL_MODE.ENABLE_PARTIAL_WRITE bitOR main:main:SSL_MODE.ACCEPT_MOVING_WRITE_BUFFER);
-		
-		this.ssl = ssl;
+		this.ssl_ctx = ctx;
 	}
 
 }

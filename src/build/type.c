@@ -10,6 +10,7 @@ Type *init_type() {
     type->is_float = false;
     type->is_unsigned = false;
     type->is_pointer = false;
+    type->is_pointer_of_pointer = false;
     type->is_array = false;
     //
     type->c_inline = false;
@@ -179,6 +180,7 @@ Type *fc_identifier_to_type(FileCompiler *fc, Identifier *id, Scope *scope) {
                 fc_next_token(fc, token, false, true, true);
             }
             t->func_return_type = fc_read_type(fc, scope);
+            t->bytes = pointer_size;
 
             free(token);
         }
