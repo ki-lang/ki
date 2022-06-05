@@ -328,13 +328,11 @@ class Server {
 		@ c = main:main:SSL_accept(ssl);
 		
 		if(c < 1) {
-			println("ssl accept fail");
-			println(c.str());
+			println("SSL_accept failed, client might not trust the certificate and is sending unencrypted data");
 			@ err = main:main:SSL_get_error(ssl, c);
-			print("Err:");
+			println("Err code: ");
 			println(err.str());
 		}
-		println("ssl accepted");
 		
 		return ssl;
 	}
