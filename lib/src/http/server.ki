@@ -60,7 +60,7 @@ class Server {
 		#end
 
 		// SSL
-		this.init_ssl(sock.listenfd);
+		this.init_ssl_context(sock.listenfd);
 
 		// 
 		@ alc = allocator 48;
@@ -185,6 +185,11 @@ class Server {
 							io:print("[+] connection closed: ");
 							io:println(fd.str());
 
+							//if(con.ssl != null) {
+							//	main:main:SSL_shutdown(con.ssl);
+							//	main:main:SSL_free(con.ssl);
+							//}
+
 							con.task = null;
 							con._ALLOCATOR.free(con);
 							connections.clear(fd);
@@ -281,7 +286,7 @@ class Server {
 			@ check = main:main:send(fd, output.data, output.bytes, 0);
 		} else {
 			//notnull ssl do {
-			//	@ n = main:main:SSL_write(ssl, output.data, output.bytes);
+			@ n = main:main:SSL_write(ssl, output.data, output.bytes);
 			//}
 		}
 
@@ -338,7 +343,7 @@ class Server {
 		this.ssl_private_key = private_key_path;
 	}
 
-	private func init_ssl(i32 fd) {
+	private func init_ssl_context(i32 fd) {
 
 		@ ssl_cert = this.ssl_cert;
 		@ ssl_private_key = this.ssl_private_key;

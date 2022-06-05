@@ -45,13 +45,15 @@ func SSL_set_mode(SSL ssl, u64 mode) u64;
 func SSL_get_mode(SSL ssl) u64;
 func SSL_clear_mode(SSL ssl, u64 mode) u64;
 
+func SSL_accept(SSL ssl) i32;
+
 func SSL_read_ex(SSL ssl, ptr buf, uxx num, ptr readbytes) i32;
 func SSL_read(SSL ssl, ptr buf, i32 num) i32;
 func SSL_peek_ex(SSL ssl, ptr buf, uxx num, ptr readbytes) i32;
 func SSL_peek(SSL ssl, ptr buf, i32 num) i32;
 
-func SSL_write_ex(SSL s, ptr buf, uxx num, ptr written);
-func SSL_write(SSL ssl, ptr buf, i32 num);
+func SSL_write_ex(SSL s, ptr buf, uxx num, ptr written) i32;
+func SSL_write(SSL ssl, ptr buf, i32 num) i32;
 
 func SSL_CTX_set_mode(SSL_CTX ctx, u64 mode) u64;
 func SSL_CTX_get_mode(SSL_CTX ctx) u64;

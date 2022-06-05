@@ -14,6 +14,9 @@
 - cross platform GUI library using SDL, GLFW, SFML or GLUT
 - allow compiling with clang & cross compilation with clang
 - private & readonly checks
+- allow ifnull/notnull on func args
+- ifnull 'do' scope + else scope
+- notnull else scope
 
 ## Future
 

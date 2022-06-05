@@ -625,6 +625,10 @@ void token_declare(FileCompiler *fc, Scope *scope, Type *left_type) {
     //
     Value *value = fc_read_value(fc, scope, false, true, true);
 
+    if (!value->return_type) {
+        fc_error(fc, "Value has no return type", NULL);
+    }
+
     if (left_type) {
         if (!type_compatible(left_type, value->return_type)) {
             fc_error(fc, "Types are not compatible", NULL);
