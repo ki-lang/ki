@@ -84,3 +84,6 @@ func SSL_use_RSAPrivateKey_file(SSL ssl, cstring file, i32 type) i32;
 
 func SSL_CTX_check_private_key(SSL_CTX ctx) i32;
 func SSL_check_private_key(SSL ssl) i32;
+
+func SSL_shutdown(SSL ssl) i32;
+func SSL_free(SSL ssl);

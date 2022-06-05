@@ -185,10 +185,10 @@ class Server {
 							io:print("[+] connection closed: ");
 							io:println(fd.str());
 
-							//if(con.ssl != null) {
-							//	main:main:SSL_shutdown(con.ssl);
-							//	main:main:SSL_free(con.ssl);
-							//}
+							if(con.ssl != null) {
+								err_check = main:main:SSL_shutdown(con.ssl);
+								main:main:SSL_free(con.ssl);
+							}
 
 							con.task = null;
 							con._ALLOCATOR.free(con);
@@ -228,6 +228,12 @@ class Server {
   							i32 err_check = main:main:recv(fd, getptr buffer, 1, 2);
 							if(err_check <= 0){
 								io:print("[+] disconnect\n");
+
+								if(con.ssl != null) {
+									err_check = main:main:SSL_shutdown(con.ssl);
+									main:main:SSL_free(con.ssl);
+								}
+
 								con._ALLOCATOR.free(con);
 								connections.clear(fd);
 								fd:remove_from_set(read_set, fd);
@@ -328,10 +334,17 @@ class Server {
 		@ c = main:main:SSL_accept(ssl);
 		
 		if(c < 1) {
-			println("SSL_accept failed, client might not trust the certificate and is sending unencrypted data");
+			println("SSL_accept failed, client might be sending unencrypted data by surfing to http:// instead of https://");
+			print("Returned: ");
+			println(c.str());
 			@ err = main:main:SSL_get_error(ssl, c);
-			println("Err code: ");
+			print("Err code: ");
 			println(err.str());
+
+			c = main:main:SSL_shutdown(ssl);
+			main:main:SSL_free(ssl);
+
+			return null;
 		}
 		
 		return ssl;
