@@ -135,7 +135,7 @@ class Server {
 
 						?main:main:SSL ssl = null;
 						if(this.ssl_ctx != null){
-							ssl = this.accept_ssl(new_fd);
+							ssl = this.create_ssl_instance(new_fd);
 							if(ssl == null) {
 								io:print("Failed to init SSL\n");
 								continue;
@@ -311,7 +311,7 @@ class Server {
 		return;
 	}
 
-	private func accept_ssl(i32 fd) ?main:main:SSL {
+	private func create_ssl_instance(i32 fd) ?main:main:SSL {
 
 		@ ctx = this.ssl_ctx;
 		ifnull ctx return null;
@@ -320,12 +320,21 @@ class Server {
 		ifnull ssl panic failed_to_init_ssl;
 
   		@ err = main:main:SSL_set_fd(ssl, fd);
-  		if (main:main:SSL_is_server(ssl) > 0) {
-   			main:main:SSL_set_accept_state(ssl);
-		} else {
-    		main:main:SSL_set_connect_state(ssl);
+		
+		// Enable SSL server mode
+		main:main:SSL_set_accept_state(ssl);
+
+		// Wait for handshake
+		@ c = main:main:SSL_accept(ssl);
+		
+		if(c < 1) {
+			println("ssl accept fail");
+			println(c.str());
+			@ err = main:main:SSL_get_error(ssl, c);
+			print("Err:");
+			println(err.str());
 		}
-  		//e = main:main:SSL_set_mode(ssl, main:main:SSL_MODE.ENABLE_PARTIAL_WRITE bitOR main:main:SSL_MODE.ACCEPT_MOVING_WRITE_BUFFER);
+		println("ssl accepted");
 		
 		return ssl;
 	}

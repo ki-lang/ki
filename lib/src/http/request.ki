@@ -26,8 +26,7 @@ class Request {
 			//}
 		}
 		if (rcvd < 0){
-			//DEBUGMSG receive_error;
-			//io:print("receive error\n");
+			io:print("Failed to read from connection\n");
 			return null;
 		} else if (rcvd == 0){
 			io:print("Client disconnected upexpectedly\n");

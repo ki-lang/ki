@@ -72,7 +72,7 @@ func main() i32 {
 	//}
 
 	@ s = ki:http:Server { port: 9000, handler: handler };
-	s.enable_ssl("./debug/ki/http/pub.crt", "./debug/ki/http/private.key");
+	s.enable_ssl("./debug/ki/http/certs/localhost.crt", "./debug/ki/http/certs/localhost.key");
 	s.start() or return 1;
 
 	return 0;
