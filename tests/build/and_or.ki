@@ -1,0 +1,41 @@
+
+class Track {
+	public i32 do_not_run = 0;
+	public i32 do_run = 0;
+}
+
+func do_not_run(Track tr) bool {
+	tr.do_not_run += 1;
+	return true;
+}
+func do_run(Track tr) bool {
+	tr.do_run += 1;
+	return true;
+}
+
+func main () {
+
+	@ tr = Track {};
+
+	bool x = true;
+
+	x = true || do_not_run(tr);
+	x = false && do_not_run(tr);
+
+	x = false || do_run(tr);
+	x = true && do_run(tr);
+	x = false || true && do_run(tr);
+	x = do_run(tr) || false;
+	x = do_run(tr) && false;
+
+	if(tr.do_not_run != 0){
+		println("do_not_run is not 0");
+		exit 1;
+	}
+	if(tr.do_run != 5){
+		println("do_run is not 5");
+		exit 1;
+	}
+
+	exit 0;
+}
