@@ -5,6 +5,5 @@ namespace http;
 
 class HttpConnection {
 	public ?async:Task task = null;
-	public ?Request req = null;
 	public net:Connection con;
 }

@@ -31,10 +31,10 @@ class Server {
 	readonly u32 port;
 	readonly i32 max_connections = 64000;
 	public funcref (Request) Response handler = request_handler;
-	private ?main:main:SSL_CTX ssl_ctx = null;
-	public bool use_ssl = false;
-	public ?String ssl_cert = null;
-	public ?String ssl_private_key = null;
+
+	readonly bool use_ssl = false;
+	readonly ?String ssl_cert = null;
+	readonly ?String ssl_private_key = null;
 
 	public func start() ! {
 
@@ -262,14 +262,15 @@ class Server {
 	private static func respond(ptr con_ptr, funcref (Request) Response handler) {
 
 		@ hcon = cast con_ptr as HttpConnection; 
+		@ con = hcon.con;
 
-        @ req = Request.read_request(hcon);
+        @ req = Request.read_request(con);
 		ifnull req return;
 
 		@ response = handler(req);
 
         String output = response.output();
-		hcon.con.write(output);
+		con.write(output);
 
 		return;
 	}

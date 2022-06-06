@@ -10,9 +10,9 @@ class Request {
 	public String protocol;
 	public String body;
 
-	public static func read_request(HttpConnection hcon) ?Request {
+	public static func read_request(net:Connection con) ?Request {
 
-		@ payload = hcon.con.read() or return {
+		@ payload = con.read() or return {
 			print("Failed to read from connection\n");
 			return null;
 		};
