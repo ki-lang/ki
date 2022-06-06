@@ -12,9 +12,9 @@ class Thread {
 
 	public static func start(funcref (ptr) void start_func, ptr data) Thread {
 
-		@ pt = mem:alloc_flat(sizeof(main:main:pthread_t));
+		@ pt = cast mem:alloc_flat(sizeof(main:main:pthread_t)) as main:main:pthread_t;
 		@ mut = Mutex.make();
-		@ cond = mem:alloc_flat(sizeof(main:main:pthread_cond_t));
+		@ cond = cast mem:alloc_flat(sizeof(main:main:pthread_cond_t)) as main:main:pthread_cond_t;
 		@ check = main:main:pthread_create(pt, null, start_func, data);
 
 		Thread t = cast mem:alloc_flat(sizeof(Thread)) as Thread;

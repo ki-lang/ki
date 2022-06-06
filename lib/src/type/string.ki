@@ -396,11 +396,13 @@ class StringChunker{
 	}
 
 	public func get_chunk(bool skip_break_bytes_at_end) String {
-		this.end = this.find_char_index(this.break_on) or return "";
+		@ break_on = this.break_on;
+		ifnull break_on return "";
+		this.end = this.find_char_index(break_on) or return "";
 		@ result = this.str.substr_bytes(this.start, this.end - this.start);
 		this.start = this.end;
 		if(skip_break_bytes_at_end){
-			this.skip_bytes(this.break_on);
+			this.skip_bytes(break_on);
 		}
 		return result;
 	}

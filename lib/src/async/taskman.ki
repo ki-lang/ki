@@ -177,7 +177,7 @@ class Taskman norfc {
 
 		mut.unlock();
 
-		main:main:write(task_list.pipe_write_fd, getptr pos, sizeof(u32));
+		@ c = main:main:write(task_list.pipe_write_fd, getptr pos, sizeof(u32));
 	}
 
 	public static func run_another_task() {

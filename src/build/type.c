@@ -180,6 +180,7 @@ Type *fc_identifier_to_type(FileCompiler *fc, Identifier *id, Scope *scope) {
                 fc_next_token(fc, token, false, true, true);
             }
             t->func_return_type = fc_read_type(fc, scope);
+            t->is_pointer = true;
             t->bytes = pointer_size;
 
             free(token);
@@ -256,8 +257,55 @@ Type *fc_create_type_for_enum(Enum *enu) {
     return t;
 }
 
+char *type_to_str(Type *t) {
+    //
+    if (!t) {
+        return strdup("void");
+    }
+    //
+    char *res = malloc(KI_TOKEN_MAX);
+    strcpy(res, "");
+    if (t->type == type_void_pointer) {
+        strcat(res, "ptr");
+        return res;
+    }
+    if (t->npt) {
+        strcat(res, "NPT ");
+    }
+    if (t->nullable) {
+        strcat(res, "?");
+    }
+    if (t->is_pointer) {
+        // strcat(res, "*");
+    }
+    if (t->class) {
+        Class *class = t->class;
+        strcat(res, class->cname);
+    } else if (t->type == type_null) {
+        strcat(res, "null");
+    } else if (t->type == type_funcref) {
+        strcat(res, "funcref (");
+        for (int i = 0; i < t->func_arg_types->length; i++) {
+            if (i > 0) {
+                strcat(res, ", ");
+            }
+            Type *arg_type = array_get_index(t->func_arg_types, i);
+            strcat(res, type_to_str(arg_type));
+        }
+        strcat(res, ") ");
+        strcat(res, type_to_str(t->func_return_type));
+    } else {
+        strcat(res, "(Unknown class)");
+    }
+    return res;
+}
+
 void fc_type_compatible(FileCompiler *fc, Type *t1, Type *t2) {
     if (!type_compatible(t1, t2)) {
+        char *t1s = type_to_str(t1);
+        char *t2s = type_to_str(t2);
+        printf("Expected: %s\n", t1s);
+        printf("Given: %s\n", t2s);
         fc_error(fc, "Types are not compatible", NULL);
     }
 }

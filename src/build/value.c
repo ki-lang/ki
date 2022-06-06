@@ -332,10 +332,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->item = func->cname;
             Type *t = init_type();
             t->type = type_funcref;
-            t->func_arg_types = func->args;
+            t->is_pointer = true;
+            t->func_arg_types = func->arg_types;
             t->func_return_type = func->return_type;
             t->func_can_error = func->can_error;
             value->return_type = t;
+
         } else if (idf->type == idfor_enum) {
             fc_expect_token(fc, ".", false, true, false);
             fc_next_token(fc, token, false, true, false);
@@ -622,7 +624,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 on->item = func->cname;
                 Type *t = init_type();
                 t->type = type_funcref;
-                t->func_arg_types = func->args;
+                t->is_pointer = true;
+                t->func_arg_types = func->arg_types;
                 t->func_return_type = func->return_type;
                 t->func_can_error = func->can_error;
                 on->return_type = t;
@@ -729,13 +732,24 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
     if (on->return_type->func_can_error)
         func_scope->catch_errors = true;
 
+    Array *func_args = fcall->on->return_type->func_arg_types;
+
     if (on->type == vt_prop_access) {
         ValueClassPropAccess *pa = on->item;
-        if (!pa->is_static) {
+        Class *class = NULL;
+        if (pa->is_static) {
+            class = pa->on;
+        } else {
             Value *class_instance_value = pa->on;
-            Class *class = class_instance_value->return_type->class;
-            ClassProp *prop = map_get(class->props, pa->name);
-            if (prop->func) {
+            class = class_instance_value->return_type->class;
+        }
+        ClassProp *prop = map_get(class->props, pa->name);
+
+        if (prop->is_func) {
+
+            func_args = prop->func->arg_types;
+
+            if (!prop->is_static) {
                 Value *prev_on = on;
                 on = init_value();
                 on->type = vt_var;
@@ -744,19 +758,36 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                 fcall->on = on;
                 array_push(fcall->arg_values, pa->on);
             }
+        } else {
+            // funcref property
+            // func_args = prop->return_type->func_arg_types;
         }
+    }
+    // printf("on: %s\n", type_to_str(fcall->on->return_type));
+
+    if (!func_args) {
+        fc_error(fc, "Function call on non-function", NULL);
     }
 
     char *token = malloc(KI_TOKEN_MAX);
     fc_next_token(fc, token, true, false, true);
+    int i = fcall->arg_values->length; // start from 0 or 1, because "this" might be the first arg
     while (strcmp(token, ")") != 0) {
         Value *argv = fc_read_value(fc, scope, false, false, true);
+        // Type check
+        Type *arg_type = array_get_index(func_args, i);
+        if (!arg_type) {
+            fc_error(fc, "Too many arguments", NULL);
+        }
+        fc_type_compatible(fc, arg_type, argv->return_type);
+        //
         array_push(fcall->arg_values, argv);
         fc_next_token(fc, token, true, false, true);
         if (strcmp(token, ",") == 0) {
             fc_next_token(fc, token, false, false, true);
             fc_next_token(fc, token, true, false, true);
         }
+        i++;
     }
     fc_next_token(fc, token, false, false, true);
 
@@ -764,7 +795,7 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
         fc_error(fc, "Too few arguments", NULL);
     }
     if (fcall->arg_values->length > fcall->on->return_type->func_arg_types->length) {
-        fc_error(fc, "Too many arguments", NULL);
+        fc_error(fc, "Too many arguments...", NULL);
     }
 
     // Check error handling

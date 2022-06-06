@@ -7,6 +7,7 @@ Function *init_func() {
     func->can_error = false;
     func->generate_code = true;
     func->args = array_make(2);
+    func->arg_types = array_make(2);
     func->args_i = 0;
     func->args_i_end = 0;
     func->scope = NULL;
@@ -100,6 +101,7 @@ void fc_scan_func_args(Function *func) {
         arg->type = type;
 
         array_push(func->args, arg);
+        array_push(func->arg_types, arg->type);
 
         IdentifierFor *idf = init_idf();
         idf->type = idfor_arg;

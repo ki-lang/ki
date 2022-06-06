@@ -6,7 +6,7 @@ class Threaded<T> {
 	public main:main:pthread_key_t key;
 
 	public static func make() Threaded<T> {
-		@ adr = mem:alloc_flat(sizeof(main:main:pthread_key_t));
+		@ adr = cast mem:alloc_flat(sizeof(main:main:pthread_key_t)) as main:main:pthread_key_t;
 		@ check = main:main:pthread_key_create(adr, null);
 		Threaded<T> v = cast mem:alloc_flat(sizeof(Threaded<T>)) as Threaded<T>;
 		v.key = adr;

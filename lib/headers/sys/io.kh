@@ -1,7 +1,7 @@
 
 namespace main;
 
-func write(i32 fd, ptr buf, u64 length);
+func write(i32 fd, ptr buf, u64 length) ixx;
 func read(i32 fd, ptr buf, u64 length) ixx;
 func open(cstring path, i32 flags, uxx mode) i32;
 func fsync(i32 fd) i32;

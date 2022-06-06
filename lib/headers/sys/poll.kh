@@ -10,8 +10,8 @@ class epoll_event norfc {
 }
 
 func epoll_create(i32 size) i32;
-func epoll_ctl(i32 epfd, i32 op, i32 fd, epoll_event event) i32;
-func epoll_wait(i32 epfd, epoll_event events, i32 maxevents, i32 timeout) i32;
+func epoll_ctl(i32 epfd, i32 op, i32 fd, ?epoll_event event) i32;
+func epoll_wait(i32 epfd, ptr events, i32 maxevents, i32 timeout) i32;
 
 enum EPOLL {
 	EPOLL_CTL_ADD: 1,

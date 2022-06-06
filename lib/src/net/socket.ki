@@ -30,7 +30,6 @@ class Socket {
 	public Socket.IPTYPE ip_type = Socket.IPTYPE.ipv4;
 
 	public i32 listenfd = 0;
-	// private array clients = [];
 
 	public func listen() ! {
 
@@ -88,7 +87,8 @@ class Socket {
 		}
 
 		if (p == null) {
-        	io:print("could_not_bind");
+        	io:print("Could not bind to port: ");
+        	io:println(this.port.str());
         	throw could_not_bind;
     	}
 		// c:freeaddrinfo(res);
@@ -96,7 +96,7 @@ class Socket {
 		// listen for incoming connections
 		success = main:main:listen(this.listenfd, 10000); // 10k max pending connections
  	    if (success != 0 ) {
-        	io:print("listen_error");
+        	io:println("Unable to listen on port");
 			throw listen_error;
  	    }
 
@@ -130,4 +130,27 @@ class Socket {
 		//success = main:main:setsockopt(fd, 6, 1, getptr nodelay, sizeof(i32));
 	}
 
+	public func accept_connection() !Connection {
+		// 
+		@ alc = allocator 48;
+		//@ clientaddr = main:main:sockaddr_in {
+		//	sin_addr: 0
+		//};
+		@ clientaddr = cast alc.get_chunk() as main:main:sockaddr_in;
+		i32 addrlen = 16;
+
+		i32 new_fd = main:main:accept(this.listenfd, clientaddr, getptr addrlen);
+
+		if (new_fd == -1){
+			throw failed_to_accept;
+		}
+
+		this.set_keep_alive(new_fd);
+
+		Connection con = Connection{ fd: new_fd };
+
+		alc.free(clientaddr);
+
+		return con;
+	}
 }

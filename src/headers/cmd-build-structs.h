@@ -183,6 +183,7 @@ typedef struct Function {
     bool generate_code;
     //
     struct Array *args;
+    struct Array *arg_types;
     struct Type *return_type;
     //
     int args_i;

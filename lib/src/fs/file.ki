@@ -63,8 +63,8 @@ func write(String path, String content, bool append) ! {
 	if(fd == -1) {
 		throw could_not_create_or_open_file;
 	}
-	main:main:write(fd, content.data, content.bytes);
-	@ check = main:main:close(fd);
+	@ check = main:main:write(fd, content.data, content.bytes);
+	check = main:main:close(fd);
 	if(check == -1){
 		throw failed_to_close_handle;
 	}

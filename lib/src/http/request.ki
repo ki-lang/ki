@@ -10,37 +10,22 @@ class Request {
 	public String protocol;
 	public String body;
 
-	public static func read_request(i32 clientfd, ?main:main:SSL ssl_) ?Request {
+	public static func read_request(HttpConnection hcon) ?Request {
 
-		@ ssl = ssl_;
-
-		@ alc = allocator 65535;
-		ptr buf = alc.get_chunk();
-
-		i32 rcvd = 0;
-		if(ssl == null){
-			rcvd = main:main:recv(clientfd, buf, 65535, 0);
-		} else {
-			//notnull ssl do {
-			rcvd = main:main:SSL_read(ssl, buf, 65535);
-			//}
-		}
-		if (rcvd < 0){
-			io:print("Failed to read from connection\n");
+		@ payload = hcon.con.read() or return {
+			print("Failed to read from connection\n");
 			return null;
-		} else if (rcvd == 0){
-			io:print("Client disconnected upexpectedly\n");
-			return null;
-		}
+		};
 
-		@ req = Request.parse(buf, rcvd);
-
-		alc.free(buf);
+		@ req = Request.parse(payload);
 
 		return req;
 	}
 
-	public static func parse(ptr buf, i32 rcvd) ?Request {
+	public static func parse(String payload) ?Request {
+
+		ptr buf = payload.data;
+		i32 rcvd = payload.bytes;
 
 		// Read first line: method{space}path{space}protocol\r\n
 		ptr adr = buf;
@@ -55,7 +40,7 @@ class Request {
 
 		String path = cstr.get_string_until_char(pos, ' ');
 		pos += path.bytes + 1;
-		println(path);
+		//println(path);
 
 		String protocol = cstr.get_string_until_char(pos, '\r');
 		pos += protocol.bytes + 2;
