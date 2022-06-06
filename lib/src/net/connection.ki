@@ -1,0 +1,8 @@
+
+namespace net;
+
+#header "ssl/ssl"
+
+class Connection {
+	public i32 fd = 0;
+}

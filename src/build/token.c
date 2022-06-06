@@ -67,15 +67,9 @@ void token_return(FileCompiler *fc, Scope *scope) {
     char *token = malloc(KI_TOKEN_MAX);
     fc_next_token(fc, token, true, true, true);
 
-    if (strcmp(token, ";") != 0) {
+    if (func_scope->func->return_type != NULL) {
         Value *value = fc_read_value(fc, scope, false, true, true);
-
-        if (func_scope->func->return_type == NULL) {
-            fc_error(fc, "Function has no return type, but you are returning a value.", NULL);
-        }
-
         fc_type_compatible(fc, func_scope->func->return_type, value->return_type);
-
         t->item = value;
     }
 
@@ -296,6 +290,8 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
         }
     } else if (on_func_call && strcmp(token, "pass") == 0) {
         ort->type = or_pass;
+        Scope *func_scope = get_func_scope(scope);
+        ort->primary_type = func_scope->func->return_type;
     } else {
         if (on_func_call) {
             fc_error(fc, "Expected 'value|return|throw|pass|continue|break|panic|exit' but found '%s'", token);

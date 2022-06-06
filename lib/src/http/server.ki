@@ -46,13 +46,11 @@ class Server {
 		io:print(this.port.str());
 		io:print("\n");
 
-		@ task_list = mem:alloc(this.max_connections * 8);
-
 		#if OS_WIN || OS_OSX
 		@ read_set = mem:calloc(this.max_connections); // todo : too much memory, divide by 8
 		#else
 		@ epfd = main:main:epoll_create(1);
-		@ buf_ev = mem:calloc(sizeof(main:main:epoll_event)); 
+		@ buf_ev = cast mem:calloc(sizeof(main:main:epoll_event)) as main:main:epoll_event; 
 		Server.epoll_ctl_add(buf_ev, epfd, sock.listenfd, main:main:EPOLL.EPOLLIN);
 		ptr events = mem:calloc(this.max_connections * sizeof(main:main:epoll_event));
 
@@ -60,15 +58,16 @@ class Server {
 		#end
 
 		// SSL
-		this.init_ssl_context(sock.listenfd);
+		?main:main:SSL_CTX ssl_ctx = null;
+		if(this.ssl_cert != null){
+			@ ssl_cert = this.ssl_cert;
+			@ ssl_key = this.ssl_private_key;
 
-		// 
-		@ alc = allocator 48;
-		//@ clientaddr = main:main:sockaddr_in {
-		//	sin_addr: 0
-		//};
-		@ clientaddr = alc.get_chunk();
-		i32 addrlen = 16;
+			ifnull ssl_cert panic missing_ssl_cert_arg;
+			ifnull ssl_key panic missing_ssl_private_key_arg;
+
+			ssl_ctx = net:SSL.create_context(sock, ssl_cert, ssl_key) or pass;
+		}
 
 		@ connections = PtrArray.make(this.max_connections);
 
@@ -131,29 +130,21 @@ class Server {
 					if(fd == sock.listenfd){
 
 						// New connection
-  				      	i32 new_fd = main:main:accept(sock.listenfd, clientaddr, getptr addrlen);
+						@ net_con = sock.accept_connection() or continue;
 
+						@ con = Connection { fd: net_con.fd, net_con: net_con };
+
+						if(con.fd > maxfd){
+							maxfd = con.fd;
+						}
+
+						// SSL
 						?main:main:SSL ssl = null;
-						if(this.ssl_ctx != null){
-							ssl = this.create_ssl_instance(new_fd);
-							if(ssl == null) {
-								io:print("Failed to init SSL\n");
-								continue;
-							}
+						if(ssl_ctx != null){
+							ifnull ssl_ctx continue;
+							ssl = net:SSL.create_ssl_instance(con.net_con, ssl_ctx) or continue;
+							con.ssl = ssl;
 						}
-
-						if (new_fd == -1){
-							io:print("Failed to accept connection\n");
-							continue;
-						}
-
-						if(new_fd > maxfd){
-							maxfd = new_fd;
-						}
-
-						sock.set_keep_alive(new_fd);
-
-						fd:set_non_block(new_fd);
 
 						#if OS_WIN || OS_OSX
 						#else
@@ -161,7 +152,6 @@ class Server {
                            fdcount++;
 						#end
 
-						Connection con = Connection{ fd: new_fd, ssl: ssl };
 						con._RC++;
 
 						connections.set(new_fd, con);
@@ -186,8 +176,10 @@ class Server {
 							io:println(fd.str());
 
 							if(con.ssl != null) {
-								err_check = main:main:SSL_shutdown(con.ssl);
-								main:main:SSL_free(con.ssl);
+								@ ssl = con.ssl;
+								ifnull ssl continue;
+								err_check = main:main:SSL_shutdown(ssl);
+								main:main:SSL_free(ssl);
 							}
 
 							con.task = null;
@@ -230,8 +222,10 @@ class Server {
 								io:print("[+] disconnect\n");
 
 								if(con.ssl != null) {
-									err_check = main:main:SSL_shutdown(con.ssl);
-									main:main:SSL_free(con.ssl);
+									@ ssl = con.ssl;
+									ifnull ssl continue;
+									err_check = main:main:SSL_shutdown(ssl);
+									main:main:SSL_free(ssl);
 								}
 
 								con._ALLOCATOR.free(con);
@@ -262,7 +256,6 @@ class Server {
 			} // END SELECT
 		} // END LOOP
 
-		alc.free(clientaddr);
 	}
 
 	#if OS_LINUX
@@ -281,9 +274,7 @@ class Server {
 		@ ssl = con.ssl;
 
         @ req = Request.read_request(fd, ssl);
-        if(req == null){
-			return;
-        }
+		ifnull req return;
 
 		@ response = handler(req);
 
@@ -291,9 +282,9 @@ class Server {
 		if(ssl == null){
 			@ check = main:main:send(fd, output.data, output.bytes, 0);
 		} else {
-			//notnull ssl do {
-			@ n = main:main:SSL_write(ssl, output.data, output.bytes);
-			//}
+			notnull ssl do {
+				@ n = main:main:SSL_write(ssl, output.data, output.bytes);
+			}
 		}
 
 		return;
@@ -317,39 +308,6 @@ class Server {
 		return;
 	}
 
-	private func create_ssl_instance(i32 fd) ?main:main:SSL {
-
-		@ ctx = this.ssl_ctx;
-		ifnull ctx return null;
-
- 		@ ssl = main:main:SSL_new(ctx);
-		ifnull ssl panic failed_to_init_ssl;
-
-  		@ err = main:main:SSL_set_fd(ssl, fd);
-		
-		// Enable SSL server mode
-		main:main:SSL_set_accept_state(ssl);
-
-		// Wait for handshake
-		@ c = main:main:SSL_accept(ssl);
-		
-		if(c < 1) {
-			println("SSL_accept failed, client might be sending unencrypted data by surfing to http:// instead of https://");
-			print("Returned: ");
-			println(c.str());
-			@ err = main:main:SSL_get_error(ssl, c);
-			print("Err code: ");
-			println(err.str());
-
-			c = main:main:SSL_shutdown(ssl);
-			main:main:SSL_free(ssl);
-
-			return null;
-		}
-		
-		return ssl;
-	}
-
 	public func enable_ssl(String cert_path, String private_key_path) {
 
 		if(ki:fs:exists(cert_path) == false){
@@ -361,35 +319,6 @@ class Server {
 
 		this.ssl_cert = cert_path;
 		this.ssl_private_key = private_key_path;
-	}
-
-	private func init_ssl_context(i32 fd) {
-
-		@ ssl_cert = this.ssl_cert;
-		@ ssl_private_key = this.ssl_private_key;
-
-		ifnull ssl_cert return; 
-		ifnull ssl_private_key return; 
-
-		@ certificate = ssl_cert.to_cstring();
-		@ private_key = ssl_private_key.to_cstring();
-
-		@ ctx = main:main:SSL_CTX_new(main:main:TLS_server_method());
-		ifnull ctx panic failed_to_init_ssl_context;
-
-  		@ e = main:main:SSL_CTX_use_certificate_file(ctx, certificate, main:main:SSL_X509_FILETYPE.PEM);
-  		if (e != 1) {
-  			main:main:SSL_CTX_free(ctx);
-  			return;
-  		}
-
-		e = main:main:SSL_CTX_use_PrivateKey_file(ctx, private_key, main:main:SSL_X509_FILETYPE.PEM);
-		if (e != 1) {
-			main:main:SSL_CTX_free(ctx);
-			return;
-		}
-
-		this.ssl_ctx = ctx;
 	}
 
 }

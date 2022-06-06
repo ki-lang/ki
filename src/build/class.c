@@ -351,6 +351,7 @@ void fc_scan_class_props(Class *class) {
 
             Type *type = init_type();
             type->type = type_funcref;
+            type->is_pointer = true;
 
             prop->return_type = type;
             prop->is_func = true;
@@ -396,6 +397,7 @@ void fc_scan_class_props(Class *class) {
                 arg->type = t;
 
                 array_push(func->args, arg);
+                array_push(func->arg_types, arg->type);
                 IdentifierFor *thisidf = init_idf();
                 thisidf->type = idfor_arg;
                 thisidf->item = arg->type;
@@ -408,11 +410,7 @@ void fc_scan_class_props(Class *class) {
 
             fc_scan_func_args(func);
 
-            type->func_arg_types = array_make(4);
-            for (int i = 0; i < func->args->length; i++) {
-                FunctionArg *arg = array_get_index(func->args, i);
-                array_push(type->func_arg_types, arg->type);
-            }
+            type->func_arg_types = func->arg_types;
             type->func_return_type = func->return_type;
             type->func_can_error = func->can_error;
 
@@ -502,6 +500,7 @@ void fc_scan_class_props(Class *class) {
 
         Type *type = init_type();
         type->type = type_funcref;
+        type->is_pointer = true;
 
         ClassProp *prop = init_class_prop();
         prop->access_type = acct_public;
@@ -546,12 +545,9 @@ void fc_scan_class_props(Class *class) {
         arg->type = t;
 
         array_push(func->args, arg);
+        array_push(func->arg_types, arg->type);
 
-        type->func_arg_types = array_make(4);
-        for (int i = 0; i < func->args->length; i++) {
-            FunctionArg *arg = array_get_index(func->args, i);
-            array_push(type->func_arg_types, arg->type);
-        }
+        type->func_arg_types = func->arg_types;
         type->func_return_type = func->return_type;
         type->func_can_error = func->can_error;
 

@@ -1,0 +1,70 @@
+
+namespace net;
+
+#header "ssl/ssl"
+
+class SSL {
+
+	public static func create_context(Socket sock, String cert_path, String private_key_path) !main:main:SSL_CTX {
+
+		if(ki:fs:exists(cert_path) == false){
+			panic ssl_cert_file_not_found;
+		}
+		if(ki:fs:exists(private_key_path) == false){
+			panic ssl_private_key_file_not_found;
+		}
+
+		@ certificate = cert_path.to_cstring();
+		@ private_key = private_key_path.to_cstring();
+
+		@ ctx = main:main:SSL_CTX_new(main:main:TLS_server_method());
+		ifnull ctx panic failed_to_init_ssl_context;
+
+  		@ e = main:main:SSL_CTX_use_certificate_file(ctx, certificate, main:main:SSL_X509_FILETYPE.PEM);
+  		if (e != 1) {
+  			main:main:SSL_CTX_free(ctx);
+			panic ssl_failed_to_import_cert_file;
+  		}
+
+		e = main:main:SSL_CTX_use_PrivateKey_file(ctx, private_key, main:main:SSL_X509_FILETYPE.PEM);
+		if (e != 1) {
+			main:main:SSL_CTX_free(ctx);
+			panic ssl_failed_to_import_private_key_file;
+		}
+
+		return ctx;
+	}
+
+	public static func create_ssl_instance(Connection con, main:main:SSL_CTX ctx) !main:main:SSL {
+
+		@ fd = con.fd;
+
+ 		@ ssl = main:main:SSL_new(ctx);
+		ifnull ssl panic failed_to_init_ssl;
+
+  		@ err = main:main:SSL_set_fd(ssl, fd);
+		
+		// Enable SSL server mode
+		main:main:SSL_set_accept_state(ssl);
+
+		// Wait for handshake
+		@ c = main:main:SSL_accept(ssl);
+		
+		if(c < 1) {
+			println("SSL_accept failed, client might be sending unencrypted data by surfing to http:// instead of https://");
+			print("Returned: ");
+			println(c.str());
+			@ err = main:main:SSL_get_error(ssl, c);
+			print("Err code: ");
+			println(err.str());
+
+			c = main:main:SSL_shutdown(ssl);
+			main:main:SSL_free(ssl);
+
+			throw SSL_accept_failed;
+		}
+		
+		return ssl;
+	}
+
+}

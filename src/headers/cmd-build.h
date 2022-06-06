@@ -124,6 +124,7 @@ void fc_type_make_nullable(FileCompiler *fc, Type *t);
 bool type_compatible(Type *t1, Type *t2);
 void fc_type_compatible(FileCompiler *fc, Type *t1, Type *t2);
 Type *fc_create_type_for_enum(Enum *enu);
+char *type_to_str(Type *t);
 
 // Value
 Value *init_value();

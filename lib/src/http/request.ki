@@ -13,6 +13,7 @@ class Request {
 	public static func read_request(i32 clientfd, ?main:main:SSL ssl_) ?Request {
 
 		@ ssl = ssl_;
+		ifnull ssl return null;
 
 		@ alc = allocator 65535;
 		ptr buf = alc.get_chunk();
