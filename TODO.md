@@ -11,7 +11,6 @@
 - cross platform GUI library using SDL, GLFW, SFML or GLUT
 - allow compiling with clang & cross compilation with clang
 - private & readonly checks
-- allow ifnull/notnull on func args
 - ifnull 'do' scope + else scope
 - notnull else scope
 - remove namespaces from headers and set all definitions under a custom namespace and define an alias after "import" to access that namespace
