@@ -1,0 +1,18 @@
+
+class SomeClass {
+	public i32 a = 1;
+}
+
+func main () {
+
+	?SomeClass x = null;
+	i32 i = 0;
+
+	notnull x do {
+		i = x.a;
+	} else {
+		i = 2;
+	}
+
+	exit 0;
+}
