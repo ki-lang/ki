@@ -21,6 +21,7 @@
 - multi port http server + https redirect
 - main args
 - only compile when needed (re-use cache)
+- if main has no return, make sure exit code is 0
 
 ## Maybe
 
