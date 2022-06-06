@@ -40,7 +40,7 @@ class Request {
 
 		String path = cstr.get_string_until_char(pos, ' ');
 		pos += path.bytes + 1;
-		println(path);
+		//println(path);
 
 		String protocol = cstr.get_string_until_char(pos, '\r');
 		pos += protocol.bytes + 2;

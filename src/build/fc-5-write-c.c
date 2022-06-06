@@ -868,7 +868,7 @@ char *fc_write_c_ort(FileCompiler *fc, OrToken *ort) {
         }
     }
 
-    str_append_chars(fc->tkn_buffer, "if(1){");
+    str_append_chars(fc->tkn_buffer, "if(1){\n");
 
     if (ort->type == or_value) {
         if (ort->vscope) {
@@ -885,11 +885,20 @@ char *fc_write_c_ort(FileCompiler *fc, OrToken *ort) {
         if (ort->vscope) {
             fc_write_c_ast(fc, ort->vscope);
         } else {
+
+            Scope *fscope = get_func_scope(fc->current_scope);
+            Scope *sub_scope = init_sub_scope(fc->current_scope);
+            Scope *prev_scope = fc->current_scope;
+            fc->current_scope = sub_scope;
+
             if (ort->value) {
                 fc_write_c_value(fc, ort->value, true);
             }
-            Scope *fscope = get_func_scope(fc->current_scope);
+
             deref_local_vars(fc, ort->value, fscope);
+            fc->current_scope = prev_scope;
+            free_scope(sub_scope);
+
             str_append_chars(fc->tkn_buffer, "return ");
             if (ort->value) {
                 str_append(fc->tkn_buffer, fc->value_buffer);
