@@ -58,7 +58,7 @@ class Server {
 		fd:set_non_block(sock.listenfd);
 		#end
 
-		// SSL
+		// SSL context
 		?main:main:SSL_CTX ssl_ctx = null;
 		if(this.use_ssl){
 			@ ssl_cert = this.ssl_cert;

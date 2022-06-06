@@ -147,8 +147,6 @@ class Socket {
 
 		this.set_keep_alive(new_fd);
 
-		fd:set_non_block(new_fd);
-
 		Connection con = Connection{ fd: new_fd };
 
 		alc.free(clientaddr);
