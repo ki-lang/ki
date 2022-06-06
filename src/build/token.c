@@ -186,32 +186,20 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
         }
     }
 
-    // Create new type within scope
-
-    Type *ntype = init_type();
-    *ntype = *type;
-    ntype->nullable = false;
-
-    // local idf
-    idf = map_get(scope->identifiers, lv->name);
-    LocalVar *nlv = lv;
-    if (!idf) {
-        // create local identifier
-        nlv = malloc(sizeof(LocalVar));
-        *nlv = *lv;
-
-        idf = init_idf();
-        idf->type = idfor_local_var;
-        idf->item = nlv;
-        map_set(scope->identifiers, lv->name, idf);
+    if (ort->type != or_do) {
+        scope_remove_local_var_nullable(scope, lv);
     }
-
-    nlv->type = ntype;
 
     if (!ort->vscope) {
         fc_expect_token(fc, ";", false, true, true);
     }
 
+    // Check else scope
+    if (ort->type == or_do) {
+        ort->else_scope = fc_read_else_scope(fc, scope, token, lv);
+    }
+
+    //
     array_push(scope->ast, t);
     //
     free(token);
@@ -246,6 +234,7 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
     OrToken *ort = malloc(sizeof(OrToken));
     ort->type = or_none;
     ort->vscope = NULL;
+    ort->else_scope = NULL;
     ort->value = NULL;
     ort->error = NULL;
     ort->primary_type = primary_type;
@@ -292,15 +281,17 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
         ort->type = or_pass;
         Scope *func_scope = get_func_scope(scope);
         ort->primary_type = func_scope->func->return_type;
+    } else if (!on_func_call && strcmp(token, "do") == 0) {
+        ort->type = or_do;
     } else {
         if (on_func_call) {
             fc_error(fc, "Expected 'value|return|throw|pass|continue|break|panic|exit' but found '%s'", token);
         } else {
-            fc_error(fc, "Expected 'set|return|throw|continue|break|panic|exit' but found '%s'", token);
+            fc_error(fc, "Expected 'set|return|do|throw|continue|break|panic|exit' but found '%s'", token);
         }
     }
 
-    if (ort->primary_type && (ort->type == or_value || ort->type == or_return)) {
+    if (ort->primary_type && (ort->type == or_value || ort->type == or_return || ort->type == or_do)) {
 
         if (ort->error_vn != NULL) {
             fc_expect_token(fc, "{", true, true, true);
@@ -320,7 +311,9 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
             if (ort->type == or_value) {
                 vscope->vscope_vname = vname;
             }
-            vscope->must_return = true;
+            if (ort->type != or_do) {
+                vscope->must_return = true;
+            }
             ort->vscope = vscope;
 
             if (ort->error_vn != NULL) {
@@ -342,6 +335,29 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
     }
 
     return ort;
+}
+
+Scope *fc_read_else_scope(FileCompiler *fc, Scope *scope, char *token, LocalVar *lv) {
+    //
+    Scope *res = NULL;
+
+    fc_next_token(fc, token, true, true, true);
+    if (strcmp(token, "else") == 0) {
+
+        fc_next_token(fc, token, false, true, true);
+        fc_expect_token(fc, "{", false, true, true);
+
+        res = init_sub_scope(scope);
+        res->body_i = fc->i;
+
+        if (lv) {
+            scope_remove_local_var_nullable(res, lv);
+        }
+
+        fc_build_ast(fc, res);
+    }
+
+    return res;
 }
 
 ErrorToken *fc_read_error_token(FileCompiler *fc, int errtype, char *token) {
@@ -394,14 +410,15 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
 
     LocalVar *lv = idf->item;
 
-    TokenNotNull *ifn = malloc(sizeof(TokenNotNull));
-    ifn->type = or_none;
-    ifn->name = lv->gen_name;
-    ifn->scope = NULL;
+    TokenNotNull *nn = malloc(sizeof(TokenNotNull));
+    nn->type = or_none;
+    nn->name = lv->gen_name;
+    nn->scope = NULL;
+    nn->else_scope = NULL;
 
     Token *t = init_token();
     t->type = tkn_notnull;
-    t->item = ifn;
+    t->item = nn;
 
     Type *type = lv->type;
 
@@ -411,12 +428,12 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
 
     fc_next_token(fc, token, false, true, true);
     if (strcmp(token, "do") == 0) {
-        ifn->type = or_do;
+        nn->type = or_do;
 
         fc_expect_token(fc, "{", false, false, true);
 
-        ifn->scope = init_sub_scope(scope);
-        ifn->scope->body_i = fc->i;
+        nn->scope = init_sub_scope(scope);
+        nn->scope->body_i = fc->i;
 
         // Create new type within scope
         LocalVar *nlv = malloc(sizeof(LocalVar));
@@ -433,12 +450,15 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
         idfs->type = idfor_local_var;
         idfs->item = nlv;
 
-        map_set(ifn->scope->identifiers, nlv->name, idfs);
+        map_set(nn->scope->identifiers, nlv->name, idfs);
 
-        fc_build_ast(fc, ifn->scope);
+        fc_build_ast(fc, nn->scope);
     } else {
         fc_error(fc, "Expected 'do' but found '%s'", token);
     }
+
+    // Check else scope
+    nn->else_scope = fc_read_else_scope(fc, scope, token, NULL);
 
     array_push(scope->ast, t);
     //

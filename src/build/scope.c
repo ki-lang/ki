@@ -75,3 +75,26 @@ Scope *get_vscope_scope(Scope *scope) {
     }
     return vs_scope;
 }
+
+void scope_remove_local_var_nullable(Scope *scope, LocalVar *lv) {
+    // Create new type within scope
+    Type *ntype = init_type();
+    *ntype = *lv->type;
+    ntype->nullable = false;
+
+    // local idf
+    IdentifierFor *idf = map_get(scope->identifiers, lv->name);
+    LocalVar *nlv = lv;
+    if (!idf) {
+        // create local identifier
+        nlv = malloc(sizeof(LocalVar));
+        *nlv = *lv;
+
+        idf = init_idf();
+        idf->type = idfor_local_var;
+        idf->item = nlv;
+        map_set(scope->identifiers, lv->name, idf);
+    }
+
+    nlv->type = ntype;
+}

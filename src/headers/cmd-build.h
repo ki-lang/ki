@@ -44,6 +44,7 @@ Scope *get_class_scope(Scope *scope);
 Scope *get_func_scope(Scope *scope);
 Scope *get_loop_scope(Scope *scope);
 Scope *get_vscope_scope(Scope *scope);
+void scope_remove_local_var_nullable(Scope *scope, LocalVar *lv);
 
 // Token
 Token *init_token();
@@ -67,6 +68,7 @@ void token_free(FileCompiler *fc, Scope *scope);
 
 // Token / Value
 OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, char *token, bool on_func_call);
+Scope *fc_read_else_scope(FileCompiler *fc, Scope *scope, char *token, LocalVar *lv);
 ErrorToken *fc_read_error_token(FileCompiler *fc, int errtype, char *token);
 
 // Identifier

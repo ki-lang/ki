@@ -777,7 +777,16 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             }
         }
 
-        str_append_chars(fc->tkn_buffer, " }\n");
+        str_append_chars(fc->tkn_buffer, "}");
+
+        if (ifn->ort->else_scope) {
+            str_append_chars(fc->tkn_buffer, " else {\n");
+            fc_write_c_ast(fc, ifn->ort->else_scope);
+            str_append_chars(fc->tkn_buffer, "}");
+        }
+
+        str_append_chars(fc->tkn_buffer, "\n");
+
         //
     } else if (token->type == tkn_notnull) {
         //
@@ -790,7 +799,16 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
             fc_write_c_ast(fc, inn->scope);
         }
 
-        str_append_chars(fc->tkn_buffer, " }\n");
+        str_append_chars(fc->tkn_buffer, "}");
+
+        if (inn->else_scope) {
+            str_append_chars(fc->tkn_buffer, " else {\n");
+            fc_write_c_ast(fc, inn->else_scope);
+            str_append_chars(fc->tkn_buffer, "}");
+        }
+
+        str_append_chars(fc->tkn_buffer, "\n");
+
     } else if (token->type == tkn_while) {
         //
         TokenWhile *wt = token->item;

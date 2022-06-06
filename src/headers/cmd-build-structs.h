@@ -322,6 +322,7 @@ typedef struct OrToken {
     int type;
     Scope *vscope;
     Value *value;
+    Scope *else_scope;
     ErrorToken *error;
     Type *primary_type;
     char *error_vn;
@@ -459,17 +460,13 @@ typedef struct TokenIfNull {
     char *name;
     IdentifierFor *idf;
     struct OrToken *ort;
-    // Value *set_value;
-    // struct Scope *then_scope;
-    // struct Scope *vscope;
-    // struct Scope *context_scope;
-    // char *throw_msg;
 } TokenIfNull;
 
 typedef struct TokenNotNull {
     int type;
     char *name;
     struct Scope *scope;
+    struct Scope *else_scope;
 } TokenNotNull;
 
 typedef struct TokenWhile {
