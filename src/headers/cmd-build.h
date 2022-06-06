@@ -68,7 +68,7 @@ void token_free(FileCompiler *fc, Scope *scope);
 
 // Token / Value
 OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, char *token, bool on_func_call);
-Scope *fc_read_else_scope(FileCompiler *fc, Scope *scope, char *token, LocalVar *lv);
+Scope *fc_read_do_else_scope(FileCompiler *fc, Scope *scope, char *token, LocalVar *lv);
 ErrorToken *fc_read_error_token(FileCompiler *fc, int errtype, char *token);
 
 // Identifier

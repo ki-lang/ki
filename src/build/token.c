@@ -196,7 +196,7 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
 
     // Check else scope
     if (ort->type == or_do) {
-        ort->else_scope = fc_read_else_scope(fc, scope, token, lv);
+        ort->else_scope = fc_read_do_else_scope(fc, scope, token, lv);
     }
 
     //
@@ -337,7 +337,7 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
     return ort;
 }
 
-Scope *fc_read_else_scope(FileCompiler *fc, Scope *scope, char *token, LocalVar *lv) {
+Scope *fc_read_do_else_scope(FileCompiler *fc, Scope *scope, char *token, LocalVar *lv) {
     //
     Scope *res = NULL;
 
@@ -458,7 +458,7 @@ void token_notnull(FileCompiler *fc, Scope *scope) {
     }
 
     // Check else scope
-    nn->else_scope = fc_read_else_scope(fc, scope, token, NULL);
+    nn->else_scope = fc_read_do_else_scope(fc, scope, token, NULL);
 
     array_push(scope->ast, t);
     //
