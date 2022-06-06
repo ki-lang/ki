@@ -133,7 +133,7 @@ void token_ifnull(FileCompiler *fc, Scope *scope) {
     Identifier *id = init_id();
     id->name = strdup(token);
     IdentifierFor *idf = idf_find_in_scope(scope, id);
-    if (!idf || idf->type != idfor_local_var) {
+    if (!idf || (idf->type != idfor_local_var && idf->type != idfor_arg)) {
         fc_error(fc, "Only local variables are allowed, found: '%s'", token);
     }
 

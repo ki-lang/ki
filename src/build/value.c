@@ -71,8 +71,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             LocalVar *lv = idf->item;
             size = lv->type->bytes;
         } else if (idf->type == idfor_arg) {
-            Type *type = idf->item;
-            size = type->bytes;
+            LocalVar *lv = idf->item;
+            size = lv->type->bytes;
         } else if (idf->type == idfor_type) {
             Type *type = idf->item;
             size = type->bytes;
@@ -373,9 +373,10 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->item = gv;
             value->return_type = gv->return_type;
         } else if (idf->type == idfor_arg) {
+            LocalVar *lv = idf->item;
             value->type = vt_arg;
-            value->item = strdup(token);
-            value->return_type = idf->item;
+            value->item = lv->name;
+            value->return_type = lv->type;
         } else if (idf->type == idfor_class) {
             // class init or static func or prop access
             Class *class = idf->item;

@@ -396,11 +396,16 @@ void fc_scan_class_props(Class *class) {
                 arg->name = "this";
                 arg->type = t;
 
+                LocalVar *lv = malloc(sizeof(LocalVar));
+                lv->name = "this";
+                lv->gen_name = "this";
+                lv->type = t;
+
                 array_push(func->args, arg);
                 array_push(func->arg_types, arg->type);
                 IdentifierFor *thisidf = init_idf();
                 thisidf->type = idfor_arg;
-                thisidf->item = arg->type;
+                thisidf->item = lv;
                 map_set(func->scope->identifiers, "this", thisidf);
             }
 

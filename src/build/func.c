@@ -103,9 +103,14 @@ void fc_scan_func_args(Function *func) {
         array_push(func->args, arg);
         array_push(func->arg_types, arg->type);
 
+        LocalVar *lv = malloc(sizeof(LocalVar));
+        lv->name = name;
+        lv->gen_name = name;
+        lv->type = type;
+
         IdentifierFor *idf = init_idf();
         idf->type = idfor_arg;
-        idf->item = type;
+        idf->item = lv;
 
         map_set(scope->identifiers, name, idf);
 
