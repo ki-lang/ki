@@ -25,7 +25,7 @@ void token_return(FileCompiler *fc, Scope *scope) {
         vscope = vscope->parent;
     }
 
-    if (vscope) {
+    if (vscope && vscope->vscope_vname) {
         t->type = tkn_set_vscope_value;
 
         Value *value = fc_read_value(fc, scope, false, true, true);

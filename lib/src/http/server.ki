@@ -32,6 +32,7 @@ class Server {
 	readonly i32 max_connections = 64000;
 	public funcref (Request) Response handler = request_handler;
 	private ?main:main:SSL_CTX ssl_ctx = null;
+	public bool use_ssl = false;
 	public ?String ssl_cert = null;
 	public ?String ssl_private_key = null;
 
@@ -59,7 +60,7 @@ class Server {
 
 		// SSL
 		?main:main:SSL_CTX ssl_ctx = null;
-		if(this.ssl_cert != null){
+		if(this.use_ssl){
 			@ ssl_cert = this.ssl_cert;
 			@ ssl_key = this.ssl_private_key;
 
@@ -73,7 +74,6 @@ class Server {
 
 		//
 		i32 maxfd = sock.listenfd;
-		i32 new_fd = 0;
 		i32 select_result = 0;
         i32 fdcount = 1;
 		while(true){
@@ -130,9 +130,7 @@ class Server {
 					if(fd == sock.listenfd){
 
 						// New connection
-						@ net_con = sock.accept_connection() or continue;
-
-						@ con = Connection { fd: net_con.fd, net_con: net_con };
+						@ con = sock.accept_connection() or continue;
 
 						if(con.fd > maxfd){
 							maxfd = con.fd;
@@ -140,23 +138,24 @@ class Server {
 
 						// SSL
 						?main:main:SSL ssl = null;
-						if(ssl_ctx != null){
+						if(this.use_ssl){
 							ifnull ssl_ctx continue;
-							ssl = net:SSL.create_ssl_instance(con.net_con, ssl_ctx) or continue;
-							con.ssl = ssl;
+							con.make_ssl(ssl_ctx) or continue;
 						}
+
+						@ hcon = HttpConnection { con: con };
 
 						#if OS_WIN || OS_OSX
 						#else
-						Server.epoll_ctl_add(buf_ev, epfd, new_fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
+						Server.epoll_ctl_add(buf_ev, epfd, con.fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
                            fdcount++;
 						#end
 
-						con._RC++;
+						hcon._RC++;
 
-						connections.set(new_fd, con);
+						connections.set(con.fd, hcon);
 						io:print("[+] new connection: ");
-						io:print(new_fd.str());
+						io:print(con.fd.str());
 						io:print("\n");
 
 						continue;
@@ -165,8 +164,8 @@ class Server {
 					if(connections.has(fd)){
 
 						ptr conptr = connections.get(fd);
-						Connection con = cast conptr as Connection;
-						con._RC++;
+						@ hcon = cast conptr as HttpConnection;
+						hcon._RC++;
 
 						#if OS_WIN || OS_OSX
 						#else
@@ -175,15 +174,12 @@ class Server {
 							io:print("[+] connection closed: ");
 							io:println(fd.str());
 
-							if(con.ssl != null) {
-								@ ssl = con.ssl;
-								ifnull ssl continue;
-								err_check = main:main:SSL_shutdown(ssl);
-								main:main:SSL_free(ssl);
+							if(this.use_ssl){
+								hcon.con.free_ssl();
 							}
 
-							con.task = null;
-							con._ALLOCATOR.free(con);
+							hcon.task = null;
+							hcon._ALLOCATOR.free(hcon);
 							connections.clear(fd);
 
 							err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
@@ -209,9 +205,9 @@ class Server {
 						}
 
 						this._RC++;
-						if(con.task == null){
-							con.task = async Server.respond(cast con as ptr, this.handler);
-							//Server.respond_fast(con.fd, this);
+						if(hcon.task == null){
+							hcon.task = async Server.respond(cast hcon as ptr, this.handler);
+							//Server.respond_fast(hcon.con.fd, this);
 						} else {
 						    #if OS_WIN || OS_OSX
 							// Peek recv to detect disconnects
@@ -221,21 +217,18 @@ class Server {
 							if(err_check <= 0){
 								io:print("[+] disconnect\n");
 
-								if(con.ssl != null) {
-									@ ssl = con.ssl;
-									ifnull ssl continue;
-									err_check = main:main:SSL_shutdown(ssl);
-									main:main:SSL_free(ssl);
+								if(this.use_ssl){
+									hcon.con.free_ssl();
 								}
 
-								con._ALLOCATOR.free(con);
+								hcon._ALLOCATOR.free(hcon);
 								connections.clear(fd);
 								fd:remove_from_set(read_set, fd);
 								err_check = main:main:close(fd);
 								continue;
 							}
                             #end
-							@ task = con.task;
+							@ task = hcon.task;
 							notnull task do {
 								task.continue();
 							}
@@ -268,24 +261,15 @@ class Server {
 
 	private static func respond(ptr con_ptr, funcref (Request) Response handler) {
 
-		@ con = cast con_ptr as Connection; 
+		@ hcon = cast con_ptr as HttpConnection; 
 
-		i32 fd = con.fd;
-		@ ssl = con.ssl;
-
-        @ req = Request.read_request(fd, ssl);
+        @ req = Request.read_request(hcon);
 		ifnull req return;
 
 		@ response = handler(req);
 
         String output = response.output();
-		if(ssl == null){
-			@ check = main:main:send(fd, output.data, output.bytes, 0);
-		} else {
-			notnull ssl do {
-				@ n = main:main:SSL_write(ssl, output.data, output.bytes);
-			}
-		}
+		hcon.con.write(output);
 
 		return;
 	}
@@ -317,6 +301,7 @@ class Server {
 			panic ssl_private_key_file_not_found;
 		}
 
+		this.use_ssl = true;
 		this.ssl_cert = cert_path;
 		this.ssl_private_key = private_key_path;
 	}

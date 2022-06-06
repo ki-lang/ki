@@ -4,14 +4,14 @@ namespace io;
 #header "sys/io"
 
 func println(String str) {
-	main:main:write(1, str.data, str.bytes);
+	@ c = main:main:write(1, str.data, str.bytes);
 	print("\n");
 }
 
 func print(String str) {
-	main:main:write(1, str.data, str.bytes);
+	@ c = main:main:write(1, str.data, str.bytes);
 }
 
 func write(i32 fd, String str) {
-	main:main:write(fd, str.data, str.bytes);
+	@ c = main:main:write(fd, str.data, str.bytes);
 }
