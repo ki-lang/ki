@@ -14,7 +14,7 @@
 - allow ifnull/notnull on func args
 - ifnull 'do' scope + else scope
 - notnull else scope
-- remove namespaces from headers and define all definitions in the fc where include is used
+- remove namespaces from headers and set all definitions under a custom namespace and define an alias after "import" to access that namespace
 - check multiple vars in ifnull
 - multi port http server + https redirect
 - main args
