@@ -1,6 +1,8 @@
 
 namespace async;
 
+#header "sys/io"
+
 threaded_global ?Taskman GT_KI_taskmanager;
 
 unsafe_shared_global ?Mutex GS_KI_add_mutex;

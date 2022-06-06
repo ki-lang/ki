@@ -19,6 +19,7 @@
 - notnull else scope
 - remove namespaces from headers and define all definitions in the fc where include is used
 - check multiple vars in ifnull
+- build tests
 
 ## Future
 

@@ -2,10 +2,7 @@
 namespace http;
 
 #header "sys/fd"
-#header "sys/net"
-#header "sys/io"
 #header "sys/poll"
-#header "ssl/ssl"
 
 use type {PtrArray};
 
