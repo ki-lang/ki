@@ -17,6 +17,7 @@
 - allow ifnull/notnull on func args
 - ifnull 'do' scope + else scope
 - notnull else scope
+- remove namespaces from headers and define all definitions in the fc where include is used
 
 ## Future
 
