@@ -21,11 +21,13 @@ void free_fc(FileCompiler *fc);
 FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file);
 void fc_scan_types(FileCompiler *fc);
 void fc_include_headers_from(FileCompiler *fc, FileCompiler *from);
-char *fc_localvar(FileCompiler *fc, char *name, Type *type);
+LocalVar *fc_localvar(FileCompiler *fc, char *name, Type *type);
 
 // Build
 void cmd_build_init_static();
 void cmd_build_init_before_build();
+void build_cache_checks();
+void save_cache();
 void fc_scan_values();
 void fc_scan_args_and_props(FileCompiler *fc);
 void fc_scan_class_props(Class *class);
@@ -139,6 +141,14 @@ char fc_get_char(FileCompiler *fc, int offset);
 void fc_next_token(FileCompiler *fc, char *token, bool readonly, bool sameline, bool allow_space);
 void fc_expect_token(FileCompiler *fc, char *ch, bool readonly, bool sameline, bool allow_space);
 
+// Cache
+FcCache *init_fc_cache();
+void free_fc_cache(FcCache *c);
+void fc_load_cache(FileCompiler *fc);
+void fc_save_cache(FileCompiler *fc);
+void fc_check_if_modified(FileCompiler *fc);
+void fc_depends_on(FileCompiler *fc, FileCompiler *depfc);
+
 // Error
 void fc_error(FileCompiler *, char *, char *);
 void fc_name_taken(FileCompiler *fc, Map *identifiers, char *name);
@@ -178,6 +188,7 @@ Str *value_buf(FileCompiler *fc);
 char *var_buf(FileCompiler *fc);
 void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope);
 char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded);
+void fc_write_c_write_allocator(Str *code, Str *hcode, char *name, char *size, bool threaded);
 void fc_write_c_inits();
 char *fc_write_c_ort(FileCompiler *fc, OrToken *ort);
 

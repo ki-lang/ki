@@ -79,6 +79,9 @@ Type *fc_read_type(FileCompiler *fc, Scope *scope) {
             Class *gclass = fc_get_generic_class(fc, t->class, scope);
             t->class = gclass;
         }
+
+        fc_depends_on(fc, t->class->fc);
+
         if (fc_get_char(fc, 0) == '.') {
             // Enum type
             fc->i++;

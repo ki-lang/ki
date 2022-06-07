@@ -57,7 +57,7 @@ void compile_all() {
         PkgCompiler *pkc = array_get_index(packages->values, i);
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
-            if (fc->create_o_file) {
+            if (fc->create_o_file && fc->should_recompile) {
                 fc_compile_o_file(fc);
             }
         }

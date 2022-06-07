@@ -5,6 +5,7 @@ Class *init_class() {
     Class *class = malloc(sizeof(Class));
     class->name = NULL;
     class->cname = NULL;
+    class->hash = NULL;
     class->fc = NULL;
     class->scope = NULL;
     class->ref_count = true;
@@ -212,6 +213,7 @@ void fc_scan_class(FileCompiler *fc, Class *class) {
 
             Enum *enu = init_enum();
             enu->name = strdup(token);
+            enu->fc = fc;
 
             ClassProp *prop = init_class_prop();
             prop->access_type = acct_public;

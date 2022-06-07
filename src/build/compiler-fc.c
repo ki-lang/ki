@@ -12,6 +12,10 @@ FileCompiler *init_fc() {
     fc->h_filepath = NULL;
     fc->o_filepath = NULL;
     fc->is_header = false;
+    fc->was_modified = false;
+    fc->should_recompile = false;
+    //
+    fc->cache = NULL;
     //
     fc->content = NULL;
     fc->content_len = 0;
@@ -24,7 +28,7 @@ FileCompiler *init_fc() {
     //
     fc->c_code = str_make("");
     fc->c_code_after = str_make("");
-    fc->struct_code = str_make("");
+    fc->h_code_start = str_make("");
     fc->h_code = str_make("");
     fc->tkn_buffer = NULL;
     fc->before_tkn_buffer = NULL;
@@ -35,6 +39,7 @@ FileCompiler *init_fc() {
     fc->var_buf = malloc(12);
     //
     fc->sprintf = malloc(100);
+    fc->sprintf2 = malloc(100);
     //
     fc->scope = init_scope();
     fc->uses = map_make();
@@ -83,6 +88,8 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
     char *c_filepath = malloc(KI_PATH_MAX);
     char *h_filepath = malloc(KI_PATH_MAX);
     char *o_filepath = malloc(KI_PATH_MAX);
+    char *cache_filepath = malloc(KI_PATH_MAX);
+    char *x_filepath = malloc(KI_PATH_MAX);
 
     char *fn_ext = get_path_basename(ki_filepath);
     char *fn = strip_ext(fn_ext);
@@ -100,10 +107,13 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
 
     strcpy(h_filepath, c_filepath);
     strcpy(o_filepath, c_filepath);
+    strcpy(cache_filepath, c_filepath);
+    strcpy(x_filepath, c_filepath);
 
     strcat(c_filepath, ".c");
     strcat(h_filepath, ".h");
     strcat(o_filepath, ".o");
+    strcat(cache_filepath, ".json");
 
     free(fn);
 
@@ -116,6 +126,8 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
     fc->c_filepath = c_filepath;
     fc->h_filepath = h_filepath;
     fc->o_filepath = o_filepath;
+    fc->cache_filepath = cache_filepath;
+    fc->x_filepath = x_filepath;
     fc->is_header = is_header;
     //
     Str *content = file_get_contents(ki_filepath);
@@ -123,7 +135,26 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
     fc->content_len = content->length;
     free(content);
 
+    map_set(g_fc_by_ki_filepath, fc->ki_filepath, fc);
     map_set(pkc->file_compilers, fc->ki_filepath, fc);
+
+    // Cache
+    fc_load_cache(fc);
+
+    // Check modified time
+    struct stat attr;
+    stat(fc->ki_filepath, &attr);
+    int modtime = attr.st_mtime;
+    if (modtime != fc->cache->modified_time) {
+        fc->cache->modified_time = modtime;
+        fc->was_modified = true;
+        fc->should_recompile = true;
+        fc->cache->depends_on = map_make();
+    }
+    if (g_nocache) {
+        fc->should_recompile = true;
+        fc->cache->depends_on = map_make();
+    }
 
     // printf("Compile file: %s\n", fc->ki_filepath);
 
@@ -141,7 +172,7 @@ void fc_include_headers_from(FileCompiler *fc, FileCompiler *from) {
     }
 }
 
-char *fc_localvar(FileCompiler *fc, char *name, Type *type) {
+LocalVar *fc_localvar(FileCompiler *fc, char *name, Type *type) {
     LocalVar *lv = malloc(sizeof(LocalVar));
     fc->var_bufc++;
     sprintf(fc->var_buf, "_KI_LVAR_%d_%s", fc->var_bufc, name);

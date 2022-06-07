@@ -28,7 +28,13 @@ typedef struct FileCompiler {
     char *c_filepath;
     char *h_filepath;
     char *o_filepath;
+    char *cache_filepath;
+    char *x_filepath;
     bool is_header;
+    bool was_modified;
+    bool should_recompile;
+    //
+    struct FcCache *cache;
     //
     char *content;
     int content_len;
@@ -41,8 +47,8 @@ typedef struct FileCompiler {
     // Write c
     Str *c_code;
     Str *c_code_after;
-    Str *struct_code; // Structs
-    Str *h_code;      // Function/Vars
+    Str *h_code_start;
+    Str *h_code;
     Str *tkn_buffer;
     Str *before_tkn_buffer;
     Str *value_buffer;
@@ -52,6 +58,7 @@ typedef struct FileCompiler {
     char *var_buf;
     // Misc
     char *sprintf;
+    char *sprintf2;
     // Local identifiers
     struct Scope *scope;
     struct Map *uses;
@@ -66,6 +73,12 @@ typedef struct FileCompiler {
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
+
+typedef struct FcCache {
+    int modified_time;
+    struct Map *depends_on;
+    struct Map *allocators;
+} FcCache;
 
 typedef struct Scope {
     int type;
@@ -137,6 +150,7 @@ typedef struct FcUse {
 typedef struct Class {
     char *cname;
     char *name;
+    char *hash;
     struct FileCompiler *fc;
     //
     struct Scope *scope;
@@ -178,6 +192,7 @@ typedef enum ClassPropAccType {
 
 typedef struct Function {
     char *cname;
+    char *hash;
     struct FileCompiler *fc;
     bool can_error;
     bool generate_code;
@@ -199,6 +214,7 @@ typedef struct FunctionArg {
 } FunctionArg;
 
 typedef struct GlobalVar {
+    FileCompiler* fc;
     int fc_i;
     int type;
     struct Type *return_type;
@@ -221,9 +237,11 @@ typedef struct Trait {
 } Trait;
 
 typedef struct Enum {
-    char *cname;
     char *name;
+    char *cname;
+    char *hash;
     struct Map *values;
+    FileCompiler* fc;
 } Enum;
 
 //////////
@@ -301,7 +319,7 @@ typedef enum ValueType {
 typedef struct ValueFuncCall {
     Array *arg_values;
     Value *on;
-    struct OrToken* ort;
+    struct OrToken *ort;
 } ValueFuncCall;
 
 typedef struct ErrorToken {

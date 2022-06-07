@@ -1,2 +1,2 @@
 
-./ki build ./debug/ki/http/*.ki -o test
+./ki build ./debug/ki/http/*.ki -o test $*

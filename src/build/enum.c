@@ -4,7 +4,10 @@
 Enum *init_enum() {
     Enum *enu = malloc(sizeof(Enum));
     enu->name = NULL;
+    enu->cname = NULL;
+    enu->hash = NULL;
     enu->values = map_make();
+    enu->fc = NULL;
     return enu;
 }
 
