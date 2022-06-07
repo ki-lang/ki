@@ -213,6 +213,7 @@ void fc_scan_class(FileCompiler *fc, Class *class) {
 
             Enum *enu = init_enum();
             enu->name = strdup(token);
+            enu->fc = fc;
 
             ClassProp *prop = init_class_prop();
             prop->access_type = acct_public;

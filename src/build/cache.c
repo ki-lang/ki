@@ -114,7 +114,7 @@ void fc_save_cache(FileCompiler *fc) {
 void fc_check_if_modified(FileCompiler *fc) {
     //
     Map *depends_on = fc->cache->depends_on;
-    for (int i = 0; depends_on->keys->length; i++) {
+    for (int i = 0; i < depends_on->keys->length; i++) {
         char *kipath = array_get_index(depends_on->keys, i);
         char *modtime = array_get_index(depends_on->values, i);
 
@@ -135,10 +135,15 @@ void fc_check_if_modified(FileCompiler *fc) {
 
 void fc_depends_on(FileCompiler *fc, FileCompiler *depfc) {
     //
-    Map *depends_on = fc->cache->depends_on;
-    char *mod_time = map_get(depends_on, depfc->ki_filepath);
-    if (!mod_time) {
-        sprintf(fc->sprintf, "%d", fc->cache->modified_time);
-        map_set(depends_on, depfc->ki_filepath, strdup(fc->sprintf));
+    if (fc == depfc)
+        return;
+
+    if (fc->should_recompile) {
+        Map *depends_on = fc->cache->depends_on;
+        char *mod_time = map_get(depends_on, depfc->ki_filepath);
+        if (!mod_time) {
+            sprintf(fc->sprintf, "%d", depfc->cache->modified_time);
+            map_set(depends_on, depfc->ki_filepath, strdup(fc->sprintf));
+        }
     }
 }

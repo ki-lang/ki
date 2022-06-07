@@ -7,6 +7,7 @@ Enum *init_enum() {
     enu->cname = NULL;
     enu->hash = NULL;
     enu->values = map_make();
+    enu->fc = NULL;
     return enu;
 }
 

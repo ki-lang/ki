@@ -214,6 +214,7 @@ typedef struct FunctionArg {
 } FunctionArg;
 
 typedef struct GlobalVar {
+    FileCompiler* fc;
     int fc_i;
     int type;
     struct Type *return_type;
@@ -240,6 +241,7 @@ typedef struct Enum {
     char *cname;
     char *hash;
     struct Map *values;
+    FileCompiler* fc;
 } Enum;
 
 //////////

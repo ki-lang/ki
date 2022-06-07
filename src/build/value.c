@@ -338,6 +338,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             t->func_can_error = func->can_error;
             value->return_type = t;
 
+            fc_depends_on(fc, func->fc);
+
         } else if (idf->type == idfor_enum) {
             fc_expect_token(fc, ".", false, true, false);
             fc_next_token(fc, token, false, true, false);
@@ -357,6 +359,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->item = enuv;
             value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"), NULL);
 
+            fc_depends_on(fc, enu->fc);
+
         } else if (idf->type == idfor_local_var) {
             LocalVar *lv = idf->item;
             value->type = vt_var;
@@ -367,11 +371,17 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->type = vt_threaded_global;
             value->item = gv;
             value->return_type = gv->return_type;
+
+            fc_depends_on(fc, gv->fc);
+
         } else if (idf->type == idfor_shared_global) {
             GlobalVar *gv = idf->item;
             value->type = vt_shared_global;
             value->item = gv;
             value->return_type = gv->return_type;
+
+            fc_depends_on(fc, gv->fc);
+
         } else if (idf->type == idfor_arg) {
             LocalVar *lv = idf->item;
             value->type = vt_arg;
@@ -385,6 +395,9 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 Class *gclass = fc_get_generic_class(fc, class, scope);
                 class = gclass;
             }
+
+            fc_depends_on(fc, class->fc);
+
             if (fc_get_char(fc, 0) == '.') {
                 // Prop access
 

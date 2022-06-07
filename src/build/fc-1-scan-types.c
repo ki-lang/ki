@@ -49,6 +49,7 @@ void fc_scan_types(FileCompiler *fc) {
             fc_name_taken(fc, fc->nsc->scope->identifiers, token);
 
             Enum *enu = init_enum();
+            enu->fc = fc;
             enu->name = strdup(token);
 
             array_push(fc->enums, enu);
@@ -289,6 +290,7 @@ void fc_scan_types(FileCompiler *fc) {
 void fc_define_global(FileCompiler *fc, int type, char *token) {
 
     GlobalVar *gv = malloc(sizeof(GlobalVar));
+    gv->fc = fc;
     gv->fc_i = fc->i;
     gv->type = type;
 
