@@ -27,12 +27,10 @@ class Connection {
 		ptr buf = alc.get_chunk();
 
 		i32 rcvd = 0;
-		if(ssl == null){
+		ifnull ssl do {
 			rcvd = main:main:read(this.fd, buf, 65535);
 		} else {
-			notnull ssl do {
-				rcvd = main:main:SSL_read(ssl, buf, 65535);
-			}
+			rcvd = main:main:SSL_read(ssl, buf, 65535);
 		}
 		if (rcvd < 0){
 			throw failed_to_read_from_connection;
@@ -52,12 +50,10 @@ class Connection {
 
 		@ ssl = this.ssl;
 
-		if(ssl == null){
+		ifnull ssl do {
 			@ check = main:main:write(this.fd, output.data, output.bytes);
 		} else {
-			notnull ssl do {
-				@ n = main:main:SSL_write(ssl, output.data, output.bytes);
-			}
+			@ n = main:main:SSL_write(ssl, output.data, output.bytes);
 		}
 	}
 }

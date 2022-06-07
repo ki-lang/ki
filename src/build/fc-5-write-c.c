@@ -959,6 +959,8 @@ char *fc_write_c_ort(FileCompiler *fc, OrToken *ort) {
         Scope *scope = get_loop_scope(fc->current_scope);
         deref_local_vars(fc, NULL, scope);
         str_append_chars(fc->tkn_buffer, "continue;\n");
+    } else if (ort->type == or_do) {
+        fc_write_c_ast(fc, ort->vscope);
     }
 
     str_append_chars(fc->tkn_buffer, " }\n");
