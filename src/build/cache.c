@@ -12,6 +12,7 @@ FcCache *init_fc_cache() {
     FcCache *c = malloc(sizeof(FcCache));
     c->modified_time = 0;
     c->depends_on = map_make();
+    c->allocators = map_make();
 
     return c;
 }
@@ -38,6 +39,7 @@ void fc_load_cache(FileCompiler *fc) {
             if (mt != NULL) {
                 c->modified_time = mt->valueint;
             }
+            //
             const cJSON *deps = cJSON_GetObjectItemCaseSensitive(json, "depends_on");
             if (deps != NULL) {
                 cJSON *item = deps->child;
@@ -49,7 +51,19 @@ void fc_load_cache(FileCompiler *fc) {
 
                     item = item->next;
                 }
-                c->modified_time = mt->valueint;
+            }
+            //
+            const cJSON *alcs = cJSON_GetObjectItemCaseSensitive(json, "allocators");
+            if (alcs != NULL) {
+                cJSON *item = alcs->child;
+                while (item) {
+                    char *key = item->string;
+                    char *value = item->valuestring;
+
+                    map_set(c->allocators, strdup(key), strdup(value));
+
+                    item = item->next;
+                }
             }
         }
 
@@ -68,6 +82,29 @@ void fc_save_cache(FileCompiler *fc) {
 
     cJSON_AddItemToObject(json, "modified_time", mt);
 
+    //
+    cJSON *depends_on = cJSON_CreateObject();
+    for (int i = 0; i < c->depends_on->keys->length; i++) {
+        char *kipath = array_get_index(c->depends_on->keys, i);
+        char *modtime = array_get_index(c->depends_on->values, i);
+
+        cJSON *val = cJSON_CreateString(modtime);
+        cJSON_AddItemToObject(depends_on, kipath, val);
+    }
+    cJSON_AddItemToObject(json, "depends_on", depends_on);
+
+    //
+    cJSON *allocators = cJSON_CreateObject();
+    for (int i = 0; i < c->allocators->keys->length; i++) {
+        char *size = array_get_index(c->allocators->keys, i);
+        char *threaded = array_get_index(c->allocators->values, i);
+
+        cJSON *val = cJSON_CreateString(threaded);
+        cJSON_AddItemToObject(allocators, size, val);
+    }
+    cJSON_AddItemToObject(json, "allocators", allocators);
+
+    // Write
     char *content = cJSON_Print(json);
     cJSON_Delete(json);
 

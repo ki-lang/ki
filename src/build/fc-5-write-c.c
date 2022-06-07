@@ -15,20 +15,6 @@ void fc_write_c_all() {
     write_file(path, "extern __thread int errno;\n", true);
 #endif
 
-    for (int i = 0; i < headers->length; i++) {
-        // char* fn = array_get_index(headers->keys, i);
-        // bool is_syslib = strcmp(array_get_index(headers->keys, i), "1") == 0;
-        // if (is_syslib) {
-        //   write_file(path, "#include <", true);
-        //   write_file(path, fn, true);
-        //   write_file(path, ">\n", true);
-        // } else {
-        //   write_file(path, "#include \"", true);
-        //   write_file(path, fn, true);
-        //   write_file(path, "\"\n", true);
-        // }
-    }
-
     // Predefine all struct names
     for (int i = 0; i < packages->keys->length; i++) {
         PkgCompiler *pkc = array_get_index(packages->values, i);
@@ -53,27 +39,31 @@ void fc_write_c_all() {
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
 
-            for (int x = 0; x < fc->classes->length; x++) {
-                Class *class = array_get_index(fc->classes, x);
-                if (class->generic_names != NULL && class->generic_hash == NULL) {
-                    continue;
+            if (fc->should_recompile) {
+
+                for (int x = 0; x < fc->classes->length; x++) {
+                    Class *class = array_get_index(fc->classes, x);
+                    if (class->generic_names != NULL && class->generic_hash == NULL) {
+                        continue;
+                    }
+                    fc_write_c_class(fc, class);
                 }
-                fc_write_c_class(fc, class);
-            }
-            for (int x = 0; x < fc->enums->length; x++) {
-                fc_write_c_enum(fc, array_get_index(fc->enums, x));
-            }
-            for (int x = 0; x < fc->globals->length; x++) {
-                fc_write_c_global(fc, array_get_index(fc->globals, x));
-            }
-            for (int x = 0; x < fc->strings->length; x++) {
-                ValueString *vstr = array_get_index(fc->strings, x);
-                str_append_chars(fc->h_code, "struct ki__type__String* ");
-                str_append_chars(fc->h_code, vstr->name);
-                str_append_chars(fc->h_code, ";\n");
+                for (int x = 0; x < fc->enums->length; x++) {
+                    fc_write_c_enum(fc, array_get_index(fc->enums, x));
+                }
+                for (int x = 0; x < fc->globals->length; x++) {
+                    fc_write_c_global(fc, array_get_index(fc->globals, x));
+                }
+                for (int x = 0; x < fc->strings->length; x++) {
+                    ValueString *vstr = array_get_index(fc->strings, x);
+                    str_append_chars(fc->h_code, "struct ki__type__String* ");
+                    str_append_chars(fc->h_code, vstr->name);
+                    str_append_chars(fc->h_code, ";\n");
+                }
+
+                fc_write_c_ast(fc, fc->scope);
             }
 
-            fc_write_c_ast(fc, fc->scope);
             fc_write_c(fc);
         }
     }
@@ -90,122 +80,207 @@ void fc_write_c_all() {
 }
 
 void fc_write_c_pre(FileCompiler *fc) {
-    char *structs_code = str_to_chars(fc->struct_code);
-
+    char *code;
     char *path = malloc(KI_PATH_MAX);
+    strcpy(path, fc->x_filepath);
+    strcat(path, "_start.h");
+
+    if (fc->should_recompile) {
+        code = str_to_chars(fc->h_code_start);
+        write_file(path, code, false);
+    } else {
+        Str *content = file_get_contents(path);
+        code = str_to_chars(content);
+        free_str(content);
+    }
+
     char *cache_dir = get_cache_dir();
     strcpy(path, cache_dir);
     strcat(path, "/project.h");
-    write_file(path, structs_code, true);
+    write_file(path, code, true);
 
-    free(structs_code);
+    free(code);
 }
 
 void fc_write_c_inits() {
-    Str *code = str_make("");
     //
-    char *hpath = malloc(KI_PATH_MAX);
     char *cache_dir = get_cache_dir();
+    char *hpath = malloc(KI_PATH_MAX);
     strcpy(hpath, cache_dir);
     strcat(hpath, "/project.h");
     //
-    str_append_chars(code, "#include \"project.h\"\n\n");
+    Str *all_code = str_make("");
+    //
+    str_append_chars(all_code, "#include \"project.h\"\n\n");
+    str_append_chars(all_code, "void KI_INITS(){\n");
 
-    FileCompiler *inits_fc = init_fc();
-
-    str_append(code, inits_fc->c_code_after);
-    write_file(hpath, str_to_chars(inits_fc->h_code), true);
-
-    str_append_chars(code, "void KI_INITS(){\n");
-
-    for (int i = 0; i < allocators->keys->length; i++) {
-        char *name = array_get_index(allocators->values, i);
-        if (name[strlen(name) - 1] == '0') {
-            str_append_chars(code, name);
-            str_append_chars(code, "__TK = (void*) 0;\n");
-        } else {
-            str_append_chars(code, "pthread_key_create(&");
-            str_append_chars(code, name);
-            str_append_chars(code, "__TK, (void*)0);\n");
-        }
-    }
+    // for (int i = 0; i < allocators->keys->length; i++) {
+    //     char *name = array_get_index(allocators->values, i);
+    //     if (name[strlen(name) - 1] == '0') {
+    //         str_append_chars(all_code, name);
+    //         str_append_chars(all_code, "__TK = (void*) 0;\n");
+    //     } else {
+    //         str_append_chars(all_code, "pthread_key_create(&");
+    //         str_append_chars(all_code, name);
+    //         str_append_chars(all_code, "__TK, (void*)0);\n");
+    //     }
+    // }
 
     for (int i = 0; i < packages->keys->length; i++) {
         PkgCompiler *pkc = array_get_index(packages->values, i);
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
 
-            for (int x = 0; x < fc->globals->length; x++) {
-                GlobalVar *gv = array_get_index(fc->globals, x);
-                if (gv->type == gv_threaded) {
-                    str_append_chars(code, "pthread_key_create(&");
-                    str_append_chars(code, gv->cname);
-                    str_append_chars(code, ", (void*)0);\n");
-                } else if (gv->type == gv_shared) {
-                    str_append_chars(code, gv->cname);
-                    if (gv->return_type->is_pointer) {
-                        str_append_chars(code, " = (void*)0;\n");
-                    } else {
-                        str_append_chars(code, " = 0;\n");
-                    }
-                }
-            }
+            Str *code = str_make("");
 
-            for (int x = 0; x < fc->strings->length; x++) {
-                ValueString *vstr = array_get_index(fc->strings, x);
+            char *path = malloc(KI_PATH_MAX);
+            strcpy(path, fc->x_filepath);
+            strcat(path, "_init.c");
 
-                char *gname = vstr->name;
-
-                str_append_chars(code, gname);
-                str_append_chars(code, " = ki__type__String__make(\"");
-                char *str = vstr->body;
-                str_append_chars(code, str);
-                str_append_chars(code, "\", ");
-                size_t len = strlen(str);
-                int count = 0;
-                int diff = 0;
-                char ch = '\0';
-                char pch = '\0';
-                // Dont count backslashes
-                while (count < len) {
-                    pch = ch;
-                    ch = str[count];
-                    if (pch == '\\') {
-                        diff++;
-                        count++;
-                        if (count < len) {
-                            ch = str[count];
+            if (fc->should_recompile) {
+                //
+                for (int x = 0; x < fc->globals->length; x++) {
+                    GlobalVar *gv = array_get_index(fc->globals, x);
+                    if (gv->type == gv_threaded) {
+                        str_append_chars(code, "pthread_key_create(&");
+                        str_append_chars(code, gv->cname);
+                        str_append_chars(code, ", (void*)0);\n");
+                    } else if (gv->type == gv_shared) {
+                        str_append_chars(code, gv->cname);
+                        if (gv->return_type->is_pointer) {
+                            str_append_chars(code, " = (void*)0;\n");
+                        } else {
+                            str_append_chars(code, " = 0;\n");
                         }
                     }
-                    count++;
                 }
 
-                len -= diff;
-                char lenstr[20];
-                sprintf(lenstr, "%zu", len);
-                str_append_chars(code, lenstr);
-                str_append_chars(code, ", 1);\n");
-                // Keep in memory
-                str_append_chars(code, gname);
-                str_append_chars(code, "->_RC++;\n");
+                for (int x = 0; x < fc->strings->length; x++) {
+                    ValueString *vstr = array_get_index(fc->strings, x);
+
+                    char *gname = vstr->name;
+
+                    str_append_chars(code, gname);
+                    str_append_chars(code, " = ki__type__String__make(\"");
+                    char *str = vstr->body;
+                    str_append_chars(code, str);
+                    str_append_chars(code, "\", ");
+                    size_t len = strlen(str);
+                    int count = 0;
+                    int diff = 0;
+                    char ch = '\0';
+                    char pch = '\0';
+                    // Dont count backslashes
+                    while (count < len) {
+                        pch = ch;
+                        ch = str[count];
+                        if (pch == '\\') {
+                            diff++;
+                            count++;
+                            if (count < len) {
+                                ch = str[count];
+                            }
+                        }
+                        count++;
+                    }
+
+                    len -= diff;
+                    char lenstr[20];
+                    sprintf(lenstr, "%zu", len);
+                    str_append_chars(code, lenstr);
+                    str_append_chars(code, ", 1);\n");
+                    // Keep in memory
+                    str_append_chars(code, gname);
+                    str_append_chars(code, "->_RC++;\n");
+                }
+
+                // Save
+                char *code_ = str_to_chars(code);
+                write_file(path, code_, false);
+                free(code_);
+            } else {
+                //
+                code = file_get_contents(path);
+            }
+            //
+            free(path);
+
+            //
+            str_append_chars(all_code, "////////////////////////////////////////////\n");
+            str_append_chars(all_code, "// from: ");
+            str_append_chars(all_code, fc->ki_filepath);
+            str_append_chars(all_code, "\n");
+            str_append_chars(all_code, "////////////////////////////////////////////\n");
+            str_append_chars(all_code, "\n");
+            str_append(all_code, code);
+            str_append_chars(all_code, "\n\n");
+        }
+    }
+
+    str_append_chars(all_code, "}\n");
+
+    // Allocators
+    Str *hcode = str_make("\n// Allocators\n\n");
+    Map *dupes = map_make();
+    for (int i = 0; i < packages->keys->length; i++) {
+        PkgCompiler *pkc = array_get_index(packages->values, i);
+        for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+            FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+
+            Map *alcs = fc->cache->allocators;
+            for (int x = 0; x < alcs->keys->length; x++) {
+                char *size = array_get_index(alcs->keys, x);
+                char *threaded = array_get_index(alcs->values, x);
+
+                sprintf(fc->sprintf, "KI_allocator_%s_%s", size, threaded);
+                char *name = strdup(fc->sprintf);
+
+                char *get = map_get(dupes, name);
+                if (!get) {
+                    fc_write_c_write_allocator(all_code, hcode, name, size, strcmp(threaded, "1") == 0);
+                    map_set(dupes, name, name);
+                }
             }
         }
     }
 
-    str_append_chars(code, "}\n");
+    char *hcode_ = str_to_chars(hcode);
+    write_file(hpath, hcode_, true);
+    free(hcode_);
 
     //
-    char *code_ = str_to_chars(code);
+    char *code_ = str_to_chars(all_code);
     char *path = malloc(KI_PATH_MAX);
     strcpy(path, cache_dir);
     strcat(path, "/inits.c");
     write_file(path, code_, false);
 
     free(code_);
-    free_str(code);
+    free_str(all_code);
 }
 
 void fc_write_c(FileCompiler *fc) {
+
+    if (!fc->should_recompile) {
+        char *path = malloc(KI_PATH_MAX);
+        char *cache_dir = get_cache_dir();
+        strcpy(path, cache_dir);
+        strcat(path, "/project.h");
+
+        Str *h = file_get_contents(fc->h_filepath);
+        char *hcode = str_to_chars(h);
+        free_str(h);
+
+        write_file(path, hcode, true);
+        free(hcode);
+        free(path);
+
+        if (file_exists(fc->o_filepath)) {
+            array_push(o_files, fc->o_filepath);
+        }
+        return;
+    }
+
     // Write c + o file
     char *hcode = str_to_chars(fc->h_code);
     char *code = str_to_chars(fc->c_code);
@@ -232,11 +307,15 @@ void fc_write_c(FileCompiler *fc) {
     if (fc->is_header && false) {
         write_file(fc->h_filepath, hcode, false);
     } else {
+        //
+        write_file(fc->h_filepath, hcode, false);
+        //
         char *path = malloc(KI_PATH_MAX);
         char *cache_dir = get_cache_dir();
         strcpy(path, cache_dir);
         strcat(path, "/project.h");
         write_file(path, hcode, true);
+        free(path);
     }
 
     free(hcode);
@@ -245,17 +324,20 @@ void fc_write_c(FileCompiler *fc) {
 }
 
 void fc_write_c_predefine_class(FileCompiler *fc, Class *class) {
+
+    Str *code = fc->h_code_start;
+
     if (class->is_ctype) {
-        str_append_chars(fc->struct_code, "typedef struct ");
-        str_append_chars(fc->struct_code, class->cname);
-        str_append_chars(fc->struct_code, " ");
-        str_append_chars(fc->struct_code, class->cname);
-        str_append_chars(fc->struct_code, ";\n");
+        str_append_chars(code, "typedef struct ");
+        str_append_chars(code, class->cname);
+        str_append_chars(code, " ");
+        str_append_chars(code, class->cname);
+        str_append_chars(code, ";\n");
     }
 
-    str_append_chars(fc->struct_code, "struct ");
-    str_append_chars(fc->struct_code, class->cname);
-    str_append_chars(fc->struct_code, ";\n");
+    str_append_chars(code, "struct ");
+    str_append_chars(code, class->cname);
+    str_append_chars(code, ";\n");
 }
 
 void fc_write_c_class(FileCompiler *fc, Class *class) {
@@ -1917,60 +1999,70 @@ void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
 char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded) {
     size += 24;
     threaded = false; // force unthreaded
+
+    if (fc->should_recompile) {
+        sprintf(fc->sprintf, "%d", size);
+        char *get = map_get(fc->cache->allocators, fc->sprintf);
+        if (!get) {
+            sprintf(fc->sprintf2, "%d", threaded);
+            map_set(fc->cache->allocators, strdup(fc->sprintf), strdup(fc->sprintf2));
+        }
+    }
+
     //
     sprintf(fc->sprintf, "KI_allocator_%d_%d", size, threaded);
     char *name = fc->sprintf;
 
     char *last = map_get(allocators, name);
     if (last) {
-        // printf("Already has %s\n", name);
         return last;
     }
-    // printf("Create %s\n", name);
-    // printf("-> %s\n", fc->c_filepath);
 
     name = strdup(name);
-    sprintf(fc->sprintf, "%d", size);
-
-    str_append_chars(fc->h_code, threaded ? "struct pthread_key_t " : "void* ");
-    str_append_chars(fc->h_code, name);
-    str_append_chars(fc->h_code, "__TK;\n");
-
-    str_append_chars(fc->c_code_after, threaded ? "struct pthread_key_t " : "void* ");
-    str_append_chars(fc->c_code_after, name);
-    str_append_chars(fc->c_code_after, "__TK;\n");
-
-    str_append_chars(fc->h_code, "struct ki__mem__Allocator* ");
-    str_append_chars(fc->h_code, name);
-    str_append_chars(fc->h_code, "();\n");
-
-    str_append_chars(fc->c_code_after, "struct ki__mem__Allocator* ");
-    str_append_chars(fc->c_code_after, name);
-    str_append_chars(fc->c_code_after, "(){\n");
-
-    str_append_chars(fc->c_code_after, "struct ki__mem__Allocator* a = ");
-    str_append_chars(fc->c_code_after, threaded ? "pthread_getspecific(" : "(");
-    str_append_chars(fc->c_code_after, name);
-    str_append_chars(fc->c_code_after, "__TK);\n");
-
-    str_append_chars(fc->c_code_after, "if(a){ return a; }\n");
-
-    str_append_chars(fc->c_code_after, "a = ki__mem__Allocator__make(");
-    str_append_chars(fc->c_code_after, fc->sprintf);
-    str_append_chars(fc->c_code_after, ");\n");
-
-    if (threaded) {
-        str_append_chars(fc->c_code_after, "pthread_setspecific(");
-        str_append_chars(fc->c_code_after, name);
-        str_append_chars(fc->c_code_after, "__TK, a);\n");
-    } else {
-        str_append_chars(fc->c_code_after, name);
-        str_append_chars(fc->c_code_after, "__TK = a;\n");
-    }
-
-    str_append_chars(fc->c_code_after, "return a;\n");
-    str_append_chars(fc->c_code_after, "}\n");
 
     map_set(allocators, name, name);
+
     return name;
+}
+
+void fc_write_c_write_allocator(Str *code, Str *hcode, char *name, char *size, bool threaded) {
+
+    str_append_chars(hcode, threaded ? "struct pthread_key_t " : "void* ");
+    str_append_chars(hcode, name);
+    str_append_chars(hcode, "__TK;\n");
+
+    str_append_chars(code, threaded ? "struct pthread_key_t " : "void* ");
+    str_append_chars(code, name);
+    str_append_chars(code, "__TK;\n");
+
+    str_append_chars(hcode, "struct ki__mem__Allocator* ");
+    str_append_chars(hcode, name);
+    str_append_chars(hcode, "();\n");
+
+    str_append_chars(code, "struct ki__mem__Allocator* ");
+    str_append_chars(code, name);
+    str_append_chars(code, "(){\n");
+
+    str_append_chars(code, "struct ki__mem__Allocator* a = ");
+    str_append_chars(code, threaded ? "pthread_getspecific(" : "(");
+    str_append_chars(code, name);
+    str_append_chars(code, "__TK);\n");
+
+    str_append_chars(code, "if(a){ return a; }\n");
+
+    str_append_chars(code, "a = ki__mem__Allocator__make(");
+    str_append_chars(code, size);
+    str_append_chars(code, ");\n");
+
+    if (threaded) {
+        str_append_chars(code, "pthread_setspecific(");
+        str_append_chars(code, name);
+        str_append_chars(code, "__TK, a);\n");
+    } else {
+        str_append_chars(code, name);
+        str_append_chars(code, "__TK = a;\n");
+    }
+
+    str_append_chars(code, "return a;\n");
+    str_append_chars(code, "}\n");
 }

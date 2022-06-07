@@ -27,6 +27,7 @@ LocalVar *fc_localvar(FileCompiler *fc, char *name, Type *type);
 void cmd_build_init_static();
 void cmd_build_init_before_build();
 void build_cache_checks();
+void save_cache();
 void fc_scan_values();
 void fc_scan_args_and_props(FileCompiler *fc);
 void fc_scan_class_props(Class *class);
@@ -187,6 +188,7 @@ Str *value_buf(FileCompiler *fc);
 char *var_buf(FileCompiler *fc);
 void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope);
 char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded);
+void fc_write_c_write_allocator(Str *code, Str *hcode, char *name, char *size, bool threaded);
 void fc_write_c_inits();
 char *fc_write_c_ort(FileCompiler *fc, OrToken *ort);
 

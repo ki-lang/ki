@@ -29,6 +29,7 @@ typedef struct FileCompiler {
     char *h_filepath;
     char *o_filepath;
     char *cache_filepath;
+    char *x_filepath;
     bool is_header;
     bool was_modified;
     bool should_recompile;
@@ -46,8 +47,8 @@ typedef struct FileCompiler {
     // Write c
     Str *c_code;
     Str *c_code_after;
-    Str *struct_code; // Structs
-    Str *h_code;      // Function/Vars
+    Str *h_code_start;
+    Str *h_code;
     Str *tkn_buffer;
     Str *before_tkn_buffer;
     Str *value_buffer;
@@ -57,6 +58,7 @@ typedef struct FileCompiler {
     char *var_buf;
     // Misc
     char *sprintf;
+    char *sprintf2;
     // Local identifiers
     struct Scope *scope;
     struct Map *uses;
@@ -75,6 +77,7 @@ typedef struct FileCompiler {
 typedef struct FcCache {
     int modified_time;
     struct Map *depends_on;
+    struct Map *allocators;
 } FcCache;
 
 typedef struct Scope {

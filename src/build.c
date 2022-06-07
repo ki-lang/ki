@@ -46,8 +46,13 @@ void cmd_build(Array *files, Map *options) {
 #if defined __APPLE__
     g_static = false;
 #endif
-    if (map_contains(options, "-static")) {
+    if (map_contains(options, "--static")) {
         g_static = true;
+    }
+    //
+    g_nocache = false;
+    if (map_contains(options, "--clean")) {
+        g_nocache = true;
     }
 
     //
@@ -65,7 +70,7 @@ void cmd_build(Array *files, Map *options) {
     pkc_create_namespace(pkc, "main");
 
     // Step 1. create fc and scan types
-    // Step 2. scan headers
+    // Step 1.1 scan headers
     printf("# SCAN TYPES\n");
     for (int i = 0; i < files->length; i++) {
         char *filepath = array_get_index(files, i);
@@ -73,6 +78,10 @@ void cmd_build(Array *files, Map *options) {
     }
 
     allow_new_namespaces = false;
+
+    // Step 2. Scan values
+    printf("# CHECK CACHE\n");
+    build_cache_checks();
 
     // Step 3. Scan values
     printf("# SCAN ARGS/PROPS\n");
@@ -96,6 +105,9 @@ void cmd_build(Array *files, Map *options) {
     compile_time = get_time();
     compile_all();
     compile_time = get_time() - compile_time;
+
+    // Store cache
+    save_cache();
 
     // Free variables
 

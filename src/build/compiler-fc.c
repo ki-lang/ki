@@ -28,7 +28,7 @@ FileCompiler *init_fc() {
     //
     fc->c_code = str_make("");
     fc->c_code_after = str_make("");
-    fc->struct_code = str_make("");
+    fc->h_code_start = str_make("");
     fc->h_code = str_make("");
     fc->tkn_buffer = NULL;
     fc->before_tkn_buffer = NULL;
@@ -39,6 +39,7 @@ FileCompiler *init_fc() {
     fc->var_buf = malloc(12);
     //
     fc->sprintf = malloc(100);
+    fc->sprintf2 = malloc(100);
     //
     fc->scope = init_scope();
     fc->uses = map_make();
@@ -88,6 +89,7 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
     char *h_filepath = malloc(KI_PATH_MAX);
     char *o_filepath = malloc(KI_PATH_MAX);
     char *cache_filepath = malloc(KI_PATH_MAX);
+    char *x_filepath = malloc(KI_PATH_MAX);
 
     char *fn_ext = get_path_basename(ki_filepath);
     char *fn = strip_ext(fn_ext);
@@ -106,6 +108,7 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
     strcpy(h_filepath, c_filepath);
     strcpy(o_filepath, c_filepath);
     strcpy(cache_filepath, c_filepath);
+    strcpy(x_filepath, c_filepath);
 
     strcat(c_filepath, ".c");
     strcat(h_filepath, ".h");
@@ -124,6 +127,7 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
     fc->h_filepath = h_filepath;
     fc->o_filepath = o_filepath;
     fc->cache_filepath = cache_filepath;
+    fc->x_filepath = x_filepath;
     fc->is_header = is_header;
     //
     Str *content = file_get_contents(ki_filepath);
@@ -144,6 +148,9 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
     if (modtime != fc->cache->modified_time) {
         fc->cache->modified_time = modtime;
         fc->was_modified = true;
+        fc->should_recompile = true;
+    }
+    if (g_nocache) {
         fc->should_recompile = true;
     }
 

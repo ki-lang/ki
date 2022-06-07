@@ -6,7 +6,7 @@ do
   fn_ext="$(basename -- $f)"
   fn="${fn_ext%.*}"
   echo "Base $fn"
-  ./ki build $f -o ./tests/out/test
+  ./ki build $f -o ./tests/out/test $*
   if [[ $? != 0 ]]; then
 	echo "Building test failed: $f"
 	exit 1

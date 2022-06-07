@@ -15,7 +15,7 @@ void fc_build_asts() {
             for (int x = 0; x < fc->functions->length; x++) {
                 Function *func = array_get_index(fc->functions, x);
                 FileCompiler *fc = func->fc;
-                if (!fc->is_header) {
+                if (!fc->is_header && fc->should_recompile) {
                     fc_build_ast(fc, func->scope);
                 }
                 Token *t = init_token();
@@ -36,14 +36,17 @@ void fc_build_asts() {
                 }
 
                 FileCompiler *fc = class->fc;
-                if (fc->is_header)
-                    continue;
+
+                // if (fc->is_header || fc->should_recompile == false) {
+                //     continue;
+                // }
+
                 for (int y = 0; y < class->props->values->length; y++) {
                     char *name = array_get_index(class->props->keys, y);
                     ClassProp *prop = array_get_index(class->props->values, y);
                     if (prop->is_func && prop->generate_code) {
                         Function *func = prop->func;
-                        if (!fc->is_header) {
+                        if (!fc->is_header && fc->should_recompile) {
                             fc_build_ast(func->fc, func->scope);
                         }
                         Token *t = init_token();
