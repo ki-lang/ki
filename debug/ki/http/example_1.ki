@@ -67,6 +67,12 @@ func main() i32 {
 
 	?String x = null;
 
+	@ a = "a";
+	@ b = "b";
+	@ c = a + b;
+
+	println(c);
+
 	//ifnull x return {
 	//	return 1;
 	//}

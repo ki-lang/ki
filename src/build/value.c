@@ -565,38 +565,76 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             // Func call
             value = fc_read_func_call(fc, scope, value);
         } else if (strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "*") == 0 || strcmp(token, "/") == 0 || strcmp(token, "<<") == 0 || strcmp(token, ">>") == 0 || strcmp(token, "%") == 0 || strcmp(token, "bitOR") == 0 || strcmp(token, "bitAND") == 0 || strcmp(token, "bitXOR") == 0) {
-            ValueOperator *op = malloc(sizeof(ValueOperator));
-            op->left = value;
-            op->right = fc_read_value(fc, scope, false, false, true);
 
+            Value *right = fc_read_value(fc, scope, false, false, true);
+            int optype;
+
+            char *fn = NULL;
             if (strcmp(token, "+") == 0) {
-                op->type = op_add;
+                optype = op_add;
+                fn = "__add";
             } else if (strcmp(token, "-") == 0) {
-                op->type = op_sub;
+                optype = op_sub;
             } else if (strcmp(token, "*") == 0) {
-                op->type = op_mult;
+                optype = op_mult;
             } else if (strcmp(token, "/") == 0) {
-                op->type = op_div;
+                optype = op_div;
             } else if (strcmp(token, "%") == 0) {
-                op->type = op_mod;
+                optype = op_mod;
             } else if (strcmp(token, "bitOR") == 0) {
-                op->type = op_bit_OR;
+                optype = op_bit_OR;
             } else if (strcmp(token, "bitAND") == 0) {
-                op->type = op_bit_AND;
+                optype = op_bit_AND;
             } else if (strcmp(token, "bitXOR") == 0) {
-                op->type = op_bit_XOR;
+                optype = op_bit_XOR;
             } else if (strcmp(token, "<<") == 0) {
-                op->type = op_bit_shift_left;
+                optype = op_bit_shift_left;
             } else if (strcmp(token, ">>") == 0) {
-                op->type = op_bit_shift_right;
+                optype = op_bit_shift_right;
             }
 
-            Type *return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"), NULL);
+            ClassProp *prop = NULL;
+            if (fn && value->return_type->class) {
+                prop = map_get(value->return_type->class->props, fn);
+            }
+            if (prop) {
+                if (right->return_type->class != value->return_type->class) {
+                    fc_error(fc, "left & right value must be the same type", fn);
+                }
+                if (!prop->is_func) {
+                    fc_error(fc, "%s is not a function", fn);
+                }
 
-            value = init_value();
-            value->type = vt_operator;
-            value->item = op;
-            value->return_type = return_type;
+                ValueFuncCall *fcall = value_generate_func_call(prop->func);
+
+                array_push(fcall->arg_values, value);
+                array_push(fcall->arg_values, right);
+
+                value = init_value();
+                value->type = vt_func_call;
+                value->item = fcall;
+                value->return_type = prop->func->return_type;
+            } else {
+
+                if (!value->return_type->allow_math) {
+                    fc_error(fc, "Cannot use this operator on the left-side value", fn);
+                }
+                if (!right->return_type->allow_math) {
+                    fc_error(fc, "Cannot use this operator with the right-side value", fn);
+                }
+
+                ValueOperator *op = malloc(sizeof(ValueOperator));
+                op->type = optype;
+                op->left = value;
+                op->right = right;
+
+                Type *return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"), NULL);
+
+                value = init_value();
+                value->type = vt_operator;
+                value->item = op;
+                value->return_type = return_type;
+            }
         } else if (strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "<") == 0 || strcmp(token, ">") == 0) {
             Value *right = fc_read_value(fc, scope, false, false, true);
 
@@ -632,22 +670,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                     fc_error(fc, "%s is not a function", fn);
                 }
 
-                Function *func = eq_prop->func;
-                Value *on = init_value();
-                on->type = vt_var;
-                on->item = func->cname;
-                Type *t = init_type();
-                t->type = type_funcref;
-                t->is_pointer = true;
-                t->func_arg_types = func->arg_types;
-                t->func_return_type = func->return_type;
-                t->func_can_error = func->can_error;
-                on->return_type = t;
-
-                ValueFuncCall *fcall = malloc(sizeof(ValueFuncCall));
-                fcall->on = on;
-                fcall->arg_values = array_make(2);
-                fcall->ort = NULL;
+                ValueFuncCall *fcall = value_generate_func_call(eq_prop->func);
 
                 array_push(fcall->arg_values, value);
                 array_push(fcall->arg_values, right);
@@ -856,4 +879,25 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
 
     //
     return value;
+}
+
+ValueFuncCall *value_generate_func_call(Function *func) {
+
+    Value *on = init_value();
+    on->type = vt_var;
+    on->item = func->cname;
+    Type *t = init_type();
+    t->type = type_funcref;
+    t->is_pointer = true;
+    t->func_arg_types = func->arg_types;
+    t->func_return_type = func->return_type;
+    t->func_can_error = func->can_error;
+    on->return_type = t;
+
+    ValueFuncCall *fcall = malloc(sizeof(ValueFuncCall));
+    fcall->on = on;
+    fcall->arg_values = array_make(2);
+    fcall->ort = NULL;
+
+    return fcall;
 }

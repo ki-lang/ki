@@ -135,6 +135,7 @@ Value *init_value();
 void free_value(Value *v);
 Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool sameline, bool allow_space);
 Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on);
+ValueFuncCall *value_generate_func_call(Function *func);
 
 // Read
 char fc_get_char(FileCompiler *fc, int offset);

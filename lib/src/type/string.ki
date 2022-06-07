@@ -32,28 +32,14 @@ class String {
 
 	public func __add(String str) String {
 
-		@ s = this;
-
-		if(s.is_const){
-			s = String.make(this.data, this.bytes, false);
-		}
-
-		uxx new_bytes = s.bytes + str.bytes;
-		uxx new_size = s.mem_size;
-		while(new_size < new_bytes){
-			new_size *= 2;
-		}
-		ptr adr = s.data;
-		if(new_size != s.mem_size){
-			adr = alloc(new_size);
-			s.mem_size = new_size;
-			copy(s.data, adr, s.bytes);
-			free(s.data);
-			s.data = adr;
-		}
-		adr += s.bytes;
+		@ size = this.bytes + str.bytes;
+		@ s = String.make_empty(size);
+		@ adr = s.data;
+		copy(this.data, adr, this.bytes);
+		adr += this.bytes;
 		copy(str.data, adr, str.bytes);
-		s.bytes = new_bytes;
+		s.bytes = size;
+
 		return s;
 	}
 
