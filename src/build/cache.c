@@ -39,7 +39,16 @@ void fc_load_cache(FileCompiler *fc) {
                 c->modified_time = mt->valueint;
             }
             const cJSON *deps = cJSON_GetObjectItemCaseSensitive(json, "depends_on");
-            if (mt != NULL) {
+            if (deps != NULL) {
+                cJSON *item = deps->child;
+                while (item) {
+                    char *key = item->string;
+                    char *value = item->valuestring;
+
+                    map_set(c->depends_on, strdup(key), strdup(value));
+
+                    item = item->next;
+                }
                 c->modified_time = mt->valueint;
             }
         }
