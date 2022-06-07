@@ -75,6 +75,7 @@ void fc_scan_types(FileCompiler *fc) {
             Array *generic_names = NULL;
             fc_next_token(fc, token, true, true, true);
             if (strcmp(token, "<") == 0) {
+
                 if (fc_get_char(fc, 0) != '<') {
                     fc_error(fc, "Remove the space between the class name and '<'", NULL);
                 }
@@ -104,6 +105,10 @@ void fc_scan_types(FileCompiler *fc) {
             class->scope = init_sub_scope(fc->scope);
             class->scope->type = sct_class;
             class->scope->class = class;
+
+            if (generic_names) {
+                class->fc->should_recompile = true;
+            }
 
             array_push(fc->classes, class);
 
