@@ -3,6 +3,8 @@
 
 Function *init_func() {
     Function *func = malloc(sizeof(Function));
+    func->cname = NULL;
+    func->hash = NULL;
     func->fc = NULL;
     func->can_error = false;
     func->generate_code = true;

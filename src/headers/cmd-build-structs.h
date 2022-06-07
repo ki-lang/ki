@@ -28,7 +28,12 @@ typedef struct FileCompiler {
     char *c_filepath;
     char *h_filepath;
     char *o_filepath;
+    char *cache_filepath;
     bool is_header;
+    bool was_modified;
+    bool should_recompile;
+    //
+    struct FcCache *cache;
     //
     char *content;
     int content_len;
@@ -66,6 +71,11 @@ typedef struct FileCompiler {
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
+
+typedef struct FcCache {
+    int modified_time;
+    struct Map *depends_on;
+} FcCache;
 
 typedef struct Scope {
     int type;
@@ -137,6 +147,7 @@ typedef struct FcUse {
 typedef struct Class {
     char *cname;
     char *name;
+    char *hash;
     struct FileCompiler *fc;
     //
     struct Scope *scope;
@@ -178,6 +189,7 @@ typedef enum ClassPropAccType {
 
 typedef struct Function {
     char *cname;
+    char *hash;
     struct FileCompiler *fc;
     bool can_error;
     bool generate_code;
@@ -221,8 +233,9 @@ typedef struct Trait {
 } Trait;
 
 typedef struct Enum {
-    char *cname;
     char *name;
+    char *cname;
+    char *hash;
     struct Map *values;
 } Enum;
 
@@ -301,7 +314,7 @@ typedef enum ValueType {
 typedef struct ValueFuncCall {
     Array *arg_values;
     Value *on;
-    struct OrToken* ort;
+    struct OrToken *ort;
 } ValueFuncCall;
 
 typedef struct ErrorToken {

@@ -29,6 +29,7 @@ void cmd_build(Array *files, Map *options) {
     allocators = map_make();
     cmd_arg_files = array_make(2);
     macro_defines = map_make();
+    g_fc_by_ki_filepath = map_make();
 
     c_identifiers = map_make();
     c_struct_identifiers = map_make();

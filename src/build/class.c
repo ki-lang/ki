@@ -5,6 +5,7 @@ Class *init_class() {
     Class *class = malloc(sizeof(Class));
     class->name = NULL;
     class->cname = NULL;
+    class->hash = NULL;
     class->fc = NULL;
     class->scope = NULL;
     class->ref_count = true;

@@ -13,6 +13,7 @@ Map *allocators;
 Map *macro_defines;
 char *g_output_name;
 bool *g_static;
+Map *g_fc_by_ki_filepath;
 
 Map *c_identifiers;
 Map *c_struct_identifiers;

@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h> // might be linux only?
+#include <time.h>
 //#include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
