@@ -1,8 +1,0 @@
-
-namespace async;
-
-class jmpbuf {
-	public u64[8] __jmpbuf = 0;
-	public i32 __mask_was_saved = 0;
-	public u64[4] __saved_mask = 0; // [2] on x64 , [4] on x32
-}
