@@ -86,23 +86,16 @@ class String {
 
 	public func append_char(u8 ch) String {
 
-		@ s = this;
-
-		if(s.is_const){
-			s = String.make(s.data, s.bytes, false);
-		}
-		uxx new_bytes = s.bytes + 1;
-		ptr adr = s.data;
-		if(new_bytes > s.mem_size){
-			s.mem_size *= 2;
-			adr = alloc(s.mem_size);
-			copy(s.data, adr, s.bytes);
-			free(s.data);
-			s.data = adr;
-		}
-		adr += s.bytes;
-		s.bytes = new_bytes;
+		@ size = this.bytes + 1;
+		@ s = String.make_empty(size);
+		@ adr = s.data;
+		if(this.bytes > 0){
+			copy(this.data, adr, this.bytes);
+			adr += this.bytes;
+		} 
 		setptrv adr to ch;
+		s.bytes = size;
+
 		return s;
 	}
 
@@ -322,10 +315,12 @@ class String {
 
 	public static func generate_main_args(i32 argc, ptr argv) Array<String> {
 		i32 i = 0;
-		@ result = Array<String>.make(2);
-		println("ARGC:"+argc.str());
+		@ result = Array<String>.make(1);
 		while(i < argc){
-			result.push(i.str());
+			@ cstr = getptrv argv as cstring;
+			@ str = cstr.to_string();
+			result.push(str);
+			argv += sizeof(ptr);
 			i++;
 		}
 		return result;
