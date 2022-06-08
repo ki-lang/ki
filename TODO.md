@@ -13,20 +13,17 @@
 - private & readonly checks
 - remove namespaces from headers and set all definitions under a custom namespace and define an alias after "import" to access that namespace
 - check multiple vars in ifnull
-- if main has no return, make sure exit code is 0
 - TCP client
 - object cloning
 - date/time library
 - mysql library
 - rewrite c generator
+- const types
+- better throw errors
 
 ## Later
 
 - more tests
-
-## Maybe
-
-- const types
 
 ## Future
 

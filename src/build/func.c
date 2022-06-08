@@ -138,9 +138,6 @@ void fc_scan_func_args(Function *func) {
                 fc_error(fc, "First argument of 'main' must of type Array<String>", NULL);
             }
         }
-        if (func->can_error) {
-            fc_error(fc, "Function 'main' is not allowed to throw errors", NULL);
-        }
     }
 
     // Return type
@@ -158,6 +155,19 @@ void fc_scan_func_args(Function *func) {
         }
     }
 
+    // Check main return type
+    if (strcmp(func->cname, "main") == 0) {
+        if (func->can_error) {
+            fc_error(fc, "Function 'main' is not allowed to throw errors", NULL);
+        }
+        Type *ret_type = func->return_type;
+        Type *ret_expect = fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"), NULL);
+        if (!type_compatible(ret_expect, ret_type)) {
+            fc_error(fc, "Function 'main' must have return type 'i32'", NULL);
+        }
+    }
+
+    //
     if (!fc->is_header) {
         fc_expect_token(fc, "{", false, false, true);
         func->scope->body_i = fc->i;

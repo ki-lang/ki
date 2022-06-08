@@ -13,7 +13,7 @@ func do_run(Track tr) bool {
 	return true;
 }
 
-func main () {
+func main () i32 {
 
 	@ tr = Track {};
 
@@ -30,12 +30,12 @@ func main () {
 
 	if(tr.do_not_run != 0){
 		println("do_not_run is not 0");
-		exit 1;
+		return 1;
 	}
 	if(tr.do_run != 5){
 		println("do_run is not 5");
-		exit 1;
+		return 1;
 	}
 
-	exit 0;
+	return 0;
 }

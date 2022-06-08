@@ -12,7 +12,7 @@ func ifnull_on_arg(?SomeClass x) bool {
 	return true;
 }
 
-func main () {
+func main () i32 {
 
 	?SomeClass x1 = null;
 	ptr x2 = null;
@@ -20,5 +20,5 @@ func main () {
 	@ b1 = ifnull_on_arg(x1);
 	@ b2 = ifnull_on_ptr(x2);
 
-	exit 0;
+	return 0;
 }
