@@ -20,6 +20,7 @@
 - object cloning
 - date/time library
 - mysql library
+- rewrite c generator
 
 ## Later
 

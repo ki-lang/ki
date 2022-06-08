@@ -301,7 +301,10 @@ void fc_scan_class_props(Class *class) {
                 fc_error(fc, "Is not a trait: %s", id->name);
             }
             fc_expect_token(fc, ";", false, true, true);
+
             Trait *trait = idf->item;
+            fc_depends_on(fc, trait->fc);
+
             ContentChunk *cc = content_chunk_create_for_fc(chunks, fc);
             // Scope* prev_scope = fc->scope;
             fc = trait->fc;

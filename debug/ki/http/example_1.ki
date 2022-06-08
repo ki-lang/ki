@@ -56,6 +56,10 @@ func handler(ki:http:Request req) ki:http:Response{
 
 func main(Array<String> args) i32 {
 
+	@ i = 123;
+
+	println(i.str());
+
 	@ str = "-😀-";
 	@ blen = str.bytes;
 	@ clen = str.chars();
