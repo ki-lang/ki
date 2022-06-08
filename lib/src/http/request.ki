@@ -5,6 +5,7 @@ namespace http;
 #header "ssl/ssl"
 
 class Request {
+	public bool is_ssl;
 	public String method;
 	public String uri;
 	public String protocol;
@@ -18,6 +19,10 @@ class Request {
 		};
 
 		@ req = Request.parse(payload);
+
+		notnull req do {
+			req.is_ssl = con.ssl != null;
+		}
 
 		return req;
 	}

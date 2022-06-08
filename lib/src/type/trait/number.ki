@@ -9,7 +9,7 @@ trait Number {
 		u8 base = 10;
     	@ negative = false;
 		@ num = this;
- 
+
     	// Handle 0 explicitly, otherwise empty string is printed for 0
     	if (num == 0) {
 			result = result.append_char('0');

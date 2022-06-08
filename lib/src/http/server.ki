@@ -30,6 +30,7 @@ class Server {
 	public funcref (Request) Response handler = request_handler;
 
 	readonly bool use_ssl = false;
+	readonly u32 ssl_port = 0;
 	readonly ?String ssl_cert = null;
 	readonly ?String ssl_private_key = null;
 
@@ -37,11 +38,22 @@ class Server {
 
 		i32 err_check = 0;
 
-		@ sock = ki:net:Socket { port: this.port };
+		@ sock = net:Socket { port: this.port };
 		sock.listen() or pass;
+
+		?net:Socket ssl_sock = null;
+		if(this.use_ssl){
+			@ sock = net:Socket { port: this.ssl_port };
+			sock.listen() or pass;
+			ssl_sock = sock;
+		}
+
 		//
 		io:print("[+] Running http server on port ");
 		io:print(this.port.str());
+		notnull ssl_sock do {
+			io:print(" & " + ssl_sock.port.str());
+		}
 		io:print("\n");
 
 		#if OS_WIN || OS_OSX
@@ -50,21 +62,26 @@ class Server {
 		@ epfd = main:main:epoll_create(1);
 		@ buf_ev = cast mem:calloc(sizeof(main:main:epoll_event)) as main:main:epoll_event; 
 		Server.epoll_ctl_add(buf_ev, epfd, sock.listenfd, main:main:EPOLL.EPOLLIN);
-		ptr events = mem:calloc(this.max_connections * sizeof(main:main:epoll_event));
-
 		fd:set_non_block(sock.listenfd);
+
+		notnull ssl_sock do {
+			Server.epoll_ctl_add(buf_ev, epfd, ssl_sock.listenfd, main:main:EPOLL.EPOLLIN);
+			fd:set_non_block(ssl_sock.listenfd);
+		}
+
+		ptr events = mem:calloc(this.max_connections * sizeof(main:main:epoll_event));
 		#end
 
 		// SSL context
 		?main:main:SSL_CTX ssl_ctx = null;
-		if(this.use_ssl){
+		notnull ssl_sock do {
 			@ ssl_cert = this.ssl_cert;
 			@ ssl_key = this.ssl_private_key;
 
 			ifnull ssl_cert panic missing_ssl_cert_arg;
 			ifnull ssl_key panic missing_ssl_private_key_arg;
 
-			ssl_ctx = net:SSL.create_context(sock, ssl_cert, ssl_key) or pass;
+			ssl_ctx = net:SSL.create_context(ssl_sock, ssl_cert, ssl_key) or pass;
 		}
 
 		@ connections = PtrArray.make(this.max_connections);
@@ -73,11 +90,22 @@ class Server {
 		i32 maxfd = sock.listenfd;
 		i32 select_result = 0;
         i32 fdcount = 1;
+
+		notnull ssl_sock do {
+			if(ssl_sock.listenfd > maxfd) {
+				maxfd = ssl_sock.listenfd;
+			}
+		}
+
 		while(true){
 
 			#if OS_WIN || OS_OSX
 			mem:clear(read_set, this.max_connections);
 			fd:add_to_set(read_set, sock.listenfd);
+			notnull ssl_sock do {
+				fd:add_to_set(read_set, ssl_sock.listenfd);
+			}
+
 			i32 i = 3;
 			while(i < connections.size){
 				ptr con = connections.get(i);
@@ -124,18 +152,31 @@ class Server {
 						continue;
 					}
 
-					if(fd == sock.listenfd){
+					@ is_ssl_fd = false;
+					notnull ssl_sock do {
+						is_ssl_fd = fd == ssl_sock.listenfd;
+					}
+
+					if(fd == sock.listenfd || is_ssl_fd){
 
 						// New connection
-						@ con = sock.accept_connection() or continue;
+						?net:Connection con = null;
+						if(is_ssl_fd){
+							notnull ssl_sock do {
+								con = ssl_sock.accept_connection() or continue;
+							}
+						} else {
+							con = sock.accept_connection() or continue;
+						}
+
+						ifnull con continue;
 
 						if(con.fd > maxfd){
 							maxfd = con.fd;
 						}
 
 						// SSL
-						?main:main:SSL ssl = null;
-						if(this.use_ssl){
+						if(is_ssl_fd){
 							ifnull ssl_ctx continue;
 							con.make_ssl(ssl_ctx) or continue;
 						}
@@ -290,7 +331,7 @@ class Server {
 		return;
 	}
 
-	public func enable_ssl(String cert_path, String private_key_path) {
+	public func enable_ssl(u32 port, String cert_path, String private_key_path) {
 
 		if(ki:fs:exists(cert_path) == false){
 			panic ssl_cert_file_not_found;
@@ -300,6 +341,7 @@ class Server {
 		}
 
 		this.use_ssl = true;
+		this.ssl_port = port;
 		this.ssl_cert = cert_path;
 		this.ssl_private_key = private_key_path;
 	}

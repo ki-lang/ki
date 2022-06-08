@@ -13,8 +13,6 @@
 - private & readonly checks
 - remove namespaces from headers and set all definitions under a custom namespace and define an alias after "import" to access that namespace
 - check multiple vars in ifnull
-- multi port http server + https redirect
-- main args
 - if main has no return, make sure exit code is 0
 - TCP client
 - object cloning

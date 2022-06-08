@@ -199,6 +199,10 @@ void fc_write_c_inits() {
                     char *code_ = str_to_chars(code);
                     write_file(path, code_, false);
                     free(code_);
+                } else {
+                    if (file_exists(path)) {
+                        remove(path);
+                    }
                 }
             } else {
                 //
