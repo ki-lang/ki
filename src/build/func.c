@@ -125,6 +125,24 @@ void fc_scan_func_args(Function *func) {
     }
     array_free(names);
 
+    if (strcmp(func->cname, "main") == 0) {
+        if (func->args->length > 1) {
+            fc_error(fc, "Too many arguments for main", NULL);
+        }
+        if (func->args->length == 1) {
+            FunctionArg *arg = array_get_index(func->args, 0);
+            Type *type = fc_identifier_to_type(fc, create_identifier("ki", "type", "Array"), NULL);
+            Type *subtype = fc_identifier_to_type(fc, create_identifier("ki", "type", "String"), NULL);
+            Type *gent = type_generate_generic(type, subtype);
+            if (!type_compatible(gent, arg->type)) {
+                fc_error(fc, "First argument of 'main' must of type Array<String>", NULL);
+            }
+        }
+        if (func->can_error) {
+            fc_error(fc, "Function 'main' is not allowed to throw errors", NULL);
+        }
+    }
+
     // Return type
     fc_next_token(fc, token, true, false, true);
     if (strcmp(token, fc->is_header ? ";" : "{") != 0) {

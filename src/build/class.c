@@ -161,10 +161,9 @@ char *fc_class_read_generic_unique_id(FileCompiler *fc, Scope *scope) {
     while (strcmp(token, ">") != 0) {
         // Identifier* id = fc_read_identifier(fc, false, true, true);
         Type *gen_t = fc_read_type(fc, scope);
-        if (gen_t->nullable) {
-            str_append_chars(uid, "?");
-        }
-        str_append_chars(uid, gen_t->class->cname);
+        char *name = type_to_str(gen_t);
+        str_append_chars(uid, name);
+        free(name);
 
         fc_next_token(fc, token, true, true, true);
         if (strcmp(token, ">") != 0) {

@@ -195,12 +195,18 @@ void fc_write_c_inits() {
                 }
 
                 // Save
-                char *code_ = str_to_chars(code);
-                write_file(path, code_, false);
-                free(code_);
+                if (code->length > 0) {
+                    char *code_ = str_to_chars(code);
+                    write_file(path, code_, false);
+                    free(code_);
+                }
             } else {
                 //
-                code = file_get_contents(path);
+                if (file_exists(path)) {
+                    Str *_code = file_get_contents(path);
+                    str_append(code, _code);
+                    free(_code);
+                }
             }
             //
             free(path);
@@ -214,6 +220,8 @@ void fc_write_c_inits() {
             str_append_chars(all_code, "\n");
             str_append(all_code, code);
             str_append_chars(all_code, "\n\n");
+
+            free_str(code);
         }
     }
 
@@ -453,8 +461,13 @@ void fc_write_c_func(FileCompiler *fc, Function *func) {
     fc_write_c_type(fc->h_code, func->return_type, NULL);
     str_append_chars(fc->tkn_buffer, " ");
     str_append_chars(fc->h_code, " ");
-    str_append_chars(fc->tkn_buffer, func->cname);
-    str_append_chars(fc->h_code, func->cname);
+    if (strcmp(func->cname, "main") == 0) {
+        str_append_chars(fc->tkn_buffer, "_KI_MAIN");
+        str_append_chars(fc->h_code, "_KI_MAIN");
+    } else {
+        str_append_chars(fc->tkn_buffer, func->cname);
+        str_append_chars(fc->h_code, func->cname);
+    }
     str_append_chars(fc->tkn_buffer, "(");
     str_append_chars(fc->h_code, "(");
     // Write args
@@ -512,24 +525,55 @@ void fc_write_c_func(FileCompiler *fc, Function *func) {
         //     }
         // }
 
-        if (strcmp(func->cname, "main") == 0) {
-            str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS = ki__mem__calloc_flat(64 * 8);\n");
-            str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS_MUT = ki__async__Mutex__make();\n");
-            str_append_chars(fc->tkn_buffer, "KI_INITS();\n");
-        }
-        if (uses_async && strcmp(func->cname, "main") == 0) {
-            str_append_chars(fc->tkn_buffer, "void* KI_MAIN_TMS = ki__async__Taskman__setup_task_managers();\n");
-        }
-
         // Body
         fc_write_c_ast(fc, func->scope);
 
-        if (uses_async && strcmp(func->cname, "main") == 0) {
-            str_append_chars(fc->tkn_buffer, "ki__async__Taskman__wait_for_tasks_to_end(KI_MAIN_TMS);\n");
-        }
-
         fc->indent--;
         str_append_chars(fc->tkn_buffer, "}\n\n");
+
+        /////////////
+        // MAIN
+        /////////////
+
+        if (strcmp(func->cname, "main") == 0) {
+            str_append_chars(fc->tkn_buffer, "int main(");
+            str_append_chars(fc->tkn_buffer, "int _KI_ARGC, char** _KI_ARGV");
+            str_append_chars(fc->tkn_buffer, "){\n");
+
+            str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS = ki__mem__calloc_flat(64 * 8);\n");
+            str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS_MUT = ki__async__Mutex__make();\n");
+            str_append_chars(fc->tkn_buffer, "KI_INITS();\n");
+
+            if (arg_len == 1) {
+                FunctionArg *arg = array_get_index(func->args, 0);
+                Type *type = arg->type;
+                Class *class = type->class;
+                str_append_chars(fc->tkn_buffer, "struct ");
+                str_append_chars(fc->tkn_buffer, class->cname);
+                str_append_chars(fc->tkn_buffer, "* ");
+                str_append_chars(fc->tkn_buffer, arg->name);
+                str_append_chars(fc->tkn_buffer, " = ki__type__String__generate_main_args(_KI_ARGC, _KI_ARGV);\n");
+            }
+
+            if (uses_async) {
+                str_append_chars(fc->tkn_buffer, "void* KI_MAIN_TMS = ki__async__Taskman__setup_task_managers();\n");
+            }
+
+            str_append_chars(fc->tkn_buffer, "int result = _KI_MAIN(\n");
+            if (arg_len == 1) {
+                FunctionArg *arg = array_get_index(func->args, 0);
+                str_append_chars(fc->tkn_buffer, arg->name);
+            }
+            str_append_chars(fc->tkn_buffer, ");\n");
+
+            if (uses_async) {
+                str_append_chars(fc->tkn_buffer, "ki__async__Taskman__wait_for_tasks_to_end(KI_MAIN_TMS);\n");
+            }
+
+            str_append_chars(fc->tkn_buffer, "return result;\n");
+
+            str_append_chars(fc->tkn_buffer, "}\n\n");
+        }
     }
 }
 
@@ -1949,11 +1993,6 @@ void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
             str_append_chars(fc->tkn_buffer, "\n");
         }
 
-        if (ignore_vbuf) {
-            free(ignore_vbuf);
-            ignore_vbuf = NULL;
-        }
-
         if (scope->is_func) {
             break;
         }
@@ -1966,6 +2005,10 @@ void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
         if (scope == NULL) {
             break;
         }
+    }
+
+    if (ignore_vbuf) {
+        free(ignore_vbuf);
     }
 
     // If we want to assign new values to argument variables, this code is required

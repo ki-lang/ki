@@ -352,3 +352,49 @@ bool type_compatible(Type *t1, Type *t2) {
     }
     return true;
 }
+
+Type *type_generate_generic(Type *type, Type *subtype) {
+    //
+    Str *uid = str_make("|");
+    char *name = type_to_str(subtype);
+    str_append_chars(uid, name);
+    str_append_chars(uid, "|");
+
+    free(name);
+
+    char *uidchars = str_to_chars(uid);
+    free_str(uid);
+
+    char *hash = malloc(33);
+    strcpy(hash, "");
+    md5(uidchars, hash);
+    free(uidchars);
+
+    char *cname = malloc(KI_TOKEN_MAX);
+    strcpy(cname, type->class->cname);
+    strcat(cname, "__");
+    strcat(cname, hash);
+
+    IdentifierFor *idf = map_get(c_identifiers, cname);
+    if (!idf) {
+        printf("Trying to find:%s\n", cname);
+        printf("Known identifiers:\n");
+        map_print_keys(c_identifiers);
+        die("Compiler bug, could not find Array<String> type");
+    }
+    Class *gclass = idf->item;
+    free(hash);
+
+    Type *t = init_type();
+    t->type = type_struct;
+    t->class = idf->item;
+    t->is_pointer = true;
+    t->bytes = pointer_size;
+    if (t->class->is_number) {
+        t->is_pointer = false;
+        t->allow_math = true;
+        t->bytes = t->class->size;
+    }
+
+    return t;
+}
