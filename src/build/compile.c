@@ -67,6 +67,7 @@ void compile_all() {
 
     //
     wait_cmd();
+    sync();
 
     char *lib_dir = malloc(KI_PATH_MAX);
 
@@ -121,6 +122,8 @@ void compile_all() {
         printf("Compile failed\n");
         exit(1);
     }
+
+    sync();
 
     free(cmd);
 }

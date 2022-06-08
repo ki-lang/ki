@@ -39,7 +39,6 @@ void cmd_build(Array *files, Map *options) {
     build_ast_stage = false;
     uses_async = false;
     last_readonly_i = 0;
-    GEN_C = 0;
 
     // -static option
     g_static = true;

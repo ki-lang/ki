@@ -34,7 +34,4 @@ int pointer_size;
 int last_readonly_i;
 int LOC;
 
-// Write c
-int GEN_C;
-
 #endif

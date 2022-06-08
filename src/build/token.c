@@ -301,14 +301,13 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
         if (strcmp(token, "{") == 0) {
             fc_next_token(fc, token, false, true, true);
 
-            GEN_C++;
-            char *vname = malloc(64);
-            sprintf(vname, "_KI_VSCOPE_VN_%d", GEN_C);
-
             Scope *vscope = init_sub_scope(scope);
             vscope->is_vscope = true;
             vscope->body_i = fc->i;
             if (ort->type == or_value) {
+                fc->var_bufc++;
+                char *vname = malloc(64);
+                sprintf(vname, "_KI_VSCOPE_VN_%d", fc->var_bufc);
                 vscope->vscope_vname = vname;
             }
             if (ort->type != or_do) {

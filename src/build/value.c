@@ -142,8 +142,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         free_str(str);
 
         char *globname = malloc(64);
-        GEN_C++;
-        sprintf(globname, "_KI_STRING_%s_%d", fc->hash, GEN_C);
+        fc->var_bufc++;
+        sprintf(globname, "_KI_STRING_%s_%d", fc->hash, fc->var_bufc);
 
         ValueString *vstr = malloc(sizeof(ValueString));
         vstr->name = globname;

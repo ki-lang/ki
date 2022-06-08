@@ -1315,13 +1315,13 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         fc_write_c_value(fc, cast->to_value, false);
     } else if (value->type == vt_class_init) {
         // Generate function
-        GEN_C++;
+        fc->var_bufc++;
         ValueClassInit *ini = value->item;
         Class *class = ini->class;
 
         char *allocator_name = fc_write_c_get_allocator(fc, class->size, true);
-        char *func_name = malloc(30);
-        sprintf(func_name, "_KI_CLASS_INIT_%d", GEN_C);
+        char *func_name = malloc(60);
+        sprintf(func_name, "_KI_CLASS_INIT_%s_%d", fc->hash, fc->var_bufc);
 
         char *buf_var_name = strdup(var_buf(fc));
         str_append_chars(result, buf_var_name);
