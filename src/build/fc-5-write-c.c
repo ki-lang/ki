@@ -1117,16 +1117,9 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
     } else if (value->type == vt_true) {
         str_append_chars(result, "1");
     } else if (value->type == vt_group) {
-        fc_write_c_value(fc, value->item, false);
-        char *v = str_to_chars(fc->value_buffer);
-        result->length = 0;
-        // str_append_chars(result, "(");
-        // fc_write_c_type(result, value->return_type, NULL);
-        // str_append_chars(result, ")");
         str_append_chars(result, "(");
-        str_append_chars(result, v);
+        fc_write_c_value(fc, value->item, false);
         str_append_chars(result, ")");
-        free(v);
     } else if (value->type == vt_var) {
         str_append_chars(result, value->item);
     } else if (value->type == vt_threaded_global) {

@@ -325,8 +325,7 @@ class String {
 		@ result = Array<String>.make(2);
 		println("ARGC:"+argc.str());
 		while(i < argc){
-			println("ARG:"+(i.str()));
-			result.push("Test: " + i.str());
+			result.push(i.str());
 			i++;
 		}
 		return result;
