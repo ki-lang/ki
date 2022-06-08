@@ -1,44 +1,46 @@
 
-threaded_global ?ki:http:Router GT_router;
+use ki:http;
+
+threaded_global ?http:Router GT_router;
 
 class Response{
 
-	public static func error(i32 code) ki:http:Response {
+	public static func error(i32 code) http:Response {
 		if(code == 404){
-			return ki:http:Response{
+			return http:Response{
 				body: "ERROR 404"
 			};
 		}
 		if(code == 500){
-			return ki:http:Response{
+			return http:Response{
 				body: "ERROR 500"
 			};
 		}
 
-		return ki:http:Response{
+		return http:Response{
 			body: "Unknown error :("
 		};
 	}
 }
 
-func home(ki:http:Request req) ki:http:Response{
-	return ki:http:Response{
+func home(http:Request req) http:Response{
+	return http:Response{
 		body: "Hello from /"
 	};
 }
 
-func hello(ki:http:Request req) ki:http:Response{
-	return ki:http:Response{
+func hello(http:Request req) http:Response{
+	return http:Response{
 		body: "Hello from /hello"
 	};
 }
 
-func handler(ki:http:Request req) ki:http:Response{
+func handler(http:Request req) http:Response{
 
 	@ router = GT_router;
 
 	ifnull router set {
-		@ r = ki:http:Router.make();
+		@ r = http:Router.make();
 
 		r.add("GET", "/", home);
 		r.add("GET", "/hello", hello);
@@ -81,7 +83,7 @@ func main(Array<String> args) i32 {
 	//	return 1;
 	//}
 
-	@ s = ki:http:Server { port: 9000, handler: handler };
+	@ s = http:Server { port: 9000, handler: handler };
 	s.enable_ssl(4430, "./debug/ki/http/certs/localhost.crt", "./debug/ki/http/certs/localhost.key");
 	s.start() or return 1;
 

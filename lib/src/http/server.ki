@@ -4,8 +4,6 @@ namespace http;
 #header "sys/fd"
 #header "sys/poll"
 
-use type {PtrArray};
-
 #if OS_OSX
 func EV_SET(main:main:kEvent kev, uxx ident, i16 filter, u16 flags, u16 fflags, i64 data, ptr udata) {
 	kev.ident = ident;
@@ -84,7 +82,7 @@ class Server {
 			ssl_ctx = net:SSL.create_context(ssl_sock, ssl_cert, ssl_key) or pass;
 		}
 
-		@ connections = PtrArray.make(this.max_connections);
+		@ connections = type:PtrArray.make(this.max_connections);
 
 		//
 		i32 maxfd = sock.listenfd;

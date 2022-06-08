@@ -21,7 +21,7 @@ void fc_scan_types(FileCompiler *fc) {
             }
             fc_next_token(fc, token, false, true, true);
             // Set namespace
-            fc->nsc = pkc_create_namespace(fc->nsc->pkc, token);
+            fc->nsc = pkc_get_namespace_or_create(fc->nsc->pkc, token);
             fc->scope->parent = fc->nsc->scope;
             //
             fc_expect_token(fc, ";", false, true, true);
@@ -238,36 +238,29 @@ void fc_scan_types(FileCompiler *fc) {
                     fc_error(fc, "Invalid name: '%s'", token);
                 }
                 package = namespace;
-                char *namespace = strdup(token);
+                namespace = strdup(token);
             }
 
             PkgCompiler *pkc = fc->nsc->pkc;
             if (package != NULL) {
                 pkc = pkc_get_by_name(package);
+                free(package);
             }
-            NsCompiler *nsc = pkc_create_namespace(pkc, namespace);
-            free(package);
-            free(namespace);
-
-            fc_expect_token(fc, "{", false, true, true);
-            fc_next_token(fc, token, false, false, true);
-            while (strcmp(token, "}") != 0) {
-                if (!is_valid_varname(token)) {
-                    fc_error(fc, "Invalid name: '%s'", token);
-                }
-                FcUse *fcu = malloc(sizeof(FcUse));
-                fcu->pkc = pkc;
-                fcu->nsc = nsc;
-                fcu->fc_i = fc->i;
-
-                map_set(fc->uses, strdup(token), fcu);
-
-                fc_next_token(fc, token, false, false, true);
-                if (strcmp(token, "}") == 0) {
-                    break;
-                }
-                fc_next_token(fc, token, false, false, true);
+            if (!pkc_namespace_exists(pkc, namespace)) {
+                fc_error(fc, "Unknown namespace '%s'", namespace);
             }
+            NsCompiler *nsc = pkc_get_namespace_or_create(pkc, namespace);
+
+            IdentifierFor *idf = map_get(fc->scope->identifiers, namespace);
+            if (idf) {
+                fc_error(fc, "Identifier '%s' already used in this file", namespace);
+            }
+
+            idf = init_idf();
+            idf->type = idfor_namespace;
+            idf->item = nsc;
+
+            map_set(fc->scope->identifiers, namespace, idf);
 
             fc_expect_token(fc, ";", false, true, true);
 

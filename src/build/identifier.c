@@ -140,6 +140,16 @@ Identifier *fc_read_identifier(FileCompiler *fc, bool readonly, bool sameline, b
         }
     }
 
+    if (id->package == NULL && id->namespace != NULL) {
+        // Check if it's a 'use' namespace
+        IdentifierFor *idf = map_get(fc->scope->identifiers, id->namespace);
+        if (idf && idf->type == idfor_namespace) {
+            NsCompiler *nsc = idf->item;
+            id->package = strdup(nsc->pkc->name);
+            id->namespace = strdup(nsc->name);
+        }
+    }
+
     // Check for new namespaces
     if (allow_new_namespaces) {
         PkgCompiler *pkc = fc->nsc->pkc;
@@ -147,7 +157,7 @@ Identifier *fc_read_identifier(FileCompiler *fc, bool readonly, bool sameline, b
             pkc = pkc_get_by_name(id->package);
         }
         if (id->namespace != NULL) {
-            pkc_create_namespace(pkc, id->namespace);
+            pkc_get_namespace_or_create(pkc, id->namespace);
         }
     }
 

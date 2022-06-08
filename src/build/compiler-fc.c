@@ -42,7 +42,6 @@ FileCompiler *init_fc() {
     fc->sprintf2 = malloc(100);
     //
     fc->scope = init_scope();
-    fc->uses = map_make();
     //
     fc->create_o_file = false;
     fc->classes = array_make(2);
@@ -118,7 +117,7 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
     free(fn);
 
     fc = init_fc();
-    fc->nsc = pkc_create_namespace(pkc, "main");
+    fc->nsc = pkc_get_namespace_or_create(pkc, "main");
     fc->scope->parent = fc->nsc->scope;
     //
     fc->hash = hash;

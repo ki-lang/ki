@@ -1,8 +1,6 @@
 
 namespace type;
 
-use mem {alloc,copy,equal,free};
-
 class String {
 
 	readonly uxx bytes = 0;
@@ -15,17 +13,17 @@ class String {
 		ptr new_data = data;
 		if(is_const == false){
 			mem_size += 4;
-			new_data = alloc(mem_size);
+			new_data = mem:alloc(mem_size);
 		}
 		@ str = String { data: new_data, mem_size: mem_size, bytes: bytes, is_const: is_const };
 		if(is_const == false){
-			copy(data, new_data, bytes);
+			mem:copy(data, new_data, bytes);
 		}
 		return str;
 	}
 
 	public static func make_empty(uxx mem_size) String {
-		ptr data = alloc(mem_size);
+		ptr data = mem:alloc(mem_size);
 		@ str = String { data: data, mem_size: mem_size, bytes: 0, is_const: false };
 		return str;
 	}
@@ -35,9 +33,9 @@ class String {
 		@ size = this.bytes + str.bytes;
 		@ s = String.make_empty(size);
 		@ adr = s.data;
-		copy(this.data, adr, this.bytes);
+		mem:copy(this.data, adr, this.bytes);
 		adr += this.bytes;
-		copy(str.data, adr, str.bytes);
+		mem:copy(str.data, adr, str.bytes);
 		s.bytes = size;
 
 		return s;
@@ -47,11 +45,11 @@ class String {
 		if(this.bytes != str.bytes){
 			return false;
 		}
-		return equal(this.data, str.data, this.bytes);
+		return mem:equal(this.data, str.data, this.bytes);
 	}
 
 	public func __free() {
-		free(this.data);
+		mem:free(this.data);
 		@ a = allocator sizeof(String);
 		a.free(this);
 	}
@@ -88,7 +86,7 @@ class String {
 		@ s = String.make_empty(size);
 		@ adr = s.data;
 		if(this.bytes > 0){
-			copy(this.data, adr, this.bytes);
+			mem:copy(this.data, adr, this.bytes);
 			adr += this.bytes;
 		} 
 		setptrv adr to ch;
@@ -102,7 +100,7 @@ class String {
 		uxx new_bytes = bytes + len;
 		this.increase_mem_size(len);
 		ptr to = this.data + bytes;
-		copy(adr, to, len);
+		mem:copy(adr, to, len);
 		this.bytes = new_bytes;
 	}
 
@@ -114,10 +112,10 @@ class String {
 			new_size *= 2;
 		}
 		if(new_size != size){
-			ptr adr = alloc(new_size);
+			ptr adr = mem:alloc(new_size);
 			this.mem_size = new_size;
-			copy(this.data, adr, this.bytes);
-			free(this.data);
+			mem:copy(this.data, adr, this.bytes);
+			mem:free(this.data);
 			this.data = adr;
 		}
 	}
@@ -152,8 +150,8 @@ class String {
 	}
 
 	public func to_cstring() cstring {
-		cstring cstr = cast alloc(this.bytes + 1) as cstring;
-		copy(this.data, cstr, this.bytes);
+		cstring cstr = cast mem:alloc(this.bytes + 1) as cstring;
+		mem:copy(this.data, cstr, this.bytes);
 		ptr x = cstr;
 		x += this.bytes;
 		setptrv x to '\0';

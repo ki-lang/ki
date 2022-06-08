@@ -66,7 +66,7 @@ void cmd_build(Array *files, Map *options) {
     pkc->dir = strdup(cwd);
     pkc_check_config(pkc);
 
-    pkc_create_namespace(pkc, "main");
+    pkc_get_namespace_or_create(pkc, "main");
 
     // Step 1. create fc and scan types
     // Step 1.1 scan headers

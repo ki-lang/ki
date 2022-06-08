@@ -8,7 +8,8 @@ PkgCompiler *init_pkc();
 void free_pkc(PkgCompiler *pkc);
 PkgCompiler *pkc_get_by_name(char *name);
 NsCompiler *pkc_get_namespace_by_name(PkgCompiler *pkc, char *name);
-NsCompiler *pkc_create_namespace(PkgCompiler *pkc, char *name);
+bool pkc_namespace_exists(PkgCompiler *pkc, char *name);
+NsCompiler *pkc_get_namespace_or_create(PkgCompiler *pkc, char *name);
 void pkc_check_config(PkgCompiler *pkc);
 
 // NsCompiler

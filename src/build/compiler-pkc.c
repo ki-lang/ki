@@ -127,7 +127,13 @@ NsCompiler *pkc_get_namespace_by_name(PkgCompiler *pkc, char *name) {
     return nsc;
 }
 
-NsCompiler *pkc_create_namespace(PkgCompiler *pkc, char *name) {
+bool pkc_namespace_exists(PkgCompiler *pkc, char *name) {
+    NsCompiler *nsc = map_get(pkc->namespaces, name);
+    char *dir = map_get(pkc->namespace_dirs, name);
+    return nsc || dir;
+}
+
+NsCompiler *pkc_get_namespace_or_create(PkgCompiler *pkc, char *name) {
     NsCompiler *nsc = map_get(pkc->namespaces, name);
     if (nsc == NULL) {
         nsc = init_nsc();

@@ -70,7 +70,7 @@ void fc_skip_body(FileCompiler *fc, char *start, char *end, char *alt_end, bool 
             if (!uses_async && id->package == NULL && id->namespace == NULL) {
                 if (strcmp(id->name, "async") == 0) {
                     PkgCompiler *pkc = pkc_get_by_name("ki");
-                    pkc_create_namespace(pkc, "async");
+                    pkc_get_namespace_or_create(pkc, "async");
                     uses_async = true;
                 }
                 continue;

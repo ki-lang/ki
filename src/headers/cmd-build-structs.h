@@ -61,8 +61,6 @@ typedef struct FileCompiler {
     char *sprintf2;
     // Local identifiers
     struct Scope *scope;
-    struct Map *uses;
-    struct Map *c_imports;
     // Things to compile in this file
     bool create_o_file;
     struct Array *functions;
@@ -132,6 +130,7 @@ typedef enum IdentifierForType {
     idfor_arg,
     idfor_threaded_global,
     idfor_shared_global,
+    idfor_namespace,
 } IdentifierForType;
 
 //////////
@@ -140,12 +139,6 @@ typedef struct ContentChunk {
     FileCompiler *fc;
     int i;
 } ContentChunk;
-
-typedef struct FcUse {
-    PkgCompiler *pkc;
-    NsCompiler *nsc;
-    int fc_i;
-} FcUse;
 
 typedef struct Class {
     char *cname;

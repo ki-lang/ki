@@ -40,16 +40,18 @@ install.bat
 ## Http server example
 
 ```
-func handler(ki:http:Request req) ki:http:Response{
+use ki:http;
 
-	return ki:http:Response{
+func handler(http:Request req) http:Response{
+
+	return http:Response{
 		body: "Hello from example"
 	};
 }
 
 func main() i32 {
 
-	@ s = ki:http:Server { port: 9000, handler: handler };
+	@ s = http:Server { port: 9000, handler: handler };
 	s.start() or return 1;
 
 	return 0;
