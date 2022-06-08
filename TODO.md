@@ -16,7 +16,10 @@
 - multi port http server + https redirect
 - main args
 - if main has no return, make sure exit code is 0
+- TCP client
 - object cloning
+- date/time library
+- mysql library
 
 ## Later
 
