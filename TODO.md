@@ -20,6 +20,7 @@
 - rewrite c generator
 - const types
 - better throw errors
+- increase allocator block_c from 1 byte to 4 bytes
 
 ## Later
 
