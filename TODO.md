@@ -19,7 +19,6 @@
 - date/time library
 - mysql library
 - rewrite c generator
-- bug: there's a 4 byte mem-leak foreach http server connection
 
 ## Later
 
