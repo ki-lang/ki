@@ -21,7 +21,7 @@ class CpuInfo {
 					i32 result = v.i32() or throw failed_to_read_core_count;
 					return result;
 				}
-				v = v.clear();
+				v = "";
 				continue;
 			}
 			if(string:is_whitespace(ch)){
@@ -31,7 +31,7 @@ class CpuInfo {
 				if(v.__eq("cpucores")){
 					found_key = true;
 				}
-				v = v.clear();
+				v = "";
 				continue;
 			}
 			v = v.append_char(ch);

@@ -51,9 +51,7 @@ class String {
 	}
 
 	public func __free() {
-		if(this.is_const == false){
-			free(this.data);
-		}
+		free(this.data);
 		@ a = allocator sizeof(String);
 		a.free(this);
 	}
@@ -122,17 +120,6 @@ class String {
 			free(this.data);
 			this.data = adr;
 		}
-	}
-
-	public func clear() String {
-
-		@ s = this;
-
-		if(s.is_const){
-			s = "";
-		}
-		s.bytes = 0;
-		return s;
 	}
 
 	public func index_of(String str) uxx {
