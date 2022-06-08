@@ -54,7 +54,12 @@ func handler(ki:http:Request req) ki:http:Response{
 	return route.handler(req);
 }
 
-func main() i32 {
+func main(Array<String> args) i32 {
+
+	each args as arg {
+		println("-----------------------------------------");
+		//println(arg);
+	}
 
 	@ str = "-😀-";
 	@ blen = str.bytes;

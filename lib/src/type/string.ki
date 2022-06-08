@@ -225,10 +225,6 @@ class String {
 		return c;
 	}
 
-	public func chunker() StringChunker {
-		return StringChunker { str: this, start: 0 };
-	}
-
 	public func substr_chars(uxx start, uxx chars) String {
 		uxx count = 0;
 		uxx pos = 0;
@@ -323,73 +319,17 @@ class String {
 		arr.push(this.substr_bytes(s, e-s));
 		return arr;
 	}
-}
 
-class StringChunker{
-	public String str;
-	public uxx start = 0;
-	public uxx end = 0;
-	public bool on_bytes = false;
-	public ?String break_on = null;
-
-	public func reset(){
-		this.start = 0;
-		this.end = 0;
-	}
-
-	public func break_on_bytes(String bytes) StringChunker {
-		this.on_bytes = true;
-		this.break_on = bytes;
-		return this;
-	}
-
-	public func find_char_index(String bytes) !uxx {
-		uxx pos = this.start;
-		uxx bytes_pos = 0;
-		while(pos < this.str.bytes){
-			u8 a = this.str.char(pos);
-			while(bytes_pos < bytes.bytes){
-				u8 b = bytes.char(bytes_pos);
-				if(a == b){
-					return pos;
-				}
-				bytes_pos++;
-			}
-			bytes_pos = 0;
-			pos++;
-		}
-		throw not_found;
-	}
-
-	public func skip_bytes(String bytes){
-		while(this.start < this.str.bytes){
-			u8 a = this.str.char(this.start);
-			uxx bytes_pos = 0;
-			bool found = false;
-			while(bytes_pos < bytes.bytes){
-				u8 b = bytes.char(bytes_pos);
-				if(a == b){
-					found = true;
-					break;
-				}
-				bytes_pos++;
-			}
-			if(found == false){
-				break;
-			}
-			this.start++;
-		}
-	}
-
-	public func get_chunk(bool skip_break_bytes_at_end) String {
-		@ break_on = this.break_on;
-		ifnull break_on return "";
-		this.end = this.find_char_index(break_on) or return "";
-		@ result = this.str.substr_bytes(this.start, this.end - this.start);
-		this.start = this.end;
-		if(skip_break_bytes_at_end){
-			this.skip_bytes(break_on);
+	public static func generate_main_args(i32 argc, ptr argv) Array<String> {
+		i32 i = 0;
+		@ result = Array<String>.make(2);
+		println("ARGC:"+argc.str());
+		while(i < argc){
+			println("ARG:"+(i.str()));
+			result.push("Test: " + i.str());
+			i++;
 		}
 		return result;
 	}
 }
+

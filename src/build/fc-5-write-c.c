@@ -459,27 +459,32 @@ void fc_write_c_func(FileCompiler *fc, Function *func) {
     str_append_chars(fc->h_code, "(");
     // Write args
     int arg_len = func->args->length;
-    int x = 0;
-    while (x < arg_len) {
-        FunctionArg *arg = array_get_index(func->args, x);
-        char *name = arg->name;
-        Type *type = arg->type;
-        fc_write_c_type(fc->tkn_buffer, type, name);
-        fc_write_c_type(fc->h_code, type, name);
-        x++;
-        if (x < arg_len) {
-            str_append_chars(fc->tkn_buffer, ", ");
-            str_append_chars(fc->h_code, ", ");
+    if (strcmp(func->cname, "main") == 0) {
+        str_append_chars(fc->h_code, "int _KI_ARGC, char** _KI_ARGV");
+        str_append_chars(fc->tkn_buffer, "int _KI_ARGC, char** _KI_ARGV");
+    } else {
+        int x = 0;
+        while (x < arg_len) {
+            FunctionArg *arg = array_get_index(func->args, x);
+            char *name = arg->name;
+            Type *type = arg->type;
+            fc_write_c_type(fc->tkn_buffer, type, name);
+            fc_write_c_type(fc->h_code, type, name);
+            x++;
+            if (x < arg_len) {
+                str_append_chars(fc->tkn_buffer, ", ");
+                str_append_chars(fc->h_code, ", ");
+            }
         }
-    }
 
-    if (func->can_error) {
-        if (arg_len > 0) {
-            str_append_chars(fc->tkn_buffer, ", ");
-            str_append_chars(fc->h_code, ", ");
+        if (func->can_error) {
+            if (arg_len > 0) {
+                str_append_chars(fc->tkn_buffer, ", ");
+                str_append_chars(fc->h_code, ", ");
+            }
+            str_append_chars(fc->tkn_buffer, "char** _KI_THROW_MSG");
+            str_append_chars(fc->h_code, "char** _KI_THROW_MSG");
         }
-        str_append_chars(fc->tkn_buffer, "char** _KI_THROW_MSG");
-        str_append_chars(fc->h_code, "char** _KI_THROW_MSG");
     }
     //
     str_append_chars(fc->h_code, ");\n");
@@ -516,6 +521,17 @@ void fc_write_c_func(FileCompiler *fc, Function *func) {
             str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS = ki__mem__calloc_flat(64 * 8);\n");
             str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS_MUT = ki__async__Mutex__make();\n");
             str_append_chars(fc->tkn_buffer, "KI_INITS();\n");
+
+            if (arg_len == 1) {
+                FunctionArg *arg = array_get_index(func->args, 0);
+                Type *type = arg->type;
+                Class *class = type->class;
+                str_append_chars(fc->tkn_buffer, "struct ");
+                str_append_chars(fc->tkn_buffer, class->cname);
+                str_append_chars(fc->tkn_buffer, "* ");
+                str_append_chars(fc->tkn_buffer, arg->name);
+                str_append_chars(fc->tkn_buffer, " = ki__type__String__generate_main_args(_KI_ARGC, _KI_ARGV);\n");
+            }
         }
         if (uses_async && strcmp(func->cname, "main") == 0) {
             str_append_chars(fc->tkn_buffer, "void* KI_MAIN_TMS = ki__async__Taskman__setup_task_managers();\n");
@@ -1101,9 +1117,16 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
     } else if (value->type == vt_true) {
         str_append_chars(result, "1");
     } else if (value->type == vt_group) {
-        str_append_chars(result, "(");
         fc_write_c_value(fc, value->item, false);
+        char *v = str_to_chars(fc->value_buffer);
+        result->length = 0;
+        // str_append_chars(result, "(");
+        // fc_write_c_type(result, value->return_type, NULL);
+        // str_append_chars(result, ")");
+        str_append_chars(result, "(");
+        str_append_chars(result, v);
         str_append_chars(result, ")");
+        free(v);
     } else if (value->type == vt_var) {
         str_append_chars(result, value->item);
     } else if (value->type == vt_threaded_global) {
