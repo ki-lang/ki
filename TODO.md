@@ -17,7 +17,6 @@
 - main args
 - if main has no return, make sure exit code is 0
 - object cloning
-- get rid of GEN_C, replace with fc counter & fc hash
 
 ## Later
 
