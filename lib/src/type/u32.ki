@@ -8,7 +8,7 @@ class u32 number:u:4 {
 	public func byte_swap() u32 {
 		@ bytes = sizeof(u32);
 		u32 result = 0;
-		ptr adr = getptr this + bytes - 1;
+		ptr adr = (getptr this) + bytes - 1;
 		ptr to_adr = getptr result;
 		@ c = 0;
 		while(c < bytes){
