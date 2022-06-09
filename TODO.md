@@ -16,7 +16,6 @@
 - object cloning
 - date/time library
 - mysql library
-- rewrite c generator
 - const types
 - better throw errors
 - increase allocator block_c from 1 byte to 4 bytes
@@ -24,6 +23,7 @@
 ## Later
 
 - more tests
+- rewrite c generator
 
 ## Future
 
