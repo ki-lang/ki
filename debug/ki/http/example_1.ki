@@ -58,37 +58,6 @@ func handler(http:Request req) http:Response{
 
 func main(Array<String> args) i32 {
 
-	@ v1 = "-|😀zz|";
-	@ v2 = "z";
-	println(v1.char_index_of(v2).str());
-	println(v1.byte_index_of(v2).str());
-	println(v1.reverse());
-
-	@ i = 123;
-
-	println(i.str());
-
-	@ str = "-😀-";
-	@ blen = str.bytes;
-	@ clen = str.chars();
-
-	println(blen.str());
-	println(clen.str());
-
-	println(str.substr_chars(1,1));
-
-	?String x = null;
-
-	@ a = "a";
-	@ b = "b";
-	@ c = a + b;
-
-	println(c);
-
-	//ifnull x return {
-	//	return 1;
-	//}
-
 	@ s = http:Server { port: 9000, handler: handler };
 	s.enable_ssl(4430, "./debug/ki/http/certs/localhost.crt", "./debug/ki/http/certs/localhost.key");
 	s.start() or return 1;

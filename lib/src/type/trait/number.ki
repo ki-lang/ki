@@ -46,4 +46,8 @@ trait Number {
     	return result;
 	}
 
+	public func __string() type:String {
+		return this.str();
+	}
+
 }

@@ -597,11 +597,41 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 optype = op_bit_shift_right;
             }
 
+            // If "+" and left or right is string, convert the other one to string if not string yet
+            Type *string_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "String"), NULL);
+            if (optype == op_add) {
+                Class *left_class = value->return_type->class;
+                Class *right_class = right->return_type->class;
+                if (left_class != NULL && right_class != NULL && left_class != right_class && (left_class == string_type->class || right_class == string_type->class)) {
+                    bool left_is_string = left_class == string_type->class;
+                    Value *non_str_value = !left_is_string ? value : right;
+                    ClassProp *prop = map_get(non_str_value->return_type->class->props, "__string");
+
+                    if (prop) {
+                        ValueFuncCall *fcall = value_generate_func_call(prop->func);
+
+                        array_push(fcall->arg_values, non_str_value);
+
+                        Value *nv = init_value();
+                        nv->type = vt_func_call;
+                        nv->item = fcall;
+                        nv->return_type = prop->func->return_type;
+
+                        if (left_is_string) {
+                            right = nv;
+                        } else {
+                            value = nv;
+                        }
+                    }
+                }
+            }
+
             ClassProp *prop = NULL;
             if (fn && value->return_type->class) {
                 prop = map_get(value->return_type->class->props, fn);
             }
             if (prop) {
+
                 if (right->return_type->class != value->return_type->class) {
                     fc_error(fc, "left & right value must be the same type", fn);
                 }

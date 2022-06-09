@@ -19,6 +19,8 @@
 - const types
 - better throw errors
 - f"" format string e.g. f"Hello {name}, {msg}"
+- integer type/byte checking
+- floats
 
 ## Later
 
