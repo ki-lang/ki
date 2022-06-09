@@ -52,7 +52,10 @@ func handler(http:Request req) http:Response{
 func main() i32 {
 
 	@ s = http:Server { port: 9000, handler: handler };
-	s.start() or return 1;
+	s.start() or return {
+		println("Failed to start http server");
+		return 1;
+	};
 
 	return 0;
 }
