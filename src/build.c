@@ -42,15 +42,12 @@ void cmd_build(Array *files, Map *options) {
 
     // -static option
     g_static = true;
-#if defined __APPLE__
-    g_static = false;
-#endif
-    if (map_contains(options, "--static")) {
-        g_static = true;
+    if (map_contains(options, "--shared")) {
+        g_static = false;
     }
     //
     g_nocache = false;
-    if (map_contains(options, "--clean")) {
+    if (map_contains(options, "--clear")) {
         g_nocache = true;
     }
 
@@ -185,4 +182,9 @@ void build_help() {
     printf("Usage: ki build {files} -o {output name/path}\n\n");
 
     printf("> Example: ki build src/*.ki -o myapp\n\n");
+
+    printf("# --clear              Clear cache\n");
+    printf("# --shared             Use shared libraries\n");
+
+    printf("\n");
 }
