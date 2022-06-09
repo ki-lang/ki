@@ -7,6 +7,7 @@ class AllocatorSettings norfc {
 	public u32 block_i = 0;
 	public u32 block_c = 0;
 	public ptr blocks_ptr;
+	public uxx block_max = 64;
 }
 
 class Allocator norfc {
@@ -14,7 +15,7 @@ class Allocator norfc {
 	private ?ki:async:Threaded<AllocatorSettings> settings;
 
 	public static func make(u64 size) Allocator {
-		@ alc = cast (calloc_flat(64)) as Allocator;
+		@ alc = cast (calloc_flat(sizeof(Allocator))) as Allocator;
 		alc.size = size;
 		alc.settings = ki:async:Threaded<AllocatorSettings>.make();
 		return alc;
@@ -22,17 +23,18 @@ class Allocator norfc {
 
 	// 1(10x)1(20x)15(40x)0(80x)102(160x)7(256x)13(256x)
 	// 1(10x) example
-	// (block_i,len:10,empty-count:1,empty-pos:1)|(pos){...}|(pos){NULL}|(pos){...}
+	// (settings*:4or8,block_i:4,len:1,empty-count:1,empty-pos:1)|(pos){...}|(pos){NULL}|(pos){...}
 
 	private func get_settings() AllocatorSettings {
 		@ settings_t = cast this.settings as ki:async:Threaded<AllocatorSettings>;
 		@ settings = settings_t.get();
 
 		ifnull settings set {
-			@ x = cast (alloc_flat(16)) as AllocatorSettings;
+			@ x = cast (alloc_flat(sizeof(AllocatorSettings))) as AllocatorSettings;
 			x.block_i = 0;
 			x.block_c = 0;
-			x.blocks_ptr = alloc_flat(256 * 8);
+			x.block_max = 32;
+			x.blocks_ptr = alloc_flat(x.block_max * sizeof(ptr));
 
 			settings_t.set(x);
 			return x;
@@ -64,12 +66,13 @@ class Allocator norfc {
 
 		if(settings.block_c > 0) {
 			// Get length from previous block
-			ptr block_ptr = settings.blocks_ptr + ((settings.block_c - 1) * 8);
+			ptr block_ptr = settings.blocks_ptr + ((settings.block_c - 1) * sizeof(ptr));
 			block_ptr = getptrv block_ptr as ptr;
-			block_ptr += 12;
+			block_ptr += 4 + sizeof(ptr);
 			len = getptrv block_ptr as u8;
 		}
 
+		// Create new block
 		settings.block_c++;
 		u16 new_len_16 = len * 2;
 		if(new_len_16 > 250){
@@ -77,8 +80,18 @@ class Allocator norfc {
 		}
 		u8 new_len = cast new_len_16 as u8;
 
+		// Increase list size if needed 
+		if(settings.block_c == settings.block_max){
+			settings.block_max *= 2;
+			ptr new_list = alloc_flat(settings.block_max * sizeof(ptr));
+			mem:copy(settings.blocks_ptr, new_list, settings.block_max * sizeof(ptr));
+			mem:free_flat(settings.blocks_ptr);
+			settings.blocks_ptr = new_list;
+		}
+
+		//
 		ptr new_block = alloc_flat(new_len * (this.size + 1) + 15);
-		ptr block_list_adr = settings.blocks_ptr + ((settings.block_c - 1) * 8);
+		ptr block_list_adr = settings.blocks_ptr + ((settings.block_c - 1) * sizeof(ptr));
 		setptrv block_list_adr to new_block;
 
 		setptrv new_block to settings; // Set block settings
@@ -92,30 +105,23 @@ class Allocator norfc {
 		new_block++;
 		empty_pos = 2;
 		setptrv new_block to empty_pos; // Set next empty index
-
-		if(settings.block_c > 200){
-			io:print("max block_c reached in allocator: ");
-			io:print(this.size.str());
-			io:print("\n");
-			main:main:raise(11);
-		}
 		
 		return new_block + 1 + 1; // skip empty_pos byte & skip value pos byte
 	}
 
 	private func get_chunk_from_block(AllocatorSettings settings) ptr {
-		ptr block_ptr = settings.blocks_ptr + ((settings.block_i) * 8);
+		ptr block_ptr = settings.blocks_ptr + ((settings.block_i) * sizeof(ptr));
 		block_ptr = getptrv block_ptr as ptr;
-		block_ptr += 12;
+		block_ptr += 4 + sizeof(ptr);
 		u8 len = getptrv block_ptr as u8;
 		block_ptr++;
 		u8 empty_count = getptrv block_ptr as u8;
 
 		while(empty_count == 0 && settings.block_i < (settings.block_c - 1)){
 			settings.block_i++;
-			block_ptr = settings.blocks_ptr + ((settings.block_i) * 8);
+			block_ptr = settings.blocks_ptr + ((settings.block_i) * sizeof(ptr));
 			block_ptr = getptrv block_ptr as ptr;
-			block_ptr += 12;
+			block_ptr += 4 + sizeof(ptr);
 			len = getptrv block_ptr as u8;
 			block_ptr++;
 			empty_count = getptrv block_ptr as u8;
@@ -183,12 +189,25 @@ class Allocator norfc {
 			settings.block_i = block_i;
 		}
 
-		//if(this.block_i > 0){
-			//this.block_i--;
-			//if(this.block_c > this.block_i + 10){
-			//	this.block_c--;
-			//	free_flat(this.blocks_ptr + ((this.block_c) * 8));
-			//}
-		//}
+		if(block_i == settings.block_c){
+			while(settings.block_c > settings.block_i + 10){
+				ptr block_list_ptr = settings.blocks_ptr + ((settings.block_c) * sizeof(ptr));
+				ptr block_ptr = getptrv block_list_ptr as ptr;
+				ptr block_ptr_ = block_ptr;
+				block_ptr += 4 + sizeof(ptr);
+				u8 len = getptrv block_ptr as u8;
+				block_ptr++;
+				u8 empty_count = getptrv block_ptr as u8;
+
+				if(empty_count != len) {
+					break;
+				}
+
+				ptr zero = 0;
+				setptrv block_list_ptr to zero;
+				free_flat(block_ptr_);
+				settings.block_c--;
+			}
+		}
 	}
 }

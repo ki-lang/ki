@@ -18,7 +18,7 @@
 - mysql library
 - const types
 - better throw errors
-- increase allocator block_c from 1 byte to 4 bytes
+- f"" format string e.g. f"Hello {name}, {msg}"
 
 ## Later
 

@@ -49,7 +49,9 @@ class String {
 	}
 
 	public func __free() {
-		mem:free(this.data);
+		if(this.is_const == false){
+			mem:free(this.data);
+		}
 		@ a = allocator sizeof(String);
 		a.free(this);
 	}
