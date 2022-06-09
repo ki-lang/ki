@@ -55,6 +55,9 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         fc_expect_token(fc, "(", false, true, false);
         // type or type of var
         IdentifierFor *idf = fc_read_and_get_idf(fc, scope, false, true, true);
+        if (!idf) {
+            fc_error(fc, "Unknown identifier", NULL);
+        }
         int size = 0;
         if (idf->type == idfor_class) {
             Class *class = idf->item;

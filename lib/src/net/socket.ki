@@ -56,21 +56,8 @@ class Socket {
 		};
 
 		// Set port
-		ptr portadr = getptr this.port;
-		ptr swapadr = getptr hints.ai_addr.sa_data;
-
-		i32 i = 0;
-		u8 v = 0;
-		while(i < 14){
-			setptrv (swapadr+i) to v;
-			i++;
-		}
-
-		u8 nr1 = getptrv portadr as u8;
-		u8 nr2 = getptrv portadr+1 as u8;
-
-		setptrv swapadr to nr2;
-		setptrv (swapadr+1) to nr1;
+		u16 port_swap = this.port.byte_swap();
+		setptrv hints.ai_addr.sa_data to port_swap;
 		
  		@ p = hints;
 
