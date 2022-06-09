@@ -241,14 +241,14 @@ class Socket {
 			if((val > 0xffffff) || (parts.p1 > 0xff) || (parts.p2 > 0xff) || (parts.p3 > 0xff)) {
 				throw invalid_ip;
 			}
-			println(parts.p1.str());
-			println(parts.p2.str());
-			println(parts.p3.str());
-			println(parts.p4.str());
+			//println(parts.p1.str());
+			//println(parts.p2.str());
+			//println(parts.p3.str());
+			//println(parts.p4.str());
 			val = val bitOR ((parts.p1 << 24) bitOR (parts.p2 << 16) bitOR (parts.p3 << 8));
 		}
 
-		return val;
-		//return val.byte_swap();
+		//return val;
+		return val.byte_swap();
 	}
 }

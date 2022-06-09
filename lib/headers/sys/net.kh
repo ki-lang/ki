@@ -8,13 +8,17 @@ class in_addr norfc {
 class sockaddr_in norfc {
     public u16 sin_family;
     public u16 sin_port;
-    public u32 sin_addr;
-    public i8[8] sin_zero; // empty data to increase class byte size to that of sockaddr
+    public u32 sin_addr; // internet address
+    //public i8[8] sin_zero; // empty data to increase class byte size to that of sockaddr
+    public u64 sin_zero;
 }
 
 class sockaddr norfc {
     public u16 sa_family;
-    public i8[14] sa_data;
+    //public i8[14] sa_data;
+    public u64 sa_data;
+    public u32 sa_data_;
+    public u16 sa_data__;
 }
 
 class addrinfo norfc {
