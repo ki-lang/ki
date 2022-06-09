@@ -12,7 +12,7 @@ trait Number {
 
     	// Handle 0 explicitly, otherwise empty string is printed for 0
     	if (num == 0) {
-			result = result.append_char('0');
+			result = result.append_byte('0');
     	    return result;
     	}
  
@@ -32,12 +32,12 @@ trait Number {
 			} else {
     	    	ch = rem + '0';
 			}
-			result = result.append_char(ch);
+			result = result.append_byte(ch);
     	    num = num/base;
     	}
  
     	if (negative) {
-			result = result.append_char('-');
+			result = result.append_byte('-');
 		}
  
     	// Reverse the string

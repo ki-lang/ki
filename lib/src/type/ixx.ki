@@ -1,7 +1,7 @@
 
 namespace type;
 
-class ixx number:u:8 {
+class ixx number:s:8 {
 
 	trait type_trait:Number;
 	

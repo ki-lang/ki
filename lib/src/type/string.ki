@@ -80,7 +80,7 @@ class String {
 		return count;
 	}
 
-	public func append_char(u8 ch) String {
+	public func append_byte(u8 ch) String {
 
 		@ size = this.bytes + 1;
 		@ s = String.make_empty(size);
@@ -104,7 +104,7 @@ class String {
 		this.bytes = new_bytes;
 	}
 
-	public func increase_mem_size(uxx len){
+	private func increase_mem_size(uxx len){
 		uxx size = this.mem_size;
 		uxx new_size = size;
 		uxx expect_size = this.mem_size + len;
@@ -120,36 +120,63 @@ class String {
 		}
 	}
 
-	public func index_of(String str) uxx {
-		if(str.bytes == 0){
+	public func char_index_of(String str) ixx {
+		if(str.bytes == 0 || str.bytes > this.bytes){
 			return -1;
 		}
-		uxx last_char_pos = this.bytes - str.bytes + 1;
-		uxx result = 0;
-		uxx eq_count = 0;
-		ptr adr1 = this.data;
-		ptr adr2 = str.data;
-		while(result < last_char_pos){
-			adr1 += eq_count;
-			adr2 += eq_count;
-			u8 ch1 = getptrv adr1 as u8;
-			u8 ch2 = getptrv adr2 as u8;
-			if(ch1 == ch2){
-				eq_count++;
-				if(eq_count == str.bytes){
-					return result;
-				}
-				continue;
-			} else if(eq_count > 0) {
-				eq_count = 0;
+
+		ixx count = 0;
+		ixx pos = 0;
+		ptr adr = this.data;
+		while(pos < this.bytes){
+			// Check if equal
+			if(mem:equal(adr, str.data, str.bytes)){
+				return count;
 			}
-			result++;
-			adr1++;
+
+			// Goto next char
+			u8 bytec = 1;
+			u8 byte = getptrv adr as u8;
+			if((byte bitAND 128) > 0){
+				bytec = 0;
+				while((byte bitAND 128) > 0 ){
+					bytec++;
+					byte = byte << 1;
+				}
+			}
+			if(bytec > 4){
+				// Invalid utf8 char
+				bytec = 1;
+			}
+			count += 1;
+			pos += bytec;
+			adr += bytec;
+
+			if((pos + str.bytes) > this.bytes){
+				return -1;
+			}
 		}
 		return -1;
 	}
 
-	public func to_cstring() cstring {
+	public func byte_index_of(String str) ixx {
+		if(str.bytes == 0){
+			return -1;
+		}
+		ixx last_char_pos = this.bytes - str.bytes + 1;
+		ixx count = 0;
+		ptr adr = this.data;
+		while(count < last_char_pos){
+			if(mem:equal(adr, str.data, str.bytes)){
+				return count;
+			}
+			count++;
+			adr++;
+		}
+		return -1;
+	}
+
+	public func cstr() cstring {
 		cstring cstr = cast mem:alloc(this.bytes + 1) as cstring;
 		mem:copy(this.data, cstr, this.bytes);
 		ptr x = cstr;
@@ -188,18 +215,40 @@ class String {
 	}
 
 	public func reverse() String {
-		@ c = String.make_empty(this.bytes);
 		@ len = this.bytes;
+		@ c = String.make_empty(this.bytes);
 		c.bytes = len;
-		ptr adr_from = this.data + len - 1;
-		ptr adr_to = c.data;
-		while(len > 0){
-			len--;
-			u8 ch = getptrv adr_from as u8;
-			setptrv adr_to to ch;
-			adr_to++;
-			adr_from--;
+
+		ixx pos = 0;
+		ptr adr = this.data;
+		ptr adr2 = c.data + len;
+		while(pos < len){
+			u8 bytec = 1;
+			u8 byte = getptrv adr as u8;
+			if(byte >= 128){
+				bytec = 0;
+				while(byte >= 128){
+					bytec++;
+					byte = byte << 1;
+				}
+			}
+			if(bytec > 4){
+				// Invalid utf8 char
+				bytec = 1;
+			}
+			pos += bytec;
+			if(pos > len){
+				// corrupt utf8, prevent memory overwrite
+				@ overflow_count = pos - len;
+				mem:clear(adr2 - overflow_count, overflow_count);
+				break;
+			}
+
+			adr2 -= bytec;
+			mem:copy(adr, adr2, bytec);
+			adr += bytec;
 		}
+
 		return c;
 	}
 

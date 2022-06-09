@@ -34,7 +34,7 @@ class CpuInfo {
 				v = "";
 				continue;
 			}
-			v = v.append_char(ch);
+			v = v.append_byte(ch);
 		}
 		throw failed_to_read_core_count;
 	}

@@ -4,7 +4,7 @@ namespace fs;
 #header "sys/fd"
 
 func read(String path) !String {
-	@ fd = main:main:open(path.to_cstring(), 0, 0);
+	@ fd = main:main:open(path.cstr(), 0, 0);
 	if(fd == -1) {
 		throw could_not_open_file;
 	}
@@ -59,7 +59,7 @@ func write(String path, String content, bool append) ! {
 	if(append){
 		flags = flags bitOR 1024;
 	}
-	@ fd = main:main:open(path.to_cstring(), flags, 256 bitOR 128 bitOR 32 bitOR 4); // permissions: 644 rw,r,r
+	@ fd = main:main:open(path.cstr(), flags, 256 bitOR 128 bitOR 32 bitOR 4); // permissions: 644 rw,r,r
 	if(fd == -1) {
 		throw could_not_create_or_open_file;
 	}
@@ -72,7 +72,7 @@ func write(String path, String content, bool append) ! {
 }
 
 func exists(String path) bool {
-	@ fd = main:main:open(path.to_cstring(), 0, 0);
+	@ fd = main:main:open(path.cstr(), 0, 0);
 	if(fd == -1) {
 		return false;
 	}

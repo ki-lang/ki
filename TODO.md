@@ -3,7 +3,6 @@
 
 - replace nx_json with cJSON
 - dont allow class instances in async calls
-- utf8 support | keep strings as byte arrays | convert to runes for substr,indexof,char and convert back
 - websockets (+ websockets secure)
 - signals
 - handle read/write errors e.g. EAGAIN

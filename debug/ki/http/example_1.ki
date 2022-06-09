@@ -58,6 +58,12 @@ func handler(http:Request req) http:Response{
 
 func main(Array<String> args) i32 {
 
+	@ v1 = "-|😀zz|";
+	@ v2 = "z";
+	println(v1.char_index_of(v2).str());
+	println(v1.byte_index_of(v2).str());
+	println(v1.reverse());
+
 	@ i = 123;
 
 	println(i.str());

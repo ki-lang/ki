@@ -14,8 +14,8 @@ class SSL {
 			panic ssl_private_key_file_not_found;
 		}
 
-		@ certificate = cert_path.to_cstring();
-		@ private_key = private_key_path.to_cstring();
+		@ certificate = cert_path.cstr();
+		@ private_key = private_key_path.cstr();
 
 		@ ctx = main:main:SSL_CTX_new(main:main:TLS_server_method());
 		ifnull ctx panic failed_to_init_ssl_context;

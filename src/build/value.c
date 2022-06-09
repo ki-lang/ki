@@ -397,6 +397,10 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             }
 
             fc_depends_on(fc, class->fc);
+            for (int i = 0; i < class->traits->length; i++) {
+                Trait *tr = array_get_index(class->traits, i);
+                fc_depends_on(fc, tr->fc);
+            }
 
             if (fc_get_char(fc, 0) == '.') {
                 // Prop access
