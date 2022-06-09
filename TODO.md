@@ -21,6 +21,7 @@
 - f"" format string e.g. f"Hello {name}, {msg}"
 - integer type/byte checking
 - floats
+- kifmt
 
 ## Later
 
