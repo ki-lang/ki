@@ -4,6 +4,13 @@ namespace net;
 #header "sys/net"
 #header "sys/io"
 
+class IPParts norfc {
+	public u32 p1 = 0;
+	public u32 p2 = 0;
+	public u32 p3 = 0;
+	public u32 p4 = 0;
+}
+
 class Socket {
 
 	enum IPTYPE {
@@ -152,5 +159,105 @@ class Socket {
 		alc.free(clientaddr);
 
 		return con;
+	}
+
+	// in c used to set sin_addr.s_addr
+	// e.g. inet_aton("63.161.169.137", &myaddr.sin_addr.s_addr);
+	public static func inet_aton(String ip) !u32 {
+
+		@ cip = ip.cstr();
+		ptr cp = cip;
+
+		u32 val = 0;
+		i32 base = 10;
+		i32 n = 0;
+		u8 c = 0;
+		@ parts = IPParts {};
+		ptr parts_ptr = parts;
+		ptr pp = parts;
+		c = getptrv cp as u8;
+
+		while(true) {
+			// Collect number up to ``.''.
+			// Values are specified as for C:
+			// 0x=hex, 0=octal, isdigit=decimal.
+			if (c.is_number() == false){
+				throw invalid_ip;
+			}
+			val = 0;
+			base = 10;
+			if (c == '0') {
+				cp++;
+				c = getptrv cp as u8;
+				if (c == 'x' || c == 'X'){
+					base = 16;
+					cp++;
+					c = getptrv cp as u8;
+				} else {
+					base = 8;
+				}
+			}
+			while(true) {
+				if (c.is_ascii() && c.is_number()) {
+					val = (val * base) + (c - '0');
+					cp++;
+					c = getptrv cp as u8;
+				} else if (base == 16 && c.is_ascii() && c.is_hex()) {
+					u8 a_ch = 'A';
+					if(c.is_lower()){
+						a_ch = 'a';
+					}
+					val = (val << 4) bitOR (c + 10 - a_ch);
+					cp++;
+					c = getptrv cp as u8;
+				} else {
+					break;
+				}
+			}
+			if (c == '.') {
+				// Internet format:
+				// a.b.c.d
+				// a.b.c	(with c treated as 16 bits)
+				// a.b	(with b treated as 24 bits)
+				if (pp >= parts_ptr + 3) {
+					throw invalid_ip;
+				}
+				setptrv pp to val;
+				pp += sizeof(u32);
+				cp++;
+				c = getptrv cp as u8;
+			} else {
+				break;
+			}
+		}
+		// Check for trailing characters.
+		if (c != '\0' && (c.is_ascii() == false || c.is_whitespace() == false)){
+			throw invalid_ip;
+		}
+		// Concoct the address according to
+		// the number of parts specified.
+		n = pp - parts_ptr + 1;
+		if(n == 0) {
+			throw invalid_ip_non_digit;
+		} else if(n == 1) {
+		} else if(n == 2) {
+			if((val > 0xffffff) || (parts.p1 > 0xff)) {
+				throw invalid_ip;
+			}
+			val = val bitOR (parts.p1 << 24);
+		} else if(n == 3) {
+			if((val > 0xffffff) || (parts.p1 > 0xff) || (parts.p2 > 0xff)) {
+				throw invalid_ip;
+			}
+			val = val bitOR ((parts.p1 << 24) bitOR (parts.p2 << 16));
+		} else if(n == 4) {
+			if((val > 0xffffff) || (parts.p1 > 0xff) || (parts.p2 > 0xff) || (parts.p3 > 0xff)) {
+				throw invalid_ip;
+			}
+			val = val bitOR ((parts.p1 << 24) bitOR (parts.p2 << 16) bitOR (parts.p3 << 8));
+		}
+
+		// return val;
+		return val.byte_swap();
 	}
 }

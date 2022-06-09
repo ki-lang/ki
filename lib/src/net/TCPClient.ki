@@ -1,0 +1,15 @@
+
+namespace net;
+
+class TCPClient {
+
+	public static func init(String host, u16 port){
+
+		@ clientaddr = main:main:sockaddr_in {
+			sin_family: cast Socket.IPTYPE.ipv4 as u16,
+			sin_port: port.htons(),
+			sin_addr: 0,
+		};
+
+	}
+}

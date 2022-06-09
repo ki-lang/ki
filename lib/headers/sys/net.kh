@@ -1,15 +1,15 @@
 
 namespace main;
 
-//class in_addr norfc {
-//	ixx s_addr;
-//}
+class in_addr norfc {
+	public u32 s_addr;
+}
 
 class sockaddr_in norfc {
-    public i16 sin_family;
+    public u16 sin_family;
     public u16 sin_port;
-    public ixx sin_addr;
-    public i8 sin_zero;
+    public u32 sin_addr;
+    public i8[8] sin_zero; // empty data to increase class byte size to that of sockaddr
 }
 
 class sockaddr norfc {

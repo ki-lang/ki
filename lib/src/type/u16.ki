@@ -4,5 +4,20 @@ namespace type;
 class u16 number:u:2 {
 
 	trait type_trait:Number;
+
+	public func htons() u16 {
+
+		ptr portadr = getptr this;
+		u16 buf = 0#u16;
+		ptr swapadr = getptr buf;
+
+		u8 nr1 = getptrv portadr as u8;
+		u8 nr2 = getptrv portadr+1 as u8;
+
+		setptrv swapadr to nr2;
+		setptrv (swapadr+1) to nr1;
+
+		return buf;
+	}
 	
 }
