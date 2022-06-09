@@ -14,6 +14,7 @@ Map *macro_defines;
 char *g_output_name;
 bool g_static;
 bool g_nocache;
+bool g_verbose;
 Map *g_fc_by_ki_filepath;
 
 Map *c_identifiers;

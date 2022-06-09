@@ -140,7 +140,9 @@ void fc_compile_o_file(FileCompiler *fc) {
     strcat(cmd, " ");
     strcat(cmd, fc->c_filepath);
 
-    printf("Write .o: %s\n", fc->o_filepath);
+    if (g_verbose) {
+        printf("Write .o: %s\n", fc->o_filepath);
+    }
 
     int result = run_cmd(cmd);
     if (result == -1) {

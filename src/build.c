@@ -45,7 +45,10 @@ void cmd_build(Array *files, Map *options) {
     if (map_contains(options, "--shared")) {
         g_static = false;
     }
-    //
+    g_verbose = false;
+    if (map_contains(options, "--verbose")) {
+        g_verbose = true;
+    }
     g_nocache = false;
     if (map_contains(options, "--clear")) {
         g_nocache = true;
@@ -67,7 +70,8 @@ void cmd_build(Array *files, Map *options) {
 
     // Step 1. create fc and scan types
     // Step 1.1 scan headers
-    printf("# SCAN TYPES\n");
+    if (g_verbose)
+        printf("# SCAN TYPES\n");
     for (int i = 0; i < files->length; i++) {
         char *filepath = array_get_index(files, i);
         fc_new_file(pkc, filepath, true);
@@ -76,28 +80,33 @@ void cmd_build(Array *files, Map *options) {
     allow_new_namespaces = false;
 
     // Step 2. Scan values
-    printf("# CHECK CACHE\n");
+    if (g_verbose)
+        printf("# CHECK CACHE\n");
     build_cache_checks();
 
     // Step 3. Scan values
-    printf("# SCAN ARGS/PROPS\n");
+    if (g_verbose)
+        printf("# SCAN ARGS/PROPS\n");
     fc_scan_values();
 
     build_ast_stage = true;
 
     // Step 4. Build ASTs
-    printf("# BUILD AST\n");
+    if (g_verbose)
+        printf("# BUILD AST\n");
     fc_build_asts();
     parse_time = get_time() - parse_time;
 
     // Step 5. Write c
-    printf("# TRANSLATE AST\n");
+    if (g_verbose)
+        printf("# TRANSLATE AST\n");
     write_c_time = get_time();
     fc_write_c_all();
     write_c_time = get_time() - write_c_time;
 
     // Step 6. Compile
-    printf("# COMPILE\n");
+    if (g_verbose)
+        printf("# COMPILE\n");
     compile_time = get_time();
     compile_all();
     compile_time = get_time() - compile_time;
@@ -183,8 +192,9 @@ void build_help() {
 
     printf("> Example: ki build src/*.ki -o myapp\n\n");
 
-    printf("# --clear              Clear cache\n");
-    printf("# --shared             Use shared libraries\n");
+    printf("  --clear              Clear cache\n");
+    printf("  --shared             Use shared libraries\n");
+    printf("  --verbose            Outputs extra information\n");
 
     printf("\n");
 }
