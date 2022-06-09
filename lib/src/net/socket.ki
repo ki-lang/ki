@@ -65,7 +65,7 @@ class Socket {
 
         	this.listenfd = main:main:socket(p.ai_family, p.ai_socktype, 0);
 			if(this.listenfd < 0){
-				io:print("Cant create socket\n");
+				throw cannot_create_socket;
 			}
 
 			// SOL_SOCKET: 65535 // 0xFFFF
@@ -157,7 +157,7 @@ class Socket {
 
 		u32 val = 0;
 		i32 base = 10;
-		i32 n = 0;
+		i32 n = 1;
 		u8 c = 0;
 		@ parts = IPParts {};
 		ptr parts_ptr = parts;
@@ -206,13 +206,14 @@ class Socket {
 				// a.b.c.d
 				// a.b.c	(with c treated as 16 bits)
 				// a.b	(with b treated as 24 bits)
-				if (pp >= parts_ptr + 3) {
+				if (pp >= parts_ptr + 12) {
 					throw invalid_ip;
 				}
 				setptrv pp to val;
-				pp += sizeof(u32);
+				pp += 4;
 				cp++;
 				c = getptrv cp as u8;
+				n++;
 			} else {
 				break;
 			}
@@ -223,7 +224,6 @@ class Socket {
 		}
 		// Concoct the address according to
 		// the number of parts specified.
-		n = pp - parts_ptr + 1;
 		if(n == 0) {
 			throw invalid_ip_non_digit;
 		} else if(n == 1) {
@@ -241,10 +241,14 @@ class Socket {
 			if((val > 0xffffff) || (parts.p1 > 0xff) || (parts.p2 > 0xff) || (parts.p3 > 0xff)) {
 				throw invalid_ip;
 			}
+			println(parts.p1.str());
+			println(parts.p2.str());
+			println(parts.p3.str());
+			println(parts.p4.str());
 			val = val bitOR ((parts.p1 << 24) bitOR (parts.p2 << 16) bitOR (parts.p3 << 8));
 		}
 
-		// return val;
-		return val.byte_swap();
+		return val;
+		//return val.byte_swap();
 	}
 }

@@ -330,6 +330,9 @@ bool type_compatible(Type *t1, Type *t2) {
     if (t1->is_pointer != t2->is_pointer) {
         return false;
     }
+    // if (t1->type == type_number && t2->type == type_enum) {
+    //     return true;
+    // }
     if (t1->type != t2->type) {
         return false;
     }

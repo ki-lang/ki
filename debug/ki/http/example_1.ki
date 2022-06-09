@@ -58,9 +58,19 @@ func handler(http:Request req) http:Response{
 
 func main(Array<String> args) i32 {
 
-	@ s = http:Server { port: 9000, handler: handler };
-	s.enable_ssl(4430, "./debug/ki/http/certs/localhost.crt", "./debug/ki/http/certs/localhost.key");
-	s.start() or return 1;
+	@ client = ki:net:TCPClient.init("127.0.0.1", 9000) or return {
+		println("Failed to create tcp client");
+		return 1;
+	};
+	client.send("test") or return {
+		println("Failed to send");
+		return 1;
+	};
+	println("Sent");
+
+	//@ s = http:Server { port: 9000, handler: handler };
+	//s.enable_ssl(4430, "./debug/ki/http/certs/localhost.crt", "./debug/ki/http/certs/localhost.key");
+	//s.start() or return 1;
 
 	return 0;
 }

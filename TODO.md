@@ -22,6 +22,7 @@
 - integer type/byte checking
 - floats
 - kifmt
+- throw error class with error_code & error_msg
 
 ## Later
 

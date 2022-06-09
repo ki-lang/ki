@@ -2,5 +2,7 @@
 namespace type;
 
 class ptr norfc {
+
 	public uxx adr;
+
 }
