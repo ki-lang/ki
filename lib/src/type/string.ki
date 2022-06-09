@@ -12,7 +12,6 @@ class String {
 		uxx mem_size = bytes;
 		ptr new_data = data;
 		if(is_const == false){
-			mem_size += 4;
 			new_data = mem:alloc(mem_size);
 		}
 		@ str = String { data: new_data, mem_size: mem_size, bytes: bytes, is_const: is_const };
