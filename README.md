@@ -37,6 +37,14 @@ make
 install.bat
 ```
 
+## Basic usage
+
+```
+// ki -h for help
+ki build src/*.ki -o hello
+./hello
+```
+
 ## Http server example
 
 ```
