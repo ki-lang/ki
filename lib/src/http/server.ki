@@ -224,8 +224,7 @@ class Server {
 							}
 
 							hcon.task = null;
-							@ alc = allocator sizeof(hcon);
-							alc.free(hcon);
+							hcon.__free();
 							connections.clear(fd);
 
 							err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
@@ -267,8 +266,7 @@ class Server {
 									hcon.con.free_ssl();
 								}
 
-								@ alc = allocator sizeof(hcon);
-								alc.free(hcon);
+								hcon.__free();
 								connections.clear(fd);
 								fd:remove_from_set(read_set, fd);
 								err_check = main:main:close(fd);
