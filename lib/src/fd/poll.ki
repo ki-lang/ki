@@ -1,0 +1,137 @@
+
+namespace fd;
+
+class PollEvent {
+	readonly u32 events = 0;
+	readonly u32 fd;
+	readonly u32 data = 0;
+}
+
+class Poll {
+
+	private Array<PollEvent> result;
+	private ptr events;
+
+	#if OS_WIN || OS_OSX
+	private ptr read_set;
+	#else
+	private i32 epoll_fd;
+	private main:main:epoll_event event_buf;
+	#end
+
+	private i32 max_connections;
+	private i32 max_fd = 0;
+	private u32 fd_count = 0;
+
+	public static func init(i32 max_connections) Poll {
+
+		if(sizeof(PollEvent) != 12){
+			panic incorrect_poll_event_size;
+		}
+
+		@ result = Array<PollEvent>.make(2);
+		ptr events = mem:calloc(max_connections * sizeof(PollEvent));
+
+		#if OS_WIN || OS_OSX
+		@ read_set = mem:calloc(max_connections); // todo : too much memory, divide by 8
+		return Poll { result: result, max_connections: max_connections, read_set: read_set, events: events };
+		#else
+		@ epfd = main:main:epoll_create(1);
+		@ buf = cast mem:calloc(sizeof(main:main:epoll_event)) as main:main:epoll_event; 
+		return Poll { result: result, max_connections: max_connections, epoll_fd: epfd, event_buf: buf, events: events };
+		#end
+
+	}
+
+	public func poll() Array<PollEvent> {
+		//
+		@ result = this.result;
+		result.clear();
+		//
+
+		#if OS_WIN || OS_OSX
+		@ read_set = this.read_set;
+		mem:clear(read_set, this.max_connections);
+		each this.fds as fdi {
+			fd:add_to_set(read_set, fdi);
+		}
+		@ select_result = main:main:select(maxfd + 1, read_set, null, null, null);
+		#else
+		i32 event_count = main:main:epoll_wait(this.epoll_fd, this.events, this.fd_count, 0);
+		@ select_result = 1;
+		#end
+
+		if(select_result <= 0){
+			return result;
+		}
+
+		#if OS_WIN || OS_OSX
+		i32 i = 3;
+		i32 max = this.max_fd + 2;
+		#else
+		i32 i = 0;
+		i32 max = event_count;
+		#end
+
+		while(i < max){
+
+			#if OS_WIN || OS_OSX
+			@ isset = fd:isset(read_set, i);
+			#else
+			@ isset = true;
+			#end
+
+			i++;
+
+			if(isset == false){
+				continue;
+			}
+
+			@ event = cast (this.events + (i * sizeof(PollEvent))) as PollEvent;
+			@ fd = event.fd;
+
+			result.push(event);
+		}
+
+		return result;
+	}
+
+	public func add(i32 fd) {
+
+		#if OS_WIN || OS_OSX
+		if(fd > this.max_connections){
+			return;
+		}
+		if(fd > this.max_fd){
+			this.max_fd = fd;
+		}
+		ptr adr = this.events;
+		adr += fd * sizeof(PollEvent);
+		PollEvent ev = cast adr as PollEvent;
+		ev.fd = fd;
+		#else
+		Poll.epoll_ctl_add(this.event_buf, this.epoll_fd, fd, main:main:EPOLL.EPOLLIN);
+		#end
+
+		this.fd_count++;
+	}
+
+	public func remove(i32 fd) {
+		#if OS_WIN || OS_OSX
+		@ i = this.fds.index_of(fd) or return;
+		this.fds.remove(i);
+		#else
+		@ err_check = main:main:epoll_ctl(this.epoll_fd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
+		#end
+
+		this.fd_count--;
+	}
+
+	#if OS_LINUX
+	public static func epoll_ctl_add(main:main:epoll_event ev, i32 epfd, i32 fd, u32 events) {
+		ev.events = events;
+		ev.fd = fd;
+		@ check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_ADD, fd, ev);
+	}
+	#end
+}

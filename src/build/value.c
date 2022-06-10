@@ -316,7 +316,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         idf = idf_find_in_scope(idf_scope, id);
         if (idf == NULL) {
             if (id->namespace) {
-                printf("Found '%d' tokens within this namespace '%s' : ", idf_scope->identifiers->keys->length, id->namespace);
+                printf("Found '%d' identifiers within this namespace '%s' : ", idf_scope->identifiers->keys->length, id->namespace);
                 for (int i = 0; i < idf_scope->identifiers->keys->length; i++) {
                     char *key = array_get_index(idf_scope->identifiers->keys, i);
                     if (i > 0) {

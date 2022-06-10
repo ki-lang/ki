@@ -8,6 +8,7 @@
 		"fd": "src/fd",
 		"fs": "src/fs",
 		"net": "src/net",
+		"tcp": "src/tcp",
 		"http": "src/http",
 		"string": "src/string",
 		"async": "src/async"

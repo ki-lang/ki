@@ -69,11 +69,9 @@ class Server {
 		@ epfd = main:main:epoll_create(1);
 		@ buf_ev = cast mem:calloc(sizeof(main:main:epoll_event)) as main:main:epoll_event; 
 		Server.epoll_ctl_add(buf_ev, epfd, sock.fd, main:main:EPOLL.EPOLLIN);
-		fd:set_non_block(sock.fd);
 
 		notnull ssl_sock do {
 			Server.epoll_ctl_add(buf_ev, epfd, ssl_sock.fd, main:main:EPOLL.EPOLLIN);
-			fd:set_non_block(ssl_sock.fd);
 		}
 
 		ptr events = mem:calloc(this.max_connections * sizeof(main:main:epoll_event));
