@@ -52,8 +52,15 @@ class Poll {
 		#if OS_WIN || OS_OSX
 		@ read_set = this.read_set;
 		mem:clear(read_set, this.max_connections);
-		each this.fds as fdi {
-			fd:add_to_set(read_set, fdi);
+		ptr adr = this.events;
+		@ i = 3;
+		@ until = this.max_fd + 1;
+		while(i < until) {
+			PollEvent ev = cast adr as PollEvent;
+			if(ev.fd > 0) {
+				fd:add_to_set(read_set, ev.fd);
+			}
+			adr += sizeof(PollEvent);
 		}
 		@ select_result = main:main:select(maxfd + 1, read_set, null, null, null);
 		#else
@@ -118,8 +125,10 @@ class Poll {
 
 	public func remove(i32 fd) {
 		#if OS_WIN || OS_OSX
-		@ i = this.fds.index_of(fd) or return;
-		this.fds.remove(i);
+		ptr adr = this.events;
+		adr += fd * sizeof(PollEvent);
+		PollEvent ev = cast adr as PollEvent;
+		ev.fd = 0;
 		#else
 		@ err_check = main:main:epoll_ctl(this.epoll_fd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
 		#end
