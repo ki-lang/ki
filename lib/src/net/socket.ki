@@ -31,70 +31,52 @@ class Socket {
 		http: 132, // IPPROTO_SCTP
 	};
 
+	public String host;
 	public u16 port;
-	public Socket.FLAGS flags = Socket.FLAGS.passive;
-	public Socket.TYPE type = Socket.TYPE.stream;
-	public Socket.IPTYPE ip_type = Socket.IPTYPE.ipv4;
+	public i32 fd = 0;
+	public main:main:sockaddr_in address;
 
-	public i32 listenfd = 0;
+	public static func init(String host, u16 port, Socket.TYPE type) !Socket {
+
+		@ fd = main:main:socket(Socket.IPTYPE.ipv4#u32, cast type as u32, 0);
+		if(fd < 0){
+			println("Cannot create socket");
+			throw cannot_create_socket;
+		}
+
+		@ c = inet_aton(host) or value 0;
+		if(c == 0){
+			println("Invalid IP");
+			throw invalid_ip;
+		}
+
+		@ clientaddr = main:main:sockaddr_in {
+			sin_family: Socket.IPTYPE.ipv4#u16,
+			sin_port: port.byte_swap(),
+			sin_addr: c,
+			sin_zero: 0,
+		};
+
+		return Socket{ host: host, port: port, fd: fd, address: clientaddr };
+	}
 
 	public func listen() ! {
 
-		i32 success = 0;
-
- 		@ hints = main:main:addrinfo {
-			 ai_flags: Socket.FLAGS.passive#i32,
-			 ai_family: Socket.IPTYPE.ipv4#i32,
-			 ai_socktype: Socket.TYPE.stream#i32,
-			 ai_protocol: Socket.PROTOCOL.http#i32,
-			 ai_addrlen: 16,
-			 ai_addr: main:main:sockaddr {
-				 sa_family: Socket.IPTYPE.ipv4#i32,
-			 },
-			 ai_canonname: null,
-			 ai_next: null,
-		};
-
-		// Set port
-		u16 port_swap = this.port.byte_swap();
-		setptrv hints.ai_addr.sa_data to port_swap;
-		
- 		@ p = hints;
-
-		while(p != null){
-
-        	this.listenfd = main:main:socket(p.ai_family, p.ai_socktype, 0);
-			if(this.listenfd < 0){
-				throw cannot_create_socket;
-			}
-
-			// SOL_SOCKET: 65535 // 0xFFFF
-			// SO_KEEPALIVE: 4
-			i32 reuseaddr = 1;
-			success = main:main:setsockopt(this.listenfd, 65535, 4, getptr reuseaddr, sizeof(i32));
-
-        	if (this.listenfd == -1) { continue; }
-			success = main:main:bind(this.listenfd, p.ai_addr, p.ai_addrlen);
-        	if (success == 0){ break; }
-
-			p = p.ai_next;
-		}
-
-		if (p == null) {
+		@ success = main:main:bind(this.fd, cast this.address as main:main:sockaddr, sizeof(main:main:sockaddr_in));
+        if (success == -1){
         	io:print("Could not bind to port: ");
         	io:println(this.port.str());
-        	throw could_not_bind;
-    	}
+			throw failed_to_bind_to_port;
+		}
+
 		// c:freeaddrinfo(res);
 
 		// listen for incoming connections
-		success = main:main:listen(this.listenfd, 10000); // 10k max pending connections
+		success = main:main:listen(this.fd, 10000); // 10k max pending connections
  	    if (success != 0 ) {
         	io:println("Unable to listen on port");
 			throw listen_error;
  	    }
-
-		//main:main:fcntl(this.listenfd, 4, 4001);
 	}
 
 	public func set_keep_alive(i32 fd){
@@ -127,14 +109,10 @@ class Socket {
 	public func accept_connection() !Connection {
 		// 
 		@ alc = allocator 48;
-		//@ clientaddr = main:main:sockaddr_in {
-		//	sin_addr: 0
-		//};
 		@ clientaddr = cast alc.get_chunk() as main:main:sockaddr_in;
-		i32 addrlen = 16;
+		i32 addrlen = sizeof(main:main:sockaddr_in);
 
-		i32 new_fd = main:main:accept(this.listenfd, clientaddr, getptr addrlen);
-
+		i32 new_fd = main:main:accept(this.fd, clientaddr, getptr addrlen);
 		if (new_fd == -1){
 			throw failed_to_accept;
 		}
@@ -148,107 +126,4 @@ class Socket {
 		return con;
 	}
 
-	// in c used to set sin_addr.s_addr
-	// e.g. inet_aton("63.161.169.137", &myaddr.sin_addr.s_addr);
-	public static func inet_aton(String ip) !u32 {
-
-		@ cip = ip.cstr();
-		ptr cp = cip;
-
-		u32 val = 0;
-		i32 base = 10;
-		i32 n = 1;
-		u8 c = 0;
-		@ parts = IPParts {};
-		ptr parts_ptr = parts;
-		ptr pp = parts;
-		c = getptrv cp as u8;
-
-		while(true) {
-			// Collect number up to ``.''.
-			// Values are specified as for C:
-			// 0x=hex, 0=octal, isdigit=decimal.
-			if (c.is_number() == false){
-				throw invalid_ip;
-			}
-			val = 0;
-			base = 10;
-			if (c == '0') {
-				cp++;
-				c = getptrv cp as u8;
-				if (c == 'x' || c == 'X'){
-					base = 16;
-					cp++;
-					c = getptrv cp as u8;
-				} else {
-					base = 8;
-				}
-			}
-			while(true) {
-				if (c.is_ascii() && c.is_number()) {
-					val = (val * base) + (c - '0');
-					cp++;
-					c = getptrv cp as u8;
-				} else if (base == 16 && c.is_ascii() && c.is_hex()) {
-					u8 a_ch = 'A';
-					if(c.is_lower()){
-						a_ch = 'a';
-					}
-					val = (val << 4) bitOR (c + 10 - a_ch);
-					cp++;
-					c = getptrv cp as u8;
-				} else {
-					break;
-				}
-			}
-			if (c == '.') {
-				// Internet format:
-				// a.b.c.d
-				// a.b.c	(with c treated as 16 bits)
-				// a.b	(with b treated as 24 bits)
-				if (pp >= parts_ptr + 12) {
-					throw invalid_ip;
-				}
-				setptrv pp to val;
-				pp += 4;
-				cp++;
-				c = getptrv cp as u8;
-				n++;
-			} else {
-				break;
-			}
-		}
-		// Check for trailing characters.
-		if (c != '\0' && (c.is_ascii() == false || c.is_whitespace() == false)){
-			throw invalid_ip;
-		}
-		// Concoct the address according to
-		// the number of parts specified.
-		if(n == 0) {
-			throw invalid_ip_non_digit;
-		} else if(n == 1) {
-		} else if(n == 2) {
-			if((val > 0xffffff) || (parts.p1 > 0xff)) {
-				throw invalid_ip;
-			}
-			val = val bitOR (parts.p1 << 24);
-		} else if(n == 3) {
-			if((val > 0xffffff) || (parts.p1 > 0xff) || (parts.p2 > 0xff)) {
-				throw invalid_ip;
-			}
-			val = val bitOR ((parts.p1 << 24) bitOR (parts.p2 << 16));
-		} else if(n == 4) {
-			if((val > 0xffffff) || (parts.p1 > 0xff) || (parts.p2 > 0xff) || (parts.p3 > 0xff)) {
-				throw invalid_ip;
-			}
-			//println(parts.p1.str());
-			//println(parts.p2.str());
-			//println(parts.p3.str());
-			//println(parts.p4.str());
-			val = val bitOR ((parts.p1 << 24) bitOR (parts.p2 << 16) bitOR (parts.p3 << 8));
-		}
-
-		//return val;
-		return val.byte_swap();
-	}
 }

@@ -24,6 +24,7 @@ func request_handler(Request req) Response {
 
 class Server {
 	readonly u32 port;
+	readonly String host;
 	readonly i32 max_connections = 64000;
 	public funcref (Request) Response handler = request_handler;
 
@@ -32,18 +33,26 @@ class Server {
 	readonly ?String ssl_cert = null;
 	readonly ?String ssl_private_key = null;
 
+	private net:Socket socket;
+	private ?net:Socket ssl_socket = null;
+
+	public static func init(String host, u16 port, funcref (Request) Response handler) !Server {
+
+		@ socket = net:Socket.init(host, port, net:Socket.TYPE.stream) or pass;
+
+		return Server{ socket: socket, port: port, host: host, handler: handler };
+	}
+
 	public func start() ! {
 
 		i32 err_check = 0;
 
-		@ sock = net:Socket { port: this.port };
+		@ sock = this.socket;
 		sock.listen() or pass;
 
-		?net:Socket ssl_sock = null;
-		if(this.use_ssl){
-			@ sock = net:Socket { port: this.ssl_port };
-			sock.listen() or pass;
-			ssl_sock = sock;
+		?net:Socket ssl_sock = this.ssl_socket;
+		notnull ssl_sock do {
+			ssl_sock.listen() or pass;
 		}
 
 		//
@@ -59,12 +68,12 @@ class Server {
 		#else
 		@ epfd = main:main:epoll_create(1);
 		@ buf_ev = cast mem:calloc(sizeof(main:main:epoll_event)) as main:main:epoll_event; 
-		Server.epoll_ctl_add(buf_ev, epfd, sock.listenfd, main:main:EPOLL.EPOLLIN);
-		fd:set_non_block(sock.listenfd);
+		Server.epoll_ctl_add(buf_ev, epfd, sock.fd, main:main:EPOLL.EPOLLIN);
+		fd:set_non_block(sock.fd);
 
 		notnull ssl_sock do {
-			Server.epoll_ctl_add(buf_ev, epfd, ssl_sock.listenfd, main:main:EPOLL.EPOLLIN);
-			fd:set_non_block(ssl_sock.listenfd);
+			Server.epoll_ctl_add(buf_ev, epfd, ssl_sock.fd, main:main:EPOLL.EPOLLIN);
+			fd:set_non_block(ssl_sock.fd);
 		}
 
 		ptr events = mem:calloc(this.max_connections * sizeof(main:main:epoll_event));
@@ -85,13 +94,13 @@ class Server {
 		@ connections = type:PtrArray.make(this.max_connections);
 
 		//
-		i32 maxfd = sock.listenfd;
+		i32 maxfd = sock.fd;
 		i32 select_result = 0;
         i32 fdcount = 1;
 
 		notnull ssl_sock do {
-			if(ssl_sock.listenfd > maxfd) {
-				maxfd = ssl_sock.listenfd;
+			if(ssl_sock.fd > maxfd) {
+				maxfd = ssl_sock.fd;
 			}
 		}
 
@@ -99,9 +108,9 @@ class Server {
 
 			#if OS_WIN || OS_OSX
 			mem:clear(read_set, this.max_connections);
-			fd:add_to_set(read_set, sock.listenfd);
+			fd:add_to_set(read_set, sock.fd);
 			notnull ssl_sock do {
-				fd:add_to_set(read_set, ssl_sock.listenfd);
+				fd:add_to_set(read_set, ssl_sock.fd);
 			}
 
 			i32 i = 3;
@@ -152,10 +161,10 @@ class Server {
 
 					@ is_ssl_fd = false;
 					notnull ssl_sock do {
-						is_ssl_fd = fd == ssl_sock.listenfd;
+						is_ssl_fd = fd == ssl_sock.fd;
 					}
 
-					if(fd == sock.listenfd || is_ssl_fd){
+					if(fd == sock.fd || is_ssl_fd){
 
 						// New connection
 						?net:Connection con = null;
@@ -215,7 +224,8 @@ class Server {
 							}
 
 							hcon.task = null;
-							hcon._ALLOCATOR.free(hcon);
+							@ alc = allocator sizeof(hcon);
+							alc.free(hcon);
 							connections.clear(fd);
 
 							err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
@@ -257,7 +267,8 @@ class Server {
 									hcon.con.free_ssl();
 								}
 
-								hcon._ALLOCATOR.free(hcon);
+								@ alc = allocator sizeof(hcon);
+								alc.free(hcon);
 								connections.clear(fd);
 								fd:remove_from_set(read_set, fd);
 								err_check = main:main:close(fd);
@@ -329,19 +340,20 @@ class Server {
 		return;
 	}
 
-	public func enable_ssl(u32 port, String cert_path, String private_key_path) {
+	public func enable_ssl(u32 port, String cert_path, String private_key_path) ! {
 
 		if(ki:fs:exists(cert_path) == false){
-			panic ssl_cert_file_not_found;
+			throw ssl_cert_file_not_found;
 		}
 		if(ki:fs:exists(private_key_path) == false){
-			panic ssl_private_key_file_not_found;
+			throw ssl_private_key_file_not_found;
 		}
 
 		this.use_ssl = true;
-		this.ssl_port = port;
 		this.ssl_cert = cert_path;
 		this.ssl_private_key = private_key_path;
+
+	 	this.ssl_socket = net:Socket.init(this.host, port, net:Socket.TYPE.stream) or pass;
 	}
 
 }

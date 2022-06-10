@@ -7,26 +7,9 @@ class TCPClient {
 
 	public static func init(String host, u16 port) !TCPClient {
 
-		@ c = Socket.inet_aton(host) or value 0;
-		if(c == 0){
-			println("Invalid IP");
-			throw invalid_ip;
-		}
+		@ sock = Socket.init(host, port, Socket.TYPE.stream) or pass;
 
-		@ clientaddr = main:main:sockaddr_in {
-			sin_family: cast Socket.IPTYPE.ipv4 as u16,
-			sin_port: port.byte_swap(),
-			sin_addr: c,
-		};
-
-		@ sock = Socket {};
-		sock.listenfd = main:main:socket(Socket.IPTYPE.ipv4#u32, Socket.TYPE.stream#u32, 0);
-		if(sock.listenfd < 0){
-			println("Could not create socket");
-			throw cannot_create_socket;
-		}
-
-		if (main:main:connect(sock.listenfd, clientaddr, sizeof(main:main:sockaddr_in)) < 0) {
+		if (main:main:connect(sock.fd, sock.address, sizeof(main:main:sockaddr_in)) < 0) {
 			println("Could not connect");
 			throw could_not_connect;
 		}
@@ -37,7 +20,7 @@ class TCPClient {
 	}
 
 	public func send(String msg) ! {
-		if (main:main:send(this.socket.listenfd, msg.data, msg.bytes, 0) < 0) {
+		if (main:main:send(this.socket.fd, msg.data, msg.bytes, 0) < 0) {
 			throw failed_to_send;
 		}
 	}

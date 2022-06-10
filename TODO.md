@@ -23,6 +23,7 @@
 - floats
 - kifmt
 - throw error class with error_code & error_msg
+- dont allow getptr on number literals
 
 ## Later
 

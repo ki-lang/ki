@@ -482,21 +482,15 @@ void fc_scan_class_props(Class *class) {
         map_set(class->props, "_RC", prop);
 
         // Allocator
-        prop = init_class_prop();
-        prop->access_type = acct_public;
-        prop->is_static = false;
+        // prop = init_class_prop();
+        // prop->access_type = acct_public;
+        // prop->is_static = false;
 
-        type = fc_identifier_to_type(fc, create_identifier("ki", "mem", "Allocator"), NULL);
-        prop->return_type = type;
+        // type = fc_identifier_to_type(fc, create_identifier("ki", "mem", "Allocator"), NULL);
+        // prop->return_type = type;
 
-        // def_value = init_value();
-        // def_value->type = vt_number;
-        // def_value->item = "NULL";
-
-        // prop->default_value = def_value;
-
-        class->size += type->bytes;
-        map_set(class->props, "_ALLOCATOR", prop);
+        // class->size += type->bytes;
+        // map_set(class->props, "_ALLOCATOR", prop);
     }
 
     ClassProp *fp = map_get(class->props, "__free");

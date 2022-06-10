@@ -464,6 +464,17 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
                     map_set(ini->prop_values, prop_name, value);
                 }
+                // Check if all props are filled in
+                for (int i = 0; i < class->props->keys->length; i++) {
+                    char *name = array_get_index(class->props->keys, i);
+                    ClassProp *prop = array_get_index(class->props->values, i);
+                    if (!prop->is_func && !prop->is_static && prop->default_value == NULL) {
+                        Value *v = map_get(ini->prop_values, name);
+                        if (v == NULL) {
+                            fc_error(fc, "Missing property '%s'", name);
+                        }
+                    }
+                }
 
                 //
                 value->type = vt_class_init;
