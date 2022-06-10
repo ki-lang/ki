@@ -24,4 +24,18 @@ class TCPClient {
 			throw failed_to_send;
 		}
 	}
+
+	public func read() !String {
+		@ msg = "";
+		@ n = 512;
+		while(n == 512){
+			@ part = String.make_empty(512);
+			n = main:main:read(this.socket.fd, part.data, part.bytes);
+			if (n < 0){
+				throw failed_to_read_from_socket;
+			}
+			//msg.append_bytes_from_ptr();
+		}
+		return msg;
+	}
 }
