@@ -11,6 +11,7 @@ Array *o_files;
 Array *cmd_arg_files;
 Map *allocators;
 Map *macro_defines;
+char *g_arg_0;
 char *g_output_name;
 bool g_static;
 bool g_nocache;

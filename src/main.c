@@ -57,6 +57,11 @@ Map *get_options_and_args(int argc, char *argv[], Map *option_has_value) {
     map_set(result, "args", args);
     map_set(result, "options", options);
 
+    g_arg_0 = NULL;
+    if (argc > 0) {
+        g_arg_0 = argv[0];
+    }
+
     bool is_option;
     char *option_name;
 
