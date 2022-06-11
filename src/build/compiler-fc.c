@@ -155,11 +155,15 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
         fc->cache->depends_on = map_make();
     }
 
-    // printf("Compile file: %s\n", fc->ki_filepath);
+    if (g_verbose) {
+        printf("Compile file: %s\n", fc->ki_filepath);
+    }
 
     fc_scan_types(fc);
 
-    // printf("Compiled: %s\n", fc->ki_filepath);
+    if (g_verbose) {
+        printf("Compiled: %s\n", fc->ki_filepath);
+    }
 
     return fc;
 }

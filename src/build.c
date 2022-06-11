@@ -42,16 +42,28 @@ void cmd_build(Array *files, Map *options) {
 
     // -static option
     g_static = true;
+    g_optimize = false;
+    g_verbose = false;
+    g_nocache = false;
+    g_optimize = false;
     if (map_contains(options, "--shared")) {
         g_static = false;
     }
-    g_verbose = false;
-    if (map_contains(options, "--verbose")) {
+    if (map_contains(options, "-v")) {
         g_verbose = true;
     }
-    g_nocache = false;
+    if (map_contains(options, "-vvv")) {
+        g_verbose_all = true;
+    }
     if (map_contains(options, "--clean")) {
         g_nocache = true;
+    }
+    if (map_contains(options, "--optimize")) {
+        g_optimize = true;
+    }
+    if (map_contains(options, "--release")) {
+        g_nocache = true;
+        g_optimize = true;
     }
 
     //
@@ -193,8 +205,10 @@ void build_help() {
     printf("> Example: ki build src/*.ki -o myapp\n\n");
 
     printf("  --clean              Clean build, ignore cache\n");
+    printf("  --optimize           Enable optimizations (-O3)\n");
+    printf("  --release            Release build, no cache, optimized\n");
+    printf("  -v -vvv              Verbose, outputs extra information\n");
     printf("  --shared             Use shared libraries\n");
-    printf("  --verbose            Outputs extra information\n");
 
     printf("\n");
 }

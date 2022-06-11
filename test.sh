@@ -1,2 +1,2 @@
 
-./ki build ./debug/ki/http/*.ki -o test --verbose $*
+./ki build ./debug/ki/http/*.ki -o test -v $*

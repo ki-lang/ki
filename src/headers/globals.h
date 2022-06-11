@@ -15,7 +15,9 @@ char *g_arg_0;
 char *g_output_name;
 bool g_static;
 bool g_nocache;
+bool g_optimize;
 bool g_verbose;
+bool g_verbose_all;
 Map *g_fc_by_ki_filepath;
 
 Map *c_identifiers;
