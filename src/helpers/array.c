@@ -80,7 +80,9 @@ int array_find(Array *arr, void *item, char *type) {
             if (*adr == (uintptr_t)item)
                 return x;
         } else if (strcmp(type, "chars") == 0) {
-            if (strcmp((char *)*adr, (char *)item) == 0)
+            char *a = (char *)*adr;
+            char *b = (char *)item;
+            if (strcmp(a, b) == 0)
                 return x;
         } else if (strcmp(type, "int") == 0) {
             if ((int)(*adr) == *(int *)item)
