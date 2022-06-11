@@ -6,7 +6,9 @@ jobs:
       xcode: "12.5.1"
     steps:
       - run:
-          command: make
+          command: |
+            cd $CIRCLE_WORKING_DIRECTORY
+            make
 
 workflows:
   test_build:
