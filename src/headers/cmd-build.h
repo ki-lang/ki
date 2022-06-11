@@ -154,6 +154,7 @@ void fc_depends_on(FileCompiler *fc, FileCompiler *depfc);
 
 // Error
 void fc_error(FileCompiler *, char *, char *);
+void fc_warn(FileCompiler *fc, char *msg, char *token);
 void fc_name_taken(FileCompiler *fc, Map *identifiers, char *name);
 
 // Skips
