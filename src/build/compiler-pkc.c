@@ -174,9 +174,16 @@ void pkc_check_config(PkgCompiler *pkc) {
     strcat(path, "/ki.json");
     pkc->config_path = path;
 
-    // printf("Check config: %s\n", path);
+    if (g_verbose) {
+        printf("Check config: %s\n", path);
+    }
 
     if (file_exists(path)) {
+
+        if (g_verbose) {
+            printf("Config found\n");
+        }
+
         Str *content_str = file_get_contents(path);
         char *content = str_to_chars(content_str);
         free(content_str);
