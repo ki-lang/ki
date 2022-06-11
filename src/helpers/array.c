@@ -11,8 +11,11 @@ Array *array_make(int max_length) {
 
 void array_push(Array *arr, void *item) {
     if (arr->length == arr->max_length) {
-        arr->max_length *= 2;
-        arr->data = realloc(arr->data, arr->max_length * sizeof(void *));
+        int newlen = arr->max_length * 2;
+        void *new = alloc(newlen * sizeof(void *));
+        memcpy(new, arr->data, arr->max_length);
+        arr->data = new;
+        arr->max_length = newlen;
     }
     uintptr_t *adr = arr->data + (arr->length * sizeof(void *));
     *adr = (uintptr_t)item;
@@ -30,8 +33,11 @@ void *array_pop(Array *arr) {
 
 void array_shift(Array *arr, void *item) {
     if (arr->length == arr->max_length) {
-        arr->max_length *= 2;
-        arr->data = realloc(arr->data, arr->max_length * sizeof(void *));
+        int newlen = arr->max_length * 2;
+        void *new = alloc(newlen * sizeof(void *));
+        memcpy(new, arr->data, arr->max_length);
+        arr->data = new;
+        arr->max_length = newlen;
     }
     for (int i = arr->length - 1; i > 0; i--) {
         uintptr_t *from = arr->data + (i * sizeof(void *));
