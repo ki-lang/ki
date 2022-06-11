@@ -2,5 +2,4 @@
 namespace main;
 
 func close(i32 sockfd) i32;
-func fcntl(i32 fd, i32 cmd, i32 flags) i32;
 func dup2(i32 oldfd, i32 newfd) i32;

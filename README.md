@@ -24,7 +24,7 @@ make
 ./install.sh
 ```
 
-## Install (Windows)
+## Install (Windows) (Not working properly atm)
 
 Install `MinGW` and make sure to install the `mingw32-gcc-bin` and `mingw32-make-bin` packages.
 

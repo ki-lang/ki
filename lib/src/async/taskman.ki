@@ -24,7 +24,11 @@ class TaskList {
 
 			uxx pipes = 0;
 			ptr pipes_ptr = getptr pipes;
+			#if OS_WIN
+			@ check = main:main:_pipe(pipes_ptr, 1024, 0x8000);
+			#else
 			@ check = main:main:pipe(pipes_ptr);
+			#end
 			i32 read_fd = getptrv pipes_ptr as i32;
 			pipes_ptr += sizeof(i32);
 			i32 write_fd = getptrv pipes_ptr as i32;

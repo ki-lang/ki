@@ -1,0 +1,24 @@
+
+namespace tcp;
+
+class Server {
+
+	public net:Socket socket;
+	public ptr context = null;
+
+	public static func init(String host, u16 port) !Server {
+
+		@ sock = net:Socket.init(host, port, net:Socket.TYPE.stream) or pass;
+
+		return Server { socket: sock };
+	}
+
+	public func listen() ! {
+		this.socket.listen() or pass;
+	}
+
+	public func accept_connection() !net:Connection {
+		return this.socket.accept_connection() or pass;
+	}
+
+}

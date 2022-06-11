@@ -1,20 +1,24 @@
 
 namespace main;
 
-//class in_addr norfc {
-//	ixx s_addr;
-//}
+class in_addr norfc {
+	public u32 s_addr;
+}
 
 class sockaddr_in norfc {
-    public i16 sin_family;
+    public u16 sin_family;
     public u16 sin_port;
-    public ixx sin_addr;
-    public i8 sin_zero;
+    public u32 sin_addr; // internet address
+    //public i8[8] sin_zero; // empty data to increase class byte size to that of sockaddr
+    public u64 sin_zero;
 }
 
 class sockaddr norfc {
     public u16 sa_family;
-    public i8[14] sa_data;
+    //public i8[14] sa_data;
+    public u64 sa_data;
+    public u32 sa_data_;
+    public u16 sa_data__;
 }
 
 class addrinfo norfc {
@@ -35,6 +39,7 @@ class os_fd_set norfc {
 
 func select(i32 fdcount, ptr readfdset, ptr writefdset, ptr expectfdset, ptr timeout) i32;
 func accept(i32 sockfd, sockaddr_in addr, ptr addrlen) i32;
+func connect(i32 sockfd, sockaddr_in addr, u32 addrlen) i32;
 
 func recv(i32 sockfd, ptr buf, ixx len, i32 flags) i32;
 func send(i32 sockfd, ptr buf, ixx len, i32 flags) i32;

@@ -4,6 +4,13 @@ namespace net;
 #header "sys/net"
 #header "sys/io"
 
+class IPParts norfc {
+	public u32 p1 = 0;
+	public u32 p2 = 0;
+	public u32 p3 = 0;
+	public u32 p4 = 0;
+}
+
 class Socket {
 
 	enum IPTYPE {
@@ -24,83 +31,52 @@ class Socket {
 		http: 132, // IPPROTO_SCTP
 	};
 
+	public String host;
 	public u16 port;
-	public Socket.FLAGS flags = Socket.FLAGS.passive;
-	public Socket.TYPE type = Socket.TYPE.stream;
-	public Socket.IPTYPE ip_type = Socket.IPTYPE.ipv4;
+	public i32 fd = 0;
+	public main:main:sockaddr_in address;
 
-	public i32 listenfd = 0;
+	public static func init(String host, u16 port, Socket.TYPE type) !Socket {
+
+		@ fd = main:main:socket(Socket.IPTYPE.ipv4#u32, cast type as u32, 0);
+		if(fd < 0){
+			println("Cannot create socket");
+			throw cannot_create_socket;
+		}
+
+		@ c = inet_aton(host) or value 0;
+		if(c == 0){
+			println("Invalid IP");
+			throw invalid_ip;
+		}
+
+		@ clientaddr = main:main:sockaddr_in {
+			sin_family: Socket.IPTYPE.ipv4#u16,
+			sin_port: port.byte_swap(),
+			sin_addr: c,
+			sin_zero: 0,
+		};
+
+		return Socket{ host: host, port: port, fd: fd, address: clientaddr };
+	}
 
 	public func listen() ! {
 
-		i32 success = 0;
-
- 		@ hints = main:main:addrinfo {
-			 ai_flags: Socket.FLAGS.passive#i32,
-			 ai_family: Socket.IPTYPE.ipv4#i32,
-			 ai_socktype: Socket.TYPE.stream#i32,
-			 ai_protocol: Socket.PROTOCOL.http#i32,
-			 ai_addrlen: 16,
-			 ai_addr: main:main:sockaddr {
-				 sa_family: Socket.IPTYPE.ipv4#i32,
-			 },
-			 ai_canonname: null,
-			 ai_next: null,
-		};
-
-		// Set port
-		ptr portadr = getptr this.port;
-		ptr swapadr = getptr hints.ai_addr.sa_data;
-
-		i32 i = 0;
-		u8 v = 0;
-		while(i < 14){
-			setptrv (swapadr+i) to v;
-			i++;
-		}
-
-		u8 nr1 = getptrv portadr as u8;
-		u8 nr2 = getptrv portadr+1 as u8;
-
-		setptrv swapadr to nr2;
-		setptrv (swapadr+1) to nr1;
-		
- 		@ p = hints;
-
-		while(p != null){
-
-        	this.listenfd = main:main:socket(p.ai_family, p.ai_socktype, 0);
-			if(this.listenfd < 0){
-				io:print("Cant create socket\n");
-			}
-
-			// SOL_SOCKET: 65535 // 0xFFFF
-			// SO_KEEPALIVE: 4
-			i32 reuseaddr = 1;
-			success = main:main:setsockopt(this.listenfd, 65535, 4, getptr reuseaddr, sizeof(i32));
-
-        	if (this.listenfd == -1) { continue; }
-			success = main:main:bind(this.listenfd, p.ai_addr, p.ai_addrlen);
-        	if (success == 0){ break; }
-
-			p = p.ai_next;
-		}
-
-		if (p == null) {
+		@ success = main:main:bind(this.fd, cast this.address as main:main:sockaddr, sizeof(main:main:sockaddr_in));
+        if (success == -1){
         	io:print("Could not bind to port: ");
         	io:println(this.port.str());
-        	throw could_not_bind;
-    	}
+			throw failed_to_bind_to_port;
+		}
+
 		// c:freeaddrinfo(res);
 
 		// listen for incoming connections
-		success = main:main:listen(this.listenfd, 10000); // 10k max pending connections
+		success = main:main:listen(this.fd, 10000); // 10k max pending connections
  	    if (success != 0 ) {
         	io:println("Unable to listen on port");
 			throw listen_error;
  	    }
-
-		//main:main:fcntl(this.listenfd, 4, 4001);
 	}
 
 	public func set_keep_alive(i32 fd){
@@ -133,14 +109,10 @@ class Socket {
 	public func accept_connection() !Connection {
 		// 
 		@ alc = allocator 48;
-		//@ clientaddr = main:main:sockaddr_in {
-		//	sin_addr: 0
-		//};
 		@ clientaddr = cast alc.get_chunk() as main:main:sockaddr_in;
-		i32 addrlen = 16;
+		i32 addrlen = sizeof(main:main:sockaddr_in);
 
-		i32 new_fd = main:main:accept(this.listenfd, clientaddr, getptr addrlen);
-
+		i32 new_fd = main:main:accept(this.fd, clientaddr, getptr addrlen);
 		if (new_fd == -1){
 			throw failed_to_accept;
 		}
@@ -153,4 +125,5 @@ class Socket {
 
 		return con;
 	}
+
 }

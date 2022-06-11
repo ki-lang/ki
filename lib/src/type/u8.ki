@@ -5,4 +5,25 @@ class u8 number:u:1 {
 
 	trait type_trait:Number;
 
+	public func is_number() bool {
+		if (this >= 48 && this <= 57) {
+        	return true;
+    	}
+		return false;
+	}
+	public func is_ascii() bool {
+		return this < 128;
+	}
+	public func is_hex() bool {
+		if ( ( this >= '0' && this <= '9') || ( this >= 'a' && this <= 'f') || ( this >= 'A' && this <= 'F') ) {
+        	return true;
+		}
+    	return false;
+	}
+	public func is_lower() bool {
+		return this >= 'a' && this <= 'z';
+	}
+	public func is_whitespace() bool {
+		return (this == '\t' || this == '\n' || this == '\v' || this == '\f' || this == '\r' || this == ' ');
+	}
 }

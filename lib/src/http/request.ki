@@ -5,11 +5,11 @@ namespace http;
 #header "ssl/ssl"
 
 class Request {
-	public bool is_ssl;
-	public String method;
-	public String uri;
-	public String protocol;
-	public String body;
+	public bool is_ssl = false;
+	public String method = "";
+	public String uri = "";
+	public String protocol = "";
+	public String body = "";
 
 	public static func read_request(net:Connection con) ?Request {
 

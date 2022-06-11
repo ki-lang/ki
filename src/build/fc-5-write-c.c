@@ -1469,13 +1469,13 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
             }
         }
 
-        if (class->ref_count) {
-            str_append_chars(fc->c_code_after, "KI_RET_V");
-            str_append_chars(fc->c_code_after, sign);
-            str_append_chars(fc->c_code_after, "_ALLOCATOR = ");
-            str_append_chars(fc->c_code_after, allocator_name);
-            str_append_chars(fc->c_code_after, "();\n");
-        }
+        // if (class->ref_count) {
+        //     str_append_chars(fc->c_code_after, "KI_RET_V");
+        //     str_append_chars(fc->c_code_after, sign);
+        //     str_append_chars(fc->c_code_after, "_ALLOCATOR = ");
+        //     str_append_chars(fc->c_code_after, allocator_name);
+        //     str_append_chars(fc->c_code_after, "();\n");
+        // }
 
         Scope *prev_scope = fc->current_scope;
         fc->current_scope = init_scope();
