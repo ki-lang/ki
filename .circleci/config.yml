@@ -9,6 +9,7 @@ jobs:
       - run:
           command: |
             make
+            ./test.sh
 
 workflows:
   build_macos:
