@@ -3,7 +3,7 @@ namespace fd;
 
 class PollEvent norfc {
 	readonly u32 events = 0;
-	readonly u32 fd;
+	public u32 fd;
 	readonly u32 data = 0;
 
 	public func is_closing() bool {
@@ -70,7 +70,7 @@ class Poll {
 			}
 			adr += sizeof(PollEvent);
 		}
-		@ select_result = main:main:select(maxfd + 1, read_set, null, null, null);
+		@ select_result = main:main:select(this.max_fd + 1, read_set, null, null, null);
 		#else
 		i32 event_count = main:main:epoll_wait(this.epoll_fd, this.events, this.fd_count, 1000);
 		@ select_result = 1;
@@ -81,7 +81,7 @@ class Poll {
 		}
 
 		#if OS_WIN || OS_OSX
-		i32 i = 3;
+		i = 3;
 		i32 max = this.max_fd + 2;
 		#else
 		i32 i = 0;

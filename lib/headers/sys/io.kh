@@ -4,17 +4,13 @@ namespace main;
 func write(i32 fd, ptr buf, u64 length) ixx;
 func read(i32 fd, ptr buf, u64 length) ixx;
 func open(cstring path, i32 flags, uxx mode) i32;
+#if OS_LINUX || OS_OSX
 func fsync(i32 fd) i32;
+#end
 func sync();
+#if OS_WIN
+func _pipe(ptr pipes, i32 a, i32 b) i32;
+#else
 func pipe(ptr pipes) i32;
-
-// Values for the second argument to `fcntl'.
-// #define        F_DUPFD                0        Duplicate file descriptor.
-// #define        F_GETFD                1        Get file descriptor flags.
-// #define        F_SETFD                2        Set file descriptor flags.
-// #define        F_GETFL                3        Get file status flags.
-// #define        F_SETFL                4        Set file status flags.
-
-// File descriptor flags used with F_GETFD and F_SETFD.
-// #define        FD_CLOEXEC             1        Close on exec.
+#end
 

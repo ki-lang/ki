@@ -67,7 +67,10 @@ void compile_all() {
 
     //
     wait_cmd();
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#else
     sync();
+#endif
 
     char *lib_dir = malloc(KI_PATH_MAX);
 
@@ -111,10 +114,15 @@ void compile_all() {
     strcat(cmd, lib_dir);
 
     // Link libraries
-#ifndef __APPLE__
-    strcat(cmd, " -Wl,--disable-new-dtags");
+    //#ifndef __APPLE__
+    //    strcat(cmd, " -Wl,--disable-new-dtags");
+    //#endif
+    strcat(cmd, " -lssl -lcrypto -lz -lpthread -pthread");
+#ifdef _WIN32
+    strcat(cmd, " -lws2_32");
+#else
+    strcat(cmd, " -ldl");
 #endif
-    strcat(cmd, " -lssl -lcrypto -lz -ldl -lpthread -pthread");
 
     // Run
     int result = run_cmd(cmd);
@@ -123,7 +131,10 @@ void compile_all() {
         exit(1);
     }
 
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#else
     sync();
+#endif
 
     free(cmd);
 }
