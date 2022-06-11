@@ -65,11 +65,11 @@ Identifier *create_identifier(char *package, char *namespace, char *name) {
 
 IdentifierFor *idf_find_in_scope(Scope *scope, Identifier *id) {
     char *vn = id->name;
-    if (g_verbose) {
+    if (g_verbose_all) {
         printf("Find: %s\n", vn);
     }
     while (scope != NULL) {
-        if (g_verbose) {
+        if (g_verbose_all) {
             printf("Scope: %p\n", scope);
         }
         void *x = map_get(scope->identifiers, vn);

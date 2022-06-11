@@ -7,9 +7,12 @@ pid_t child_pid, wpid;
 int status = 0;
 #endif
 
+char basic_args[100];
 char *fc_compile_basic_args() {
     //
-    return " -g -O0 -fcommon -c";
+    strcpy(basic_args, " -g -fcommon -c");
+    strcat(basic_args, g_optimize ? " -O3" : " -O0");
+    return basic_args;
 }
 
 void fc_compile_local_c_files() {

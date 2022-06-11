@@ -21,7 +21,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
     int index = fc->i;
     Value *value = init_value();
 
-    if (g_verbose) {
+    if (g_verbose_all) {
         printf("Read value at %d in %s\n", index, fc->ki_filepath);
     }
 
