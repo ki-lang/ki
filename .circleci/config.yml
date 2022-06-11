@@ -15,3 +15,8 @@ workflows:
   build_macos:
     jobs:
       - build_macos
+          filters:
+            branches:
+              only:
+                - master
+                - development
