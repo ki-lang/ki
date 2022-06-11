@@ -14,6 +14,7 @@ void array_push(Array *arr, void *item) {
         int newlen = arr->max_length * 2;
         void *new = malloc(newlen * sizeof(void *));
         memcpy(new, arr->data, arr->max_length);
+        free(arr->data);
         arr->data = new;
         arr->max_length = newlen;
     }
@@ -36,6 +37,7 @@ void array_shift(Array *arr, void *item) {
         int newlen = arr->max_length * 2;
         void *new = malloc(newlen * sizeof(void *));
         memcpy(new, arr->data, arr->max_length);
+        free(arr->data);
         arr->data = new;
         arr->max_length = newlen;
     }
