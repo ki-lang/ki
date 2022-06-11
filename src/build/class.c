@@ -1,5 +1,6 @@
 
 #include "../all.h"
+#include "../libs/md5.h"
 
 Class *init_class() {
     Class *class = malloc(sizeof(Class));
