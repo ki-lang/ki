@@ -9,7 +9,7 @@ jobs:
       - run:
           command: |
             make
-            ./test.sh
+            ./gdb.sh
 
 workflows:
   build_macos:
