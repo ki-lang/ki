@@ -1,0 +1,8 @@
+version: 2.1
+
+commands:
+  build_macos:
+    description: "Build macos"
+    executor: macos
+    steps:
+      - run: make
