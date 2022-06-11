@@ -5,12 +5,12 @@ jobs:
     macos:
       xcode: "12.5.1"
     steps:
+      - checkout
       - run:
           command: |
-            cd $CIRCLE_WORKING_DIRECTORY
             make
 
 workflows:
-  test_build:
+  build_macos:
     jobs:
       - build_macos
