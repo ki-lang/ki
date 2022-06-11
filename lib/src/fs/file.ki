@@ -64,7 +64,9 @@ func write(String path, String content, bool append) ! {
 		throw could_not_create_or_open_file;
 	}
 	@ check = main:main:write(fd, content.data, content.bytes);
+	#if OS_LINUX || OS_OSX
 	check = main:main:fsync(fd);
+	#end
 	check = main:main:close(fd);
 	if(check == -1){
 		throw failed_to_close_handle;

@@ -1,0 +1,165 @@
+
+namespace fd;
+
+class PollEvent norfc {
+	readonly u32 events = 0;
+	public u32 fd;
+	readonly u32 data = 0;
+
+	public func is_closing() bool {
+		#if OS_WIN || OS_OSX
+		return false;
+		#else
+		return (this.events bitAND (main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0;
+		#end
+	}
+}
+
+class Poll {
+
+	private Array<PollEvent> result;
+	private ptr events;
+
+	#if OS_WIN || OS_OSX
+	private ptr read_set;
+	#else
+	private i32 epoll_fd;
+	private main:main:epoll_event event_buf;
+	#end
+
+	private i32 max_connections;
+	private i32 max_fd = 0;
+	private u32 fd_count = 0;
+
+	public static func init(i32 max_connections) Poll {
+
+		if(sizeof(PollEvent) != 12){
+			panic incorrect_poll_event_size;
+		}
+
+		@ result = Array<PollEvent>.make(2);
+		ptr events = mem:calloc(max_connections * sizeof(PollEvent));
+
+		#if OS_WIN || OS_OSX
+		@ read_set = mem:calloc(max_connections); // todo : too much memory, divide by 8
+		return Poll { result: result, max_connections: max_connections, read_set: read_set, events: events };
+		#else
+		@ epfd = main:main:epoll_create(1);
+		@ buf = cast mem:calloc(sizeof(main:main:epoll_event)) as main:main:epoll_event; 
+		return Poll { result: result, max_connections: max_connections, epoll_fd: epfd, event_buf: buf, events: events };
+		#end
+
+	}
+
+	public func poll() Array<PollEvent> {
+		//
+		@ result = this.result;
+		result.clear();
+		//
+
+		#if OS_WIN || OS_OSX
+		@ read_set = this.read_set;
+		mem:clear(read_set, this.max_connections);
+		ptr adr = this.events;
+		@ i = 3;
+		@ until = this.max_fd + 1;
+		while(i < until) {
+			PollEvent ev = cast adr as PollEvent;
+			if(ev.fd > 0) {
+				fd:add_to_set(read_set, ev.fd);
+			}
+			adr += sizeof(PollEvent);
+		}
+		@ select_result = main:main:select(this.max_fd + 1, read_set, null, null, null);
+		#else
+		i32 event_count = main:main:epoll_wait(this.epoll_fd, this.events, this.fd_count, 1000);
+		@ select_result = 1;
+		#end
+
+		if(select_result <= 0){
+			return result;
+		}
+
+		#if OS_WIN || OS_OSX
+		i = 3;
+		i32 max = this.max_fd + 2;
+		#else
+		i32 i = 0;
+		i32 max = event_count;
+		#end
+
+		while(i < max){
+
+			#if OS_WIN || OS_OSX
+			@ isset = fd:isset(read_set, i);
+			#else
+			@ isset = true;
+			#end
+
+			i++;
+
+			if(isset == false){
+				continue;
+			}
+
+			@ event = cast (this.events + ((i - 1) * sizeof(PollEvent))) as PollEvent;
+			@ fd = event.fd;
+
+			result.push(event);
+		}
+
+		return result;
+	}
+
+	public func add_socket_server_fd (i32 fd) {
+		#if OS_LINUX
+		Poll.epoll_ctl_add(this.event_buf, this.epoll_fd, fd, main:main:EPOLL.EPOLLIN);
+		#end
+		this.add(fd);
+	}
+	public func add_connection_fd (i32 fd) {
+		#if OS_LINUX
+		Poll.epoll_ctl_add(this.event_buf, this.epoll_fd, fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
+		#end
+		this.add(fd);
+	}
+
+	private func add(i32 fd) {
+
+		#if OS_WIN || OS_OSX
+		if(fd > this.max_connections){
+			return;
+		}
+		if(fd > this.max_fd){
+			this.max_fd = fd;
+		}
+		ptr adr = this.events;
+		adr += fd * sizeof(PollEvent);
+		PollEvent ev = cast adr as PollEvent;
+		ev.fd = fd;
+		#end
+
+		this.fd_count++;
+	}
+
+	public func remove(i32 fd) {
+		#if OS_WIN || OS_OSX
+		ptr adr = this.events;
+		adr += fd * sizeof(PollEvent);
+		PollEvent ev = cast adr as PollEvent;
+		ev.fd = 0;
+		#else
+		@ err_check = main:main:epoll_ctl(this.epoll_fd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
+		#end
+
+		this.fd_count--;
+	}
+
+	#if OS_LINUX
+	public static func epoll_ctl_add(main:main:epoll_event ev, i32 epfd, i32 fd, u32 events) {
+		ev.events = events;
+		ev.fd = fd;
+		@ check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_ADD, fd, ev);
+	}
+	#end
+}

@@ -1,0 +1,32 @@
+
+use ki:http;
+
+func hello(http:Request req) http:Response{
+	return http:Response{
+		body: "Hello"
+	};
+}
+
+func start_server() {
+	@ s = http:Server.init("127.0.0.1", 9123, handler) or panic failed_to_init_server
+	s.start() or panic failed_to_start_server;
+}
+
+func main () i32 {
+
+	async start_server();
+
+	@ client = ki:tcp:Client.init("127.0.0.1", 9123) or return {
+		println("Failed to create tcp client");
+		return 1;
+	};
+
+	client.send("test") or return {
+		println("Failed to send");
+		return 1;
+	};
+
+	@ msg = client.read();
+
+	println("Sent");
+}

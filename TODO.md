@@ -12,7 +12,6 @@
 - private & readonly checks
 - remove namespaces from headers and set all definitions under a custom namespace and define an alias after "import" to access that namespace
 - check multiple vars in ifnull
-- TCP client
 - object cloning
 - date/time library
 - mysql library
@@ -22,6 +21,9 @@
 - integer type/byte checking
 - floats
 - kifmt
+- throw error class with error_code & error_msg
+- dont allow getptr on number literals
+- foreach on Map<>
 
 ## Later
 

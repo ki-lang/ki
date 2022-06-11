@@ -46,6 +46,14 @@ class Connection {
 		return result;
 	}
 
+	public func has_data_to_read() bool {
+		// Peek recv to detect disconnects
+		@ buffer = ' ';
+		// MSG_PEEK = 0x2
+  		i32 err_check = main:main:recv(this.fd, getptr buffer, 1, 2);
+		return err_check > 0;
+	}
+
 	public func write(String output) {
 
 		@ ssl = this.ssl;
@@ -55,5 +63,9 @@ class Connection {
 		} else {
 			@ n = main:main:SSL_write(ssl, output.data, output.bytes);
 		}
+	}
+
+	public func close() {
+		@ c = main:main:close(this.fd);
 	}
 }

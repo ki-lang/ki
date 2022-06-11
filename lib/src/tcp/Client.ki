@@ -1,0 +1,43 @@
+
+namespace tcp;
+
+class Client {
+
+	public net:Socket socket;
+
+	public static func init(String host, u16 port) !Client {
+
+		@ sock = net:Socket.init(host, port, net:Socket.TYPE.stream) or pass;
+
+		if (main:main:connect(sock.fd, sock.address, sizeof(main:main:sockaddr_in)) < 0) {
+			println("Could not connect");
+			throw could_not_connect;
+		}
+
+		return Client { socket: sock };
+	}
+
+	public func send(String msg) ! {
+		if (main:main:send(this.socket.fd, msg.data, msg.bytes, 0) < 0) {
+			throw failed_to_send_from_socket;
+		}
+	}
+
+	public func read() !String {
+		@ msg = "";
+		@ n = 512;
+		@ part = String.make_empty(512);
+		while(n == 512){
+			n = main:main:read(this.socket.fd, part.data, part.bytes);
+			if (n < 0){
+				throw failed_to_read_from_socket;
+			}
+			msg.append_bytes_from_ptr(part.data, n);
+		}
+		return msg;
+	}
+
+	public func close(){
+		@ c = main:main:close(this.socket.fd);
+	}
+}

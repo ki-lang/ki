@@ -24,6 +24,7 @@ func request_handler(Request req) Response {
 
 class Server {
 	readonly u32 port;
+	readonly String host;
 	readonly i32 max_connections = 64000;
 	public funcref (Request) Response handler = request_handler;
 
@@ -32,18 +33,26 @@ class Server {
 	readonly ?String ssl_cert = null;
 	readonly ?String ssl_private_key = null;
 
+	private net:Socket socket;
+	private ?net:Socket ssl_socket = null;
+
+	public static func init(String host, u16 port, funcref (Request) Response handler) !Server {
+
+		@ socket = net:Socket.init(host, port, net:Socket.TYPE.stream) or pass;
+
+		return Server{ socket: socket, port: port, host: host, handler: handler };
+	}
+
 	public func start() ! {
 
 		i32 err_check = 0;
 
-		@ sock = net:Socket { port: this.port };
+		@ sock = this.socket;
 		sock.listen() or pass;
 
-		?net:Socket ssl_sock = null;
-		if(this.use_ssl){
-			@ sock = net:Socket { port: this.ssl_port };
-			sock.listen() or pass;
-			ssl_sock = sock;
+		?net:Socket ssl_sock = this.ssl_socket;
+		notnull ssl_sock do {
+			ssl_sock.listen() or pass;
 		}
 
 		//
@@ -54,21 +63,11 @@ class Server {
 		}
 		io:print("\n");
 
-		#if OS_WIN || OS_OSX
-		@ read_set = mem:calloc(this.max_connections); // todo : too much memory, divide by 8
-		#else
-		@ epfd = main:main:epoll_create(1);
-		@ buf_ev = cast mem:calloc(sizeof(main:main:epoll_event)) as main:main:epoll_event; 
-		Server.epoll_ctl_add(buf_ev, epfd, sock.listenfd, main:main:EPOLL.EPOLLIN);
-		fd:set_non_block(sock.listenfd);
-
+		@ poll = fd:Poll.init(this.max_connections);
+		poll.add_socket_server_fd(sock.fd);
 		notnull ssl_sock do {
-			Server.epoll_ctl_add(buf_ev, epfd, ssl_sock.listenfd, main:main:EPOLL.EPOLLIN);
-			fd:set_non_block(ssl_sock.listenfd);
+			poll.add_socket_server_fd(ssl_sock.fd);
 		}
-
-		ptr events = mem:calloc(this.max_connections * sizeof(main:main:epoll_event));
-		#end
 
 		// SSL context
 		?main:main:SSL_CTX ssl_ctx = null;
@@ -84,207 +83,125 @@ class Server {
 
 		@ connections = type:PtrArray.make(this.max_connections);
 
-		//
-		i32 maxfd = sock.listenfd;
-		i32 select_result = 0;
-        i32 fdcount = 1;
-
-		notnull ssl_sock do {
-			if(ssl_sock.listenfd > maxfd) {
-				maxfd = ssl_sock.listenfd;
-			}
-		}
-
 		while(true){
 
-			#if OS_WIN || OS_OSX
-			mem:clear(read_set, this.max_connections);
-			fd:add_to_set(read_set, sock.listenfd);
-			notnull ssl_sock do {
-				fd:add_to_set(read_set, ssl_sock.listenfd);
-			}
+			@ events = poll.poll();
 
-			i32 i = 3;
-			while(i < connections.size){
-				ptr con = connections.get(i);
-				if(con != null){
-					fd:add_to_set(read_set, i);
+			each events as event {
+
+				@ fd = event.fd;
+
+				@ is_ssl_fd = false;
+				notnull ssl_sock do {
+					is_ssl_fd = fd == ssl_sock.fd;
 				}
-				i++;
-			}
-			select_result = main:main:select(maxfd + 1, read_set, null, null, null);
-			#else
-			i32 event_count = main:main:epoll_wait(epfd, events, fdcount, 100);
-			select_result = 1;
-			#end
 
-			if(select_result <= 0){
-				io:print("poll/select error\n");
-				DEBUGMSG select_failed;
-			}else {
+				if(fd == sock.fd || is_ssl_fd){
 
-				#if OS_WIN || OS_OSX
-				i32 i = 3;
-				i32 max = maxfd + 2;
-				#else
-				i32 i = 0;
-				i32 max = event_count;
-				#end
-
-				while(i < max){
-
-					#if OS_WIN || OS_OSX
-					@ fd = i;
-					@ isset = fd:isset(read_set, fd);
-					#else
-					@ event = cast (events + (i * sizeof(main:main:epoll_event))) as main:main:epoll_event;
-					@ fd = event.fd;
-					@ isset = true;
-					#end
-
-					//io:println(fd.str());
-
-					i++;
-
-					if(isset == false){
-						continue;
+					// New connection
+					?net:Connection con = null;
+					if(is_ssl_fd){
+						notnull ssl_sock do {
+							con = ssl_sock.accept_connection() or continue;
+						}
+					} else {
+						con = sock.accept_connection() or continue;
 					}
 
-					@ is_ssl_fd = false;
-					notnull ssl_sock do {
-						is_ssl_fd = fd == ssl_sock.listenfd;
+					ifnull con continue;
+
+					poll.add_connection_fd(con.fd);
+
+					// SSL
+					if(is_ssl_fd){
+						ifnull ssl_ctx continue;
+						con.make_ssl(ssl_ctx) or continue;
 					}
 
-					if(fd == sock.listenfd || is_ssl_fd){
+					@ hcon = HttpConnection { con: con };
+					hcon._RC++;
 
-						// New connection
-						?net:Connection con = null;
-						if(is_ssl_fd){
-							notnull ssl_sock do {
-								con = ssl_sock.accept_connection() or continue;
-							}
-						} else {
-							con = sock.accept_connection() or continue;
+					connections.set(con.fd, hcon);
+					io:print("[+] new connection: ");
+					io:print(con.fd.str());
+					io:print("\n");
+
+					continue;
+				}
+
+				if(connections.has(fd)){
+
+					ptr conptr = connections.get(fd);
+					@ hcon = cast conptr as HttpConnection;
+					hcon._RC++;
+
+					if(event.is_closing()) {
+						io:print("[+] connection closed: ");
+						io:println(fd.str());
+
+						if(this.use_ssl){
+							hcon.con.free_ssl();
 						}
 
-						ifnull con continue;
-
-						if(con.fd > maxfd){
-							maxfd = con.fd;
-						}
-
-						// SSL
-						if(is_ssl_fd){
-							ifnull ssl_ctx continue;
-							con.make_ssl(ssl_ctx) or continue;
-						}
-
-						@ hcon = HttpConnection { con: con };
-
-						#if OS_WIN || OS_OSX
-						#else
-						Server.epoll_ctl_add(buf_ev, epfd, con.fd, main:main:EPOLL.EPOLLIN bitOR main:main:EPOLL.EPOLLET bitOR main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP);
-                           fdcount++;
-						#end
-
-						hcon._RC++;
-
-						connections.set(con.fd, hcon);
-						io:print("[+] new connection: ");
-						io:print(con.fd.str());
-						io:print("\n");
+						hcon.con.close();
+						hcon.task = null;
+						hcon.__free();
+						connections.clear(fd);
+						poll.remove(fd);
 
 						continue;
 					}
 
-					if(connections.has(fd)){
+					//#if OS_WIN || OS_OSX
+					//bool has_incoming_data = true;
+					//#else
+					//bool has_incoming_data = (event.events bitAND main:main:EPOLL.EPOLLIN) > 0;
+					//#end
+					//if(has_incoming_data == false){
+					//	#if OS_WIN || OS_OSX
+					//		io:print("[+] no incoming data from connection\n");
+					//	#else
+					//		io:print("[+] unknown epoll event (bug)\n");
+					//	#end
+					//	continue;
+					//}
 
-						ptr conptr = connections.get(fd);
-						@ hcon = cast conptr as HttpConnection;
-						hcon._RC++;
-
-						#if OS_WIN || OS_OSX
-						#else
-						// Check if the connection is closing
-						if ((event.events bitAND (main:main:EPOLL.EPOLLERR bitOR main:main:EPOLL.EPOLLRDHUP bitOR main:main:EPOLL.EPOLLHUP)) > 0) {
-							io:print("[+] connection closed: ");
-							io:println(fd.str());
+					this._RC++;
+					if(hcon.task == null){
+						hcon.task = async Server.respond(cast hcon as ptr, this.handler);
+						//Server.respond_fast(hcon.con.fd, this);
+					} else {
+					    #if OS_WIN || OS_OSX
+						if(hcon.con.has_data_to_read()){
+							io:print("[+] disconnect\n");
 
 							if(this.use_ssl){
 								hcon.con.free_ssl();
 							}
 
-							hcon.task = null;
-							hcon._ALLOCATOR.free(hcon);
+							hcon.con.close();
+							hcon.__free();
 							connections.clear(fd);
+							poll.remove(fd);
 
-							err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
-							err_check = main:main:close(fd);
-                            fdcount--;
 							continue;
 						}
-						#end
-
-						#if OS_WIN || OS_OSX
-						bool has_incoming_data = true;
-						#else
-						bool has_incoming_data = (event.events bitAND main:main:EPOLL.EPOLLIN) > 0;
-						#end
-
-						if(has_incoming_data == false){
-							#if OS_WIN || OS_OSX
-								io:print("[+] no incoming data from connection\n");
-							#else
-								io:print("[+] unknown epoll event (bug)\n");
-							#end
-							continue;
+                        #end
+						@ task = hcon.task;
+						notnull task do {
+							task.continue();
 						}
-
-						this._RC++;
-						if(hcon.task == null){
-							hcon.task = async Server.respond(cast hcon as ptr, this.handler);
-							//Server.respond_fast(hcon.con.fd, this);
-						} else {
-						    #if OS_WIN || OS_OSX
-							// Peek recv to detect disconnects
-							u8 buffer = ' ';
-							// MSG_PEEK = 0x2
-  							i32 err_check = main:main:recv(fd, getptr buffer, 1, 2);
-							if(err_check <= 0){
-								io:print("[+] disconnect\n");
-
-								if(this.use_ssl){
-									hcon.con.free_ssl();
-								}
-
-								hcon._ALLOCATOR.free(hcon);
-								connections.clear(fd);
-								fd:remove_from_set(read_set, fd);
-								err_check = main:main:close(fd);
-								continue;
-							}
-                            #end
-							@ task = hcon.task;
-							notnull task do {
-								task.continue();
-							}
-						}
-					} else {
-						#if OS_WIN || OS_OSX
-							io:print("[+] poll/select event on non-existing connection\n");
-						#else
-                            err_check = main:main:epoll_ctl(epfd, main:main:EPOLL.EPOLL_CTL_DEL, fd, null);
-							err_check = main:main:close(fd);
-                            fdcount--;
-							io:print("[+] epoll event on non-existing connection\n");
-						#end
 					}
+				} else {
+					print("[+] poll event on non-existing connection: ");
+					println(fd.str());
+					poll.remove(fd);
+				}
 
-				} // END FD LOOP
+			} // End each events
+		} // End while true
 
-			} // END SELECT
-		} // END LOOP
-
+		// Close sockets ...
 	}
 
 	#if OS_LINUX
@@ -329,19 +246,20 @@ class Server {
 		return;
 	}
 
-	public func enable_ssl(u32 port, String cert_path, String private_key_path) {
+	public func enable_ssl(u32 port, String cert_path, String private_key_path) ! {
 
 		if(ki:fs:exists(cert_path) == false){
-			panic ssl_cert_file_not_found;
+			throw ssl_cert_file_not_found;
 		}
 		if(ki:fs:exists(private_key_path) == false){
-			panic ssl_private_key_file_not_found;
+			throw ssl_private_key_file_not_found;
 		}
 
 		this.use_ssl = true;
-		this.ssl_port = port;
 		this.ssl_cert = cert_path;
 		this.ssl_private_key = private_key_path;
+
+	 	this.ssl_socket = net:Socket.init(this.host, port, net:Socket.TYPE.stream) or pass;
 	}
 
 }

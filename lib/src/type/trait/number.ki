@@ -50,4 +50,21 @@ trait Number {
 		return this.str();
 	}
 
+	public func byte_swap() CLASS {
+		@ bytes = sizeof(CLASS);
+		CLASS result = 0;
+		ptr adr = getptr this;
+		adr += bytes - 1;
+		ptr to_adr = getptr result;
+		@ c = 0;
+		while(c < bytes){
+			u8 ch = getptrv adr as u8;
+			setptrv to_adr to ch;
+			adr--;
+			to_adr++;
+			c++;
+		}
+		return result;
+	}
+
 }

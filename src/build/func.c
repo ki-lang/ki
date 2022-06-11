@@ -91,6 +91,10 @@ void fc_scan_func_args(Function *func) {
         if (!is_valid_varname(token)) {
             fc_error(fc, "Invalid arg name: '%s'\n", token);
         }
+        FunctionArg *prev = map_get(scope->identifiers, token);
+        if (prev) {
+            fc_error(fc, "Duplicate argument name: '%s'", token);
+        }
 
         char *name = strdup(token);
         int find = array_find(names, name, "chars");

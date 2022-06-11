@@ -55,6 +55,9 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         fc_expect_token(fc, "(", false, true, false);
         // type or type of var
         IdentifierFor *idf = fc_read_and_get_idf(fc, scope, false, true, true);
+        if (!idf) {
+            fc_error(fc, "Unknown identifier", NULL);
+        }
         int size = 0;
         if (idf->type == idfor_class) {
             Class *class = idf->item;
@@ -313,7 +316,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         idf = idf_find_in_scope(idf_scope, id);
         if (idf == NULL) {
             if (id->namespace) {
-                printf("Found '%d' tokens within this namespace '%s' : ", idf_scope->identifiers->keys->length, id->namespace);
+                printf("Found '%d' identifiers within this namespace '%s' : ", idf_scope->identifiers->keys->length, id->namespace);
                 for (int i = 0; i < idf_scope->identifiers->keys->length; i++) {
                     char *key = array_get_index(idf_scope->identifiers->keys, i);
                     if (i > 0) {
@@ -460,6 +463,17 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                     }
 
                     map_set(ini->prop_values, prop_name, value);
+                }
+                // Check if all props are filled in
+                for (int i = 0; i < class->props->keys->length; i++) {
+                    char *name = array_get_index(class->props->keys, i);
+                    ClassProp *prop = array_get_index(class->props->values, i);
+                    if (!prop->is_func && !prop->is_static && prop->default_value == NULL) {
+                        Value *v = map_get(ini->prop_values, name);
+                        if (v == NULL) {
+                            fc_error(fc, "Missing property '%s'", name);
+                        }
+                    }
                 }
 
                 //

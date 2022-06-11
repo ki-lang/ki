@@ -13,6 +13,21 @@ class Array<T> {
 		return Array<T> { max_length: suggested_length, data: mem:calloc(suggested_length * sizeof(T)) };
 	}
 
+	public func clear() {
+		#if IS_REFCOUNTED_TYPE T
+		each this as item {
+			#if IS_NULLABLE_TYPE T
+			if(item != null) {
+			#end
+			item._RC++;
+			#if IS_NULLABLE_TYPE T
+			}
+			#end
+		}
+		#end
+		this.length = 0;
+	}
+
 	public func check_max_length() {
 		if(this.length == this.max_length){
 			if(this.max_length > 0){

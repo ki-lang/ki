@@ -50,7 +50,7 @@ void cmd_build(Array *files, Map *options) {
         g_verbose = true;
     }
     g_nocache = false;
-    if (map_contains(options, "--clear")) {
+    if (map_contains(options, "--clean")) {
         g_nocache = true;
     }
 
@@ -192,7 +192,7 @@ void build_help() {
 
     printf("> Example: ki build src/*.ki -o myapp\n\n");
 
-    printf("  --clear              Clear cache\n");
+    printf("  --clean              Clean build, ignore cache\n");
     printf("  --shared             Use shared libraries\n");
     printf("  --verbose            Outputs extra information\n");
 
