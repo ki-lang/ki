@@ -62,15 +62,17 @@ class Poll {
 		mem:clear(read_set, this.max_connections);
 		ptr adr = this.events;
 		@ i = 3;
-		@ until = this.max_fd + 1;
+		@ until = this.max_fd + 2;
+		adr += i * sizeof(PollEvent);
 		while(i < until) {
 			PollEvent ev = cast adr as PollEvent;
 			if(ev.fd > 0) {
 				fd:add_to_set(read_set, ev.fd);
 			}
 			adr += sizeof(PollEvent);
+			i++;
 		}
-		@ select_result = main:main:select(this.max_fd + 1, read_set, null, null, null);
+		@ select_result = main:main:select(until, read_set, null, null, null);
 		#else
 		i32 event_count = main:main:epoll_wait(this.epoll_fd, this.events, this.fd_count, 1000);
 		@ select_result = 1;
