@@ -1,5 +1,6 @@
 
 #include "../all.h"
+#include "../libs/md5.h"
 
 Type *init_type() {
     Type *type = malloc(sizeof(Type));
