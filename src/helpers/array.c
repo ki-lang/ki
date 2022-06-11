@@ -12,7 +12,7 @@ Array *array_make(int max_length) {
 void array_push(Array *arr, void *item) {
     if (arr->length == arr->max_length) {
         int newlen = arr->max_length * 2;
-        void *new = alloc(newlen * sizeof(void *));
+        void *new = malloc(newlen * sizeof(void *));
         memcpy(new, arr->data, arr->max_length);
         arr->data = new;
         arr->max_length = newlen;
@@ -34,7 +34,7 @@ void *array_pop(Array *arr) {
 void array_shift(Array *arr, void *item) {
     if (arr->length == arr->max_length) {
         int newlen = arr->max_length * 2;
-        void *new = alloc(newlen * sizeof(void *));
+        void *new = malloc(newlen * sizeof(void *));
         memcpy(new, arr->data, arr->max_length);
         arr->data = new;
         arr->max_length = newlen;
