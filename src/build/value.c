@@ -227,7 +227,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             strcat(fl, ".");
             int x = strlen(fl);
             char digit = fc_get_char(fc, 0);
-            if (is_number(digit)) {
+            while (is_number(digit)) {
                 if (x >= 250) {
                     char msg[100];
                     sprintf(msg,
