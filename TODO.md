@@ -29,6 +29,7 @@
 
 - more tests
 - rewrite c generator
+- pre-allocating data
 
 ## Future
 
