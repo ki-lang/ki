@@ -698,6 +698,10 @@ void token_assign(FileCompiler *fc, Scope *scope, char *sign, Value *left) {
 
     ta->right = fc_read_value(fc, scope, false, true, true);
 
+    if (!ta->right->return_type) {
+        fc_error(fc, "Value has no return type", NULL);
+    }
+
     Token *t = init_token();
     t->type = tkn_assign;
     t->item = ta;

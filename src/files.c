@@ -91,6 +91,7 @@ char *get_binary_dir() {
     }
 
     char *buf = malloc(1000);
+    strcpy(buf, "");
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     GetModuleFileName(NULL, buf, 1000);
 #elif defined(__APPLE__)
@@ -98,18 +99,21 @@ char *get_binary_dir() {
     // strcpy(buf, "/opt/ki/ki");
     strcpy(buf, g_arg_0);
 #else
-    readlink("/proc/self/exe", buf, 1000);
+    int len = readlink("/proc/self/exe", buf, 1000);
+    buf[len] = '\0';
 #endif
 
+    // Remove executable name
     int i = strlen(buf);
     while (i > 0) {
         i--;
         char ch = buf[i];
-        buf[i] = '\0';
         if (ch == '/' || ch == '\\') {
             break;
         }
     }
+    buf[i] = '\0';
+
     g_binary_dir = strdup(buf);
     free(buf);
     return g_binary_dir;

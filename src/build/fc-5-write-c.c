@@ -750,7 +750,7 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
 
         char *left;
         if (ta->left->type == vt_threaded_global) {
-            GlobalVar *gv = ta->left->item;
+            // GlobalVar *gv = ta->left->item;
             left = strdup(var_buf(fc));
             fc_write_c_type(fc->tkn_buffer, ta->left->return_type, left);
             str_append_chars(fc->tkn_buffer, " = 0;\n");
