@@ -24,12 +24,15 @@
 - throw error class with error_code & error_msg
 - dont allow getptr on number literals
 - foreach on Map<>
+- package requirements e.g. ki version between x/y
+- package import libs
 
 ## Later
 
 - more tests
 - rewrite c generator
 - pre-allocating data
+- let compiler generate api-docs for a package,namespace,class,func,enum
 
 ## Future
 
