@@ -74,6 +74,7 @@ typedef struct FileCompiler {
 
 typedef struct FcCache {
     int modified_time;
+    int tests_enabled;
     struct Map *depends_on;
     struct Map *allocators;
 } FcCache;
