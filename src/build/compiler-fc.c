@@ -36,7 +36,7 @@ FileCompiler *init_fc() {
     fc->indent = 0;
     fc->current_scope = NULL;
     fc->var_bufc = 0;
-    fc->var_buf = malloc(12);
+    fc->var_buf = malloc(100);
     //
     fc->sprintf = malloc(100);
     fc->sprintf2 = malloc(100);

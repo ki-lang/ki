@@ -59,7 +59,6 @@ void fc_read_header_token(FileCompiler *fc) {
         fc_error(fc, "Cannot find header file location: '%s'", path);
     }
 
-    free(path);
     // Parse
     PkgCompiler *mainpkc = map_get(packages, "main");
     hfc = fc_new_file(mainpkc, fullpath, false);
