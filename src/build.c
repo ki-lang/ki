@@ -162,10 +162,12 @@ void cmd_build(Array *files, Map *options) {
             die("Output file not found...");
         }
         chmod(g_output_name, 0777);
+        sync();
         //
-        printf("# Run\n");
+        printf("# Run: %s\n", g_output_name);
         strcpy(cmd, g_output_name);
         int result = run_cmd(cmd);
+        wait_cmd();
     }
 }
 

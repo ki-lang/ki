@@ -150,6 +150,7 @@ void compile_all() {
         printf("Compile failed\n");
         exit(1);
     }
+    wait_cmd();
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #else
@@ -208,8 +209,7 @@ int run_cmd(char *cmd) {
     if (child_pid == -1) {
         perror("fork");
     } else if (child_pid == 0) {
-        execlp("/bin/sh", "/bin/sh", "-c", cmd, NULL);
-        // system(cmd);
+        result = execlp("/bin/sh", "/bin/sh", "-c", cmd, NULL);
     }
 #endif
     return result;
