@@ -15,5 +15,8 @@
 	},
 	"headers": {
 		"dirs": ["headers"]
+	},
+	"binaries": {
+		"dirs": ["binaries"]
 	}
 }

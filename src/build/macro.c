@@ -10,6 +10,9 @@ void fc_parse_macro(FileCompiler *fc, Scope *scope, char *token) {
     if (strcmp(token, "header") == 0) {
         // ki header
         fc_read_header_token(fc);
+    } else if (strcmp(token, "link") == 0) {
+        // Add to linker
+        fc_read_link_token(fc);
     } else if (strcmp(token, "if") == 0) {
         bool result = fc_resolve_macro_if_value(fc, scope);
         array_push(fc->macro_results, result ? "1" : "0");

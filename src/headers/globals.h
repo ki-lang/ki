@@ -19,6 +19,8 @@ bool g_optimize;
 bool g_verbose;
 bool g_verbose_all;
 Map *g_fc_by_ki_filepath;
+Array *g_links;
+Array* g_link_dirs;
 
 Map *c_identifiers;
 Map *c_struct_identifiers;
