@@ -75,29 +75,33 @@ void compile_all() {
     sync();
 #endif
 
-    char *lib_dir = malloc(KI_PATH_MAX);
-
+    // char *lib_dir = malloc(KI_PATH_MAX);
     // strcpy(lib_dir, get_binary_dir());
-    strcpy(lib_dir, "lib/binaries/");
+    // strcat(lib_dir, "lib/binaries");
+
+    char *lib_dir_suffix = malloc(KI_PATH_MAX);
+    strcpy(lib_dir_suffix, "/");
 #if defined _WIN32
-    strcat(lib_dir, "win-x64");
+    strcat(lib_dir_suffix, "win-x64");
 #elif defined __APPLE__
-    strcat(lib_dir, "osx-x64");
+    strcat(lib_dir_suffix, "osx-x64");
 #else
-    strcat(lib_dir, "linux-x64");
+    strcat(lib_dir_suffix, "linux-x64");
 #endif
-    strcat(lib_dir, g_static ? "/static" : "/shared");
+    strcat(lib_dir_suffix, g_static ? "/static" : "/shared");
+
+    // strcat(lib_dir, lib_dir_suffix);
 
     // Compile executable
     char *cmd = malloc(50000);
     strcpy(cmd, "");
 
     // Set LD_RUN_PATH
-    if (!g_static) {
-        strcat(cmd, "LD_RUN_PATH='$ORIGIN/");
-        strcat(cmd, lib_dir);
-        strcat(cmd, "' ");
-    }
+    // if (!g_static) {
+    //     strcat(cmd, "LD_RUN_PATH='$ORIGIN/");
+    //     strcat(cmd, lib_dir);
+    //     strcat(cmd, "' ");
+    // }
 
     // gcc/clang/...
     strcat(cmd, get_compiler_path());
@@ -112,27 +116,41 @@ void compile_all() {
     strcat(cmd, " -o ");
     strcat(cmd, g_output_name);
 
-    // Link lib_dir
-    strcat(cmd, " -L ");
-    strcat(cmd, lib_dir);
+    for (int i = 0; i < g_link_dirs->length; i++) {
+        char *dir = array_get_index(g_link_dirs, i);
+        strcat(cmd, " -L ");
+        strcat(cmd, dir);
+        strcat(cmd, lib_dir_suffix);
+    }
 
     // Link libraries
     //#ifndef __APPLE__
     //    strcat(cmd, " -Wl,--disable-new-dtags");
     //#endif
-    strcat(cmd, " -lssl -lcrypto -lz -lpthread -pthread");
+
+    for (int i = 0; i < g_links->length; i++) {
+        char *link = array_get_index(g_links, i);
+        strcat(cmd, " -l");
+        strcat(cmd, link);
+    }
+
+    strcat(cmd, " -lz -lpthread -pthread");
 #ifdef _WIN32
     strcat(cmd, " -lws2_32");
 #else
     strcat(cmd, " -ldl");
 #endif
 
-    // Run
+    // Compile
+    if (g_verbose) {
+        printf("%s\n", cmd);
+    }
     int result = run_cmd(cmd);
     if (result == -1) {
         printf("Compile failed\n");
         exit(1);
     }
+    wait_cmd();
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #else
@@ -191,8 +209,7 @@ int run_cmd(char *cmd) {
     if (child_pid == -1) {
         perror("fork");
     } else if (child_pid == 0) {
-        execlp("/bin/sh", "/bin/sh", "-c", cmd, NULL);
-        // system(cmd);
+        result = execlp("/bin/sh", "/bin/sh", "-c", cmd, NULL);
     }
 #endif
     return result;

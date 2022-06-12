@@ -168,6 +168,7 @@ void fc_skip_assign_value(FileCompiler *fc);
 
 // Headers
 void fc_read_header_token(FileCompiler *fc);
+void fc_read_link_token(FileCompiler *fc);
 
 // Macro
 void fc_parse_macro(FileCompiler *fc, Scope *scope, char *token);

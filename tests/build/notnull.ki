@@ -1,15 +1,11 @@
 
-class SomeClass {
-	public i32 a = 1;
-}
+func _test_notnull () i32 {
 
-func main () i32 {
-
-	?SomeClass x = null;
+	?String x = null;
 	i32 i = 0;
 
 	notnull x do {
-		i = x.a;
+		i = x.bytes;
 	} else {
 		i = 2;
 	}

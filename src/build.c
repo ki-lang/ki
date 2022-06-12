@@ -14,12 +14,6 @@ void cmd_build(Array *files, Map *options) {
 
     printf("Build...\n");
 
-    if (!map_contains(options, "-o")) {
-        die("Please set output name/path. e.g. '-o mytool'");
-    }
-
-    g_output_name = map_get(options, "-o");
-
     //
     cmd_build_init_static();
     // Globals
@@ -39,6 +33,11 @@ void cmd_build(Array *files, Map *options) {
     build_ast_stage = false;
     uses_async = false;
     last_readonly_i = 0;
+    //
+    g_main_func = NULL;
+    g_links = array_make(4);
+    g_link_dirs = array_make(2);
+    g_test_funcs = array_make(4);
 
     // -static option
     g_static = true;
@@ -46,6 +45,18 @@ void cmd_build(Array *files, Map *options) {
     g_verbose = false;
     g_nocache = false;
     g_optimize = false;
+    g_run = false;
+    g_run_tests = false;
+    g_sprintf = malloc(1000);
+
+    g_output_name = map_get(options, "-o");
+
+    if (map_contains(options, "--run")) {
+        g_run = true;
+    }
+    if (map_contains(options, "--tests")) {
+        g_run_tests = true;
+    }
     if (map_contains(options, "--shared")) {
         g_static = false;
     }
@@ -64,6 +75,13 @@ void cmd_build(Array *files, Map *options) {
     if (map_contains(options, "--release")) {
         g_nocache = true;
         g_optimize = true;
+    }
+
+    if (!g_output_name) {
+        char *cache_dir = get_cache_dir();
+        g_output_name = malloc(KI_PATH_MAX);
+        strcpy(g_output_name, cache_dir);
+        strcat(g_output_name, "/build_and_run");
     }
 
     //
@@ -135,6 +153,22 @@ void cmd_build(Array *files, Map *options) {
     printf("Compile time: %f\n", compile_time);
     printf("Lines of code: %d\n", LOC);
     printf("\n");
+
+    // Run
+    if (g_run) {
+        char *cmd = malloc(KI_PATH_MAX);
+        // Set chmod
+        if (!file_exists(g_output_name)) {
+            die("Output file not found...");
+        }
+        chmod(g_output_name, 0777);
+        sync();
+        //
+        printf("# Run: %s\n", g_output_name);
+        strcpy(cmd, g_output_name);
+        int result = run_cmd(cmd);
+        wait_cmd();
+    }
 }
 
 void cmd_build_init_static() {
@@ -204,11 +238,15 @@ void build_help() {
 
     printf("> Example: ki build src/*.ki -o myapp\n\n");
 
+    printf("  --run                Run program after compiling\n");
     printf("  --clean              Clean build, ignore cache\n");
     printf("  --optimize           Enable optimizations (-O3)\n");
     printf("  --release            Release build, no cache, optimized\n");
     printf("  -v -vvv              Verbose, outputs extra information\n");
-    printf("  --shared             Use shared libraries\n");
+    printf("  --tests              Include _test_ functions and run them at start\n");
+
+    // Hide for now
+    // printf("  --shared             Use shared libraries\n");
 
     printf("\n");
 }

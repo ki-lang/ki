@@ -3,6 +3,30 @@ namespace sys;
 
 #header "sys/sys"
 
+func tests_start() {
+	io:println("Start testing...");
+}
+
+func test_start(ptr path_ptr) {
+	@ path = cast path_ptr as cstring;
+	io:print("Run: ");
+	io:print(path.to_string());
+	io:print(" -> ");
+}
+
+func test_result(i32 code) {
+	if(code == 0){
+		println("Succeeded");
+	} else {
+		println("Failed");
+		exit 1;
+	}
+}
+
+func tests_ready() {
+	io:println("Done");
+}
+
 func exit(i32 code) {
 	main:main:exit(code);
 }

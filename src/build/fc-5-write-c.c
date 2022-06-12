@@ -256,6 +256,65 @@ void fc_write_c_inits() {
         }
     }
 
+    // Main
+    str_append_chars(all_code, "int main(");
+    str_append_chars(all_code, "int _KI_ARGC, char** _KI_ARGV");
+    str_append_chars(all_code, "){\n");
+
+    str_append_chars(all_code, "KI_ALLOCATORS = ki__mem__calloc_flat(64 * 8);\n");
+    str_append_chars(all_code, "KI_ALLOCATORS_MUT = ki__async__Mutex__make();\n");
+    str_append_chars(all_code, "KI_INITS();\n");
+
+    if (uses_async) {
+        str_append_chars(all_code, "void* KI_MAIN_TMS = ki__async__Taskman__setup_task_managers();\n");
+    }
+
+    str_append_chars(all_code, "int result = 0;\n");
+
+    if (g_run_tests) {
+        str_append_chars(all_code, "ki__sys__tests_start();\n");
+        for (int i = 0; i < g_test_funcs->length; i++) {
+            Function *func = array_get_index(g_test_funcs, i);
+
+            sprintf(g_sprintf, "ki__sys__test_start(\"%s\");\n", func->cname);
+            str_append_chars(all_code, g_sprintf);
+
+            str_append_chars(all_code, "result = ");
+            str_append_chars(all_code, func->cname);
+            str_append_chars(all_code, "();\n");
+            str_append_chars(all_code, "ki__sys__test_result(result);\n");
+        }
+        str_append_chars(all_code, "ki__sys__tests_ready();\n");
+
+    } else if (g_main_func) {
+        Function *func = g_main_func;
+        if (func->args->length == 1) {
+            FunctionArg *arg = array_get_index(func->args, 0);
+            Type *type = arg->type;
+            Class *class = type->class;
+            str_append_chars(all_code, "struct ");
+            str_append_chars(all_code, class->cname);
+            str_append_chars(all_code, "* ");
+            str_append_chars(all_code, arg->name);
+            str_append_chars(all_code, " = ki__type__String__generate_main_args(_KI_ARGC, _KI_ARGV);\n");
+        }
+
+        str_append_chars(all_code, "result = _KI_MAIN(\n");
+        if (func->args->length == 1) {
+            FunctionArg *arg = array_get_index(func->args, 0);
+            str_append_chars(all_code, arg->name);
+        }
+        str_append_chars(all_code, ");\n");
+    }
+
+    if (uses_async) {
+        str_append_chars(all_code, "ki__async__Taskman__wait_for_tasks_to_end(KI_MAIN_TMS);\n");
+    }
+
+    str_append_chars(all_code, "return result;\n");
+    str_append_chars(all_code, "}\n\n");
+
+    //
     char *hcode_ = str_to_chars(hcode);
     write_file(hpath, hcode_, true);
     free(hcode_);
@@ -534,50 +593,6 @@ void fc_write_c_func(FileCompiler *fc, Function *func) {
 
         fc->indent--;
         str_append_chars(fc->tkn_buffer, "}\n\n");
-
-        /////////////
-        // MAIN
-        /////////////
-
-        if (strcmp(func->cname, "main") == 0) {
-            str_append_chars(fc->tkn_buffer, "int main(");
-            str_append_chars(fc->tkn_buffer, "int _KI_ARGC, char** _KI_ARGV");
-            str_append_chars(fc->tkn_buffer, "){\n");
-
-            str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS = ki__mem__calloc_flat(64 * 8);\n");
-            str_append_chars(fc->tkn_buffer, "KI_ALLOCATORS_MUT = ki__async__Mutex__make();\n");
-            str_append_chars(fc->tkn_buffer, "KI_INITS();\n");
-
-            if (arg_len == 1) {
-                FunctionArg *arg = array_get_index(func->args, 0);
-                Type *type = arg->type;
-                Class *class = type->class;
-                str_append_chars(fc->tkn_buffer, "struct ");
-                str_append_chars(fc->tkn_buffer, class->cname);
-                str_append_chars(fc->tkn_buffer, "* ");
-                str_append_chars(fc->tkn_buffer, arg->name);
-                str_append_chars(fc->tkn_buffer, " = ki__type__String__generate_main_args(_KI_ARGC, _KI_ARGV);\n");
-            }
-
-            if (uses_async) {
-                str_append_chars(fc->tkn_buffer, "void* KI_MAIN_TMS = ki__async__Taskman__setup_task_managers();\n");
-            }
-
-            str_append_chars(fc->tkn_buffer, "int result = _KI_MAIN(\n");
-            if (arg_len == 1) {
-                FunctionArg *arg = array_get_index(func->args, 0);
-                str_append_chars(fc->tkn_buffer, arg->name);
-            }
-            str_append_chars(fc->tkn_buffer, ");\n");
-
-            if (uses_async) {
-                str_append_chars(fc->tkn_buffer, "ki__async__Taskman__wait_for_tasks_to_end(KI_MAIN_TMS);\n");
-            }
-
-            str_append_chars(fc->tkn_buffer, "return result;\n");
-
-            str_append_chars(fc->tkn_buffer, "}\n\n");
-        }
     }
 }
 

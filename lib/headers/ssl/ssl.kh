@@ -1,6 +1,9 @@
 
 namespace main;
 
+#link "crypto"
+#link "ssl"
+
 class SSL norfc {
 }
 
