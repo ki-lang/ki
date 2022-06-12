@@ -124,9 +124,16 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         SetPtrValue *cast = malloc(sizeof(ValueCast));
         cast->ptr_value = fc_read_value(fc, scope, false, true, true);
 
+        Type *ptr_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "ptr"), NULL);
+        fc_type_compatible(fc, ptr_type, cast->ptr_value->return_type);
+
         fc_expect_token(fc, "to", false, true, true);
 
         cast->to_value = fc_read_value(fc, scope, false, true, true);
+
+        if (!cast->to_value->return_type) {
+            fc_error(fc, "Value has no return type", NULL);
+        }
 
         value->item = cast;
         value->return_type = NULL;
