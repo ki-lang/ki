@@ -26,6 +26,7 @@
 - foreach on Map<>
 - package requirements e.g. ki version between x/y
 - package import libs
+- macro values via ki build --def "env=production,enable_some_feature=1"
 
 ## Later
 
