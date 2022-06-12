@@ -1,4 +1,6 @@
 
+namespace tests;
+
 use ki:http;
 
 func hello(http:Request req) http:Response{
@@ -8,13 +10,13 @@ func hello(http:Request req) http:Response{
 }
 
 func start_server() {
-	@ s = http:Server.init("127.0.0.1", 9123, handler) or panic failed_to_init_server
+	@ s = http:Server.init("127.0.0.1", 9123, hello) or panic failed_to_init_server;
 	s.start() or panic failed_to_start_server;
 }
 
-func main () i32 {
+func __test_socket () i32 {
 
-	async start_server();
+	@ task = async start_server();
 
 	@ client = ki:tcp:Client.init("127.0.0.1", 9123) or return {
 		println("Failed to create tcp client");
@@ -26,7 +28,8 @@ func main () i32 {
 		return 1;
 	};
 
-	@ msg = client.read();
+	@ msg = client.read() or return 1;
 
 	println("Sent");
+	return 0;
 }

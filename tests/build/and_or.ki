@@ -13,7 +13,7 @@ func do_run(Track tr) bool {
 	return true;
 }
 
-func main () i32 {
+func _test_and_or () i32 {
 
 	@ tr = Track {};
 

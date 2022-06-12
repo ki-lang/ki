@@ -1,0 +1,14 @@
+
+func _test_notnull () i32 {
+
+	?String x = null;
+	i32 i = 0;
+
+	notnull x do {
+		i = x.bytes;
+	} else {
+		i = 2;
+	}
+
+	return 0;
+}
