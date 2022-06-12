@@ -8,6 +8,7 @@ Function *init_func() {
     func->fc = NULL;
     func->can_error = false;
     func->generate_code = true;
+    func->is_test = false;
     func->args = array_make(2);
     func->arg_types = array_make(2);
     func->args_i = 0;

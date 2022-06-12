@@ -141,7 +141,7 @@ void compile_all() {
     strcat(cmd, " -ldl");
 #endif
 
-    // Run
+    // Compile
     if (g_verbose) {
         printf("%s\n", cmd);
     }

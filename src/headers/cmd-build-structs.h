@@ -189,6 +189,7 @@ typedef struct Function {
     struct FileCompiler *fc;
     bool can_error;
     bool generate_code;
+    bool is_test;
     //
     struct Array *args;
     struct Array *arg_types;

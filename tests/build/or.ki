@@ -1,17 +1,13 @@
 
-class SomeClass {
-	public i32 a = 1;
-}
+func _test_or () i32 {
 
-func main () i32 {
-
-	?SomeClass x = null;
+	?String x = null;
 	i32 i = 0;
 
 	ifnull x do {
 		i = 2;
 	} else {
-		i = x.a;
+		i = x.bytes;
 	}
 
 	return 0;

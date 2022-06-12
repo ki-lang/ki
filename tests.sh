@@ -1,4 +1,7 @@
 
+./ki build ./debug/ki/http/*.ki ./tests/build/*.ki --run --tests -v --clean
+exit 0
+
 if [ $# -eq 1 ]; then
   echo "Run tests containing '$1'"
 fi
