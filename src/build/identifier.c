@@ -152,7 +152,6 @@ Identifier *fc_read_identifier(FileCompiler *fc, bool readonly, bool sameline, b
         if (idf && idf->type == idfor_namespace) {
             NsCompiler *nsc = idf->item;
             id->package = strdup(nsc->pkc->name);
-            id->namespace = strdup(nsc->name);
         }
     }
 
