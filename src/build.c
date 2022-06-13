@@ -64,6 +64,7 @@ void cmd_build(Array *files, Map *options) {
         g_verbose = true;
     }
     if (map_contains(options, "-vvv")) {
+        g_verbose = true;
         g_verbose_all = true;
     }
     if (map_contains(options, "--clean")) {
