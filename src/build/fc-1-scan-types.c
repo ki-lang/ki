@@ -207,22 +207,34 @@ void fc_scan_types(FileCompiler *fc) {
             func->scope->is_func = true;
             func->scope->func = func;
 
-            array_push(fc->functions, func);
-
-            IdentifierFor *idf = init_idf();
-            idf->type = idfor_func;
-            idf->item = func;
-
-            Scope *scope = fc->nsc->scope;
-            map_set(scope->identifiers, name, idf);
-
-            // printf("Adding func named '%s' to namespace '%s:%s'\n", name, fc->nsc->pkc->name, fc->nsc->name);
-
             char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, name);
             func->cname = cname;
-            map_set(c_identifiers, cname, idf);
 
-            fc_scan_func(fc, func);
+            array_push(fc->functions, func);
+
+            if (strcmp(cname, "main") == 0) {
+                g_main_func = func;
+            }
+
+            func->is_test = starts_with(name, "_test_");
+
+            if (func->is_test) {
+                array_push(g_test_funcs, func);
+            }
+
+            if (!func->is_test || g_run_tests) {
+                //
+                IdentifierFor *idf = init_idf();
+                idf->type = idfor_func;
+                idf->item = func;
+
+                Scope *scope = fc->nsc->scope;
+                map_set(scope->identifiers, name, idf);
+
+                map_set(c_identifiers, cname, idf);
+
+                fc_scan_func(fc, func);
+            }
 
         } else if (strcmp(token, "use") == 0) {
             fc_next_token(fc, token, false, true, true);

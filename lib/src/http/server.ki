@@ -152,27 +152,13 @@ class Server {
 						continue;
 					}
 
-					//#if OS_WIN || OS_OSX
-					//bool has_incoming_data = true;
-					//#else
-					//bool has_incoming_data = (event.events bitAND main:main:EPOLL.EPOLLIN) > 0;
-					//#end
-					//if(has_incoming_data == false){
-					//	#if OS_WIN || OS_OSX
-					//		io:print("[+] no incoming data from connection\n");
-					//	#else
-					//		io:print("[+] unknown epoll event (bug)\n");
-					//	#end
-					//	continue;
-					//}
-
 					this._RC++;
 					if(hcon.task == null){
 						hcon.task = async Server.respond(cast hcon as ptr, this.handler);
 						//Server.respond_fast(hcon.con.fd, this);
 					} else {
 					    #if OS_WIN || OS_OSX
-						if(hcon.con.has_data_to_read()){
+						if(hcon.con.has_data_to_read() == false){
 							io:print("[+] disconnect\n");
 
 							if(this.use_ssl){

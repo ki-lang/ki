@@ -24,11 +24,16 @@
 - throw error class with error_code & error_msg
 - dont allow getptr on number literals
 - foreach on Map<>
+- package requirements e.g. ki version between x/y
+- macro values via ki build --def "env=production,enable_some_feature=1"
+- convert using #{type} -> e.g. #i32 => __to_i32()
 
 ## Later
 
 - more tests
 - rewrite c generator
+- pre-allocating data
+- let compiler generate api-docs for a package,namespace,class,func,enum
 
 ## Future
 

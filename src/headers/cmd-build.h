@@ -168,6 +168,7 @@ void fc_skip_assign_value(FileCompiler *fc);
 
 // Headers
 void fc_read_header_token(FileCompiler *fc);
+void fc_read_link_token(FileCompiler *fc);
 
 // Macro
 void fc_parse_macro(FileCompiler *fc, Scope *scope, char *token);
@@ -200,5 +201,5 @@ char *fc_write_c_ort(FileCompiler *fc, OrToken *ort);
 void compile_all();
 void fc_compile_o_file(FileCompiler *fc);
 char *get_compiler_path();
-int run_cmd(char *cmd);
+void run_cmd(char *cmd);
 void wait_cmd();

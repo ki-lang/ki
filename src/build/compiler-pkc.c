@@ -213,5 +213,29 @@ void pkc_check_config(PkgCompiler *pkc) {
         }
         // Freeing the content breaks the json object
         // free(content);
+
+        Config *cfg = cfg_get(pkc->dir);
+        if (cfg) {
+            cJSON *binaries = cJSON_GetObjectItemCaseSensitive(cfg->json, "binaries");
+            if (binaries != NULL) {
+                cJSON *bdirs = cJSON_GetObjectItemCaseSensitive(binaries, "dirs");
+                if (bdirs != NULL) {
+                    cJSON *dir = bdirs->child;
+                    while (dir) {
+
+                        char *val = dir->valuestring;
+                        char path[KI_PATH_MAX];
+                        strcpy(path, cfg->dir);
+                        strcat(path, "/");
+                        strcat(path, val);
+
+                        if (array_find(g_link_dirs, path, "chars") == -1) {
+                            array_push(g_link_dirs, strdup(path));
+                        }
+                        dir = dir->next;
+                    }
+                }
+            }
+        }
     }
 }

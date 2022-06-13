@@ -1,20 +1,17 @@
 
-class SomeClass {
-}
-
 func ifnull_on_ptr(ptr x) bool {
 	ifnull x return false;
 	return true;
 }
 
-func ifnull_on_arg(?SomeClass x) bool {
+func ifnull_on_arg(?String x) bool {
 	ifnull x return false;
 	return true;
 }
 
-func main () i32 {
+func _test_ifnull () i32 {
 
-	?SomeClass x1 = null;
+	?String x1 = null;
 	ptr x2 = null;
 
 	@ b1 = ifnull_on_arg(x1);

@@ -13,6 +13,7 @@ FcCache *init_fc_cache() {
     c->modified_time = 0;
     c->depends_on = map_make();
     c->allocators = map_make();
+    c->tests_enabled = g_run_tests;
 
     return c;
 }
@@ -65,12 +66,21 @@ void fc_load_cache(FileCompiler *fc) {
                     item = item->next;
                 }
             }
+            const cJSON *enable = cJSON_GetObjectItemCaseSensitive(json, "tests_enabled");
+            if (enable != NULL) {
+                c->tests_enabled = enable->valueint;
+            }
         }
 
         cJSON_Delete(json);
     }
 
     fc->cache = c;
+
+    if (c->tests_enabled != g_run_tests) {
+        fc->should_recompile = true;
+        fc->cache->depends_on = map_make();
+    }
 }
 
 void fc_save_cache(FileCompiler *fc) {
@@ -79,8 +89,9 @@ void fc_save_cache(FileCompiler *fc) {
     cJSON *json = cJSON_CreateObject();
 
     cJSON *mt = cJSON_CreateNumber(c->modified_time);
-
     cJSON_AddItemToObject(json, "modified_time", mt);
+    cJSON *tests_enabled = cJSON_CreateNumber(c->tests_enabled);
+    cJSON_AddItemToObject(json, "tests_enabled", tests_enabled);
 
     //
     cJSON *depends_on = cJSON_CreateObject();
@@ -140,8 +151,8 @@ void fc_depends_on(FileCompiler *fc, FileCompiler *depfc) {
 
     if (fc->should_recompile) {
         Map *depends_on = fc->cache->depends_on;
-        char *mod_time = map_get(depends_on, depfc->ki_filepath);
-        if (!mod_time) {
+        char *entry = map_get(depends_on, depfc->ki_filepath);
+        if (!entry) {
             sprintf(fc->sprintf, "%d", depfc->cache->modified_time);
             map_set(depends_on, depfc->ki_filepath, strdup(fc->sprintf));
         }

@@ -19,4 +19,4 @@ workflows:
             branches:
               only:
                 - master
-                - development
+                - testing
