@@ -433,6 +433,7 @@ void fc_write_c_class(FileCompiler *fc, Class *class) {
     // Free func
     ClassProp *prop = map_get(class->props, "__free");
     if (!prop || prop->generate_code == false) {
+
         str_append_chars(fc->h_code, "void ");
         str_append_chars(fc->h_code, class->cname);
         str_append_chars(fc->h_code, "____free(struct ");
@@ -444,6 +445,12 @@ void fc_write_c_class(FileCompiler *fc, Class *class) {
         str_append_chars(fc->c_code, "____free(struct ");
         str_append_chars(fc->c_code, class->cname);
         str_append_chars(fc->c_code, "* this){\n");
+
+        ClassProp *before_prop = map_get(class->props, "__before_free");
+        if (before_prop) {
+            str_append_chars(fc->h_code, class->cname);
+            str_append_chars(fc->h_code, "____before_free(this);\n");
+        }
 
         for (int i = 0; i < class->props->keys->length; i++) {
             char *name = array_get_index(class->props->keys, i);

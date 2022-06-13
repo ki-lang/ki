@@ -166,8 +166,12 @@ void cmd_build(Array *files, Map *options) {
         //
         printf("# Run: %s\n", g_output_name);
         strcpy(cmd, g_output_name);
-        int result = run_cmd(cmd);
+        run_cmd(cmd);
         wait_cmd();
+        if (cmd_err_code != 0) {
+            printf("# Failed to run\n");
+            exit(1);
+        }
     }
 }
 

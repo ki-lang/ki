@@ -23,6 +23,7 @@
 #include <time.h>
 //#include <sys/wait.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <unistd.h>
 
 #define KI_PATH_MAX 4096
