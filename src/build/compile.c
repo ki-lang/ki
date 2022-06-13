@@ -41,7 +41,7 @@ void fc_compile_local_c_files() {
     strcat(cmd, " ");
     strcat(cmd, c_file);
 
-    result = run_cmd(cmd);
+    run_cmd(cmd);
 
     //
     free(cmd);
@@ -61,15 +61,25 @@ void compile_all() {
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
             if (fc->create_o_file && fc->should_recompile) {
-                fc_compile_o_file(fc);
+                if (cmd_err_code == 0) {
+                    fc_compile_o_file(fc);
+                }
             }
         }
     }
 
-    fc_compile_local_c_files();
+    if (cmd_err_code == 0) {
+        fc_compile_local_c_files();
+    }
 
     //
     wait_cmd();
+
+    if (cmd_err_code != 0) {
+        printf("Failed to compile code\n");
+        exit(1);
+    }
+
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #else
     sync();
@@ -116,9 +126,10 @@ void compile_all() {
     strcat(cmd, " -o ");
     strcat(cmd, g_output_name);
 
+    // Link dir
     for (int i = 0; i < g_link_dirs->length; i++) {
         char *dir = array_get_index(g_link_dirs, i);
-        strcat(cmd, " -L ");
+        strcat(cmd, " -L");
         strcat(cmd, dir);
         strcat(cmd, lib_dir_suffix);
     }
@@ -134,23 +145,25 @@ void compile_all() {
         strcat(cmd, link);
     }
 
-    strcat(cmd, " -lz -lpthread -pthread");
 #ifdef _WIN32
     strcat(cmd, " -lws2_32");
 #else
     strcat(cmd, " -ldl");
 #endif
+    strcat(cmd, " -lz -lpthread -pthread");
 
     // Compile
     if (g_verbose) {
         printf("%s\n", cmd);
     }
-    int result = run_cmd(cmd);
-    if (result == -1) {
-        printf("Compile failed\n");
+
+    run_cmd(cmd);
+    wait_cmd();
+
+    if (cmd_err_code != 0) {
+        printf("Failed to compile executable\n");
         exit(1);
     }
-    wait_cmd();
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #else
@@ -176,11 +189,7 @@ void fc_compile_o_file(FileCompiler *fc) {
         printf("Write .o: %s\n", fc->o_filepath);
     }
 
-    int result = run_cmd(cmd);
-    if (result == -1) {
-        printf("Compile .o failed\n");
-        exit(1);
-    }
+    run_cmd(cmd);
 
     free(cmd);
 }
@@ -200,25 +209,30 @@ char *get_compiler_path() {
     return cmd;
 }
 
-int run_cmd(char *cmd) {
-    int result = 0;
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-    result = system(cmd);
-#else
-    child_pid = fork();
-    if (child_pid == -1) {
-        perror("fork");
-    } else if (child_pid == 0) {
-        result = execlp("/bin/sh", "/bin/sh", "-c", cmd, NULL);
+int cmd_init_c = 0;
+int cmd_done_c = 0;
+int cmd_err_code = 0;
+void *run_cmd_x(void *cmd_v) {
+    //
+    char *cmd = (char *)cmd_v;
+    int result = system(cmd);
+    if (result != 0) {
+        cmd_err_code = result;
     }
-#endif
-    return result;
+    cmd_done_c++;
+}
+
+void run_cmd(char *cmd) {
+    // Run max 10 at the same time
+    while (cmd_init_c - 10 > cmd_done_c)
+        ;
+    cmd_init_c++;
+    pthread_t *pt = malloc(sizeof(pthread_t));
+    pthread_create(pt, NULL, run_cmd_x, strdup(cmd));
 }
 
 void wait_cmd() {
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-#else
-    while ((wpid = wait(&status)) > 0)
+    //
+    while (cmd_init_c != cmd_done_c)
         ;
-#endif
 }

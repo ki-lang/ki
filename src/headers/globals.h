@@ -12,12 +12,12 @@ Array *cmd_arg_files;
 Map *allocators;
 Map *macro_defines;
 //
-Function* g_main_func;
+Function *g_main_func;
 Map *g_fc_by_ki_filepath;
 Array *g_links;
-Array* g_link_dirs;
-Array* g_test_funcs;
-char* g_sprintf;
+Array *g_link_dirs;
+Array *g_test_funcs;
+char *g_sprintf;
 
 // Options
 char *g_arg_0;
@@ -47,5 +47,7 @@ int pointer_size;
 
 int last_readonly_i;
 int LOC;
+
+int cmd_err_code;
 
 #endif

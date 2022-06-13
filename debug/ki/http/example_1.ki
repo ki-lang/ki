@@ -58,6 +58,8 @@ func handler(http:Request req) http:Response{
 
 func main(Array<String> args) i32 {
 
+	@ x = 50.123;
+
 	@ s = http:Server.init("127.0.0.1", 9000, handler) or exit 1;
 	//s.enable_ssl(4430, "./debug/ki/http/certs/localhost.crt", "./debug/ki/http/certs/localhost.key") or exit 1;
 	s.start() or exit 1;

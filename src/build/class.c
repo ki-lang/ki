@@ -494,6 +494,24 @@ void fc_scan_class_props(Class *class) {
         // map_set(class->props, "_ALLOCATOR", prop);
     }
 
+    ClassProp *bfp = map_get(class->props, "__before_free");
+    if (bfp) {
+        // Type check
+        if (!bfp->is_func || bfp->is_static) {
+            fc_error(fc, "__before_free must be a function (non-static)", NULL);
+        }
+        Function *func = bfp->func;
+        if (func->args->length != 0) {
+            fc_error(fc, "__before_free must have 0 arguments", NULL);
+        }
+        if (func->return_type != NULL) {
+            fc_error(fc, "__before_free should not have a return type", NULL);
+        }
+        if (func->can_error) {
+            fc_error(fc, "__before_free should not be allowed to throw an error", NULL);
+        }
+    }
+
     ClassProp *fp = map_get(class->props, "__free");
     if (!fp) {
         Function *func = init_func();
