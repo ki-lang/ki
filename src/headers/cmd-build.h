@@ -201,5 +201,5 @@ char *fc_write_c_ort(FileCompiler *fc, OrToken *ort);
 void compile_all();
 void fc_compile_o_file(FileCompiler *fc);
 char *get_compiler_path();
-void *run_cmd(char *cmd);
+void run_cmd(char *cmd);
 void wait_cmd();

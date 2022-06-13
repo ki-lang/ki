@@ -222,10 +222,12 @@ void *run_cmd_x(void *cmd_v) {
 }
 
 void run_cmd(char *cmd) {
+    // Run max 10 at the same time
+    while (cmd_init_c - 10 > cmd_done_c)
+        ;
     cmd_init_c++;
     pthread_t *pt = malloc(sizeof(pthread_t));
     pthread_create(pt, NULL, run_cmd_x, strdup(cmd));
-    return 0;
 }
 
 void wait_cmd() {
