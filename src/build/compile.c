@@ -126,9 +126,10 @@ void compile_all() {
     strcat(cmd, " -o ");
     strcat(cmd, g_output_name);
 
+    // Link dir
     for (int i = 0; i < g_link_dirs->length; i++) {
         char *dir = array_get_index(g_link_dirs, i);
-        strcat(cmd, " -L ");
+        strcat(cmd, " -L");
         strcat(cmd, dir);
         strcat(cmd, lib_dir_suffix);
     }
@@ -144,12 +145,12 @@ void compile_all() {
         strcat(cmd, link);
     }
 
-    strcat(cmd, " -lz -lpthread -pthread");
 #ifdef _WIN32
     strcat(cmd, " -lws2_32");
 #else
     strcat(cmd, " -ldl");
 #endif
+    strcat(cmd, " -lz -lpthread -pthread");
 
     // Compile
     if (g_verbose) {
