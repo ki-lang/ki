@@ -1,0 +1,10 @@
+
+namespace net;
+
+func domain_to_ip(String domain){
+	// Step 1. Get DNS ip
+	// On linux, use nameserver ip stored in /etc/resolv.conf
+	// On windows, use default gateway ip via win32 api GetAdaptersInfo
+	// Step 2. connect with socket to nameserver ip and request info from the DNS server
+
+}

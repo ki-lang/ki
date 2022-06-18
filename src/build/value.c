@@ -517,8 +517,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
     fc_next_token(fc, token, true, true, true);
     char ch = fc_get_char(fc, 0);
-    while (ch == '.' || ch == '(' || strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "*") == 0 || strcmp(token, "/") == 0 || strcmp(token, "%") == 0 || strcmp(token, "<<") == 0 || strcmp(token, ">>") == 0 || strcmp(token, "bitOR") == 0 || strcmp(token, "bitAND") == 0 || strcmp(token, "bitXOR") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, ">") == 0 || strcmp(token, "<") == 0 || strcmp(token, "&&") == 0 || strcmp(token, "||") == 0) {
+    while (ch == '.' || ch == '(' || strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "*") == 0 || strcmp(token, "/") == 0 || strcmp(token, "%") == 0 || strcmp(token, "<<") == 0 || strcmp(token, "bitOR") == 0 || strcmp(token, "bitAND") == 0 || strcmp(token, "bitXOR") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, ">") == 0 || strcmp(token, "<") == 0 || strcmp(token, "&&") == 0 || strcmp(token, "||") == 0) {
         fc_next_token(fc, token, false, true, true);
+        if (strcmp(token, ">") == 0 && fc_get_char(fc, 0) == '>') {
+            strcpy(token, ">>");
+            fc->i++;
+        }
         //
         if (ch == '.') {
             // Prop access
