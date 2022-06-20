@@ -8,7 +8,7 @@ class String {
 	readonly ptr data = 0;
 	readonly bool is_const = false;
 
-	public static func make(ptr data, uxx bytes, bool is_const) String {
+	public static func |used| make(ptr data, uxx bytes, bool is_const) String {
 		uxx mem_size = bytes;
 		ptr new_data = data;
 		if(is_const == false){
@@ -21,7 +21,7 @@ class String {
 		return str;
 	}
 
-	public static func make_empty(uxx mem_size) String {
+	public static func |used| make_empty(uxx mem_size) String {
 		ptr data = mem:alloc(mem_size);
 		@ str = String { data: data, mem_size: mem_size, bytes: 0, is_const: false };
 		return str;
@@ -47,7 +47,7 @@ class String {
 		return mem:equal(this.data, str.data, this.bytes);
 	}
 
-	public func __free() {
+	public func |used| __free() {
 		if(this.is_const == false){
 			mem:free(this.data);
 		}
@@ -348,7 +348,7 @@ class String {
 		return arr;
 	}
 
-	public static func generate_main_args(i32 argc, ptr argv) Array<String> {
+	public static func |used| generate_main_args(i32 argc, ptr argv) Array<String> {
 		i32 i = 0;
 		@ result = Array<String>.make(1);
 		while(i < argc){

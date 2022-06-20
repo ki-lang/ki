@@ -3,7 +3,7 @@ namespace type_trait;
 
 trait Number {
 
-	public func str() type:String {
+	public func |used| str() type:String {
 	    @ result = type:String.make_empty(sizeof(CLASS) * 3 + 1);
 		u8 i = 0;
 		u8 base = 10;

@@ -38,6 +38,7 @@ void cmd_build(Array *files, Map *options) {
     g_links = array_make(4);
     g_link_dirs = array_make(2);
     g_test_funcs = array_make(4);
+    g_used_functions = array_make(32);
 
     // -static option
     g_static = true;

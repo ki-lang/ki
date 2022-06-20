@@ -1,4 +1,4 @@
 
 namespace main;
 
-func exit(i32 code);
+func |used| exit(i32 code);

@@ -149,10 +149,12 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
         fc->was_modified = true;
         fc->should_recompile = true;
         fc->cache->depends_on = map_make();
-    }
-    if (g_nocache) {
+    } else if (g_nocache) {
         fc->should_recompile = true;
         fc->cache->depends_on = map_make();
+    } else {
+        // fc->should_recompile = true;
+        // fc->cache->depends_on = map_make();
     }
 
     if (g_verbose) {

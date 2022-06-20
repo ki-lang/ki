@@ -63,7 +63,7 @@ class Taskman norfc {
 		return tms;
 	}
 
-	public static func setup_task_managers() type:PtrArray {
+	public static func |used| setup_task_managers() type:PtrArray {
 
 		@ tms = type:PtrArray.make(64);
 		@ list = Taskman.get_task_managers();
@@ -98,7 +98,7 @@ class Taskman norfc {
 		GT_KI_taskmanager = null;
 	}
 
-	public static func wait_for_tasks_to_end(type:PtrArray tms) {
+	public static func |used| wait_for_tasks_to_end(type:PtrArray tms) {
 
 		i32 run_count = 0;
 		while(true){

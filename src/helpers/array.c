@@ -23,6 +23,12 @@ void array_push(Array *arr, void *item) {
     arr->length++;
 }
 
+void array_push_unique(Array *arr, void *item) {
+    if (!array_contains(arr, item, "address")) {
+        array_push(arr, item);
+    }
+}
+
 void *array_pop(Array *arr) {
     if (arr->length == 0) {
         return NULL;

@@ -580,6 +580,9 @@ void token_each(FileCompiler *fc, Scope *scope) {
         fc_error(fc, "__each_get must have a return type and allow errors", NULL);
     }
 
+    array_push_unique(g_used_functions, countf->func);
+    array_push_unique(g_used_functions, getf->func);
+
     te->vvar->type = ret;
 
     fc_expect_token(fc, "{", false, true, true);

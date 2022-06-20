@@ -1681,10 +1681,6 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         str_append_chars(fc->tkn_buffer, " = ki__mem__Allocator__get_chunk(");
         str_append_chars(fc->tkn_buffer, allocator_name);
         str_append_chars(fc->tkn_buffer, "());\n");
-        // str_append_chars(fc->tkn_buffer, " = ki__mem__alloc(");
-        // sprintf(size, "%d", task_type->class->size);
-        // str_append_chars(fc->tkn_buffer, size);
-        // str_append_chars(fc->tkn_buffer, ");\n");
         //
         str_append_chars(fc->tkn_buffer, var_name);
         str_append_chars(fc->tkn_buffer, "->handler_func = ");
