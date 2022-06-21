@@ -31,6 +31,7 @@ typedef struct FileCompiler {
     char *cache_filepath;
     char *x_filepath;
     bool is_header;
+    bool is_used;
     bool was_modified;
     bool should_recompile;
     //
@@ -154,6 +155,7 @@ typedef struct Class {
     bool is_unsigned;
     bool is_ctype;
     bool self_scan;
+    bool is_used;
     int size;
     //
     Map *props;
@@ -191,6 +193,8 @@ typedef struct Function {
     bool can_error;
     bool generate_code;
     bool is_test;
+    bool is_used;
+    bool is_parsed;
     //
     struct Array *args;
     struct Array *arg_types;

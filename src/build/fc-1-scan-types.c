@@ -196,10 +196,6 @@ void fc_scan_types(FileCompiler *fc) {
             fc_skip_body(fc, "{", "}", NULL, false);
 
         } else if (strcmp(token, "func") == 0) {
-            fc_next_token(fc, token, false, true, true);
-            fc_name_taken(fc, fc->nsc->scope->identifiers, token);
-
-            char *name = strdup(token);
 
             Function *func = init_func();
             func->fc = fc;
@@ -207,6 +203,28 @@ void fc_scan_types(FileCompiler *fc) {
             func->scope->is_func = true;
             func->scope->func = func;
 
+            // Get name
+            fc_next_token(fc, token, false, true, true);
+
+            if (strcmp(token, "|") == 0) {
+                fc_next_token(fc, token, false, true, true);
+                while (is_valid_varname(token)) {
+
+                    if (strcmp(token, "used") == 0) {
+                        func_mark_used(func);
+                    }
+
+                    fc_next_token(fc, token, false, true, true);
+                    if (strcmp(token, ",") == 0) {
+                        fc_next_token(fc, token, false, true, true);
+                    }
+                }
+                fc_next_token(fc, token, false, true, true);
+            }
+
+            fc_name_taken(fc, fc->nsc->scope->identifiers, token);
+
+            char *name = strdup(token);
             char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, name);
             func->cname = cname;
 

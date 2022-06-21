@@ -49,7 +49,7 @@ func free(ptr adr) {
 	alc.free(adr);
 }
 
-func alloc_flat(uxx size) ptr {
+func |used| alloc_flat(uxx size) ptr {
 
 	#if OS_LINUX || OS_OSX
 	size += 8;

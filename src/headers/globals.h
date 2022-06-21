@@ -17,6 +17,7 @@ Map *g_fc_by_ki_filepath;
 Array *g_links;
 Array *g_link_dirs;
 Array *g_test_funcs;
+Array *g_used_functions;
 char *g_sprintf;
 
 // Options

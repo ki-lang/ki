@@ -14,7 +14,7 @@ class Allocator norfc {
 	private u64 size;
 	private ?ki:async:Threaded<AllocatorSettings> settings;
 
-	public static func make(u64 size) Allocator {
+	public static func |used| make(u64 size) Allocator {
 		@ alc = cast (calloc_flat(sizeof(Allocator))) as Allocator;
 		alc.size = size;
 		alc.settings = ki:async:Threaded<AllocatorSettings>.make();
@@ -43,7 +43,7 @@ class Allocator norfc {
 		return settings;
 	}
 
-	public func get_chunk() ptr {
+	public func |used| get_chunk() ptr {
 
 		@ settings = this.get_settings();
 
@@ -155,7 +155,7 @@ class Allocator norfc {
 		return null;
 	}
 
-	public func free(ptr adr) {
+	public func |used| free(ptr adr) {
 
 		adr--;
 		u8 pos = getptrv adr as u8;

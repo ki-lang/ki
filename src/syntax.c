@@ -63,21 +63,22 @@ bool is_whitespace(char c) { return c <= 32; }
 bool is_newline(char c) { return c == 10; }
 
 bool is_valid_varname(char *name) {
-    int len = strlen(name);
-    if (len == 0) {
-        return false;
-    }
-    int i = 0;
-    while (i < len) {
-        if (i == 0 && is_number(name[i])) {
-            return false;
-        }
-        if (!is_valid_varname_char(name[i])) {
-            return false;
-        }
-        i++;
-    }
-    return true;
+    return is_valid_varname_char(name[0]);
+    // int len = strlen(name);
+    // if (len == 0) {
+    //     return false;
+    // }
+    // int i = 0;
+    // while (i < len) {
+    //     if (i == 0 && is_number(name[i])) {
+    //         return false;
+    //     }
+    //     if (!is_valid_varname_char(name[i])) {
+    //         return false;
+    //     }
+    //     i++;
+    // }
+    // return true;
 }
 
 bool is_valid_number(char *str) {
