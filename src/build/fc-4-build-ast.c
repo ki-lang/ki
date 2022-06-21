@@ -6,7 +6,7 @@ void fc_build_asts() {
     if (g_main_func) {
         int x = 0;
         //
-        array_push(g_used_functions, g_main_func);
+        func_mark_used(g_main_func);
         //
         while (x < g_used_functions->length) {
             Function *func = array_get_index(g_used_functions, x);
@@ -15,12 +15,11 @@ void fc_build_asts() {
                 continue;
             }
 
-            func->is_used = true;
-
             FileCompiler *fc = func->fc;
             if (!fc->is_header) {
                 fc_build_ast(fc, func->scope);
             }
+
             Token *t = init_token();
             t->type = tkn_func;
             t->item = func;

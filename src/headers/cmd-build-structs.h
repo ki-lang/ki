@@ -31,6 +31,7 @@ typedef struct FileCompiler {
     char *cache_filepath;
     char *x_filepath;
     bool is_header;
+    bool is_used;
     bool was_modified;
     bool should_recompile;
     //

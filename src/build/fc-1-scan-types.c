@@ -211,7 +211,7 @@ void fc_scan_types(FileCompiler *fc) {
                 while (is_valid_varname(token)) {
 
                     if (strcmp(token, "used") == 0) {
-                        array_push(g_used_functions, func);
+                        func_mark_used(func);
                     }
 
                     fc_next_token(fc, token, false, true, true);

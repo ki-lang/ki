@@ -39,30 +39,33 @@ void fc_write_c_all() {
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
 
-            if (fc->should_recompile) {
+            if (!fc->is_used)
+                continue;
 
-                for (int x = 0; x < fc->classes->length; x++) {
-                    Class *class = array_get_index(fc->classes, x);
-                    if (class->generic_names != NULL && class->generic_hash == NULL) {
-                        continue;
-                    }
-                    fc_write_c_class(fc, class);
-                }
-                for (int x = 0; x < fc->enums->length; x++) {
-                    fc_write_c_enum(fc, array_get_index(fc->enums, x));
-                }
-                for (int x = 0; x < fc->globals->length; x++) {
-                    fc_write_c_global(fc, array_get_index(fc->globals, x));
-                }
-                for (int x = 0; x < fc->strings->length; x++) {
-                    ValueString *vstr = array_get_index(fc->strings, x);
-                    str_append_chars(fc->h_code, "struct ki__type__String* ");
-                    str_append_chars(fc->h_code, vstr->name);
-                    str_append_chars(fc->h_code, ";\n");
-                }
+            // if (fc->should_recompile) {
 
-                fc_write_c_ast(fc, fc->scope);
+            for (int x = 0; x < fc->classes->length; x++) {
+                Class *class = array_get_index(fc->classes, x);
+                if (class->generic_names != NULL && class->generic_hash == NULL) {
+                    continue;
+                }
+                fc_write_c_class(fc, class);
             }
+            for (int x = 0; x < fc->enums->length; x++) {
+                fc_write_c_enum(fc, array_get_index(fc->enums, x));
+            }
+            for (int x = 0; x < fc->globals->length; x++) {
+                fc_write_c_global(fc, array_get_index(fc->globals, x));
+            }
+            for (int x = 0; x < fc->strings->length; x++) {
+                ValueString *vstr = array_get_index(fc->strings, x);
+                str_append_chars(fc->h_code, "struct ki__type__String* ");
+                str_append_chars(fc->h_code, vstr->name);
+                str_append_chars(fc->h_code, ";\n");
+            }
+
+            fc_write_c_ast(fc, fc->scope);
+            // }
 
             fc_write_c(fc);
         }
@@ -85,14 +88,14 @@ void fc_write_c_pre(FileCompiler *fc) {
     strcpy(path, fc->x_filepath);
     strcat(path, "_start.h");
 
-    if (fc->should_recompile) {
-        code = str_to_chars(fc->h_code_start);
-        write_file(path, code, false);
-    } else {
-        Str *content = file_get_contents(path);
-        code = str_to_chars(content);
-        free_str(content);
-    }
+    // if (fc->should_recompile) {
+    code = str_to_chars(fc->h_code_start);
+    write_file(path, code, false);
+    // } else {
+    //     Str *content = file_get_contents(path);
+    //     code = str_to_chars(content);
+    //     free_str(content);
+    // }
 
     char *cache_dir = get_cache_dir();
     strcpy(path, cache_dir);
@@ -130,6 +133,10 @@ void fc_write_c_inits() {
         PkgCompiler *pkc = array_get_index(packages->values, i);
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+
+            if (!fc->is_used) {
+                continue;
+            }
 
             Str *code = str_make("");
 

@@ -359,7 +359,7 @@ void fc_scan_class_props(Class *class) {
                 while (is_valid_varname(token)) {
 
                     if (strcmp(token, "used") == 0) {
-                        array_push(g_used_functions, func);
+                        func_mark_used(func);
                     }
 
                     fc_next_token(fc, token, false, true, true);
@@ -628,11 +628,12 @@ void class_mark_used(Class *class) {
     }
 
     class->is_used = true;
+    class->fc->is_used = true;
 
     ClassProp *prop = map_get(class->props, "__free");
     if (!prop) {
         printf("class:%s\n", class->cname);
         die("Missing __free prop");
     }
-    array_push_unique(g_used_functions, prop->func);
+    func_mark_used(prop->func);
 }
