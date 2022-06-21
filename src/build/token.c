@@ -258,6 +258,10 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
         ort->primary_type = func_scope->func->return_type;
     } else if (strcmp(token, "throw") == 0) {
         ort->type = or_throw;
+        Scope *func_scope = get_func_scope(scope);
+        if (!func_scope->func->can_error) {
+            fc_error(fc, "You cannot throw/pass errors within this scope", NULL);
+        }
         ort->error = fc_read_error_token(fc, err_throw, token);
     } else if (strcmp(token, "panic") == 0) {
         ort->type = or_panic;
@@ -280,6 +284,9 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
     } else if (on_func_call && strcmp(token, "pass") == 0) {
         ort->type = or_pass;
         Scope *func_scope = get_func_scope(scope);
+        if (!func_scope->func->can_error) {
+            fc_error(fc, "You cannot throw/pass errors within this scope", NULL);
+        }
         ort->primary_type = func_scope->func->return_type;
     } else if (!on_func_call && strcmp(token, "do") == 0) {
         ort->type = or_do;
@@ -572,6 +579,9 @@ void token_each(FileCompiler *fc, Scope *scope) {
     if (!ret || !getf->func->can_error) {
         fc_error(fc, "__each_get must have a return type and allow errors", NULL);
     }
+
+    func_mark_used(countf->func);
+    func_mark_used(getf->func);
 
     te->vvar->type = ret;
 

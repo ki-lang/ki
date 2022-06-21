@@ -80,7 +80,7 @@ void fc_next_token(FileCompiler *fc, char *token, bool readonly, bool sameline, 
             ti++;
             index++;
 
-            if ((ch == ':' && nch == '=') || (ch == '=' && nch == '=') || (ch == '!' && nch == '=') || (ch == '<' && nch == '=') || (ch == '>' && nch == '=') || (ch == '+' && nch == '+') || (ch == '-' && nch == '-') || (ch == '+' && nch == '=') || (ch == '-' && nch == '=') || (ch == '*' && nch == '=') || (ch == '&' && nch == '&') || (ch == '|' && nch == '|') || (ch == '/' && nch == '=') || (ch == '<' && nch == '<') || (ch == '>' && nch == '>')) {
+            if ((ch == ':' && nch == '=') || (ch == '=' && nch == '=') || (ch == '!' && nch == '=') || (ch == '<' && nch == '=') || (ch == '>' && nch == '=') || (ch == '+' && nch == '+') || (ch == '-' && nch == '-') || (ch == '+' && nch == '=') || (ch == '-' && nch == '=') || (ch == '*' && nch == '=') || (ch == '&' && nch == '&') || (ch == '|' && nch == '|') || (ch == '/' && nch == '=') || (ch == '<' && nch == '<')) {
                 token[ti] = nch;
                 ti++;
                 index++;

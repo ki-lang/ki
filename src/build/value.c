@@ -342,8 +342,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
         if (idf->type == idfor_func) {
             Function *func = idf->item;
+
             value->type = vt_var;
             value->item = func->cname;
+
+            func_mark_used(func);
+
             Type *t = init_type();
             t->type = type_funcref;
             t->is_pointer = true;
@@ -410,7 +414,9 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 class = gclass;
             }
 
+            class_mark_used(class);
             fc_depends_on(fc, class->fc);
+
             for (int i = 0; i < class->traits->length; i++) {
                 Trait *tr = array_get_index(class->traits, i);
                 fc_depends_on(fc, tr->fc);
@@ -439,6 +445,10 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 value->type = vt_prop_access;
                 value->item = pa;
                 value->return_type = prop->return_type;
+
+                if (prop->is_func) {
+                    func_mark_used(prop->func);
+                }
 
             } else {
                 // Init func
@@ -517,8 +527,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
     fc_next_token(fc, token, true, true, true);
     char ch = fc_get_char(fc, 0);
-    while (ch == '.' || ch == '(' || strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "*") == 0 || strcmp(token, "/") == 0 || strcmp(token, "%") == 0 || strcmp(token, "<<") == 0 || strcmp(token, ">>") == 0 || strcmp(token, "bitOR") == 0 || strcmp(token, "bitAND") == 0 || strcmp(token, "bitXOR") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, ">") == 0 || strcmp(token, "<") == 0 || strcmp(token, "&&") == 0 || strcmp(token, "||") == 0) {
+    while (ch == '.' || ch == '(' || strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "*") == 0 || strcmp(token, "/") == 0 || strcmp(token, "%") == 0 || strcmp(token, "<<") == 0 || strcmp(token, "bitOR") == 0 || strcmp(token, "bitAND") == 0 || strcmp(token, "bitXOR") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, ">") == 0 || strcmp(token, "<") == 0 || strcmp(token, "&&") == 0 || strcmp(token, "||") == 0) {
         fc_next_token(fc, token, false, true, true);
+        if (strcmp(token, ">") == 0 && fc_get_char(fc, 0) == '>') {
+            strcpy(token, ">>");
+            fc->i++;
+        }
         //
         if (ch == '.') {
             // Prop access
@@ -570,6 +584,10 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 }
                 if (value->return_type->nullable) {
                     fc_error(fc, "Accessing property on value with nullable type is not allowed", NULL);
+                }
+
+                if (prop->is_func) {
+                    func_mark_used(prop->func);
                 }
 
                 Scope *class_scope = get_class_scope(scope);
@@ -664,6 +682,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                     fc_error(fc, "%s is not a function", fn);
                 }
 
+                func_mark_used(prop->func);
+
                 ValueFuncCall *fcall = value_generate_func_call(prop->func);
 
                 array_push(fcall->arg_values, value);
@@ -728,6 +748,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 if (!eq_prop->is_func) {
                     fc_error(fc, "%s is not a function", fn);
                 }
+
+                func_mark_used(eq_prop->func);
 
                 ValueFuncCall *fcall = value_generate_func_call(eq_prop->func);
 

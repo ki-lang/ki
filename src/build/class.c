@@ -15,6 +15,7 @@ Class *init_class() {
     class->is_unsigned = false;
     class->is_ctype = false;
     class->self_scan = false;
+    class->is_used = false;
     class->size = 0;
     class->props = map_make();
     class->traits = array_make(2);
@@ -59,6 +60,7 @@ Class *fc_make_generic_class(Class *class) {
     gclass->scope = init_sub_scope(class->fc->scope);
     gclass->scope->type = sct_class;
     gclass->scope->class = gclass;
+    gclass->is_used = false;
 
     IdentifierFor *idf = init_idf();
     idf->type = idfor_class;
@@ -342,17 +344,35 @@ void fc_scan_class_props(Class *class) {
         prop->is_static = is_static;
 
         if (strcmp(token, "func") == 0) {
-            fc_next_token(fc, token, false, true, true);
-
-            char *name = strdup(token);
-
-            fc_name_taken(fc, class->props, name);
 
             Function *func = init_func();
             func->fc = fc;
             func->scope = init_sub_scope(class->scope);
             func->scope->is_func = true;
             func->scope->func = func;
+
+            // Get func name
+            fc_next_token(fc, token, false, true, true);
+
+            if (strcmp(token, "|") == 0) {
+                fc_next_token(fc, token, false, true, true);
+                while (is_valid_varname(token)) {
+
+                    if (strcmp(token, "used") == 0) {
+                        func_mark_used(func);
+                    }
+
+                    fc_next_token(fc, token, false, true, true);
+                    if (strcmp(token, ",") == 0) {
+                        fc_next_token(fc, token, false, true, true);
+                    }
+                }
+                fc_next_token(fc, token, false, true, true);
+            }
+
+            char *name = strdup(token);
+
+            fc_name_taken(fc, class->props, name);
 
             Type *type = init_type();
             type->type = type_funcref;
@@ -519,6 +539,7 @@ void fc_scan_class_props(Class *class) {
         func->scope = init_sub_scope(class->scope);
         func->scope->is_func = true;
         func->scope->func = func;
+        func->is_parsed = true;
 
         Type *type = init_type();
         type->type = type_funcref;
@@ -598,4 +619,21 @@ void fc_scan_class_prop_values(Class *class) {
             fc_type_compatible(fc, prop->return_type, prop->default_value->return_type);
         }
     }
+}
+
+void class_mark_used(Class *class) {
+    //
+    if (class->is_used) {
+        return;
+    }
+
+    class->is_used = true;
+    class->fc->is_used = true;
+
+    ClassProp *prop = map_get(class->props, "__free");
+    if (!prop) {
+        printf("class:%s\n", class->cname);
+        die("Missing __free prop");
+    }
+    func_mark_used(prop->func);
 }

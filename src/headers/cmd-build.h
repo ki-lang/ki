@@ -101,6 +101,7 @@ void fc_scan_class(FileCompiler *fc, Class *class);
 Class *fc_make_generic_class(Class *class);
 Class *fc_get_generic_class(FileCompiler *fc, Class *class, Scope *scope);
 char *fc_class_read_generic_unique_id(FileCompiler *fc, Scope *scope);
+void class_mark_used(Class *class);
 
 // Trait
 Trait *init_trait();
@@ -113,6 +114,7 @@ FunctionArg *init_func_arg();
 void free_func_arg(FunctionArg *arg);
 void fc_scan_func(FileCompiler *fc, Function *func);
 void fc_scan_func_args(Function *func);
+void func_mark_used(Function *func);
 
 // Content Chunks
 ContentChunk *init_content_chunk();
