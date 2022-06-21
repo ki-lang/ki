@@ -100,7 +100,11 @@ void compile_all() {
 #endif
     strcat(lib_dir_suffix, g_static ? "/static" : "/shared");
 
-    // strcat(lib_dir, lib_dir_suffix);
+    // Check if mold installed
+    // run_cmd("which mold");
+    // wait_cmd();
+    // bool has_mold = cmd_err_code == 0;
+    //
 
     // Compile executable
     char *cmd = malloc(50000);
@@ -115,6 +119,11 @@ void compile_all() {
 
     // gcc/clang/...
     strcat(cmd, get_compiler_path());
+
+    // Mold
+    // if (has_mold) {
+    // strcat(cmd, " -fuse-ld=mold");
+    // }
 
     // Object files
     for (int i = 0; i < o_files->length; i++) {
