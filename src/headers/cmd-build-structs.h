@@ -60,6 +60,7 @@ typedef struct FileCompiler {
     // Misc
     char *sprintf;
     char *sprintf2;
+    char *add_use_target;
     // Local identifiers
     struct Scope *scope;
     // Things to compile in this file
@@ -69,6 +70,7 @@ typedef struct FileCompiler {
     struct Array *enums;
     struct Array *strings;
     struct Array *globals;
+    struct Array *used_functions;
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
@@ -78,6 +80,7 @@ typedef struct FcCache {
     int tests_enabled;
     struct Map *depends_on;
     struct Map *allocators;
+    struct Map *uses;
 } FcCache;
 
 typedef struct Scope {
@@ -155,7 +158,6 @@ typedef struct Class {
     bool is_unsigned;
     bool is_ctype;
     bool self_scan;
-    bool is_used;
     int size;
     //
     Map *props;
@@ -193,8 +195,6 @@ typedef struct Function {
     bool can_error;
     bool generate_code;
     bool is_test;
-    bool is_used;
-    bool is_parsed;
     //
     struct Array *args;
     struct Array *arg_types;
@@ -213,7 +213,7 @@ typedef struct FunctionArg {
 } FunctionArg;
 
 typedef struct GlobalVar {
-    FileCompiler* fc;
+    FileCompiler *fc;
     int fc_i;
     int type;
     struct Type *return_type;
@@ -240,7 +240,7 @@ typedef struct Enum {
     char *cname;
     char *hash;
     struct Map *values;
-    FileCompiler* fc;
+    FileCompiler *fc;
 } Enum;
 
 //////////

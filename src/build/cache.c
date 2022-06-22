@@ -13,6 +13,7 @@ FcCache *init_fc_cache() {
     c->modified_time = 0;
     c->depends_on = map_make();
     c->allocators = map_make();
+    c->uses = map_make();
     c->tests_enabled = g_run_tests;
 
     return c;
@@ -66,6 +67,25 @@ void fc_load_cache(FileCompiler *fc) {
                     item = item->next;
                 }
             }
+            const cJSON *j_uses = cJSON_GetObjectItemCaseSensitive(json, "uses");
+            if (j_uses != NULL) {
+                cJSON *item = j_uses->child;
+                while (item) {
+                    char *key = item->string;
+                    cJSON *use = item->child;
+                    Array *uses = array_make(2);
+
+                    while (use) {
+                        char *v = use->valuestring;
+                        array_push(uses, strdup(v));
+                        use = use->next;
+                    }
+
+                    map_set(c->uses, strdup(key), uses);
+
+                    item = item->next;
+                }
+            }
             const cJSON *enable = cJSON_GetObjectItemCaseSensitive(json, "tests_enabled");
             if (enable != NULL) {
                 c->tests_enabled = enable->valueint;
@@ -80,6 +100,7 @@ void fc_load_cache(FileCompiler *fc) {
     if (c->tests_enabled != g_run_tests) {
         fc->should_recompile = true;
         fc->cache->depends_on = map_make();
+        fc->cache->uses = map_make();
     }
 }
 
@@ -115,6 +136,23 @@ void fc_save_cache(FileCompiler *fc) {
     }
     cJSON_AddItemToObject(json, "allocators", allocators);
 
+    // Uses
+    cJSON *j_uses = cJSON_CreateObject();
+    for (int i = 0; i < c->uses->keys->length; i++) {
+        char *cname = array_get_index(c->uses->keys, i);
+        Array *cname_uses = array_get_index(c->uses->values, i);
+        cJSON *uses = cJSON_CreateArray();
+
+        for (int o = 0; o < cname_uses->length; o++) {
+            char *cname_use = array_get_index(cname_uses, o);
+            cJSON *cname_use_str = cJSON_CreateString(cname_use);
+            cJSON_AddItemToArray(uses, cname_use_str);
+        }
+
+        cJSON_AddItemToObject(j_uses, cname, uses);
+    }
+    cJSON_AddItemToObject(json, "uses", j_uses);
+
     // Write
     char *content = cJSON_Print(json);
     cJSON_Delete(json);
@@ -133,12 +171,14 @@ void fc_check_if_modified(FileCompiler *fc) {
         if (!depfc) {
             fc->should_recompile = true;
             fc->cache->depends_on = map_make();
+            fc->cache->uses = map_make();
             break;
         }
         sprintf(fc->sprintf, "%d", depfc->cache->modified_time);
         if (strcmp(modtime, fc->sprintf) != 0) {
             fc->should_recompile = true;
             fc->cache->depends_on = map_make();
+            fc->cache->uses = map_make();
             break;
         }
     }

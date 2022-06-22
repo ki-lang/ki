@@ -3,6 +3,7 @@ namespace main;
 
 #link "ssl"
 #link "crypto"
+#link "z"
 
 class SSL norfc {
 }

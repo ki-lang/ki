@@ -9,8 +9,6 @@ Function *init_func() {
     func->can_error = false;
     func->generate_code = true;
     func->is_test = false;
-    func->is_used = false;
-    func->is_parsed = false;
     func->args = array_make(2);
     func->arg_types = array_make(2);
     func->args_i = 0;
@@ -182,15 +180,4 @@ void fc_scan_func_args(Function *func) {
 
     //
     free(token);
-}
-
-void func_mark_used(Function *func) {
-    //
-    if (func->is_used)
-        return;
-
-    func->is_used = true;
-    func->fc->is_used = true;
-
-    array_push(g_used_functions, func);
 }

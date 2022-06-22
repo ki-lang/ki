@@ -159,7 +159,7 @@ void compile_all() {
 #else
     strcat(cmd, " -ldl");
 #endif
-    strcat(cmd, " -lz -lpthread -pthread");
+    strcat(cmd, " -lpthread -pthread");
 
     // Compile
     if (g_verbose) {
@@ -206,16 +206,12 @@ void fc_compile_o_file(FileCompiler *fc) {
 ////////
 
 char *get_compiler_path() {
-    char *cmd = malloc(1000);
-    strcpy(cmd, "gcc");
-    return cmd;
-    strcpy(cmd, get_binary_dir());
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-    strcat(cmd, "/misc/tcc/win/tcc.exe");
-#else
-    strcat(cmd, "/misc/tcc/linux/tcc");
-#endif
-    return cmd;
+    return "gcc";
+    // return "clang";
+    //     strcpy(cmd, get_binary_dir());
+    // #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+    //     return "/misc/tcc/win/tcc.exe";
+    // #endif
 }
 
 int cmd_init_c = 0;

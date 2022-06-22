@@ -3,87 +3,26 @@
 
 void fc_build_asts() {
     //
-    if (g_main_func) {
-        int x = 0;
-        //
-        func_mark_used(g_main_func);
-        //
-        while (x < g_used_functions->length) {
-            Function *func = array_get_index(g_used_functions, x);
-            x++;
-            if (func->is_parsed) {
-                continue;
-            }
+    for (int i = 0; i < g_functions->length; i++) {
+        Function *func = array_get_index(g_functions, i);
 
-            FileCompiler *fc = func->fc;
-            if (!fc->is_header) {
-                fc_build_ast(fc, func->scope);
-            }
+        FileCompiler *fc = func->fc;
+        fc->add_use_target = func->cname;
 
-            Token *t = init_token();
-            t->type = tkn_func;
-            t->item = func;
-            array_push(fc->scope->ast, t);
+        if (!fc->should_recompile) {
+            continue;
         }
+
+        if (!fc->is_header) {
+            // printf("ast:%s\n", func->cname);
+            fc_build_ast(fc, func->scope);
+        }
+
+        Token *t = init_token();
+        t->type = tkn_func;
+        t->item = func;
+        array_push(fc->scope->ast, t);
     }
-
-    // for (int i = 0; i < packages->keys->length; i++) {
-    //     PkgCompiler *pkc = array_get_index(packages->values, i);
-
-    //     for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
-    //         FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
-
-    //         // printf("-- %s\n", fc->h_filepath);
-
-    //         // Functions
-    //         for (int x = 0; x < fc->functions->length; x++) {
-    //             Function *func = array_get_index(fc->functions, x);
-    //             FileCompiler *fc = func->fc;
-    //             if (!fc->is_header && fc->should_recompile) {
-    //                 fc_build_ast(fc, func->scope);
-    //             }
-    //             Token *t = init_token();
-    //             t->type = tkn_func;
-    //             t->item = func;
-    //             array_push(fc->scope->ast, t);
-    //         }
-
-    //         // Classes
-    //         for (int x = 0; x < fc->classes->length; x++) {
-    //             Class *class = array_get_index(fc->classes, x);
-
-    //             if (class->self_scan) {
-    //                 continue;
-    //             }
-    //             if (class->generic_names != NULL && class->generic_hash == NULL) {
-    //                 continue;
-    //             }
-
-    //             FileCompiler *fc = class->fc;
-
-    //             // if (fc->is_header || fc->should_recompile == false) {
-    //             //     continue;
-    //             // }
-
-    //             for (int y = 0; y < class->props->values->length; y++) {
-    //                 char *name = array_get_index(class->props->keys, y);
-    //                 ClassProp *prop = array_get_index(class->props->values, y);
-    //                 if (prop->is_func && prop->generate_code) {
-    //                     Function *func = prop->func;
-    //                     if (!fc->is_header && fc->should_recompile) {
-    //                         fc_build_ast(func->fc, func->scope);
-    //                     }
-    //                     Token *t = init_token();
-    //                     t->type = tkn_func;
-    //                     t->item = func;
-    //                     array_push(fc->scope->ast, t);
-    //                 }
-    //             }
-    //         }
-
-    //         //
-    //     }
-    // }
 }
 
 void fc_build_ast(FileCompiler *fc, Scope *scope) {

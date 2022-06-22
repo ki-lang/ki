@@ -15,7 +15,6 @@ Class *init_class() {
     class->is_unsigned = false;
     class->is_ctype = false;
     class->self_scan = false;
-    class->is_used = false;
     class->size = 0;
     class->props = map_make();
     class->traits = array_make(2);
@@ -60,7 +59,6 @@ Class *fc_make_generic_class(Class *class) {
     gclass->scope = init_sub_scope(class->fc->scope);
     gclass->scope->type = sct_class;
     gclass->scope->class = gclass;
-    gclass->is_used = false;
 
     IdentifierFor *idf = init_idf();
     idf->type = idfor_class;
@@ -135,10 +133,18 @@ Class *fc_get_generic_class(FileCompiler *fc, Class *class, Scope *scope) {
             for (int y = 0; y < gclass->props->values->length; y++) {
                 ClassProp *prop = array_get_index(gclass->props->values, y);
                 if (prop->is_func) {
+
                     Function *func = prop->func;
+
                     if (!gclass->fc->is_header) {
+                        char *prev = gclass->fc->add_use_target;
+                        gclass->fc->add_use_target = func->cname;
+                        //
                         fc_build_ast(func->fc, func->scope);
+                        //
+                        gclass->fc->add_use_target = prev;
                     }
+
                     Token *t = init_token();
                     t->type = tkn_func;
                     t->item = func;
@@ -359,7 +365,7 @@ void fc_scan_class_props(Class *class) {
                 while (is_valid_varname(token)) {
 
                     if (strcmp(token, "used") == 0) {
-                        func_mark_used(func);
+                        fc->is_used = true;
                     }
 
                     fc_next_token(fc, token, false, true, true);
@@ -383,6 +389,7 @@ void fc_scan_class_props(Class *class) {
             prop->func = func;
 
             map_set(class->props, name, prop);
+            array_push(g_functions, func);
 
             char *cname = malloc(strlen(class->cname) + strlen(token) + 3);
             strcpy(cname, class->cname);
@@ -539,7 +546,6 @@ void fc_scan_class_props(Class *class) {
         func->scope = init_sub_scope(class->scope);
         func->scope->is_func = true;
         func->scope->func = func;
-        func->is_parsed = true;
 
         Type *type = init_type();
         type->type = type_funcref;
@@ -552,6 +558,8 @@ void fc_scan_class_props(Class *class) {
         prop->is_func = true;
         prop->func = func;
         prop->generate_code = false;
+
+        fp = prop;
 
         char *cname = malloc(strlen(class->cname) + 10);
         strcpy(cname, class->cname);
@@ -606,6 +614,7 @@ void fc_scan_class_prop_values(Class *class) {
     //
 
     FileCompiler *fc = class->fc;
+    fc->add_use_target = class->cname;
 
     for (int o = 0; o < class->props->keys->length; o++) {
         //
@@ -619,21 +628,4 @@ void fc_scan_class_prop_values(Class *class) {
             fc_type_compatible(fc, prop->return_type, prop->default_value->return_type);
         }
     }
-}
-
-void class_mark_used(Class *class) {
-    //
-    if (class->is_used) {
-        return;
-    }
-
-    class->is_used = true;
-    class->fc->is_used = true;
-
-    ClassProp *prop = map_get(class->props, "__free");
-    if (!prop) {
-        printf("class:%s\n", class->cname);
-        die("Missing __free prop");
-    }
-    func_mark_used(prop->func);
 }
