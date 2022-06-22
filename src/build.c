@@ -9,7 +9,7 @@ void cmd_build(Array *files, Map *options) {
     }
 
     LOC = 0;
-    double parse_time, write_c_time, compile_time;
+    double parse_time, used_time, write_c_time, compile_time;
     parse_time = get_time();
 
     printf("Build...\n");
@@ -130,6 +130,13 @@ void cmd_build(Array *files, Map *options) {
     fc_build_asts();
     parse_time = get_time() - parse_time;
 
+    //
+    used_time = get_time();
+    if (g_verbose)
+        printf("# MARK USED CODE\n");
+    mark_used_files();
+    used_time = get_time() - used_time;
+
     // Step 5. Write c
     if (g_verbose)
         printf("# TRANSLATE AST\n");
@@ -152,6 +159,7 @@ void cmd_build(Array *files, Map *options) {
     //
     printf("\n");
     printf("Parse time: %f\n", parse_time);
+    printf("Mark used time: %f\n", used_time);
     printf("Write-c time: %f\n", write_c_time);
     printf("Compile time: %f\n", compile_time);
     printf("Lines of code: %d\n", LOC);

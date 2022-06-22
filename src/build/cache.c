@@ -76,8 +76,8 @@ void fc_load_cache(FileCompiler *fc) {
                     Array *uses = array_make(2);
 
                     while (use) {
-                        char *v = item->valuestring;
-                        array_push(uses, v);
+                        char *v = use->valuestring;
+                        array_push(uses, strdup(v));
                         use = use->next;
                     }
 
@@ -100,6 +100,7 @@ void fc_load_cache(FileCompiler *fc) {
     if (c->tests_enabled != g_run_tests) {
         fc->should_recompile = true;
         fc->cache->depends_on = map_make();
+        fc->cache->uses = map_make();
     }
 }
 
@@ -170,12 +171,14 @@ void fc_check_if_modified(FileCompiler *fc) {
         if (!depfc) {
             fc->should_recompile = true;
             fc->cache->depends_on = map_make();
+            fc->cache->uses = map_make();
             break;
         }
         sprintf(fc->sprintf, "%d", depfc->cache->modified_time);
         if (strcmp(modtime, fc->sprintf) != 0) {
             fc->should_recompile = true;
             fc->cache->depends_on = map_make();
+            fc->cache->uses = map_make();
             break;
         }
     }

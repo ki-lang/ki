@@ -188,13 +188,3 @@ LocalVar *fc_localvar(FileCompiler *fc, char *name, Type *type) {
     lv->type = type;
     return lv;
 }
-
-void fc_add_use(FileCompiler *fc, char *subject, char *use) {
-    //
-    Array *uses = map_get(fc->cache->uses, subject);
-    if (!uses) {
-        uses = array_make(2);
-        map_set(fc->cache->uses, subject, uses);
-    }
-    array_push_unique(uses, use);
-}

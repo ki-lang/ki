@@ -23,7 +23,6 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file);
 void fc_scan_types(FileCompiler *fc);
 void fc_include_headers_from(FileCompiler *fc, FileCompiler *from);
 LocalVar *fc_localvar(FileCompiler *fc, char *name, Type *type);
-void fc_add_use(FileCompiler *fc, char *subject, char *use);
 
 // Build
 void cmd_build_init_static();
@@ -39,6 +38,8 @@ void fc_build_ast(FileCompiler *fc, Scope *scope);
 void fc_define_global(FileCompiler *fc, int type, char *token);
 void fc_scan_globals(FileCompiler *fc);
 double get_time();
+void mark_used_files();
+void mark_used(FileCompiler *fc);
 
 // Scope
 Scope *init_scope();

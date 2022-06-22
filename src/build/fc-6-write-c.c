@@ -346,7 +346,7 @@ void fc_write_c(FileCompiler *fc) {
         free(hcode);
         free(path);
 
-        if (file_exists(fc->o_filepath)) {
+        if (fc->is_used && file_exists(fc->o_filepath)) {
             array_push(o_files, fc->o_filepath);
         }
         return;
@@ -372,7 +372,9 @@ void fc_write_c(FileCompiler *fc) {
             write_file(fc->c_filepath, code_gen, true);
         }
 
-        array_push(o_files, fc->o_filepath);
+        if (fc->is_used) {
+            array_push(o_files, fc->o_filepath);
+        }
     }
 
     if (fc->is_header && false) {

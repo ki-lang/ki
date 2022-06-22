@@ -346,8 +346,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->type = vt_var;
             value->item = func->cname;
 
-            fc_add_use(fc, fc->add_use_target, func->cname);
-
             Type *t = init_type();
             t->type = type_funcref;
             t->is_pointer = true;
@@ -414,7 +412,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 class = gclass;
             }
 
-            fc_add_use(fc, fc->add_use_target, class->cname);
             fc_depends_on(fc, class->fc);
 
             for (int i = 0; i < class->traits->length; i++) {
@@ -445,10 +442,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 value->type = vt_prop_access;
                 value->item = pa;
                 value->return_type = prop->return_type;
-
-                if (prop->is_func) {
-                    fc_add_use(fc, fc->add_use_target, prop->func->cname);
-                }
 
             } else {
                 // Init func
@@ -586,10 +579,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                     fc_error(fc, "Accessing property on value with nullable type is not allowed", NULL);
                 }
 
-                if (prop->is_func) {
-                    fc_add_use(fc, fc->add_use_target, prop->func->cname);
-                }
-
                 Scope *class_scope = get_class_scope(scope);
                 if (!class_scope || class_scope->class != class) {
                     if (prop->access_type == acct_private) {
@@ -682,8 +671,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                     fc_error(fc, "%s is not a function", fn);
                 }
 
-                fc_add_use(fc, fc->add_use_target, prop->func->cname);
-
                 ValueFuncCall *fcall = value_generate_func_call(prop->func);
 
                 array_push(fcall->arg_values, value);
@@ -748,8 +735,6 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 if (!eq_prop->is_func) {
                     fc_error(fc, "%s is not a function", fn);
                 }
-
-                fc_add_use(fc, fc->add_use_target, eq_prop->func->cname);
 
                 ValueFuncCall *fcall = value_generate_func_call(eq_prop->func);
 
