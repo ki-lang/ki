@@ -80,7 +80,6 @@ typedef struct FcCache {
     int tests_enabled;
     struct Map *depends_on;
     struct Map *allocators;
-    struct Map *uses;
 } FcCache;
 
 typedef struct Scope {

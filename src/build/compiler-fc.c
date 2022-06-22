@@ -152,11 +152,9 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
         fc->should_recompile = true;
         fc->cache->modified_time = modtime;
         fc->cache->depends_on = map_make();
-        fc->cache->uses = map_make();
     } else if (g_nocache) {
         fc->should_recompile = true;
         fc->cache->depends_on = map_make();
-        fc->cache->uses = map_make();
     }
 
     if (g_verbose_all) {
