@@ -69,6 +69,7 @@ typedef struct FileCompiler {
     struct Array *enums;
     struct Array *strings;
     struct Array *globals;
+    struct Array *used_functions;
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
@@ -213,7 +214,7 @@ typedef struct FunctionArg {
 } FunctionArg;
 
 typedef struct GlobalVar {
-    FileCompiler* fc;
+    FileCompiler *fc;
     int fc_i;
     int type;
     struct Type *return_type;
@@ -240,7 +241,7 @@ typedef struct Enum {
     char *cname;
     char *hash;
     struct Map *values;
-    FileCompiler* fc;
+    FileCompiler *fc;
 } Enum;
 
 //////////

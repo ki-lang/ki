@@ -184,13 +184,7 @@ void fc_scan_func_args(Function *func) {
     free(token);
 }
 
-void func_mark_used(Function *func) {
+void func_mark_used(FileCompiler *fc, Function *func) {
     //
-    if (func->is_used)
-        return;
-
-    func->is_used = true;
-    func->fc->is_used = true;
-
-    array_push(g_used_functions, func);
+    array_push_unique(fc->used_functions, func);
 }

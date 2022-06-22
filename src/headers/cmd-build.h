@@ -114,7 +114,7 @@ FunctionArg *init_func_arg();
 void free_func_arg(FunctionArg *arg);
 void fc_scan_func(FileCompiler *fc, Function *func);
 void fc_scan_func_args(Function *func);
-void func_mark_used(Function *func);
+void func_mark_used(FileCompiler *fc, Function *func);
 
 // Content Chunks
 ContentChunk *init_content_chunk();

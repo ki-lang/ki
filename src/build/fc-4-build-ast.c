@@ -6,7 +6,7 @@ void fc_build_asts() {
     if (g_main_func) {
         int x = 0;
         //
-        func_mark_used(g_main_func);
+        func_mark_used(fc, g_main_func);
         //
         while (x < g_used_functions->length) {
             Function *func = array_get_index(g_used_functions, x);

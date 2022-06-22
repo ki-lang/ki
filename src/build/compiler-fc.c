@@ -50,6 +50,7 @@ FileCompiler *init_fc() {
     fc->enums = array_make(4);
     fc->strings = array_make(8);
     fc->globals = array_make(4);
+    fc->used_functions = array_make(8);
     //
     fc->include_headers_from = array_make(10);
     return fc;

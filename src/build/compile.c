@@ -159,7 +159,7 @@ void compile_all() {
 #else
     strcat(cmd, " -ldl");
 #endif
-    strcat(cmd, " -lz -lpthread -pthread");
+    strcat(cmd, " -lpthread -pthread");
 
     // Compile
     if (g_verbose) {

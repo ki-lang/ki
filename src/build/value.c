@@ -346,7 +346,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->type = vt_var;
             value->item = func->cname;
 
-            func_mark_used(func);
+            func_mark_used(fc, func);
 
             Type *t = init_type();
             t->type = type_funcref;
@@ -447,7 +447,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 value->return_type = prop->return_type;
 
                 if (prop->is_func) {
-                    func_mark_used(prop->func);
+                    func_mark_used(fc, prop->func);
                 }
 
             } else {
@@ -587,7 +587,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 }
 
                 if (prop->is_func) {
-                    func_mark_used(prop->func);
+                    func_mark_used(fc, prop->func);
                 }
 
                 Scope *class_scope = get_class_scope(scope);
@@ -682,7 +682,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                     fc_error(fc, "%s is not a function", fn);
                 }
 
-                func_mark_used(prop->func);
+                func_mark_used(fc, prop->func);
 
                 ValueFuncCall *fcall = value_generate_func_call(prop->func);
 
@@ -749,7 +749,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                     fc_error(fc, "%s is not a function", fn);
                 }
 
-                func_mark_used(eq_prop->func);
+                func_mark_used(fc, eq_prop->func);
 
                 ValueFuncCall *fcall = value_generate_func_call(eq_prop->func);
 
