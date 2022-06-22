@@ -183,8 +183,3 @@ void fc_scan_func_args(Function *func) {
     //
     free(token);
 }
-
-void func_mark_used(FileCompiler *fc, Function *func) {
-    //
-    array_push_unique(fc->used_functions, func);
-}

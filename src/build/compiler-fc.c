@@ -41,6 +41,7 @@ FileCompiler *init_fc() {
     //
     fc->sprintf = malloc(100);
     fc->sprintf2 = malloc(100);
+    fc->add_use_target = NULL;
     //
     fc->scope = init_scope();
     //
@@ -147,16 +148,15 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
     stat(fc->ki_filepath, &attr);
     int modtime = attr.st_mtime;
     if (modtime != fc->cache->modified_time) {
-        fc->cache->modified_time = modtime;
         fc->was_modified = true;
         fc->should_recompile = true;
+        fc->cache->modified_time = modtime;
         fc->cache->depends_on = map_make();
+        fc->cache->uses = map_make();
     } else if (g_nocache) {
         fc->should_recompile = true;
         fc->cache->depends_on = map_make();
-    } else {
-        // fc->should_recompile = true;
-        // fc->cache->depends_on = map_make();
+        fc->cache->uses = map_make();
     }
 
     if (g_verbose_all) {
@@ -187,4 +187,14 @@ LocalVar *fc_localvar(FileCompiler *fc, char *name, Type *type) {
     lv->gen_name = strdup(fc->var_buf);
     lv->type = type;
     return lv;
+}
+
+void fc_add_use(FileCompiler *fc, char *subject, char *use) {
+    //
+    Array *uses = map_get(fc->cache->uses, subject);
+    if (!uses) {
+        uses = array_make(2);
+        map_set(fc->cache->uses, subject, uses);
+    }
+    array_push_unique(uses, use);
 }

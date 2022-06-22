@@ -60,6 +60,7 @@ typedef struct FileCompiler {
     // Misc
     char *sprintf;
     char *sprintf2;
+    char *add_use_target;
     // Local identifiers
     struct Scope *scope;
     // Things to compile in this file
@@ -79,6 +80,7 @@ typedef struct FcCache {
     int tests_enabled;
     struct Map *depends_on;
     struct Map *allocators;
+    struct Map *uses;
 } FcCache;
 
 typedef struct Scope {

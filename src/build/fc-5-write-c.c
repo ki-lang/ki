@@ -39,9 +39,6 @@ void fc_write_c_all() {
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
 
-            if (!fc->is_used)
-                continue;
-
             // if (fc->should_recompile) {
 
             for (int x = 0; x < fc->classes->length; x++) {
@@ -133,10 +130,6 @@ void fc_write_c_inits() {
         PkgCompiler *pkc = array_get_index(packages->values, i);
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
-
-            if (!fc->is_used) {
-                continue;
-            }
 
             Str *code = str_make("");
 

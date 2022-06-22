@@ -112,6 +112,7 @@ void fc_scan_types(FileCompiler *fc) {
             }
 
             array_push(fc->classes, class);
+            array_push(g_classes, class);
 
             while (true) {
                 fc_next_token(fc, token, true, true, true);
@@ -211,7 +212,7 @@ void fc_scan_types(FileCompiler *fc) {
                 while (is_valid_varname(token)) {
 
                     if (strcmp(token, "used") == 0) {
-                        func_mark_used(fc, func);
+                        fc->is_used = true;
                     }
 
                     fc_next_token(fc, token, false, true, true);
@@ -229,6 +230,7 @@ void fc_scan_types(FileCompiler *fc) {
             func->cname = cname;
 
             array_push(fc->functions, func);
+            array_push(g_functions, func);
 
             if (strcmp(cname, "main") == 0) {
                 g_main_func = func;

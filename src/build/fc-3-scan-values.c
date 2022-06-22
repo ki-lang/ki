@@ -66,6 +66,7 @@ void fc_scan_globals(FileCompiler *fc) {
     //
     for (int x = 0; x < fc->globals->length; x++) {
         GlobalVar *gv = array_get_index(fc->globals, x);
+        fc->add_use_target = gv->cname;
 
         fc->i = gv->fc_i;
 

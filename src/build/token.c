@@ -580,8 +580,8 @@ void token_each(FileCompiler *fc, Scope *scope) {
         fc_error(fc, "__each_get must have a return type and allow errors", NULL);
     }
 
-    func_mark_used(fc, countf->func);
-    func_mark_used(fc, getf->func);
+    fc_add_use(fc, class->cname, countf->func->cname);
+    fc_add_use(fc, class->cname, getf->func->cname);
 
     te->vvar->type = ret;
 
