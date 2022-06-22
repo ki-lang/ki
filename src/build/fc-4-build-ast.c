@@ -9,6 +9,10 @@ void fc_build_asts() {
         FileCompiler *fc = func->fc;
         fc->add_use_target = func->cname;
 
+        if (!fc->should_recompile) {
+            continue;
+        }
+
         if (!fc->is_header) {
             // printf("ast:%s\n", func->cname);
             fc_build_ast(fc, func->scope);
