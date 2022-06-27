@@ -1,0 +1,10 @@
+
+namespace type;
+
+class Value<T> {
+	public T value;
+
+	public static func init(T v) Value<T> {
+		return Value<T>{ value: v };
+	}
+}

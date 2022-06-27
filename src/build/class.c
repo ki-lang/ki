@@ -80,6 +80,46 @@ Class *fc_get_generic_class(FileCompiler *fc, Class *class, Scope *scope) {
     strcpy(cname, class->cname);
     strcat(cname, "__");
     strcat(cname, uid);
+    free(uid);
+
+    Class *gclass = NULL;
+    IdentifierFor *idf = map_get(c_identifiers, cname);
+    if (idf) {
+        gclass = idf->item;
+    } else {
+        Array *types = array_make(class->generic_names->length);
+        // Read generic types
+        fc->i = fci;
+        fc_expect_token(fc, "<", false, true, true);
+        int generic_c = 0;
+        while (generic_c < class->generic_names->length) {
+            Type *gen_t = fc_read_type(fc, scope);
+            array_push(types, gen_t);
+            generic_c++;
+            if (generic_c < class->generic_names->length) {
+                fc_expect_token(fc, ",", false, true, true);
+            }
+        }
+        fc_expect_token(fc, ">", false, true, true);
+
+        gclass = fc_get_generic_class_by_hash(class, types);
+
+        // array_free(types); // shouldnt free values
+    }
+
+    free(cname);
+
+    return gclass;
+}
+
+Class *fc_get_generic_class_by_hash(Class *class, Array *types) {
+    //
+    char *uid = types_to_generic_hash(types);
+    //
+    char *cname = malloc(KI_TOKEN_MAX);
+    strcpy(cname, class->cname);
+    strcat(cname, "__");
+    strcat(cname, uid);
 
     Class *gclass = NULL;
     IdentifierFor *idf = map_get(c_identifiers, cname);
@@ -90,23 +130,19 @@ Class *fc_get_generic_class(FileCompiler *fc, Class *class, Scope *scope) {
         gclass = fc_make_generic_class(class);
         gclass->cname = strdup(cname);
         gclass->generic_hash = uid;
-        // Read generic types
-        fc->i = fci;
-        fc_expect_token(fc, "<", false, true, true);
-        int generic_c = 0;
-        while (generic_c < class->generic_names->length) {
-            Type *gen_t = fc_read_type(fc, scope);
-            char *name = array_get_index(class->generic_names, generic_c);
+        // Types
+        if (types->length != class->generic_names->length) {
+            die("Not enough types to generate generic");
+        }
+        //
+        for (int i = 0; i < types->length; i++) {
+            Type *gen_t = array_get_index(types, i);
+            char *name = array_get_index(class->generic_names, i);
             IdentifierFor *idf = init_idf();
             idf->type = idfor_type;
             idf->item = gen_t;
             map_set(gclass->scope->identifiers, name, idf);
-            generic_c++;
-            if (generic_c < class->generic_names->length) {
-                fc_expect_token(fc, ",", false, true, true);
-            }
         }
-        fc_expect_token(fc, ">", false, true, true);
 
         // Add to class lists
         array_push(gclass->fc->classes, gclass);
@@ -128,35 +164,61 @@ Class *fc_get_generic_class(FileCompiler *fc, Class *class, Scope *scope) {
         if (gclass->self_scan) {
             fc_scan_class_props(gclass);
             fc_scan_class_prop_values(gclass);
-            map_print_keys(gclass->props);
+            // map_print_keys(gclass->props);
 
-            for (int y = 0; y < gclass->props->values->length; y++) {
-                ClassProp *prop = array_get_index(gclass->props->values, y);
-                if (prop->is_func) {
+            // for (int y = 0; y < gclass->props->values->length; y++) {
+            //     char *n = array_get_index(gclass->props->keys, y);
+            //     ClassProp *prop = array_get_index(gclass->props->values, y);
+            //     if (prop->is_func) {
 
-                    Function *func = prop->func;
+            //         Function *func = prop->func;
 
-                    if (!gclass->fc->is_header) {
-                        char *prev = gclass->fc->add_use_target;
-                        gclass->fc->add_use_target = func->cname;
-                        //
-                        fc_build_ast(func->fc, func->scope);
-                        //
-                        gclass->fc->add_use_target = prev;
-                    }
+            //         if (!gclass->fc->is_header && prop->generate_code) {
+            //             char *prev = gclass->fc->add_use_target;
+            //             gclass->fc->add_use_target = func->cname;
+            //             //
+            //             fc_build_ast(func->fc, func->scope);
+            //             //
+            //             gclass->fc->add_use_target = prev;
+            //         }
 
-                    Token *t = init_token();
-                    t->type = tkn_func;
-                    t->item = func;
-                    array_push(gclass->fc->scope->ast, t);
-                }
-            }
+            //         Token *t = init_token();
+            //         t->type = tkn_func;
+            //         t->item = func;
+            //         array_push(gclass->fc->scope->ast, t);
+            //     }
+            // }
         }
     }
 
     free(cname);
 
     return gclass;
+}
+
+char *types_to_generic_hash(Array *subtypes) {
+    //
+    Str *uid = str_make("|");
+    for (int i = 0; i < subtypes->length; i++) {
+        if (i > 0) {
+            str_append_chars(uid, ",");
+        }
+        Type *subtype = array_get_index(subtypes, i);
+        char *name = type_to_str(subtype);
+        str_append_chars(uid, name);
+        free(name);
+    }
+    str_append_chars(uid, "|");
+
+    char *uidchars = str_to_chars(uid);
+    free_str(uid);
+
+    char *hash = malloc(33);
+    strcpy(hash, "");
+    md5(uidchars, hash);
+    free(uidchars);
+
+    return hash;
 }
 
 char *fc_class_read_generic_unique_id(FileCompiler *fc, Scope *scope) {

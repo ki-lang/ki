@@ -312,6 +312,7 @@ typedef enum ValueType {
     vt_arg,
     vt_threaded_global,
     vt_shared_global,
+    vt_nullable_value,
 } ValueType;
 
 typedef struct ValueFuncCall {

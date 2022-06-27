@@ -3,14 +3,14 @@ namespace type;
 
 class Array<T> {
 	readonly u32 length = 0;
-	private u32 max_length = 0;
+	private u32 max_length = 2;
 	private ptr data;
 
 	public static func make(i32 suggested_length) Array<T> {
-		if(suggested_length < 1){
+		if(suggested_length < 2){
 			suggested_length = 2;
 		}
-		return Array<T> { max_length: suggested_length, data: mem:calloc(suggested_length * sizeof(T)) };
+		return Array<T>{ max_length: suggested_length, data: mem:calloc(suggested_length * sizeof(T)) };
 	}
 
 	public func clear() {

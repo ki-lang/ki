@@ -90,6 +90,31 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         sprintf(value->item, "%d", size);
         //
         fc_expect_token(fc, ")", false, true, true);
+    } else if (strcmp(token, "?") == 0) {
+        // ?Value<...>
+        Value *v = fc_read_value(fc, scope, false, true, true);
+
+        // Generate ?Value<T> type
+        Type *opt_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "Value"), NULL);
+        Array *subtypes = array_make(2);
+        array_push(subtypes, v->return_type);
+        Class *gclass = fc_get_generic_class_by_hash(opt_type->class, subtypes);
+        // array_free(subtypes); // shouldnt free values
+
+        fc_depends_on(fc, gclass->fc);
+
+        Type *t = init_type();
+        t->type = type_struct;
+        t->class = gclass;
+        t->is_pointer = true;
+        t->bytes = pointer_size;
+        t->allow_math = false;
+        t->nullable = true;
+
+        value->type = vt_nullable_value;
+        value->item = v;
+        value->return_type = t;
+
     } else if (strcmp(token, "cast") == 0) {
 
         ValueCast *cast = malloc(sizeof(ValueCast));

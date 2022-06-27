@@ -105,6 +105,34 @@ class Map<T> {
 		return rest;
 	}
 
+	public func keys() Array<String> {
+		@ keys = Array<String>.make(4);
+		u8 i = 0;
+		while(i < 128){
+			ptr array = this.arrays.get(i);
+			i++;
+			if(array == null){
+				continue;
+			}
+			uxx count = getptrv array as uxx;
+			uxx ic = 0;
+			@ adr = array;
+			adr += sizeof(uxx);
+			while(ic < count){
+				@ key = getptrv adr as ?String;
+				adr += sizeof(String);
+				adr += sizeof(T);
+				ic++;
+
+				ifnull key continue;
+
+				keys.push(key);
+			}
+		}
+
+		return keys;
+	}
+
 	public func __free() {
 		u8 i = 0;
 		while(i < 128){

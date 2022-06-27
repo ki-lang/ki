@@ -1178,6 +1178,13 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         str_append_chars(result, ")");
     } else if (value->type == vt_var) {
         str_append_chars(result, value->item);
+    } else if (value->type == vt_nullable_value) {
+        //
+        Type *ret = value->return_type;
+        str_append_chars(result, ret->class->cname);
+        str_append_chars(result, "__init(");
+        fc_write_c_value(fc, value->item, false);
+        str_append_chars(result, ");");
     } else if (value->type == vt_threaded_global) {
         //
         GlobalVar *gv = value->item;
