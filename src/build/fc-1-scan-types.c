@@ -108,7 +108,9 @@ void fc_scan_types(FileCompiler *fc) {
             class->scope->class = class;
 
             if (generic_names) {
+                class->fc->was_modified = true;
                 class->fc->should_recompile = true;
+                class->fc->cache->depends_on = map_make();
             }
 
             array_push(fc->classes, class);

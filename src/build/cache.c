@@ -136,7 +136,7 @@ void fc_check_if_modified(FileCompiler *fc) {
             break;
         }
         sprintf(fc->sprintf, "%d", depfc->cache->modified_time);
-        if (strcmp(modtime, fc->sprintf) != 0) {
+        if (depfc->was_modified || strcmp(modtime, fc->sprintf) != 0) {
             fc->should_recompile = true;
             fc->cache->depends_on = map_make();
             break;
