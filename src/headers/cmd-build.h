@@ -110,6 +110,11 @@ char *types_to_generic_hash(Array *subtypes);
 Trait *init_trait();
 void free_trait(Trait *trait);
 
+// Converter
+void fc_scan_converters(FileCompiler* fc);
+void fc_scan_converter(FileCompiler *fc, ConverterPos* cvp);
+Function *converter_find_func(Converter *cv, Type *from, Type *to);
+
 // Func
 Function *init_func();
 void free_func(Function *func);

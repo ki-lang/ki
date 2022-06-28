@@ -73,6 +73,7 @@ typedef struct FileCompiler {
     struct Array *strings;
     struct Array *globals;
     struct Array *used_functions;
+    struct Array *converter_positions;
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
@@ -138,6 +139,7 @@ typedef enum IdentifierForType {
     idfor_shared_global,
     idfor_namespace,
     idfor_macro_token,
+    idfor_converter,
 } IdentifierForType;
 
 //////////
@@ -214,6 +216,18 @@ typedef struct FunctionArg {
     struct Type *type;
     struct Value *default_value;
 } FunctionArg;
+
+typedef struct Converter {
+    char *cname;
+    Array* from_types;
+    Array* to_types;
+    Array* functions;
+} Converter;
+
+typedef struct ConverterPos {
+    int fc_i;
+    Converter* converter;
+} ConverterPos;
 
 typedef struct GlobalVar {
     FileCompiler *fc;

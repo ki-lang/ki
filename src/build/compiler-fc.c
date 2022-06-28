@@ -53,6 +53,7 @@ FileCompiler *init_fc() {
     fc->strings = array_make(8);
     fc->globals = array_make(4);
     fc->used_functions = array_make(8);
+    fc->converter_positions = array_make(2);
     //
     fc->include_headers_from = array_make(10);
     return fc;
