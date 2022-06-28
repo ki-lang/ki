@@ -171,6 +171,22 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             prev_ch = ch;
             ch = fc->content[fc->i];
             fc->i++;
+            if (ch == '#' && fc->content[fc->i] == '{') {
+                // macro token
+                fc->i++;
+                fc_next_token(fc, token, false, true, true);
+                if (is_valid_varname(token)) {
+                    Identifier *id = create_identifier(NULL, NULL, token);
+                    IdentifierFor *idf = idf_find_in_scope(scope, id);
+                    if (!idf || idf->type != idfor_macro_token) {
+                        fc_error(fc, "Invalid macro token: %s", token);
+                    }
+                    char *value = idf->item;
+                    str_append_chars(str, value);
+                    fc_expect_token(fc, "}", false, true, true);
+                }
+                continue;
+            }
             if (ch == '"' && prev_ch != '\\') {
                 break;
             }

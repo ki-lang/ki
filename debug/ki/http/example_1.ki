@@ -58,6 +58,10 @@ func handler(http:Request req) http:Response{
 
 func main(Array<String> args) i32 {
 
+	#props String as name type
+	println("#{name}");
+	#\props
+
 	@ a = ?10;
 	ifnull a return 1;
 	@ b = a.value + 5;

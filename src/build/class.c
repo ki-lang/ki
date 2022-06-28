@@ -41,6 +41,7 @@ ClassProp *init_class_prop() {
     prop->default_value = NULL;
     prop->value_i = 0;
     prop->func = NULL;
+    prop->macro_tag = NULL;
     return prop;
 }
 
@@ -410,6 +411,10 @@ void fc_scan_class_props(Class *class) {
         ClassProp *prop = init_class_prop();
         prop->access_type = acc_type;
         prop->is_static = is_static;
+
+        if (fc->macro_tag) {
+            prop->macro_tag = fc->macro_tag;
+        }
 
         if (strcmp(token, "func") == 0) {
 

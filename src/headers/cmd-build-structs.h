@@ -45,6 +45,8 @@ typedef struct FileCompiler {
     int col;
     // Macros
     Array *macro_results;
+    Array *macro_prop_loops;
+    char *macro_tag;
     // Write c
     Str *c_code;
     Str *c_code_after;
@@ -135,6 +137,7 @@ typedef enum IdentifierForType {
     idfor_threaded_global,
     idfor_shared_global,
     idfor_namespace,
+    idfor_macro_token,
 } IdentifierForType;
 
 //////////
@@ -178,6 +181,7 @@ typedef struct ClassProp {
     struct Value *default_value;
     int value_i;
     struct Function *func;
+    char *macro_tag;
 } ClassProp;
 
 typedef enum ClassPropAccType {
@@ -522,3 +526,12 @@ typedef struct TokenIdValue {
     char *name;
     Value *value;
 } TokenIdValue;
+
+typedef struct PropLoop {
+    int fc_i;
+    Class* class;
+    int prop_index;
+    char* name_id;
+    char* type_id;
+    char* filter;
+} PropLoop;

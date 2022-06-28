@@ -26,6 +26,7 @@ FileCompiler *init_fc() {
     fc->line = 0;
     //
     fc->macro_results = array_make(4);
+    fc->macro_prop_loops = array_make(4);
     //
     fc->c_code = str_make("");
     fc->c_code_after = str_make("");
