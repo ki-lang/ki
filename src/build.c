@@ -211,6 +211,7 @@ void cmd_build_init_static() {
     array_push(internal_types, "cstring");
     array_push(internal_types, "Array");
     array_push(internal_types, "Map");
+    array_push(internal_types, "Value");
 }
 
 #ifdef WIN32

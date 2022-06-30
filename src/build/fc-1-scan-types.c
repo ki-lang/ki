@@ -242,6 +242,10 @@ void fc_scan_types(FileCompiler *fc) {
 
             if (func->is_test) {
                 array_push(g_test_funcs, func);
+
+                if (g_run_tests) {
+                    fc->is_used = true;
+                }
             }
 
             if (!func->is_test || g_run_tests) {

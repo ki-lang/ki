@@ -4,7 +4,7 @@
 void fc_parse_macro(FileCompiler *fc, Scope *scope, char *token) {
     fc_next_token(fc, token, false, true, false);
     bool end = false;
-    if (strcmp(token, "\\") == 0) {
+    if (strcmp(token, "/") == 0) {
         end = true;
         fc_next_token(fc, token, false, true, false);
         // memmove(token + 1, token, strlen(token) + 1);
