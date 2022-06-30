@@ -50,10 +50,11 @@ class Array<T> {
 		this.length++;
 
 		#if IS_REFCOUNTED_TYPE T
+		@ lv = item;
 		#if IS_NULLABLE_TYPE T
-		if(item != null) {
+		notnull lv do {
 		#end
-		item._RC++;
+		lv._RC++;
 		#if IS_NULLABLE_TYPE T
 		}
 		#end
@@ -81,10 +82,11 @@ class Array<T> {
 		this.length++;
 
 		#if IS_REFCOUNTED_TYPE T
+		@ lv = item;
 		#if IS_NULLABLE_TYPE T
-		if(item != null) {
+		notnull lv do {
 		#end
-		item._RC++;
+		lv._RC++;
 		#if IS_NULLABLE_TYPE T
 		}
 		#end
@@ -104,12 +106,13 @@ class Array<T> {
 
 		@ item = getptrv adr as T;
 		#if IS_REFCOUNTED_TYPE T
+		@ lv = item;
 		#if IS_NULLABLE_TYPE T
-		if(item != null) {
+		notnull lv do {
 		#end
-		item._RC--;
-		if(item._RC == 0){
-			item.__free();
+		lv._RC--;
+		if(lv._RC == 0){
+			lv.__free();
 		}
 		#if IS_NULLABLE_TYPE T
 		}
@@ -155,7 +158,7 @@ class Array<T> {
 			@ val = getptrv adr as T;
 
 			#if IS_NULLABLE_TYPE T
-			if(val != null) {
+			notnull val do {
 			#end
 			val._RC--;
 			if(val._RC == 0){
