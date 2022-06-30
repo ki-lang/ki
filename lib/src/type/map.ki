@@ -50,10 +50,11 @@ class Map<T> {
 		key._RC++;
 
 		#if IS_REFCOUNTED_TYPE T
+		@ v = value;
 		#if IS_NULLABLE_TYPE T
-		if(value != null) {
+		notnull v do {
 		#end
-		value._RC++;
+		v._RC++;
 		#if IS_NULLABLE_TYPE T
 		}
 		#end
@@ -164,7 +165,7 @@ class Map<T> {
 					@ val = getptrv adr as T;
 
 					#if IS_NULLABLE_TYPE T
-					if(val != null) {
+					notnull val do {
 					#end
 					val._RC--;
 					#if IS_NULLABLE_TYPE T
