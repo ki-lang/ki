@@ -26,6 +26,7 @@ FileCompiler *init_fc() {
     fc->line = 0;
     //
     fc->macro_results = array_make(4);
+    fc->macro_prop_loops = array_make(4);
     //
     fc->c_code = str_make("");
     fc->c_code_after = str_make("");
@@ -52,6 +53,7 @@ FileCompiler *init_fc() {
     fc->strings = array_make(8);
     fc->globals = array_make(4);
     fc->used_functions = array_make(8);
+    fc->converter_positions = array_make(2);
     //
     fc->include_headers_from = array_make(10);
     return fc;
@@ -152,11 +154,9 @@ FileCompiler *fc_new_file(PkgCompiler *pkc, char *path, bool is_cmd_arg_file) {
         fc->should_recompile = true;
         fc->cache->modified_time = modtime;
         fc->cache->depends_on = map_make();
-        fc->cache->uses = map_make();
     } else if (g_nocache) {
         fc->should_recompile = true;
         fc->cache->depends_on = map_make();
-        fc->cache->uses = map_make();
     }
 
     if (g_verbose_all) {

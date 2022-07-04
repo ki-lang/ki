@@ -57,8 +57,10 @@ char *fc_create_identifier_global_cname(FileCompiler *fc, Identifier *id) {
 
 Identifier *create_identifier(char *package, char *namespace, char *name) {
     Identifier *id = init_id();
-    id->package = strdup(package);
-    id->namespace = strdup(namespace);
+    if (package)
+        id->package = strdup(package);
+    if (namespace)
+        id->namespace = strdup(namespace);
     id->name = strdup(name);
     return id;
 }

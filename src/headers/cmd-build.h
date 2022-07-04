@@ -103,10 +103,17 @@ void fc_scan_class(FileCompiler *fc, Class *class);
 Class *fc_make_generic_class(Class *class);
 Class *fc_get_generic_class(FileCompiler *fc, Class *class, Scope *scope);
 char *fc_class_read_generic_unique_id(FileCompiler *fc, Scope *scope);
+Class *fc_get_generic_class_by_hash(Class *class, Array *types);
+char *types_to_generic_hash(Array *subtypes);
 
 // Trait
 Trait *init_trait();
 void free_trait(Trait *trait);
+
+// Converter
+void fc_scan_converters(FileCompiler* fc);
+void fc_scan_converter(FileCompiler *fc, ConverterPos* cvp);
+Function *converter_find_func(Converter *cv, Type *from, Type *to);
 
 // Func
 Function *init_func();

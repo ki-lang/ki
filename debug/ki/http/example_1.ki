@@ -58,6 +58,28 @@ func handler(http:Request req) http:Response{
 
 func main(Array<String> args) i32 {
 
+	@ m = Map<String>.make();
+	m.set("a", "1");
+	m.set("b", "2");
+	m.set("c", "3");
+
+	@ keys = m.keys();
+	each keys as key {
+		print(key);
+		print(":");
+		println(m.get(key) or value "?");
+	}
+
+	return 1;
+	#props String as name type
+	println("#{name}");
+	#/props
+
+	@ a = ?10;
+	ifnull a return 1;
+	@ b = a.value + 5;
+	println(b.str());
+
 	@ x = 50.123;
 
 	@ s = http:Server.init("127.0.0.1", 9000, handler) or exit 1;

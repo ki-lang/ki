@@ -136,6 +136,23 @@ Type *fc_read_type(FileCompiler *fc, Scope *scope) {
 void fc_type_make_nullable(FileCompiler *fc, Type *t) {
     //
     if (!t->is_pointer) {
+        // // Generate ?Value<T> type
+        // Type *subtype = init_type();
+        // *subtype = *t; // Copy values
+
+        // Type *opt_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "Value"), NULL);
+
+        // Array *subtypes = array_make(2);
+        // array_push(subtypes, subtype);
+        // Class *gclass = fc_get_generic_class_by_hash(opt_type->class, subtypes);
+        // // array_free(subtypes); // shouldnt free values
+
+        // t->type = type_struct;
+        // t->class = gclass;
+        // t->is_pointer = true;
+        // t->bytes = pointer_size;
+        // t->allow_math = false;
+        //
         fc_error(fc, "Invalid type, only pointer types can be null", NULL);
     }
     t->nullable = true;

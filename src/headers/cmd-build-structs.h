@@ -45,6 +45,8 @@ typedef struct FileCompiler {
     int col;
     // Macros
     Array *macro_results;
+    Array *macro_prop_loops;
+    char *macro_tag;
     // Write c
     Str *c_code;
     Str *c_code_after;
@@ -71,6 +73,7 @@ typedef struct FileCompiler {
     struct Array *strings;
     struct Array *globals;
     struct Array *used_functions;
+    struct Array *converter_positions;
     // Extern
     struct Array *include_headers_from;
 } FileCompiler;
@@ -80,7 +83,6 @@ typedef struct FcCache {
     int tests_enabled;
     struct Map *depends_on;
     struct Map *allocators;
-    struct Map *uses;
 } FcCache;
 
 typedef struct Scope {
@@ -136,6 +138,8 @@ typedef enum IdentifierForType {
     idfor_threaded_global,
     idfor_shared_global,
     idfor_namespace,
+    idfor_macro_token,
+    idfor_converter,
 } IdentifierForType;
 
 //////////
@@ -179,6 +183,7 @@ typedef struct ClassProp {
     struct Value *default_value;
     int value_i;
     struct Function *func;
+    char *macro_tag;
 } ClassProp;
 
 typedef enum ClassPropAccType {
@@ -211,6 +216,18 @@ typedef struct FunctionArg {
     struct Type *type;
     struct Value *default_value;
 } FunctionArg;
+
+typedef struct Converter {
+    char *cname;
+    Array* from_types;
+    Array* to_types;
+    Array* functions;
+} Converter;
+
+typedef struct ConverterPos {
+    int fc_i;
+    Converter* converter;
+} ConverterPos;
 
 typedef struct GlobalVar {
     FileCompiler *fc;
@@ -313,6 +330,7 @@ typedef enum ValueType {
     vt_arg,
     vt_threaded_global,
     vt_shared_global,
+    vt_nullable_value,
 } ValueType;
 
 typedef struct ValueFuncCall {
@@ -522,3 +540,12 @@ typedef struct TokenIdValue {
     char *name;
     Value *value;
 } TokenIdValue;
+
+typedef struct PropLoop {
+    int fc_i;
+    Class* class;
+    int prop_index;
+    char* name_id;
+    char* type_id;
+    char* filter;
+} PropLoop;

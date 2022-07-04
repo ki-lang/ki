@@ -108,7 +108,9 @@ void fc_scan_types(FileCompiler *fc) {
             class->scope->class = class;
 
             if (generic_names) {
+                class->fc->was_modified = true;
                 class->fc->should_recompile = true;
+                class->fc->cache->depends_on = map_make();
             }
 
             array_push(fc->classes, class);
@@ -240,6 +242,10 @@ void fc_scan_types(FileCompiler *fc) {
 
             if (func->is_test) {
                 array_push(g_test_funcs, func);
+
+                if (g_run_tests) {
+                    fc->is_used = true;
+                }
             }
 
             if (!func->is_test || g_run_tests) {
@@ -255,6 +261,50 @@ void fc_scan_types(FileCompiler *fc) {
 
                 fc_scan_func(fc, func);
             }
+
+        } else if (strcmp(token, "converter") == 0) {
+            fc_next_token(fc, token, true, true, true);
+            if (!is_valid_varname(token)) {
+                fc_error(fc, "Invalid name: '%s'", token);
+            }
+
+            Identifier *id = fc_read_identifier(fc, false, true, true);
+            Scope *idf_scope = fc_get_identifier_scope(fc, fc->scope, id);
+            IdentifierFor *idf = idf_find_in_scope(idf_scope, id);
+
+            if (idf && idf->type != idfor_converter) {
+                fc_error(fc, "Name already used for something else: '%s'", token);
+            }
+
+            char *cname = create_c_identifier_with_strings(fc->nsc->pkc->name, fc->nsc->name, token);
+
+            fc_expect_token(fc, "{", false, false, true);
+
+            Converter *cv = NULL;
+            if (idf) {
+                cv = idf->item;
+                free(cname);
+            } else {
+                cv = malloc(sizeof(Converter));
+                cv->cname = cname;
+                cv->from_types = array_make(2);
+                cv->to_types = array_make(2);
+                cv->functions = array_make(2);
+
+                IdentifierFor *idf = init_idf();
+                idf->type = idfor_converter;
+                idf->item = cv;
+
+                map_set(c_identifiers, cname, idf);
+            }
+
+            ConverterPos *cvp = malloc(sizeof(ConverterPos));
+            cvp->fc_i = fc->i;
+            cvp->converter = cv;
+
+            array_push(fc->converter_positions, cvp);
+
+            fc_skip_body(fc, "{", "}", NULL, false);
 
         } else if (strcmp(token, "use") == 0) {
             fc_next_token(fc, token, false, true, true);

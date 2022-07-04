@@ -27,6 +27,7 @@
 - package requirements e.g. ki version between x/y
 - macro values via ki build --def "env=production,enable_some_feature=1"
 - convert using #{type} -> e.g. #i32 => __to_i32()
+- []#String (empty array of strings value), ["hello"] (array of strings value)
 
 ## Later
 

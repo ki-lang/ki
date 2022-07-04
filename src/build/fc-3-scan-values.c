@@ -44,6 +44,15 @@ void fc_scan_values() {
         }
     }
 
+    // Scan converters
+    for (int i = 0; i < packages->keys->length; i++) {
+        PkgCompiler *pkc = array_get_index(packages->values, i);
+        for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+            FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+            fc_scan_converters(fc);
+        }
+    }
+
     // Scan globals
     for (int i = 0; i < packages->keys->length; i++) {
         PkgCompiler *pkc = array_get_index(packages->values, i);
