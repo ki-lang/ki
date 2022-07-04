@@ -595,7 +595,7 @@ void fc_scan_class_props(Class *class) {
             fc_error(fc, "__before_free must be a function (non-static)", NULL);
         }
         Function *func = bfp->func;
-        if (func->args->length != 0) {
+        if (func->args->length != 1) {
             fc_error(fc, "__before_free must have 0 arguments", NULL);
         }
         if (func->return_type != NULL) {

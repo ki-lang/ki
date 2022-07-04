@@ -450,8 +450,8 @@ void fc_write_c_class(FileCompiler *fc, Class *class) {
 
         ClassProp *before_prop = map_get(class->props, "__before_free");
         if (before_prop) {
-            str_append_chars(fc->h_code, class->cname);
-            str_append_chars(fc->h_code, "____before_free(this);\n");
+            str_append_chars(fc->c_code, class->cname);
+            str_append_chars(fc->c_code, "____before_free(this);\n");
         }
 
         for (int i = 0; i < class->props->keys->length; i++) {
