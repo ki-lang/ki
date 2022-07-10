@@ -1184,7 +1184,7 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         str_append_chars(result, ret->class->cname);
         str_append_chars(result, "__init(");
         fc_write_c_value(fc, value->item, false);
-        str_append_chars(result, ");");
+        str_append_chars(result, ")");
     } else if (value->type == vt_threaded_global) {
         //
         GlobalVar *gv = value->item;
@@ -1206,6 +1206,31 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value) {
         str_append_chars(result, "'");
         str_append_chars(result, value->item);
         str_append_chars(result, "'");
+    } else if (value->type == vt_null_or) {
+        ValueOperator *op = value->item;
+        fc_write_c_value(fc, op->left, true);
+        char *buf_var_name = strdup(var_buf(fc));
+        fc_write_c_type(fc->tkn_buffer, op->left->return_type, buf_var_name);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+        //
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, buf_var_name);
+        str_append_chars(fc->tkn_buffer, " == (void*)0) {\n");
+
+        str_append_chars(fc->tkn_buffer, buf_var_name);
+        str_append_chars(fc->tkn_buffer, " = ");
+        fc_write_c_value(fc, op->right, true);
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+
+        str_append_chars(fc->tkn_buffer, "}\n");
+
+        result->length = 0;
+        str_append_chars(result, buf_var_name);
+        free(buf_var_name);
+
     } else if (value->type == vt_operator) {
         ValueOperator *op = value->item;
         fc_write_c_value(fc, op->left, false);

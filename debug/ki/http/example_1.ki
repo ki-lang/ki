@@ -58,6 +58,9 @@ func handler(http:Request req) http:Response{
 
 func main(Array<String> args) i32 {
 
+	?String zz = "1";
+	println(zz or "2");
+
 	@ m = Map<String>.make();
 	m.set("a", "1");
 	m.set("b", "2");

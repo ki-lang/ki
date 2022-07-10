@@ -561,7 +561,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
     fc_next_token(fc, token, true, true, true);
     char ch = fc_get_char(fc, 0);
-    while (ch == '.' || ch == '(' || strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "*") == 0 || strcmp(token, "/") == 0 || strcmp(token, "%") == 0 || strcmp(token, "<<") == 0 || strcmp(token, "bitOR") == 0 || strcmp(token, "bitAND") == 0 || strcmp(token, "bitXOR") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, ">") == 0 || strcmp(token, "<") == 0 || strcmp(token, "&&") == 0 || strcmp(token, "||") == 0) {
+    while (ch == '.' || ch == '(' || strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "*") == 0 || strcmp(token, "/") == 0 || strcmp(token, "%") == 0 || strcmp(token, "<<") == 0 || strcmp(token, "bitOR") == 0 || strcmp(token, "bitAND") == 0 || strcmp(token, "bitXOR") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, ">") == 0 || strcmp(token, "<") == 0 || strcmp(token, "&&") == 0 || strcmp(token, "||") == 0 || strcmp(token, "or") == 0) {
         fc_next_token(fc, token, false, true, true);
         if (strcmp(token, ">") == 0 && fc_get_char(fc, 0) == '>') {
             strcpy(token, ">>");
@@ -831,6 +831,27 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->type = vt_operator;
             value->item = op;
             value->return_type = return_type;
+        } else if (strcmp(token, "or") == 0) {
+
+            if (!value->return_type->nullable) {
+                fc_error(fc, "Using 'or' on non-nullable value", NULL);
+            }
+
+            ValueOperator *op = malloc(sizeof(ValueOperator));
+            op->type = op_null_or;
+            op->left = value;
+            op->right = fc_read_value(fc, scope, false, false, true);
+
+            if (op->right->return_type->nullable) {
+                fc_error(fc, "Right-side value cannot be nullable", NULL);
+            }
+
+            fc_type_compatible(fc, op->left->return_type, op->right->return_type);
+
+            value = init_value();
+            value->type = vt_null_or;
+            value->item = op;
+            value->return_type = op->right->return_type;
         } else {
             fc_error(fc, "Unhandled operator '%s' (todo)", token);
         }
