@@ -846,9 +846,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 fc_error(fc, "Right-side value cannot be nullable", NULL);
             }
 
-            if (!type_compatible(op->left, op->right)) {
-                fc_error(fc, "Using 'or' on non-nullable value", NULL);
-            }
+            fc_type_compatible(fc, op->left->return_type, op->right->return_type);
 
             value = init_value();
             value->type = vt_null_or;
