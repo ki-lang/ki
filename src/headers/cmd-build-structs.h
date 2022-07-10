@@ -331,6 +331,7 @@ typedef enum ValueType {
     vt_threaded_global,
     vt_shared_global,
     vt_nullable_value,
+    vt_null_or,
 } ValueType;
 
 typedef struct ValueFuncCall {
@@ -404,6 +405,7 @@ typedef enum OperatorType {
     op_or,
     op_bit_shift_left,
     op_bit_shift_right,
+    op_null_or,
 } OperatorType;
 
 typedef struct ValueCast {
