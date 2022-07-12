@@ -4,9 +4,10 @@ namespace type;
 class Map<T> {
 
 	private PtrArray arrays;
+	private Array<String> _keys;
 
 	public static func make() CLASS {
-		return CLASS { arrays: PtrArray.make(128) };
+		return CLASS { arrays: PtrArray.make(128), _keys: Array<String>.make(2) };
 	}
 
 	public func set(String key, T value) {
@@ -25,9 +26,15 @@ class Map<T> {
 		@ array_start = array;
 		array += sizeof(uxx);
 		uxx pos = 0;
+		bool new = false;
 		while(true){
 			?String k = getptrv array as ?String;
-			if(k == null){
+			ifnull k do {
+				new = true;
+				break;
+			}
+
+			if(k == key) {
 				break;
 			}
 
@@ -43,11 +50,15 @@ class Map<T> {
 			}
 		}
 
+		if(new) {
+			this._keys.push(key);
+		}
+
 		setptrv array to key;
 		array += sizeof(String);
-		setptrv array to value;
 
-		key._RC++;
+		@ prev_value = getptrv array as T;
+		setptrv array to value;
 
 		#if IS_REFCOUNTED_TYPE T
 		@ v = value;
@@ -58,7 +69,21 @@ class Map<T> {
 		#if IS_NULLABLE_TYPE T
 		}
 		#end
+
+		if(new == false) {
+			#if IS_NULLABLE_TYPE T
+			notnull prev_value do {
+			#end
+			prev_value._RC--;
+			if(prev_value._RC == 0){
+				prev_value.__free();
+			}
+			#if IS_NULLABLE_TYPE T
+			}
+			#end
+		}
 		#end
+
 	}
 
 	public func get(String key) !T {
