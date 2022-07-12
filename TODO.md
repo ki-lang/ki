@@ -29,6 +29,7 @@
 - convert using #{type} -> e.g. #i32 => __to_i32()
 - []#String (empty array of strings value), ["hello"] (array of strings value)
 - (re-)compile entire namespaces to object files to reduce amount of linker files
+- valgrind -> check if there is un-freed memory in the compiled programs
 
 ## Later
 
