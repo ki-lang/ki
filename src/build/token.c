@@ -658,11 +658,12 @@ void token_declare(FileCompiler *fc, Scope *scope, Type *left_type) {
         if (!type_compatible(left_type, value->return_type)) {
             fc_error(fc, "Types are not compatible", NULL);
         }
+        value->return_type = left_type;
     }
 
     IdentifierFor *idf = init_idf();
     idf->type = idfor_local_var;
-    LocalVar *lv = fc_localvar(fc, token, left_type ? left_type : value->return_type);
+    LocalVar *lv = fc_localvar(fc, token, value->return_type);
     idf->item = lv;
 
     map_set(scope->identifiers, lv->name, idf);

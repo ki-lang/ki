@@ -23,6 +23,16 @@ class Response{
 	}
 }
 
+class Test {
+
+	public String label;
+
+	public func __before_free() {
+		print("FREEE: ");
+		println(this.label);
+	}
+}
+
 func home(http:Request req) http:Response{
 	return http:Response{
 		body: "Hello from /"
@@ -58,8 +68,11 @@ func handler(http:Request req) http:Response{
 
 func main(Array<String> args) i32 {
 
-	?String zz = "1";
-	println(zz or "2");
+	@ mx = Map<Test>.make();
+	mx.set("1", Test{ label: "a" });
+	mx.set("1", Test{ label: "b" });
+	mx.remove("1");
+	mx.set("1", Test{ label: "c" });
 
 	@ m = Map<String>.make();
 	m.set("a", "1");

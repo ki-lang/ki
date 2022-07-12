@@ -4,9 +4,10 @@ namespace type;
 class Map<T> {
 
 	private PtrArray arrays;
+	private Array<String> _keys;
 
 	public static func make() CLASS {
-		return CLASS { arrays: PtrArray.make(128) };
+		return CLASS { arrays: PtrArray.make(128), _keys: Array<String>.make(2) };
 	}
 
 	public func set(String key, T value) {
@@ -15,7 +16,7 @@ class Map<T> {
 
 		ptr array = this.arrays.get(rest);
 		if(array == null){
-			array = mem:calloc(sizeof(String) + sizeof(T) + sizeof(uxx));
+			array = mem:calloc(sizeof(ptr) + sizeof(T) + sizeof(uxx) + sizeof(uxx));
 			uxx start_size = 1;
 			setptrv array to start_size;
 			this.arrays.set(rest, array);
@@ -24,30 +25,48 @@ class Map<T> {
 		uxx arr_size = getptrv array as uxx;
 		@ array_start = array;
 		array += sizeof(uxx);
+		array += sizeof(uxx);
 		uxx pos = 0;
+		bool new = false;
 		while(true){
 			?String k = getptrv array as ?String;
-			if(k == null){
+			ifnull k do {
+				new = true;
 				break;
 			}
 
-			array += (sizeof(String) + sizeof(T));
+			if(k == key) {
+				break;
+			}
+
+			array += (sizeof(ptr) + sizeof(T) + sizeof(uxx));
 			pos++;
 
 			if(pos == arr_size){
 				// Need more space, Resize
 				arr_size *= 2;
-				array = mem:calloc(((sizeof(String) + sizeof(T)) * arr_size) + sizeof(uxx));
+				array = mem:calloc(((sizeof(ptr) + sizeof(T) + sizeof(uxx)) * arr_size) + sizeof(uxx));
 				setptrv array_start to arr_size;
 				this.arrays.set(rest, array);
 			}
 		}
 
-		setptrv array to key;
-		array += sizeof(String);
-		setptrv array to value;
+		if(new) {
+			this._keys.push(key);
+			uxx keypos = this._keys.length;
+			setptrv (array - sizeof(uxx)) to keypos;
+		}
 
-		key._RC++;
+		setptrv array to key;
+		array += sizeof(ptr);
+
+		#if IS_REFCOUNTED_TYPE T
+		?T prev_value = null;
+		if(new == false) {
+			prev_value = getptrv array as T;
+		}
+		#end
+		setptrv array to value;
 
 		#if IS_REFCOUNTED_TYPE T
 		@ v = value;
@@ -58,7 +77,55 @@ class Map<T> {
 		#if IS_NULLABLE_TYPE T
 		}
 		#end
+
+		notnull prev_value do {
+			prev_value._RC--;
+		}
 		#end
+	}
+
+	public func remove(String key) {
+
+		u8 rest = this.get_rest(key);
+
+		ptr array = this.arrays.get(rest);
+		ifnull array return;
+
+		uxx arr_size = getptrv array as uxx;
+		array += sizeof(uxx);
+		array += sizeof(uxx);
+		uxx pos = 0;
+		while(pos < arr_size){
+			@ k = getptrv array as ?String;
+			array += sizeof(ptr);
+			if(k != null && key == k){
+
+				#if IS_REFCOUNTED_TYPE T
+				@ v = getptrv array as T;
+				#if IS_NULLABLE_TYPE T
+				notnull v do {
+				#end
+				v._RC--;
+				#if IS_NULLABLE_TYPE T
+				}
+				#end
+				#end
+
+				// Remove data
+				setptrv array to 0#uxx;
+				array -= sizeof(ptr);
+				setptrv array to 0#uxx;
+				array -= sizeof(uxx);
+				@ keypos = getptrv array as uxx;
+				setptrv array to 0#uxx;
+
+				this._keys.remove(keypos);
+				
+				return;
+			}
+			array += sizeof(T);
+			pos++;
+		}
 	}
 
 	public func get(String key) !T {
@@ -70,10 +137,11 @@ class Map<T> {
 
 		uxx arr_size = getptrv array as uxx;
 		array += sizeof(uxx);
+		array += sizeof(uxx);
 		uxx pos = 0;
 		while(pos < arr_size){
 			@ k = getptrv array as ?String;
-			array += sizeof(String);
+			array += sizeof(ptr);
 			if(k != null && key == k){
 				@ val = getptrv array as T;
 				return val;
@@ -120,8 +188,9 @@ class Map<T> {
 			@ adr = array;
 			adr += sizeof(uxx);
 			while(ic < count){
+				adr += sizeof(uxx);
 				@ key = getptrv adr as ?String;
-				adr += sizeof(String);
+				adr += sizeof(ptr);
 				adr += sizeof(T);
 				ic++;
 
@@ -148,8 +217,9 @@ class Map<T> {
 			@ adr = array;
 			adr += sizeof(uxx);
 			while(ic < count){
+				adr += sizeof(uxx);
 				@ key = getptrv adr as ?String;
-				adr += sizeof(String);
+				adr += sizeof(ptr);
 
 				if(key == null){
 					ic++;

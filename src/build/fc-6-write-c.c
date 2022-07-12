@@ -1405,11 +1405,11 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value, Str *code)
         fc_write_c_value(fc, cast->value, false, code);
     } else if (value->type == vt_getptrv) {
         ValueCast *cast = value->item;
-        str_append_chars(result, "*(");
+        str_append_chars(result, "(*(");
         fc_write_c_type(result, cast->as_type, NULL);
         str_append_chars(result, "*)(");
         fc_write_c_value(fc, cast->value, false, code);
-        str_append_chars(result, ")");
+        str_append_chars(result, "))");
     } else if (value->type == vt_getptr) {
         str_append_chars(result, "&");
         fc_write_c_value(fc, value->item, false, code);
