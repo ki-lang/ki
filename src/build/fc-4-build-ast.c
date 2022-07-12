@@ -1,6 +1,8 @@
 
 #include "../all.h"
 
+void fc_mark_accesses_globals(Function *func);
+
 void fc_build_asts() {
     //
     for (int i = 0; i < g_functions->length; i++) {
@@ -23,9 +25,37 @@ void fc_build_asts() {
         t->item = func;
         array_push(fc->scope->ast, t);
     }
+
+    // Mark functions that access globals
+    for (int i = 0; i < g_functions->length; i++) {
+        Function *func = array_get_index(g_functions, i);
+        if (func->accesses_globals) {
+            fc_mark_accesses_globals(func);
+            continue;
+        }
+    }
+
+    // Scan global values
+    for (int i = 0; i < packages->keys->length; i++) {
+        PkgCompiler *pkc = array_get_index(packages->values, i);
+        for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+            FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+
+            if (!fc->should_recompile) {
+                continue;
+            }
+
+            fc_scan_global_values(fc);
+        }
+    }
 }
 
 void fc_build_ast(FileCompiler *fc, Scope *scope) {
+    //
+    Scope *prev_fscope = fc->current_func_scope;
+    if (scope->is_func) {
+        fc->current_func_scope = scope;
+    }
     //
     char *token = malloc(KI_TOKEN_MAX);
     fc->i = scope->body_i;
@@ -214,4 +244,19 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
     }
 
     free(token);
+
+    //
+    fc->current_func_scope = prev_fscope;
+}
+
+void fc_mark_accesses_globals(Function *func) {
+    //
+    for (int i = 0; i < func->called_by->length; i++) {
+        Function *by = array_get_index(func->called_by, i);
+        if (by->accesses_globals) {
+            continue;
+        }
+        by->accesses_globals = true;
+        fc_mark_accesses_globals(by);
+    }
 }

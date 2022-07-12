@@ -255,11 +255,14 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
         }
         ort->type = or_return;
         Scope *func_scope = get_func_scope(scope);
+        if (!func_scope) {
+            fc_error(fc, "You cannot use 'or return ...' outside a function scope", NULL);
+        }
         ort->primary_type = func_scope->func->return_type;
     } else if (strcmp(token, "throw") == 0) {
         ort->type = or_throw;
         Scope *func_scope = get_func_scope(scope);
-        if (!func_scope->func->can_error) {
+        if (!func_scope || !func_scope->func->can_error) {
             fc_error(fc, "You cannot throw/pass errors within this scope", NULL);
         }
         ort->error = fc_read_error_token(fc, err_throw, token);
@@ -284,7 +287,7 @@ OrToken *fc_read_or_token(FileCompiler *fc, Scope *scope, Type *primary_type, ch
     } else if (on_func_call && strcmp(token, "pass") == 0) {
         ort->type = or_pass;
         Scope *func_scope = get_func_scope(scope);
-        if (!func_scope->func->can_error) {
+        if (!func_scope || !func_scope->func->can_error) {
             fc_error(fc, "You cannot throw/pass errors within this scope", NULL);
         }
         ort->primary_type = func_scope->func->return_type;

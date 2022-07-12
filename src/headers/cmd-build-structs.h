@@ -57,6 +57,7 @@ typedef struct FileCompiler {
     Str *value_buffer;
     int indent;
     struct Scope *current_scope;
+    struct Scope *current_func_scope;
     int var_bufc;
     char *var_buf;
     // Misc
@@ -200,6 +201,7 @@ typedef struct Function {
     bool can_error;
     bool generate_code;
     bool is_test;
+    bool accesses_globals;
     //
     struct Array *args;
     struct Array *arg_types;
@@ -209,6 +211,8 @@ typedef struct Function {
     int args_i_end;
     //
     Scope *scope;
+    //
+    struct Array *called_by;
 } Function;
 
 typedef struct FunctionArg {
@@ -219,14 +223,14 @@ typedef struct FunctionArg {
 
 typedef struct Converter {
     char *cname;
-    Array* from_types;
-    Array* to_types;
-    Array* functions;
+    Array *from_types;
+    Array *to_types;
+    Array *functions;
 } Converter;
 
 typedef struct ConverterPos {
     int fc_i;
-    Converter* converter;
+    Converter *converter;
 } ConverterPos;
 
 typedef struct GlobalVar {
@@ -239,6 +243,7 @@ typedef struct GlobalVar {
     int or_type;
     Scope *vscope;
     char *error_msg;
+    struct Value *default_value;
 } GlobalVar;
 
 typedef enum GlobalVarType {
@@ -545,9 +550,9 @@ typedef struct TokenIdValue {
 
 typedef struct PropLoop {
     int fc_i;
-    Class* class;
+    Class *class;
     int prop_index;
-    char* name_id;
-    char* type_id;
-    char* filter;
+    char *name_id;
+    char *type_id;
+    char *filter;
 } PropLoop;

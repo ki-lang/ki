@@ -368,6 +368,7 @@ void fc_define_global(FileCompiler *fc, int type, char *token) {
     gv->fc = fc;
     gv->fc_i = fc->i;
     gv->type = type;
+    gv->default_value = NULL;
 
     fc_skip_type(fc);
     fc_next_token(fc, token, false, true, true);
@@ -390,5 +391,8 @@ void fc_define_global(FileCompiler *fc, int type, char *token) {
 
     array_push(fc->globals, gv);
 
+    fc_expect_token(fc, "=", false, true, true);
+
+    fc_skip_until_char(fc, ';');
     fc_expect_token(fc, ";", false, true, true);
 }

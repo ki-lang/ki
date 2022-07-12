@@ -37,6 +37,7 @@ FileCompiler *init_fc() {
     fc->value_buffer = str_make("");
     fc->indent = 0;
     fc->current_scope = NULL;
+    fc->current_func_scope = NULL;
     fc->var_bufc = 0;
     fc->var_buf = malloc(100);
     //

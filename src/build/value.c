@@ -397,6 +397,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
             fc_depends_on(fc, func->fc);
 
+            if (fc->current_func_scope) {
+                array_push_unique(func->called_by, fc->current_func_scope->func);
+            } else if (func->accesses_globals) {
+                fc_error(fc, "Globally accessing function that accesses other globals (not allowed because of race conditions)", NULL);
+            }
+
         } else if (idf->type == idfor_enum) {
             fc_expect_token(fc, ".", false, true, false);
             fc_next_token(fc, token, false, true, false);
@@ -431,6 +437,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
             fc_depends_on(fc, gv->fc);
 
+            if (fc->current_func_scope) {
+                fc->current_func_scope->func->accesses_globals = true;
+            } else {
+                fc_error(fc, "Accessing globals outside a function scope is not allowed", NULL);
+            }
+
         } else if (idf->type == idfor_shared_global) {
             GlobalVar *gv = idf->item;
             value->type = vt_shared_global;
@@ -438,6 +450,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->return_type = gv->return_type;
 
             fc_depends_on(fc, gv->fc);
+
+            if (fc->current_func_scope) {
+                fc->current_func_scope->func->accesses_globals = true;
+            } else {
+                fc_error(fc, "Accessing globals outside a function scope is not allowed", NULL);
+            }
 
         } else if (idf->type == idfor_arg) {
             LocalVar *lv = idf->item;
@@ -483,6 +501,14 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 value->type = vt_prop_access;
                 value->item = pa;
                 value->return_type = prop->return_type;
+
+                if (prop->is_func) {
+                    if (fc->current_func_scope) {
+                        array_push_unique(prop->func->called_by, fc->current_func_scope->func);
+                    } else if (prop->func->accesses_globals) {
+                        fc_error(fc, "Globally accessing function that accesses other globals (not allowed because of race conditions)", NULL);
+                    }
+                }
 
             } else {
                 // Init func
@@ -636,6 +662,14 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 value->type = vt_prop_access;
                 value->item = pa;
                 value->return_type = prop->return_type;
+
+                if (prop->is_func) {
+                    if (fc->current_func_scope) {
+                        array_push_unique(prop->func->called_by, fc->current_func_scope->func);
+                    } else if (prop->func->accesses_globals) {
+                        fc_error(fc, "Globally accessing function that accesses other globals (not allowed because of race conditions)", NULL);
+                    }
+                }
             }
 
         } else if (ch == '(') {
@@ -890,11 +924,11 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
     while (func_scope && func_scope->is_func == false) {
         func_scope = func_scope->parent;
     }
-    if (func_scope == NULL) {
-        fc_error(fc, "Trying to call function outside a function scope", NULL);
-    }
+    // if (func_scope == NULL) {
+    //     fc_error(fc, "Trying to call function outside a function scope", NULL);
+    // }
 
-    if (on->return_type->func_can_error)
+    if (func_scope && on->return_type->func_can_error)
         func_scope->catch_errors = true;
 
     Array *func_args = fcall->on->return_type->func_arg_types;
@@ -982,9 +1016,6 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                     value->return_type = fc_type_make_nullable_copy(fc, value->return_type);
                 }
                 fc_type_compatible(fc, value->return_type, ort->vscope->vscope_return_type);
-            } else {
-                // or return
-                // ast builder does the type checking
             }
         } else if (ort->value) {
             if (ort->type == or_value) {
@@ -995,7 +1026,7 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                     }
                     value->return_type = fc_type_make_nullable_copy(fc, value->return_type);
                 }
-            } else {
+            } else if (ort->type == or_return) {
                 // or return
                 Scope *func_scope = get_func_scope(scope);
                 if (func_scope->func->return_type) {
