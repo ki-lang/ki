@@ -71,9 +71,8 @@ func main(Array<String> args) i32 {
 	@ mx = Map<Test>.make();
 	mx.set("1", Test{ label: "a" });
 	mx.set("1", Test{ label: "b" });
-	//mx.set("2", Test{ label: "c" });
-
-	return 1;
+	mx.remove("1");
+	mx.set("1", Test{ label: "c" });
 
 	@ m = Map<String>.make();
 	m.set("a", "1");
