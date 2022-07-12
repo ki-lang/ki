@@ -133,6 +133,13 @@ Type *fc_read_type(FileCompiler *fc, Scope *scope) {
     return t;
 }
 
+Type *fc_type_make_nullable_copy(FileCompiler *fc, Type *t) {
+    Type *res = init_type();
+    *res = *t;
+    fc_type_make_nullable(fc, res);
+    return res;
+}
+
 void fc_type_make_nullable(FileCompiler *fc, Type *t) {
     //
     if (!t->is_pointer) {

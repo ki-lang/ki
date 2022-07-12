@@ -111,8 +111,8 @@ Trait *init_trait();
 void free_trait(Trait *trait);
 
 // Converter
-void fc_scan_converters(FileCompiler* fc);
-void fc_scan_converter(FileCompiler *fc, ConverterPos* cvp);
+void fc_scan_converters(FileCompiler *fc);
+void fc_scan_converter(FileCompiler *fc, ConverterPos *cvp);
 Function *converter_find_func(Converter *cv, Type *from, Type *to);
 
 // Func
@@ -135,6 +135,7 @@ void free_type(Type *type);
 Type *fc_read_type(FileCompiler *fc, Scope *scope);
 Type *fc_identifier_to_type(FileCompiler *fc, Identifier *id, Scope *scope);
 void fc_type_make_nullable(FileCompiler *fc, Type *t);
+Type *fc_type_make_nullable_copy(FileCompiler *fc, Type *t);
 bool type_compatible(Type *t1, Type *t2);
 void fc_type_compatible(FileCompiler *fc, Type *t1, Type *t2);
 Type *fc_create_type_for_enum(Enum *enu);
