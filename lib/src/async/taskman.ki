@@ -5,9 +5,9 @@ namespace async;
 
 threaded_global ?Taskman GT_KI_taskmanager = null;
 
-unsafe_shared_global ?Mutex GS_KI_add_mutex = null;
+unsafe_shared_global Mutex GS_KI_add_mutex = Mutex.make();
 unsafe_shared_global TaskList GS_KI_tasklist = TaskList.init();
-unsafe_shared_global ?type:PtrArray GS_KI_taskmanagers = null;
+unsafe_shared_global type:PtrArray GS_KI_taskmanagers = type:PtrArray.make(64);
 
 class TaskList {
 
@@ -19,6 +19,7 @@ class TaskList {
 	public i32 pipe_write_fd;
 
 	public static func init() TaskList {
+
 		uxx pipes = 0;
 		ptr pipes_ptr = getptr pipes;
 		#if OS_WIN
@@ -50,18 +51,10 @@ class Taskman norfc {
 		return tm;
 	}
 
-	public static func get_task_managers() type:PtrArray {
-		@ tms = GS_KI_taskmanagers;
-		ifnull tms set {
-			return type:PtrArray.make(64);
-		}
-		return tms;
-	}
-
 	public static func |used| setup_task_managers() type:PtrArray {
 
 		@ tms = type:PtrArray.make(64);
-		@ list = Taskman.get_task_managers();
+		@ list = GS_KI_taskmanagers;
 
 		@ mut_get_task = Mutex.make();
 		@ core_count = sys:CpuInfo.core_count() or value 1;
@@ -146,19 +139,9 @@ class Taskman norfc {
 		}
 	}
 
-	public static func get_add_mutex() Mutex {
-		@ mut = GS_KI_add_mutex;
-		ifnull mut set {
-			@ mut = Mutex.make();
-			GS_KI_add_mutex = mut;
-			return mut;
-		}
-		return mut;
-	}
-
 	public static func add_task(Task task) {
 
-		@ mut = Taskman.get_add_mutex();
+		@ mut = GS_KI_add_mutex;
 		mut.lock();
 
 		@ task_list = GS_KI_tasklist;

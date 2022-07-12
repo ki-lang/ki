@@ -87,7 +87,8 @@ void fc_scan_globals(FileCompiler *fc) {
 
         fc_expect_token(fc, "=", false, true, true);
 
-        gv->default_value = fc_read_value(fc, fc->scope, false, true, true);
+        gv->fc_i = fc->i;
+        fc_skip_assign_value(fc);
 
         IdentifierFor *idf = init_idf();
         idf->type = gv->type == gv_threaded ? idfor_threaded_global : idfor_shared_global;
@@ -100,5 +101,16 @@ void fc_scan_globals(FileCompiler *fc) {
         // if (gv->return_type->is_pointer && !gv->return_type->nullable) {
         //     fc_error(fc, "Global variables must be nullable (null is their default value)", NULL);
         // }
+    }
+}
+
+void fc_scan_global_values(FileCompiler *fc) {
+    //
+    for (int x = 0; x < fc->globals->length; x++) {
+        GlobalVar *gv = array_get_index(fc->globals, x);
+
+        fc->i = gv->fc_i;
+
+        gv->default_value = fc_read_value(fc, fc->scope, false, true, true);
     }
 }

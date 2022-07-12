@@ -37,6 +37,7 @@ void fc_build_asts();
 void fc_build_ast(FileCompiler *fc, Scope *scope);
 void fc_define_global(FileCompiler *fc, int type, char *token);
 void fc_scan_globals(FileCompiler *fc);
+void fc_scan_global_values(FileCompiler *fc);
 double get_time();
 void mark_used_files();
 void mark_used(FileCompiler *fc);

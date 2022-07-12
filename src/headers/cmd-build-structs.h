@@ -57,6 +57,7 @@ typedef struct FileCompiler {
     Str *value_buffer;
     int indent;
     struct Scope *current_scope;
+    struct Scope *current_func_scope;
     int var_bufc;
     char *var_buf;
     // Misc
@@ -200,6 +201,7 @@ typedef struct Function {
     bool can_error;
     bool generate_code;
     bool is_test;
+    bool accesses_globals;
     //
     struct Array *args;
     struct Array *arg_types;
@@ -209,6 +211,8 @@ typedef struct Function {
     int args_i_end;
     //
     Scope *scope;
+    //
+    struct Array *called_by;
 } Function;
 
 typedef struct FunctionArg {

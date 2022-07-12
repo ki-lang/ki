@@ -397,6 +397,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
             fc_depends_on(fc, func->fc);
 
+            if (fc->current_func_scope) {
+                array_push_unique(func->called_by, fc->current_func_scope->func);
+            } else if (func->accesses_globals) {
+                fc_error(fc, "Globally accessing function that accesses other globals (not allowed because of race conditions)", NULL);
+            }
+
         } else if (idf->type == idfor_enum) {
             fc_expect_token(fc, ".", false, true, false);
             fc_next_token(fc, token, false, true, false);
@@ -431,6 +437,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
             fc_depends_on(fc, gv->fc);
 
+            if (fc->current_func_scope) {
+                fc->current_func_scope->func->accesses_globals = true;
+            } else {
+                fc_error(fc, "Accessing globals outside a function scope is not allowed", NULL);
+            }
+
         } else if (idf->type == idfor_shared_global) {
             GlobalVar *gv = idf->item;
             value->type = vt_shared_global;
@@ -438,6 +450,12 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             value->return_type = gv->return_type;
 
             fc_depends_on(fc, gv->fc);
+
+            if (fc->current_func_scope) {
+                fc->current_func_scope->func->accesses_globals = true;
+            } else {
+                fc_error(fc, "Accessing globals outside a function scope is not allowed", NULL);
+            }
 
         } else if (idf->type == idfor_arg) {
             LocalVar *lv = idf->item;
@@ -483,6 +501,14 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 value->type = vt_prop_access;
                 value->item = pa;
                 value->return_type = prop->return_type;
+
+                if (prop->is_func) {
+                    if (fc->current_func_scope) {
+                        array_push_unique(prop->func->called_by, fc->current_func_scope->func);
+                    } else if (prop->func->accesses_globals) {
+                        fc_error(fc, "Globally accessing function that accesses other globals (not allowed because of race conditions)", NULL);
+                    }
+                }
 
             } else {
                 // Init func
@@ -636,6 +662,14 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 value->type = vt_prop_access;
                 value->item = pa;
                 value->return_type = prop->return_type;
+
+                if (prop->is_func) {
+                    if (fc->current_func_scope) {
+                        array_push_unique(prop->func->called_by, fc->current_func_scope->func);
+                    } else if (prop->func->accesses_globals) {
+                        fc_error(fc, "Globally accessing function that accesses other globals (not allowed because of race conditions)", NULL);
+                    }
+                }
             }
 
         } else if (ch == '(') {

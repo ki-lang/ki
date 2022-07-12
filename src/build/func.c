@@ -9,12 +9,14 @@ Function *init_func() {
     func->can_error = false;
     func->generate_code = true;
     func->is_test = false;
+    func->accesses_globals = false;
     func->args = array_make(2);
     func->arg_types = array_make(2);
     func->args_i = 0;
     func->args_i_end = 0;
     func->scope = NULL;
     func->return_type = NULL;
+    func->called_by = array_make(2);
     return func;
 }
 
