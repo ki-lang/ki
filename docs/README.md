@@ -123,6 +123,12 @@ trait A {
 }
 
 class B {
+	public i32 b = 1;
+
 	trait A;
+
+	public func plus () i32 {
+		return this.a + this.b;
+	}
 }
 ```
