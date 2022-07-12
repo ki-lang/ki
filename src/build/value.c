@@ -890,11 +890,11 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
     while (func_scope && func_scope->is_func == false) {
         func_scope = func_scope->parent;
     }
-    if (func_scope == NULL) {
-        fc_error(fc, "Trying to call function outside a function scope", NULL);
-    }
+    // if (func_scope == NULL) {
+    //     fc_error(fc, "Trying to call function outside a function scope", NULL);
+    // }
 
-    if (on->return_type->func_can_error)
+    if (func_scope && on->return_type->func_can_error)
         func_scope->catch_errors = true;
 
     Array *func_args = fcall->on->return_type->func_arg_types;
@@ -982,9 +982,6 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                     value->return_type = fc_type_make_nullable_copy(fc, value->return_type);
                 }
                 fc_type_compatible(fc, value->return_type, ort->vscope->vscope_return_type);
-            } else {
-                // or return
-                // ast builder does the type checking
             }
         } else if (ort->value) {
             if (ort->type == or_value) {
@@ -995,7 +992,7 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                     }
                     value->return_type = fc_type_make_nullable_copy(fc, value->return_type);
                 }
-            } else {
+            } else if (ort->type == or_return) {
                 // or return
                 Scope *func_scope = get_func_scope(scope);
                 if (func_scope->func->return_type) {

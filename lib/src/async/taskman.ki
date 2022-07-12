@@ -3,11 +3,11 @@ namespace async;
 
 #header "sys/io"
 
-threaded_global ?Taskman GT_KI_taskmanager;
+threaded_global ?Taskman GT_KI_taskmanager = null;
 
-unsafe_shared_global ?Mutex GS_KI_add_mutex;
-unsafe_shared_global ?TaskList GS_KI_tasklist;
-unsafe_shared_global ?type:PtrArray GS_KI_taskmanagers;
+unsafe_shared_global ?Mutex GS_KI_add_mutex = null;
+unsafe_shared_global TaskList GS_KI_tasklist = TaskList.init();
+unsafe_shared_global ?type:PtrArray GS_KI_taskmanagers = null;
 
 class TaskList {
 
@@ -18,25 +18,20 @@ class TaskList {
 	public i32 pipe_read_fd;
 	public i32 pipe_write_fd;
 
-	public static func get() TaskList {
-		@ tl = GS_KI_tasklist;
-		ifnull tl set {
+	public static func init() TaskList {
+		uxx pipes = 0;
+		ptr pipes_ptr = getptr pipes;
+		#if OS_WIN
+		@ check = main:main:_pipe(pipes_ptr, 1024, 0x8000);
+		#else
+		@ check = main:main:pipe(pipes_ptr);
+		#end
+		i32 read_fd = getptrv pipes_ptr as i32;
+		pipes_ptr += sizeof(i32);
+		i32 write_fd = getptrv pipes_ptr as i32;
 
-			uxx pipes = 0;
-			ptr pipes_ptr = getptr pipes;
-			#if OS_WIN
-			@ check = main:main:_pipe(pipes_ptr, 1024, 0x8000);
-			#else
-			@ check = main:main:pipe(pipes_ptr);
-			#end
-			i32 read_fd = getptrv pipes_ptr as i32;
-			pipes_ptr += sizeof(i32);
-			i32 write_fd = getptrv pipes_ptr as i32;
+		@ tl = TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
 
-			@ tl = TaskList { tasks: type:PtrArray.make(256), pipe_read_fd: read_fd, pipe_write_fd: write_fd };
-			GS_KI_tasklist = tl;
-			return tl;
-		}
 		return tl;
 	}
 }
@@ -122,7 +117,7 @@ class Taskman norfc {
 
 	public func run_tasks(bool max_one_task) {
 
-		@ task_list = TaskList.get();
+		@ task_list = GS_KI_tasklist;
 		@ mut = this.mut_get_task;
 
 		while(true){
@@ -166,7 +161,7 @@ class Taskman norfc {
 		@ mut = Taskman.get_add_mutex();
 		mut.lock();
 
-		@ task_list = TaskList.get();
+		@ task_list = GS_KI_tasklist;
 
 		@ pos = task_list.head;
 
@@ -175,7 +170,7 @@ class Taskman norfc {
 			task_list.head = 0;
 		}
 		while(task_list.tasks.get(task_list.head) != null){
-			//io:print("[+] waiting on task manager\n");
+			io:print("[+] waiting on task manager\n");
 			main:main:usleep(1);
 		}
 

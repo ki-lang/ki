@@ -1,7 +1,7 @@
 
 use ki:http;
 
-threaded_global ?http:Router GT_router;
+threaded_global ?http:Router GT_router = null;
 
 class Response{
 
@@ -73,7 +73,6 @@ func main(Array<String> args) i32 {
 		println(m.get(key) or value "?");
 	}
 
-	return 1;
 	#props String as name type
 	println("#{name}");
 	#/props

@@ -219,14 +219,14 @@ typedef struct FunctionArg {
 
 typedef struct Converter {
     char *cname;
-    Array* from_types;
-    Array* to_types;
-    Array* functions;
+    Array *from_types;
+    Array *to_types;
+    Array *functions;
 } Converter;
 
 typedef struct ConverterPos {
     int fc_i;
-    Converter* converter;
+    Converter *converter;
 } ConverterPos;
 
 typedef struct GlobalVar {
@@ -239,6 +239,7 @@ typedef struct GlobalVar {
     int or_type;
     Scope *vscope;
     char *error_msg;
+    struct Value *default_value;
 } GlobalVar;
 
 typedef enum GlobalVarType {
@@ -545,9 +546,9 @@ typedef struct TokenIdValue {
 
 typedef struct PropLoop {
     int fc_i;
-    Class* class;
+    Class *class;
     int prop_index;
-    char* name_id;
-    char* type_id;
-    char* filter;
+    char *name_id;
+    char *type_id;
+    char *filter;
 } PropLoop;
