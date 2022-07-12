@@ -979,7 +979,7 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                     if (!value->return_type->is_pointer) {
                         fc_error(fc, "The or-value is nullable, but the function return type is not a pointer/class type", NULL);
                     }
-                    value->return_type->nullable = true;
+                    value->return_type = fc_type_make_nullable_copy(fc, value->return_type);
                 }
                 fc_type_compatible(fc, value->return_type, ort->vscope->vscope_return_type);
             } else {
@@ -993,7 +993,7 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
                     if (!value->return_type->is_pointer) {
                         fc_error(fc, "The or-value is nullable, but the function return type is not a pointer/class type", NULL);
                     }
-                    value->return_type->nullable = true;
+                    value->return_type = fc_type_make_nullable_copy(fc, value->return_type);
                 }
             } else {
                 // or return
