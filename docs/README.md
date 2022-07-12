@@ -52,7 +52,7 @@ ifnull str set "";
 @ len = str.length;
 ```
 
-### ifnull / notnull
+## ifnull / notnull
 ifnull & notnull is used to prove to the compiler that a certain variable is not null. `ifnull` is mostly used to transform a `?Type` to a `Type` variable. `notnull myvar do { ... }` is used to create a scope where in the compiler is certain a variable is not null.
 ```
 ?String x = ...
@@ -64,7 +64,7 @@ ifnull x return ...;
 println(x);
 ```
 
-### ifnull actions
+## ifnull actions
 
 ```
 ifnull mystr set "default string";
@@ -84,7 +84,7 @@ func my_func (i32 a, i32 b) i32 {
 }
 ```
 
-### Return errors
+## Return errors
 
 ```
 func plus (i32 a, i32 b) !i32 {
@@ -96,7 +96,7 @@ func main() i32 {
 }
 ```
 
-### or ...
+## or ...
 
 If a function throws an error, we handle it by using an `or` token after the function call. `or` uses the same logic as `ifnull`, with the exception of `set` being `value`. So: `or value,return,break,continue,throw,panic,exit`. Instead of using `throw` to throw a new error, you can also use `or pass` to pass on the received error.
 
@@ -116,7 +116,7 @@ class MyClass {
 }
 ```
 
-### Traits
+## Traits
 ```
 trait A {
 	public i32 a = 1;
