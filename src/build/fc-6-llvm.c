@@ -1,8 +1,8 @@
 
 #include "../all.h"
 
-void fc_build_ast(FileCompiler *fc, Scope *scope);
-void fc_build_token(FileCompiler *fc, Token *t);
+void llvm_build_ast(FileCompiler *fc, Scope *scope);
+void llvm_build_token(FileCompiler *fc, Token *t);
 LLVMTypeRef llvm_type(Type *type);
 
 void fc_write_c_all() {
@@ -27,7 +27,7 @@ void fc_write_c_all() {
                 fc->mod = LLVMModuleCreateWithName("main_module");
                 fc->builder = LLVMCreateBuilder();
 
-                fc_build_ast(fc, fc->scope);
+                llvm_build_ast(fc, fc->scope);
             }
         }
     }
@@ -97,7 +97,7 @@ void fc_write_c_all() {
     // write_file(path, "void* KI_ALLOCATORS_MUT;\n", true);
 }
 
-void fc_build_ast(FileCompiler *fc, Scope *scope) {
+void llvm_build_ast(FileCompiler *fc, Scope *scope) {
     //
     Scope *prev_scope = fc->current_scope;
     fc->current_scope = scope;
@@ -106,7 +106,7 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
     Array *ast = scope->ast;
     while (c < ast->length) {
         Token *t = array_get_index(ast, c);
-        fc_build_token(fc, t);
+        llvm_build_token(fc, t);
         c++;
     }
 
@@ -117,22 +117,20 @@ void fc_build_ast(FileCompiler *fc, Scope *scope) {
     fc->current_scope = prev_scope;
 }
 
-void fc_build_func(FileCompiler *fc, Function *func) {
+void llvm_build_func(FileCompiler *fc, Function *func) {
     //
     LLVMTypeRef param_types[func->arg_types->length];
     for (int i = 0; i < func->arg_types->length; i++) {
         param_types[i] = llvm_type(array_get_index(func->arg_types, i));
     }
-    LLVMTypeRef param_types[] = {LLVMInt32Type(), LLVMInt32Type()};
     LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, func->arg_types->length, 0);
-    LLVMValueRef sum = LLVMAddFunction(mod, func->cname, ret_type);
+    LLVMValueRef sum = LLVMAddFunction(fc->mod, func->cname, ret_type);
 
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(sum, "entry");
 
-    LLVMBuilderRef builder = LLVMCreateBuilder();
-    LLVMPositionBuilderAtEnd(builder, entry);
-    LLVMValueRef tmp = LLVMBuildAdd(builder, LLVMGetParam(sum, 0), LLVMGetParam(sum, 1), "tmp");
-    LLVMBuildRet(builder, tmp);
+    LLVMPositionBuilderAtEnd(fc->builder, entry);
+
+    // llvm_build_ast(fc, func->scope);
 }
 
 LLVMTypeRef llvm_type(Type *type) {
@@ -168,18 +166,31 @@ LLVMTypeRef llvm_type(Type *type) {
 
         } else {
 
-            int propc = 0;
-            LLVMTypeRef prop_types[class->props->keys->length];
-            for (int i = 0; i < class->props->keys->length; i++) {
-                ClassProp *prop = array_get_index(class->props->values->length, i);
-                if (!prop->is_func) {
-                    param_types[propc] = llvm_type(prop->return_type);
-                    propc++;
+            if (class->llvm_type == NULL) {
+                int propc = 0;
+                LLVMTypeRef prop_types[class->props->keys->length];
+                for (int i = 0; i < class->props->keys->length; i++) {
+                    ClassProp *prop = array_get_index(class->props->values, i);
+                    if (!prop->is_static && !prop->is_func) {
+                        propc++;
+                    }
+                }
+                //
+                class->llvm_type = LLVMStructType(prop_types, propc, 0);
+                //
+                for (int i = 0; i < class->props->keys->length; i++) {
+                    ClassProp *prop = array_get_index(class->props->values, i);
+                    if (!prop->is_static && !prop->is_func) {
+                        prop_types[propc] = llvm_type(prop->return_type);
+                    }
                 }
             }
-            result = LLVMStructType(prop_types, propc, 0);
+
+            result = class->llvm_type;
         }
 
+    } else if (type->type == type_enum) {
+        result = LLVMInt32Type();
     } else if (type->type == type_bool) {
         result = LLVMInt8Type();
     } else {
@@ -188,14 +199,17 @@ LLVMTypeRef llvm_type(Type *type) {
     }
 
     if (type->is_pointer) {
-        result = LLVMPointerTypeIsOpaque(result);
+        result = LLVMVectorType(result, 1);
     }
+
+    return result;
 }
 
-void fc_build_token(FileCompiler *fc, Token *token) {
+void llvm_build_token(FileCompiler *fc, Token *token) {
     //
     if (token->type == tkn_func) {
-        fc_build_func(fc, token->item);
+        llvm_build_func(fc, token->item);
+        /*
     } else if (token->type == tkn_init_thread) {
         str_append_chars(fc->tkn_buffer, "KI_INIT_THREAD();\n");
     } else if (token->type == tkn_debug_msg) {
@@ -567,23 +581,11 @@ void fc_build_token(FileCompiler *fc, Token *token) {
         fc_write_c_value(fc, val, true, fc->tkn_buffer);
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ";\n");
+        */
     } else {
         printf("Token: %d\n", token->type);
         fc_error(fc, "Unhandled token", NULL);
     }
-
-    //
-    str_append(before_buf, buf);
-    free_str(buf);
-    if (prev_buf == NULL) {
-        str_append(fc->c_code, before_buf);
-    } else {
-        str_append(prev_buf, before_buf);
-    }
-    free_str(before_buf);
-    //
-    fc->tkn_buffer = prev_buf;
-    fc->before_tkn_buffer = prev_before_buf;
 }
 
 void fc_write_c_pre(FileCompiler *fc) {

@@ -16,6 +16,7 @@ Class *init_class() {
     class->is_ctype = false;
     class->self_scan = false;
     class->size = 0;
+    class->llvm_type = NULL;
     class->props = map_make();
     class->traits = array_make(2);
     class->generic_names = NULL;

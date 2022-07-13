@@ -168,6 +168,8 @@ typedef struct Class {
     bool self_scan;
     int size;
     //
+    LLVMTypeRef llvm_type;
+    //
     Map *props;
     //
     int body_i;
@@ -299,7 +301,7 @@ typedef enum TypeType {
     type_void_pointer,
     type_null,
     type_funcref,
-    type_struct,
+    type_struct, // 5
     type_union,
     type_bool,
     type_enum,
