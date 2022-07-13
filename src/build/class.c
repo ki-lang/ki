@@ -75,6 +75,9 @@ Class *fc_make_generic_class(Class *class) {
 }
 
 Class *fc_get_generic_class(FileCompiler *fc, Class *class, Scope *scope) {
+    //
+    fc_depends_on(class->fc, fc);
+    //
     int fci = fc->i;
     char *uid = fc_class_read_generic_unique_id(fc, scope);
     char *cname = malloc(KI_TOKEN_MAX);
