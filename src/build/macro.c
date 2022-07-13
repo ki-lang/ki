@@ -171,6 +171,11 @@ void fc_parse_macro(FileCompiler *fc, Scope *scope, char *token) {
             fc_error(fc, "Unexcepted end if, no previous if statement", NULL);
         }
         char *last_result = array_pop(fc->macro_results);
+    } else if (strcmp(token, "init_thread") == 0) {
+        Token *t = init_token();
+        t->type = tkn_init_thread;
+        t->item = NULL;
+        array_push(scope->ast, t);
     } else {
         fc_error(fc, "Unknown token: #%s", token);
     }

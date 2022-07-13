@@ -3,6 +3,11 @@ namespace async;
 
 #header "sys/thread"
 
+class ThreadEntry norfc {
+	public ptr data;
+	public funcref (ptr) void start_func;
+}
+
 class Thread {
 
 	public bool suspended = false;
@@ -10,12 +15,22 @@ class Thread {
 	public Mutex mut;
 	public main:main:pthread_cond_t cond;
 
+	public static func entry(ptr data) {
+		#init_thread
+		@ entry = cast data as ThreadEntry;
+		entry.start_func(entry.data);
+		entry.__free();
+	}
+
 	public static func start(funcref (ptr) void start_func, ptr data) Thread {
 
 		@ pt = cast mem:alloc_flat(sizeof(main:main:pthread_t)) as main:main:pthread_t;
 		@ mut = Mutex.make();
 		@ cond = cast mem:alloc_flat(sizeof(main:main:pthread_cond_t)) as main:main:pthread_cond_t;
-		@ check = main:main:pthread_create(pt, null, start_func, data);
+
+		@ entry = ThreadEntry{ start_func: start_func, data: data };
+
+		@ check = main:main:pthread_create(pt, null, Thread.entry, entry);
 
 		Thread t = cast mem:alloc_flat(sizeof(Thread)) as Thread;
 		t.pt = pt;

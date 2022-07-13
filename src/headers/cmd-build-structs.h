@@ -474,6 +474,7 @@ typedef enum TokenTypeEnum {
     tkn_class,
     // misc
     tkn_debug_msg,
+    tkn_init_thread,
     //
 } TokenTypeEnum;
 

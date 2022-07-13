@@ -75,6 +75,7 @@ void fc_write_c_all() {
         write_file(path, "void ki__async__Taskman__run_another_task();\n", true);
     }
     write_file(path, "void KI_INITS();\n", true);
+    write_file(path, "void KI_INIT_THREAD();\n", true);
     write_file(path, "void* KI_ALLOCATORS;\n", true);
     write_file(path, "void* KI_ALLOCATORS_MUT;\n", true);
 }
@@ -691,6 +692,8 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
     fc_indent(fc, fc->tkn_buffer);
     if (token->type == tkn_func) {
         fc_write_c_func(fc, token->item);
+    } else if (token->type == tkn_init_thread) {
+        str_append_chars(fc->tkn_buffer, "KI_INIT_THREAD();\n");
     } else if (token->type == tkn_debug_msg) {
         char *msg = token->item;
         str_append_chars(fc->tkn_buffer, "write(1, \"");
