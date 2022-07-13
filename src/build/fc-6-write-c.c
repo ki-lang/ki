@@ -142,15 +142,12 @@ void fc_write_c_inits() {
                 for (int x = 0; x < fc->globals->length; x++) {
                     GlobalVar *gv = array_get_index(fc->globals, x);
 
-                    fc_write_c_value(fc, gv->default_value, true, code);
-
                     if (gv->type == gv_threaded) {
                         str_append_chars(code, "pthread_key_create(&");
                         str_append_chars(code, gv->cname);
-                        str_append_chars(code, ", ");
-                        str_append(code, fc->value_buffer);
-                        str_append_chars(code, ");\n");
+                        str_append_chars(code, ", (void*)0);\n");
                     } else if (gv->type == gv_shared) {
+                        fc_write_c_value(fc, gv->default_value, true, code);
                         str_append_chars(code, gv->cname);
                         str_append_chars(code, " = ");
                         str_append(code, fc->value_buffer);
@@ -205,6 +202,61 @@ void fc_write_c_inits() {
                 } else {
                     if (file_exists(path)) {
                         remove(path);
+                    }
+                }
+            } else {
+                //
+                if (file_exists(path)) {
+                    Str *_code = file_get_contents(path);
+                    str_append(code, _code);
+                    free(_code);
+                }
+            }
+            //
+            free(path);
+
+            //
+            str_append_chars(all_code, "////////////////////////////////////////////\n");
+            str_append_chars(all_code, "// from: ");
+            str_append_chars(all_code, fc->ki_filepath);
+            str_append_chars(all_code, "\n");
+            str_append_chars(all_code, "////////////////////////////////////////////\n");
+            str_append_chars(all_code, "\n");
+            str_append(all_code, code);
+            str_append_chars(all_code, "\n\n");
+
+            free_str(code);
+        }
+    }
+
+    str_append_chars(all_code, "}\n");
+
+    str_append_chars(all_code, "void KI_INIT_THREAD(){\n");
+
+    for (int i = 0; i < packages->keys->length; i++) {
+        PkgCompiler *pkc = array_get_index(packages->values, i);
+        for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+            FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+
+            Str *code = str_make("");
+
+            char *path = malloc(KI_PATH_MAX);
+            strcpy(path, fc->x_filepath);
+            strcat(path, "_init_thread.c");
+
+            if (fc->should_recompile) {
+                //
+                for (int x = 0; x < fc->globals->length; x++) {
+                    GlobalVar *gv = array_get_index(fc->globals, x);
+
+                    if (gv->type == gv_threaded) {
+                        fc_write_c_value(fc, gv->default_value, true, code);
+
+                        str_append_chars(code, "pthread_setspecific(");
+                        str_append_chars(code, gv->cname);
+                        str_append_chars(code, ", ");
+                        str_append(code, fc->value_buffer);
+                        str_append_chars(code, ");\n");
                     }
                 }
             } else {
