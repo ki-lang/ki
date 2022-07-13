@@ -1,7 +1,10 @@
 
 #include "../all.h"
 
-/*
+void fc_build_ast(FileCompiler *fc, Scope *scope);
+void fc_build_token(FileCompiler *fc, Token *t);
+LLVMTypeRef llvm_type(Type *type);
+
 void fc_write_c_all() {
     // Clear header
     char *path = malloc(KI_PATH_MAX);
@@ -10,29 +13,42 @@ void fc_write_c_all() {
     strcat(path, "/project.h");
     write_file(path, "", false);
 
-#if defined __APPLE__ || defined _WIN32
-    write_file(path, "extern int errno;\n", true);
-#else
-    write_file(path, "extern __thread int errno;\n", true);
-#endif
+    // #if defined __APPLE__ || defined _WIN32
+    //     write_file(path, "extern int errno;\n", true);
+    // #else
+    //     write_file(path, "extern __thread int errno;\n", true);
+    // #endif
 
-    // Predefine all struct names
     for (int i = 0; i < packages->keys->length; i++) {
         PkgCompiler *pkc = array_get_index(packages->values, i);
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+            if (fc->should_recompile) {
+                fc->mod = LLVMModuleCreateWithName("main_module");
+                fc->builder = LLVMCreateBuilder();
 
-            for (int x = 0; x < fc->classes->length; x++) {
-                Class *class = array_get_index(fc->classes, x);
-                if (class->generic_names != NULL && class->generic_hash == NULL) {
-                    continue;
-                }
-                fc_write_c_predefine_class(fc, class);
+                fc_build_ast(fc, fc->scope);
             }
-
-            fc_write_c_pre(fc);
         }
     }
+
+    // Predefine all struct names
+    // for (int i = 0; i < packages->keys->length; i++) {
+    //     PkgCompiler *pkc = array_get_index(packages->values, i);
+    //     for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
+    //         FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
+
+    //         for (int x = 0; x < fc->classes->length; x++) {
+    //             Class *class = array_get_index(fc->classes, x);
+    //             if (class->generic_names != NULL && class->generic_hash == NULL) {
+    //                 continue;
+    //             }
+    //             fc_write_c_predefine_class(fc, class);
+    //         }
+
+    //         fc_write_c_pre(fc);
+    //     }
+    // }
 
     //
     for (int i = 0; i < packages->keys->length; i++) {
@@ -42,43 +58,532 @@ void fc_write_c_all() {
 
             if (fc->should_recompile) {
 
-                for (int x = 0; x < fc->classes->length; x++) {
-                    Class *class = array_get_index(fc->classes, x);
-                    if (class->generic_names != NULL && class->generic_hash == NULL) {
-                        continue;
-                    }
-                    fc_write_c_class(fc, class);
-                }
-                for (int x = 0; x < fc->enums->length; x++) {
-                    fc_write_c_enum(fc, array_get_index(fc->enums, x));
-                }
-                for (int x = 0; x < fc->globals->length; x++) {
-                    fc_write_c_global(fc, array_get_index(fc->globals, x));
-                }
-                for (int x = 0; x < fc->strings->length; x++) {
-                    ValueString *vstr = array_get_index(fc->strings, x);
-                    str_append_chars(fc->h_code, "struct ki__type__String* ");
-                    str_append_chars(fc->h_code, vstr->name);
-                    str_append_chars(fc->h_code, ";\n");
-                }
+                // for (int x = 0; x < fc->classes->length; x++) {
+                //     Class *class = array_get_index(fc->classes, x);
+                //     if (class->generic_names != NULL && class->generic_hash == NULL) {
+                //         continue;
+                //     }
+                //     fc_write_c_class(fc, class);
+                // }
+                // for (int x = 0; x < fc->enums->length; x++) {
+                //     fc_write_c_enum(fc, array_get_index(fc->enums, x));
+                // }
+                // for (int x = 0; x < fc->globals->length; x++) {
+                //     fc_write_c_global(fc, array_get_index(fc->globals, x));
+                // }
+                // for (int x = 0; x < fc->strings->length; x++) {
+                //     ValueString *vstr = array_get_index(fc->strings, x);
+                //     str_append_chars(fc->h_code, "struct ki__type__String* ");
+                //     str_append_chars(fc->h_code, vstr->name);
+                //     str_append_chars(fc->h_code, ";\n");
+                // }
 
-                fc_write_c_ast(fc, fc->scope);
+                // fc_write_c_ast(fc, fc->scope);
             }
 
-            fc_write_c(fc);
+            // fc_write_c(fc);
         }
     }
 
-    fc_write_c_inits();
+    // fc_write_c_inits();
 
-    if (uses_async) {
-        write_file(path, "void ki__async__Taskman__add_task(struct ki__async__Task* task);\n", true);
-        write_file(path, "void ki__async__Taskman__run_another_task();\n", true);
+    // if (uses_async) {
+    //     write_file(path, "void ki__async__Taskman__add_task(struct ki__async__Task* task);\n", true);
+    //     write_file(path, "void ki__async__Taskman__run_another_task();\n", true);
+    // }
+    // write_file(path, "void KI_INITS();\n", true);
+    // write_file(path, "void KI_INIT_THREAD();\n", true);
+    // write_file(path, "void* KI_ALLOCATORS;\n", true);
+    // write_file(path, "void* KI_ALLOCATORS_MUT;\n", true);
+}
+
+void fc_build_ast(FileCompiler *fc, Scope *scope) {
+    //
+    Scope *prev_scope = fc->current_scope;
+    fc->current_scope = scope;
+
+    int c = 0;
+    Array *ast = scope->ast;
+    while (c < ast->length) {
+        Token *t = array_get_index(ast, c);
+        fc_build_token(fc, t);
+        c++;
     }
-    write_file(path, "void KI_INITS();\n", true);
-    write_file(path, "void KI_INIT_THREAD();\n", true);
-    write_file(path, "void* KI_ALLOCATORS;\n", true);
-    write_file(path, "void* KI_ALLOCATORS_MUT;\n", true);
+
+    if (!scope->did_return) {
+        deref_local_vars(fc, NULL, fc->current_scope);
+    }
+
+    fc->current_scope = prev_scope;
+}
+
+void fc_build_func(FileCompiler *fc, Function *func) {
+    //
+    LLVMTypeRef param_types[func->arg_types->length];
+    for (int i = 0; i < func->arg_types->length; i++) {
+        param_types[i] = llvm_type(array_get_index(func->arg_types, i));
+    }
+    LLVMTypeRef param_types[] = {LLVMInt32Type(), LLVMInt32Type()};
+    LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, func->arg_types->length, 0);
+    LLVMValueRef sum = LLVMAddFunction(mod, func->cname, ret_type);
+
+    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(sum, "entry");
+
+    LLVMBuilderRef builder = LLVMCreateBuilder();
+    LLVMPositionBuilderAtEnd(builder, entry);
+    LLVMValueRef tmp = LLVMBuildAdd(builder, LLVMGetParam(sum, 0), LLVMGetParam(sum, 1), "tmp");
+    LLVMBuildRet(builder, tmp);
+}
+
+LLVMTypeRef llvm_type(Type *type) {
+    //
+    LLVMTypeRef result;
+    if (type->type == type_void) {
+        result = LLVMVoidType();
+    } else if (type->type == type_void_pointer) {
+        result = LLVMVoidType();
+    } else if (type->type == type_funcref) {
+        LLVMTypeRef param_types[type->func_arg_types->length];
+        for (int i = 0; i < type->func_arg_types->length; i++) {
+            param_types[i] = llvm_type(array_get_index(type->func_arg_types, i));
+        }
+        result = LLVMFunctionType(llvm_type(type->func_return_type), param_types, type->func_arg_types->length, 0);
+    } else if (type->type == type_struct) {
+        Class *class = type->class;
+
+        if (class->is_number) {
+            int bytes = type->bytes;
+
+            if (bytes == 1) {
+                result = LLVMInt8Type();
+            } else if (bytes == 2) {
+                result = LLVMInt16Type();
+            } else if (bytes == 4) {
+                result = LLVMInt32Type();
+            } else if (bytes == 8) {
+                result = LLVMInt64Type();
+            } else {
+                die("Cant determine llvm number type based on the amount of bytes");
+            }
+
+        } else {
+
+            int propc = 0;
+            LLVMTypeRef prop_types[class->props->keys->length];
+            for (int i = 0; i < class->props->keys->length; i++) {
+                ClassProp *prop = array_get_index(class->props->values->length, i);
+                if (!prop->is_func) {
+                    param_types[propc] = llvm_type(prop->return_type);
+                    propc++;
+                }
+            }
+            result = LLVMStructType(prop_types, propc, 0);
+        }
+
+    } else if (type->type == type_bool) {
+        result = LLVMInt8Type();
+    } else {
+        printf("Type: %d\n", type->type);
+        die("Cannot convert llvm type");
+    }
+
+    if (type->is_pointer) {
+        result = LLVMPointerTypeIsOpaque(result);
+    }
+}
+
+void fc_build_token(FileCompiler *fc, Token *token) {
+    //
+    if (token->type == tkn_func) {
+        fc_build_func(fc, token->item);
+    } else if (token->type == tkn_init_thread) {
+        str_append_chars(fc->tkn_buffer, "KI_INIT_THREAD();\n");
+    } else if (token->type == tkn_debug_msg) {
+        char *msg = token->item;
+        str_append_chars(fc->tkn_buffer, "write(1, \"");
+        str_append_chars(fc->tkn_buffer, msg);
+        str_append_chars(fc->tkn_buffer, "\\n\", ");
+        sprintf(fc->sprintf, "%ld", strlen(msg) + 1);
+        str_append_chars(fc->tkn_buffer, fc->sprintf);
+        str_append_chars(fc->tkn_buffer, ");\n");
+        // TODO: Delete errno stuff
+        str_append_chars(fc->tkn_buffer, "write(1, \"errno:\", 6);\n");
+        str_append_chars(fc->tkn_buffer, "struct ki__type__String* ERRNOMSG = ki__type__i32__str(errno);\n");
+        str_append_chars(fc->tkn_buffer, "write(1, ERRNOMSG->data, ERRNOMSG->bytes);\n");
+        str_append_chars(fc->tkn_buffer, "write(1, \"\\n\", 1);\n");
+    } else if (token->type == tkn_exit) {
+        ErrorToken *err = token->item;
+        str_append_chars(fc->tkn_buffer, "ki__sys__exit(");
+        str_append_chars(fc->tkn_buffer, err->msg);
+        str_append_chars(fc->tkn_buffer, ");\n");
+    } else if (token->type == tkn_panic) {
+        ErrorToken *err = token->item;
+        str_append_chars(fc->tkn_buffer, "write(1, \"");
+        str_append_chars(fc->tkn_buffer, err->msg);
+        str_append_chars(fc->tkn_buffer, "\", ");
+        sprintf(fc->sprintf, "%ld", strlen(err->msg));
+        str_append_chars(fc->tkn_buffer, fc->sprintf);
+        str_append_chars(fc->tkn_buffer, ");\n");
+        str_append_chars(fc->tkn_buffer, "ki__sys__exit(1);\n");
+    } else if (token->type == tkn_each) {
+        TokenEach *te = token->item;
+        fc_write_c_value(fc, te->value, true, fc->tkn_buffer);
+        Class *class = te->value->return_type->class;
+        ClassProp *fcountp = map_get(class->props, "__each_count");
+        ClassProp *fgetp = map_get(class->props, "__each_get");
+        Function *fcount = fcountp->func;
+        Function *fget = fgetp->func;
+
+        char *buf_count_name = strdup(var_buf(fc));
+        char *buf_max_name = strdup(var_buf(fc));
+        char *buf_error_name = strdup(var_buf(fc));
+        str_append_chars(fc->tkn_buffer, "unsigned long int ");
+        str_append_chars(fc->tkn_buffer, buf_count_name);
+        str_append_chars(fc->tkn_buffer, " = 0;\n");
+        str_append_chars(fc->tkn_buffer, "unsigned long int ");
+        str_append_chars(fc->tkn_buffer, buf_max_name);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append_chars(fc->tkn_buffer, fcount->cname);
+        str_append_chars(fc->tkn_buffer, "(");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ");\n");
+        // While loop
+        str_append_chars(fc->tkn_buffer, "while(");
+        str_append_chars(fc->tkn_buffer, buf_count_name);
+        str_append_chars(fc->tkn_buffer, " < ");
+        str_append_chars(fc->tkn_buffer, buf_max_name);
+        str_append_chars(fc->tkn_buffer, "){\n");
+        // Get item
+        str_append_chars(fc->tkn_buffer, "char* ");
+        str_append_chars(fc->tkn_buffer, buf_error_name);
+        str_append_chars(fc->tkn_buffer, " = (void*)0;");
+
+        fc_write_c_type(fc->tkn_buffer, fget->return_type, te->vvar->gen_name);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append_chars(fc->tkn_buffer, fget->cname);
+        str_append_chars(fc->tkn_buffer, "(");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ",");
+        str_append_chars(fc->tkn_buffer, buf_count_name);
+        str_append_chars(fc->tkn_buffer, ", &");
+        str_append_chars(fc->tkn_buffer, buf_error_name);
+        str_append_chars(fc->tkn_buffer, ");\n");
+        //
+        if (te->kvar) {
+            str_append_chars(fc->tkn_buffer, "unsigned long int ");
+            str_append_chars(fc->tkn_buffer, te->kvar->gen_name);
+            str_append_chars(fc->tkn_buffer, " = ");
+            str_append_chars(fc->tkn_buffer, buf_count_name);
+            str_append_chars(fc->tkn_buffer, ";\n");
+        }
+        // Increase index
+        str_append_chars(fc->tkn_buffer, buf_count_name);
+        str_append_chars(fc->tkn_buffer, "++;\n");
+        // Check error
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, buf_error_name);
+        str_append_chars(fc->tkn_buffer, "){ continue; }\n");
+
+        // Scope AST
+        fc_write_c_ast(fc, te->scope);
+
+        str_append_chars(fc->tkn_buffer, "}\n");
+
+        free(buf_count_name);
+        free(buf_max_name);
+        free(buf_error_name);
+
+    } else if (token->type == tkn_declare) {
+        TokenDeclare *decl = token->item;
+
+        fc_write_c_value(fc, decl->value, true, fc->tkn_buffer);
+
+        fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+
+        Class *class = decl->value->return_type->class;
+        bool nullable = decl->value->return_type->nullable;
+        if (class && class->ref_count) {
+            if (nullable) {
+                str_append_chars(fc->tkn_buffer, "if(");
+                str_append_chars(fc->tkn_buffer, decl->name);
+                str_append_chars(fc->tkn_buffer, ") ");
+            }
+            str_append_chars(fc->tkn_buffer, decl->name);
+            str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+
+            array_push(fc->current_scope->local_var_names, decl);
+        }
+    } else if (token->type == tkn_assign) {
+        TokenAssign *ta = token->item;
+
+        char *left;
+        if (ta->left->type == vt_threaded_global) {
+            // GlobalVar *gv = ta->left->item;
+            left = strdup(var_buf(fc));
+            fc_write_c_type(fc->tkn_buffer, ta->left->return_type, left);
+            str_append_chars(fc->tkn_buffer, " = 0;\n");
+        } else {
+            fc_write_c_value(fc, ta->left, true, fc->tkn_buffer);
+            left = str_to_chars(fc->value_buffer);
+        }
+        fc_write_c_value(fc, ta->right, true, fc->tkn_buffer);
+
+        bool lrefc = false;
+        bool lrefc_nullable = false;
+        bool rrefc = false;
+        bool rrefc_nullable = false;
+        Class *class = NULL;
+        if (ta->type == op_eq) {
+            Value *left = ta->left;
+            Value *right = ta->right;
+            class = left->return_type->class;
+            Class *rclass = right->return_type->class;
+
+            if (class && class->ref_count) {
+                lrefc = true;
+                if (left->return_type->nullable) {
+                    lrefc_nullable = true;
+                }
+            }
+            if (rclass && rclass->ref_count) {
+                rrefc = true;
+                if (right->return_type->nullable) {
+                    rrefc_nullable = true;
+                }
+            }
+        }
+
+        // RC++ the new value first
+        if (rrefc) {
+            if (rrefc_nullable) {
+                str_append_chars(fc->tkn_buffer, "if(");
+                str_append(fc->tkn_buffer, fc->value_buffer);
+                str_append_chars(fc->tkn_buffer, "){ ");
+            }
+            str_append(fc->tkn_buffer, fc->value_buffer);
+            str_append_chars(fc->tkn_buffer, "->_RC++;");
+            if (rrefc_nullable) {
+                str_append_chars(fc->tkn_buffer, " }");
+            }
+            str_append_chars(fc->tkn_buffer, "\n");
+        }
+
+        // RC-- the old value
+        if (lrefc) {
+            if (lrefc_nullable) {
+                str_append_chars(fc->tkn_buffer, "if(");
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, "){ ");
+            }
+            str_append_chars(fc->tkn_buffer, left);
+            str_append_chars(fc->tkn_buffer, "->_RC--;\n");
+            str_append_chars(fc->tkn_buffer, "if(");
+            str_append_chars(fc->tkn_buffer, left);
+            str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
+            str_append_chars(fc->tkn_buffer, class->cname);
+            str_append_chars(fc->tkn_buffer, "____free(");
+            str_append_chars(fc->tkn_buffer, left);
+            str_append_chars(fc->tkn_buffer, ");");
+            if (lrefc_nullable) {
+                str_append_chars(fc->tkn_buffer, " }");
+            }
+            str_append_chars(fc->tkn_buffer, "\n");
+        }
+
+        str_append_chars(fc->tkn_buffer, left);
+
+        if (ta->type == op_eq) {
+            str_append_chars(fc->tkn_buffer, " = ");
+        } else if (ta->type == op_add) {
+            str_append_chars(fc->tkn_buffer, " += ");
+        } else if (ta->type == op_sub) {
+            str_append_chars(fc->tkn_buffer, " -= ");
+        } else if (ta->type == op_mult) {
+            str_append_chars(fc->tkn_buffer, " *= ");
+        } else if (ta->type == op_div) {
+            str_append_chars(fc->tkn_buffer, " /= ");
+        } else if (ta->type == op_mod) {
+            str_append_chars(fc->tkn_buffer, " \%= ");
+        } else if (ta->type == op_bit_OR) {
+            str_append_chars(fc->tkn_buffer, " |= ");
+        } else if (ta->type == op_bit_AND) {
+            str_append_chars(fc->tkn_buffer, " &= ");
+        } else if (ta->type == op_bit_XOR) {
+            str_append_chars(fc->tkn_buffer, " ^= ");
+        } else {
+            fc_error(fc, "Unhandled assign operator translation", NULL);
+        }
+
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+
+        if (ta->left->type == vt_threaded_global) {
+            GlobalVar *gv = ta->left->item;
+            str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
+            str_append_chars(fc->tkn_buffer, gv->cname);
+            str_append_chars(fc->tkn_buffer, ", ");
+            str_append_chars(fc->tkn_buffer, left);
+            str_append_chars(fc->tkn_buffer, ");\n");
+        }
+
+        free(left);
+
+    } else if (token->type == tkn_set_vscope_value) {
+
+        TokenSetVscopeValue *sv = token->item;
+        fc_write_c_value(fc, sv->value, true, fc->tkn_buffer);
+
+        deref_local_vars(fc, sv->value, sv->vscope);
+        //
+        str_append_chars(fc->tkn_buffer, sv->vname);
+        str_append_chars(fc->tkn_buffer, " = ");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+
+        str_append_chars(fc->tkn_buffer, "goto ");
+        str_append_chars(fc->tkn_buffer, sv->vname);
+        str_append_chars(fc->tkn_buffer, "_GOTO;\n");
+
+    } else if (token->type == tkn_return) {
+        Value *retv = NULL;
+        if (token->item) {
+            retv = token->item;
+            fc_write_c_value(fc, token->item, true, fc->tkn_buffer);
+        }
+
+        // Deref local vars + Check if var_bufs RC == 0 (if so free)
+        deref_local_vars(fc, retv, NULL);
+
+        //
+        str_append_chars(fc->tkn_buffer, "return ");
+        if (retv) {
+            str_append(fc->tkn_buffer, fc->value_buffer);
+        }
+        str_append_chars(fc->tkn_buffer, ";\n");
+    } else if (token->type == tkn_if) {
+        fc_write_c_if(fc, token->item);
+    } else if (token->type == tkn_ifnull) {
+        //
+        TokenIfNull *ifn = token->item;
+
+        char *left = ifn->name;
+
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, left);
+        str_append_chars(fc->tkn_buffer, " == (void*)0) {\n");
+
+        char *buf = fc_write_c_ort(fc, ifn->ort);
+
+        if (buf) {
+            str_append_chars(fc->tkn_buffer, left);
+            str_append_chars(fc->tkn_buffer, " = ");
+            str_append_chars(fc->tkn_buffer, buf);
+            str_append_chars(fc->tkn_buffer, ";\n");
+            free(buf);
+
+            LocalVar *lv = ifn->idf->item;
+            Type *type = lv->type;
+
+            if (type->class && type->class->ref_count) {
+                str_append_chars(fc->tkn_buffer, left);
+                str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+            }
+        }
+
+        str_append_chars(fc->tkn_buffer, "}");
+
+        if (ifn->ort->else_scope) {
+            str_append_chars(fc->tkn_buffer, " else {\n");
+            fc_write_c_ast(fc, ifn->ort->else_scope);
+            str_append_chars(fc->tkn_buffer, "}");
+        }
+
+        str_append_chars(fc->tkn_buffer, "\n");
+
+        //
+    } else if (token->type == tkn_notnull) {
+        //
+        TokenNotNull *inn = token->item;
+        str_append_chars(fc->tkn_buffer, "if(");
+        str_append_chars(fc->tkn_buffer, inn->name);
+        str_append_chars(fc->tkn_buffer, " != (void*)0) {\n");
+
+        if (inn->type == or_do) {
+            fc_write_c_ast(fc, inn->scope);
+        }
+
+        str_append_chars(fc->tkn_buffer, "}");
+
+        if (inn->else_scope) {
+            str_append_chars(fc->tkn_buffer, " else {\n");
+            fc_write_c_ast(fc, inn->else_scope);
+            str_append_chars(fc->tkn_buffer, "}");
+        }
+
+        str_append_chars(fc->tkn_buffer, "\n");
+
+    } else if (token->type == tkn_while) {
+        //
+        TokenWhile *wt = token->item;
+        fc_write_c_value(fc, wt->condition, true, fc->tkn_buffer);
+        str_append_chars(fc->tkn_buffer, "while(");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ") {\n");
+        fc_write_c_ast(fc, wt->scope);
+        str_append_chars(fc->tkn_buffer, "}\n\n");
+    } else if (token->type == tkn_break) {
+        Scope *scope = fc->current_scope;
+        scope = get_loop_scope(scope);
+        deref_local_vars(fc, NULL, scope);
+        str_append_chars(fc->tkn_buffer, "break;\n");
+    } else if (token->type == tkn_continue) {
+        Scope *scope = fc->current_scope;
+        scope = get_loop_scope(scope);
+        deref_local_vars(fc, NULL, scope);
+        str_append_chars(fc->tkn_buffer, "continue;\n");
+    } else if (token->type == tkn_throw) {
+        TokenThrow *tt = token->item;
+        str_append_chars(fc->tkn_buffer, "*_KI_THROW_MSG = \"");
+        str_append_chars(fc->tkn_buffer, tt->msg);
+        str_append_chars(fc->tkn_buffer, "\";\n");
+        if (tt->return_type == NULL) {
+            str_append_chars(fc->tkn_buffer, "return;\n");
+        } else if (tt->return_type->is_pointer) {
+            str_append_chars(fc->tkn_buffer, "return (void*)0;\n");
+        } else {
+            str_append_chars(fc->tkn_buffer, "return 0;\n");
+        }
+
+    } else if (token->type == tkn_free) {
+        fc_write_c_value(fc, token->item, true, fc->tkn_buffer);
+        str_append_chars(fc->tkn_buffer, "ki__mem__free(");
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ");\n");
+    } else if (token->type == tkn_value) {
+        Value *val = token->item;
+        fc_write_c_value(fc, val, true, fc->tkn_buffer);
+        str_append(fc->tkn_buffer, fc->value_buffer);
+        str_append_chars(fc->tkn_buffer, ";\n");
+    } else {
+        printf("Token: %d\n", token->type);
+        fc_error(fc, "Unhandled token", NULL);
+    }
+
+    //
+    str_append(before_buf, buf);
+    free_str(buf);
+    if (prev_buf == NULL) {
+        str_append(fc->c_code, before_buf);
+    } else {
+        str_append(prev_buf, before_buf);
+    }
+    free_str(before_buf);
+    //
+    fc->tkn_buffer = prev_buf;
+    fc->before_tkn_buffer = prev_before_buf;
 }
 
 void fc_write_c_pre(FileCompiler *fc) {
@@ -2225,4 +2730,3 @@ void fc_write_c_write_allocator(Str *code, Str *hcode, char *name, char *size, b
     str_append_chars(code, "return a;\n");
     str_append_chars(code, "}\n");
 }
-*/

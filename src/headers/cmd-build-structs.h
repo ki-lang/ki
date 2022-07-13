@@ -77,6 +77,9 @@ typedef struct FileCompiler {
     struct Array *converter_positions;
     // Extern
     struct Array *include_headers_from;
+    // LLVM
+    LLVMModuleRef mod;
+    LLVMBuilderRef builder;
 } FileCompiler;
 
 typedef struct FcCache {
@@ -301,7 +304,6 @@ typedef enum TypeType {
     type_bool,
     type_enum,
     type_number,
-    type_wildcard_args,
     type_throw_msg,
 } TypeType;
 

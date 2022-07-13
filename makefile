@@ -1,7 +1,7 @@
 
 CC=gcc
-CFLAGS = -g -Wall -O0 -std=gnu99 -fcommon
-LDFLAGS += -lm -fstack-protector -lpthread -pthread
+CFLAGS = -g -Wall -O0 -std=gnu99 -fcommon `llvm-config --cflags`
+LDFLAGS += -lm -fstack-protector -lpthread -pthread `llvm-config --ldflags --libs core`
 
 ifeq ($(OS),Windows_NT)
 	CFLAGS += -I./misc/curl/include

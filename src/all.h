@@ -26,6 +26,9 @@
 #include <pthread.h>
 #include <unistd.h>
 
+// LLVM
+#include <llvm-c/Core.h>
+
 #define KI_PATH_MAX 4096
 #define KI_TOKEN_MAX 256
 
