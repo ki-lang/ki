@@ -18,6 +18,7 @@ Class *init_class() {
     class->size = 0;
     class->llvm_type = NULL;
     class->props = map_make();
+    class->struct_props = map_make();
     class->traits = array_make(2);
     class->generic_names = NULL;
     class->generic_hash = NULL;
@@ -35,6 +36,7 @@ void free_class(Class *class) {
 ClassProp *init_class_prop() {
     ClassProp *prop = malloc(sizeof(ClassProp));
     prop->access_type = acct_public;
+    prop->struct_index = 0;
     prop->is_static = false;
     prop->is_func = false;
     prop->generate_code = true;
@@ -544,6 +546,11 @@ void fc_scan_class_props(Class *class) {
         fc_name_taken(fc, class->props, name);
         map_set(class->props, name, prop);
 
+        if (!prop->is_static) {
+            prop->struct_index = class->struct_props->keys->length;
+            map_set(class->struct_props, name, prop);
+        }
+
         // printf("p:%s\n", name);
         // printf("c:%s\n", class->cname);
         // if (type->class) {
@@ -579,6 +586,9 @@ void fc_scan_class_props(Class *class) {
 
         class->size += type->bytes;
         map_set(class->props, "_RC", prop);
+
+        prop->struct_index = class->struct_props->keys->length;
+        map_set(class->struct_props, "_RC", prop);
 
         // Allocator
         // prop = init_class_prop();

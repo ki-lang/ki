@@ -52,4 +52,8 @@ int LOC;
 
 int cmd_err_code;
 
+// LLVM
+LLVMTargetMachineRef g_target_machine;
+LLVMTargetDataRef g_target_data;
+
 #endif

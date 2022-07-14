@@ -1,24 +1,6 @@
 
 #include "../all.h"
 
-void llvm_set_target();
-void llvm_build_inits();
-void llvm_build_ast(FileCompiler *fc, Scope *scope);
-void llvm_build_token(FileCompiler *fc, Token *t);
-void llvm_build_o(LLVMModuleRef mod, char *outpath);
-LLVMTypeRef llvm_type(Type *type);
-LLVMValueRef llvm_value(FileCompiler *fc, Value *value);
-void llvm_deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope);
-void llvm_deref(FileCompiler *fc, LLVMValueRef v, Type *type);
-void llvm_upref(FileCompiler *fc, LLVMValueRef v, Type *type);
-LLVMValueRef llvm_isset(FileCompiler *fc, LLVMValueRef v);
-// Operands
-LLVMValueRef llvm_icmp(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right);
-LLVMValueRef llvm_sub(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right);
-// Types
-LLVMValueRef llvm_int(int v);
-LLVMValueRef llvm_null();
-
 //
 LLVMModuleRef g_llvm_inits_mod;
 LLVMBuilderRef g_llvm_inits_builder;
@@ -27,9 +9,6 @@ LLVMTypeRef g_llvm_inits_type;
 LLVMValueRef g_llvm_init_thread;
 LLVMTypeRef g_llvm_init_thread_type;
 //
-
-LLVMTargetMachineRef g_target_machine;
-LLVMTargetDataRef g_target_data;
 
 void fc_write_c_all() {
     // Clear header
@@ -58,6 +37,13 @@ void fc_write_c_all() {
                 fc->mod = LLVMModuleCreateWithName("main_module");
                 fc->builder = LLVMCreateBuilder();
 
+                // Pre define all functions
+                for (int x = 0; x < fc->functions->length; x++) {
+                    Function *func = array_get_index(fc->functions, x);
+                    llvm_define_func(fc, func);
+                }
+
+                //
                 llvm_build_ast(fc, fc->scope);
 
                 llvm_build_o(fc->mod, fc->o_filepath);
@@ -170,14 +156,14 @@ void llvm_build_inits() {
     g_llvm_inits = LLVMAddFunction(g_llvm_inits_mod, "KI_INITS", g_llvm_inits_type);
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(g_llvm_init_thread, "entry");
     LLVMPositionBuilderAtEnd(b, entry);
-    LLVMBuildRet(b, NULL);
+    LLVMBuildRetVoid(b);
 
     // Init thread
     g_llvm_init_thread_type = LLVMFunctionType(LLVMVoidType(), NULL, 0, 0);
     g_llvm_inits = LLVMAddFunction(g_llvm_inits_mod, "KI_INIT_THREAD", g_llvm_init_thread_type);
     entry = LLVMAppendBasicBlock(g_llvm_init_thread, "entry");
     LLVMPositionBuilderAtEnd(b, entry);
-    LLVMBuildRet(b, NULL);
+    LLVMBuildRetVoid(b);
 }
 
 void llvm_build_ast(FileCompiler *fc, Scope *scope) {
@@ -200,24 +186,57 @@ void llvm_build_ast(FileCompiler *fc, Scope *scope) {
     fc->current_scope = prev_scope;
 }
 
-void llvm_build_func(FileCompiler *fc, Function *func) {
-    //
+void llvm_define_func(FileCompiler *fc, Function *func) {
     LLVMTypeRef param_types[func->arg_types->length];
     for (int i = 0; i < func->arg_types->length; i++) {
         param_types[i] = llvm_type(array_get_index(func->arg_types, i));
     }
-    LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, func->arg_types->length, 0);
-    LLVMValueRef sum = LLVMAddFunction(fc->mod, func->cname, ret_type);
+    LLVMTypeRef ftype = LLVMFunctionType(LLVMInt32Type(), param_types, func->arg_types->length, 0);
+    LLVMValueRef llvmfn = LLVMAddFunction(fc->mod, func->cname, ftype);
+    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(llvmfn, "entry");
+}
 
-    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(sum, "entry");
+void llvm_build_func(FileCompiler *fc, Function *func) {
+    //
+    LLVMValueRef llvmfn = LLVMGetNamedFunction(fc->mod, func->cname);
+    LLVMBasicBlockRef entry = LLVMGetEntryBasicBlock(llvmfn);
 
     LLVMPositionBuilderAtEnd(fc->builder, entry);
 
     llvm_build_ast(fc, func->scope);
 
-    if (!ret_type) {
-        LLVMBuildRet(fc->builder, NULL);
+    // hasReturn = LLVMGetBasicBlockTerminator(LLVMGetLastBasicBlock(llvmfn)) != NULL;
+    if (!func->return_type) {
+        LLVMBuildRetVoid(fc->builder);
     }
+}
+
+LLVMValueRef llvm_build_declare(FileCompiler *fc, LLVMTypeRef type, char *name) {
+    //
+    LLVMValueRef a = LLVMBuildAlloca(fc->builder, type, name);
+    Scope *scope = fc->current_scope;
+    map_set(scope->llvm_declares, name, a);
+    return a;
+}
+
+LLVMValueRef llvm_get_var(FileCompiler *fc, char *name) {
+    //
+    Scope *scope = fc->current_scope;
+    while (scope) {
+        LLVMValueRef v = map_get(scope->llvm_declares, name);
+        if (v) {
+            return v;
+        }
+        scope = scope->parent;
+    }
+    printf("Var name: %s\n", name);
+    die("Variable not found");
+}
+
+LLVMValueRef llvm_build_prop_access(FileCompiler *fc, LLVMValueRef on, Class *class, char *prop_name) {
+    //
+    ClassProp *prop = map_get(class, prop_name);
+    return LLVMBuildStructGEP2(fc->builder, class->llvm_type, on, prop->struct_index, "get_prop_1");
 }
 
 LLVMTypeRef llvm_type(Type *type) {
@@ -254,30 +273,7 @@ LLVMTypeRef llvm_type(Type *type) {
             }
 
         } else {
-
-            if (class->llvm_type == NULL) {
-                int propc = 0;
-                LLVMTypeRef *prop_types = malloc(sizeof(LLVMTypeRef) * class->props->keys->length);
-                for (int i = 0; i < class->props->keys->length; i++) {
-                    ClassProp *prop = array_get_index(class->props->values, i);
-                    if (!prop->is_static && !prop->is_func) {
-                        propc++;
-                    }
-                }
-                //
-                class->llvm_type = LLVMStructType(prop_types, propc, 0);
-                //
-                propc = 0;
-                for (int i = 0; i < class->props->keys->length; i++) {
-                    ClassProp *prop = array_get_index(class->props->values, i);
-                    if (!prop->is_static && !prop->is_func) {
-                        prop_types[propc] = llvm_type(prop->return_type);
-                        propc++;
-                    }
-                }
-            }
-
-            result = class->llvm_type;
+            result = llvm_class_type(class);
         }
 
     } else if (type->type == type_enum) {
@@ -290,6 +286,23 @@ LLVMTypeRef llvm_type(Type *type) {
     }
 
     return result;
+}
+
+LLVMTypeRef llvm_class_type(Class *class) {
+    //
+    if (class->llvm_type == NULL) {
+
+        int propc = class->struct_props->values->length;
+        LLVMTypeRef *prop_types = malloc(sizeof(LLVMTypeRef) * propc);
+        class->llvm_type = LLVMStructType(prop_types, propc, 0);
+        //
+        for (int i = 0; i < propc; i++) {
+            ClassProp *prop = array_get_index(class->struct_props->values, i);
+            prop_types[i] = llvm_type(prop->return_type);
+        }
+    }
+
+    return class->llvm_type;
 }
 
 LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
@@ -307,8 +320,9 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
         return llvm_value(fc, value->item);
         // str_append_chars(result, ")");
     } else if (value->type == vt_shared_global) {
-        Scope *scope = fc->current_scope;
-        str_append_chars(result, value->item);
+        return LLVMGetNamedGlobal(fc->mod, value->item);
+    } else if (value->type == vt_class_init) {
+        return llvm_build_class_init(fc, value->item);
         /*
             } else if (value->type == vt_nullable_value) {
                 //
@@ -550,168 +564,6 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
                 fc_write_c_value(fc, cast->ptr_value, false, code);
                 str_append_chars(result, " = ");
                 fc_write_c_value(fc, cast->to_value, false, code);
-            } else if (value->type == vt_class_init) {
-                // Generate function
-                fc->var_bufc++;
-                ValueClassInit *ini = value->item;
-                Class *class = ini->class;
-
-                char *allocator_name = fc_write_c_get_allocator(fc, class->size, true);
-                char *func_name = malloc(60);
-                sprintf(func_name, "_KI_CLASS_INIT_%s_%d", fc->hash, fc->var_bufc);
-
-                char *buf_var_name = strdup(var_buf(fc));
-                str_append_chars(result, buf_var_name);
-
-                // Set cache
-                char *cache = str_to_chars(fc->value_buffer);
-
-                //
-                Str *args_str = str_make("");
-                for (int i = 0; i < ini->prop_values->values->length; i++) {
-                    if (i > 0) {
-                        str_append_chars(args_str, ", ");
-                    }
-                    Value *val = array_get_index(ini->prop_values->values, i);
-                    fc->value_buffer->length = 0;
-                    fc_write_c_value(fc, val, false, code);
-                    str_append(args_str, fc->value_buffer);
-                }
-                fc_write_c_type(code, value->return_type, buf_var_name);
-                str_append_chars(code, " = ");
-
-                str_append_chars(code, func_name);
-                str_append_chars(code, "(");
-                str_append(code, args_str);
-                str_append_chars(code, ");\n");
-                free_str(args_str);
-
-                // Restore cache
-                fc->value_buffer->length = 0;
-                str_append_chars(fc->value_buffer, cache);
-                free(cache);
-
-                // Write header
-                fc_write_c_type(fc->h_code, value->return_type, NULL);
-                str_append_chars(fc->h_code, " ");
-                str_append_chars(fc->h_code, func_name);
-                str_append_chars(fc->h_code, "(");
-                for (int i = 0; i < ini->prop_values->keys->length; i++) {
-                    if (i > 0) {
-                        str_append_chars(fc->h_code, ", ");
-                    }
-                    char *prop_name = array_get_index(ini->prop_values->keys, i);
-                    ClassProp *prop = map_get(class->props, prop_name);
-                    fc_write_c_type(fc->h_code, prop->return_type, prop_name);
-                }
-                str_append_chars(fc->h_code, ");\n");
-
-                // Write func
-                fc_write_c_type(fc->c_code_after, value->return_type, NULL);
-                str_append_chars(fc->c_code_after, " ");
-                str_append_chars(fc->c_code_after, func_name);
-                str_append_chars(fc->c_code_after, "(");
-                for (int i = 0; i < ini->prop_values->keys->length; i++) {
-                    if (i > 0) {
-                        str_append_chars(fc->c_code_after, ", ");
-                    }
-                    char *prop_name = array_get_index(ini->prop_values->keys, i);
-                    ClassProp *prop = map_get(class->props, prop_name);
-                    fc_write_c_type(fc->c_code_after, prop->return_type, prop_name);
-                }
-                str_append_chars(fc->c_code_after, ") {\n");
-                char *sign;
-                if (value->return_type->is_pointer) {
-                    sign = "->";
-                    fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
-
-                    str_append_chars(fc->c_code_after, " = ki__mem__Allocator__get_chunk(");
-                    str_append_chars(fc->c_code_after, allocator_name);
-                    str_append_chars(fc->c_code_after, "());\n");
-                } else {
-                    sign = ".";
-                    fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
-                    str_append_chars(fc->c_code_after, ";\n");
-                }
-
-                // if (class->ref_count) {
-                //   str_append_chars(fc->c_code_after, "KI_RET_V");
-                //   str_append_chars(fc->c_code_after, sign);
-                //   str_append_chars(fc->c_code_after, "_RC = 0;\n");
-                // }
-
-                for (int i = 0; i < ini->prop_values->keys->length; i++) {
-                    char *prop_name = array_get_index(ini->prop_values->keys, i);
-                    Value *v = array_get_index(ini->prop_values->values, i);
-                    str_append_chars(fc->c_code_after, "KI_RET_V");
-                    str_append_chars(fc->c_code_after, sign);
-                    str_append_chars(fc->c_code_after, prop_name);
-                    str_append_chars(fc->c_code_after, " = ");
-                    str_append_chars(fc->c_code_after, prop_name);
-                    str_append_chars(fc->c_code_after, ";\n");
-
-                    if (v->return_type->class && v->return_type->class->ref_count) {
-                        str_append_chars(fc->c_code_after, "KI_RET_V");
-                        str_append_chars(fc->c_code_after, sign);
-                        str_append_chars(fc->c_code_after, prop_name);
-                        str_append_chars(fc->c_code_after, "->_RC++;\n");
-                    }
-                }
-
-                // if (class->ref_count) {
-                //     str_append_chars(fc->c_code_after, "KI_RET_V");
-                //     str_append_chars(fc->c_code_after, sign);
-                //     str_append_chars(fc->c_code_after, "_ALLOCATOR = ");
-                //     str_append_chars(fc->c_code_after, allocator_name);
-                //     str_append_chars(fc->c_code_after, "();\n");
-                // }
-
-                Scope *prev_scope = fc->current_scope;
-                fc->current_scope = init_scope();
-
-                Str *prevbuf = code;
-                code = str_make("");
-
-                for (int i = 0; i < class->props->keys->length; i++) {
-                    char *prop_name = array_get_index(class->props->keys, i);
-                    if (map_contains(ini->prop_values, prop_name)) {
-                        continue;
-                    }
-                    ClassProp *prop = array_get_index(class->props->values, i);
-                    if (!prop->default_value) {
-                        continue;
-                    }
-
-                    char *cache = str_to_chars(fc->value_buffer);
-                    fc->value_buffer->length = 0;
-                    fc_write_c_value(fc, prop->default_value, false, code);
-                    char *defv = str_to_chars(fc->value_buffer);
-                    fc->value_buffer->length = 0;
-                    str_append_chars(fc->value_buffer, cache);
-                    free(cache);
-
-                    str_append_chars(code, "KI_RET_V");
-                    str_append_chars(code, sign);
-                    str_append_chars(code, prop_name);
-                    str_append_chars(code, " = ");
-                    str_append_chars(code, defv);
-                    str_append_chars(code, ";\n");
-
-                    free(defv);
-                }
-
-                deref_local_vars(fc, NULL, fc->current_scope);
-
-                str_append(fc->c_code_after, code);
-                free_str(code);
-                code = prevbuf;
-
-                free_scope(fc->current_scope);
-                fc->current_scope = prev_scope;
-
-                str_append_chars(fc->c_code_after, "return KI_RET_V;\n");
-                str_append_chars(fc->c_code_after, "}\n\n");
-
             } else if (value->type == vt_prop_access) {
                 ValueClassPropAccess *pa = value->item;
 
@@ -968,11 +820,8 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
         TokenDeclare *decl = token->item;
 
         LLVMValueRef v = llvm_value(fc, decl->value);
-        LLVMValueRef a = LLVMBuildAlloca(fc->builder, llvm_type(decl->type), decl->name);
-        LLVMBuildStore(fc->builder, v, a);
-
-        Scope *scope = fc->current_scope;
-        map_set(scope->llvm_declares, decl->name, a);
+        LLVMValueRef a = llvm_build_declare(fc, llvm_type(decl->type), decl->name);
+        LLVMBuildStore(fc->builder, a, v);
 
         // fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
         // str_append_chars(fc->tkn_buffer, " = ");
@@ -2783,7 +2632,7 @@ void llvm_deref(FileCompiler *fc, LLVMValueRef v, Type *type) {
     // }
 }
 
-void llvm_upref(FileCompiler *fc, LLVMValueRef v, Type *type) {
+void llvm_upref(FileCompiler *fc, LLVMValueRef v, bool nullable) {
     //
     // bool nullable = decl->value->return_type->nullable;
     // if (nullable) {
@@ -2795,8 +2644,12 @@ void llvm_upref(FileCompiler *fc, LLVMValueRef v, Type *type) {
     // str_append_chars(fc->tkn_buffer, "->_RC++;\n");
 }
 
+// Values
 LLVMValueRef llvm_int(int v) { return LLVMConstInt(LLVMInt32Type(), v, true); }
 LLVMValueRef llvm_null() { return LLVMConstInt(LLVMIntPtrType(g_target_data), 0, false); }
+
+// Types
+LLVMTypeRef llvm_ptr() { return LLVMIntPtrType(g_target_data); }
 
 // Operands
 LLVMValueRef llvm_icmp(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right) { return LLVMBuildICmp(fc->builder, LLVMICmp, left, right, "icmp_1"); }
@@ -2808,8 +2661,7 @@ LLVMValueRef llvm_isset(FileCompiler *fc, LLVMValueRef v) {
     return LLVMBuildIsNull(fc->builder, v, "isset_1");
 }
 
-/*
-char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded) {
+LLVMValueRef llvm_get_allocator(FileCompiler *fc, int size, bool threaded) {
     size += 24;
     threaded = false; // force unthreaded
 
@@ -2833,7 +2685,10 @@ char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded) {
 
     name = strdup(name);
 
-    map_set(allocators, name, name);
+    LLVMTypeRef ftype = LLVMFunctionType(llvm_ptr(), NULL, 0, 0);
+    LLVMValueRef fv = LLVMAddFunction(fc->mod, name, ftype);
+
+    map_set(allocators, name, fv);
 
     return name;
 }
@@ -2879,7 +2734,12 @@ void fc_write_c_write_allocator(Str *code, Str *hcode, char *name, char *size, b
     str_append_chars(code, "return a;\n");
     str_append_chars(code, "}\n");
 }
-*/
+
+int llvm_prop_index(Class *class, char *prop_name) {
+    //
+    ClassProp *prop = map_get(class->props, prop_name);
+    return prop->struct_index;
+}
 
 void llvm_build_o(LLVMModuleRef mod, char *outpath) {
     //

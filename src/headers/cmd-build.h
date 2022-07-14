@@ -185,6 +185,38 @@ void fc_read_link_token(FileCompiler *fc);
 void fc_parse_macro(FileCompiler *fc, Scope *scope, char *token);
 bool fc_resolve_macro_if_value(FileCompiler *fc, Scope *scope);
 
+// LLVM
+void llvm_set_target();
+void llvm_build_inits();
+void llvm_build_ast(FileCompiler *fc, Scope *scope);
+void llvm_build_token(FileCompiler *fc, Token *t);
+void llvm_build_o(LLVMModuleRef mod, char *outpath);
+LLVMTypeRef llvm_type(Type *type);
+LLVMValueRef llvm_value(FileCompiler *fc, Value *value);
+void llvm_deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope);
+void llvm_deref(FileCompiler *fc, LLVMValueRef v, Type *type);
+void llvm_upref(FileCompiler *fc, LLVMValueRef v, bool nullable);
+LLVMValueRef llvm_isset(FileCompiler *fc, LLVMValueRef v);
+// Operands
+LLVMValueRef llvm_icmp(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right);
+LLVMValueRef llvm_sub(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right);
+// Constant values
+LLVMValueRef llvm_int(int v);
+LLVMValueRef llvm_null();
+// Types
+LLVMTypeRef llvm_ptr();
+LLVMTypeRef llvm_class_type(Class *class);
+// Helpers
+int llvm_prop_index(Class *class, char *prop_name);
+LLVMValueRef llvm_get_var(FileCompiler *fc, char *name);
+// Build
+LLVMValueRef llvm_build_class_init(FileCompiler *fc, ValueClassInit *init);
+LLVMValueRef llvm_build_declare(FileCompiler *fc, LLVMTypeRef type, char *name);
+LLVMValueRef llvm_build_prop_access(FileCompiler *fc, LLVMValueRef on, Class *class, char *prop_name);
+//
+void llvm_define_func(FileCompiler *fc, Function *func);
+void llvm_build_func(FileCompiler *fc, Function *func);
+
 // Write c
 void fc_write_c_all();
 void fc_write_c_pre(FileCompiler *fc);

@@ -174,6 +174,7 @@ typedef struct Class {
     LLVMTypeRef llvm_type;
     //
     Map *props;
+    Map *struct_props;
     //
     int body_i;
     int body_i_end;
@@ -185,6 +186,7 @@ typedef struct Class {
 
 typedef struct ClassProp {
     int access_type;
+    int struct_index;
     bool is_static;
     bool is_func;
     bool generate_code;
