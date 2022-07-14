@@ -15,8 +15,9 @@ LLVMValueRef llvm_isset(FileCompiler *fc, LLVMValueRef v);
 // Operands
 LLVMValueRef llvm_icmp(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right);
 LLVMValueRef llvm_sub(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right);
-//
+// Types
 LLVMValueRef llvm_int(int v);
+LLVMValueRef llvm_null();
 
 //
 LLVMModuleRef g_llvm_inits_mod;
@@ -295,6 +296,651 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
     //
     LLVMValueRef result = NULL;
 
+    if (value->type == vt_null) {
+        return llvm_null();
+    } else if (value->type == vt_false) {
+        return LLVMConstInt(LLVMInt8Type(), 0, false);
+    } else if (value->type == vt_true) {
+        return LLVMConstInt(LLVMInt8Type(), 1, false);
+    } else if (value->type == vt_group) {
+        // str_append_chars(result, "(");
+        return llvm_value(fc, value->item);
+        // str_append_chars(result, ")");
+    } else if (value->type == vt_var) {
+        Scope *scope = fc->current_scope;
+        str_append_chars(result, value->item);
+        /*
+            } else if (value->type == vt_nullable_value) {
+                //
+                Type *ret = value->return_type;
+                str_append_chars(result, ret->class->cname);
+                str_append_chars(result, "__init(");
+                fc_write_c_value(fc, value->item, false, code);
+                str_append_chars(result, ")");
+            } else if (value->type == vt_threaded_global) {
+                //
+                GlobalVar *gv = value->item;
+
+                str_append_chars(result, "pthread_getspecific(");
+                str_append_chars(result, gv->cname);
+                str_append_chars(result, ")");
+                //
+            } else if (value->type == vt_shared_global) {
+                //
+                GlobalVar *gv = value->item;
+                str_append_chars(result, gv->cname);
+                //
+            } else if (value->type == vt_arg) {
+                str_append_chars(result, value->item);
+            } else if (value->type == vt_number) {
+                str_append_chars(result, value->item);
+            } else if (value->type == vt_char) {
+                str_append_chars(result, "'");
+                str_append_chars(result, value->item);
+                str_append_chars(result, "'");
+            } else if (value->type == vt_null_or) {
+                ValueOperator *op = value->item;
+                fc_write_c_value(fc, op->left, true, code);
+                char *buf_var_name = strdup(var_buf(fc));
+                fc_write_c_type(code, op->left->return_type, buf_var_name);
+                str_append_chars(code, " = ");
+                str_append(code, fc->value_buffer);
+                str_append_chars(code, ";\n");
+                //
+                str_append_chars(code, "if(");
+                str_append_chars(code, buf_var_name);
+                str_append_chars(code, " == (void*)0) {\n");
+
+                str_append_chars(code, buf_var_name);
+                str_append_chars(code, " = ");
+                fc_write_c_value(fc, op->right, true, code);
+                str_append(code, fc->value_buffer);
+                str_append_chars(code, ";\n");
+
+                str_append_chars(code, "}\n");
+
+                result->length = 0;
+                str_append_chars(result, buf_var_name);
+                free(buf_var_name);
+
+            } else if (value->type == vt_operator) {
+                ValueOperator *op = value->item;
+                fc_write_c_value(fc, op->left, false, code);
+                if (op->type == op_add) {
+                    str_append_chars(result, " + ");
+                } else if (op->type == op_sub) {
+                    str_append_chars(result, " - ");
+                } else if (op->type == op_mult) {
+                    str_append_chars(result, " * ");
+                } else if (op->type == op_div) {
+                    str_append_chars(result, " / ");
+                } else if (op->type == op_mod) {
+                    str_append_chars(result, " \% ");
+                } else if (op->type == op_bit_OR) {
+                    str_append_chars(result, " | ");
+                } else if (op->type == op_bit_AND) {
+                    str_append_chars(result, " & ");
+                } else if (op->type == op_bit_XOR) {
+                    str_append_chars(result, " ^ ");
+                } else if (op->type == op_bit_shift_left) {
+                    str_append_chars(result, "<<");
+                } else if (op->type == op_bit_shift_right) {
+                    str_append_chars(result, ">>");
+                    //
+                } else if (op->type == op_and) {
+                    str_append_chars(result, " && ");
+                } else if (op->type == op_or) {
+                    str_append_chars(result, " || ");
+                    //
+                } else if (op->type == op_eq) {
+                    str_append_chars(result, " == ");
+                } else if (op->type == op_neq) {
+                    str_append_chars(result, " != ");
+                } else if (op->type == op_lt) {
+                    str_append_chars(result, " < ");
+                } else if (op->type == op_lte) {
+                    str_append_chars(result, " <= ");
+                } else if (op->type == op_gt) {
+                    str_append_chars(result, " > ");
+                } else if (op->type == op_gte) {
+                    str_append_chars(result, " >= ");
+                } else if (op->type == op_incr) {
+                    str_append_chars(result, "++");
+                } else if (op->type == op_decr) {
+                    str_append_chars(result, "--");
+                } else {
+                    printf("Op: %d\n", op->type);
+                    fc_error(fc, "Unhandled operator type", NULL);
+                }
+                if (op->right) {
+                    fc_write_c_value(fc, op->right, false, code);
+                }
+            } else if (value->type == vt_func_call) {
+                ValueFuncCall *fa = value->item;
+
+                // Arg values
+                char *cache = str_to_chars(fc->value_buffer);
+                Array *arg_strings = array_make(4);
+                for (int i = 0; i < fa->arg_values->length; i++) {
+                    Value *v = array_get_index(fa->arg_values, i);
+                    fc->value_buffer->length = 0;
+                    fc_write_c_value(fc, v, false, code);
+                    array_push(arg_strings, str_to_chars(fc->value_buffer));
+                }
+                fc->value_buffer->length = 0;
+                str_append_chars(fc->value_buffer, cache);
+                free(cache);
+
+                //
+                fc_write_c_value(fc, fa->on, false, code);
+                str_append_chars(result, "(");
+                for (int i = 0; i < arg_strings->length; i++) {
+                    if (i > 0) {
+                        str_append_chars(result, ", ");
+                    }
+                    char *arg_str = array_get_index(arg_strings, i);
+                    str_append_chars(result, arg_str);
+                    free(arg_str);
+                }
+                free(arg_strings);
+
+                if (fa->ort != NULL) {
+                    if (fa->arg_values->length > 0) {
+                        str_append_chars(result, ", ");
+                    }
+                    str_append_chars(result, "&_KI_THROW_MSG_BUF");
+                }
+                str_append_chars(result, ")");
+
+                if (fa->ort != NULL) {
+                    char *buf_var_name = NULL;
+                    if (value->return_type) {
+                        buf_var_name = strdup(var_buf(fc));
+                        fc_write_c_type(code, value->return_type, buf_var_name);
+                        str_append_chars(code, " = ");
+                    }
+                    str_append(code, result);
+                    str_append_chars(code, ";\n");
+                    //
+                    result->length = 0;
+
+                    // Check error
+                    str_append_chars(code, "if(_KI_THROW_MSG_BUF){\n");
+
+                    if (fa->ort->type != or_pass) {
+                        str_append_chars(code, "_KI_THROW_MSG_BUF = (void*)0;\n");
+                    }
+
+                    char *buf = fc_write_c_ort(fc, fa->ort);
+
+                    if (buf) {
+                        str_append_chars(code, buf_var_name);
+                        str_append_chars(code, " = ");
+                        str_append_chars(code, buf);
+                        str_append_chars(code, ";\n");
+                        free(buf);
+                    }
+
+                    //
+                    str_append_chars(code, "}\n");
+                    // Update result
+                    result->length = 0;
+                    if (value->return_type) {
+                        str_append_chars(result, buf_var_name);
+                        free(buf_var_name);
+                    }
+                }
+
+                if (value->return_type) {
+                    Class *retClass = value->return_type->class;
+                    if (retClass && retClass->ref_count) {
+                        // Buffer the value
+                        char *buf_var_name = strdup(var_buf(fc));
+                        str_append_chars(code, "struct ");
+                        str_append_chars(code, retClass->cname);
+                        str_append_chars(code, "* ");
+                        str_append_chars(code, buf_var_name);
+                        str_append_chars(code, " = ");
+                        str_append(code, result);
+                        str_append_chars(code, ";\n");
+
+                        if (value->return_type->nullable) {
+                            str_append_chars(code, "if(");
+                            str_append_chars(code, buf_var_name);
+                            str_append_chars(code, ") ");
+                        }
+
+                        str_append_chars(code, buf_var_name);
+                        str_append_chars(code, "->_RC++;\n");
+                        result->length = 0;
+                        str_append_chars(result, buf_var_name);
+
+                        VarInfo *vi = malloc(sizeof(VarInfo));
+                        vi->name = buf_var_name;
+                        vi->return_type = value->return_type;
+
+                        if (fc->current_scope)
+                            array_push(fc->current_scope->var_bufs, vi);
+                    }
+                }
+
+            } else if (value->type == vt_sizeof) {
+                str_append_chars(result, value->item);
+            } else if (value->type == vt_cast) {
+                ValueCast *cast = value->item;
+                str_append_chars(result, "(");
+                fc_write_c_type(result, cast->as_type, NULL);
+                str_append_chars(result, ")");
+                fc_write_c_value(fc, cast->value, false, code);
+            } else if (value->type == vt_getptrv) {
+                ValueCast *cast = value->item;
+                str_append_chars(result, "(*(");
+                fc_write_c_type(result, cast->as_type, NULL);
+                str_append_chars(result, "*)(");
+                fc_write_c_value(fc, cast->value, false, code);
+                str_append_chars(result, "))");
+            } else if (value->type == vt_getptr) {
+                str_append_chars(result, "&");
+                fc_write_c_value(fc, value->item, false, code);
+            } else if (value->type == vt_setptrv) {
+                SetPtrValue *cast = value->item;
+                str_append_chars(result, "*(");
+                fc_write_c_type(result, cast->to_value->return_type, NULL);
+                str_append_chars(result, "*)");
+                fc_write_c_value(fc, cast->ptr_value, false, code);
+                str_append_chars(result, " = ");
+                fc_write_c_value(fc, cast->to_value, false, code);
+            } else if (value->type == vt_class_init) {
+                // Generate function
+                fc->var_bufc++;
+                ValueClassInit *ini = value->item;
+                Class *class = ini->class;
+
+                char *allocator_name = fc_write_c_get_allocator(fc, class->size, true);
+                char *func_name = malloc(60);
+                sprintf(func_name, "_KI_CLASS_INIT_%s_%d", fc->hash, fc->var_bufc);
+
+                char *buf_var_name = strdup(var_buf(fc));
+                str_append_chars(result, buf_var_name);
+
+                // Set cache
+                char *cache = str_to_chars(fc->value_buffer);
+
+                //
+                Str *args_str = str_make("");
+                for (int i = 0; i < ini->prop_values->values->length; i++) {
+                    if (i > 0) {
+                        str_append_chars(args_str, ", ");
+                    }
+                    Value *val = array_get_index(ini->prop_values->values, i);
+                    fc->value_buffer->length = 0;
+                    fc_write_c_value(fc, val, false, code);
+                    str_append(args_str, fc->value_buffer);
+                }
+                fc_write_c_type(code, value->return_type, buf_var_name);
+                str_append_chars(code, " = ");
+
+                str_append_chars(code, func_name);
+                str_append_chars(code, "(");
+                str_append(code, args_str);
+                str_append_chars(code, ");\n");
+                free_str(args_str);
+
+                // Restore cache
+                fc->value_buffer->length = 0;
+                str_append_chars(fc->value_buffer, cache);
+                free(cache);
+
+                // Write header
+                fc_write_c_type(fc->h_code, value->return_type, NULL);
+                str_append_chars(fc->h_code, " ");
+                str_append_chars(fc->h_code, func_name);
+                str_append_chars(fc->h_code, "(");
+                for (int i = 0; i < ini->prop_values->keys->length; i++) {
+                    if (i > 0) {
+                        str_append_chars(fc->h_code, ", ");
+                    }
+                    char *prop_name = array_get_index(ini->prop_values->keys, i);
+                    ClassProp *prop = map_get(class->props, prop_name);
+                    fc_write_c_type(fc->h_code, prop->return_type, prop_name);
+                }
+                str_append_chars(fc->h_code, ");\n");
+
+                // Write func
+                fc_write_c_type(fc->c_code_after, value->return_type, NULL);
+                str_append_chars(fc->c_code_after, " ");
+                str_append_chars(fc->c_code_after, func_name);
+                str_append_chars(fc->c_code_after, "(");
+                for (int i = 0; i < ini->prop_values->keys->length; i++) {
+                    if (i > 0) {
+                        str_append_chars(fc->c_code_after, ", ");
+                    }
+                    char *prop_name = array_get_index(ini->prop_values->keys, i);
+                    ClassProp *prop = map_get(class->props, prop_name);
+                    fc_write_c_type(fc->c_code_after, prop->return_type, prop_name);
+                }
+                str_append_chars(fc->c_code_after, ") {\n");
+                char *sign;
+                if (value->return_type->is_pointer) {
+                    sign = "->";
+                    fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
+
+                    str_append_chars(fc->c_code_after, " = ki__mem__Allocator__get_chunk(");
+                    str_append_chars(fc->c_code_after, allocator_name);
+                    str_append_chars(fc->c_code_after, "());\n");
+                } else {
+                    sign = ".";
+                    fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
+                    str_append_chars(fc->c_code_after, ";\n");
+                }
+
+                // if (class->ref_count) {
+                //   str_append_chars(fc->c_code_after, "KI_RET_V");
+                //   str_append_chars(fc->c_code_after, sign);
+                //   str_append_chars(fc->c_code_after, "_RC = 0;\n");
+                // }
+
+                for (int i = 0; i < ini->prop_values->keys->length; i++) {
+                    char *prop_name = array_get_index(ini->prop_values->keys, i);
+                    Value *v = array_get_index(ini->prop_values->values, i);
+                    str_append_chars(fc->c_code_after, "KI_RET_V");
+                    str_append_chars(fc->c_code_after, sign);
+                    str_append_chars(fc->c_code_after, prop_name);
+                    str_append_chars(fc->c_code_after, " = ");
+                    str_append_chars(fc->c_code_after, prop_name);
+                    str_append_chars(fc->c_code_after, ";\n");
+
+                    if (v->return_type->class && v->return_type->class->ref_count) {
+                        str_append_chars(fc->c_code_after, "KI_RET_V");
+                        str_append_chars(fc->c_code_after, sign);
+                        str_append_chars(fc->c_code_after, prop_name);
+                        str_append_chars(fc->c_code_after, "->_RC++;\n");
+                    }
+                }
+
+                // if (class->ref_count) {
+                //     str_append_chars(fc->c_code_after, "KI_RET_V");
+                //     str_append_chars(fc->c_code_after, sign);
+                //     str_append_chars(fc->c_code_after, "_ALLOCATOR = ");
+                //     str_append_chars(fc->c_code_after, allocator_name);
+                //     str_append_chars(fc->c_code_after, "();\n");
+                // }
+
+                Scope *prev_scope = fc->current_scope;
+                fc->current_scope = init_scope();
+
+                Str *prevbuf = code;
+                code = str_make("");
+
+                for (int i = 0; i < class->props->keys->length; i++) {
+                    char *prop_name = array_get_index(class->props->keys, i);
+                    if (map_contains(ini->prop_values, prop_name)) {
+                        continue;
+                    }
+                    ClassProp *prop = array_get_index(class->props->values, i);
+                    if (!prop->default_value) {
+                        continue;
+                    }
+
+                    char *cache = str_to_chars(fc->value_buffer);
+                    fc->value_buffer->length = 0;
+                    fc_write_c_value(fc, prop->default_value, false, code);
+                    char *defv = str_to_chars(fc->value_buffer);
+                    fc->value_buffer->length = 0;
+                    str_append_chars(fc->value_buffer, cache);
+                    free(cache);
+
+                    str_append_chars(code, "KI_RET_V");
+                    str_append_chars(code, sign);
+                    str_append_chars(code, prop_name);
+                    str_append_chars(code, " = ");
+                    str_append_chars(code, defv);
+                    str_append_chars(code, ";\n");
+
+                    free(defv);
+                }
+
+                deref_local_vars(fc, NULL, fc->current_scope);
+
+                str_append(fc->c_code_after, code);
+                free_str(code);
+                code = prevbuf;
+
+                free_scope(fc->current_scope);
+                fc->current_scope = prev_scope;
+
+                str_append_chars(fc->c_code_after, "return KI_RET_V;\n");
+                str_append_chars(fc->c_code_after, "}\n\n");
+
+            } else if (value->type == vt_prop_access) {
+                ValueClassPropAccess *pa = value->item;
+
+                if (pa->is_static) {
+                    Class *class = pa->on;
+                    // ClassProp* prop = map_get(class->props, pa->name);
+                    //  func ref
+                    //  Type* type = prop->return_type;
+                    str_append_chars(result, class->cname);
+                    str_append_chars(result, "__");
+                    str_append_chars(result, pa->name);
+                } else {
+                    Value *val = pa->on;
+                    fc_write_c_value(fc, pa->on, false, code);
+                    Type *type = val->return_type;
+                    if (type->is_pointer) {
+                        str_append_chars(result, "->");
+                    } else {
+                        str_append_chars(result, ".");
+                    }
+                    str_append_chars(result, pa->name);
+                }
+            } else if (value->type == vt_async) {
+                Value *fcallv = value->item;
+                ValueFuncCall *fcall = fcallv->item;
+                Value *on = fcall->on;
+                char *size = malloc(10);
+                //
+                Type *task_type = fc_identifier_to_type(fc, create_identifier("ki", "async", "Task"), NULL);
+                // Cache current value
+                char *cache = str_to_chars(fc->value_buffer);
+
+                // Step 1. Generate execution function
+                char *handler_name = strdup(var_buf(fc));
+                str_append_chars(fc->c_code_after, "void ");
+                str_append_chars(fc->c_code_after, handler_name);
+                str_append_chars(fc->c_code_after, "(");
+                fc_write_c_type(fc->c_code_after, task_type, "task");
+                str_append_chars(fc->c_code_after, ") {\n");
+                str_append_chars(fc->c_code_after, "void* arg_pointer = task->args;\n");
+                // Header
+                str_append_chars(fc->h_code, "void ");
+                str_append_chars(fc->h_code, handler_name);
+                str_append_chars(fc->h_code, "(");
+                fc_write_c_type(fc->h_code, task_type, "task");
+                str_append_chars(fc->h_code, ");\n");
+
+                // Body
+                int args_size = 0;
+                Array *arg_strings = array_make(4);
+                for (int i = 0; i < fcall->arg_values->length; i++) {
+                    char *arg_name = malloc(20);
+                    Value *v = array_get_index(fcall->arg_values, i);
+                    args_size += v->return_type->bytes;
+                    sprintf(arg_name, "arg_%d", i);
+                    array_push(arg_strings, arg_name);
+                    fc_write_c_type(fc->c_code_after, v->return_type, arg_name);
+                    str_append_chars(fc->c_code_after, " = *(");
+                    v->return_type->is_pointer_of_pointer = true;
+                    fc_write_c_type(fc->c_code_after, v->return_type, NULL);
+                    v->return_type->is_pointer_of_pointer = false;
+                    str_append_chars(fc->c_code_after, ")arg_pointer;\n");
+                    str_append_chars(fc->c_code_after, "arg_pointer += ");
+                    sprintf(size, "%d", v->return_type->bytes);
+                    str_append_chars(fc->c_code_after, size);
+                    str_append_chars(fc->c_code_after, ";\n");
+                }
+                // Call func
+                char *func_ref_name = strdup(var_buf(fc));
+                str_append_chars(fc->c_code_after, "void* ");
+                str_append_chars(fc->c_code_after, func_ref_name);
+                str_append_chars(fc->c_code_after, " = task->func;\n");
+
+                char *ret_name = NULL;
+                if (fcallv->return_type) {
+                    ret_name = var_buf(fc);
+                    fc_write_c_type(fc->c_code_after, fcallv->return_type, ret_name);
+                    str_append_chars(fc->c_code_after, " = ");
+                }
+                str_append_chars(fc->c_code_after, "((");
+                fc_write_c_type(fc->c_code_after, on->return_type, NULL);
+                str_append_chars(fc->c_code_after, ")");
+                str_append_chars(fc->c_code_after, func_ref_name);
+                free(func_ref_name);
+                str_append_chars(fc->c_code_after, ")(");
+                // Args
+                for (int i = 0; i < arg_strings->length; i++) {
+                    char *arg_name = array_get_index(arg_strings, i);
+                    if (i > 0) {
+                        str_append_chars(fc->c_code_after, ", ");
+                    }
+                    str_append_chars(fc->c_code_after, arg_name);
+                }
+                str_append_chars(fc->c_code_after, ");\n");
+                // End func call
+                if (ret_name) {
+                    str_append_chars(fc->c_code_after, "task->result = (void*)");
+                    str_append_chars(fc->c_code_after, ret_name);
+                    str_append_chars(fc->c_code_after, ";\n");
+                }
+                str_append_chars(fc->c_code_after, "task->ready = 1;\n");
+                // Deref args if needed
+                for (int i = 0; i < fcall->arg_values->length; i++) {
+                    Value *v = array_get_index(fcall->arg_values, i);
+                    char *arg_name = array_get_index(arg_strings, i);
+                    if (v->return_type->class && v->return_type->class->ref_count) {
+                        str_append_chars(fc->c_code_after, "if(--");
+                        str_append_chars(fc->c_code_after, arg_name);
+                        str_append_chars(fc->c_code_after, "->_RC == 0) ");
+                        str_append_chars(fc->c_code_after, v->return_type->class->cname);
+                        str_append_chars(fc->c_code_after, "____free(");
+                        str_append_chars(fc->c_code_after, arg_name);
+                        str_append_chars(fc->c_code_after, ");\n");
+                    }
+                }
+                array_free(arg_strings);
+                // End body
+                str_append_chars(fc->c_code_after, "}\n\n");
+
+                // Step 2. Create Task and push onto stack
+                // Func ref
+                char *allocator_name = fc_write_c_get_allocator(fc, task_type->class->size, false);
+                char *func_name = strdup(var_buf(fc));
+                str_append_chars(code, "void* ");
+                str_append_chars(code, func_name);
+                str_append_chars(code, " = ");
+                fc->value_buffer->length = 0;
+                fc_write_c_value(fc, on, false, code);
+                str_append(code, fc->value_buffer);
+                str_append_chars(code, ";\n");
+                // Init Task
+                char *var_name = strdup(var_buf(fc));
+                fc_write_c_type(code, task_type, var_name);
+                str_append_chars(code, " = ki__mem__Allocator__get_chunk(");
+                str_append_chars(code, allocator_name);
+                str_append_chars(code, "());\n");
+                //
+                str_append_chars(code, var_name);
+                str_append_chars(code, "->handler_func = ");
+                str_append_chars(code, handler_name);
+                str_append_chars(code, ";\n");
+                // Set function
+                str_append_chars(code, var_name);
+                str_append_chars(code, "->func = ");
+                str_append_chars(code, func_name);
+                str_append_chars(code, ";\n");
+                // Set args
+                str_append_chars(code, var_name);
+                str_append_chars(code, "->args = ki__mem__alloc_flat(");
+                sprintf(size, "%d", args_size);
+                str_append_chars(code, size);
+                str_append_chars(code, ");\n");
+
+                char *argsptr_name = var_buf(fc);
+                str_append_chars(code, "void* ");
+                str_append_chars(code, argsptr_name);
+                str_append_chars(code, " = ");
+                str_append_chars(code, var_name);
+                str_append_chars(code, "->args;\n");
+
+                for (int i = 0; i < fcall->arg_values->length; i++) {
+                    Value *v = array_get_index(fcall->arg_values, i);
+                    fc->value_buffer->length = 0;
+                    fc_write_c_value(fc, v, false, code);
+                    //
+                    str_append_chars(code, "*(");
+                    v->return_type->is_pointer_of_pointer = true;
+                    fc_write_c_type(code, v->return_type, NULL);
+                    v->return_type->is_pointer_of_pointer = false;
+                    str_append_chars(code, ")");
+                    str_append_chars(code, argsptr_name);
+                    str_append_chars(code, " = ");
+                    str_append(code, fc->value_buffer);
+                    str_append_chars(code, ";\n");
+
+                    if (v->return_type->class && v->return_type->class->ref_count) {
+                        str_append(code, fc->value_buffer);
+                        str_append_chars(code, "->_RC++;\n");
+                    }
+
+                    str_append_chars(code, argsptr_name);
+                    str_append_chars(code, " += ");
+                    sprintf(size, "%d", v->return_type->bytes);
+                    str_append_chars(code, size);
+                    str_append_chars(code, ";\n");
+                }
+
+                // Push task on stack
+                str_append_chars(code, "ki__async__Taskman__add_task(");
+                str_append_chars(code, var_name);
+                str_append_chars(code, ");\n");
+
+                // Set cache back
+                fc->value_buffer->length = 0;
+                str_append_chars(fc->value_buffer, cache);
+                free(cache);
+                free(size);
+                free(func_name);
+                free(handler_name);
+
+                str_append_chars(result, var_name);
+
+                // free(var_name);
+            } else if (value->type == vt_await) {
+                // loop until task is ready
+                // if not ready, check for other tasks todo
+                fc_write_c_value(fc, value->item, false, code);
+                //
+                str_append_chars(code, "while(!");
+                str_append(code, result);
+                str_append_chars(code, "->ready){\n");
+                str_append_chars(code, "ki__async__Taskman__run_another_task();\n");
+                str_append_chars(code, "}\n");
+
+                str_append_chars(result, "->result");
+                //
+            } else if (value->type == vt_allocator) {
+                char *size = value->item;
+                int sizei = atoi(size);
+                char *name = fc_write_c_get_allocator(fc, sizei, true);
+                str_append_chars(result, name);
+                str_append_chars(result, "()");
+                */
+
+    } else {
+        printf("Value token type: %d\n", value->type);
+        die("Unhandled value token");
+    }
+
     //
     return result;
 }
@@ -321,12 +967,12 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
     } else if (token->type == tkn_declare) {
         TokenDeclare *decl = token->item;
 
-        LLVMTypeRef lt = llvm_type(decl->type);
-        LLVMValueRef a = LLVMBuildAlloca(fc->builder, lt, decl->name);
-
         LLVMValueRef v = llvm_value(fc, decl->value);
-
+        LLVMValueRef a = LLVMBuildAlloca(fc->builder, llvm_type(decl->type), decl->name);
         LLVMBuildStore(fc->builder, v, a);
+
+        Scope *scope = fc->current_scope;
+        map_set(scope->llvm_declares, decl->name, a);
 
         // fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
         // str_append_chars(fc->tkn_buffer, " = ");
@@ -1821,646 +2467,6 @@ void fc_write_c_value(FileCompiler *fc, Value *value, bool new_value, Str *code)
     //
     // printf("Type: %d\n", value->type);
 
-    if (value->type == vt_null) {
-        str_append_chars(result, "(void*)0");
-        // Bools
-    } else if (value->type == vt_false) {
-        str_append_chars(result, "0");
-    } else if (value->type == vt_true) {
-        str_append_chars(result, "1");
-    } else if (value->type == vt_group) {
-        str_append_chars(result, "(");
-        fc_write_c_value(fc, value->item, false, code);
-        str_append_chars(result, ")");
-    } else if (value->type == vt_var) {
-        str_append_chars(result, value->item);
-    } else if (value->type == vt_nullable_value) {
-        //
-        Type *ret = value->return_type;
-        str_append_chars(result, ret->class->cname);
-        str_append_chars(result, "__init(");
-        fc_write_c_value(fc, value->item, false, code);
-        str_append_chars(result, ")");
-    } else if (value->type == vt_threaded_global) {
-        //
-        GlobalVar *gv = value->item;
-
-        str_append_chars(result, "pthread_getspecific(");
-        str_append_chars(result, gv->cname);
-        str_append_chars(result, ")");
-        //
-    } else if (value->type == vt_shared_global) {
-        //
-        GlobalVar *gv = value->item;
-        str_append_chars(result, gv->cname);
-        //
-    } else if (value->type == vt_arg) {
-        str_append_chars(result, value->item);
-    } else if (value->type == vt_number) {
-        str_append_chars(result, value->item);
-    } else if (value->type == vt_char) {
-        str_append_chars(result, "'");
-        str_append_chars(result, value->item);
-        str_append_chars(result, "'");
-    } else if (value->type == vt_null_or) {
-        ValueOperator *op = value->item;
-        fc_write_c_value(fc, op->left, true, code);
-        char *buf_var_name = strdup(var_buf(fc));
-        fc_write_c_type(code, op->left->return_type, buf_var_name);
-        str_append_chars(code, " = ");
-        str_append(code, fc->value_buffer);
-        str_append_chars(code, ";\n");
-        //
-        str_append_chars(code, "if(");
-        str_append_chars(code, buf_var_name);
-        str_append_chars(code, " == (void*)0) {\n");
-
-        str_append_chars(code, buf_var_name);
-        str_append_chars(code, " = ");
-        fc_write_c_value(fc, op->right, true, code);
-        str_append(code, fc->value_buffer);
-        str_append_chars(code, ";\n");
-
-        str_append_chars(code, "}\n");
-
-        result->length = 0;
-        str_append_chars(result, buf_var_name);
-        free(buf_var_name);
-
-    } else if (value->type == vt_operator) {
-        ValueOperator *op = value->item;
-        fc_write_c_value(fc, op->left, false, code);
-        if (op->type == op_add) {
-            str_append_chars(result, " + ");
-        } else if (op->type == op_sub) {
-            str_append_chars(result, " - ");
-        } else if (op->type == op_mult) {
-            str_append_chars(result, " * ");
-        } else if (op->type == op_div) {
-            str_append_chars(result, " / ");
-        } else if (op->type == op_mod) {
-            str_append_chars(result, " \% ");
-        } else if (op->type == op_bit_OR) {
-            str_append_chars(result, " | ");
-        } else if (op->type == op_bit_AND) {
-            str_append_chars(result, " & ");
-        } else if (op->type == op_bit_XOR) {
-            str_append_chars(result, " ^ ");
-        } else if (op->type == op_bit_shift_left) {
-            str_append_chars(result, "<<");
-        } else if (op->type == op_bit_shift_right) {
-            str_append_chars(result, ">>");
-            //
-        } else if (op->type == op_and) {
-            str_append_chars(result, " && ");
-        } else if (op->type == op_or) {
-            str_append_chars(result, " || ");
-            //
-        } else if (op->type == op_eq) {
-            str_append_chars(result, " == ");
-        } else if (op->type == op_neq) {
-            str_append_chars(result, " != ");
-        } else if (op->type == op_lt) {
-            str_append_chars(result, " < ");
-        } else if (op->type == op_lte) {
-            str_append_chars(result, " <= ");
-        } else if (op->type == op_gt) {
-            str_append_chars(result, " > ");
-        } else if (op->type == op_gte) {
-            str_append_chars(result, " >= ");
-        } else if (op->type == op_incr) {
-            str_append_chars(result, "++");
-        } else if (op->type == op_decr) {
-            str_append_chars(result, "--");
-        } else {
-            printf("Op: %d\n", op->type);
-            fc_error(fc, "Unhandled operator type", NULL);
-        }
-        if (op->right) {
-            fc_write_c_value(fc, op->right, false, code);
-        }
-    } else if (value->type == vt_func_call) {
-        ValueFuncCall *fa = value->item;
-
-        // Arg values
-        char *cache = str_to_chars(fc->value_buffer);
-        Array *arg_strings = array_make(4);
-        for (int i = 0; i < fa->arg_values->length; i++) {
-            Value *v = array_get_index(fa->arg_values, i);
-            fc->value_buffer->length = 0;
-            fc_write_c_value(fc, v, false, code);
-            array_push(arg_strings, str_to_chars(fc->value_buffer));
-        }
-        fc->value_buffer->length = 0;
-        str_append_chars(fc->value_buffer, cache);
-        free(cache);
-
-        //
-        fc_write_c_value(fc, fa->on, false, code);
-        str_append_chars(result, "(");
-        for (int i = 0; i < arg_strings->length; i++) {
-            if (i > 0) {
-                str_append_chars(result, ", ");
-            }
-            char *arg_str = array_get_index(arg_strings, i);
-            str_append_chars(result, arg_str);
-            free(arg_str);
-        }
-        free(arg_strings);
-
-        if (fa->ort != NULL) {
-            if (fa->arg_values->length > 0) {
-                str_append_chars(result, ", ");
-            }
-            str_append_chars(result, "&_KI_THROW_MSG_BUF");
-        }
-        str_append_chars(result, ")");
-
-        if (fa->ort != NULL) {
-            char *buf_var_name = NULL;
-            if (value->return_type) {
-                buf_var_name = strdup(var_buf(fc));
-                fc_write_c_type(code, value->return_type, buf_var_name);
-                str_append_chars(code, " = ");
-            }
-            str_append(code, result);
-            str_append_chars(code, ";\n");
-            //
-            result->length = 0;
-
-            // Check error
-            str_append_chars(code, "if(_KI_THROW_MSG_BUF){\n");
-
-            if (fa->ort->type != or_pass) {
-                str_append_chars(code, "_KI_THROW_MSG_BUF = (void*)0;\n");
-            }
-
-            char *buf = fc_write_c_ort(fc, fa->ort);
-
-            if (buf) {
-                str_append_chars(code, buf_var_name);
-                str_append_chars(code, " = ");
-                str_append_chars(code, buf);
-                str_append_chars(code, ";\n");
-                free(buf);
-            }
-
-            //
-            str_append_chars(code, "}\n");
-            // Update result
-            result->length = 0;
-            if (value->return_type) {
-                str_append_chars(result, buf_var_name);
-                free(buf_var_name);
-            }
-        }
-
-        if (value->return_type) {
-            Class *retClass = value->return_type->class;
-            if (retClass && retClass->ref_count) {
-                // Buffer the value
-                char *buf_var_name = strdup(var_buf(fc));
-                str_append_chars(code, "struct ");
-                str_append_chars(code, retClass->cname);
-                str_append_chars(code, "* ");
-                str_append_chars(code, buf_var_name);
-                str_append_chars(code, " = ");
-                str_append(code, result);
-                str_append_chars(code, ";\n");
-
-                if (value->return_type->nullable) {
-                    str_append_chars(code, "if(");
-                    str_append_chars(code, buf_var_name);
-                    str_append_chars(code, ") ");
-                }
-
-                str_append_chars(code, buf_var_name);
-                str_append_chars(code, "->_RC++;\n");
-                result->length = 0;
-                str_append_chars(result, buf_var_name);
-
-                VarInfo *vi = malloc(sizeof(VarInfo));
-                vi->name = buf_var_name;
-                vi->return_type = value->return_type;
-
-                if (fc->current_scope)
-                    array_push(fc->current_scope->var_bufs, vi);
-            }
-        }
-
-    } else if (value->type == vt_sizeof) {
-        str_append_chars(result, value->item);
-    } else if (value->type == vt_cast) {
-        ValueCast *cast = value->item;
-        str_append_chars(result, "(");
-        fc_write_c_type(result, cast->as_type, NULL);
-        str_append_chars(result, ")");
-        fc_write_c_value(fc, cast->value, false, code);
-    } else if (value->type == vt_getptrv) {
-        ValueCast *cast = value->item;
-        str_append_chars(result, "(*(");
-        fc_write_c_type(result, cast->as_type, NULL);
-        str_append_chars(result, "*)(");
-        fc_write_c_value(fc, cast->value, false, code);
-        str_append_chars(result, "))");
-    } else if (value->type == vt_getptr) {
-        str_append_chars(result, "&");
-        fc_write_c_value(fc, value->item, false, code);
-    } else if (value->type == vt_setptrv) {
-        SetPtrValue *cast = value->item;
-        str_append_chars(result, "*(");
-        fc_write_c_type(result, cast->to_value->return_type, NULL);
-        str_append_chars(result, "*)");
-        fc_write_c_value(fc, cast->ptr_value, false, code);
-        str_append_chars(result, " = ");
-        fc_write_c_value(fc, cast->to_value, false, code);
-    } else if (value->type == vt_class_init) {
-        // Generate function
-        fc->var_bufc++;
-        ValueClassInit *ini = value->item;
-        Class *class = ini->class;
-
-        char *allocator_name = fc_write_c_get_allocator(fc, class->size, true);
-        char *func_name = malloc(60);
-        sprintf(func_name, "_KI_CLASS_INIT_%s_%d", fc->hash, fc->var_bufc);
-
-        char *buf_var_name = strdup(var_buf(fc));
-        str_append_chars(result, buf_var_name);
-
-        // Set cache
-        char *cache = str_to_chars(fc->value_buffer);
-
-        //
-        Str *args_str = str_make("");
-        for (int i = 0; i < ini->prop_values->values->length; i++) {
-            if (i > 0) {
-                str_append_chars(args_str, ", ");
-            }
-            Value *val = array_get_index(ini->prop_values->values, i);
-            fc->value_buffer->length = 0;
-            fc_write_c_value(fc, val, false, code);
-            str_append(args_str, fc->value_buffer);
-        }
-        fc_write_c_type(code, value->return_type, buf_var_name);
-        str_append_chars(code, " = ");
-
-        str_append_chars(code, func_name);
-        str_append_chars(code, "(");
-        str_append(code, args_str);
-        str_append_chars(code, ");\n");
-        free_str(args_str);
-
-        // Restore cache
-        fc->value_buffer->length = 0;
-        str_append_chars(fc->value_buffer, cache);
-        free(cache);
-
-        // Write header
-        fc_write_c_type(fc->h_code, value->return_type, NULL);
-        str_append_chars(fc->h_code, " ");
-        str_append_chars(fc->h_code, func_name);
-        str_append_chars(fc->h_code, "(");
-        for (int i = 0; i < ini->prop_values->keys->length; i++) {
-            if (i > 0) {
-                str_append_chars(fc->h_code, ", ");
-            }
-            char *prop_name = array_get_index(ini->prop_values->keys, i);
-            ClassProp *prop = map_get(class->props, prop_name);
-            fc_write_c_type(fc->h_code, prop->return_type, prop_name);
-        }
-        str_append_chars(fc->h_code, ");\n");
-
-        // Write func
-        fc_write_c_type(fc->c_code_after, value->return_type, NULL);
-        str_append_chars(fc->c_code_after, " ");
-        str_append_chars(fc->c_code_after, func_name);
-        str_append_chars(fc->c_code_after, "(");
-        for (int i = 0; i < ini->prop_values->keys->length; i++) {
-            if (i > 0) {
-                str_append_chars(fc->c_code_after, ", ");
-            }
-            char *prop_name = array_get_index(ini->prop_values->keys, i);
-            ClassProp *prop = map_get(class->props, prop_name);
-            fc_write_c_type(fc->c_code_after, prop->return_type, prop_name);
-        }
-        str_append_chars(fc->c_code_after, ") {\n");
-        char *sign;
-        if (value->return_type->is_pointer) {
-            sign = "->";
-            fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
-
-            str_append_chars(fc->c_code_after, " = ki__mem__Allocator__get_chunk(");
-            str_append_chars(fc->c_code_after, allocator_name);
-            str_append_chars(fc->c_code_after, "());\n");
-        } else {
-            sign = ".";
-            fc_write_c_type(fc->c_code_after, value->return_type, "KI_RET_V");
-            str_append_chars(fc->c_code_after, ";\n");
-        }
-
-        // if (class->ref_count) {
-        //   str_append_chars(fc->c_code_after, "KI_RET_V");
-        //   str_append_chars(fc->c_code_after, sign);
-        //   str_append_chars(fc->c_code_after, "_RC = 0;\n");
-        // }
-
-        for (int i = 0; i < ini->prop_values->keys->length; i++) {
-            char *prop_name = array_get_index(ini->prop_values->keys, i);
-            Value *v = array_get_index(ini->prop_values->values, i);
-            str_append_chars(fc->c_code_after, "KI_RET_V");
-            str_append_chars(fc->c_code_after, sign);
-            str_append_chars(fc->c_code_after, prop_name);
-            str_append_chars(fc->c_code_after, " = ");
-            str_append_chars(fc->c_code_after, prop_name);
-            str_append_chars(fc->c_code_after, ";\n");
-
-            if (v->return_type->class && v->return_type->class->ref_count) {
-                str_append_chars(fc->c_code_after, "KI_RET_V");
-                str_append_chars(fc->c_code_after, sign);
-                str_append_chars(fc->c_code_after, prop_name);
-                str_append_chars(fc->c_code_after, "->_RC++;\n");
-            }
-        }
-
-        // if (class->ref_count) {
-        //     str_append_chars(fc->c_code_after, "KI_RET_V");
-        //     str_append_chars(fc->c_code_after, sign);
-        //     str_append_chars(fc->c_code_after, "_ALLOCATOR = ");
-        //     str_append_chars(fc->c_code_after, allocator_name);
-        //     str_append_chars(fc->c_code_after, "();\n");
-        // }
-
-        Scope *prev_scope = fc->current_scope;
-        fc->current_scope = init_scope();
-
-        Str *prevbuf = code;
-        code = str_make("");
-
-        for (int i = 0; i < class->props->keys->length; i++) {
-            char *prop_name = array_get_index(class->props->keys, i);
-            if (map_contains(ini->prop_values, prop_name)) {
-                continue;
-            }
-            ClassProp *prop = array_get_index(class->props->values, i);
-            if (!prop->default_value) {
-                continue;
-            }
-
-            char *cache = str_to_chars(fc->value_buffer);
-            fc->value_buffer->length = 0;
-            fc_write_c_value(fc, prop->default_value, false, code);
-            char *defv = str_to_chars(fc->value_buffer);
-            fc->value_buffer->length = 0;
-            str_append_chars(fc->value_buffer, cache);
-            free(cache);
-
-            str_append_chars(code, "KI_RET_V");
-            str_append_chars(code, sign);
-            str_append_chars(code, prop_name);
-            str_append_chars(code, " = ");
-            str_append_chars(code, defv);
-            str_append_chars(code, ";\n");
-
-            free(defv);
-        }
-
-        deref_local_vars(fc, NULL, fc->current_scope);
-
-        str_append(fc->c_code_after, code);
-        free_str(code);
-        code = prevbuf;
-
-        free_scope(fc->current_scope);
-        fc->current_scope = prev_scope;
-
-        str_append_chars(fc->c_code_after, "return KI_RET_V;\n");
-        str_append_chars(fc->c_code_after, "}\n\n");
-
-    } else if (value->type == vt_prop_access) {
-        ValueClassPropAccess *pa = value->item;
-
-        if (pa->is_static) {
-            Class *class = pa->on;
-            // ClassProp* prop = map_get(class->props, pa->name);
-            //  func ref
-            //  Type* type = prop->return_type;
-            str_append_chars(result, class->cname);
-            str_append_chars(result, "__");
-            str_append_chars(result, pa->name);
-        } else {
-            Value *val = pa->on;
-            fc_write_c_value(fc, pa->on, false, code);
-            Type *type = val->return_type;
-            if (type->is_pointer) {
-                str_append_chars(result, "->");
-            } else {
-                str_append_chars(result, ".");
-            }
-            str_append_chars(result, pa->name);
-        }
-    } else if (value->type == vt_async) {
-        Value *fcallv = value->item;
-        ValueFuncCall *fcall = fcallv->item;
-        Value *on = fcall->on;
-        char *size = malloc(10);
-        //
-        Type *task_type = fc_identifier_to_type(fc, create_identifier("ki", "async", "Task"), NULL);
-        // Cache current value
-        char *cache = str_to_chars(fc->value_buffer);
-
-        // Step 1. Generate execution function
-        char *handler_name = strdup(var_buf(fc));
-        str_append_chars(fc->c_code_after, "void ");
-        str_append_chars(fc->c_code_after, handler_name);
-        str_append_chars(fc->c_code_after, "(");
-        fc_write_c_type(fc->c_code_after, task_type, "task");
-        str_append_chars(fc->c_code_after, ") {\n");
-        str_append_chars(fc->c_code_after, "void* arg_pointer = task->args;\n");
-        // Header
-        str_append_chars(fc->h_code, "void ");
-        str_append_chars(fc->h_code, handler_name);
-        str_append_chars(fc->h_code, "(");
-        fc_write_c_type(fc->h_code, task_type, "task");
-        str_append_chars(fc->h_code, ");\n");
-
-        // Body
-        int args_size = 0;
-        Array *arg_strings = array_make(4);
-        for (int i = 0; i < fcall->arg_values->length; i++) {
-            char *arg_name = malloc(20);
-            Value *v = array_get_index(fcall->arg_values, i);
-            args_size += v->return_type->bytes;
-            sprintf(arg_name, "arg_%d", i);
-            array_push(arg_strings, arg_name);
-            fc_write_c_type(fc->c_code_after, v->return_type, arg_name);
-            str_append_chars(fc->c_code_after, " = *(");
-            v->return_type->is_pointer_of_pointer = true;
-            fc_write_c_type(fc->c_code_after, v->return_type, NULL);
-            v->return_type->is_pointer_of_pointer = false;
-            str_append_chars(fc->c_code_after, ")arg_pointer;\n");
-            str_append_chars(fc->c_code_after, "arg_pointer += ");
-            sprintf(size, "%d", v->return_type->bytes);
-            str_append_chars(fc->c_code_after, size);
-            str_append_chars(fc->c_code_after, ";\n");
-        }
-        // Call func
-        char *func_ref_name = strdup(var_buf(fc));
-        str_append_chars(fc->c_code_after, "void* ");
-        str_append_chars(fc->c_code_after, func_ref_name);
-        str_append_chars(fc->c_code_after, " = task->func;\n");
-
-        char *ret_name = NULL;
-        if (fcallv->return_type) {
-            ret_name = var_buf(fc);
-            fc_write_c_type(fc->c_code_after, fcallv->return_type, ret_name);
-            str_append_chars(fc->c_code_after, " = ");
-        }
-        str_append_chars(fc->c_code_after, "((");
-        fc_write_c_type(fc->c_code_after, on->return_type, NULL);
-        str_append_chars(fc->c_code_after, ")");
-        str_append_chars(fc->c_code_after, func_ref_name);
-        free(func_ref_name);
-        str_append_chars(fc->c_code_after, ")(");
-        // Args
-        for (int i = 0; i < arg_strings->length; i++) {
-            char *arg_name = array_get_index(arg_strings, i);
-            if (i > 0) {
-                str_append_chars(fc->c_code_after, ", ");
-            }
-            str_append_chars(fc->c_code_after, arg_name);
-        }
-        str_append_chars(fc->c_code_after, ");\n");
-        // End func call
-        if (ret_name) {
-            str_append_chars(fc->c_code_after, "task->result = (void*)");
-            str_append_chars(fc->c_code_after, ret_name);
-            str_append_chars(fc->c_code_after, ";\n");
-        }
-        str_append_chars(fc->c_code_after, "task->ready = 1;\n");
-        // Deref args if needed
-        for (int i = 0; i < fcall->arg_values->length; i++) {
-            Value *v = array_get_index(fcall->arg_values, i);
-            char *arg_name = array_get_index(arg_strings, i);
-            if (v->return_type->class && v->return_type->class->ref_count) {
-                str_append_chars(fc->c_code_after, "if(--");
-                str_append_chars(fc->c_code_after, arg_name);
-                str_append_chars(fc->c_code_after, "->_RC == 0) ");
-                str_append_chars(fc->c_code_after, v->return_type->class->cname);
-                str_append_chars(fc->c_code_after, "____free(");
-                str_append_chars(fc->c_code_after, arg_name);
-                str_append_chars(fc->c_code_after, ");\n");
-            }
-        }
-        array_free(arg_strings);
-        // End body
-        str_append_chars(fc->c_code_after, "}\n\n");
-
-        // Step 2. Create Task and push onto stack
-        // Func ref
-        char *allocator_name = fc_write_c_get_allocator(fc, task_type->class->size, false);
-        char *func_name = strdup(var_buf(fc));
-        str_append_chars(code, "void* ");
-        str_append_chars(code, func_name);
-        str_append_chars(code, " = ");
-        fc->value_buffer->length = 0;
-        fc_write_c_value(fc, on, false, code);
-        str_append(code, fc->value_buffer);
-        str_append_chars(code, ";\n");
-        // Init Task
-        char *var_name = strdup(var_buf(fc));
-        fc_write_c_type(code, task_type, var_name);
-        str_append_chars(code, " = ki__mem__Allocator__get_chunk(");
-        str_append_chars(code, allocator_name);
-        str_append_chars(code, "());\n");
-        //
-        str_append_chars(code, var_name);
-        str_append_chars(code, "->handler_func = ");
-        str_append_chars(code, handler_name);
-        str_append_chars(code, ";\n");
-        // Set function
-        str_append_chars(code, var_name);
-        str_append_chars(code, "->func = ");
-        str_append_chars(code, func_name);
-        str_append_chars(code, ";\n");
-        // Set args
-        str_append_chars(code, var_name);
-        str_append_chars(code, "->args = ki__mem__alloc_flat(");
-        sprintf(size, "%d", args_size);
-        str_append_chars(code, size);
-        str_append_chars(code, ");\n");
-
-        char *argsptr_name = var_buf(fc);
-        str_append_chars(code, "void* ");
-        str_append_chars(code, argsptr_name);
-        str_append_chars(code, " = ");
-        str_append_chars(code, var_name);
-        str_append_chars(code, "->args;\n");
-
-        for (int i = 0; i < fcall->arg_values->length; i++) {
-            Value *v = array_get_index(fcall->arg_values, i);
-            fc->value_buffer->length = 0;
-            fc_write_c_value(fc, v, false, code);
-            //
-            str_append_chars(code, "*(");
-            v->return_type->is_pointer_of_pointer = true;
-            fc_write_c_type(code, v->return_type, NULL);
-            v->return_type->is_pointer_of_pointer = false;
-            str_append_chars(code, ")");
-            str_append_chars(code, argsptr_name);
-            str_append_chars(code, " = ");
-            str_append(code, fc->value_buffer);
-            str_append_chars(code, ";\n");
-
-            if (v->return_type->class && v->return_type->class->ref_count) {
-                str_append(code, fc->value_buffer);
-                str_append_chars(code, "->_RC++;\n");
-            }
-
-            str_append_chars(code, argsptr_name);
-            str_append_chars(code, " += ");
-            sprintf(size, "%d", v->return_type->bytes);
-            str_append_chars(code, size);
-            str_append_chars(code, ";\n");
-        }
-
-        // Push task on stack
-        str_append_chars(code, "ki__async__Taskman__add_task(");
-        str_append_chars(code, var_name);
-        str_append_chars(code, ");\n");
-
-        // Set cache back
-        fc->value_buffer->length = 0;
-        str_append_chars(fc->value_buffer, cache);
-        free(cache);
-        free(size);
-        free(func_name);
-        free(handler_name);
-
-        str_append_chars(result, var_name);
-
-        // free(var_name);
-    } else if (value->type == vt_await) {
-        // loop until task is ready
-        // if not ready, check for other tasks todo
-        fc_write_c_value(fc, value->item, false, code);
-        //
-        str_append_chars(code, "while(!");
-        str_append(code, result);
-        str_append_chars(code, "->ready){\n");
-        str_append_chars(code, "ki__async__Taskman__run_another_task();\n");
-        str_append_chars(code, "}\n");
-
-        str_append_chars(result, "->result");
-        //
-    } else if (value->type == vt_allocator) {
-        char *size = value->item;
-        int sizei = atoi(size);
-        char *name = fc_write_c_get_allocator(fc, sizei, true);
-        str_append_chars(result, name);
-        str_append_chars(result, "()");
-    } else {
-        fc_error(fc, "Unhandled value token (compiler bug)", NULL);
-    }
 }
 
 char i_to_str_buf[100];
@@ -2790,6 +2796,7 @@ void llvm_upref(FileCompiler *fc, LLVMValueRef v, Type *type) {
 }
 
 LLVMValueRef llvm_int(int v) { return LLVMConstInt(LLVMInt32Type(), v, true); }
+LLVMValueRef llvm_null() { return LLVMConstInt(LLVMIntPtrType(g_target_data), 0, false); }
 
 // Operands
 LLVMValueRef llvm_icmp(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right) { return LLVMBuildICmp(fc->builder, LLVMICmp, left, right, "icmp_1"); }

@@ -113,6 +113,7 @@ typedef struct Scope {
     //
     Array *var_bufs;
     Array *local_var_names;
+    Map *llvm_declares;
 } Scope;
 
 typedef enum ScopeType {
@@ -326,7 +327,7 @@ typedef enum ValueType {
     vt_string,
     vt_char,
     vt_operator,
-    vt_var,
+    vt_var_DEPRICATED,
     vt_func_call, // 10
     vt_sizeof,
     vt_cast,
@@ -343,6 +344,8 @@ typedef enum ValueType {
     vt_shared_global,
     vt_nullable_value,
     vt_null_or,
+    vt_func_name,
+    vt_local_var,
 } ValueType;
 
 typedef struct ValueFuncCall {

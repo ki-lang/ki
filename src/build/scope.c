@@ -24,6 +24,7 @@ Scope *init_scope() {
     //
     scope->var_bufs = array_make(8);
     scope->local_var_names = array_make(8);
+    scope->llvm_declares = map_make(4);
     //
     return scope;
 }

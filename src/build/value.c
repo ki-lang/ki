@@ -34,11 +34,11 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         value->return_type = subv->return_type;
         fc_expect_token(fc, ")", false, false, true);
     } else if (strcmp(token, "KI_ALLOCATORS") == 0) {
-        value->type = vt_var;
+        value->type = vt_shared_global;
         value->item = strdup("KI_ALLOCATORS");
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "ptr"), NULL);
     } else if (strcmp(token, "KI_ALLOCATORS_MUT") == 0) {
-        value->type = vt_var;
+        value->type = vt_shared_global;
         value->item = strdup("KI_ALLOCATORS_MUT");
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "async", "Mutex"), NULL);
     } else if (strcmp(token, "null") == 0) {
@@ -206,8 +206,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
         array_push(fc->strings, vstr);
 
+        value->type = vt_shared_global;
         value->item = globname;
-        value->type = vt_var;
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "String"), NULL);
 
     } else if (strcmp(token, "'") == 0) {
@@ -384,7 +384,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         if (idf->type == idfor_func) {
             Function *func = idf->item;
 
-            value->type = vt_var;
+            value->type = vt_func_name;
             value->item = func->cname;
 
             Type *t = init_type();
@@ -426,7 +426,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
 
         } else if (idf->type == idfor_local_var) {
             LocalVar *lv = idf->item;
-            value->type = vt_var;
+            value->type = vt_local_var;
             value->item = lv->gen_name;
             value->return_type = lv->type;
         } else if (idf->type == idfor_threaded_global) {
@@ -446,7 +446,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         } else if (idf->type == idfor_shared_global) {
             GlobalVar *gv = idf->item;
             value->type = vt_shared_global;
-            value->item = gv;
+            value->item = gv->cname;
             value->return_type = gv->return_type;
 
             fc_depends_on(fc, gv->fc);
@@ -951,7 +951,7 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
             if (!prop->is_static) {
                 Value *prev_on = on;
                 on = init_value();
-                on->type = vt_var;
+                on->type = vt_func_name;
                 on->item = prop->func->cname;
                 on->return_type = prev_on->return_type;
                 fcall->on = on;
@@ -1043,7 +1043,7 @@ Value *fc_read_func_call(FileCompiler *fc, Scope *scope, Value *on) {
 ValueFuncCall *value_generate_func_call(Function *func) {
 
     Value *on = init_value();
-    on->type = vt_var;
+    on->type = vt_func_name;
     on->item = func->cname;
     Type *t = init_type();
     t->type = type_funcref;
