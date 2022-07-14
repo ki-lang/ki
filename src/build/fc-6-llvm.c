@@ -1,6 +1,7 @@
 
 #include "../all.h"
 
+void llvm_set_target();
 void llvm_build_inits();
 void llvm_build_ast(FileCompiler *fc, Scope *scope);
 void llvm_build_token(FileCompiler *fc, Token *t);
@@ -26,6 +27,9 @@ LLVMValueRef g_llvm_init_thread;
 LLVMTypeRef g_llvm_init_thread_type;
 //
 
+LLVMTargetMachineRef g_target_machine;
+LLVMTargetDataRef g_target_data;
+
 void fc_write_c_all() {
     // Clear header
     char *path = malloc(KI_PATH_MAX);
@@ -37,7 +41,7 @@ void fc_write_c_all() {
     //     write_file(path, "extern __thread int errno;\n", true);
     // #endif
 
-    // LLVMInitializeNativeTarget();
+    llvm_set_target();
 
     llvm_build_inits();
 
@@ -123,6 +127,34 @@ void fc_write_c_all() {
     // write_file(path, "void KI_INIT_THREAD();\n", true);
     // write_file(path, "void* KI_ALLOCATORS;\n", true);
     // write_file(path, "void* KI_ALLOCATORS_MUT;\n", true);
+
+    LLVMDisposeTargetMachine(g_target_machine);
+}
+
+void llvm_set_target() {
+    //
+    char *error = NULL;
+    //
+    LLVMInitializeNativeTarget();
+    LLVMInitializeAllTargetInfos();
+    LLVMInitializeAllTargets();
+    LLVMInitializeAllTargetMCs();
+    LLVMInitializeAllAsmParsers();
+    LLVMInitializeAllAsmPrinters();
+    //
+    LLVMTargetRef target;
+    if (LLVMGetTargetFromTriple(LLVM_DEFAULT_TARGET_TRIPLE, &target, &error) != 0) {
+        fprintf(stderr, "Failed to get target!\n");
+        fprintf(stderr, "%s\n", error);
+        LLVMDisposeMessage(error);
+        exit(1);
+    }
+
+    char *cpu = "generic";
+    char *features = "";
+
+    g_target_machine = LLVMCreateTargetMachine(target, LLVM_DEFAULT_TARGET_TRIPLE, cpu, features, LLVMCodeGenLevelDefault, LLVMRelocDefault, LLVMCodeModelDefault);
+    g_target_data = LLVMCreateTargetDataLayout(g_target_machine);
 }
 
 void llvm_build_inits() {
@@ -190,7 +222,9 @@ void llvm_build_func(FileCompiler *fc, Function *func) {
 LLVMTypeRef llvm_type(Type *type) {
     //
     LLVMTypeRef result;
-    if (type->type == type_void) {
+    if (type->is_pointer) {
+        result = LLVMIntPtrType(g_target_data);
+    } else if (type->type == type_void) {
         result = LLVMVoidType();
     } else if (type->type == type_void_pointer) {
         result = LLVMVoidType();
@@ -222,7 +256,7 @@ LLVMTypeRef llvm_type(Type *type) {
 
             if (class->llvm_type == NULL) {
                 int propc = 0;
-                LLVMTypeRef prop_types[class->props->keys->length];
+                LLVMTypeRef *prop_types = malloc(sizeof(LLVMTypeRef) * class->props->keys->length);
                 for (int i = 0; i < class->props->keys->length; i++) {
                     ClassProp *prop = array_get_index(class->props->values, i);
                     if (!prop->is_static && !prop->is_func) {
@@ -232,10 +266,12 @@ LLVMTypeRef llvm_type(Type *type) {
                 //
                 class->llvm_type = LLVMStructType(prop_types, propc, 0);
                 //
+                propc = 0;
                 for (int i = 0; i < class->props->keys->length; i++) {
                     ClassProp *prop = array_get_index(class->props->values, i);
                     if (!prop->is_static && !prop->is_func) {
                         prop_types[propc] = llvm_type(prop->return_type);
+                        propc++;
                     }
                 }
             }
@@ -250,10 +286,6 @@ LLVMTypeRef llvm_type(Type *type) {
     } else {
         printf("Type: %d\n", type->type);
         die("Cannot convert llvm type");
-    }
-
-    if (type->is_pointer) {
-        result = LLVMVectorType(result, 1);
     }
 
     return result;
@@ -289,10 +321,11 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
     } else if (token->type == tkn_declare) {
         TokenDeclare *decl = token->item;
 
-        LLVMValueRef v = llvm_value(fc, decl->value);
-
         LLVMTypeRef lt = llvm_type(decl->type);
         LLVMValueRef a = LLVMBuildAlloca(fc->builder, lt, decl->name);
+
+        LLVMValueRef v = llvm_value(fc, decl->value);
+
         LLVMBuildStore(fc->builder, v, a);
 
         // fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
@@ -2845,26 +2878,8 @@ void llvm_build_o(LLVMModuleRef mod, char *outpath) {
     //
     char *error = NULL;
     LLVMVerifyModule(mod, LLVMAbortProcessAction, &error);
-    // if (error) {
-    //     printf("Verify module failed\n");
-    //     die(error);
-    // }
-    //
-    LLVMInitializeNativeTarget();
-    LLVMInitializeAllTargetInfos();
-    LLVMInitializeAllTargets();
-    LLVMInitializeAllTargetMCs();
-    LLVMInitializeAllAsmParsers();
-    LLVMInitializeAllAsmPrinters();
-    //
+
     LLVMSetTarget(mod, LLVM_DEFAULT_TARGET_TRIPLE);
-    LLVMTargetRef target;
-    if (LLVMGetTargetFromTriple(LLVM_DEFAULT_TARGET_TRIPLE, &target, &error) != 0) {
-        fprintf(stderr, "Failed to get target!\n");
-        fprintf(stderr, "%s\n", error);
-        LLVMDisposeMessage(error);
-        exit(1);
-    }
 
     LLVMPassManagerRef pass = LLVMCreatePassManager();
     LLVMAddCFGSimplificationPass(pass);
@@ -2877,12 +2892,7 @@ void llvm_build_o(LLVMModuleRef mod, char *outpath) {
 
     LLVMRunPassManager(pass, mod);
 
-    char *cpu = "generic";
-    char *features = "";
-
-    LLVMTargetMachineRef targetMachine = LLVMCreateTargetMachine(target, LLVM_DEFAULT_TARGET_TRIPLE, cpu, features, LLVMCodeGenLevelDefault, LLVMRelocDefault, LLVMCodeModelDefault);
-
-    if (LLVMTargetMachineEmitToFile(targetMachine, mod, outpath, LLVMObjectFile, &error) != 0) {
+    if (LLVMTargetMachineEmitToFile(g_target_machine, mod, outpath, LLVMObjectFile, &error) != 0) {
         fprintf(stderr, "Failed to emit machine code!\n");
         fprintf(stderr, "%s\n", error);
         LLVMDisposeMessage(error);
@@ -2890,7 +2900,6 @@ void llvm_build_o(LLVMModuleRef mod, char *outpath) {
     }
 
     LLVMDisposeMessage(error);
-    LLVMDisposeTargetMachine(targetMachine);
     LLVMPassManagerBuilderDispose(passBuilder);
     LLVMDisposePassManager(pass);
     LLVMDisposeModule(mod);
