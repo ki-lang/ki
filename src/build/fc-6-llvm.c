@@ -306,7 +306,7 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
         // str_append_chars(result, "(");
         return llvm_value(fc, value->item);
         // str_append_chars(result, ")");
-    } else if (value->type == vt_var) {
+    } else if (value->type == vt_shared_global) {
         Scope *scope = fc->current_scope;
         str_append_chars(result, value->item);
         /*
