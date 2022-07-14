@@ -426,6 +426,7 @@ void fc_scan_class_props(Class *class) {
 
             Function *func = init_func();
             func->fc = fc;
+            func->class = class;
             func->scope = init_sub_scope(class->scope);
             func->scope->is_func = true;
             func->scope->func = func;
@@ -463,6 +464,7 @@ void fc_scan_class_props(Class *class) {
 
             map_set(class->props, name, prop);
             array_push(g_functions, func);
+            array_push(class->fc->functions, func);
 
             char *cname = malloc(strlen(class->cname) + strlen(token) + 3);
             strcpy(cname, class->cname);

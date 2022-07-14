@@ -1,0 +1,118 @@
+
+use ki:http;
+
+threaded_global ?http:Router GT_router = null;
+
+class Response{
+
+	public static func error(i32 code) http:Response {
+		if(code == 404){
+			return http:Response{
+				body: "ERROR 404"
+			};
+		}
+		if(code == 500){
+			return http:Response{
+				body: "ERROR 500"
+			};
+		}
+
+		return http:Response{
+			body: "Unknown error :("
+		};
+	}
+}
+
+class Test {
+
+	public String label;
+
+	public func __before_free() {
+		print("FREEE: ");
+		println(this.label);
+	}
+}
+
+func home(http:Request req) http:Response{
+	return http:Response{
+		body: "Hello from /"
+	};
+}
+
+func hello(http:Request req) http:Response{
+	return http:Response{
+		body: "Hello from /hello"
+	};
+}
+
+func handler(http:Request req) http:Response{
+
+	@ router = GT_router;
+
+	ifnull router set {
+		@ r = http:Router.make();
+
+		r.add("GET", "/", home);
+		r.add("GET", "/hello", hello);
+
+		GT_router = r;
+
+		return r;
+	}
+
+	@ route = router.find("GET", req.uri);
+	ifnull route return Response.error(404);
+
+	return route.handler(req);
+}
+
+func main(Array<String> args) i32 {
+
+	@ mx = Map<Test>.make();
+	mx.set("1", Test{ label: "a" });
+	mx.set("1", Test{ label: "b" });
+	mx.remove("1");
+	mx.set("1", Test{ label: "c" });
+
+	@ m = Map<String>.make();
+	m.set("a", "1");
+	m.set("b", "2");
+	m.set("c", "3");
+
+	@ keys = m.keys();
+	each keys as key {
+		print(key);
+		print(":");
+		println(m.get(key) or value "?");
+	}
+
+	#props String as name type
+	println("#{name}");
+	#/props
+
+	@ a = ?10;
+	ifnull a return 1;
+	@ b = a.value + 5;
+	println(b.str());
+
+	@ x = 50.123;
+
+	@ s = http:Server.init("127.0.0.1", 9000, handler) or exit 1;
+	//s.enable_ssl(4430, "./debug/ki/http/certs/localhost.crt", "./debug/ki/http/certs/localhost.key") or exit 1;
+	s.start() or exit 1;
+
+	return 0;
+
+	@ client = ki:tcp:Client.init("127.0.0.1", 9000) or return {
+		println("Failed to create tcp client");
+		return 1;
+	};
+	client.send("test") or return {
+		println("Failed to send");
+		return 1;
+	};
+	println("Sent");
+
+	return 0;
+}
+

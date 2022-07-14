@@ -255,14 +255,16 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
             }
         }
 
-        if (negative) {
-            prepend(token, "-");
-        }
+        ValueNumber *vn = malloc(sizeof(ValueNumber));
+        vn->is_float = false;
+        vn->negative = negative;
 
         char ch = fc_get_char(fc, 0);
         if (!is_hex && ch == '.') {
             // Float
             fc->i++;
+            vn->is_float = true;
+            //
             char *fl = malloc(256);
             strcpy(fl, token);
             strcat(fl, ".");
@@ -283,14 +285,22 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 digit = fc_get_char(fc, 0);
             }
             fl[x] = '\0';
+
+            //
+            vn->iv = atof(fl);
+            //
             value->type = vt_number;
-            value->item = fl;
+            value->item = vn;
             value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "f32"), NULL);
+            //
+            free(fl);
 
         } else {
             // Int
+            vn->iv = atoi(token);
+            //
             value->type = vt_number;
-            value->item = strdup(token);
+            value->item = vn;
             value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"), NULL);
         }
 

@@ -17,6 +17,7 @@ Function *init_func() {
     func->scope = NULL;
     func->return_type = NULL;
     func->called_by = array_make(2);
+    func->class = NULL;
     return func;
 }
 

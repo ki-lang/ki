@@ -67,6 +67,9 @@ void fc_scan_args_and_props(FileCompiler *fc) {
     //
     for (int x = 0; x < fc->functions->length; x++) {
         Function *func = array_get_index(fc->functions, x);
+        if (func->class) {
+            continue;
+        }
         fc_scan_func_args(func);
     }
 }

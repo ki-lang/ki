@@ -210,9 +210,11 @@ LLVMTypeRef llvm_class_type(Class *class);
 int llvm_prop_index(Class *class, char *prop_name);
 LLVMValueRef llvm_get_var(FileCompiler *fc, char *name);
 // Build
-LLVMValueRef llvm_build_class_init(FileCompiler *fc, ValueClassInit *init);
+LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value);
+LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value);
 LLVMValueRef llvm_build_declare(FileCompiler *fc, LLVMTypeRef type, char *name);
 LLVMValueRef llvm_build_prop_access(FileCompiler *fc, LLVMValueRef on, Class *class, char *prop_name);
+LLVMValueRef llvm_build_ort(FileCompiler *fc, OrToken *ort);
 //
 void llvm_define_func(FileCompiler *fc, Function *func);
 void llvm_build_func(FileCompiler *fc, Function *func);

@@ -33,7 +33,10 @@ void fc_write_c_all() {
         PkgCompiler *pkc = array_get_index(packages->values, i);
         for (int o = 0; o < pkc->file_compilers->keys->length; o++) {
             FileCompiler *fc = array_get_index(pkc->file_compilers->values, o);
-            if (fc->should_recompile) {
+            if (fc->should_recompile && !fc->is_header) {
+
+                printf("Compile: %s\n", fc->ki_filepath);
+
                 fc->mod = LLVMModuleCreateWithName("main_module");
                 fc->builder = LLVMCreateBuilder();
 
@@ -43,8 +46,11 @@ void fc_write_c_all() {
                     llvm_define_func(fc, func);
                 }
 
-                //
-                llvm_build_ast(fc, fc->scope);
+                // Build functions
+                for (int x = 0; x < fc->functions->length; x++) {
+                    Function *func = array_get_index(fc->functions, x);
+                    llvm_build_func(fc, func);
+                }
 
                 llvm_build_o(fc->mod, fc->o_filepath);
             }
@@ -187,6 +193,7 @@ void llvm_build_ast(FileCompiler *fc, Scope *scope) {
 }
 
 void llvm_define_func(FileCompiler *fc, Function *func) {
+    printf("pre: %s\n", func->cname);
     LLVMTypeRef param_types[func->arg_types->length];
     for (int i = 0; i < func->arg_types->length; i++) {
         param_types[i] = llvm_type(array_get_index(func->arg_types, i));
@@ -198,6 +205,7 @@ void llvm_define_func(FileCompiler *fc, Function *func) {
 
 void llvm_build_func(FileCompiler *fc, Function *func) {
     //
+    printf("func: %s\n", func->cname);
     LLVMValueRef llvmfn = LLVMGetNamedFunction(fc->mod, func->cname);
     LLVMBasicBlockRef entry = LLVMGetEntryBasicBlock(llvmfn);
 
@@ -231,11 +239,12 @@ LLVMValueRef llvm_get_var(FileCompiler *fc, char *name) {
     }
     printf("Var name: %s\n", name);
     die("Variable not found");
+    return NULL;
 }
 
 LLVMValueRef llvm_build_prop_access(FileCompiler *fc, LLVMValueRef on, Class *class, char *prop_name) {
     //
-    ClassProp *prop = map_get(class, prop_name);
+    ClassProp *prop = map_get(class->struct_props, prop_name);
     return LLVMBuildStructGEP2(fc->builder, class->llvm_type, on, prop->struct_index, "get_prop_1");
 }
 
@@ -323,14 +332,24 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
         return LLVMGetNamedGlobal(fc->mod, value->item);
     } else if (value->type == vt_class_init) {
         return llvm_build_class_init(fc, value->item);
+    } else if (value->type == vt_number) {
+        ValueNumber *vn = value->item;
+        if (vn->is_float) {
+            die("TODO: float");
+        } else {
+            return LLVMConstInt(LLVMInt32Type(), vn->iv, true);
+        }
+    } else if (value->type == vt_func_call) {
+        return llvm_build_func_call(fc, value);
         /*
-            } else if (value->type == vt_nullable_value) {
-                //
-                Type *ret = value->return_type;
-                str_append_chars(result, ret->class->cname);
-                str_append_chars(result, "__init(");
-                fc_write_c_value(fc, value->item, false, code);
-                str_append_chars(result, ")");
+
+    } else if (value->type == vt_nullable_value) {
+        //
+        Type *ret = value->return_type;
+        str_append_chars(result, ret->class->cname);
+        str_append_chars(result, "__init(");
+        fc_write_c_value(fc, value->item, false, code);
+        str_append_chars(result, ")");
             } else if (value->type == vt_threaded_global) {
                 //
                 GlobalVar *gv = value->item;
@@ -430,113 +449,6 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
                     fc_write_c_value(fc, op->right, false, code);
                 }
             } else if (value->type == vt_func_call) {
-                ValueFuncCall *fa = value->item;
-
-                // Arg values
-                char *cache = str_to_chars(fc->value_buffer);
-                Array *arg_strings = array_make(4);
-                for (int i = 0; i < fa->arg_values->length; i++) {
-                    Value *v = array_get_index(fa->arg_values, i);
-                    fc->value_buffer->length = 0;
-                    fc_write_c_value(fc, v, false, code);
-                    array_push(arg_strings, str_to_chars(fc->value_buffer));
-                }
-                fc->value_buffer->length = 0;
-                str_append_chars(fc->value_buffer, cache);
-                free(cache);
-
-                //
-                fc_write_c_value(fc, fa->on, false, code);
-                str_append_chars(result, "(");
-                for (int i = 0; i < arg_strings->length; i++) {
-                    if (i > 0) {
-                        str_append_chars(result, ", ");
-                    }
-                    char *arg_str = array_get_index(arg_strings, i);
-                    str_append_chars(result, arg_str);
-                    free(arg_str);
-                }
-                free(arg_strings);
-
-                if (fa->ort != NULL) {
-                    if (fa->arg_values->length > 0) {
-                        str_append_chars(result, ", ");
-                    }
-                    str_append_chars(result, "&_KI_THROW_MSG_BUF");
-                }
-                str_append_chars(result, ")");
-
-                if (fa->ort != NULL) {
-                    char *buf_var_name = NULL;
-                    if (value->return_type) {
-                        buf_var_name = strdup(var_buf(fc));
-                        fc_write_c_type(code, value->return_type, buf_var_name);
-                        str_append_chars(code, " = ");
-                    }
-                    str_append(code, result);
-                    str_append_chars(code, ";\n");
-                    //
-                    result->length = 0;
-
-                    // Check error
-                    str_append_chars(code, "if(_KI_THROW_MSG_BUF){\n");
-
-                    if (fa->ort->type != or_pass) {
-                        str_append_chars(code, "_KI_THROW_MSG_BUF = (void*)0;\n");
-                    }
-
-                    char *buf = fc_write_c_ort(fc, fa->ort);
-
-                    if (buf) {
-                        str_append_chars(code, buf_var_name);
-                        str_append_chars(code, " = ");
-                        str_append_chars(code, buf);
-                        str_append_chars(code, ";\n");
-                        free(buf);
-                    }
-
-                    //
-                    str_append_chars(code, "}\n");
-                    // Update result
-                    result->length = 0;
-                    if (value->return_type) {
-                        str_append_chars(result, buf_var_name);
-                        free(buf_var_name);
-                    }
-                }
-
-                if (value->return_type) {
-                    Class *retClass = value->return_type->class;
-                    if (retClass && retClass->ref_count) {
-                        // Buffer the value
-                        char *buf_var_name = strdup(var_buf(fc));
-                        str_append_chars(code, "struct ");
-                        str_append_chars(code, retClass->cname);
-                        str_append_chars(code, "* ");
-                        str_append_chars(code, buf_var_name);
-                        str_append_chars(code, " = ");
-                        str_append(code, result);
-                        str_append_chars(code, ";\n");
-
-                        if (value->return_type->nullable) {
-                            str_append_chars(code, "if(");
-                            str_append_chars(code, buf_var_name);
-                            str_append_chars(code, ") ");
-                        }
-
-                        str_append_chars(code, buf_var_name);
-                        str_append_chars(code, "->_RC++;\n");
-                        result->length = 0;
-                        str_append_chars(result, buf_var_name);
-
-                        VarInfo *vi = malloc(sizeof(VarInfo));
-                        vi->name = buf_var_name;
-                        vi->return_type = value->return_type;
-
-                        if (fc->current_scope)
-                            array_push(fc->current_scope->var_bufs, vi);
-                    }
-                }
 
             } else if (value->type == vt_sizeof) {
                 str_append_chars(result, value->item);
@@ -833,6 +745,7 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
             llvm_upref(fc, a, decl->type);
             array_push(fc->current_scope->local_var_names, decl);
         }
+    } else if (token->type == tkn_if) {
         /*
     } else if (token->type == tkn_debug_msg) {
         char *msg = token->item;
@@ -2595,24 +2508,23 @@ void llvm_deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
 
 void llvm_deref(FileCompiler *fc, LLVMValueRef v, Type *type) {
     //
-    LLVMBasicBlockRef main_block = fc->current_block;
-    //
-    LLVMBasicBlockRef then = LLVMAppendBasicBlock(fc->current_func, "if_deref");
-    LLVMPositionBuilderAtEnd(fc->builder, then);
-    fc->current_block = then;
-    //
-
-    //
-    fc->current_block = main_block;
-    LLVMPositionBuilderAtEnd(fc->builder, main_block);
-    //
     LLVMValueRef min = llvm_sub(fc, v, llvm_int(1));
     LLVMValueRef cond = llvm_icmp(fc, min, llvm_int(0));
     if (type->nullable) {
         LLVMValueRef isset = llvm_isset(fc, v);
         cond = LLVMBuildAnd(fc->builder, cond, isset, "tmp");
     }
+    LLVMBasicBlockRef then = LLVMAppendBasicBlock(fc->current_func, "if_deref");
+    LLVMBasicBlockRef next = LLVMAppendBasicBlock(fc->current_func, "if_deref_next");
     LLVMBuildCondBr(fc->builder, cond, then, NULL);
+    //
+    LLVMPositionBuilderAtEnd(fc->builder, then);
+    fc->current_block = then;
+    //
+
+    //
+    LLVMPositionBuilderAtEnd(fc->builder, next);
+    fc->current_block = next;
 
     // str_append_chars(fc->tkn_buffer, "if(");
     // if (rt->nullable) {

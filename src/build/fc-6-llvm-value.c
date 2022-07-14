@@ -4,7 +4,8 @@
 LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value) {
     //
     fc->var_bufc++;
-    ValueClassInit *ini = value->item Class *class = ini->class;
+    ValueClassInit *ini = value->item;
+    Class *class = ini->class;
     LLVMValueRef allocator_func = llvm_get_allocator(fc, class->size, true);
     char *allocator_name = LLVMGetValueName(allocator_func);
 
@@ -19,7 +20,7 @@ LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value) {
     for (int i = 0; i < ini->prop_values->values->length; i++) {
         Value *val = array_get_index(ini->prop_values->values, i);
         ini_types[i] = llvm_type(val->return_type);
-        ini_values[i] = llvm_value(val->item);
+        ini_values[i] = llvm_value(fc, val->item);
     }
 
     LLVMTypeRef ftype = LLVMFunctionType(llvm_ptr(), ini_types, argc, 0);
@@ -89,4 +90,112 @@ LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value) {
     LLVMValueRef init_call = LLVMBuildCall2(fc->builder, ftype, fv, ini_values, argc, "class_init_1");
 
     return init_call;
+}
+
+LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value) {
+    //
+    ValueFuncCall *fa = value->item;
+
+    int argc = fa->arg_values->length;
+    if (fa->ort != NULL) {
+        argc++;
+    }
+    LLVMValueRef *args = malloc(sizeof(LLVMValueRef) * argc);
+    for (int i = 0; i < fa->arg_values->length; i++) {
+        Value *v = array_get_index(fa->arg_values, i);
+        args[i] = llvm_value(fc, v);
+    }
+    if (fa->ort != NULL) {
+        LLVMValueRef var = llvm_get_var(fc, "_KI_THROW_MSG_BUF");
+        LLVMValueRef ptr = llvm_build_declare(fc, llvm_ptr(), "tmp");
+        ptr = LLVMBuildGEP2(fc->builder, llvm_ptr(), var, NULL, 0, "tmp");
+        args[argc - 1] = ptr;
+    }
+
+    LLVMTypeRef ont = llvm_type(fa->on->return_type);
+    LLVMValueRef onv = llvm_value(fc, fa->on);
+    LLVMValueRef retv = LLVMBuildCall2(fc->builder, ont, onv, args, argc, "fcall_1");
+
+    if (fa->ort != NULL) {
+
+        LLVMTypeRef rett = llvm_type(value->return_type);
+        char *ret_var = strdup(var_buf(fc));
+        LLVMValueRef ort_retv = llvm_build_declare(fc, rett, ret_var);
+        LLVMBuildStore(fc->builder, retv, ort_retv);
+
+        //
+        LLVMValueRef throw_var = llvm_get_var(fc, "_KI_THROW_MSG_BUF");
+        LLVMValueRef cond = llvm_icmp(fc, throw_var, llvm_int(0));
+        LLVMBasicBlockRef then = LLVMAppendBasicBlock(fc->current_func, "fcall_ort");
+        LLVMBasicBlockRef next = LLVMAppendBasicBlock(fc->current_func, "fcall_ort_next");
+        LLVMBuildCondBr(fc->builder, cond, then, NULL);
+        //
+        LLVMPositionBuilderAtEnd(fc->builder, then);
+        fc->current_block = then;
+
+        if (fa->ort->type != or_pass) {
+            LLVMValueRef zero = llvm_int(0);
+            LLVMBuildStore(fc->builder, zero, throw_var);
+        }
+
+        LLVMValueRef ortv = llvm_build_ort(fc, fa->ort);
+        if (ortv) {
+            LLVMBuildStore(fc->builder, ortv, ort_retv);
+        }
+
+        LLVMPositionBuilderAtEnd(fc->builder, next);
+        fc->current_block = next;
+
+        retv = ort_retv;
+    }
+
+    // Ref count
+    if (value->return_type) {
+        Class *retClass = value->return_type->class;
+        if (retClass && retClass->ref_count) {
+            // todo
+        }
+    }
+
+    return retv;
+    /*
+
+            if (value->return_type) {
+                Class *retClass = value->return_type->class;
+                if (retClass && retClass->ref_count) {
+                    // Buffer the value
+                    char *buf_var_name = strdup(var_buf(fc));
+                    str_append_chars(code, "struct ");
+                    str_append_chars(code, retClass->cname);
+                    str_append_chars(code, "* ");
+                    str_append_chars(code, buf_var_name);
+                    str_append_chars(code, " = ");
+                    str_append(code, result);
+                    str_append_chars(code, ";\n");
+
+                    if (value->return_type->nullable) {
+                        str_append_chars(code, "if(");
+                        str_append_chars(code, buf_var_name);
+                        str_append_chars(code, ") ");
+                    }
+
+                    str_append_chars(code, buf_var_name);
+                    str_append_chars(code, "->_RC++;\n");
+                    result->length = 0;
+                    str_append_chars(result, buf_var_name);
+
+                    VarInfo *vi = malloc(sizeof(VarInfo));
+                    vi->name = buf_var_name;
+                    vi->return_type = value->return_type;
+
+                    if (fc->current_scope)
+                        array_push(fc->current_scope->var_bufs, vi);
+                }
+            }
+                            */
+}
+
+LLVMValueRef llvm_build_ort(FileCompiler *fc, OrToken *ort) {
+    //
+    return NULL;
 }

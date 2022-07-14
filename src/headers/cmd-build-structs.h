@@ -223,6 +223,7 @@ typedef struct Function {
     Scope *scope;
     //
     struct Array *called_by;
+    struct Class *class;
 } Function;
 
 typedef struct FunctionArg {
@@ -449,6 +450,13 @@ typedef struct ValueString {
     char *name;
     char *body;
 } ValueString;
+
+typedef struct ValueNumber {
+    bool is_float;
+    bool negative;
+    float fv;
+    unsigned long iv;
+} ValueNumber;
 
 //////////
 
