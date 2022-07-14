@@ -80,6 +80,8 @@ typedef struct FileCompiler {
     // LLVM
     LLVMModuleRef mod;
     LLVMBuilderRef builder;
+    LLVMValueRef current_func;
+    LLVMBasicBlockRef current_block;
 } FileCompiler;
 
 typedef struct FcCache {
@@ -546,6 +548,7 @@ typedef struct LocalVar {
 typedef struct VarInfo {
     char *name;
     Type *return_type;
+    LLVMValueRef llvm_value;
 } VarInfo;
 
 typedef struct TokenIdValue {

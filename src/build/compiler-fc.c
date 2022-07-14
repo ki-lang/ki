@@ -57,6 +57,11 @@ FileCompiler *init_fc() {
     fc->converter_positions = array_make(2);
     //
     fc->include_headers_from = array_make(10);
+    //
+    fc->mod = NULL;
+    fc->builder = NULL;
+    fc->current_func = NULL;
+    fc->current_block = NULL;
     return fc;
 }
 

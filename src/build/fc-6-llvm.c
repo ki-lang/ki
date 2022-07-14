@@ -1,23 +1,49 @@
 
 #include "../all.h"
 
+void llvm_build_inits();
 void llvm_build_ast(FileCompiler *fc, Scope *scope);
 void llvm_build_token(FileCompiler *fc, Token *t);
+void llvm_build_o(LLVMModuleRef mod, char *outpath);
 LLVMTypeRef llvm_type(Type *type);
+LLVMValueRef llvm_value(FileCompiler *fc, Value *value);
+void llvm_deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope);
+void llvm_deref(FileCompiler *fc, LLVMValueRef v, Type *type);
+void llvm_upref(FileCompiler *fc, LLVMValueRef v, Type *type);
+LLVMValueRef llvm_isset(FileCompiler *fc, LLVMValueRef v);
+// Operands
+LLVMValueRef llvm_icmp(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right);
+LLVMValueRef llvm_sub(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right);
+//
+LLVMValueRef llvm_int(int v);
+
+//
+LLVMModuleRef g_llvm_inits_mod;
+LLVMBuilderRef g_llvm_inits_builder;
+LLVMValueRef g_llvm_inits;
+LLVMTypeRef g_llvm_inits_type;
+LLVMValueRef g_llvm_init_thread;
+LLVMTypeRef g_llvm_init_thread_type;
+//
 
 void fc_write_c_all() {
     // Clear header
     char *path = malloc(KI_PATH_MAX);
     char *cache_dir = get_cache_dir();
-    strcpy(path, cache_dir);
-    strcat(path, "/project.h");
-    write_file(path, "", false);
 
     // #if defined __APPLE__ || defined _WIN32
     //     write_file(path, "extern int errno;\n", true);
     // #else
     //     write_file(path, "extern __thread int errno;\n", true);
     // #endif
+
+    // LLVMInitializeNativeTarget();
+
+    llvm_build_inits();
+
+    strcpy(path, cache_dir);
+    strcat(path, "/inits.o");
+    llvm_build_o(g_llvm_inits_mod, path);
 
     for (int i = 0; i < packages->keys->length; i++) {
         PkgCompiler *pkc = array_get_index(packages->values, i);
@@ -28,6 +54,8 @@ void fc_write_c_all() {
                 fc->builder = LLVMCreateBuilder();
 
                 llvm_build_ast(fc, fc->scope);
+
+                llvm_build_o(fc->mod, fc->o_filepath);
             }
         }
     }
@@ -97,6 +125,28 @@ void fc_write_c_all() {
     // write_file(path, "void* KI_ALLOCATORS_MUT;\n", true);
 }
 
+void llvm_build_inits() {
+    //
+    LLVMModuleRef mod = LLVMModuleCreateWithName("main_module");
+    LLVMBuilderRef b = LLVMCreateBuilder();
+    g_llvm_inits_mod = mod;
+    g_llvm_inits_builder = b;
+
+    // Inits
+    g_llvm_inits_type = LLVMFunctionType(LLVMVoidType(), NULL, 0, 0);
+    g_llvm_inits = LLVMAddFunction(g_llvm_inits_mod, "KI_INITS", g_llvm_inits_type);
+    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(g_llvm_init_thread, "entry");
+    LLVMPositionBuilderAtEnd(b, entry);
+    LLVMBuildRet(b, NULL);
+
+    // Init thread
+    g_llvm_init_thread_type = LLVMFunctionType(LLVMVoidType(), NULL, 0, 0);
+    g_llvm_inits = LLVMAddFunction(g_llvm_inits_mod, "KI_INIT_THREAD", g_llvm_init_thread_type);
+    entry = LLVMAppendBasicBlock(g_llvm_init_thread, "entry");
+    LLVMPositionBuilderAtEnd(b, entry);
+    LLVMBuildRet(b, NULL);
+}
+
 void llvm_build_ast(FileCompiler *fc, Scope *scope) {
     //
     Scope *prev_scope = fc->current_scope;
@@ -111,7 +161,7 @@ void llvm_build_ast(FileCompiler *fc, Scope *scope) {
     }
 
     if (!scope->did_return) {
-        deref_local_vars(fc, NULL, fc->current_scope);
+        llvm_deref_local_vars(fc, NULL, fc->current_scope);
     }
 
     fc->current_scope = prev_scope;
@@ -130,7 +180,11 @@ void llvm_build_func(FileCompiler *fc, Function *func) {
 
     LLVMPositionBuilderAtEnd(fc->builder, entry);
 
-    // llvm_build_ast(fc, func->scope);
+    llvm_build_ast(fc, func->scope);
+
+    if (!ret_type) {
+        LLVMBuildRet(fc->builder, NULL);
+    }
 }
 
 LLVMTypeRef llvm_type(Type *type) {
@@ -205,13 +259,53 @@ LLVMTypeRef llvm_type(Type *type) {
     return result;
 }
 
+LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
+    //
+    LLVMValueRef result = NULL;
+
+    //
+    return result;
+}
+
 void llvm_build_token(FileCompiler *fc, Token *token) {
     //
     if (token->type == tkn_func) {
         llvm_build_func(fc, token->item);
-        /*
     } else if (token->type == tkn_init_thread) {
-        str_append_chars(fc->tkn_buffer, "KI_INIT_THREAD();\n");
+        LLVMBuildCall2(fc->builder, g_llvm_init_thread_type, g_llvm_init_thread, NULL, 0, NULL);
+    } else if (token->type == tkn_return) {
+
+        Value *retv = NULL;
+        if (token->item) {
+            retv = token->item;
+        }
+
+        // Deref local vars + Check if var_bufs RC == 0 (if so free)
+        llvm_deref_local_vars(fc, retv, NULL);
+
+        LLVMValueRef llvm_v = llvm_value(fc, retv);
+        LLVMBuildRet(fc->builder, llvm_v);
+        //
+    } else if (token->type == tkn_declare) {
+        TokenDeclare *decl = token->item;
+
+        LLVMValueRef v = llvm_value(fc, decl->value);
+
+        LLVMTypeRef lt = llvm_type(decl->type);
+        LLVMValueRef a = LLVMBuildAlloca(fc->builder, lt, decl->name);
+        LLVMBuildStore(fc->builder, v, a);
+
+        // fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
+        // str_append_chars(fc->tkn_buffer, " = ");
+        // str_append(fc->tkn_buffer, fc->value_buffer);
+        // str_append_chars(fc->tkn_buffer, ";\n");
+
+        Class *class = decl->value->return_type->class;
+        if (class && class->ref_count) {
+            llvm_upref(fc, a, decl->type);
+            array_push(fc->current_scope->local_var_names, decl);
+        }
+        /*
     } else if (token->type == tkn_debug_msg) {
         char *msg = token->item;
         str_append_chars(fc->tkn_buffer, "write(1, \"");
@@ -307,29 +401,6 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
         free(buf_max_name);
         free(buf_error_name);
 
-    } else if (token->type == tkn_declare) {
-        TokenDeclare *decl = token->item;
-
-        fc_write_c_value(fc, decl->value, true, fc->tkn_buffer);
-
-        fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
-        str_append_chars(fc->tkn_buffer, " = ");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ";\n");
-
-        Class *class = decl->value->return_type->class;
-        bool nullable = decl->value->return_type->nullable;
-        if (class && class->ref_count) {
-            if (nullable) {
-                str_append_chars(fc->tkn_buffer, "if(");
-                str_append_chars(fc->tkn_buffer, decl->name);
-                str_append_chars(fc->tkn_buffer, ") ");
-            }
-            str_append_chars(fc->tkn_buffer, decl->name);
-            str_append_chars(fc->tkn_buffer, "->_RC++;\n");
-
-            array_push(fc->current_scope->local_var_names, decl);
-        }
     } else if (token->type == tkn_assign) {
         TokenAssign *ta = token->item;
 
@@ -461,22 +532,6 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, sv->vname);
         str_append_chars(fc->tkn_buffer, "_GOTO;\n");
 
-    } else if (token->type == tkn_return) {
-        Value *retv = NULL;
-        if (token->item) {
-            retv = token->item;
-            fc_write_c_value(fc, token->item, true, fc->tkn_buffer);
-        }
-
-        // Deref local vars + Check if var_bufs RC == 0 (if so free)
-        deref_local_vars(fc, retv, NULL);
-
-        //
-        str_append_chars(fc->tkn_buffer, "return ");
-        if (retv) {
-            str_append(fc->tkn_buffer, fc->value_buffer);
-        }
-        str_append_chars(fc->tkn_buffer, ";\n");
     } else if (token->type == tkn_if) {
         fc_write_c_if(fc, token->item);
     } else if (token->type == tkn_ifnull) {
@@ -583,11 +638,13 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, ";\n");
         */
     } else {
+        printf("File: %s\n", fc->ki_filepath);
         printf("Token: %d\n", token->type);
-        fc_error(fc, "Unhandled token", NULL);
+        die("Unhandled token");
     }
 }
 
+/*
 void fc_write_c_pre(FileCompiler *fc) {
     char *code;
     char *path = malloc(KI_PATH_MAX);
@@ -2522,6 +2579,7 @@ Str *value_buf(FileCompiler *fc) {
     fc->value_buffer->length = 0;
     return fc->value_buffer;
 }
+*/
 
 char *var_buf(FileCompiler *fc) {
     strcpy(fc->var_buf, "_KI_VBUF");
@@ -2531,7 +2589,7 @@ char *var_buf(FileCompiler *fc) {
     return fc->var_buf;
 }
 
-void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
+void llvm_deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
     //
     char *ignore_vbuf = NULL;
     if (retv && retv->return_type->class && retv->return_type->class->ref_count) {
@@ -2557,22 +2615,7 @@ void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
             char *vb = vi->name;
             Type *rt = vi->return_type;
 
-            str_append_chars(fc->tkn_buffer, "if(");
-            if (rt->nullable) {
-                str_append_chars(fc->tkn_buffer, vb);
-                str_append_chars(fc->tkn_buffer, " && ");
-            }
-            str_append_chars(fc->tkn_buffer, "--");
-            str_append_chars(fc->tkn_buffer, vb);
-            str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
-            if (ignore_vbuf && strcmp(ignore_vbuf, vb) == 0) {
-                str_append_chars(fc->tkn_buffer, "{}\n");
-            } else {
-                str_append_chars(fc->tkn_buffer, rt->class->cname);
-                str_append_chars(fc->tkn_buffer, "____free(");
-                str_append_chars(fc->tkn_buffer, vb);
-                str_append_chars(fc->tkn_buffer, ");\n");
-            }
+            llvm_deref(fc, vi->llvm_value, rt);
 
             if (c == 1) {
                 free(vb);
@@ -2662,6 +2705,70 @@ void deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
     // }
 }
 
+void llvm_deref(FileCompiler *fc, LLVMValueRef v, Type *type) {
+    //
+    LLVMBasicBlockRef main_block = fc->current_block;
+    //
+    LLVMBasicBlockRef then = LLVMAppendBasicBlock(fc->current_func, "if_deref");
+    LLVMPositionBuilderAtEnd(fc->builder, then);
+    fc->current_block = then;
+    //
+
+    //
+    fc->current_block = main_block;
+    LLVMPositionBuilderAtEnd(fc->builder, main_block);
+    //
+    LLVMValueRef min = llvm_sub(fc, v, llvm_int(1));
+    LLVMValueRef cond = llvm_icmp(fc, min, llvm_int(0));
+    if (type->nullable) {
+        LLVMValueRef isset = llvm_isset(fc, v);
+        cond = LLVMBuildAnd(fc->builder, cond, isset, "tmp");
+    }
+    LLVMBuildCondBr(fc->builder, cond, then, NULL);
+
+    // str_append_chars(fc->tkn_buffer, "if(");
+    // if (rt->nullable) {
+    //     str_append_chars(fc->tkn_buffer, vb);
+    //     str_append_chars(fc->tkn_buffer, " && ");
+    // }
+    // str_append_chars(fc->tkn_buffer, "--");
+    // str_append_chars(fc->tkn_buffer, vb);
+    // str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
+    // if (ignore_vbuf && strcmp(ignore_vbuf, vb) == 0) {
+    //     str_append_chars(fc->tkn_buffer, "{}\n");
+    // } else {
+    //     str_append_chars(fc->tkn_buffer, rt->class->cname);
+    //     str_append_chars(fc->tkn_buffer, "____free(");
+    //     str_append_chars(fc->tkn_buffer, vb);
+    //     str_append_chars(fc->tkn_buffer, ");\n");
+    // }
+}
+
+void llvm_upref(FileCompiler *fc, LLVMValueRef v, Type *type) {
+    //
+    // bool nullable = decl->value->return_type->nullable;
+    // if (nullable) {
+    //    str_append_chars(fc->tkn_buffer, "if(");
+    //    str_append_chars(fc->tkn_buffer, decl->name);
+    //    str_append_chars(fc->tkn_buffer, ") ");
+    //}
+    // str_append_chars(fc->tkn_buffer, decl->name);
+    // str_append_chars(fc->tkn_buffer, "->_RC++;\n");
+}
+
+LLVMValueRef llvm_int(int v) { return LLVMConstInt(LLVMInt32Type(), v, true); }
+
+// Operands
+LLVMValueRef llvm_icmp(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right) { return LLVMBuildICmp(fc->builder, LLVMICmp, left, right, "icmp_1"); }
+LLVMValueRef llvm_sub(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right) { return LLVMBuildSub(fc->builder, left, right, "sub_1"); }
+
+//
+LLVMValueRef llvm_isset(FileCompiler *fc, LLVMValueRef v) {
+    //
+    return LLVMBuildIsNull(fc->builder, v, "isset_1");
+}
+
+/*
 char *fc_write_c_get_allocator(FileCompiler *fc, int size, bool threaded) {
     size += 24;
     threaded = false; // force unthreaded
@@ -2731,4 +2838,62 @@ void fc_write_c_write_allocator(Str *code, Str *hcode, char *name, char *size, b
 
     str_append_chars(code, "return a;\n");
     str_append_chars(code, "}\n");
+}
+*/
+
+void llvm_build_o(LLVMModuleRef mod, char *outpath) {
+    //
+    char *error = NULL;
+    LLVMVerifyModule(mod, LLVMAbortProcessAction, &error);
+    // if (error) {
+    //     printf("Verify module failed\n");
+    //     die(error);
+    // }
+    //
+    LLVMInitializeNativeTarget();
+    LLVMInitializeAllTargetInfos();
+    LLVMInitializeAllTargets();
+    LLVMInitializeAllTargetMCs();
+    LLVMInitializeAllAsmParsers();
+    LLVMInitializeAllAsmPrinters();
+    //
+    LLVMSetTarget(mod, LLVM_DEFAULT_TARGET_TRIPLE);
+    LLVMTargetRef target;
+    if (LLVMGetTargetFromTriple(LLVM_DEFAULT_TARGET_TRIPLE, &target, &error) != 0) {
+        fprintf(stderr, "Failed to get target!\n");
+        fprintf(stderr, "%s\n", error);
+        LLVMDisposeMessage(error);
+        exit(1);
+    }
+
+    LLVMPassManagerRef pass = LLVMCreatePassManager();
+    LLVMAddCFGSimplificationPass(pass);
+    LLVMAddReassociatePass(pass);
+    LLVMAddPromoteMemoryToRegisterPass(pass);
+
+    LLVMPassManagerBuilderRef passBuilder = LLVMPassManagerBuilderCreate();
+    LLVMPassManagerBuilderSetOptLevel(passBuilder, 3);
+    LLVMPassManagerBuilderPopulateModulePassManager(passBuilder, pass);
+
+    LLVMRunPassManager(pass, mod);
+
+    char *cpu = "generic";
+    char *features = "";
+
+    LLVMTargetMachineRef targetMachine = LLVMCreateTargetMachine(target, LLVM_DEFAULT_TARGET_TRIPLE, cpu, features, LLVMCodeGenLevelDefault, LLVMRelocDefault, LLVMCodeModelDefault);
+
+    if (LLVMTargetMachineEmitToFile(targetMachine, mod, outpath, LLVMObjectFile, &error) != 0) {
+        fprintf(stderr, "Failed to emit machine code!\n");
+        fprintf(stderr, "%s\n", error);
+        LLVMDisposeMessage(error);
+        exit(1);
+    }
+
+    LLVMDisposeMessage(error);
+    LLVMDisposeTargetMachine(targetMachine);
+    LLVMPassManagerBuilderDispose(passBuilder);
+    LLVMDisposePassManager(pass);
+    LLVMDisposeModule(mod);
+
+    printf("Write: %s\n", outpath);
 }

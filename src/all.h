@@ -27,7 +27,14 @@
 #include <unistd.h>
 
 // LLVM
+#include <llvm-c/Analysis.h>
 #include <llvm-c/Core.h>
+#include <llvm-c/Object.h>
+#include <llvm-c/Target.h>
+#include <llvm-c/TargetMachine.h>
+#include <llvm-c/Transforms/PassManagerBuilder.h>
+#include <llvm-c/Transforms/Scalar.h>
+#include <llvm-c/Transforms/Utils.h>
 
 #define KI_PATH_MAX 4096
 #define KI_TOKEN_MAX 256
