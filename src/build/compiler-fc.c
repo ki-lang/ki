@@ -62,6 +62,7 @@ FileCompiler *init_fc() {
     fc->builder = NULL;
     fc->current_func = NULL;
     fc->current_block = NULL;
+    fc->llvmc = 0;
     return fc;
 }
 

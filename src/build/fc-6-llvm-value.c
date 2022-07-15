@@ -7,7 +7,7 @@ LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value) {
     ValueClassInit *ini = value->item;
     Class *class = ini->class;
     LLVMValueRef allocator_func = llvm_get_allocator(fc, class->size, true);
-    char *allocator_name = LLVMGetValueName(allocator_func);
+    // const char *allocator_name = LLVMGetValueName(allocator_func);
 
     // Generate function
     char *func_name = malloc(60);
@@ -27,7 +27,7 @@ LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value) {
     LLVMValueRef fv = LLVMAddFunction(fc->mod, func_name, ftype);
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(fv, "entry");
     LLVMBasicBlockRef current_block = fc->current_block;
-    LLVMBasicBlockRef current_scope = fc->current_scope;
+    Scope *current_scope = fc->current_scope;
     fc->current_scope = init_sub_scope(fc->scope);
     LLVMPositionBuilderAtEnd(fc->builder, entry);
     // Build function
@@ -39,9 +39,8 @@ LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value) {
     LLVMValueRef gc_func = LLVMGetNamedFunction(fc->mod, "ki__mem__Allocator__get_chunk");
     LLVMValueRef alcget_call = LLVMBuildCall2(fc->builder, LLVMGetCalledFunctionType(gc_func), gc_func, ini_values_1, 1, "class_init_alcget_1");
 
-    unsigned long long offset = LLVMOffsetOfElement(g_target_data, llvm_type(value->return_type), llvm_prop_index(class, "_RC"));
-
     LLVMValueRef retv = llvm_build_declare(fc, llvm_class_type(class), "KI_RET_V");
+    LLVMBuildStore(fc->builder, alcget_call, retv);
 
     if (class->ref_count) {
         LLVMValueRef v = llvm_build_prop_access(fc, retv, class, "_RC");
@@ -197,5 +196,86 @@ LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value) {
 
 LLVMValueRef llvm_build_ort(FileCompiler *fc, OrToken *ort) {
     //
+    return NULL;
+}
+
+LLVMValueRef llvm_build_operator(FileCompiler *fc, Value *value) {
+
+    ValueOperator *op = value->item;
+    LLVMValueRef left = llvm_value(fc, op->left);
+    LLVMValueRef right = NULL;
+    if (op->right && op->type != op_and && op->type != op_or) {
+        right = llvm_value(fc, op->right);
+    }
+
+    if (op->type == op_add) {
+        return LLVMBuildAdd(fc->builder, left, right, llvm_buf(fc));
+    } else if (op->type == op_sub) {
+        return LLVMBuildSub(fc->builder, left, right, llvm_buf(fc));
+    } else if (op->type == op_mult) {
+        return LLVMBuildMul(fc->builder, left, right, llvm_buf(fc));
+    } else if (op->type == op_div) {
+        return LLVMBuildFDiv(fc->builder, left, right, llvm_buf(fc));
+    } else if (op->type == op_mod) {
+        return LLVMBuildSRem(fc->builder, left, right, llvm_buf(fc));
+    } else if (op->type == op_bit_OR) {
+        return LLVMBuildOr(fc->builder, left, right, llvm_buf(fc));
+    } else if (op->type == op_bit_AND) {
+        return LLVMBuildAnd(fc->builder, left, right, llvm_buf(fc));
+    } else if (op->type == op_bit_XOR) {
+        return LLVMBuildXor(fc->builder, left, right, llvm_buf(fc));
+    } else if (op->type == op_bit_shift_left) {
+        return LLVMBuildShl(fc->builder, left, right, llvm_buf(fc));
+    } else if (op->type == op_bit_shift_right) {
+        return LLVMBuildAShr(fc->builder, left, right, llvm_buf(fc));
+        //
+    } else if (op->type == op_and || op->type == op_or) {
+        // Create blocks
+        LLVMBasicBlockRef second_check = LLVMAppendBasicBlock(fc->current_func, llvm_buf(fc));
+        LLVMBasicBlockRef after = LLVMAppendBasicBlock(fc->current_func, llvm_buf(fc));
+        // First
+        LLVMValueRef ifv = LLVMBuildICmp(fc->builder, LLVMIntNE, left, llvm_u8(0), llvm_buf(fc));
+        if (op->type == op_and) {
+            // &&
+            LLVMBuildCondBr(fc->builder, ifv, second_check, after);
+        } else {
+            // ||
+            LLVMBuildCondBr(fc->builder, ifv, after, second_check);
+        }
+        // Second
+        LLVMPositionBuilderAtEnd(fc->builder, second_check);
+        right = llvm_value(fc, op->right);
+        LLVMBuildICmp(fc->builder, LLVMIntNE, right, llvm_u8(0), llvm_buf(fc));
+        LLVMBuildBr(fc->builder, after);
+        // Result
+        LLVMValueRef phi = LLVMBuildPhi(fc->builder, LLVMInt1Type(), llvm_buf(fc));
+        return LLVMBuildZExt(fc->builder, phi, LLVMInt8Type(), llvm_buf(fc));
+        //
+    } else if (op->type == op_eq) {
+        LLVMValueRef cmp = LLVMBuildICmp(fc->builder, LLVMIntEQ, left, right, llvm_buf(fc));
+        return LLVMBuildZExt(fc->builder, cmp, LLVMInt8Type(), llvm_buf(fc));
+    } else if (op->type == op_neq) {
+        LLVMValueRef cmp = LLVMBuildICmp(fc->builder, LLVMIntNE, left, right, llvm_buf(fc));
+        return LLVMBuildZExt(fc->builder, cmp, LLVMInt8Type(), llvm_buf(fc));
+    } else if (op->type == op_lt) {
+        LLVMValueRef cmp = LLVMBuildICmp(fc->builder, LLVMIntSLT, left, right, llvm_buf(fc));
+        return LLVMBuildZExt(fc->builder, cmp, LLVMInt8Type(), llvm_buf(fc));
+    } else if (op->type == op_lte) {
+        LLVMValueRef cmp = LLVMBuildICmp(fc->builder, LLVMIntSLE, left, right, llvm_buf(fc));
+        return LLVMBuildZExt(fc->builder, cmp, LLVMInt8Type(), llvm_buf(fc));
+    } else if (op->type == op_gt) {
+        LLVMValueRef cmp = LLVMBuildICmp(fc->builder, LLVMIntSGT, left, right, llvm_buf(fc));
+        return LLVMBuildZExt(fc->builder, cmp, LLVMInt8Type(), llvm_buf(fc));
+    } else if (op->type == op_gte) {
+        LLVMValueRef cmp = LLVMBuildICmp(fc->builder, LLVMIntSGE, left, right, llvm_buf(fc));
+        return LLVMBuildZExt(fc->builder, cmp, LLVMInt8Type(), llvm_buf(fc));
+    } else if (op->type == op_incr) {
+        return LLVMBuildAdd(fc->builder, left, llvm_int(1), llvm_buf(fc));
+    } else if (op->type == op_decr) {
+        return LLVMBuildSub(fc->builder, left, llvm_int(1), llvm_buf(fc));
+    } else {
+        printf("Op: %d\n", op->type);
+        fc_error(fc, "Unhandled operator type", NULL);
+    }
     return NULL;
 }

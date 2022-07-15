@@ -206,6 +206,8 @@ void llvm_define_func(FileCompiler *fc, Function *func) {
 void llvm_build_func(FileCompiler *fc, Function *func) {
     //
     printf("func: %s\n", func->cname);
+    fc->llvmc = 0;
+    //
     LLVMValueRef llvmfn = LLVMGetNamedFunction(fc->mod, func->cname);
     LLVMBasicBlockRef entry = LLVMGetEntryBasicBlock(llvmfn);
 
@@ -341,6 +343,8 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
         }
     } else if (value->type == vt_func_call) {
         return llvm_build_func_call(fc, value);
+    } else if (value->type == vt_operator) {
+        return llvm_build_operator(fc, value);
         /*
 
     } else if (value->type == vt_nullable_value) {
@@ -396,58 +400,6 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
                 str_append_chars(result, buf_var_name);
                 free(buf_var_name);
 
-            } else if (value->type == vt_operator) {
-                ValueOperator *op = value->item;
-                fc_write_c_value(fc, op->left, false, code);
-                if (op->type == op_add) {
-                    str_append_chars(result, " + ");
-                } else if (op->type == op_sub) {
-                    str_append_chars(result, " - ");
-                } else if (op->type == op_mult) {
-                    str_append_chars(result, " * ");
-                } else if (op->type == op_div) {
-                    str_append_chars(result, " / ");
-                } else if (op->type == op_mod) {
-                    str_append_chars(result, " \% ");
-                } else if (op->type == op_bit_OR) {
-                    str_append_chars(result, " | ");
-                } else if (op->type == op_bit_AND) {
-                    str_append_chars(result, " & ");
-                } else if (op->type == op_bit_XOR) {
-                    str_append_chars(result, " ^ ");
-                } else if (op->type == op_bit_shift_left) {
-                    str_append_chars(result, "<<");
-                } else if (op->type == op_bit_shift_right) {
-                    str_append_chars(result, ">>");
-                    //
-                } else if (op->type == op_and) {
-                    str_append_chars(result, " && ");
-                } else if (op->type == op_or) {
-                    str_append_chars(result, " || ");
-                    //
-                } else if (op->type == op_eq) {
-                    str_append_chars(result, " == ");
-                } else if (op->type == op_neq) {
-                    str_append_chars(result, " != ");
-                } else if (op->type == op_lt) {
-                    str_append_chars(result, " < ");
-                } else if (op->type == op_lte) {
-                    str_append_chars(result, " <= ");
-                } else if (op->type == op_gt) {
-                    str_append_chars(result, " > ");
-                } else if (op->type == op_gte) {
-                    str_append_chars(result, " >= ");
-                } else if (op->type == op_incr) {
-                    str_append_chars(result, "++");
-                } else if (op->type == op_decr) {
-                    str_append_chars(result, "--");
-                } else {
-                    printf("Op: %d\n", op->type);
-                    fc_error(fc, "Unhandled operator type", NULL);
-                }
-                if (op->right) {
-                    fc_write_c_value(fc, op->right, false, code);
-                }
             } else if (value->type == vt_func_call) {
 
             } else if (value->type == vt_sizeof) {
@@ -2556,7 +2508,14 @@ void llvm_upref(FileCompiler *fc, LLVMValueRef v, bool nullable) {
     // str_append_chars(fc->tkn_buffer, "->_RC++;\n");
 }
 
+char *llvm_buf(FileCompiler *fc) {
+    sprintf(fc->sprintf, "%d", fc->llvmc);
+    fc->llvmc++;
+    return fc->sprintf;
+}
+
 // Values
+LLVMValueRef llvm_u8(char v) { return LLVMConstInt(LLVMInt8Type(), v, false); }
 LLVMValueRef llvm_int(int v) { return LLVMConstInt(LLVMInt32Type(), v, true); }
 LLVMValueRef llvm_null() { return LLVMConstInt(LLVMIntPtrType(g_target_data), 0, false); }
 

@@ -82,6 +82,7 @@ typedef struct FileCompiler {
     LLVMBuilderRef builder;
     LLVMValueRef current_func;
     LLVMBasicBlockRef current_block;
+    int llvmc;
 } FileCompiler;
 
 typedef struct FcCache {
