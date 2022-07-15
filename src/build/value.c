@@ -349,25 +349,18 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         Value *sizev = fc_read_value(fc, scope, false, true, true);
 
         if (sizev->type == vt_sizeof) {
-            char *sizec = sizev->item;
-            value->item = sizec;
+            value->item = sizev->item;
         } else if (sizev->type == vt_number) {
-            char *sizec = sizev->item;
-            value->item = sizec;
+            ValueNumber *vn = sizev->item;
+            value->item = (void *)vn->iv;
+        } else if (sizev->type == vt_int) {
+            value->item = sizev->item;
         } else {
             fc_error(fc, "Expected a sizeof value", NULL);
         }
 
         value->type = vt_allocator;
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "mem", "Allocator"), NULL);
-
-    } else if (strcmp(token, "PTRSIZE") == 0) {
-        char *num = malloc(16);
-        sprintf(num, "%d", pointer_size);
-
-        value->type = vt_number;
-        value->item = num;
-        value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "u16"), NULL);
 
     } else if (is_valid_varname(token)) {
 
@@ -428,8 +421,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 fc_error(fc, "Unknown enum property: '%s'", prop_name);
             }
 
-            value->type = vt_number;
-            value->item = enuv;
+            value->type = vt_int;
+            value->item = (void *)(intptr_t)atoi(enuv);
             value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "i32"), NULL);
 
             fc_depends_on(fc, enu->fc);
@@ -624,8 +617,8 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
                 }
 
                 value = init_value();
-                value->type = vt_number;
-                value->item = enuv;
+                value->type = vt_int;
+                value->item = (void *)(intptr_t)atoi(enuv);
 
                 if (fc_get_char(fc, 0) == '#') {
                     fc->i++;

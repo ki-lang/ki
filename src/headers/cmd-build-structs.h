@@ -350,6 +350,7 @@ typedef enum ValueType {
     vt_null_or,
     vt_func_name,
     vt_local_var,
+    vt_int,
 } ValueType;
 
 typedef struct ValueFuncCall {

@@ -247,7 +247,7 @@ LLVMValueRef llvm_get_var(FileCompiler *fc, char *name) {
 LLVMValueRef llvm_build_prop_access(FileCompiler *fc, LLVMValueRef on, Class *class, char *prop_name) {
     //
     ClassProp *prop = map_get(class->struct_props, prop_name);
-    return LLVMBuildStructGEP2(fc->builder, class->llvm_type, on, prop->struct_index, "get_prop_1");
+    return LLVMBuildStructGEP2(fc->builder, class->llvm_type, on, prop->struct_index, llvm_buf(fc));
 }
 
 LLVMTypeRef llvm_type(Type *type) {
@@ -345,6 +345,42 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
         return llvm_build_func_call(fc, value);
     } else if (value->type == vt_operator) {
         return llvm_build_operator(fc, value);
+    } else if (value->type == vt_sizeof) {
+        return llvm_int((intptr_t)value->item);
+    } else if (value->type == vt_prop_access) {
+
+        ValueClassPropAccess *pa = value->item;
+
+        if (pa->is_static) {
+            Class *class = pa->on;
+            ClassProp *prop = map_get(class->props, pa->name);
+
+            char name[KI_TOKEN_MAX];
+            strcpy(name, class->cname);
+            strcat(name, "__");
+            strcat(name, pa->name);
+
+            if (prop->is_func) {
+                return LLVMGetNamedFunction(fc->mod, name);
+            } else {
+                die("Static variables do not exist");
+            }
+
+        } else {
+            Value *val = pa->on;
+
+            LLVMValueRef on = llvm_value(fc, val);
+
+            Type *type = val->return_type;
+            if (type->is_pointer) {
+                // %3 = load %struct.A*, %struct.A** %1, align 8
+                on = LLVMBuildLoad2(fc->builder, llvm_type(type), on, llvm_buf(fc));
+            }
+            // %4 = getelementptr inbounds %struct.A, %struct.A* %3, i32 0, i32 1
+            // %5 = load i32, i32* %4, align 4
+            on = llvm_build_prop_access(fc, on, type->class, pa->name);
+            return LLVMBuildLoad2(fc->builder, llvm_type(value->return_type), on, llvm_buf(fc));
+        }
         /*
 
     } else if (value->type == vt_nullable_value) {
@@ -402,8 +438,6 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
 
             } else if (value->type == vt_func_call) {
 
-            } else if (value->type == vt_sizeof) {
-                str_append_chars(result, value->item);
             } else if (value->type == vt_cast) {
                 ValueCast *cast = value->item;
                 str_append_chars(result, "(");
@@ -428,28 +462,6 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
                 fc_write_c_value(fc, cast->ptr_value, false, code);
                 str_append_chars(result, " = ");
                 fc_write_c_value(fc, cast->to_value, false, code);
-            } else if (value->type == vt_prop_access) {
-                ValueClassPropAccess *pa = value->item;
-
-                if (pa->is_static) {
-                    Class *class = pa->on;
-                    // ClassProp* prop = map_get(class->props, pa->name);
-                    //  func ref
-                    //  Type* type = prop->return_type;
-                    str_append_chars(result, class->cname);
-                    str_append_chars(result, "__");
-                    str_append_chars(result, pa->name);
-                } else {
-                    Value *val = pa->on;
-                    fc_write_c_value(fc, pa->on, false, code);
-                    Type *type = val->return_type;
-                    if (type->is_pointer) {
-                        str_append_chars(result, "->");
-                    } else {
-                        str_append_chars(result, ".");
-                    }
-                    str_append_chars(result, pa->name);
-                }
             } else if (value->type == vt_async) {
                 Value *fcallv = value->item;
                 ValueFuncCall *fcall = fcallv->item;
@@ -2549,7 +2561,7 @@ LLVMValueRef llvm_get_allocator(FileCompiler *fc, int size, bool threaded) {
     sprintf(fc->sprintf, "KI_allocator_%d_%d", size, threaded);
     char *name = fc->sprintf;
 
-    char *last = map_get(allocators, name);
+    LLVMValueRef last = map_get(allocators, name);
     if (last) {
         return last;
     }
@@ -2561,7 +2573,7 @@ LLVMValueRef llvm_get_allocator(FileCompiler *fc, int size, bool threaded) {
 
     map_set(allocators, name, fv);
 
-    return name;
+    return fv;
 }
 
 void fc_write_c_write_allocator(Str *code, Str *hcode, char *name, char *size, bool threaded) {

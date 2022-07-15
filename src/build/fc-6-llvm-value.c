@@ -106,14 +106,12 @@ LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value) {
     }
     if (fa->ort != NULL) {
         LLVMValueRef var = llvm_get_var(fc, "_KI_THROW_MSG_BUF");
-        LLVMValueRef ptr = llvm_build_declare(fc, llvm_ptr(), "tmp");
-        ptr = LLVMBuildGEP2(fc->builder, llvm_ptr(), var, NULL, 0, "tmp");
-        args[argc - 1] = ptr;
+        args[argc - 1] = var;
     }
 
     LLVMTypeRef ont = llvm_type(fa->on->return_type);
     LLVMValueRef onv = llvm_value(fc, fa->on);
-    LLVMValueRef retv = LLVMBuildCall2(fc->builder, ont, onv, args, argc, "fcall_1");
+    LLVMValueRef retv = LLVMBuildCall2(fc->builder, ont, onv, args, argc, llvm_buf(fc));
 
     if (fa->ort != NULL) {
 

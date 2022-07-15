@@ -4,8 +4,9 @@ struct A {
     int b;
 };
 
+int x(int a, int b) { return a + b; }
+
 int main() {
-    int a = 1;
-    a++;
-    return 1;
+    int b = 3;
+    x(5, b);
 }
