@@ -54,7 +54,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         value->type = vt_false;
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "bool"), NULL);
     } else if (strcmp(token, "sizeof") == 0) {
-        value->type = vt_sizeof;
+        value->type = vt_int;
         value->return_type = fc_identifier_to_type(fc, create_identifier("ki", "type", "u32"), NULL);
         fc_expect_token(fc, "(", false, true, false);
         // type or type of var
@@ -86,8 +86,7 @@ Value *fc_read_value(FileCompiler *fc, Scope *scope, bool readonly, bool samelin
         } else {
             fc_error(fc, "cannot determine sizeof this value", NULL);
         }
-        value->item = malloc(16);
-        sprintf(value->item, "%d", size);
+        value->item = (void *)(intptr_t)(size);
         //
         fc_expect_token(fc, ")", false, true, true);
     } else if (strcmp(token, "?") == 0) {

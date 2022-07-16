@@ -99,7 +99,7 @@ LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value) {
     if (fa->ort != NULL) {
         argc++;
     }
-    LLVMValueRef *args = malloc(sizeof(LLVMValueRef) * argc);
+    LLVMValueRef args[argc];
     for (int i = 0; i < fa->arg_values->length; i++) {
         Value *v = array_get_index(fa->arg_values, i);
         args[i] = llvm_value(fc, v);
@@ -109,7 +109,9 @@ LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value) {
         args[argc - 1] = var;
     }
 
-    LLVMTypeRef ont = llvm_type(fa->on->return_type);
+    char *x = type_to_str(fa->on->return_type);
+    printf("Type: %s\n", x);
+    LLVMTypeRef ont = llvm_funcref_type(fa->on->return_type);
     LLVMValueRef onv = llvm_value(fc, fa->on);
     LLVMValueRef retv = LLVMBuildCall2(fc->builder, ont, onv, args, argc, llvm_buf(fc));
 

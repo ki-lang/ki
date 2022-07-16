@@ -244,6 +244,19 @@ LLVMValueRef llvm_get_var(FileCompiler *fc, char *name) {
     return NULL;
 }
 
+LLVMValueRef llvm_get_func(FileCompiler *fc, char *name, Type *func_ref_type) {
+    //
+    LLVMValueRef func = LLVMGetNamedFunction(fc->mod, name);
+    if (!func) {
+        // Func is extern
+        printf("extern-func: %s\n", name);
+        char *x = type_to_str(func_ref_type);
+        printf("extern-func-type: %s\n", x);
+        func = LLVMAddFunction(fc->mod, name, llvm_type(func_ref_type));
+    }
+    return func;
+}
+
 LLVMValueRef llvm_build_prop_access(FileCompiler *fc, LLVMValueRef on, Class *class, char *prop_name) {
     //
     ClassProp *prop = map_get(class->struct_props, prop_name);
@@ -260,11 +273,7 @@ LLVMTypeRef llvm_type(Type *type) {
     } else if (type->type == type_void_pointer) {
         result = LLVMVoidType();
     } else if (type->type == type_funcref) {
-        LLVMTypeRef param_types[type->func_arg_types->length];
-        for (int i = 0; i < type->func_arg_types->length; i++) {
-            param_types[i] = llvm_type(array_get_index(type->func_arg_types, i));
-        }
-        result = LLVMFunctionType(llvm_type(type->func_return_type), param_types, type->func_arg_types->length, 0);
+        return llvm_funcref_type(type);
     } else if (type->type == type_struct) {
         Class *class = type->class;
 
@@ -296,7 +305,20 @@ LLVMTypeRef llvm_type(Type *type) {
         die("Cannot convert llvm type");
     }
 
+    printf("FROM: %s\n", type_to_str(type));
+    printf("TO: %s\n", LLVMPrintTypeToString(result));
+
     return result;
+}
+
+LLVMTypeRef llvm_funcref_type(Type *type) {
+    //
+    int argc = type->func_arg_types->length;
+    LLVMTypeRef param_types[argc];
+    for (int i = 0; i < argc; i++) {
+        param_types[i] = llvm_type(array_get_index(type->func_arg_types, i));
+    }
+    return LLVMFunctionType(llvm_type(type->func_return_type), param_types, argc, 0);
 }
 
 LLVMTypeRef llvm_class_type(Class *class) {
@@ -335,6 +357,7 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
     } else if (value->type == vt_class_init) {
         return llvm_build_class_init(fc, value->item);
     } else if (value->type == vt_number) {
+        printf("num\n");
         ValueNumber *vn = value->item;
         if (vn->is_float) {
             die("TODO: float");
@@ -344,8 +367,10 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
     } else if (value->type == vt_func_call) {
         return llvm_build_func_call(fc, value);
     } else if (value->type == vt_operator) {
+        printf("op\n");
         return llvm_build_operator(fc, value);
-    } else if (value->type == vt_sizeof) {
+    } else if (value->type == vt_int) {
+        printf("int\n");
         return llvm_int((intptr_t)value->item);
     } else if (value->type == vt_prop_access) {
 
@@ -361,7 +386,8 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
             strcat(name, pa->name);
 
             if (prop->is_func) {
-                return LLVMGetNamedFunction(fc->mod, name);
+                printf("static-func: %s\n", name);
+                return llvm_get_func(fc, name, prop->return_type);
             } else {
                 die("Static variables do not exist");
             }

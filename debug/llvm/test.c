@@ -4,9 +4,9 @@ struct A {
     int b;
 };
 
-int x(int a, int b) { return a + b; }
+int xx(int a, int b) { return a + b; }
 
 int main() {
-    int b = 3;
-    x(5, b);
+    int (*x)(int a, int b) = xx;
+    x(1, 2);
 }
