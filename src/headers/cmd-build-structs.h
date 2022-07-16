@@ -347,7 +347,7 @@ typedef enum ValueType {
     vt_threaded_global,
     vt_shared_global,
     vt_nullable_value,
-    vt_null_or,
+    vt_null_or, // 25
     vt_func_name,
     vt_local_var,
     vt_int,

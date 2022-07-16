@@ -17,12 +17,10 @@ define dso_local i32 @xx(i32 %0, i32 %1) #0 {
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @main() #0 {
-  %1 = alloca i32, align 4
-  %2 = alloca i32 (i32, i32)*, align 8
-  store i32 7, i32* %1, align 4
-  store i32 (i32, i32)* @xx, i32 (i32, i32)** %2, align 8
-  %3 = load i32 (i32, i32)*, i32 (i32, i32)** %2, align 8
-  %4 = call i32 %3(i32 1, i32 2)
+  %1 = alloca i32 (i32, i32)*, align 8
+  store i32 (i32, i32)* @xx, i32 (i32, i32)** %1, align 8
+  %2 = load i32 (i32, i32)*, i32 (i32, i32)** %1, align 8
+  %3 = call i32 %2(i32 1, i32 2)
   ret i32 0
 }
 

@@ -210,9 +210,16 @@ void llvm_build_func(FileCompiler *fc, Function *func) {
     //
     LLVMValueRef llvmfn = LLVMGetNamedFunction(fc->mod, func->cname);
     LLVMBasicBlockRef entry = LLVMGetEntryBasicBlock(llvmfn);
-
     LLVMPositionBuilderAtEnd(fc->builder, entry);
 
+    // Declare arg vars
+    fc->current_scope = func->scope;
+    for (int i = 0; i < func->args->length; i++) {
+        FunctionArg *arg = array_get_index(func->args, i);
+        llvm_build_declare(fc, llvm_type(arg->type), arg->name);
+    }
+
+    // AST
     llvm_build_ast(fc, func->scope);
 
     // hasReturn = LLVMGetBasicBlockTerminator(LLVMGetLastBasicBlock(llvmfn)) != NULL;
@@ -407,6 +414,9 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
             on = llvm_build_prop_access(fc, on, type->class, pa->name);
             return LLVMBuildLoad2(fc->builder, llvm_type(value->return_type), on, llvm_buf(fc));
         }
+    } else if (value->type == vt_arg) {
+        LLVMValueRef var = llvm_get_var(fc, value->item);
+        return LLVMBuildLoad2(fc->builder, llvm_type(value->return_type), var, llvm_buf(fc));
         /*
 
     } else if (value->type == vt_nullable_value) {
@@ -429,10 +439,6 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
                 GlobalVar *gv = value->item;
                 str_append_chars(result, gv->cname);
                 //
-            } else if (value->type == vt_arg) {
-                str_append_chars(result, value->item);
-            } else if (value->type == vt_number) {
-                str_append_chars(result, value->item);
             } else if (value->type == vt_char) {
                 str_append_chars(result, "'");
                 str_append_chars(result, value->item);
