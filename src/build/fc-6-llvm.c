@@ -216,7 +216,8 @@ void llvm_build_func(FileCompiler *fc, Function *func) {
     fc->current_scope = func->scope;
     for (int i = 0; i < func->args->length; i++) {
         FunctionArg *arg = array_get_index(func->args, i);
-        llvm_build_declare(fc, llvm_type(arg->type), arg->name);
+        LLVMValueRef decl = llvm_build_declare(fc, llvm_type(arg->type), arg->name);
+        LLVMBuildStore(fc->builder, LLVMGetParam(llvmfn, i), decl);
     }
 
     // AST
@@ -233,6 +234,7 @@ LLVMValueRef llvm_build_declare(FileCompiler *fc, LLVMTypeRef type, char *name) 
     LLVMValueRef a = LLVMBuildAlloca(fc->builder, type, name);
     Scope *scope = fc->current_scope;
     map_set(scope->llvm_declares, name, a);
+    printf("decl: %s\n", name);
     return a;
 }
 
@@ -240,6 +242,7 @@ LLVMValueRef llvm_get_var(FileCompiler *fc, char *name) {
     //
     Scope *scope = fc->current_scope;
     while (scope) {
+        printf("find: %s\n", name);
         LLVMValueRef v = map_get(scope->llvm_declares, name);
         if (v) {
             return v;
@@ -273,9 +276,7 @@ LLVMValueRef llvm_build_prop_access(FileCompiler *fc, LLVMValueRef on, Class *cl
 LLVMTypeRef llvm_type(Type *type) {
     //
     LLVMTypeRef result;
-    if (type->is_pointer) {
-        result = LLVMIntPtrType(g_target_data);
-    } else if (type->type == type_void) {
+    if (type->type == type_void) {
         result = LLVMVoidType();
     } else if (type->type == type_void_pointer) {
         result = LLVMVoidType();
@@ -300,7 +301,7 @@ LLVMTypeRef llvm_type(Type *type) {
             }
 
         } else {
-            result = llvm_class_type(class);
+            result = llvm_class_type(fc, class);
         }
 
     } else if (type->type == type_enum) {
@@ -310,6 +311,11 @@ LLVMTypeRef llvm_type(Type *type) {
     } else {
         printf("Type: %d\n", type->type);
         die("Cannot convert llvm type");
+    }
+
+    if (type->is_pointer) {
+        // result = LLVMIntPtrType(g_target_data);
+        result = LLVMPointerType(result, 0);
     }
 
     printf("FROM: %s\n", type_to_str(type));
@@ -328,18 +334,26 @@ LLVMTypeRef llvm_funcref_type(Type *type) {
     return LLVMFunctionType(llvm_type(type->func_return_type), param_types, argc, 0);
 }
 
-LLVMTypeRef llvm_class_type(Class *class) {
+LLVMTypeRef llvm_class_type(FileCompiler *fc, Class *class) {
     //
     if (class->llvm_type == NULL) {
 
         int propc = class->struct_props->values->length;
         LLVMTypeRef *prop_types = malloc(sizeof(LLVMTypeRef) * propc);
-        class->llvm_type = LLVMStructType(prop_types, propc, 0);
+        class->llvm_type = LLVMStructCreateNamed(LLVMGetModuleContext(fc->mod), class->cname);
         //
         for (int i = 0; i < propc; i++) {
             ClassProp *prop = array_get_index(class->struct_props->values, i);
+            Type *pt = prop->return_type;
+            // if (pt->class) {
+            //     pt = init_type();
+            //     pt->type = type_void;
+            //     pt->is_pointer = true;
+            // }
             prop_types[i] = llvm_type(prop->return_type);
         }
+
+        LLVMStructSetBody(class->llvm_type, prop_types, propc, 0);
     }
 
     return class->llvm_type;
@@ -364,7 +378,6 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
     } else if (value->type == vt_class_init) {
         return llvm_build_class_init(fc, value->item);
     } else if (value->type == vt_number) {
-        printf("num\n");
         ValueNumber *vn = value->item;
         if (vn->is_float) {
             die("TODO: float");
@@ -374,10 +387,8 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
     } else if (value->type == vt_func_call) {
         return llvm_build_func_call(fc, value);
     } else if (value->type == vt_operator) {
-        printf("op\n");
         return llvm_build_operator(fc, value);
     } else if (value->type == vt_int) {
-        printf("int\n");
         return llvm_int((intptr_t)value->item);
     } else if (value->type == vt_prop_access) {
 
@@ -417,6 +428,12 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
     } else if (value->type == vt_arg) {
         LLVMValueRef var = llvm_get_var(fc, value->item);
         return LLVMBuildLoad2(fc->builder, llvm_type(value->return_type), var, llvm_buf(fc));
+    } else if (value->type == vt_local_var) {
+        LLVMValueRef var = llvm_get_var(fc, value->item);
+        printf("Load lvar: %s\n", (char *)(value->item));
+        printf("Type: %s\n", type_to_str(value->return_type));
+        return LLVMBuildLoad2(fc->builder, llvm_type(value->return_type), var, llvm_buf(fc));
+        return var;
         /*
 
     } else if (value->type == vt_nullable_value) {
@@ -731,17 +748,17 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
         LLVMValueRef a = llvm_build_declare(fc, llvm_type(decl->type), decl->name);
         LLVMBuildStore(fc->builder, a, v);
 
-        // fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
-        // str_append_chars(fc->tkn_buffer, " = ");
-        // str_append(fc->tkn_buffer, fc->value_buffer);
-        // str_append_chars(fc->tkn_buffer, ";\n");
-
         Class *class = decl->value->return_type->class;
         if (class && class->ref_count) {
             llvm_upref(fc, a, decl->type);
             array_push(fc->current_scope->local_var_names, decl);
         }
+    } else if (token->type == tkn_assign) {
+        llvm_build_assign(fc, token->item);
     } else if (token->type == tkn_if) {
+        LLVMBasicBlockRef after = LLVMAppendBasicBlock(fc->current_func, llvm_buf(fc));
+        llvm_build_if_token(fc, token->item, after);
+        LLVMMoveBasicBlockAfter(after, LLVMGetLastBasicBlock(fc->current_func));
         /*
     } else if (token->type == tkn_debug_msg) {
         char *msg = token->item;
@@ -837,121 +854,6 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
         free(buf_count_name);
         free(buf_max_name);
         free(buf_error_name);
-
-    } else if (token->type == tkn_assign) {
-        TokenAssign *ta = token->item;
-
-        char *left;
-        if (ta->left->type == vt_threaded_global) {
-            // GlobalVar *gv = ta->left->item;
-            left = strdup(var_buf(fc));
-            fc_write_c_type(fc->tkn_buffer, ta->left->return_type, left);
-            str_append_chars(fc->tkn_buffer, " = 0;\n");
-        } else {
-            fc_write_c_value(fc, ta->left, true, fc->tkn_buffer);
-            left = str_to_chars(fc->value_buffer);
-        }
-        fc_write_c_value(fc, ta->right, true, fc->tkn_buffer);
-
-        bool lrefc = false;
-        bool lrefc_nullable = false;
-        bool rrefc = false;
-        bool rrefc_nullable = false;
-        Class *class = NULL;
-        if (ta->type == op_eq) {
-            Value *left = ta->left;
-            Value *right = ta->right;
-            class = left->return_type->class;
-            Class *rclass = right->return_type->class;
-
-            if (class && class->ref_count) {
-                lrefc = true;
-                if (left->return_type->nullable) {
-                    lrefc_nullable = true;
-                }
-            }
-            if (rclass && rclass->ref_count) {
-                rrefc = true;
-                if (right->return_type->nullable) {
-                    rrefc_nullable = true;
-                }
-            }
-        }
-
-        // RC++ the new value first
-        if (rrefc) {
-            if (rrefc_nullable) {
-                str_append_chars(fc->tkn_buffer, "if(");
-                str_append(fc->tkn_buffer, fc->value_buffer);
-                str_append_chars(fc->tkn_buffer, "){ ");
-            }
-            str_append(fc->tkn_buffer, fc->value_buffer);
-            str_append_chars(fc->tkn_buffer, "->_RC++;");
-            if (rrefc_nullable) {
-                str_append_chars(fc->tkn_buffer, " }");
-            }
-            str_append_chars(fc->tkn_buffer, "\n");
-        }
-
-        // RC-- the old value
-        if (lrefc) {
-            if (lrefc_nullable) {
-                str_append_chars(fc->tkn_buffer, "if(");
-                str_append_chars(fc->tkn_buffer, left);
-                str_append_chars(fc->tkn_buffer, "){ ");
-            }
-            str_append_chars(fc->tkn_buffer, left);
-            str_append_chars(fc->tkn_buffer, "->_RC--;\n");
-            str_append_chars(fc->tkn_buffer, "if(");
-            str_append_chars(fc->tkn_buffer, left);
-            str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
-            str_append_chars(fc->tkn_buffer, class->cname);
-            str_append_chars(fc->tkn_buffer, "____free(");
-            str_append_chars(fc->tkn_buffer, left);
-            str_append_chars(fc->tkn_buffer, ");");
-            if (lrefc_nullable) {
-                str_append_chars(fc->tkn_buffer, " }");
-            }
-            str_append_chars(fc->tkn_buffer, "\n");
-        }
-
-        str_append_chars(fc->tkn_buffer, left);
-
-        if (ta->type == op_eq) {
-            str_append_chars(fc->tkn_buffer, " = ");
-        } else if (ta->type == op_add) {
-            str_append_chars(fc->tkn_buffer, " += ");
-        } else if (ta->type == op_sub) {
-            str_append_chars(fc->tkn_buffer, " -= ");
-        } else if (ta->type == op_mult) {
-            str_append_chars(fc->tkn_buffer, " *= ");
-        } else if (ta->type == op_div) {
-            str_append_chars(fc->tkn_buffer, " /= ");
-        } else if (ta->type == op_mod) {
-            str_append_chars(fc->tkn_buffer, " \%= ");
-        } else if (ta->type == op_bit_OR) {
-            str_append_chars(fc->tkn_buffer, " |= ");
-        } else if (ta->type == op_bit_AND) {
-            str_append_chars(fc->tkn_buffer, " &= ");
-        } else if (ta->type == op_bit_XOR) {
-            str_append_chars(fc->tkn_buffer, " ^= ");
-        } else {
-            fc_error(fc, "Unhandled assign operator translation", NULL);
-        }
-
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ";\n");
-
-        if (ta->left->type == vt_threaded_global) {
-            GlobalVar *gv = ta->left->item;
-            str_append_chars(fc->tkn_buffer, "pthread_setspecific(");
-            str_append_chars(fc->tkn_buffer, gv->cname);
-            str_append_chars(fc->tkn_buffer, ", ");
-            str_append_chars(fc->tkn_buffer, left);
-            str_append_chars(fc->tkn_buffer, ");\n");
-        }
-
-        free(left);
 
     } else if (token->type == tkn_set_vscope_value) {
 
@@ -1791,29 +1693,6 @@ void fc_write_c_token(FileCompiler *fc, Token *token) {
         free(buf_max_name);
         free(buf_error_name);
 
-    } else if (token->type == tkn_declare) {
-        TokenDeclare *decl = token->item;
-
-        fc_write_c_value(fc, decl->value, true, fc->tkn_buffer);
-
-        fc_write_c_type(fc->tkn_buffer, decl->type, decl->name);
-        str_append_chars(fc->tkn_buffer, " = ");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ";\n");
-
-        Class *class = decl->value->return_type->class;
-        bool nullable = decl->value->return_type->nullable;
-        if (class && class->ref_count) {
-            if (nullable) {
-                str_append_chars(fc->tkn_buffer, "if(");
-                str_append_chars(fc->tkn_buffer, decl->name);
-                str_append_chars(fc->tkn_buffer, ") ");
-            }
-            str_append_chars(fc->tkn_buffer, decl->name);
-            str_append_chars(fc->tkn_buffer, "->_RC++;\n");
-
-            array_push(fc->current_scope->local_var_names, decl);
-        }
     } else if (token->type == tkn_assign) {
         TokenAssign *ta = token->item;
 
@@ -2540,7 +2419,7 @@ void llvm_deref(FileCompiler *fc, LLVMValueRef v, Type *type) {
     // }
 }
 
-void llvm_upref(FileCompiler *fc, LLVMValueRef v, bool nullable) {
+void llvm_upref(FileCompiler *fc, LLVMValueRef v, Type *type) {
     //
     // bool nullable = decl->value->return_type->nullable;
     // if (nullable) {

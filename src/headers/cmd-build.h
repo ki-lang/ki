@@ -191,11 +191,11 @@ void llvm_build_inits();
 void llvm_build_ast(FileCompiler *fc, Scope *scope);
 void llvm_build_token(FileCompiler *fc, Token *t);
 void llvm_build_o(LLVMModuleRef mod, char *outpath);
-LLVMTypeRef llvm_type(Type *type);
+LLVMTypeRef llvm_type(FileCompiler*fc, Type *type);
 LLVMValueRef llvm_value(FileCompiler *fc, Value *value);
 void llvm_deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope);
 void llvm_deref(FileCompiler *fc, LLVMValueRef v, Type *type);
-void llvm_upref(FileCompiler *fc, LLVMValueRef v, bool nullable);
+void llvm_upref(FileCompiler *fc, LLVMValueRef v, Type *type);
 LLVMValueRef llvm_isset(FileCompiler *fc, LLVMValueRef v);
 char *llvm_buf(FileCompiler *fc);
 // Operands
@@ -207,20 +207,23 @@ LLVMValueRef llvm_int(int v);
 LLVMValueRef llvm_null();
 // Types
 LLVMTypeRef llvm_ptr();
-LLVMTypeRef llvm_class_type(Class *class);
+LLVMTypeRef llvm_class_type(FileCompiler* fc, Class *class);
 LLVMTypeRef llvm_funcref_type(Type *type);
 // Helpers
 int llvm_prop_index(Class *class, char *prop_name);
 LLVMValueRef llvm_get_var(FileCompiler *fc, char *name);
 LLVMValueRef llvm_get_func(FileCompiler *fc, char *name, Type *func_ref_type);
 LLVMValueRef llvm_get_allocator(FileCompiler *fc, int size, bool threaded);
-// Build
+// Build value
 LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value);
 LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value);
 LLVMValueRef llvm_build_declare(FileCompiler *fc, LLVMTypeRef type, char *name);
 LLVMValueRef llvm_build_prop_access(FileCompiler *fc, LLVMValueRef on, Class *class, char *prop_name);
 LLVMValueRef llvm_build_ort(FileCompiler *fc, OrToken *ort);
 LLVMValueRef llvm_build_operator(FileCompiler *fc, Value *value);
+// Build token
+void llvm_build_if_token(FileCompiler *fc, TokenIf *ift, LLVMBasicBlockRef after);
+void llvm_build_assign(FileCompiler *fc, TokenAssign *ta);
 //
 void llvm_define_func(FileCompiler *fc, Function *func);
 void llvm_build_func(FileCompiler *fc, Function *func);

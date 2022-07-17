@@ -39,7 +39,7 @@ LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value) {
     LLVMValueRef gc_func = LLVMGetNamedFunction(fc->mod, "ki__mem__Allocator__get_chunk");
     LLVMValueRef alcget_call = LLVMBuildCall2(fc->builder, LLVMGetCalledFunctionType(gc_func), gc_func, ini_values_1, 1, "class_init_alcget_1");
 
-    LLVMValueRef retv = llvm_build_declare(fc, llvm_class_type(class), "KI_RET_V");
+    LLVMValueRef retv = llvm_build_declare(fc, llvm_class_type(fc, class), "KI_RET_V");
     LLVMBuildStore(fc->builder, alcget_call, retv);
 
     if (class->ref_count) {
@@ -101,6 +101,7 @@ LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value) {
     }
     LLVMValueRef args[argc];
     for (int i = 0; i < fa->arg_values->length; i++) {
+        printf("arg:%d\n", i);
         Value *v = array_get_index(fa->arg_values, i);
         args[i] = llvm_value(fc, v);
     }
@@ -248,6 +249,7 @@ LLVMValueRef llvm_build_operator(FileCompiler *fc, Value *value) {
         LLVMBuildICmp(fc->builder, LLVMIntNE, right, llvm_u8(0), llvm_buf(fc));
         LLVMBuildBr(fc->builder, after);
         // Result
+        LLVMPositionBuilderAtEnd(fc->builder, after);
         LLVMValueRef phi = LLVMBuildPhi(fc->builder, LLVMInt1Type(), llvm_buf(fc));
         return LLVMBuildZExt(fc->builder, phi, LLVMInt8Type(), llvm_buf(fc));
         //

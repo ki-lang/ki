@@ -4,9 +4,10 @@ struct A {
     int b;
 };
 
-int xx(int a, int b) { return a + b; }
+void x(struct A *test) { test->a = 2; }
 
 int main() {
-    int (*x)(int a, int b) = xx;
-    x(1, 2);
+    struct A a;
+    struct A *b = &a;
+    x(b);
 }

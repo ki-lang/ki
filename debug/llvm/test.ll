@@ -3,24 +3,25 @@ source_filename = "test.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
+%struct.A = type { i32, i32 }
+
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @xx(i32 %0, i32 %1) #0 {
-  %3 = alloca i32, align 4
-  %4 = alloca i32, align 4
-  store i32 %0, i32* %3, align 4
-  store i32 %1, i32* %4, align 4
-  %5 = load i32, i32* %3, align 4
-  %6 = load i32, i32* %4, align 4
-  %7 = add nsw i32 %5, %6
-  ret i32 %7
+define dso_local void @x(%struct.A* %0) #0 {
+  %2 = alloca %struct.A*, align 8
+  store %struct.A* %0, %struct.A** %2, align 8
+  %3 = load %struct.A*, %struct.A** %2, align 8
+  %4 = getelementptr inbounds %struct.A, %struct.A* %3, i32 0, i32 0
+  store i32 2, i32* %4, align 4
+  ret void
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @main() #0 {
-  %1 = alloca i32 (i32, i32)*, align 8
-  store i32 (i32, i32)* @xx, i32 (i32, i32)** %1, align 8
-  %2 = load i32 (i32, i32)*, i32 (i32, i32)** %1, align 8
-  %3 = call i32 %2(i32 1, i32 2)
+  %1 = alloca %struct.A, align 4
+  %2 = alloca %struct.A*, align 8
+  store %struct.A* %1, %struct.A** %2, align 8
+  %3 = load %struct.A*, %struct.A** %2, align 8
+  call void @x(%struct.A* %3)
   ret i32 0
 }
 
