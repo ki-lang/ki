@@ -231,7 +231,7 @@ void llvm_build_func(FileCompiler *fc, Function *func) {
 
 LLVMValueRef llvm_build_declare(FileCompiler *fc, LLVMTypeRef type, char *name) {
     //
-    LLVMValueRef a = LLVMBuildAlloca(fc->builder, type, name);
+    LLVMValueRef a = LLVMBuildAlloca(fc->builder, type, llvm_buf(fc));
     Scope *scope = fc->current_scope;
     map_set(scope->llvm_declares, name, a);
     printf("decl: %s\n", name);
@@ -432,6 +432,9 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
         LLVMValueRef var = llvm_get_var(fc, value->item);
         printf("Load lvar: %s\n", (char *)(value->item));
         printf("Type: %s\n", type_to_str(value->return_type));
+        printf("|||\n");
+        printf("%s\n", LLVMPrintValueToString(var));
+        printf("|||\n");
         return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
         return var;
         /*
