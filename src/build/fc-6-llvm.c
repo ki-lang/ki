@@ -196,7 +196,7 @@ void llvm_define_func(FileCompiler *fc, Function *func) {
     printf("pre: %s\n", func->cname);
     LLVMTypeRef param_types[func->arg_types->length];
     for (int i = 0; i < func->arg_types->length; i++) {
-        param_types[i] = llvm_type(array_get_index(func->arg_types, i));
+        param_types[i] = llvm_type(fc, array_get_index(func->arg_types, i));
     }
     LLVMTypeRef ftype = LLVMFunctionType(LLVMInt32Type(), param_types, func->arg_types->length, 0);
     LLVMValueRef llvmfn = LLVMAddFunction(fc->mod, func->cname, ftype);
@@ -216,7 +216,7 @@ void llvm_build_func(FileCompiler *fc, Function *func) {
     fc->current_scope = func->scope;
     for (int i = 0; i < func->args->length; i++) {
         FunctionArg *arg = array_get_index(func->args, i);
-        LLVMValueRef decl = llvm_build_declare(fc, llvm_type(arg->type), arg->name);
+        LLVMValueRef decl = llvm_build_declare(fc, llvm_type(fc, arg->type), arg->name);
         LLVMBuildStore(fc->builder, LLVMGetParam(llvmfn, i), decl);
     }
 
@@ -262,7 +262,7 @@ LLVMValueRef llvm_get_func(FileCompiler *fc, char *name, Type *func_ref_type) {
         printf("extern-func: %s\n", name);
         char *x = type_to_str(func_ref_type);
         printf("extern-func-type: %s\n", x);
-        func = LLVMAddFunction(fc->mod, name, llvm_type(func_ref_type));
+        func = LLVMAddFunction(fc->mod, name, llvm_type(fc, func_ref_type));
     }
     return func;
 }
@@ -273,7 +273,7 @@ LLVMValueRef llvm_build_prop_access(FileCompiler *fc, LLVMValueRef on, Class *cl
     return LLVMBuildStructGEP2(fc->builder, class->llvm_type, on, prop->struct_index, llvm_buf(fc));
 }
 
-LLVMTypeRef llvm_type(Type *type) {
+LLVMTypeRef llvm_type(FileCompiler *fc, Type *type) {
     //
     LLVMTypeRef result;
     if (type->type == type_void) {
@@ -281,7 +281,7 @@ LLVMTypeRef llvm_type(Type *type) {
     } else if (type->type == type_void_pointer) {
         result = LLVMVoidType();
     } else if (type->type == type_funcref) {
-        return llvm_funcref_type(type);
+        return llvm_funcref_type(fc, type);
     } else if (type->type == type_struct) {
         Class *class = type->class;
 
@@ -324,14 +324,14 @@ LLVMTypeRef llvm_type(Type *type) {
     return result;
 }
 
-LLVMTypeRef llvm_funcref_type(Type *type) {
+LLVMTypeRef llvm_funcref_type(FileCompiler *fc, Type *type) {
     //
     int argc = type->func_arg_types->length;
     LLVMTypeRef param_types[argc];
     for (int i = 0; i < argc; i++) {
-        param_types[i] = llvm_type(array_get_index(type->func_arg_types, i));
+        param_types[i] = llvm_type(fc, array_get_index(type->func_arg_types, i));
     }
-    return LLVMFunctionType(llvm_type(type->func_return_type), param_types, argc, 0);
+    return LLVMFunctionType(llvm_type(fc, type->func_return_type), param_types, argc, 0);
 }
 
 LLVMTypeRef llvm_class_type(FileCompiler *fc, Class *class) {
@@ -350,7 +350,7 @@ LLVMTypeRef llvm_class_type(FileCompiler *fc, Class *class) {
             //     pt->type = type_void;
             //     pt->is_pointer = true;
             // }
-            prop_types[i] = llvm_type(prop->return_type);
+            prop_types[i] = llvm_type(fc, prop->return_type);
         }
 
         LLVMStructSetBody(class->llvm_type, prop_types, propc, 0);
@@ -418,21 +418,21 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
             Type *type = val->return_type;
             if (type->is_pointer) {
                 // %3 = load %struct.A*, %struct.A** %1, align 8
-                on = LLVMBuildLoad2(fc->builder, llvm_type(type), on, llvm_buf(fc));
+                on = LLVMBuildLoad2(fc->builder, llvm_type(fc, type), on, llvm_buf(fc));
             }
             // %4 = getelementptr inbounds %struct.A, %struct.A* %3, i32 0, i32 1
             // %5 = load i32, i32* %4, align 4
             on = llvm_build_prop_access(fc, on, type->class, pa->name);
-            return LLVMBuildLoad2(fc->builder, llvm_type(value->return_type), on, llvm_buf(fc));
+            return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), on, llvm_buf(fc));
         }
     } else if (value->type == vt_arg) {
         LLVMValueRef var = llvm_get_var(fc, value->item);
-        return LLVMBuildLoad2(fc->builder, llvm_type(value->return_type), var, llvm_buf(fc));
+        return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
     } else if (value->type == vt_local_var) {
         LLVMValueRef var = llvm_get_var(fc, value->item);
         printf("Load lvar: %s\n", (char *)(value->item));
         printf("Type: %s\n", type_to_str(value->return_type));
-        return LLVMBuildLoad2(fc->builder, llvm_type(value->return_type), var, llvm_buf(fc));
+        return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
         return var;
         /*
 
@@ -745,7 +745,7 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
         TokenDeclare *decl = token->item;
 
         LLVMValueRef v = llvm_value(fc, decl->value);
-        LLVMValueRef a = llvm_build_declare(fc, llvm_type(decl->type), decl->name);
+        LLVMValueRef a = llvm_build_declare(fc, llvm_type(fc, decl->type), decl->name);
         LLVMBuildStore(fc->builder, a, v);
 
         Class *class = decl->value->return_type->class;

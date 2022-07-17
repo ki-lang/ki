@@ -19,7 +19,7 @@ LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value) {
     LLVMValueRef *ini_values = malloc(sizeof(LLVMValueRef) * argc);
     for (int i = 0; i < ini->prop_values->values->length; i++) {
         Value *val = array_get_index(ini->prop_values->values, i);
-        ini_types[i] = llvm_type(val->return_type);
+        ini_types[i] = llvm_type(fc, val->return_type);
         ini_values[i] = llvm_value(fc, val->item);
     }
 
@@ -112,13 +112,13 @@ LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value) {
 
     char *x = type_to_str(fa->on->return_type);
     printf("Type: %s\n", x);
-    LLVMTypeRef ont = llvm_funcref_type(fa->on->return_type);
+    LLVMTypeRef ont = llvm_funcref_type(fc, fa->on->return_type);
     LLVMValueRef onv = llvm_value(fc, fa->on);
     LLVMValueRef retv = LLVMBuildCall2(fc->builder, ont, onv, args, argc, llvm_buf(fc));
 
     if (fa->ort != NULL) {
 
-        LLVMTypeRef rett = llvm_type(value->return_type);
+        LLVMTypeRef rett = llvm_type(fc, value->return_type);
         char *ret_var = strdup(var_buf(fc));
         LLVMValueRef ort_retv = llvm_build_declare(fc, rett, ret_var);
         LLVMBuildStore(fc->builder, retv, ort_retv);

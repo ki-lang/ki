@@ -208,7 +208,7 @@ LLVMValueRef llvm_null();
 // Types
 LLVMTypeRef llvm_ptr();
 LLVMTypeRef llvm_class_type(FileCompiler* fc, Class *class);
-LLVMTypeRef llvm_funcref_type(Type *type);
+LLVMTypeRef llvm_funcref_type(FileCompiler*fc, Type *type);
 // Helpers
 int llvm_prop_index(Class *class, char *prop_name);
 LLVMValueRef llvm_get_var(FileCompiler *fc, char *name);

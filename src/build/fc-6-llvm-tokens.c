@@ -68,36 +68,36 @@ void llvm_build_assign(FileCompiler *fc, TokenAssign *ta) {
     if (ta->type == op_eq) {
         //
     } else if (ta->type == op_add) {
-        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(ta->left->return_type), set_on, llvm_buf(fc));
+        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
         value = LLVMBuildAdd(fc->builder, load, value, llvm_buf(fc));
     } else if (ta->type == op_sub) {
-        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(ta->left->return_type), set_on, llvm_buf(fc));
+        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
         value = LLVMBuildSub(fc->builder, load, value, llvm_buf(fc));
     } else if (ta->type == op_mult) {
-        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(ta->left->return_type), set_on, llvm_buf(fc));
+        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
         value = LLVMBuildMul(fc->builder, load, value, llvm_buf(fc));
     } else if (ta->type == op_div) {
-        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(ta->left->return_type), set_on, llvm_buf(fc));
+        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
         if (ta->left->return_type->class->is_unsigned) {
             value = LLVMBuildUDiv(fc->builder, load, value, llvm_buf(fc));
         } else {
             value = LLVMBuildSDiv(fc->builder, load, value, llvm_buf(fc));
         }
     } else if (ta->type == op_mod) {
-        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(ta->left->return_type), set_on, llvm_buf(fc));
+        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
         if (ta->left->return_type->class->is_unsigned) {
             value = LLVMBuildURem(fc->builder, load, value, llvm_buf(fc));
         } else {
             value = LLVMBuildSRem(fc->builder, load, value, llvm_buf(fc));
         }
     } else if (ta->type == op_bit_OR) {
-        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(ta->left->return_type), set_on, llvm_buf(fc));
+        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
         value = LLVMBuildOr(fc->builder, load, value, llvm_buf(fc));
     } else if (ta->type == op_bit_AND) {
-        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(ta->left->return_type), set_on, llvm_buf(fc));
+        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
         value = LLVMBuildAnd(fc->builder, load, value, llvm_buf(fc));
     } else if (ta->type == op_bit_XOR) {
-        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(ta->left->return_type), set_on, llvm_buf(fc));
+        LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
         value = LLVMBuildXor(fc->builder, load, value, llvm_buf(fc));
     } else {
         fc_error(fc, "Unhandled assign operator translation", NULL);
