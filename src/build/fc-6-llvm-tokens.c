@@ -14,9 +14,11 @@ void llvm_build_if_token(FileCompiler *fc, TokenIf *ift, LLVMBasicBlockRef after
     llvm_build_ast(fc, ift->scope);
     LLVMBuildBr(fc->builder, after);
     // Else code
-    LLVMPositionBuilderAtEnd(fc->builder, elsecode);
-    llvm_build_if_token(fc, ift->next, after);
-    LLVMBuildBr(fc->builder, after);
+    if (ift->next) {
+        LLVMPositionBuilderAtEnd(fc->builder, elsecode);
+        llvm_build_if_token(fc, ift->next, after);
+        LLVMBuildBr(fc->builder, after);
+    }
     // Result
     LLVMPositionBuilderAtEnd(fc->builder, after);
 }
@@ -104,6 +106,8 @@ void llvm_build_assign(FileCompiler *fc, TokenAssign *ta) {
     }
 
     printf("store (assign-type:%d)\n", ta->type);
+    printf("on: %s\n", LLVMPrintValueToString(set_on));
+    printf("value: %s\n", LLVMPrintValueToString(value));
     LLVMBuildStore(fc->builder, value, set_on);
 
     //

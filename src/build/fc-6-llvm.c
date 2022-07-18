@@ -207,10 +207,12 @@ void llvm_build_func(FileCompiler *fc, Function *func) {
     //
     printf("func: %s\n", func->cname);
     fc->llvmc = 0;
+    LLVMValueRef prev_llvmfn = fc->current_func;
     //
     LLVMValueRef llvmfn = LLVMGetNamedFunction(fc->mod, func->cname);
     LLVMBasicBlockRef entry = LLVMGetEntryBasicBlock(llvmfn);
     LLVMPositionBuilderAtEnd(fc->builder, entry);
+    fc->current_func = llvmfn;
 
     // Declare arg vars
     fc->current_scope = func->scope;
@@ -227,6 +229,8 @@ void llvm_build_func(FileCompiler *fc, Function *func) {
     if (!func->return_type) {
         LLVMBuildRetVoid(fc->builder);
     }
+
+    fc->current_func = prev_llvmfn;
 }
 
 LLVMValueRef llvm_build_declare(FileCompiler *fc, LLVMTypeRef type, char *name) {
@@ -318,8 +322,8 @@ LLVMTypeRef llvm_type(FileCompiler *fc, Type *type) {
         result = LLVMPointerType(result, 0);
     }
 
-    printf("FROM: %s\n", type_to_str(type));
-    printf("TO: %s\n", LLVMPrintTypeToString(result));
+    // printf("FROM: %s\n", type_to_str(type));
+    // printf("TO: %s\n", LLVMPrintTypeToString(result));
 
     return result;
 }
@@ -438,6 +442,11 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
         printf("|||\n");
         // return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
         return var;
+    } else if (value->type == vt_char) {
+        return llvm_u8(atoi(value->item));
+    } else if (value->type == vt_func_name) {
+        return llvm_get_func(fc, value->item, value->return_type);
+
         /*
 
     } else if (value->type == vt_nullable_value) {
@@ -460,10 +469,6 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
                 GlobalVar *gv = value->item;
                 str_append_chars(result, gv->cname);
                 //
-            } else if (value->type == vt_char) {
-                str_append_chars(result, "'");
-                str_append_chars(result, value->item);
-                str_append_chars(result, "'");
             } else if (value->type == vt_null_or) {
                 ValueOperator *op = value->item;
                 fc_write_c_value(fc, op->left, true, code);
@@ -2328,28 +2333,30 @@ void llvm_deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
             bool nullable = decl->type->nullable;
             char *lv = decl->name;
 
-            if (nullable) {
-                str_append_chars(fc->tkn_buffer, "if(");
-                str_append_chars(fc->tkn_buffer, lv);
-                str_append_chars(fc->tkn_buffer, "){ ");
-            }
-            str_append_chars(fc->tkn_buffer, "if(--");
-            str_append_chars(fc->tkn_buffer, lv);
-            str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
+            llvm_deref(fc, llvm_get_var(fc, lv), decl->type);
 
-            if (ignore_vbuf && strcmp(ignore_vbuf, lv) == 0) {
-                str_append_chars(fc->tkn_buffer, "{}");
-            } else {
-                str_append_chars(fc->tkn_buffer, class->cname);
-                str_append_chars(fc->tkn_buffer, "____free(");
-                str_append_chars(fc->tkn_buffer, lv);
-                str_append_chars(fc->tkn_buffer, ");");
-            }
+            // if (nullable) {
+            //     str_append_chars(fc->tkn_buffer, "if(");
+            //     str_append_chars(fc->tkn_buffer, lv);
+            //     str_append_chars(fc->tkn_buffer, "){ ");
+            // }
+            // str_append_chars(fc->tkn_buffer, "if(--");
+            // str_append_chars(fc->tkn_buffer, lv);
+            // str_append_chars(fc->tkn_buffer, "->_RC == 0) ");
 
-            if (nullable) {
-                str_append_chars(fc->tkn_buffer, " }");
-            }
-            str_append_chars(fc->tkn_buffer, "\n");
+            // if (ignore_vbuf && strcmp(ignore_vbuf, lv) == 0) {
+            //     str_append_chars(fc->tkn_buffer, "{}");
+            // } else {
+            //     str_append_chars(fc->tkn_buffer, class->cname);
+            //     str_append_chars(fc->tkn_buffer, "____free(");
+            //     str_append_chars(fc->tkn_buffer, lv);
+            //     str_append_chars(fc->tkn_buffer, ");");
+            // }
+
+            // if (nullable) {
+            //     str_append_chars(fc->tkn_buffer, " }");
+            // }
+            // str_append_chars(fc->tkn_buffer, "\n");
         }
 
         if (scope->is_func) {
