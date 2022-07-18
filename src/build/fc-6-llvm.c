@@ -431,21 +431,38 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
         }
     } else if (value->type == vt_arg) {
         LLVMValueRef var = llvm_get_var(fc, value->item);
-        // return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
-        return var;
+        return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
     } else if (value->type == vt_local_var) {
         LLVMValueRef var = llvm_get_var(fc, value->item);
-        printf("Load lvar: %s\n", (char *)(value->item));
-        printf("Type: %s\n", type_to_str(value->return_type));
-        printf("|||\n");
-        printf("%s\n", LLVMPrintValueToString(var));
-        printf("|||\n");
-        // return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
-        return var;
+        return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
     } else if (value->type == vt_char) {
         return llvm_u8(atoi(value->item));
     } else if (value->type == vt_func_name) {
         return llvm_get_func(fc, value->item, value->return_type);
+    } else if (value->type == vt_getptr) {
+        Value *of = value->item;
+        if (of->type == vt_local_var) {
+            return llvm_get_var(fc, of->item);
+        } else if (of->type == vt_arg) {
+            return llvm_get_var(fc, of->item);
+        } else {
+            printf("Cannot get reference from this value type: %d\n", of->type);
+            die("...");
+        }
+    } else if (value->type == vt_getptrv) {
+        ValueCast *cast = value->item;
+        return LLVMBuildLoad2(fc->builder, llvm_type(fc, cast->as_type), llvm_value(fc, cast->value), llvm_buf(fc));
+    } else if (value->type == vt_setptrv) {
+        SetPtrValue *cast = value->item;
+        LLVMValueRef right = llvm_value(fc, cast->to_value);
+        LLVMValueRef left = llvm_value(fc, cast->ptr_value);
+        LLVMBuildStore(fc->builder, right, left);
+        // str_append_chars(result, "*(");
+        // fc_write_c_type(result, cast->to_value->return_type, NULL);
+        // str_append_chars(result, "*)");
+        // fc_write_c_value(fc, cast->ptr_value, false, code);
+        // str_append_chars(result, " = ");
+        // fc_write_c_value(fc, cast->to_value, false, code);
 
         /*
 
@@ -502,24 +519,6 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
                 fc_write_c_type(result, cast->as_type, NULL);
                 str_append_chars(result, ")");
                 fc_write_c_value(fc, cast->value, false, code);
-            } else if (value->type == vt_getptrv) {
-                ValueCast *cast = value->item;
-                str_append_chars(result, "(*(");
-                fc_write_c_type(result, cast->as_type, NULL);
-                str_append_chars(result, "*)(");
-                fc_write_c_value(fc, cast->value, false, code);
-                str_append_chars(result, "))");
-            } else if (value->type == vt_getptr) {
-                str_append_chars(result, "&");
-                fc_write_c_value(fc, value->item, false, code);
-            } else if (value->type == vt_setptrv) {
-                SetPtrValue *cast = value->item;
-                str_append_chars(result, "*(");
-                fc_write_c_type(result, cast->to_value->return_type, NULL);
-                str_append_chars(result, "*)");
-                fc_write_c_value(fc, cast->ptr_value, false, code);
-                str_append_chars(result, " = ");
-                fc_write_c_value(fc, cast->to_value, false, code);
             } else if (value->type == vt_async) {
                 Value *fcallv = value->item;
                 ValueFuncCall *fcall = fcallv->item;

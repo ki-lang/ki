@@ -5,9 +5,6 @@ struct A {
 };
 
 int main() {
-    int a = 1;
-    struct A *b;
-
-    int d = a;
-    struct A *c = b;
+    int *b = 0x1293815251;
+    *b = 1;
 }
