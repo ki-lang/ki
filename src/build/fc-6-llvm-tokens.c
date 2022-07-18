@@ -2,6 +2,12 @@
 #include "../all.h"
 
 void llvm_build_if_token(FileCompiler *fc, TokenIf *ift, LLVMBasicBlockRef after) {
+    //
+    if (!ift->condition) {
+        // Else code
+        llvm_build_ast(fc, ift->scope);
+        return;
+    }
     // Create blocks
     LLVMBasicBlockRef ifcode = LLVMAppendBasicBlock(fc->current_func, llvm_buf(fc));
     LLVMBasicBlockRef elsecode = ift->next ? LLVMAppendBasicBlock(fc->current_func, llvm_buf(fc)) : NULL;
