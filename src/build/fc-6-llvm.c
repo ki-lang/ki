@@ -427,7 +427,8 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
         }
     } else if (value->type == vt_arg) {
         LLVMValueRef var = llvm_get_var(fc, value->item);
-        return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
+        // return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
+        return var;
     } else if (value->type == vt_local_var) {
         LLVMValueRef var = llvm_get_var(fc, value->item);
         printf("Load lvar: %s\n", (char *)(value->item));
@@ -435,7 +436,7 @@ LLVMValueRef llvm_value(FileCompiler *fc, Value *value) {
         printf("|||\n");
         printf("%s\n", LLVMPrintValueToString(var));
         printf("|||\n");
-        return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
+        // return LLVMBuildLoad2(fc->builder, llvm_type(fc, value->return_type), var, llvm_buf(fc));
         return var;
         /*
 
@@ -762,6 +763,33 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
         LLVMBasicBlockRef after = LLVMAppendBasicBlock(fc->current_func, llvm_buf(fc));
         llvm_build_if_token(fc, token->item, after);
         LLVMMoveBasicBlockAfter(after, LLVMGetLastBasicBlock(fc->current_func));
+    } else if (token->type == tkn_while) {
+        //
+        TokenWhile *wt = token->item;
+        //
+        LLVMBasicBlockRef cond_block = LLVMAppendBasicBlock(fc->current_func, llvm_buf(fc));
+        LLVMBasicBlockRef code_block = LLVMAppendBasicBlock(fc->current_func, llvm_buf(fc));
+        LLVMBasicBlockRef after = LLVMAppendBasicBlock(fc->current_func, llvm_buf(fc));
+
+        LLVMBuildBr(fc->builder, cond_block);
+        LLVMPositionBuilderAtEnd(fc->builder, cond_block);
+        fc->current_block = cond_block;
+
+        LLVMValueRef cond = llvm_value(fc, wt->condition);
+        LLVMValueRef cmp = LLVMBuildICmp(fc->builder, LLVMIntNE, cond, llvm_u8(0), llvm_buf(fc));
+        LLVMBuildCondBr(fc->builder, cmp, code_block, after);
+
+        LLVMPositionBuilderAtEnd(fc->builder, code_block);
+        fc->current_block = code_block;
+
+        llvm_build_ast(fc, wt->scope);
+        LLVMBuildBr(fc->builder, cond_block);
+
+        LLVMPositionBuilderAtEnd(fc->builder, after);
+        fc->current_block = after;
+    } else if (token->type == tkn_value) {
+        Value *val = token->item;
+        llvm_value(fc, val);
         /*
     } else if (token->type == tkn_debug_msg) {
         char *msg = token->item;
@@ -936,15 +964,6 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
 
         str_append_chars(fc->tkn_buffer, "\n");
 
-    } else if (token->type == tkn_while) {
-        //
-        TokenWhile *wt = token->item;
-        fc_write_c_value(fc, wt->condition, true, fc->tkn_buffer);
-        str_append_chars(fc->tkn_buffer, "while(");
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ") {\n");
-        fc_write_c_ast(fc, wt->scope);
-        str_append_chars(fc->tkn_buffer, "}\n\n");
     } else if (token->type == tkn_break) {
         Scope *scope = fc->current_scope;
         scope = get_loop_scope(scope);
@@ -973,11 +992,6 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
         str_append_chars(fc->tkn_buffer, "ki__mem__free(");
         str_append(fc->tkn_buffer, fc->value_buffer);
         str_append_chars(fc->tkn_buffer, ");\n");
-    } else if (token->type == tkn_value) {
-        Value *val = token->item;
-        fc_write_c_value(fc, val, true, fc->tkn_buffer);
-        str_append(fc->tkn_buffer, fc->value_buffer);
-        str_append_chars(fc->tkn_buffer, ";\n");
         */
     } else {
         printf("File: %s\n", fc->ki_filepath);

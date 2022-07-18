@@ -37,8 +37,8 @@ void llvm_build_assign(FileCompiler *fc, TokenAssign *ta) {
         set_on = LLVMGetNamedGlobal(fc->mod, gv->name);
     } else if (ta->left->type == vt_local_var) {
         //
-        LocalVar *lv = ta->left->item;
-        set_on = llvm_get_var(fc, lv->name);
+        char *name = ta->left->item;
+        set_on = llvm_get_var(fc, name);
     } else if (ta->left->type == vt_prop_access) {
         //
         ValueClassPropAccess *pa = ta->left->item;
@@ -103,7 +103,7 @@ void llvm_build_assign(FileCompiler *fc, TokenAssign *ta) {
         fc_error(fc, "Unhandled assign operator translation", NULL);
     }
 
-    printf("store\n");
+    printf("store (assign-type:%d)\n", ta->type);
     LLVMBuildStore(fc->builder, value, set_on);
 
     //
