@@ -238,7 +238,7 @@ LLVMValueRef llvm_build_declare(FileCompiler *fc, LLVMTypeRef type, char *name) 
     LLVMValueRef a = LLVMBuildAlloca(fc->builder, type, llvm_buf(fc));
     Scope *scope = fc->current_scope;
     map_set(scope->llvm_declares, name, a);
-    printf("decl: %s\n", name);
+    // printf("decl: %s\n", name);
     return a;
 }
 
@@ -246,7 +246,6 @@ LLVMValueRef llvm_get_var(FileCompiler *fc, char *name) {
     //
     Scope *scope = fc->current_scope;
     while (scope) {
-        printf("find: %s\n", name);
         LLVMValueRef v = map_get(scope->llvm_declares, name);
         if (v) {
             return v;
@@ -754,7 +753,8 @@ void llvm_build_token(FileCompiler *fc, Token *token) {
 
         LLVMValueRef v = llvm_value(fc, decl->value);
         LLVMValueRef a = llvm_build_declare(fc, llvm_type(fc, decl->type), decl->name);
-        LLVMBuildStore(fc->builder, a, v);
+        v = llvm_int_bytes_check(fc, v, decl->value->return_type, decl->type);
+        LLVMBuildStore(fc->builder, v, a);
 
         Class *class = decl->value->return_type->class;
         if (class && class->ref_count) {
@@ -2406,6 +2406,7 @@ void llvm_deref_local_vars(FileCompiler *fc, Value *retv, Scope *until_scope) {
 
 void llvm_deref(FileCompiler *fc, LLVMValueRef v, Type *type) {
     //
+    return;
     LLVMValueRef min = llvm_sub(fc, v, llvm_int(1));
     LLVMValueRef cond = llvm_icmp(fc, min, llvm_int(0));
     if (type->nullable) {
@@ -2414,11 +2415,13 @@ void llvm_deref(FileCompiler *fc, LLVMValueRef v, Type *type) {
     }
     LLVMBasicBlockRef then = LLVMAppendBasicBlock(fc->current_func, "if_deref");
     LLVMBasicBlockRef next = LLVMAppendBasicBlock(fc->current_func, "if_deref_next");
-    LLVMBuildCondBr(fc->builder, cond, then, NULL);
+    LLVMBuildCondBr(fc->builder, cond, then, next);
     //
     LLVMPositionBuilderAtEnd(fc->builder, then);
     fc->current_block = then;
     //
+
+    LLVMBuildBr(fc->builder, next);
 
     //
     LLVMPositionBuilderAtEnd(fc->builder, next);
@@ -2550,6 +2553,21 @@ void fc_write_c_write_allocator(Str *code, Str *hcode, char *name, char *size, b
 
     str_append_chars(code, "return a;\n");
     str_append_chars(code, "}\n");
+}
+
+LLVMValueRef llvm_int_bytes_check(FileCompiler *fc, LLVMValueRef value, Type *type, Type *expected_type) {
+    //
+    if (expected_type && expected_type->class && expected_type->class->is_number) {
+        int size = type->bytes;
+        int exp_size = expected_type->bytes;
+        if (size < exp_size) {
+            return LLVMBuildSExt(fc->builder, value, llvm_type(fc, expected_type), llvm_buf(fc));
+        }
+        if (size > exp_size) {
+            return LLVMBuildTrunc(fc->builder, value, llvm_type(fc, expected_type), llvm_buf(fc));
+        }
+    }
+    return value;
 }
 
 int llvm_prop_index(Class *class, char *prop_name) {

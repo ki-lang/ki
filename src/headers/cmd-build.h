@@ -214,6 +214,7 @@ int llvm_prop_index(Class *class, char *prop_name);
 LLVMValueRef llvm_get_var(FileCompiler *fc, char *name);
 LLVMValueRef llvm_get_func(FileCompiler *fc, char *name, Type *func_ref_type);
 LLVMValueRef llvm_get_allocator(FileCompiler *fc, int size, bool threaded);
+LLVMValueRef llvm_int_bytes_check(FileCompiler*fc, LLVMValueRef value, Type *type, Type *expected_type);
 // Build value
 LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value);
 LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value);

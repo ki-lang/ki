@@ -5,6 +5,7 @@ struct A {
 };
 
 int main() {
-    int *b = 0x1293815251;
-    *b = 1;
+    //
+    int b = 10;
+    short a = b;
 }

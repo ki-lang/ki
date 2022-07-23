@@ -369,6 +369,10 @@ bool type_compatible(Type *t1, Type *t2) {
             if (!t2->class->is_number) {
                 return false;
             }
+            // if (t2->bytes > t1->bytes) {
+            //     return false;
+            // }
+
         } else {
             if (t1->class != t2->class) {
                 return false;

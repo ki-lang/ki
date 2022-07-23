@@ -31,9 +31,7 @@ void llvm_build_if_token(FileCompiler *fc, TokenIf *ift, LLVMBasicBlockRef after
 
 void llvm_build_assign(FileCompiler *fc, TokenAssign *ta) {
     //
-    printf("right\n");
     LLVMValueRef value = llvm_value(fc, ta->right);
-    printf("left\n");
     LLVMValueRef set_on;
     //
     if (ta->left->type == vt_threaded_global) {
@@ -57,8 +55,6 @@ void llvm_build_assign(FileCompiler *fc, TokenAssign *ta) {
         die("Codegen: left side is not assign-able");
     }
 
-    printf("ref\n");
-
     // Upref new value
     Type *rtype = ta->right->return_type;
     if (rtype->class && rtype->class->ref_count) {
@@ -70,8 +66,6 @@ void llvm_build_assign(FileCompiler *fc, TokenAssign *ta) {
     if (ltype->class && ltype->class->ref_count) {
         llvm_deref(fc, set_on, ltype);
     }
-
-    printf("op\n");
 
     if (ta->type == op_eq) {
         //
@@ -111,9 +105,7 @@ void llvm_build_assign(FileCompiler *fc, TokenAssign *ta) {
         fc_error(fc, "Unhandled assign operator translation", NULL);
     }
 
-    printf("store (assign-type:%d)\n", ta->type);
-    printf("on: %s\n", LLVMPrintValueToString(set_on));
-    printf("value: %s\n", LLVMPrintValueToString(value));
+    value = llvm_int_bytes_check(fc, value, ta->right->return_type, ta->left->return_type);
     LLVMBuildStore(fc->builder, value, set_on);
 
     //

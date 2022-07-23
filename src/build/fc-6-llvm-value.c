@@ -52,10 +52,13 @@ LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value) {
 
     for (int i = 0; i < ini->prop_values->keys->length; i++) {
         char *prop_name = array_get_index(ini->prop_values->keys, i);
+        ClassProp *prop = map_get(class->props, prop_name);
         Value *v = array_get_index(ini->prop_values->values, i);
 
         LLVMValueRef pa = llvm_build_prop_access(fc, retv, class, prop_name);
-        LLVMBuildStore(fc->builder, LLVMGetParam(fv, i), pa);
+        LLVMValueRef paramv = LLVMGetParam(fv, i);
+        paramv = llvm_int_bytes_check(fc, paramv, v->return_type, prop->return_type);
+        LLVMBuildStore(fc->builder, paramv, pa);
 
         if (v->return_type->class && v->return_type->class->ref_count) {
             // KI_RET_V->{prop_name}->_RC++
@@ -76,6 +79,7 @@ LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value) {
 
         LLVMValueRef v = llvm_value(fc, prop->default_value);
         LLVMValueRef pa = llvm_build_prop_access(fc, retv, class, prop_name);
+        v = llvm_int_bytes_check(fc, v, prop->default_value->return_type, prop->return_type);
         LLVMBuildStore(fc->builder, v, pa);
     }
 
@@ -99,11 +103,14 @@ LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value) {
     if (fa->ort != NULL) {
         argc++;
     }
+    Array *funcArgs = fa->on->return_type->func_arg_types;
     LLVMValueRef args[argc];
     for (int i = 0; i < fa->arg_values->length; i++) {
-        printf("arg:%d\n", i);
         Value *v = array_get_index(fa->arg_values, i);
+        Type *funcArg = array_get_index(funcArgs, i);
+        //
         args[i] = llvm_value(fc, v);
+        args[i] = llvm_int_bytes_check(fc, args[i], v->return_type, funcArg);
     }
     if (fa->ort != NULL) {
         LLVMValueRef var = llvm_get_var(fc, "_KI_THROW_MSG_BUF");
@@ -140,6 +147,7 @@ LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value) {
 
         LLVMValueRef ortv = llvm_build_ort(fc, fa->ort);
         if (ortv) {
+            ortv = llvm_int_bytes_check(fc, ortv, fa->ort->value->return_type, value->return_type);
             LLVMBuildStore(fc->builder, ortv, ort_retv);
         }
 
@@ -204,9 +212,11 @@ LLVMValueRef llvm_build_operator(FileCompiler *fc, Value *value) {
 
     ValueOperator *op = value->item;
     LLVMValueRef left = llvm_value(fc, op->left);
+    left = llvm_int_bytes_check(fc, left, op->left->return_type, value->return_type);
     LLVMValueRef right = NULL;
     if (op->right && op->type != op_and && op->type != op_or) {
         right = llvm_value(fc, op->right);
+        right = llvm_int_bytes_check(fc, right, op->right->return_type, value->return_type);
     }
 
     if (op->type == op_add) {
