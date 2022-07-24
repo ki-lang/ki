@@ -2574,17 +2574,17 @@ void fc_write_c_write_allocator(Str *code, Str *hcode, char *name, char *size, b
 
 LLVMValueRef llvm_int_bytes_check(FileCompiler *fc, LLVMValueRef value, Type *type, Type *expected_type) {
     //
-    printf("expect: %p\n", expected_type);
+    // printf("expect: %p\n", expected_type);
     if (expected_type && expected_type->class && expected_type->class->is_number) {
         int size = type->bytes;
         int exp_size = expected_type->bytes;
-        printf("%d vs %d\n", size, exp_size);
+        // printf("%d vs %d\n", size, exp_size);
         if (size < exp_size) {
-            printf("ext\n");
+            // printf("ext\n");
             return LLVMBuildSExt(fc->builder, value, llvm_type(fc, expected_type), llvm_buf(fc));
         }
         if (size > exp_size) {
-            printf("trunc\n");
+            // printf("trunc\n");
             return LLVMBuildTrunc(fc->builder, value, llvm_type(fc, expected_type), llvm_buf(fc));
         }
     }
@@ -2596,11 +2596,14 @@ void llvm_equalize_values(FileCompiler *fc, LLVMValueRef *value_ref, Type *type,
     LLVMValueRef value = *value_ref;
     LLVMValueRef value2 = *value2_ref;
     if (type->bytes == type2->bytes) {
+        printf("EQ\n");
         return;
     }
     if (type->bytes < type2->bytes) {
+        printf("EXT1\n");
         *value_ref = LLVMBuildSExt(fc->builder, value, llvm_type(fc, type2), llvm_buf(fc));
     } else {
+        printf("EXT2\n");
         *value2_ref = LLVMBuildSExt(fc->builder, value2, llvm_type(fc, type), llvm_buf(fc));
     }
 }

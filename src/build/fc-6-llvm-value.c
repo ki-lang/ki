@@ -217,6 +217,7 @@ LLVMValueRef llvm_build_operator(FileCompiler *fc, Value *value) {
         right = llvm_value(fc, op->right);
     }
 
+    printf("OP\n");
     if (left && right) {
         llvm_equalize_values(fc, &left, op->left->return_type, &right, op->right->return_type);
     }
@@ -228,7 +229,7 @@ LLVMValueRef llvm_build_operator(FileCompiler *fc, Value *value) {
     } else if (op->type == op_mult) {
         return LLVMBuildMul(fc->builder, left, right, llvm_buf(fc));
     } else if (op->type == op_div) {
-        return LLVMBuildFDiv(fc->builder, left, right, llvm_buf(fc));
+        return LLVMBuildSDiv(fc->builder, left, right, llvm_buf(fc));
     } else if (op->type == op_mod) {
         return LLVMBuildSRem(fc->builder, left, right, llvm_buf(fc));
     } else if (op->type == op_bit_OR) {
@@ -272,6 +273,7 @@ LLVMValueRef llvm_build_operator(FileCompiler *fc, Value *value) {
         LLVMValueRef cmp = LLVMBuildICmp(fc->builder, LLVMIntNE, left, right, llvm_buf(fc));
         return LLVMBuildZExt(fc->builder, cmp, LLVMInt8Type(), llvm_buf(fc));
     } else if (op->type == op_lt) {
+        printf("SLT\n");
         LLVMValueRef cmp = LLVMBuildICmp(fc->builder, LLVMIntSLT, left, right, llvm_buf(fc));
         return LLVMBuildZExt(fc->builder, cmp, LLVMInt8Type(), llvm_buf(fc));
     } else if (op->type == op_lte) {
