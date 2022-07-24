@@ -212,16 +212,14 @@ LLVMValueRef llvm_build_operator(FileCompiler *fc, Value *value) {
 
     ValueOperator *op = value->item;
     LLVMValueRef left = llvm_value(fc, op->left);
-    left = llvm_int_bytes_check(fc, left, op->left->return_type, value->return_type);
     LLVMValueRef right = NULL;
     if (op->right && op->type != op_and && op->type != op_or) {
         right = llvm_value(fc, op->right);
-        right = llvm_int_bytes_check(fc, right, op->right->return_type, value->return_type);
     }
 
-    // if (left && right) {
-    //     llvm_equalize_values(fc, &left, op->left->return_type, &right, op->right->return_type);
-    // }
+    if (left && right) {
+        llvm_equalize_values(fc, &left, op->left->return_type, &right, op->right->return_type);
+    }
 
     if (op->type == op_add) {
         return LLVMBuildAdd(fc->builder, left, right, llvm_buf(fc));

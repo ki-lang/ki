@@ -2574,13 +2574,17 @@ void fc_write_c_write_allocator(Str *code, Str *hcode, char *name, char *size, b
 
 LLVMValueRef llvm_int_bytes_check(FileCompiler *fc, LLVMValueRef value, Type *type, Type *expected_type) {
     //
+    printf("expect: %p\n", expected_type);
     if (expected_type && expected_type->class && expected_type->class->is_number) {
         int size = type->bytes;
         int exp_size = expected_type->bytes;
+        printf("%d vs %d\n", size, exp_size);
         if (size < exp_size) {
+            printf("ext\n");
             return LLVMBuildSExt(fc->builder, value, llvm_type(fc, expected_type), llvm_buf(fc));
         }
         if (size > exp_size) {
+            printf("trunc\n");
             return LLVMBuildTrunc(fc->builder, value, llvm_type(fc, expected_type), llvm_buf(fc));
         }
     }

@@ -1,5 +1,5 @@
 
 namespace type;
 
-class bool norfc {
+class bool number:u:1 {
 }
