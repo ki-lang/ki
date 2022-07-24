@@ -658,7 +658,6 @@ void token_declare(FileCompiler *fc, Scope *scope, Type *left_type) {
         if (!type_compatible(left_type, value->return_type)) {
             fc_error(fc, "Types are not compatible", NULL);
         }
-        value->return_type = left_type;
     }
 
     IdentifierFor *idf = init_idf();

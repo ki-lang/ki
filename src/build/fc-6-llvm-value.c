@@ -219,6 +219,10 @@ LLVMValueRef llvm_build_operator(FileCompiler *fc, Value *value) {
         right = llvm_int_bytes_check(fc, right, op->right->return_type, value->return_type);
     }
 
+    // if (left && right) {
+    //     llvm_equalize_values(fc, &left, op->left->return_type, &right, op->right->return_type);
+    // }
+
     if (op->type == op_add) {
         return LLVMBuildAdd(fc->builder, left, right, llvm_buf(fc));
     } else if (op->type == op_sub) {
@@ -282,9 +286,9 @@ LLVMValueRef llvm_build_operator(FileCompiler *fc, Value *value) {
         LLVMValueRef cmp = LLVMBuildICmp(fc->builder, LLVMIntSGE, left, right, llvm_buf(fc));
         return LLVMBuildZExt(fc->builder, cmp, LLVMInt8Type(), llvm_buf(fc));
     } else if (op->type == op_incr) {
-        return LLVMBuildAdd(fc->builder, left, llvm_int(1), llvm_buf(fc));
+        return LLVMBuildAdd(fc->builder, left, llvm_intx(1, op->left->return_type->bytes), llvm_buf(fc));
     } else if (op->type == op_decr) {
-        return LLVMBuildSub(fc->builder, left, llvm_int(1), llvm_buf(fc));
+        return LLVMBuildSub(fc->builder, left, llvm_intx(1, op->left->return_type->bytes), llvm_buf(fc));
     } else {
         printf("Op: %d\n", op->type);
         fc_error(fc, "Unhandled operator type", NULL);

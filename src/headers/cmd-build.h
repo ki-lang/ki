@@ -204,6 +204,7 @@ LLVMValueRef llvm_sub(FileCompiler *fc, LLVMValueRef left, LLVMValueRef right);
 // Constant values
 LLVMValueRef llvm_u8(char v);
 LLVMValueRef llvm_int(int v);
+LLVMValueRef llvm_intx(int v, int bytes);
 LLVMValueRef llvm_null();
 // Types
 LLVMTypeRef llvm_ptr();
@@ -215,6 +216,7 @@ LLVMValueRef llvm_get_var(FileCompiler *fc, char *name);
 LLVMValueRef llvm_get_func(FileCompiler *fc, char *name, Type *func_ref_type);
 LLVMValueRef llvm_get_allocator(FileCompiler *fc, int size, bool threaded);
 LLVMValueRef llvm_int_bytes_check(FileCompiler*fc, LLVMValueRef value, Type *type, Type *expected_type);
+void llvm_equalize_values(FileCompiler *fc, LLVMValueRef *value, Type *type, LLVMValueRef *value2, Type *type2);
 // Build value
 LLVMValueRef llvm_build_func_call(FileCompiler *fc, Value *value);
 LLVMValueRef llvm_build_class_init(FileCompiler *fc, Value *value);

@@ -2466,6 +2466,23 @@ char *llvm_buf(FileCompiler *fc) {
 // Values
 LLVMValueRef llvm_u8(char v) { return LLVMConstInt(LLVMInt8Type(), v, false); }
 LLVMValueRef llvm_int(int v) { return LLVMConstInt(LLVMInt32Type(), v, true); }
+LLVMValueRef llvm_intx(int v, int bytes) {
+    //
+    LLVMTypeRef type = NULL;
+    if (bytes == 1) {
+        type = LLVMInt8Type();
+    }
+    if (bytes == 2) {
+        type = LLVMInt16Type();
+    }
+    if (bytes == 4) {
+        type = LLVMInt32Type();
+    }
+    if (bytes == 8) {
+        type = LLVMInt64Type();
+    }
+    return LLVMConstInt(type, v, true);
+}
 LLVMValueRef llvm_null() { return LLVMConstInt(LLVMIntPtrType(g_target_data), 0, false); }
 
 // Types
@@ -2568,6 +2585,20 @@ LLVMValueRef llvm_int_bytes_check(FileCompiler *fc, LLVMValueRef value, Type *ty
         }
     }
     return value;
+}
+
+void llvm_equalize_values(FileCompiler *fc, LLVMValueRef *value_ref, Type *type, LLVMValueRef *value2_ref, Type *type2) {
+    //
+    LLVMValueRef value = *value_ref;
+    LLVMValueRef value2 = *value2_ref;
+    if (type->bytes == type2->bytes) {
+        return;
+    }
+    if (type->bytes < type2->bytes) {
+        *value_ref = LLVMBuildSExt(fc->builder, value, llvm_type(fc, type2), llvm_buf(fc));
+    } else {
+        *value2_ref = LLVMBuildSExt(fc->builder, value2, llvm_type(fc, type), llvm_buf(fc));
+    }
 }
 
 int llvm_prop_index(Class *class, char *prop_name) {

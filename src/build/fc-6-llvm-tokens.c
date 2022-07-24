@@ -71,15 +71,19 @@ void llvm_build_assign(FileCompiler *fc, TokenAssign *ta) {
         //
     } else if (ta->type == op_add) {
         LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
+        llvm_equalize_values(fc, &load, ta->left->return_type, &value, ta->right->return_type);
         value = LLVMBuildAdd(fc->builder, load, value, llvm_buf(fc));
     } else if (ta->type == op_sub) {
         LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
+        llvm_equalize_values(fc, &load, ta->left->return_type, &value, ta->right->return_type);
         value = LLVMBuildSub(fc->builder, load, value, llvm_buf(fc));
     } else if (ta->type == op_mult) {
         LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
+        llvm_equalize_values(fc, &load, ta->left->return_type, &value, ta->right->return_type);
         value = LLVMBuildMul(fc->builder, load, value, llvm_buf(fc));
     } else if (ta->type == op_div) {
         LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
+        llvm_equalize_values(fc, &load, ta->left->return_type, &value, ta->right->return_type);
         if (ta->left->return_type->class->is_unsigned) {
             value = LLVMBuildUDiv(fc->builder, load, value, llvm_buf(fc));
         } else {
@@ -87,6 +91,7 @@ void llvm_build_assign(FileCompiler *fc, TokenAssign *ta) {
         }
     } else if (ta->type == op_mod) {
         LLVMValueRef load = LLVMBuildLoad2(fc->builder, llvm_type(fc, ta->left->return_type), set_on, llvm_buf(fc));
+        llvm_equalize_values(fc, &load, ta->left->return_type, &value, ta->right->return_type);
         if (ta->left->return_type->class->is_unsigned) {
             value = LLVMBuildURem(fc->builder, load, value, llvm_buf(fc));
         } else {
