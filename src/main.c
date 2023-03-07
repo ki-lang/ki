@@ -20,6 +20,8 @@ int main(int argc, char *argv[]) {
 
 void help() {
     //
-    printf("ki build {filename} -o {outpath}\n");
+    printf("\n");
+    printf("# ki build -h\n");
+    printf("\n");
     exit(1);
 }

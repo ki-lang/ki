@@ -6,7 +6,7 @@ void die(char *msg) {
     exit(1);
 }
 
-void parse_argv(char *argv, int argc, Array *has_value, Array *args, Map *options) {
+void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *options) {
     //
     for (int i = 0; i < argc; i++) {
         char *arg = argv[i];

@@ -9,7 +9,7 @@ Array *array_make(int max_length) {
     return arr;
 }
 
-Array array_from_pointer_list(void *list[], int count) {
+Array *array_from_pointer_list(void *list[], int count) {
     Array *arr = array_make(count);
     for (int i = 0; i < count; i++) {
         array_push(arr, list[i]);
