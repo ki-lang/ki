@@ -45,8 +45,10 @@ void cmd_build(int argc, char *argv[]) {
         array_push(files, arg);
     }
     //
+    Build *b = malloc(sizeof(Build));
 
     //
+    build_free(b);
     map_free(options, false);
     array_free(args, false);
     array_free(files, false);
@@ -80,6 +82,16 @@ char *default_arch() {
     return "arm64";
 #endif
     die("Cannot determine default target 'arch', use --arch to specify manually");
+}
+
+void build_free(Build *b) {
+    //
+    Array *allocs = b->allocs;
+    int alc = b->allocs->length;
+    for (int i = 0; i < alc; i++) {
+        free(array_get_index(allocs, i));
+    }
+    free(b);
 }
 
 void cmd_build_help() {
