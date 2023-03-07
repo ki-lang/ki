@@ -13,4 +13,6 @@
 
 #include "headers/structs.h"
 
+#include "headers/globals.h"
+
 #include "headers/functions.h"

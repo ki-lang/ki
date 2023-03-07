@@ -15,10 +15,11 @@ void cmd_build(int argc, char *argv[]) {
     array_push(has_value, "--os");
 
     parse_argv(argv, argc, has_value, args, options);
+    array_free(has_value, false);
 
     // Check options
     char *path_out = map_get(options, "-o");
-    if (!path_out) {
+    if (!path_out || array_contains(args, "-h", "chars")) {
         cmd_build_help();
     }
 
@@ -29,7 +30,26 @@ void cmd_build(int argc, char *argv[]) {
     if (!arch)
         arch = default_arch();
 
+    // Filter out files
+    Array *files = array_make(argc);
+    argc = args->length;
+    for (int i = 0; i < argc; i++) {
+        char *arg = array_get_index(args, i);
+        if (arg[0] == '-') {
+            continue;
+        }
+        if (!ends_with(arg, ".ki")) {
+            sprintf(die_buf, "Filename must end with .ki : '%s'", arg);
+            die(die_buf);
+        }
+        array_push(files, arg);
+    }
     //
+
+    //
+    map_free(options, false);
+    array_free(args, false);
+    array_free(files, false);
 }
 
 char *default_os() {
