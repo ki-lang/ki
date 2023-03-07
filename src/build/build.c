@@ -41,7 +41,7 @@ void cmd_build(int argc, char *argv[]) {
     // Filter out files
     Array *files = array_make(argc);
     argc = args->length;
-    for (int i = 0; i < argc; i++) {
+    for (int i = 2; i < argc; i++) {
         char *arg = array_get_index(args, i);
         if (arg[0] == '-') {
             continue;
@@ -57,9 +57,14 @@ void cmd_build(int argc, char *argv[]) {
     b->os = os;
     b->arch = arch;
     b->ptr_size = ptr_size;
+    b->allocs = array_make(100);
 
     Pkc *pkc_main = b_alloc(b, sizeof(Pkc));
     Nsc *nsc_main = b_alloc(b, sizeof(Nsc));
+    nsc_main->pkc = pkc_main;
+    nsc_main->b = b;
+
+    b->nsc_main = nsc_main;
 
     build_add_files(b, files);
     build_start(b);
@@ -121,6 +126,7 @@ void build_free(Build *b) {
     for (int i = 0; i < alc; i++) {
         free(array_get_index(allocs, i));
     }
+    array_free(b->allocs, false);
     free(b);
 }
 

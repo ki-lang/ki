@@ -8,6 +8,11 @@ Array *array_make(int max_length) {
     arr->data = malloc(sizeof(void *) * max_length);
     return arr;
 }
+void array_init(Array *arr, int max_length) {
+    arr->length = 0;
+    arr->max_length = max_length;
+    arr->data = malloc(sizeof(void *) * max_length);
+}
 
 Array *array_from_pointer_list(void *list[], int count) {
     Array *arr = array_make(count);
