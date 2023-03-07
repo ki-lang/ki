@@ -4,6 +4,9 @@
 char *default_os();
 char *default_arch();
 void cmd_build_help();
+void build_add_files(Build *b, Array *files);
+void build_start(Build *b);
+void build_free(Build *b);
 
 void cmd_build(int argc, char *argv[]) {
     //
@@ -30,6 +33,11 @@ void cmd_build(int argc, char *argv[]) {
     if (!arch)
         arch = default_arch();
 
+    int ptr_size = 8;
+    if (strcmp(arch, "x86") == 0) {
+        ptr_size = 4;
+    }
+
     // Filter out files
     Array *files = array_make(argc);
     argc = args->length;
@@ -46,12 +54,34 @@ void cmd_build(int argc, char *argv[]) {
     }
     //
     Build *b = malloc(sizeof(Build));
+    b->os = os;
+    b->arch = arch;
+    b->ptr_size = ptr_size;
+
+    Pkc *pkc_main = b_alloc(b, sizeof(Pkc));
+    Nsc *nsc_main = b_alloc(b, sizeof(Nsc));
+
+    build_add_files(b, files);
+    build_start(b);
 
     //
     build_free(b);
     map_free(options, false);
     array_free(args, false);
     array_free(files, false);
+}
+
+void build_add_files(Build *b, Array *files) {
+    //
+    int filec = files->length;
+    for (int i = 0; i < filec; i++) {
+        char *path = array_get_index(files, i);
+        char *fpath = get_fullpath(path);
+        Fc *fc = fc_init(b, fpath);
+    }
+}
+void build_start(Build *b) {
+    //
 }
 
 char *default_os() {
