@@ -1,6 +1,4 @@
 
-typedef struct Allocator Allocator;
-typedef struct AllocatorBlock AllocatorBlock;
 typedef struct Build Build;
 typedef struct Fc Fc;
 typedef struct Nsc Nsc;
@@ -24,8 +22,10 @@ struct Build {
     char *os;
     char *arch;
     //
+    Allocator *alc;
+    Allocator *alc_ast;
+    //
     char *cache_dir;
-    Array *allocs;
     Nsc *nsc_main;
     //
     int ptr_size;
@@ -35,8 +35,8 @@ struct Fc {
     Build *b;
     char *path_ki;
     char *path_ir;
-    Array *allocs;
     Nsc *nsc;
+    Allocator *alc;
 };
 
 struct Nsc {

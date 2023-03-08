@@ -1,28 +1,29 @@
 
 #include "all.h"
 
-Array *array_make(int max_length) {
-    Array *arr = malloc(sizeof(Array));
+Array *array_make(Allocator *alc, int max_length) {
+    Array *arr = al(alc, sizeof(Array));
+    arr->alc = alc;
     arr->length = 0;
     arr->max_length = max_length;
-    arr->data = malloc(sizeof(void *) * max_length);
+    arr->data = al(alc, sizeof(void *) * max_length);
     return arr;
 }
 
-Array *array_from_pointer_list(void *list[], int count) {
-    Array *arr = array_make(count);
-    for (int i = 0; i < count; i++) {
-        array_push(arr, list[i]);
-    }
-    return arr;
-}
+// Array *array_from_pointer_list(void *list[], int count) {
+//     Array *arr = array_make(count);
+//     for (int i = 0; i < count; i++) {
+//         array_push(arr, list[i]);
+//     }
+//     return arr;
+// }
 
 void array_push(Array *arr, void *item) {
     if (arr->length == arr->max_length) {
         int newlen = arr->max_length * 2;
-        void *new = malloc(newlen * sizeof(void *));
+        void *new = al(arr->alc, newlen * sizeof(void *));
         memcpy(new, arr->data, arr->max_length * sizeof(void *));
-        free(arr->data);
+        // free(arr->data);
         arr->data = new;
         arr->max_length = newlen;
     }
@@ -54,9 +55,9 @@ void *array_pop(Array *arr) {
 void array_shift(Array *arr, void *item) {
     if (arr->length == arr->max_length) {
         int newlen = arr->max_length * 2;
-        void *new = malloc(newlen * sizeof(void *));
+        void *new = al(arr->alc, newlen * sizeof(void *));
         memcpy(new, arr->data, arr->max_length * sizeof(void *));
-        free(arr->data);
+        // free(arr->data);
         arr->data = new;
         arr->max_length = newlen;
     }
@@ -115,19 +116,4 @@ int array_find(Array *arr, void *item, char *type) {
         }
     }
     return -1;
-}
-
-void array_free(Array *arr, bool free_values) {
-    if (free_values) {
-        int x = arr->length;
-        while (x > 0) {
-            x--;
-            void **adrx = arr->data + (x * sizeof(void *));
-            void *adr = *adrx;
-            // printf("free:%d | %p\n", x, adr);
-            free(adr);
-        }
-    }
-    free(arr->data);
-    free(arr);
 }

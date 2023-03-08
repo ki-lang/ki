@@ -6,19 +6,19 @@ char *default_arch();
 void cmd_build_help();
 void build_add_files(Build *b, Array *files);
 void build_start(Build *b);
-void build_free(Build *b);
 
 void cmd_build(int argc, char *argv[]) {
     //
-    Array *args = array_make(argc);
-    Map *options = map_make();
-    Array *has_value = array_make(8);
+    Allocator *alc = alc_make();
+    //
+    Array *args = array_make(alc, argc);
+    Map *options = map_make(alc);
+    Array *has_value = array_make(alc, 8);
     array_push(has_value, "-o");
     array_push(has_value, "--arch");
     array_push(has_value, "--os");
 
     parse_argv(argv, argc, has_value, args, options);
-    array_free(has_value, false);
 
     // Check options
     char *path_out = map_get(options, "-o");
@@ -39,7 +39,7 @@ void cmd_build(int argc, char *argv[]) {
     }
 
     // Filter out files
-    Array *files = array_make(argc);
+    Array *files = array_make(alc, argc);
     argc = args->length;
     for (int i = 2; i < argc; i++) {
         char *arg = array_get_index(args, i);
@@ -53,14 +53,15 @@ void cmd_build(int argc, char *argv[]) {
         array_push(files, arg);
     }
     //
-    Build *b = malloc(sizeof(Build));
+    Build *b = al(alc, sizeof(Build));
     b->os = os;
     b->arch = arch;
     b->ptr_size = ptr_size;
-    b->allocs = array_make(100);
+    b->alc = alc;
+    b->alc_ast = alc_make();
 
-    Pkc *pkc_main = malloc(sizeof(Pkc));
-    Nsc *nsc_main = malloc(sizeof(Nsc));
+    Pkc *pkc_main = al(alc, sizeof(Pkc));
+    Nsc *nsc_main = al(alc, sizeof(Nsc));
     nsc_main->pkc = pkc_main;
     nsc_main->b = b;
 
@@ -70,10 +71,6 @@ void cmd_build(int argc, char *argv[]) {
     build_start(b);
 
     //
-    build_free(b);
-    map_free(options, false);
-    array_free(args, false);
-    array_free(files, false);
 }
 
 void build_add_files(Build *b, Array *files) {
@@ -117,17 +114,6 @@ char *default_arch() {
     return "arm64";
 #endif
     die("Cannot determine default target 'arch', use --arch to specify manually");
-}
-
-void build_free(Build *b) {
-    //
-    Array *allocs = b->allocs;
-    int alc = b->allocs->length;
-    for (int i = 0; i < alc; i++) {
-        free(array_get_index(allocs, i));
-    }
-    array_free(b->allocs, false);
-    free(b);
 }
 
 void cmd_build_help() {

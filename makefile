@@ -2,7 +2,7 @@
 CC=gcc
 LCC=gcc
 
-CFLAGS=
+CFLAGS=-g
 LDFLAGS=-lcurl -lm
 
 SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/build/*.c)

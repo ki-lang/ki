@@ -30,6 +30,9 @@
 #define KI_TOKEN_MAX 256
 #define KI_VERSION "0.1.0"
 
+typedef struct Allocator Allocator;
+typedef struct AllocatorBlock AllocatorBlock;
+
 #include "headers/array.h"
 #include "headers/map.h"
 #include "headers/string.h"

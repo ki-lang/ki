@@ -25,16 +25,15 @@ AllocatorBlock *alc_block_make(AllocatorBlock *prev, AllocatorBlock *next, size_
 
     return block;
 }
-void *alc(Allocator *alc, size_t size) {
+void *al(Allocator *alc, size_t size) {
     //
     if (size % 8 > 0) {
-        size += 8 - size % 8;
+        size += 8 - (size % 8);
     }
     AllocatorBlock *block = alc->current_block;
     if (size <= block->space_left) {
         void *adr = block->current_adr;
-        adr += size;
-        block->current_adr = adr;
+        block->current_adr += size;
         block->space_left -= size;
         return adr;
     }

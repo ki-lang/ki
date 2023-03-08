@@ -8,7 +8,7 @@ int atoi(const char *str);
 // Alloc
 Allocator *alc_make();
 AllocatorBlock *alc_block_make(AllocatorBlock *prev, AllocatorBlock *next, size_t size);
-void *alc(Allocator *alc, size_t size);
+void *al(Allocator *alc, size_t size);
 
 // Build
 void cmd_build(int argc, char **argv);

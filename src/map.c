@@ -1,10 +1,10 @@
 
 #include "all.h"
 
-Map *map_make() {
-    Map *m = malloc(sizeof(Map));
-    m->keys = array_make(4);
-    m->values = array_make(4);
+Map *map_make(Allocator *alc) {
+    Map *m = al(alc, sizeof(Map));
+    m->keys = array_make(alc, 4);
+    m->values = array_make(alc, 4);
     return m;
 }
 
@@ -52,12 +52,4 @@ void map_print_keys(Map *map) {
         printf("%s,", key);
     }
     printf("\n");
-}
-
-void map_free(Map *map, bool free_values) {
-    array_free(map->keys, false);
-    if (free_values) {
-        array_free(map->values, false);
-    }
-    free(map);
 }

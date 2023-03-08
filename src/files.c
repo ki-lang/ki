@@ -192,8 +192,8 @@ char *get_storage_path() {
 //     return g_cache_path;
 // }
 
-Array *get_subfiles(char *dir, bool dirs, bool files) {
-    Array *result = array_make(2);
+Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
+    Array *result = array_make(alc, 2);
     DIR *d;
     struct dirent *ent;
     if ((d = opendir(dir)) != NULL) {
