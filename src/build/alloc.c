@@ -45,3 +45,11 @@ void *al(Allocator *alc, size_t size) {
     new_block->space_left -= size;
     return adr;
 }
+
+char *dups(Allocator *alc, char *str) {
+    //
+    int len = strlen(str) + 1;
+    void *new = al(alc, len);
+    memcpy(new, str, len);
+    return new;
+}

@@ -9,6 +9,7 @@ int atoi(const char *str);
 Allocator *alc_make();
 AllocatorBlock *alc_block_make(AllocatorBlock *prev, AllocatorBlock *next, size_t size);
 void *al(Allocator *alc, size_t size);
+char *dups(Allocator *alc, char *str);
 
 // Build
 void cmd_build(int argc, char **argv);

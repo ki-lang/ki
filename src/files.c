@@ -39,8 +39,8 @@ int dir_exists(const char *path) {
 // e.g. /etc/nginx/ -> /etc/
 // e.g. /etc/ -> /
 // e.g. / -> /
-char *get_dir_from_path(char *path) {
-    char *result = strdup(path);
+char *get_dir_from_path(Allocator *alc, char *path) {
+    char *result = dups(alc, path);
     int len = strlen(path) - 1;
     while (len > 0) {
         len--;
@@ -52,8 +52,8 @@ char *get_dir_from_path(char *path) {
     return result;
 }
 
-char *get_path_basename(char *path) {
-    char *result = strdup(path);
+char *get_path_basename(Allocator *alc, char *path) {
+    char *result = dups(alc, path);
     int len = strlen(path) - 1;
     int original_len = len;
     while (len > 0) {
@@ -73,8 +73,8 @@ char *get_path_basename(char *path) {
     return result;
 }
 
-char *strip_ext(char *fn) {
-    char *result = strdup(fn);
+char *strip_ext(Allocator *alc, char *fn) {
+    char *result = dups(alc, fn);
     int len = strlen(fn) - 1;
     while (len > 0) {
         len--;
@@ -224,9 +224,9 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
             }
 #endif
             if (dirs && is_dir) {
-                array_push(result, strdup(ent->d_name));
+                array_push(result, dups(alc, ent->d_name));
             } else if (files && is_file) {
-                array_push(result, strdup(ent->d_name));
+                array_push(result, dups(alc, ent->d_name));
             }
             free(path);
         }
