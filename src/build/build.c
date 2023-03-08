@@ -59,8 +59,8 @@ void cmd_build(int argc, char *argv[]) {
     b->ptr_size = ptr_size;
     b->allocs = array_make(100);
 
-    Pkc *pkc_main = b_alloc(b, sizeof(Pkc));
-    Nsc *nsc_main = b_alloc(b, sizeof(Nsc));
+    Pkc *pkc_main = malloc(sizeof(Pkc));
+    Nsc *nsc_main = malloc(sizeof(Nsc));
     nsc_main->pkc = pkc_main;
     nsc_main->b = b;
 

@@ -6,8 +6,9 @@ char *rand_string(char *str, int size);
 int atoi(const char *str);
 
 // Alloc
-void *b_alloc(Build *b, size_t size);
-void *fc_alloc(Fc *fc, size_t size);
+Allocator *alc_make();
+AllocatorBlock *alc_block_make(AllocatorBlock *prev, AllocatorBlock *next, size_t size);
+void *alc(Allocator *alc, size_t size);
 
 // Build
 void cmd_build(int argc, char **argv);

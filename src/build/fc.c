@@ -16,7 +16,7 @@ Fc *fc_init(Build *b, char *path_ki) {
         sprintf(die_buf, "File not found: %s", path_ki);
         die(die_buf);
     }
-    Fc *fc = b_alloc(b, sizeof(Fc));
+    Fc *fc = malloc(sizeof(Fc));
     fc->b = b;
     fc->allocs = array_make(100);
 }

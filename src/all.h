@@ -31,9 +31,10 @@
 #define KI_VERSION "0.1.0"
 
 #include "headers/array.h"
-#include "headers/files.h"
 #include "headers/map.h"
 #include "headers/string.h"
+
+#include "headers/files.h"
 
 #include "headers/structs.h"
 

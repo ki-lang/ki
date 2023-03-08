@@ -1,8 +1,24 @@
 
+typedef struct Allocator Allocator;
+typedef struct AllocatorBlock AllocatorBlock;
 typedef struct Build Build;
 typedef struct Fc Fc;
 typedef struct Nsc Nsc;
 typedef struct Pkc Pkc;
+
+struct Allocator {
+    AllocatorBlock *first_block;
+    AllocatorBlock *current_block;
+    AllocatorBlock *last_block;
+};
+struct AllocatorBlock {
+    AllocatorBlock *prev_block;
+    AllocatorBlock *next_block;
+    size_t size;
+    size_t space_left;
+    void *start_adr;
+    void *current_adr;
+};
 
 struct Build {
     char *os;

@@ -3,5 +3,5 @@
 
 void pkc_init(Pkc *pkc, Build *b) {
     //
-    pkc->namespaces = b_alloc(b, sizeof(Map));
+    pkc->namespaces = malloc(sizeof(Map));
 }
