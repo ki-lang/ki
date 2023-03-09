@@ -5,7 +5,6 @@ char *default_os();
 char *default_arch();
 void cmd_build_help();
 void build_add_files(Build *b, Array *files);
-void build_start(Build *b);
 
 void cmd_build(int argc, char *argv[]) {
     //
@@ -59,6 +58,18 @@ void cmd_build(int argc, char *argv[]) {
     b->ptr_size = ptr_size;
     b->alc = alc;
     b->alc_ast = alc_make();
+    //
+    b->all_ki_files = array_make(alc, 1000);
+    b->queue_read_ki_file = array_make(alc, 1000);
+    b->queue_write_ir = array_make(alc, 1000);
+    b->stage_1 = array_make(alc, 1000);
+    b->stage_2 = array_make(alc, 1000);
+    b->stage_3 = array_make(alc, 1000);
+    b->stage_4 = array_make(alc, 1000);
+    b->stage_5 = array_make(alc, 1000);
+    b->stage_6 = array_make(alc, 1000);
+    //
+    b->ir_ready = false;
 
     Pkc *pkc_main = al(alc, sizeof(Pkc));
     Nsc *nsc_main = al(alc, sizeof(Nsc));
@@ -67,10 +78,16 @@ void cmd_build(int argc, char *argv[]) {
 
     b->nsc_main = nsc_main;
 
-    build_add_files(b, files);
-    build_start(b);
-
     //
+    pthread_t thr;
+    pthread_create(&thr, NULL, io_loop, (void *)b);
+
+    // Compile ki lib
+    compile_loop(b);
+
+    // Compile CLI files
+    build_add_files(b, files);
+    compile_loop(b);
 }
 
 void build_add_files(Build *b, Array *files) {
@@ -79,11 +96,8 @@ void build_add_files(Build *b, Array *files) {
     for (int i = 0; i < filec; i++) {
         char *path = array_get_index(files, i);
         char *fpath = get_fullpath(path);
-        Fc *fc = fc_init(b, fpath);
+        Fc *fc = fc_init(b, fpath, b->nsc_main);
     }
-}
-void build_start(Build *b) {
-    //
 }
 
 char *default_os() {

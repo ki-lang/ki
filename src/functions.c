@@ -60,3 +60,16 @@ int atoi(const char *str) {
         num = -1 * num;
     return num;
 }
+
+void sleep_ns(unsigned int ns) {
+    //
+    struct timespec ts;
+    int res;
+
+    ts.tv_sec = 0;
+    ts.tv_nsec = ns;
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+}

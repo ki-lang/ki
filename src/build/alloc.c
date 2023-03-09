@@ -4,7 +4,7 @@
 Allocator *alc_make() {
     //
     Allocator *alc = malloc(sizeof(Allocator));
-    AllocatorBlock *block = alc_block_make(NULL, NULL, 10000);
+    AllocatorBlock *block = alc_block_make(NULL, NULL, 100000);
     alc->first_block = block;
     alc->current_block = block;
     alc->last_block = block;
@@ -37,7 +37,7 @@ void *al(Allocator *alc, size_t size) {
         block->space_left -= size;
         return adr;
     }
-    AllocatorBlock *new_block = alc_block_make(block, NULL, 10000);
+    AllocatorBlock *new_block = alc_block_make(block, NULL, 100000);
     block->next_block = new_block;
     void *adr = new_block->current_adr;
     adr += size;

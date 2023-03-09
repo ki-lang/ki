@@ -267,8 +267,8 @@ void write_file(char *filepath, char *content, bool append) {
     fclose(fp);
 }
 
-Str *file_get_contents(char *path) {
-    Str *content_str = str_make("");
+Str *file_get_contents(Allocator *alc, char *path) {
+    Str *content_str = str_make(alc, "");
     char ch;
     FILE *fp = fopen(path, "r");
     while ((ch = fgetc(fp)) != EOF) {

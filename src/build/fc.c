@@ -1,7 +1,7 @@
 
 #include "../all.h"
 
-Fc *fc_init(Build *b, char *path_ki) {
+Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     //
     if (!path_ki || !file_exists(path_ki)) {
         sprintf(die_buf, "File not found: %s", path_ki);
@@ -21,4 +21,15 @@ Fc *fc_init(Build *b, char *path_ki) {
     fc->b = b;
     fc->path_ki = path_ki;
     fc->path_ir = path_ir;
+    fc->content = NULL;
+    fc->nsc = nsc;
+    fc->alc = alc;
+    fc->alc_ast = b->alc_ast;
+    fc->deps = array_make(alc, 10);
+    fc->stage = 0;
+
+    array_push(b->queue_read_ki_file, fc);
+    array_push(b->stage_1, fc);
+
+    return fc;
 }
