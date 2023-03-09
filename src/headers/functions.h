@@ -41,8 +41,13 @@ void *io_loop(void *build);
 void compile_loop(Build *b, int max_stage);
 
 // Pkc
-Pkc *pkc_init(Allocator *alc, Build *b);
+Pkc *pkc_init(Allocator *alc, Build *b, char *name);
 Nsc *pkc_get_nsc(Pkc *pkc, char *name);
+
+// Nsc
+Nsc *nsc_init(Allocator *alc, Build *b, Pkc *pkc, char *name);
+char *nsc_gname(Nsc *nsc, char *name);
+char *nsc_dname(Nsc *nsc, char *name);
 
 // Fc
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc);
@@ -66,19 +71,6 @@ void rtok(Fc *fc);
 void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space);
 char get_char(Fc *fc, int index);
 
-// Macro
-MacroScope *init_macro_scope(Allocator *alc);
-void read_macro(Fc *fc, Allocator *alc, Scope *scope);
-bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc);
-char *macro_get_var(MacroScope *mc, char *key);
-
-// Id
-Id *init_id(Allocator *alc);
-Idf *init_idf(Allocator *alc, int type);
-Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash);
-Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail);
-Idf *ki_lib_get(Build *b, char *ns, char *name);
-
 // Skips
 void skip_body(Fc *fc, char until_ch);
 void skip_string(Fc *fc, char end_char);
@@ -86,3 +78,25 @@ void skip_until_char(Fc *fc, char find);
 void skip_whitespace(Fc *fc);
 void skip_macro_if(Fc *fc);
 void skip_traits(Fc *fc);
+
+// Macro
+MacroScope *init_macro_scope(Allocator *alc);
+void read_macro(Fc *fc, Allocator *alc, Scope *scope);
+bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc);
+char *macro_get_var(MacroScope *mc, char *key);
+
+// Id
+Id *id_init(Allocator *alc);
+Idf *idf_init(Allocator *alc, int type);
+Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash);
+Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail);
+Idf *ki_lib_get(Build *b, char *ns, char *name);
+
+// Scope
+Scope *scope_init(Allocator *alc, int type, Scope *parent);
+void name_taken_check(Fc *fc, Scope *scope, char *name);
+
+// Func
+Func *func_init(Allocator *alc);
+
+// Class

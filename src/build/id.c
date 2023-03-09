@@ -1,14 +1,14 @@
 
 #include "../all.h"
 
-Id *init_id(Allocator *alc) {
+Id *id_init(Allocator *alc) {
     Id *id = al(alc, sizeof(Id));
     id->nsc_name = NULL;
     id->name = NULL;
     return id;
 }
 
-Idf *init_idf(Allocator *alc, int type) {
+Idf *idf_init(Allocator *alc, int type) {
     Idf *idf = al(alc, sizeof(Idf));
     idf->type = type;
     idf->item = NULL;

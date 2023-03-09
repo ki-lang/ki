@@ -11,3 +11,10 @@ enum IDFOR {
     idf_error_code,
     idf_fc,
 };
+
+enum SCOPETYPE {
+    sct_default,
+    sct_func,
+    sct_class,
+    sct_loop,
+};

@@ -1,11 +1,12 @@
 
 #include "../all.h"
 
-Pkc *pkc_init(Allocator *alc, Build *b) {
+Pkc *pkc_init(Allocator *alc, Build *b, char *name) {
     //
     Pkc *pkc = al(alc, sizeof(Pkc));
     pkc->b = b;
     pkc->namespaces = al(alc, sizeof(Map));
+    pkc->name = name;
     return pkc;
 }
 

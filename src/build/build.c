@@ -81,6 +81,8 @@ void cmd_build(int argc, char *argv[]) {
     b->verbose = verbose;
     //
     b->all_ki_files = array_make(alc, 1000);
+    b->main_func = NULL;
+    //
     b->read_ki_file = chain_make(alc);
     b->write_ir = chain_make(alc);
     b->stage_1 = chain_make(alc);
@@ -92,12 +94,10 @@ void cmd_build(int argc, char *argv[]) {
     //
     b->ir_ready = false;
 
-    Pkc *pkc_main = al(alc, sizeof(Pkc));
-    Nsc *nsc_main = al(alc, sizeof(Nsc));
-    nsc_main->pkc = pkc_main;
-    nsc_main->b = b;
+    Pkc *pkc_main = pkc_init(alc, b, "main");
+    Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
 
-    Pkc *pkc_ki = pkc_init(alc, b);
+    Pkc *pkc_ki = pkc_init(alc, b, "ki");
 
     b->nsc_main = nsc_main;
     b->pkc_ki = pkc_ki;

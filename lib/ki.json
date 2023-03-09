@@ -1,0 +1,11 @@
+{
+	"namespaces": {
+		"type": "src/type"
+	},
+	"headers": {
+		"dirs": ["headers"]
+	},
+	"link": {
+		"dirs": ["libs"]
+	}
+}

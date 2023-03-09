@@ -44,6 +44,7 @@ struct Build {
     //
     Nsc *nsc_main;
     Pkc *pkc_ki;
+    Func *main_func;
     //
     Array *all_ki_files;
     //
@@ -82,14 +83,14 @@ struct Fc {
     Scope *scope;
     MacroScope *current_macro_scope;
     //
-    int stage;
-    //
+    bool is_header;
     bool ir_changed;
 };
 
 struct Nsc {
     Build *b;
     Pkc *pkc;
+    char *name;
     char *path_o;
     Array *fcs;
     Scope *scope;
@@ -97,6 +98,7 @@ struct Nsc {
 
 struct Pkc {
     Build *b;
+    char *name;
     Map *namespaces;
 };
 
@@ -110,6 +112,7 @@ struct Scope {
     int type;
     Scope *parent;
     Map *identifiers;
+    Func *func;
 };
 struct MacroScope {
     Map *identifiers;
@@ -132,11 +135,29 @@ struct Type {
 };
 
 struct Class {
-    bool is_rc;
-    bool is_signed;
+    char *name;
+    char *gname;
+    char *dname;
+    Fc *fc;
+    Scope *scope;
+    Chunk *chunk_body;
     Map *props;
     Map *funcs;
+    bool is_rc;
+    bool is_signed;
 };
 struct Func {
-    bool is_rc;
+    char *name;
+    char *gname;
+    char *dname;
+    Fc *fc;
+    Scope *scope;
+    Chunk *chunk_args;
+    Chunk *chunk_body;
+};
+struct Enum {
+    char *name;
+    char *gname;
+    char *dname;
+    Fc *fc;
 };

@@ -8,6 +8,8 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
         die(b->sbuf);
     }
 
+    bool is_header = ends_with(path_ki, ".kh");
+
     Allocator *alc = b->alc;
 
     char *strg_dir = get_storage_path();
@@ -26,11 +28,12 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     fc->alc = alc;
     fc->alc_ast = b->alc_ast;
     fc->deps = array_make(alc, 20);
-    fc->stage = 0;
     fc->token = b->token;
     fc->sbuf = b->sbuf;
     fc->chunk = chunk_init(alc);
     fc->chunk_prev = chunk_init(alc);
+    fc->scope = scope_init(alc, sct_default, nsc->scope);
+    fc->is_header = is_header;
 
     chain_add(b->read_ki_file, fc);
     b->event_count++;
