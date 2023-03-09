@@ -2,10 +2,10 @@
 #ifdef WIN32
 #include <windows.h>
 #else
-#include <sys/resource.h>
+// #include <sys/resource.h>
 #include <sys/stat.h> // might be linux only?
 #include <sys/time.h>
-#include <sys/wait.h>
+// #include <sys/wait.h>
 #endif
 
 #include <dirent.h>

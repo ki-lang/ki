@@ -18,7 +18,9 @@ void *io_loop(void *build) {
             }
             did_work = true;
             Str *content_str = file_get_contents(b->alc, read_fc->path_ki);
-            read_fc->content = str_to_chars(b->alc, content_str);
+            char *content = str_to_chars(b->alc, content_str);
+            read_fc->chunk->content = content;
+            read_fc->chunk->length = strlen(content);
             b->events_done++;
             chain_add(b->stage_1, read_fc);
             continue;

@@ -1,20 +1,31 @@
 
 #include "../all.h"
 
-int tok(Fc *fc, char *token, bool sameline, bool allow_space) {
+Chunk *chunk_init(Allocator *alc) {
+    Chunk *ch = al(alc, sizeof(Chunk));
+    ch->content = NULL;
+    ch->content = NULL;
+    ch->i = 0;
+    ch->line = 1;
+}
+
+void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
     //
-    int i = fc->i;
-    char *content = fc->content;
+    Chunk *chunk = fc->chunk;
+    *fc->chunk_prev = *chunk;
+
+    int i = chunk->i;
+    const char *content = chunk->content;
     char ch = content[i];
 
     if (ch == '\0') {
         token[0] = '\0';
-        return i;
+        return;
     }
 
     if (!allow_space && is_whitespace(ch)) {
         token[0] = '\0';
-        return i;
+        return;
     }
 
     // Skip whitespace
@@ -22,10 +33,10 @@ int tok(Fc *fc, char *token, bool sameline, bool allow_space) {
         while (is_whitespace(ch)) {
             //
             if (is_newline(ch)) {
-                g_LOC++;
+                chunk->line++;
                 if (sameline) {
                     token[0] = '\0';
-                    return i;
+                    return;
                 }
             }
             //
@@ -33,7 +44,7 @@ int tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             ch = content[i];
             if (ch == '\0') {
                 token[0] = '\0';
-                return i;
+                return;
             }
         }
         // Skip comment
@@ -43,7 +54,7 @@ int tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             while (!is_newline(ch)) {
                 if (ch == '\0') {
                     token[0] = '\0';
-                    return i;
+                    return;
                 }
                 i++;
                 ch = content[i];
@@ -112,21 +123,21 @@ int tok(Fc *fc, char *token, bool sameline, bool allow_space) {
     token[pos] = '\0';
 
     // printf("tok: '%s'\n", token);
-
-    return i;
 }
 
-int tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space) {
+void rtok(Fc *fc) { *fc->chunk = *fc->chunk_prev; }
+
+void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space) {
     char token[KI_TOKEN_MAX];
-    int i = tok(fc, token, sameline, allow_space);
+    tok(fc, token, sameline, allow_space);
     if (strcmp(token, expect) != 0) {
-        sprintf(fc->sprintf, "Expected: '%s', but found: '%s'", expect, token);
-        fc_error(fc, fc->sprintf, NULL);
+        sprintf(fc->b->msg, "Expected: '%s', but found: '%s'", expect, token);
+        fc_error(fc, fc->b->msg);
     }
-    return i;
 }
 
 char get_char(Fc *fc, int index) {
     //
-    return fc->content[fc->i + index];
+    Chunk *chunk = fc->chunk;
+    return chunk->content[chunk->i + index];
 }

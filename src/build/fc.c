@@ -4,8 +4,8 @@
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     //
     if (!path_ki || !file_exists(path_ki)) {
-        sprintf(die_buf, "File not found: %s", path_ki);
-        die(die_buf);
+        sprintf(b->msg, "File not found: %s", path_ki);
+        die(b->msg);
     }
 
     Allocator *alc = b->alc;
@@ -22,12 +22,14 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     fc->next = NULL;
     fc->path_ki = path_ki;
     fc->path_ir = path_ir;
-    fc->content = NULL;
     fc->nsc = nsc;
     fc->alc = alc;
     fc->alc_ast = b->alc_ast;
     fc->deps = array_make(alc, 20);
     fc->stage = 0;
+    fc->token = al(alc, KI_TOKEN_MAX);
+    fc->chunk = chunk_init(alc);
+    fc->chunk_prev = chunk_init(alc);
 
     chain_add(b->read_ki_file, fc);
     b->event_count++;
@@ -64,4 +66,84 @@ void chain_add(Chain *chain, Fc *item) {
     Fc *last = chain->last;
     last->next = item;
     chain->last = item;
+}
+
+void fc_error(Fc *fc, char *msg) {
+    //
+    Chunk *chunk = fc->chunk;
+    char *content = chunk->content;
+    int length = chunk->length;
+
+    if (is_newline(get_char(fc, 0))) {
+        chunk->i--;
+    }
+
+    int line = chunk->line;
+    int i = chunk->i;
+
+    int col = 0;
+    i = chunk->i;
+    while (i >= 0) {
+        char ch = content[i];
+        if (is_newline(ch)) {
+            i++;
+            break;
+        }
+        col++;
+        i--;
+    }
+    int start = i;
+
+    printf("\n");
+    printf("File: %s\n", fc->path_ki);
+    printf("Line: %d\n", line);
+    printf("Col: %d\n", col);
+    printf("Error: %s\n", msg);
+    printf("\n");
+
+    // Line 1
+    int c = 40;
+    while (c > 0) {
+        printf("#");
+        c--;
+    }
+    printf("\n");
+
+    // Code
+    i = chunk->i;
+    while (i < length) {
+        char ch = content[i];
+        if (is_newline(ch)) {
+            break;
+        }
+        i++;
+    }
+    int end = i;
+    i = start;
+    while (i < end) {
+        char ch = content[i];
+        if (ch == '\t') {
+            ch = ' ';
+        }
+        printf("%c", ch);
+        i++;
+    }
+    printf("\n");
+
+    // Line 2
+    c = col - 3;
+    int after_c = 40 - c - 4;
+    while (c >= 0) {
+        printf("#");
+        c--;
+    }
+    printf(" ^ ");
+    while (after_c > 0) {
+        printf("#");
+        after_c--;
+    }
+    printf("\n");
+
+    printf("\n");
+    exit(1);
 }

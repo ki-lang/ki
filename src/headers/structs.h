@@ -4,6 +4,7 @@ typedef struct Build Build;
 typedef struct Fc Fc;
 typedef struct Nsc Nsc;
 typedef struct Pkc Pkc;
+typedef struct Chunk Chunk;
 
 struct Allocator {
     AllocatorBlock *first_block;
@@ -27,14 +28,16 @@ struct Chain {
 struct Build {
     char *os;
     char *arch;
+    char *msg;
+    char *cache_dir;
     //
     Allocator *alc;
     Allocator *alc_ast;
     //
-    char *cache_dir;
     Nsc *nsc_main;
     //
     Array *all_ki_files;
+    //
     Chain *read_ki_file;
     Chain *write_ir;
     Chain *stage_1;
@@ -57,13 +60,18 @@ struct Fc {
     Fc *next;
     char *path_ki;
     char *path_ir;
-    char *content;
+    char *token;
     Nsc *nsc;
     Allocator *alc;
     Allocator *alc_ast;
     Array *deps;
-    int stage;
     Str *ir;
+    Chunk *chunk;
+    Chunk *chunk_prev;
+    //
+    int stage;
+    //
+    bool ir_changed;
 };
 
 struct Nsc {
@@ -76,4 +84,11 @@ struct Nsc {
 struct Pkc {
     Build *b;
     Map *namespaces;
+};
+
+struct Chunk {
+    char *content;
+    int length;
+    int i;
+    int line;
 };

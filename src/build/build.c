@@ -49,6 +49,10 @@ void cmd_build(int argc, char *argv[]) {
         verbose = 3;
     }
 
+    //
+    Build *b = al(alc, sizeof(Build));
+    b->msg = al(alc, 2000);
+
     // Filter out files
     Array *files = array_make(alc, argc);
     argc = args->length;
@@ -58,13 +62,13 @@ void cmd_build(int argc, char *argv[]) {
             continue;
         }
         if (!ends_with(arg, ".ki")) {
-            sprintf(die_buf, "Filename must end with .ki : '%s'", arg);
-            die(die_buf);
+            sprintf(b->msg, "Filename must end with .ki : '%s'", arg);
+            die(b->msg);
         }
         array_push(files, arg);
     }
+
     //
-    Build *b = al(alc, sizeof(Build));
     b->os = os;
     b->arch = arch;
     b->ptr_size = ptr_size;
