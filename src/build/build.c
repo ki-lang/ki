@@ -37,6 +37,18 @@ void cmd_build(int argc, char *argv[]) {
         ptr_size = 4;
     }
 
+    int verbose = 0;
+    ;
+    if (array_contains(args, "-v", "chars")) {
+        verbose = 1;
+    }
+    if (array_contains(args, "-vv", "chars")) {
+        verbose = 2;
+    }
+    if (array_contains(args, "-vvv", "chars")) {
+        verbose = 3;
+    }
+
     // Filter out files
     Array *files = array_make(alc, argc);
     argc = args->length;
@@ -61,6 +73,7 @@ void cmd_build(int argc, char *argv[]) {
     //
     b->event_count = 0;
     b->events_done = 0;
+    b->verbose = verbose;
     //
     b->all_ki_files = array_make(alc, 1000);
     b->read_ki_file = chain_make(alc);
@@ -86,11 +99,11 @@ void cmd_build(int argc, char *argv[]) {
     pthread_create(&thr, NULL, io_loop, (void *)b);
 
     // Compile ki lib
-    compile_loop(b);
+    compile_loop(b, 5);
 
     // Compile CLI files
     build_add_files(b, files);
-    compile_loop(b);
+    compile_loop(b, 6);
 
     printf("# Link\n");
 

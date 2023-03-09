@@ -19,8 +19,9 @@ struct AllocatorBlock {
     void *current_adr;
 };
 struct Chain {
-    void *first;
-    void *last;
+    Fc *first;
+    Fc *last;
+    Fc *current;
 };
 
 struct Build {
@@ -33,9 +34,6 @@ struct Build {
     char *cache_dir;
     Nsc *nsc_main;
     //
-    int event_count;
-    int events_done;
-    //
     Array *all_ki_files;
     Chain *read_ki_file;
     Chain *write_ir;
@@ -46,7 +44,10 @@ struct Build {
     Chain *stage_5;
     Chain *stage_6;
     //
+    int event_count;
+    int events_done;
     int ptr_size;
+    int verbose;
     //
     bool ir_ready;
 };

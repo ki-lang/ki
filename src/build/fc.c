@@ -39,6 +39,19 @@ Chain *chain_make(Allocator *alc) {
     Chain *chain = al(alc, sizeof(Chain));
     chain->first = NULL;
     chain->last = NULL;
+    chain->current = NULL;
+}
+Fc *chain_get(Chain *chain) {
+    //
+    if (chain->current == NULL) {
+        chain->current = chain->first;
+        return chain->current;
+    }
+    Fc *next = chain->current->next;
+    if (next) {
+        chain->current = next;
+    }
+    return next;
 }
 
 void chain_add(Chain *chain, Fc *item) {

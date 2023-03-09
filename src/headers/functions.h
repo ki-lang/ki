@@ -19,11 +19,21 @@ void cmd_build(int argc, char **argv);
 
 // Chain
 Chain *chain_make(Allocator *alc);
+Fc *chain_get(Chain *chain);
 void chain_add(Chain *chain, Fc *item);
 
 // Loop
 void *io_loop(void *build);
-void compile_loop(Build *b);
+void compile_loop(Build *b, int max_stage);
 
 // Fc
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc);
+
+//
+void stage_1(Fc *);
+void stage_2(Fc *);
+void stage_3(Fc *);
+void stage_4(Fc *);
+void stage_5(Fc *);
+void stage_6(Fc *);
+void stage_7(Fc *);

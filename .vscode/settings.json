@@ -1,7 +1,0 @@
-{
-	"files.associations": {
-		"*.ki": "lua",
-		"*.kh": "lua",
-		"string_view": "c"
-	}
-}
