@@ -1,8 +1,9 @@
 
-char *get_fullpath(char *filepath);
+bool get_fullpath(char *filepath, char *buf);
 int file_exists(const char *path);
 int dir_exists(const char *path);
-char *get_dir_from_path(Allocator *alc, char *path);
+void get_dir_from_path(char *path, char *buf);
+void filepath_pop_basename(char *path);
 char *get_path_basename(Allocator *alc, char *path);
 char *strip_ext(Allocator *alc, char *fn);
 void makedir(char *dir, int mod);

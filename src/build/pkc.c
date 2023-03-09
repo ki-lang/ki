@@ -1,8 +1,13 @@
 
 #include "../all.h"
 
-Pkc *pkc_init(Allocator *alc, Build *b, char *name) {
+Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
     //
+    if (!file_exists(dir)) {
+        sprintf(b->sbuf, "Package directory for '%s' not found: '%s'", name, dir);
+        die(b->sbuf);
+    }
+
     Pkc *pkc = al(alc, sizeof(Pkc));
     pkc->b = b;
     pkc->namespaces = al(alc, sizeof(Map));

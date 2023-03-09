@@ -4,15 +4,14 @@
 #include <mach-o/dyld.h>
 #endif
 
-char *get_fullpath(char *filepath) {
+bool get_fullpath(char *filepath, char *buf) {
     char *fullpath = NULL;
 #ifdef WIN32
-    fullpath = _fullpath(NULL, filepath, KI_PATH_MAX);
+    char *res = _fullpath(buf, filepath, KI_PATH_MAX);
 #else
-    char *buf = malloc(KI_PATH_MAX);
-    fullpath = realpath(filepath, buf);
+    char *res = realpath(filepath, buf);
 #endif
-    return fullpath;
+    return res != NULL;
 }
 
 int file_exists(const char *path) {
@@ -39,17 +38,26 @@ int dir_exists(const char *path) {
 // e.g. /etc/nginx/ -> /etc/
 // e.g. /etc/ -> /
 // e.g. / -> /
-char *get_dir_from_path(Allocator *alc, char *path) {
-    char *result = dups(alc, path);
+void get_dir_from_path(char *path, char *buf) {
+    strcpy(buf, path);
     int len = strlen(path) - 1;
     while (len > 0) {
         len--;
-        if (result[len] == '/' || result[len] == '\\') {
+        if (buf[len] == '/' || buf[len] == '\\') {
             break;
         }
     }
-    result[len + 1] = '\0';
-    return result;
+    buf[len + 1] = '\0';
+}
+void filepath_pop_basename(char *path) {
+    int index = strlen(path);
+    while (index > 0) {
+        index--;
+        if (path[index] == '/' || path[index] == '\\') {
+            break;
+        }
+    }
+    path[index] = '\0';
 }
 
 char *get_path_basename(Allocator *alc, char *path) {

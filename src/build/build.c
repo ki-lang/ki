@@ -5,6 +5,7 @@ char *default_os();
 char *default_arch();
 void cmd_build_help();
 void build_add_files(Build *b, Array *files);
+char *find_config_dir(Allocator *alc, char *ki_path);
 
 void cmd_build(int argc, char *argv[]) {
     //
@@ -55,6 +56,7 @@ void cmd_build(int argc, char *argv[]) {
     b->sbuf = al(alc, 2000);
 
     // Filter out files
+    char *first_file = NULL;
     Array *files = array_make(alc, argc);
     argc = args->length;
     for (int i = 2; i < argc; i++) {
@@ -66,7 +68,24 @@ void cmd_build(int argc, char *argv[]) {
             sprintf(b->sbuf, "Filename must end with .ki : '%s'", arg);
             die(b->sbuf);
         }
-        array_push(files, arg);
+
+        char *full = al(alc, KI_PATH_MAX);
+        bool success = get_fullpath(arg, full);
+
+        if (!success || !file_exists(full)) {
+            sprintf(b->sbuf, "File not found: '%s'", arg);
+            die(b->sbuf);
+        }
+
+        if (!first_file)
+            first_file = full;
+
+        array_push(files, full);
+    }
+
+    if (!first_file) {
+        sprintf(b->sbuf, "Nothing to compile, add some files to your command");
+        die(b->sbuf);
     }
 
     //
@@ -94,10 +113,13 @@ void cmd_build(int argc, char *argv[]) {
     //
     b->ir_ready = false;
 
-    Pkc *pkc_main = pkc_init(alc, b, "main");
+    Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));
     Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
 
-    Pkc *pkc_ki = pkc_init(alc, b, "ki");
+    char *ki_dir = al(alc, KI_PATH_MAX);
+    strcpy(ki_dir, get_binary_dir());
+    strcat(ki_dir, "/lib");
+    Pkc *pkc_ki = pkc_init(alc, b, "ki", ki_dir);
 
     b->nsc_main = nsc_main;
     b->pkc_ki = pkc_ki;
@@ -123,8 +145,7 @@ void build_add_files(Build *b, Array *files) {
     int filec = files->length;
     for (int i = 0; i < filec; i++) {
         char *path = array_get_index(files, i);
-        char *fpath = get_fullpath(path);
-        Fc *fc = fc_init(b, fpath, b->nsc_main);
+        Fc *fc = fc_init(b, path, b->nsc_main);
     }
 }
 
@@ -165,4 +186,28 @@ void cmd_build_help() {
     printf(" --arch          compile for target arch: x86, x64, arm64\n");
     printf("\n");
     exit(1);
+}
+
+char *find_config_dir(Allocator *alc, char *ki_path) {
+    //
+    char *dir = al(alc, KI_PATH_MAX);
+    get_dir_from_path(ki_path, dir);
+    char cfg_path[strlen(dir) + 10];
+
+    bool found = false;
+    while (strlen(dir) > 3) {
+        strcpy(cfg_path, dir);
+        strcat(cfg_path, "ki.json");
+        if (file_exists(cfg_path)) {
+            dir[strlen(dir) - 1] = '\0';
+            found = true;
+            break;
+        }
+        get_dir_from_path(dir, dir);
+    }
+    if (!found) {
+        get_dir_from_path(ki_path, dir);
+        dir[strlen(dir) - 1] = '\0';
+    }
+    return dir;
 }

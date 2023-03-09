@@ -41,7 +41,7 @@ void *io_loop(void *build);
 void compile_loop(Build *b, int max_stage);
 
 // Pkc
-Pkc *pkc_init(Allocator *alc, Build *b, char *name);
+Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir);
 Nsc *pkc_get_nsc(Pkc *pkc, char *name);
 
 // Nsc
