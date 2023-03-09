@@ -4,8 +4,8 @@
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     //
     if (!path_ki || !file_exists(path_ki)) {
-        sprintf(b->msg, "File not found: %s", path_ki);
-        die(b->msg);
+        sprintf(b->sbuf, "File not found: %s", path_ki);
+        die(b->sbuf);
     }
 
     Allocator *alc = b->alc;
@@ -27,7 +27,8 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     fc->alc_ast = b->alc_ast;
     fc->deps = array_make(alc, 20);
     fc->stage = 0;
-    fc->token = al(alc, KI_TOKEN_MAX);
+    fc->token = b->token;
+    fc->sbuf = b->sbuf;
     fc->chunk = chunk_init(alc);
     fc->chunk_prev = chunk_init(alc);
 
@@ -68,7 +69,7 @@ void chain_add(Chain *chain, Fc *item) {
     chain->last = item;
 }
 
-void fc_error(Fc *fc, char *msg) {
+void fc_error(Fc *fc) {
     //
     Chunk *chunk = fc->chunk;
     char *content = chunk->content;
@@ -98,7 +99,7 @@ void fc_error(Fc *fc, char *msg) {
     printf("File: %s\n", fc->path_ki);
     printf("Line: %d\n", line);
     printf("Col: %d\n", col);
-    printf("Error: %s\n", msg);
+    printf("Error: %s\n", fc->sbuf);
     printf("\n");
 
     // Line 1

@@ -1,7 +1,20 @@
 
 #include "../all.h"
 
-void pkc_init(Pkc *pkc, Build *b) {
+Pkc *pkc_init(Allocator *alc, Build *b) {
     //
-    pkc->namespaces = malloc(sizeof(Map));
+    Pkc *pkc = al(alc, sizeof(Pkc));
+    pkc->b = b;
+    pkc->namespaces = al(alc, sizeof(Map));
+    return pkc;
+}
+
+Nsc *pkc_get_nsc(Pkc *pkc, char *name) {
+    //
+    Nsc *nsc = map_get(pkc->namespaces, name);
+    if (!nsc) {
+        sprintf(pkc->b->sbuf, "Namespace not found: '%s'", name);
+        die(pkc->b->sbuf);
+    }
+    return nsc;
 }

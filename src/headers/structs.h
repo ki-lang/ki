@@ -5,6 +5,13 @@ typedef struct Fc Fc;
 typedef struct Nsc Nsc;
 typedef struct Pkc Pkc;
 typedef struct Chunk Chunk;
+typedef struct Scope Scope;
+typedef struct MacroScope MacroScope;
+typedef struct Id Id;
+typedef struct Idf Idf;
+typedef struct Type Type;
+typedef struct Class Class;
+typedef struct Func Func;
 
 struct Allocator {
     AllocatorBlock *first_block;
@@ -28,13 +35,15 @@ struct Chain {
 struct Build {
     char *os;
     char *arch;
-    char *msg;
     char *cache_dir;
+    char *token;
+    char *sbuf;
     //
     Allocator *alc;
     Allocator *alc_ast;
     //
     Nsc *nsc_main;
+    Pkc *pkc_ki;
     //
     Array *all_ki_files;
     //
@@ -61,6 +70,8 @@ struct Fc {
     char *path_ki;
     char *path_ir;
     char *token;
+    char *sbuf;
+    Id *id_buf;
     Nsc *nsc;
     Allocator *alc;
     Allocator *alc_ast;
@@ -68,6 +79,8 @@ struct Fc {
     Str *ir;
     Chunk *chunk;
     Chunk *chunk_prev;
+    Scope *scope;
+    MacroScope *current_macro_scope;
     //
     int stage;
     //
@@ -79,6 +92,7 @@ struct Nsc {
     Pkc *pkc;
     char *path_o;
     Array *fcs;
+    Scope *scope;
 };
 
 struct Pkc {
@@ -91,4 +105,38 @@ struct Chunk {
     int length;
     int i;
     int line;
+};
+struct Scope {
+    int type;
+    Scope *parent;
+    Map *identifiers;
+};
+struct MacroScope {
+    Map *identifiers;
+    MacroScope *parent;
+};
+struct Id {
+    char *nsc_name;
+    char *name;
+};
+struct Idf {
+    int type;
+    void *item;
+};
+
+struct Type {
+    Class *class;
+    int type;
+    bool is_signed;
+    bool nullable;
+};
+
+struct Class {
+    bool is_rc;
+    bool is_signed;
+    Map *props;
+    Map *funcs;
+};
+struct Func {
+    bool is_rc;
 };

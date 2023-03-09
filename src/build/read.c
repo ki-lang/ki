@@ -4,9 +4,18 @@
 Chunk *chunk_init(Allocator *alc) {
     Chunk *ch = al(alc, sizeof(Chunk));
     ch->content = NULL;
-    ch->content = NULL;
     ch->i = 0;
     ch->line = 1;
+}
+Chunk *chunk_clone(Allocator *alc, Chunk *chunk) {
+    //
+    Chunk *ch = al(alc, sizeof(Chunk));
+    *ch = *chunk;
+    return ch;
+}
+void chunk_move(Chunk *chunk, int pos) {
+    //
+    chunk->i += pos;
 }
 
 void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
@@ -36,6 +45,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
                 chunk->line++;
                 if (sameline) {
                     token[0] = '\0';
+                    chunk->i = i;
                     return;
                 }
             }
@@ -44,6 +54,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             ch = content[i];
             if (ch == '\0') {
                 token[0] = '\0';
+                chunk->i = i;
                 return;
             }
         }
@@ -54,6 +65,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             while (!is_newline(ch)) {
                 if (ch == '\0') {
                     token[0] = '\0';
+                    chunk->i = i;
                     return;
                 }
                 i++;
@@ -121,8 +133,9 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
     }
 
     token[pos] = '\0';
-
     // printf("tok: '%s'\n", token);
+
+    chunk->i = i;
 }
 
 void rtok(Fc *fc) { *fc->chunk = *fc->chunk_prev; }
@@ -131,8 +144,8 @@ void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space) {
     char token[KI_TOKEN_MAX];
     tok(fc, token, sameline, allow_space);
     if (strcmp(token, expect) != 0) {
-        sprintf(fc->b->msg, "Expected: '%s', but found: '%s'", expect, token);
-        fc_error(fc, fc->b->msg);
+        sprintf(fc->sbuf, "Expected: '%s', but found: '%s'", expect, token);
+        fc_error(fc);
     }
 }
 

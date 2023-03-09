@@ -51,7 +51,8 @@ void cmd_build(int argc, char *argv[]) {
 
     //
     Build *b = al(alc, sizeof(Build));
-    b->msg = al(alc, 2000);
+    b->token = al(alc, KI_TOKEN_MAX);
+    b->sbuf = al(alc, 2000);
 
     // Filter out files
     Array *files = array_make(alc, argc);
@@ -62,8 +63,8 @@ void cmd_build(int argc, char *argv[]) {
             continue;
         }
         if (!ends_with(arg, ".ki")) {
-            sprintf(b->msg, "Filename must end with .ki : '%s'", arg);
-            die(b->msg);
+            sprintf(b->sbuf, "Filename must end with .ki : '%s'", arg);
+            die(b->sbuf);
         }
         array_push(files, arg);
     }
@@ -96,7 +97,10 @@ void cmd_build(int argc, char *argv[]) {
     nsc_main->pkc = pkc_main;
     nsc_main->b = b;
 
+    Pkc *pkc_ki = pkc_init(alc, b);
+
     b->nsc_main = nsc_main;
+    b->pkc_ki = pkc_ki;
 
     //
     pthread_t thr;

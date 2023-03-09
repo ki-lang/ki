@@ -39,6 +39,7 @@ typedef struct AllocatorBlock AllocatorBlock;
 
 #include "headers/files.h"
 
+#include "headers/enums.h"
 #include "headers/structs.h"
 
 #include "headers/globals.h"
