@@ -38,12 +38,35 @@ void *al(Allocator *alc, size_t size) {
         return adr;
     }
     AllocatorBlock *new_block = alc_block_make(block, NULL, 100000);
-    block->next_block = new_block;
+    alc->last_block->next_block = new_block;
+    alc->last_block = new_block;
+    alc->current_block = new_block;
     void *adr = new_block->current_adr;
     adr += size;
     new_block->current_adr = adr;
     new_block->space_left -= size;
     return adr;
+}
+AllocatorBlock *al_private(Allocator *alc, size_t size) {
+    //
+    AllocatorBlock *last = alc->last_block;
+    AllocatorBlock *block = alc_block_make(last, NULL, size);
+    block->space_left = 0;
+    last->next_block = block;
+    return block;
+}
+void free_block(AllocatorBlock *block) {
+    //
+    AllocatorBlock *prev = block->prev_block;
+    AllocatorBlock *next = block->next_block;
+    if (prev) {
+        prev->next_block = next;
+    }
+    if (next) {
+        prev->prev_block = prev;
+    }
+    free(block->start_adr);
+    free(block);
 }
 
 char *dups(Allocator *alc, char *str) {

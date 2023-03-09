@@ -10,10 +10,16 @@ void sleep_ns(unsigned int ns);
 Allocator *alc_make();
 AllocatorBlock *alc_block_make(AllocatorBlock *prev, AllocatorBlock *next, size_t size);
 void *al(Allocator *alc, size_t size);
+AllocatorBlock *al_private(Allocator *alc, size_t size);
+void free_block(AllocatorBlock *block);
 char *dups(Allocator *alc, char *str);
 
 // Build
 void cmd_build(int argc, char **argv);
+
+// Chain
+Chain *chain_make(Allocator *alc);
+void chain_add(Chain *chain, Fc *item);
 
 // Loop
 void *io_loop(void *build);

@@ -59,15 +59,18 @@ void cmd_build(int argc, char *argv[]) {
     b->alc = alc;
     b->alc_ast = alc_make();
     //
+    b->event_count = 0;
+    b->events_done = 0;
+    //
     b->all_ki_files = array_make(alc, 1000);
-    b->queue_read_ki_file = array_make(alc, 1000);
-    b->queue_write_ir = array_make(alc, 1000);
-    b->stage_1 = array_make(alc, 1000);
-    b->stage_2 = array_make(alc, 1000);
-    b->stage_3 = array_make(alc, 1000);
-    b->stage_4 = array_make(alc, 1000);
-    b->stage_5 = array_make(alc, 1000);
-    b->stage_6 = array_make(alc, 1000);
+    b->read_ki_file = chain_make(alc);
+    b->write_ir = chain_make(alc);
+    b->stage_1 = chain_make(alc);
+    b->stage_2 = chain_make(alc);
+    b->stage_3 = chain_make(alc);
+    b->stage_4 = chain_make(alc);
+    b->stage_5 = chain_make(alc);
+    b->stage_6 = chain_make(alc);
     //
     b->ir_ready = false;
 
@@ -88,6 +91,10 @@ void cmd_build(int argc, char *argv[]) {
     // Compile CLI files
     build_add_files(b, files);
     compile_loop(b);
+
+    printf("# Link\n");
+
+    printf("# Done\n");
 }
 
 void build_add_files(Build *b, Array *files) {

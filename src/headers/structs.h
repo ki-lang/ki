@@ -1,4 +1,5 @@
 
+typedef struct Chain Chain;
 typedef struct Build Build;
 typedef struct Fc Fc;
 typedef struct Nsc Nsc;
@@ -17,6 +18,10 @@ struct AllocatorBlock {
     void *start_adr;
     void *current_adr;
 };
+struct Chain {
+    void *first;
+    void *last;
+};
 
 struct Build {
     char *os;
@@ -28,15 +33,18 @@ struct Build {
     char *cache_dir;
     Nsc *nsc_main;
     //
+    int event_count;
+    int events_done;
+    //
     Array *all_ki_files;
-    Array *queue_read_ki_file;
-    Array *queue_write_ir;
-    Array *stage_1;
-    Array *stage_2;
-    Array *stage_3;
-    Array *stage_4;
-    Array *stage_5;
-    Array *stage_6;
+    Chain *read_ki_file;
+    Chain *write_ir;
+    Chain *stage_1;
+    Chain *stage_2;
+    Chain *stage_3;
+    Chain *stage_4;
+    Chain *stage_5;
+    Chain *stage_6;
     //
     int ptr_size;
     //
@@ -45,6 +53,7 @@ struct Build {
 
 struct Fc {
     Build *b;
+    Fc *next;
     char *path_ki;
     char *path_ir;
     char *content;
