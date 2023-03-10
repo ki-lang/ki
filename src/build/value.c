@@ -29,6 +29,12 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         char *body = str_to_chars(alc, str);
         v = value_init(alc, v_string, body, type_gen(fc->b, alc, "String"));
         //
+    } else if (strcmp(token, "ptrv") == 0) {
+        Value *on = read_value(fc, alc, scope, false, 0);
+        tok_expect(fc, "as", true, true);
+        Type *type = read_type(fc, alc, scope, true, true);
+        v = vgen_ptrv(alc, on, type);
+        //
     } else if (is_valid_varname_char(token[0])) {
         rtok(fc);
         Id *id = read_id(fc, sameline, true, true);
