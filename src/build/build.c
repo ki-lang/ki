@@ -171,9 +171,9 @@ void cmd_build(int argc, char *argv[]) {
     build_add_files(b, files);
     compile_loop(b, 6);
 
-    printf("# Link\n");
+    printf("🔗 Link executable\n");
 
-    printf("# Done\n");
+    printf("✅ Done\n");
 }
 
 void build_add_files(Build *b, Array *files) {

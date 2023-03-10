@@ -14,7 +14,7 @@ void *io_loop(void *build) {
 
         if (read_fc) {
             if (b->verbose > 0) {
-                printf("# Read: %s\n", read_fc->path_ki);
+                printf("👓 Read : %s\n", read_fc->path_ki);
             }
             did_work = true;
             Str *content_str = file_get_contents(b->alc, read_fc->path_ki);
