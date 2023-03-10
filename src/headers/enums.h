@@ -6,6 +6,7 @@ enum TYPES {
     type_int,
     type_float,
     type_func_ref,
+    type_null,
 };
 
 enum IDFOR {

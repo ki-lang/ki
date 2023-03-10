@@ -211,3 +211,103 @@ Type *type_gen(Build *b, Allocator *alc, char *name) {
 
     return type_gen_class(alc, idf->item);
 }
+
+bool type_compat(Type *t1, Type *t2, char **reason) {
+    //
+    if (t1 == NULL || t2 == NULL) {
+        return t1 == t2;
+    }
+    int t1t = t1->type;
+    int t2t = t2->type;
+    if (t2t == type_null && t1->nullable) {
+        return true;
+    }
+    if (t1t != t2t) {
+        if (reason)
+            *reason = "Types are not compatible";
+        return false;
+    }
+    if (t1t == type_int) {
+        if (t1->enu != NULL && t1->enu != t2->enu) {
+            if (reason)
+                *reason = "Right side number must be from the same enum type";
+            return false;
+        }
+        if (t2->bytes != t1->bytes) {
+            if (reason)
+                *reason = "Number size mismatch";
+            return false;
+        }
+        if (t2->is_signed != t1->is_signed) {
+            if (reason)
+                *reason = "Signed & unsigned are not compatible, use cast";
+            return false;
+        }
+    } else if (t1t == type_float) {
+        if (t2->bytes != t1->bytes) {
+            if (reason)
+                *reason = "Number size mismatch";
+            return false;
+        }
+    } else if (t1t == type_struct) {
+        if (t1->class != t2->class) {
+            if (reason)
+                *reason = "Classes are not the same";
+            return false;
+        }
+    }
+    if (t2->nullable && !t1->nullable) {
+        if (reason)
+            *reason = "Trying to assign nullable type to a non nullable type";
+        return false;
+    }
+    if (t1t == type_func_ref) {
+        return false; // TODO
+        //     Array *t1_args = t1->func_args;
+        //     Array *t2_args = t2->func_args;
+        //     if (t1_args->length != t2_args->length) {
+        //         return false;
+        //     }
+        //     for (int i = 0; i < t1_args->length; i++) {
+        //         VarDecl *t1d = array_get_index(t1_args, i);
+        //         VarDecl *t2d = array_get_index(t2_args, i);
+        //         if (!type_compatible(t1d->type, t2d->type)) {
+        //             return false;
+        //         }
+        //     }
+        //     if (!type_compatible(t1->func_return_type, t2->func_return_type)) {
+        //         return false;
+        //     }
+        //     // Check error codes
+        //     Array *t1errs = t1->func_error_codes;
+        //     Array *t2errs = t2->func_error_codes;
+        //     if ((t1errs == NULL || t2errs == NULL) && t1errs != t2errs) {
+        //         return false;
+        //     }
+        //     if (t1->func_error_codes) {
+        //         if (t1errs->length != t2errs->length) {
+        //             return false;
+        //         }
+        //         for (int i = 0; i < t1errs->length; i++) {
+        //             char *t1e = array_get_index(t1errs, i);
+        //             char *t2e = array_get_index(t2errs, i);
+        //             if (strcmp(t1e, t2e) != 0) {
+        //                 return false;
+        //             }
+        //         }
+        //     }
+    }
+    if (t1->ptr_depth != t2->ptr_depth) {
+        if (reason)
+            *reason = "Pointer depth difference";
+        return false;
+    }
+    return true;
+}
+void type_check(Fc *fc, Type *t1, Type *t2) {
+    //
+    if (!type_compat(t1, t2, NULL)) {
+        sprintf(fc->sbuf, "Types are not compatible");
+        fc_error(fc);
+    }
+}

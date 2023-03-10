@@ -114,7 +114,13 @@ bool type_is_void(Type *type);
 Type *type_gen_class(Allocator *alc, Class *class);
 Type *type_gen(Build *b, Allocator *alc, char *name);
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space);
+bool type_compat(Type *t1, Type *t2, char **reason);
+void type_check(Fc *fc, Type *t1, Type *t2);
 
 // Var
 Var *var_init(Allocator *alc, char *name, Type *type, bool is_mut, bool is_arg, bool is_global);
 Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
+
+// Value
+Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio);
+Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
