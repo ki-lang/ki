@@ -4,7 +4,7 @@
 void stage_3(Fc *fc) {
     //
     Build *b = fc->b;
-    if (b->verbose > 0) {
+    if (b->verbose > 1) {
         printf("# Stage 3 : Class sizes : %s\n", fc->path_ki);
     }
 

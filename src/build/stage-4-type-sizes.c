@@ -4,7 +4,7 @@
 void stage_4(Fc *fc) {
     //
     Build *b = fc->b;
-    if (b->verbose > 0) {
+    if (b->verbose > 1) {
         printf("# Stage 4 : Type sizes : %s\n", fc->path_ki);
     }
 

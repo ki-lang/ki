@@ -119,7 +119,8 @@ void cmd_build(int argc, char *argv[]) {
     }
 
     if (verbose > 0) {
-        printf("# Cache dir: %s\n", cache_dir);
+        printf("📦 Cache dir : %s\n", cache_dir);
+        printf("💿 Target : %s-%s\n", os, arch);
     }
 
     //

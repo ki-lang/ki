@@ -13,7 +13,7 @@ void *io_loop(void *build) {
         Fc *read_fc = chain_get(read_chain);
 
         if (read_fc) {
-            if (b->verbose > 0) {
+            if (b->verbose > 1) {
                 printf("👓 Read : %s\n", read_fc->path_ki);
             }
             did_work = true;

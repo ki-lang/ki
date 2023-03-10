@@ -8,7 +8,7 @@ void stage_1_enum(Fc *fc);
 void stage_1(Fc *fc) {
     //
     Build *b = fc->b;
-    if (b->verbose > 0) {
+    if (b->verbose > 1) {
         printf("# Stage 1 : Parse : %s\n", fc->path_ki);
     }
 

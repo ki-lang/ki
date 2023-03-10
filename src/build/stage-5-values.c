@@ -7,7 +7,7 @@ void stage_5_func(Fc *fc, Func *func);
 void stage_5(Fc *fc) {
     //
     Build *b = fc->b;
-    if (b->verbose > 0) {
+    if (b->verbose > 1) {
         printf("# Stage 5 : Read values : %s\n", fc->path_ki);
     }
 
