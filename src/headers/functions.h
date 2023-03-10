@@ -76,10 +76,11 @@ char get_char(Fc *fc, int index);
 // Skips
 void skip_body(Fc *fc, char until_ch);
 void skip_string(Fc *fc, char end_char);
-void skip_until_char(Fc *fc, char find);
+void skip_until_char(Fc *fc, char *find);
 void skip_whitespace(Fc *fc);
 void skip_macro_if(Fc *fc);
 void skip_traits(Fc *fc);
+void skip_value(Fc *fc);
 
 // Macro
 MacroScope *init_macro_scope(Allocator *alc);

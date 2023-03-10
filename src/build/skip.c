@@ -3,7 +3,7 @@
 void skip_body(Fc *fc, char until_ch) {
     //
     int depth = 0;
-    if (until_ch == '}' || until_ch == ')')
+    if (until_ch == '}' || until_ch == ')' || until_ch == ']')
         depth = 1;
     char *token = fc->token;
     while (true) {
@@ -21,7 +21,7 @@ void skip_body(Fc *fc, char until_ch) {
         }
 
         if (ch == '/' && get_char(fc, 0) == '/') {
-            skip_until_char(fc, '\n');
+            skip_until_char(fc, "\n");
             continue;
         }
 
@@ -73,9 +73,11 @@ void skip_string(Fc *fc, char end_char) {
     }
 }
 
-void skip_until_char(Fc *fc, char find) {
+void skip_until_char(Fc *fc, char *find) {
     //
+    int depth = 0;
     Chunk *chunk = fc->chunk;
+    int len = strlen(find);
     char ch;
     int i = chunk->i;
     const char *content = chunk->content;
@@ -83,8 +85,24 @@ void skip_until_char(Fc *fc, char find) {
         //
         ch = chunk->content[i];
         i++;
-        if (ch == find) {
-            break;
+
+        if (depth == 0) {
+            for (int o = 0; o < len; o++) {
+                char fch = find[o];
+                if (ch == fch) {
+                    chunk->i = i;
+                    return;
+                }
+            }
+        }
+
+        if (ch == '{' || ch == '(' || ch == '[') {
+            depth++;
+            continue;
+        }
+        if (ch == '}' || ch == ')' || ch == ']') {
+            depth--;
+            continue;
         }
     }
     chunk->i = i;
@@ -173,5 +191,46 @@ void skip_traits(Fc *fc) {
             rtok(fc);
             break;
         }
+    }
+}
+
+void skip_value(Fc *fc) {
+
+    char *token = fc->token;
+    while (true) {
+
+        tok(fc, token, false, true);
+
+        if (strcmp(token, "\"") == 0) {
+            skip_string(fc, '"');
+            continue;
+        }
+        if (strcmp(token, "'") == 0) {
+            skip_string(fc, '\'');
+            continue;
+        }
+        if (strcmp(token, "(") == 0) {
+            skip_until_char(fc, ")");
+            continue;
+        }
+        if (strcmp(token, "{") == 0) {
+            skip_until_char(fc, "}");
+            continue;
+        }
+        if (strcmp(token, "[") == 0) {
+            skip_until_char(fc, "]");
+            continue;
+        }
+        if (is_valid_varname_char(token[0]))
+            continue;
+        if (is_number(token[0]))
+            continue;
+
+        if (strcmp(token, ":") == 0 || strcmp(token, ".") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, "&&") == 0 || strcmp(token, "||") == 0 || strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "/") == 0 || strcmp(token, "*") == 0 || strcmp(token, "%") == 0 || strcmp(token, "&") == 0 || strcmp(token, "|") == 0 || strcmp(token, "^") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "->") == 0 || strcmp(token, "??") == 0 || strcmp(token, "?!") == 0 || strcmp(token, "!!") == 0 || strcmp(token, "?") == 0) {
+            continue;
+        }
+
+        rtok(fc);
+        break;
     }
 }

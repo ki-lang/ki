@@ -3,8 +3,9 @@
 
 Id *id_init(Allocator *alc) {
     Id *id = al(alc, sizeof(Id));
-    id->nsc_name = NULL;
-    id->name = NULL;
+    id->nsc_name = al(alc, KI_TOKEN_MAX);
+    id->name = al(alc, KI_TOKEN_MAX);
+    id->has_nsc = false;
     return id;
 }
 
@@ -18,6 +19,9 @@ Idf *idf_init(Allocator *alc, int type) {
 Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
     //
     char *token = fc->token;
+    Id *id = fc->id_buf;
+    id->has_nsc = false;
+
     tok(fc, token, sameline, allow_space);
 
     // if (token[0] == ':') {
@@ -32,11 +36,9 @@ Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
         fc_error(fc);
     }
 
-    char nsc_name[255];
-    nsc_name[0] = '\0';
-
     if (get_char(fc, 0) == ':') {
-        strcpy(nsc_name, token);
+        id->has_nsc = true;
+        strcpy(id->nsc_name, token);
         chunk_move(fc->chunk, 1);
         tok(fc, token, true, false);
 
@@ -53,11 +55,7 @@ Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
         }
     }
 
-    char *name = strdup(token);
-
-    Id *id = fc->id_buf;
-    id->nsc_name = nsc_name[0] == '\0' ? NULL : strdup(nsc_name);
-    id->name = name;
+    strcpy(id->name, token);
 
     return id;
 }
@@ -65,7 +63,7 @@ Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
 Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail) {
     //
 
-    if (id->nsc_name) {
+    if (id->has_nsc) {
         Idf *idf = map_get(fc->scope->identifiers, id->nsc_name);
         if (!idf || idf->type != idf_nsc) {
             if (!fail) {
@@ -88,7 +86,7 @@ Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail) {
             scope = scope->parent;
             if (!scope) {
 
-                if (!id->nsc_name) {
+                if (!id->has_nsc) {
                     sprintf(fc->sbuf, ".%s.", name);
                     if (strstr(".bool.ptr.i8.u8.i16.u16.i32.u32.i64.u64.ixx.uxx.fxx.String.cstring.Array.Map.", fc->sbuf)) {
                         return ki_lib_get(fc->b, "type", name);

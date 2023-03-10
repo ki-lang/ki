@@ -116,7 +116,7 @@ void stage_2_class_props(Fc *fc, Class *class) {
             }
 
             skip_body(fc, ')');
-            skip_until_char(fc, '{');
+            skip_until_char(fc, "{");
             func->chunk_body = chunk_clone(fc->alc, fc->chunk);
             skip_body(fc, '}');
 
@@ -164,11 +164,152 @@ void stage_2_class_props(Fc *fc, Class *class) {
 
             map_set(class->props, token, prop);
 
-            skip_until_char(fc, ';');
+            skip_until_char(fc, ";");
         }
     }
 }
 
 void stage_2_func(Fc *fc, Func *func) {
     //
+    fc->chunk = func->chunk_args;
+    char *token = fc->token;
+    Allocator *alc = fc->alc;
+
+    // Args
+    tok(fc, token, true, true);
+    while (strcmp(token, ")") != 0) {
+
+        rtok(fc);
+        Type *type = read_type(fc, alc, func->scope->parent, true, true);
+
+        bool mutable = false;
+
+        tok(fc, token, true, true);
+        if (strcmp(token, "mut") == 0) {
+            if (type->class && type->class->is_rc) {
+                sprintf(fc->sbuf, "Making an argument mutable where the type is reference counted, is not allowed for performance reasons");
+                fc_error(fc);
+            }
+            mutable = true;
+            tok(fc, token, true, true);
+        }
+
+        if (!is_valid_varname(token)) {
+            sprintf(fc->sbuf, "Invalid argument name: '%s'", token);
+            fc_error(fc);
+        }
+        if (map_get(func->args_by_name, token)) {
+            sprintf(fc->sbuf, "Argument name already used: '%s'", token);
+            fc_error(fc);
+        }
+
+        char *name = dups(alc, token);
+
+        Chunk *val_chunk = NULL;
+
+        tok(fc, token, true, true);
+        if (strcmp(token, "=") == 0) {
+            val_chunk = chunk_clone(alc, fc->chunk);
+            skip_value(fc);
+        } else {
+            rtok(fc);
+        }
+
+        tok(fc, token, false, true);
+        if (strcmp(token, ",") == 0) {
+            tok(fc, token, false, true);
+        } else if (strcmp(token, ")") != 0) {
+            sprintf(fc->sbuf, "Unexpected token '%s'", token);
+            fc_error(fc);
+        }
+
+        Var *arg = var_init(alc, name, type, mutable, true, false);
+        array_push(func->args, arg);
+        map_set(func->args_by_name, name, arg);
+    }
+
+    // Define arguments in AST
+    for (int i = 0; i < func->args->length; i++) {
+        Var *var = array_get_index(func->args, i);
+
+        Idf *idf = idf_init(alc, idf_var);
+        idf->item = var;
+
+        map_set(func->scope->identifiers, var->name, idf);
+    }
+
+    // Return type
+    func->rett = read_type(fc, alc, func->scope->parent, true, true);
+
+    // i = tok(fc, token, false, true);
+    // if (strcmp(token, "or") == 0) {
+    //     // Read error codes
+    //     func->can_error = true;
+    //     func->scope->can_error = true;
+    //     fc->i = i;
+
+    //     func->error_codes = array_make(2);
+    //     while (true) {
+    //         fc->i = tok(fc, token, true, true);
+    //         if (!is_valid_varname(token)) {
+    //             fc_error(fc, "Invalid error code syntax: '%s'", token);
+    //         }
+    //         if (array_contains(func->error_codes, token, "chars")) {
+    //             fc_error(fc, "Duplicate error code: '%s'", token);
+    //         }
+
+    //         array_push(func->error_codes, strdup(token));
+
+    //         i = tok(fc, token, true, true);
+    //         if (strcmp(token, ",") == 0) {
+    //             fc->i = i;
+    //             continue;
+    //         }
+    //         break;
+    //     }
+    // }
+
+    // if (func == g_main_func) {
+    //     //
+    //     if (func->args->length > 1) {
+    //         fc_error(fc, "main() too many arguments (max 1)", NULL);
+    //     }
+    //     if (func->args->length == 1) {
+    //         // Replace args from main
+    //         VarDecl *decl = array_get_index(func->args, 0);
+    //         char *name = array_get_index(func->arg_names, 0);
+    //         Type *type = decl->type;
+    //         char hash[33];
+    //         Array *types = array_make(1);
+    //         array_push(types, type_gen_class(g_class_string));
+    //         class_generate_generic_hash(types, hash);
+    //         Class *class = class_get_generic_class(g_class_array, hash, types, true);
+    //         if (type->class != class) {
+    //             fc_error(fc, "main() argument must of type Array<String>", NULL);
+    //         }
+    //         g_main_func_arg_name = name;
+    //         g_main_func_arg_mut = decl->is_mut;
+    //         g_main_func_arg_type = decl->type;
+    //         //
+    //         VarDecl *argc = init_decl(false, true, type_gen_class(g_class_i32));
+    //         VarDecl *argv = init_decl(false, true, type_gen_class(g_class_ptr));
+    //         array_set_index(func->args, 0, argc);
+    //         array_set_index(func->arg_names, 0, "KI_ARGC");
+    //         array_set_index(func->arg_defaults, 0, NULL);
+    //         array_push(func->args, argv);
+    //         array_push(func->arg_names, "KI_ARGV");
+    //         array_push(func->arg_defaults, NULL);
+    //     }
+
+    //     //
+    //     if (func->return_type) {
+    //         Class *class = func->return_type->class;
+    //         if (!class || class != g_class_i32) {
+    //             fc_error(fc, "main() must have a void or i32 return type", NULL);
+    //         }
+    //     }
+    //     if (func->can_error) {
+    //         fc_error(fc, "main() should not return errors", NULL);
+    //     }
+    // }
 }

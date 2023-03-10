@@ -88,9 +88,9 @@ void stage_1_func(Fc *fc) {
     skip_body(fc, ')');
 
     if (fc->is_header) {
-        skip_until_char(fc, ';');
+        skip_until_char(fc, ";");
     } else {
-        skip_until_char(fc, '{');
+        skip_until_char(fc, "{");
         func->chunk_body = chunk_clone(fc->alc, fc->chunk);
         skip_body(fc, '}');
     }

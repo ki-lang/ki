@@ -93,6 +93,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     if (strcmp(token, "void") == 0) {
         type->type = type_void;
+        return type;
     } else if (strcmp(token, "fn") == 0) {
         // Func Ref Type
         type->type = type_func_ref;
@@ -145,6 +146,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         //     }
         // }
     } else {
+
+        rtok(fc);
+
         Id *id = read_id(fc, sameline, allow_space, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
 

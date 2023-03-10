@@ -135,6 +135,7 @@ struct Scope {
     Scope *parent;
     Map *identifiers;
     Func *func;
+    bool did_return;
 };
 struct MacroScope {
     Map *identifiers;
@@ -143,6 +144,7 @@ struct MacroScope {
 struct Id {
     char *nsc_name;
     char *name;
+    bool has_nsc;
 };
 struct Idf {
     void *item;
@@ -195,6 +197,7 @@ struct Func {
     Chunk *chunk_body;
     Type *rett;
     Array *args;
+    Map *args_by_name;
     //
     int act; // Access type for class functions
     //
