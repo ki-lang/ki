@@ -95,6 +95,7 @@ struct Fc {
     //
     Array *funcs;
     Array *classes;
+    Array *class_size_checks;
     Array *type_size_checks;
     //
     bool is_header;

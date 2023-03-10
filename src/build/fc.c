@@ -36,6 +36,8 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     fc->funcs = array_make(alc, 20);
     fc->classes = array_make(alc, 4);
     fc->id_buf = id_init(alc);
+    fc->class_size_checks = array_make(alc, 4);
+    fc->type_size_checks = array_make(alc, 20);
 
     chain_add(b->read_ki_file, fc);
     b->event_count++;

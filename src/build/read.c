@@ -71,6 +71,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
                 i++;
                 ch = content[i];
             }
+            chunk->line++;
         } else {
             break;
         }

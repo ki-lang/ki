@@ -35,6 +35,7 @@ void *al(Allocator *alc, size_t size) {
         void *adr = block->current_adr;
         block->current_adr += size;
         block->space_left -= size;
+        // printf("l:%ld\n", block->space_left);
         return adr;
     }
     AllocatorBlock *new_block = alc_block_make(block, NULL, 100000);
@@ -42,8 +43,7 @@ void *al(Allocator *alc, size_t size) {
     alc->last_block = new_block;
     alc->current_block = new_block;
     void *adr = new_block->current_adr;
-    adr += size;
-    new_block->current_adr = adr;
+    new_block->current_adr = adr + size;
     new_block->space_left -= size;
     return adr;
 }

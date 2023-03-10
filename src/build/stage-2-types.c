@@ -9,7 +9,7 @@ void stage_2(Fc *fc) {
     //
     Build *b = fc->b;
     if (b->verbose > 0) {
-        printf("# Stage 2 : %s\n", fc->path_ki);
+        printf("# Stage 2 : Read types : %s\n", fc->path_ki);
     }
 
     for (int i = 0; i < fc->classes->length; i++) {
@@ -51,6 +51,7 @@ void stage_2_class_props(Fc *fc, Class *class) {
     while (true) {
 
         tok(fc, token, false, true);
+        // printf("t:'%s'\n", token);
 
         if (token[0] == 0) {
             sprintf(fc->sbuf, "Unexpected end of file");

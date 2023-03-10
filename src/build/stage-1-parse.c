@@ -9,7 +9,7 @@ void stage_1(Fc *fc) {
     //
     Build *b = fc->b;
     if (b->verbose > 0) {
-        printf("# Stage 1 : %s\n", fc->path_ki);
+        printf("# Stage 1 : Parse : %s\n", fc->path_ki);
     }
 
     char *token = fc->token;
@@ -193,6 +193,7 @@ void stage_1_class(Fc *fc) {
     }
 
     class->chunk_body = chunk_clone(fc->alc, fc->chunk);
+
     skip_body(fc, '}');
 }
 
