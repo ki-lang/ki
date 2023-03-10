@@ -10,6 +10,7 @@ char *find_config_dir(Allocator *alc, char *ki_path);
 void cmd_build(int argc, char *argv[]) {
     //
     Allocator *alc = alc_make();
+    Allocator *alc_io = alc_make();
     //
     Array *args = array_make(alc, argc);
     Map *options = map_make(alc);
@@ -126,6 +127,7 @@ void cmd_build(int argc, char *argv[]) {
     b->arch = arch;
     b->ptr_size = ptr_size;
     b->alc = alc;
+    b->alc_io = alc_io;
     b->alc_ast = alc_make();
     b->cache_dir = cache_dir;
     //

@@ -17,8 +17,8 @@ void *io_loop(void *build) {
                 printf("👓 Read : %s\n", read_fc->path_ki);
             }
             did_work = true;
-            Str *content_str = file_get_contents(b->alc, read_fc->path_ki);
-            char *content = str_to_chars(b->alc, content_str);
+            Str *content_str = file_get_contents(b->alc_io, read_fc->path_ki);
+            char *content = str_to_chars(b->alc_io, content_str);
             read_fc->chunk->content = content;
             read_fc->chunk->length = strlen(content);
             b->events_done++;

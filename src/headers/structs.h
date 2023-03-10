@@ -52,6 +52,7 @@ struct Build {
     char *sbuf;
     //
     Allocator *alc;
+    Allocator *alc_io;
     Allocator *alc_ast;
     //
     Nsc *nsc_main;
