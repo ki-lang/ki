@@ -1,5 +1,6 @@
 
 typedef struct Chain Chain;
+typedef struct ChainItem ChainItem;
 typedef struct Build Build;
 typedef struct Fc Fc;
 typedef struct Nsc Nsc;
@@ -28,9 +29,14 @@ struct AllocatorBlock {
     void *current_adr;
 };
 struct Chain {
-    Fc *first;
-    Fc *last;
-    Fc *current;
+    Allocator *alc;
+    ChainItem *first;
+    ChainItem *last;
+    ChainItem *current;
+};
+struct ChainItem {
+    Fc *item;
+    ChainItem *next;
 };
 
 struct Build {
@@ -68,7 +74,6 @@ struct Build {
 
 struct Fc {
     Build *b;
-    Fc *next;
     char *path_ki;
     char *path_ir;
     char *token;
@@ -154,6 +159,7 @@ struct Class {
     Map *funcs;
     bool is_rc;
     bool is_signed;
+    bool packed;
 };
 struct Func {
     char *name;

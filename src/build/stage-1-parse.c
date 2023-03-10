@@ -122,6 +122,68 @@ void stage_1_class(Fc *fc) {
     } else {
         map_set(fc->nsc->scope->identifiers, name, idf);
     }
+
+    map_set(class->scope->identifiers, "CLASS", idf);
+
+    tok(fc, token, true, true);
+    while (strcmp(token, "{") != 0) {
+        if (strcmp(token, "type") == 0) {
+            // tok_expect(fc, ":", true, false);
+            // tok(fc, token, true, false);
+            // if (strcmp(token, "ptr") == 0) {
+            //     class->type = ct_ptr;
+            //     class->ref_counted = false;
+            //     class->size = g_ptr_size;
+            // } else if (strcmp(token, "int") == 0 || strcmp(token, "float") == 0) {
+            //     class->type = strcmp(token, "int") == 0 ? ct_int : ct_float;
+            //     class->ref_counted = false;
+            //     fc->i = tok_expect(fc, ":", true, false);
+            //     fc->i = tok(fc, token, true, false);
+            //     int size = 0;
+            //     if (strcmp(token, "*") == 0) {
+            //         size = g_ptr_size;
+            //     } else {
+            //         if (!is_valid_number(token)) {
+            //             fc_error(fc, "Invalid number byte size: '%s'", token);
+            //         }
+            //         size = atoi(token);
+            //     }
+            //     if (class->type == ct_int) {
+            //         if (size != 1 && size != 2 && size != 4 && size != 8 && size != 16) {
+            //             fc_error(fc, "Invalid integer byte size, options: 1,2,4,8 or 16 received: '%s'", token);
+            //         }
+            //         fc->i = tok_expect(fc, ":", true, false);
+            //         fc->i = tok(fc, token, true, false);
+            //         if (strcmp(token, "true") != 0 && strcmp(token, "false") != 0) {
+            //             fc_error(fc, "Invalid value for is_signed, options: true,false, received: '%s'", token);
+            //         }
+            //         class->size = size;
+            //         class->is_signed = strcmp(token, "true") == 0;
+            //     } else {
+            //         if (size != 4 && size != 8) {
+            //             fc_error(fc, "Invalid float byte size, options: 4 or 8 received: '%s'", token);
+            //         }
+            //         class->size = size;
+            //         class->is_signed = true;
+            //     }
+            // } else {
+            //     fc_error(fc, "Unknown class type: '%s'", token);
+            // }
+
+        } else if (strcmp(token, "norc") == 0) {
+            class->is_rc = false;
+        } else if (strcmp(token, "packed") == 0) {
+            class->packed = true;
+        } else {
+            sprintf(fc->sbuf, "Unexpected token: '%s' (class attributes)", token);
+            fc_error(fc);
+        }
+
+        tok(fc, token, true, true);
+    }
+
+    class->chunk_body = chunk_clone(fc->alc, fc->chunk);
+    skip_body(fc, '}');
 }
 
 void stage_1_enum(Fc *fc) {

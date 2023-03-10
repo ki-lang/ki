@@ -21,7 +21,6 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
 
     Fc *fc = al(alc, sizeof(Fc));
     fc->b = b;
-    fc->next = NULL;
     fc->path_ki = path_ki;
     fc->path_ir = path_ir;
     fc->nsc = nsc;
@@ -43,6 +42,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
 
 Chain *chain_make(Allocator *alc) {
     Chain *chain = al(alc, sizeof(Chain));
+    chain->alc = alc;
     chain->first = NULL;
     chain->last = NULL;
     chain->current = NULL;
@@ -51,25 +51,33 @@ Fc *chain_get(Chain *chain) {
     //
     if (chain->current == NULL) {
         chain->current = chain->first;
-        return chain->current;
+        ChainItem *cur = chain->current;
+        if (cur) {
+            return cur->item;
+        }
+        return NULL;
     }
-    Fc *next = chain->current->next;
+    ChainItem *next = chain->current->next;
     if (next) {
         chain->current = next;
+        return next->item;
     }
-    return next;
+    return NULL;
 }
 
 void chain_add(Chain *chain, Fc *item) {
     //
+    ChainItem *ci = al(chain->alc, sizeof(ChainItem));
+    ci->item = item;
+    ci->next = NULL;
     if (chain->first == NULL) {
-        chain->first = item;
-        chain->last = item;
+        chain->first = ci;
+        chain->last = ci;
         return;
     }
-    Fc *last = chain->last;
-    last->next = item;
-    chain->last = item;
+    ChainItem *last = chain->last;
+    last->next = ci;
+    chain->last = ci;
 }
 
 void fc_error(Fc *fc) {
