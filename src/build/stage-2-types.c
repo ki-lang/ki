@@ -237,14 +237,16 @@ void stage_2_func(Fc *fc, Func *func) {
             fc_error(fc);
         }
 
-        Var *arg = var_init(alc, name, type, mutable, true, false);
+        Arg *arg = arg_init(alc, name, type, mutable);
         array_push(func->args, arg);
         map_set(func->args_by_name, name, arg);
     }
 
     // Define arguments in AST
     for (int i = 0; i < func->args->length; i++) {
-        Var *var = array_get_index(func->args, i);
+        Arg *arg = array_get_index(func->args, i);
+
+        Var *var = var_init(alc, arg->name, arg->type, arg->is_mut, true, false);
 
         Idf *idf = idf_init(alc, idf_var);
         idf->item = var;

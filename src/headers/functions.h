@@ -117,3 +117,4 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
 // Var
 Var *var_init(Allocator *alc, char *name, Type *type, bool is_mut, bool is_arg, bool is_global);
+Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);

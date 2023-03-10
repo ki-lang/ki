@@ -18,6 +18,7 @@ typedef struct Func Func;
 typedef struct Enum Enum;
 typedef struct Value Value;
 typedef struct Var Var;
+typedef struct Arg Arg;
 
 struct Allocator {
     AllocatorBlock *first_block;
@@ -223,4 +224,11 @@ struct Var {
     bool is_mut;
     bool is_global;
     bool is_arg;
+};
+struct Arg {
+    char *name;
+    Type *type;
+    bool is_mut;
+    Value *value;
+    Chunk *value_chunk;
 };
