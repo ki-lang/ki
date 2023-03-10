@@ -3,6 +3,7 @@
 
 Map *map_make(Allocator *alc) {
     Map *m = al(alc, sizeof(Map));
+    m->alc = alc;
     m->keys = array_make(alc, 4);
     m->values = array_make(alc, 4);
     return m;
@@ -27,7 +28,7 @@ void *map_get(Map *map, char *key) {
 void map_set(Map *map, char *key, void *value) {
     int i = array_find(map->keys, key, "chars");
     if (i == -1) {
-        array_push(map->keys, strdup(key));
+        array_push(map->keys, dups(map->alc, key));
         array_push(map->values, value);
     } else {
         array_set_index(map->values, i, value);

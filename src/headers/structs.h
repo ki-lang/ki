@@ -89,6 +89,9 @@ struct Fc {
     Scope *scope;
     MacroScope *current_macro_scope;
     //
+    Array *funcs;
+    Array *classes;
+    //
     bool is_header;
     bool ir_changed;
 };
@@ -149,6 +152,7 @@ struct Type {
 };
 
 struct Class {
+    int type;
     char *name;
     char *gname;
     char *dname;
@@ -157,9 +161,11 @@ struct Class {
     Chunk *chunk_body;
     Map *props;
     Map *funcs;
+    int size;
     bool is_rc;
     bool is_signed;
     bool packed;
+    bool is_generic_base;
 };
 struct Func {
     char *name;

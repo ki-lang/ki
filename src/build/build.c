@@ -151,6 +151,7 @@ void cmd_build(int argc, char *argv[]) {
     strcat(ki_dir, "/lib");
     Pkc *pkc_ki = pkc_init(alc, b, "ki", ki_dir);
     pkc_load_nsc(pkc_ki, "type", NULL);
+    pkc_load_nsc(pkc_ki, "io", NULL);
 
     b->nsc_main = nsc_main;
     b->pkc_ki = pkc_ki;

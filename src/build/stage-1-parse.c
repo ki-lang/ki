@@ -65,6 +65,8 @@ void stage_1_func(Fc *fc) {
     func->scope = scope_init(fc->alc, sct_func, fc->scope);
     func->scope->func = func;
 
+    array_push(fc->funcs, func);
+
     Idf *idf = idf_init(fc->alc, idf_func);
     idf->item = func;
 
@@ -114,6 +116,8 @@ void stage_1_class(Fc *fc) {
     class->dname = dname;
     class->scope = scope_init(fc->alc, sct_func, fc->scope);
 
+    array_push(fc->classes, class);
+
     Idf *idf = idf_init(fc->alc, idf_class);
     idf->item = class;
 
@@ -128,48 +132,52 @@ void stage_1_class(Fc *fc) {
     tok(fc, token, true, true);
     while (strcmp(token, "{") != 0) {
         if (strcmp(token, "type") == 0) {
-            // tok_expect(fc, ":", true, false);
-            // tok(fc, token, true, false);
-            // if (strcmp(token, "ptr") == 0) {
-            //     class->type = ct_ptr;
-            //     class->ref_counted = false;
-            //     class->size = g_ptr_size;
-            // } else if (strcmp(token, "int") == 0 || strcmp(token, "float") == 0) {
-            //     class->type = strcmp(token, "int") == 0 ? ct_int : ct_float;
-            //     class->ref_counted = false;
-            //     fc->i = tok_expect(fc, ":", true, false);
-            //     fc->i = tok(fc, token, true, false);
-            //     int size = 0;
-            //     if (strcmp(token, "*") == 0) {
-            //         size = g_ptr_size;
-            //     } else {
-            //         if (!is_valid_number(token)) {
-            //             fc_error(fc, "Invalid number byte size: '%s'", token);
-            //         }
-            //         size = atoi(token);
-            //     }
-            //     if (class->type == ct_int) {
-            //         if (size != 1 && size != 2 && size != 4 && size != 8 && size != 16) {
-            //             fc_error(fc, "Invalid integer byte size, options: 1,2,4,8 or 16 received: '%s'", token);
-            //         }
-            //         fc->i = tok_expect(fc, ":", true, false);
-            //         fc->i = tok(fc, token, true, false);
-            //         if (strcmp(token, "true") != 0 && strcmp(token, "false") != 0) {
-            //             fc_error(fc, "Invalid value for is_signed, options: true,false, received: '%s'", token);
-            //         }
-            //         class->size = size;
-            //         class->is_signed = strcmp(token, "true") == 0;
-            //     } else {
-            //         if (size != 4 && size != 8) {
-            //             fc_error(fc, "Invalid float byte size, options: 4 or 8 received: '%s'", token);
-            //         }
-            //         class->size = size;
-            //         class->is_signed = true;
-            //     }
-            // } else {
-            //     fc_error(fc, "Unknown class type: '%s'", token);
-            // }
-
+            tok_expect(fc, ":", true, false);
+            tok(fc, token, true, false);
+            if (strcmp(token, "ptr") == 0) {
+                class->type = ct_ptr;
+                class->is_rc = false;
+                class->size = fc->b->ptr_size;
+            } else if (strcmp(token, "int") == 0 || strcmp(token, "float") == 0) {
+                class->type = strcmp(token, "int") == 0 ? ct_int : ct_float;
+                class->is_rc = false;
+                tok_expect(fc, ":", true, false);
+                tok(fc, token, true, false);
+                int size = 0;
+                if (strcmp(token, "*") == 0) {
+                    size = fc->b->ptr_size;
+                } else {
+                    if (!is_valid_number(token)) {
+                        sprintf(fc->sbuf, "Invalid number byte size: '%s'", token);
+                        fc_error(fc);
+                    }
+                    size = atoi(token);
+                }
+                if (class->type == ct_int) {
+                    if (size != 1 && size != 2 && size != 4 && size != 8 && size != 16) {
+                        sprintf(fc->sbuf, "Invalid integer byte size, options: 1,2,4,8 or 16 received: '%s'", token);
+                        fc_error(fc);
+                    }
+                    tok_expect(fc, ":", true, false);
+                    tok(fc, token, true, false);
+                    if (strcmp(token, "true") != 0 && strcmp(token, "false") != 0) {
+                        sprintf(fc->sbuf, "Invalid value for is_signed, options: true,false, received: '%s'", token);
+                        fc_error(fc);
+                    }
+                    class->size = size;
+                    class->is_signed = strcmp(token, "true") == 0;
+                } else {
+                    if (size != 4 && size != 8) {
+                        sprintf(fc->sbuf, "Invalid float byte size, options: 4 or 8 received: '%s'", token);
+                        fc_error(fc);
+                    }
+                    class->size = size;
+                    class->is_signed = true;
+                }
+            } else {
+                sprintf(fc->sbuf, "Unknown class type: '%s'", token);
+                fc_error(fc);
+            }
         } else if (strcmp(token, "norc") == 0) {
             class->is_rc = false;
         } else if (strcmp(token, "packed") == 0) {

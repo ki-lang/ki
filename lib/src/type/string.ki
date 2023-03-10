@@ -2,7 +2,7 @@
 // const:   {string_length:uxx}-1-{...string bytes...}
 // dynamic: {string_length:uxx}-0-{pad 3}-{ref_count:u32}-{...string bytes...}
 
-class String norc {
+class String type:ptr {
 
 	public func is_const() bool {
 		return (ptrv this + sizeof(uxx) as u8) == 1#u8;

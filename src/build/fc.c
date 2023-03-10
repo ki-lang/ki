@@ -33,6 +33,8 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     fc->chunk_prev = chunk_init(alc);
     fc->scope = scope_init(alc, sct_default, nsc->scope);
     fc->is_header = is_header;
+    fc->funcs = array_make(alc, 20);
+    fc->classes = array_make(alc, 4);
 
     chain_add(b->read_ki_file, fc);
     b->event_count++;

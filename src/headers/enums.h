@@ -18,3 +18,10 @@ enum SCOPETYPE {
     sct_class,
     sct_loop,
 };
+
+enum CLASSTYPE {
+    ct_struct,
+    ct_int,
+    ct_float,
+    ct_ptr,
+};

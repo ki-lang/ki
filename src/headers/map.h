@@ -6,6 +6,7 @@
 #include "array.h"
 
 typedef struct Map {
+    Allocator *alc;
     Array *keys;
     Array *values;
 } Map;
