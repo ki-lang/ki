@@ -13,7 +13,11 @@ typedef struct Id Id;
 typedef struct Idf Idf;
 typedef struct Type Type;
 typedef struct Class Class;
+typedef struct ClassProp ClassProp;
 typedef struct Func Func;
+typedef struct Enum Enum;
+typedef struct Value Value;
+typedef struct Var Var;
 
 struct Allocator {
     AllocatorBlock *first_block;
@@ -91,6 +95,7 @@ struct Fc {
     //
     Array *funcs;
     Array *classes;
+    Array *type_size_checks;
     //
     bool is_header;
     bool ir_changed;
@@ -140,19 +145,25 @@ struct Id {
     char *name;
 };
 struct Idf {
-    int type;
     void *item;
+    int type;
 };
 
 struct Type {
     Class *class;
+    Enum *enu;
+    Array *func_args;
+    Type *func_rett;
+    Array *func_errors;
     int type;
+    int bytes;
+    int ptr_depth;
     bool is_signed;
     bool nullable;
+    bool func_can_error;
 };
 
 struct Class {
-    int type;
     char *name;
     char *gname;
     char *dname;
@@ -161,11 +172,18 @@ struct Class {
     Chunk *chunk_body;
     Map *props;
     Map *funcs;
+    int type;
     int size;
     bool is_rc;
     bool is_signed;
     bool packed;
     bool is_generic_base;
+};
+struct ClassProp {
+    Type *type;
+    Value *value;
+    Chunk *value_chunk;
+    int index;
 };
 struct Func {
     char *name;
@@ -175,10 +193,30 @@ struct Func {
     Scope *scope;
     Chunk *chunk_args;
     Chunk *chunk_body;
+    Type *rett;
+    Array *args;
+    //
+    int act; // Access type for class functions
+    //
+    bool is_static;
 };
 struct Enum {
     char *name;
     char *gname;
     char *dname;
     Fc *fc;
+};
+
+struct Value {
+    int type;
+    void *item;
+    Type *rett;
+};
+
+struct Var {
+    char *name;
+    Type *type;
+    bool is_mut;
+    bool is_global;
+    bool is_arg;
 };

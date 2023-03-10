@@ -1,4 +1,13 @@
 
+enum TYPES {
+    type_void,
+    type_ptr,
+    type_struct,
+    type_int,
+    type_float,
+    type_func_ref,
+};
+
 enum IDFOR {
     idf_func,
     idf_class,
@@ -6,9 +15,6 @@ enum IDFOR {
     idf_nsc,
     idf_trait,
     idf_enum,
-    idf_type,
-    idf_union,
-    idf_error_code,
     idf_fc,
 };
 

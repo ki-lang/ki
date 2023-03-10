@@ -59,6 +59,7 @@ void stage_1_func(Fc *fc) {
     char *dname = nsc_dname(fc->nsc, name);
 
     Func *func = func_init(fc->alc);
+    func->fc = fc;
     func->name = name;
     func->gname = gname;
     func->dname = dname;
@@ -111,6 +112,7 @@ void stage_1_class(Fc *fc) {
     char *dname = nsc_dname(fc->nsc, name);
 
     Class *class = class_init(fc->alc);
+    class->fc = fc;
     class->name = name;
     class->gname = gname;
     class->dname = dname;

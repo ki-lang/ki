@@ -90,9 +90,6 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         if (idf && idf->type == idf_class) {
             Class *class = idf->item;
             result = class->is_rc;
-        } else if (idf && idf->type == idf_type) {
-            Type *type = idf->item;
-            result = type->class && type->class->is_rc;
         } else {
             sprintf(fc->sbuf, "Not a class or type: '%s'", id->name);
             fc_error(fc);
@@ -103,23 +100,20 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         Id *id = read_id(fc, true, true, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
 
-        if (idf && idf->type == idf_type) {
-            Type *type = idf->item;
-            result = type->nullable;
-        } else {
-            sprintf(fc->sbuf, "Not a type: '%s'", id->name);
-            fc_error(fc);
-        }
+        // if (idf && idf->type == idf_type) {
+        //     Type *type = idf->item;
+        //     result = type->nullable;
+        // } else {
+        sprintf(fc->sbuf, "Not a type: '%s'", id->name);
+        fc_error(fc);
+        // }
 
     } else if (strcmp(token, "IS_SIGNED_NUMBER_TYPE") == 0) {
 
         Id *id = read_id(fc, true, true, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
 
-        if (idf && idf->type == idf_type) {
-            Type *type = idf->item;
-            result = type->is_signed;
-        } else if (idf && idf->type == idf_class) {
+        if (idf && idf->type == idf_class) {
             Class *class = idf->item;
             result = class->is_signed;
         } else {
@@ -132,10 +126,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         Id *id = read_id(fc, true, true, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
 
-        if (idf && idf->type == idf_type) {
-            Type *type = idf->item;
-            result = !type->is_signed;
-        } else if (idf && idf->type == idf_class) {
+        if (idf && idf->type == idf_class) {
             Class *class = idf->item;
             result = !class->is_signed;
         } else {
@@ -149,10 +140,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         Idf *idf = idf_by_id(fc, scope, id, true);
 
         Class *class = NULL;
-        if (idf && idf->type == idf_type) {
-            Type *type = idf->item;
-            class = type->class;
-        } else if (idf && idf->type == idf_class) {
+        if (idf && idf->type == idf_class) {
             class = idf->item;
         }
         if (!class) {
@@ -170,10 +158,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         Idf *idf = idf_by_id(fc, scope, id, true);
 
         Class *class = NULL;
-        if (idf && idf->type == idf_type) {
-            Type *type = idf->item;
-            class = type->class;
-        } else if (idf && idf->type == idf_class) {
+        if (idf && idf->type == idf_class) {
             class = idf->item;
         }
         if (!class) {
@@ -190,32 +175,13 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         Id *id = read_id(fc, true, true, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
 
-        if (idf && idf->type == idf_type) {
-            Type *type = idf->item;
-            result = type == NULL;
-        } else {
-            sprintf(fc->sbuf, "Not a type: '%s'", id->name);
-            fc_error(fc);
-        }
-
-    } else if (strcmp(token, "TYPE_IS_ASYNC") == 0) {
-
-        Id *id = read_id(fc, true, true, true);
-        Idf *idf = idf_by_id(fc, scope, id, true);
-
-        Class *class = NULL;
-        if (idf && idf->type == idf_type) {
-            Type *type = idf->item;
-            if (type) {
-                class = type->class;
-            }
-        } else if (idf && idf->type == idf_class) {
-            class = idf->item;
-        }
-        if (!class) {
-            sprintf(fc->sbuf, "Not a type: '%s'", id->name);
-            fc_error(fc);
-        }
+        // if (idf && idf->type == idf_type) {
+        //     Type *type = idf->item;
+        //     result = type == NULL;
+        // } else {
+        sprintf(fc->sbuf, "Not a type: '%s'", id->name);
+        fc_error(fc);
+        // }
 
     } else {
 

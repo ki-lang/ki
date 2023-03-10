@@ -4,22 +4,22 @@
 
 class String type:ptr {
 
-	public func is_const() bool {
+	func is_const() bool {
 		return (ptrv this + sizeof(uxx) as u8) == 1#u8;
 	}
 
-	public func bytes() u32 {
+	func bytes() u32 {
 		return ptrv (this -> ptr) as u32;
 	}
 
-	public func rc() u32 {
+	func rc() u32 {
 		if(this.is_const()) { return 666; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 666.
 		let mut adr = this -> ptr;
 		adr += sizeof(uxx) + 1;
 		return ptrv adr as u32;
 	}
 
-	public func data() ptr {
+	func data() ptr {
 		let mut adr = this -> ptr;
 		if(this.is_const()){
 			adr += sizeof(uxx) + 1;

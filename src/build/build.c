@@ -117,6 +117,10 @@ void cmd_build(int argc, char *argv[]) {
         makedir(cache_dir, 0700);
     }
 
+    if (verbose > 0) {
+        printf("# Cache dir: %s\n", cache_dir);
+    }
+
     //
     b->os = os;
     b->arch = arch;

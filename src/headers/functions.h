@@ -103,3 +103,16 @@ Func *func_init(Allocator *alc);
 
 // Class
 Class *class_init(Allocator *alc);
+ClassProp *class_prop_init(Allocator *alc);
+bool class_check_size(Class *class);
+
+// Type
+Type *type_init(Allocator *alc);
+int type_get_size(Build *b, Type *type);
+bool type_is_void(Type *type);
+Type *type_gen_class(Allocator *alc, Class *class);
+Type *type_gen(Build *b, Allocator *alc, char *name);
+Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space);
+
+// Var
+Var *var_init(Allocator *alc, char *name, Type *type, bool is_mut, bool is_arg, bool is_global);
