@@ -16,9 +16,11 @@ typedef struct Class Class;
 typedef struct ClassProp ClassProp;
 typedef struct Func Func;
 typedef struct Enum Enum;
-typedef struct Value Value;
 typedef struct Var Var;
 typedef struct Arg Arg;
+
+#include "token.h"
+#include "value.h"
 
 struct Allocator {
     AllocatorBlock *first_block;
@@ -60,6 +62,8 @@ struct Build {
     Func *main_func;
     //
     Array *all_ki_files;
+    Str *str_buf;
+    Str *str_buf_io;
     //
     Chain *read_ki_file;
     Chain *write_ir;
@@ -138,6 +142,7 @@ struct Scope {
     Scope *parent;
     Map *identifiers;
     Func *func;
+    Array *ast;
     bool did_return;
 };
 struct MacroScope {
@@ -205,18 +210,13 @@ struct Func {
     int act; // Access type for class functions
     //
     bool is_static;
+    bool is_generated;
 };
 struct Enum {
     char *name;
     char *gname;
     char *dname;
     Fc *fc;
-};
-
-struct Value {
-    int type;
-    void *item;
-    Type *rett;
 };
 
 struct Var {

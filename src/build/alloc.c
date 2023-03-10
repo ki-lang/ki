@@ -27,6 +27,9 @@ AllocatorBlock *alc_block_make(AllocatorBlock *prev, AllocatorBlock *next, size_
 }
 void *al(Allocator *alc, size_t size) {
     //
+    if (size > 500) {
+        return al_private(alc, size)->start_adr;
+    }
     if (size % 8 > 0) {
         size += 8 - (size % 8);
     }

@@ -155,3 +155,12 @@ char get_char(Fc *fc, int index) {
     Chunk *chunk = fc->chunk;
     return chunk->content[chunk->i + index];
 }
+
+Str *read_string(Fc *fc) {
+    //
+    Str *buf = fc->b->str_buf;
+    Chunk *chunk = fc->chunk;
+    str_clear(buf);
+
+    return buf;
+}

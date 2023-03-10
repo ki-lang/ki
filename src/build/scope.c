@@ -1,13 +1,14 @@
 
 #include "../all.h"
 
-Scope *scope_init(Allocator *alc, int type, Scope *parent) {
+Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast) {
     //
     Scope *scope = al(alc, sizeof(Scope));
     scope->parent = parent;
     scope->type = type;
     scope->identifiers = map_make(alc);
     scope->func = NULL;
+    scope->ast = has_ast ? array_make(alc, 10) : NULL;
     return scope;
 }
 

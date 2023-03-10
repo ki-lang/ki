@@ -1,13 +1,13 @@
 
 #include "all.h"
 
-Str *str_make(Allocator *alc, char *data) {
+Str *str_make(Allocator *alc, int mem_size) {
     Str *result = al(alc, sizeof(Str));
     result->alc = alc;
-    result->length = strlen(data);
-    result->mem_size = result->length + 10;
-    result->data = al(alc, result->mem_size);
-    memcpy(result->data, data, result->length);
+    result->length = 0;
+    result->mem_size = mem_size;
+    result->al_block = al_private(alc, mem_size);
+    result->data = result->al_block->start_adr;
     return result;
 }
 
@@ -21,9 +21,12 @@ void str_append(Str *str, Str *add) {
         str->mem_size *= 2;
     }
     if (reloc) {
-        void *new_data = al(str->alc, str->mem_size);
+        AllocatorBlock *new_block = al_private(str->alc, str->mem_size);
+        void *new_data = new_block->start_adr;
         memcpy(new_data, str->data, str->length);
         memcpy(new_data + str->length, add->data, add->length);
+        free_block(str->al_block);
+        str->al_block = new_block;
         str->data = new_data;
     } else {
         memcpy(str->data + str->length, add->data, add->length);
@@ -38,8 +41,11 @@ void str_append_char(Str *str, char ch) {
         str->mem_size *= 2;
     }
     if (reloc) {
-        void *new_data = al(str->alc, str->mem_size);
+        AllocatorBlock *new_block = al_private(str->alc, str->mem_size);
+        void *new_data = new_block->start_adr;
         memcpy(new_data, str->data, str->length);
+        free_block(str->al_block);
+        str->al_block = new_block;
         str->data = new_data;
     }
     char *adr = str->data + str->length;
@@ -58,9 +64,12 @@ void str_append_chars(Str *str, char *add) {
         str->mem_size *= 2;
     }
     if (reloc) {
-        void *new_data = al(str->alc, str->mem_size);
+        AllocatorBlock *new_block = al_private(str->alc, str->mem_size);
+        void *new_data = new_block->start_adr;
         memcpy(new_data, str->data, str->length);
         memcpy(new_data + str->length, add, add_len);
+        free_block(str->al_block);
+        str->al_block = new_block;
         str->data = new_data;
     } else {
         memcpy(str->data + str->length, add, add_len);
@@ -73,4 +82,9 @@ char *str_to_chars(Allocator *alc, Str *str) {
     memcpy(res, str->data, str->length);
     res[str->length] = '\0';
     return res;
+}
+
+void str_clear(Str *str) {
+    //
+    str->length = 0;
 }

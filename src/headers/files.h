@@ -13,4 +13,4 @@ char *get_storage_path();
 Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files);
 int mod_time(char *path);
 void write_file(char *filepath, char *content, bool append);
-Str *file_get_contents(Allocator *alc, char *path);
+void file_get_contents(Str *buf, char *path);

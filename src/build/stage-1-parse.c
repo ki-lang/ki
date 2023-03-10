@@ -63,7 +63,7 @@ void stage_1_func(Fc *fc) {
     func->name = name;
     func->gname = gname;
     func->dname = dname;
-    func->scope = scope_init(fc->alc, sct_func, fc->scope);
+    func->scope = scope_init(fc->alc, sct_func, fc->scope, true);
     func->scope->func = func;
 
     array_push(fc->funcs, func);
@@ -116,7 +116,7 @@ void stage_1_class(Fc *fc) {
     class->name = name;
     class->gname = gname;
     class->dname = dname;
-    class->scope = scope_init(fc->alc, sct_func, fc->scope);
+    class->scope = scope_init(fc->alc, sct_func, fc->scope, false);
 
     array_push(fc->classes, class);
 

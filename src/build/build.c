@@ -138,6 +138,8 @@ void cmd_build(int argc, char *argv[]) {
     //
     b->all_ki_files = array_make(alc, 1000);
     b->main_func = NULL;
+    b->str_buf = str_make(alc, 5000);
+    b->str_buf_io = str_make(alc_io, 10000);
     //
     b->read_ki_file = chain_make(alc);
     b->write_ir = chain_make(alc);

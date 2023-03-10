@@ -32,3 +32,22 @@ enum CLASSTYPE {
     ct_float,
     ct_ptr,
 };
+
+enum TOKENTYPE {
+    tkn_declare,
+    tkn_assign,
+    tkn_statement,
+    tkn_return,
+    tkn_while,
+    tkn_if,
+    tkn_break,
+    tkn_continue,
+    tkn_throw,
+    tkn_panic,
+    tkn_exit,
+    tkn_each,
+};
+
+enum VALUETYPE {
+    v_string,
+};

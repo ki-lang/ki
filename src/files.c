@@ -275,13 +275,12 @@ void write_file(char *filepath, char *content, bool append) {
     fclose(fp);
 }
 
-Str *file_get_contents(Allocator *alc, char *path) {
-    Str *content_str = str_make(alc, "");
+void file_get_contents(Str *buf, char *path) {
+    str_clear(buf);
     char ch;
     FILE *fp = fopen(path, "r");
     while ((ch = fgetc(fp)) != EOF) {
-        str_append_char(content_str, ch);
+        str_append_char(buf, ch);
     }
     fclose(fp);
-    return content_str;
 }

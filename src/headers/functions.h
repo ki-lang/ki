@@ -72,6 +72,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space);
 void rtok(Fc *fc);
 void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space);
 char get_char(Fc *fc, int index);
+Str *read_string(Fc *fc);
 
 // Skips
 void skip_body(Fc *fc, char until_ch);
@@ -96,7 +97,7 @@ Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail);
 Idf *ki_lib_get(Build *b, char *ns, char *name);
 
 // Scope
-Scope *scope_init(Allocator *alc, int type, Scope *parent);
+Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast);
 void name_taken_check(Fc *fc, Scope *scope, char *name);
 
 // Func
@@ -122,5 +123,12 @@ Var *var_init(Allocator *alc, char *name, Type *type, bool is_mut, bool is_arg, 
 Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
 
 // Value
+Value *value_init(Allocator *alc, int type, void *item, Type *rett);
 Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio);
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
+
+// Ast
+void read_ast(Fc *fc, Scope *scope, bool single_line);
+
+// Token
+Token *token_init(Allocator *alc, int type, void *item);

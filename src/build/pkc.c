@@ -113,10 +113,11 @@ void pkc_load_config(Pkc *pkc) {
     Allocator *alc = pkc->b->alc;
     char *cpath = dups(alc, path);
 
-    Str *content_str = file_get_contents(alc, cpath);
-    char *content = str_to_chars(alc, content_str);
+    Str *buf = pkc->b->str_buf;
+    file_get_contents(buf, cpath);
+    char *content = str_to_chars(alc, buf);
 
-    cJSON *json = cJSON_ParseWithLength(content, content_str->length);
+    cJSON *json = cJSON_ParseWithLength(content, buf->length);
 
     Config *cfg = malloc(sizeof(Config));
     cfg->path = cpath;

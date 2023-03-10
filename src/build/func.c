@@ -9,6 +9,7 @@ Func *func_init(Allocator *alc) {
     func->args_by_name = map_make(alc);
     func->act = 0;
     func->is_static = false;
+    func->is_generated = false;
 
     return func;
 }

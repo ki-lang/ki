@@ -113,7 +113,7 @@ void stage_2_class_props(Fc *fc, Class *class) {
             func->name = name;
             func->gname = gname;
             func->dname = dname;
-            func->scope = scope_init(fc->alc, sct_func, fc->scope);
+            func->scope = scope_init(fc->alc, sct_func, fc->scope, true);
             func->scope->func = func;
             func->is_static = is_static;
 
