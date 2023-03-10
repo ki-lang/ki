@@ -41,6 +41,19 @@ void stage_2_class(Fc *fc, Class *class) {
     //
     fc->chunk = class->chunk_body;
     stage_2_class_props(fc, class);
+
+    // Generate __free / __deref
+
+    //
+    if (class->type == ct_struct && class->props->keys->length == 0) {
+        sprintf(fc->sbuf, "Class has no properties");
+        fc_error(fc);
+    }
+
+    //
+    if (!class_check_size(class)) {
+        array_push(fc->class_size_checks, class);
+    }
 }
 
 void stage_2_class_props(Fc *fc, Class *class) {

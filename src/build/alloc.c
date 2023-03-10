@@ -31,7 +31,7 @@ void *al(Allocator *alc, size_t size) {
         size += 8 - (size % 8);
     }
     AllocatorBlock *block = alc->current_block;
-    if (size <= block->space_left) {
+    if (size < block->space_left) {
         void *adr = block->current_adr;
         block->current_adr += size;
         block->space_left -= size;
