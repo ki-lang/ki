@@ -30,6 +30,10 @@ void stage_1(Fc *fc) {
             stage_1_func(fc);
             continue;
         }
+        if (strcmp(token, "class") == 0) {
+            stage_1_class(fc);
+            continue;
+        }
 
         sprintf(fc->sbuf, "Unexpected token '%s'", token);
         fc_error(fc);
@@ -97,6 +101,26 @@ void stage_1_class(Fc *fc) {
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid class name syntax '%s'", token);
         fc_error(fc);
+    }
+    name_taken_check(fc, fc->nsc->scope, token);
+
+    char *name = dups(fc->alc, token);
+    char *gname = nsc_gname(fc->nsc, name);
+    char *dname = nsc_dname(fc->nsc, name);
+
+    Class *class = class_init(fc->alc);
+    class->name = name;
+    class->gname = gname;
+    class->dname = dname;
+    class->scope = scope_init(fc->alc, sct_func, fc->scope);
+
+    Idf *idf = idf_init(fc->alc, idf_class);
+    idf->item = class;
+
+    if (fc->is_header) {
+        map_set(fc->scope->identifiers, name, idf);
+    } else {
+        map_set(fc->nsc->scope->identifiers, name, idf);
     }
 }
 

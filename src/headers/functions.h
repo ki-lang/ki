@@ -102,3 +102,4 @@ void name_taken_check(Fc *fc, Scope *scope, char *name);
 Func *func_init(Allocator *alc);
 
 // Class
+Class *class_init(Allocator *alc);

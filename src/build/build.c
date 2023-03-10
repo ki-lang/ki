@@ -94,7 +94,7 @@ void cmd_build(int argc, char *argv[]) {
 
     // Cache dir
     char *cache_buf = malloc(1000);
-    char cache_hash[64];
+    char *cache_hash = malloc(64);
     char *cache_dir = al(alc, KI_PATH_MAX);
     get_dir_from_path(first_file, cache_buf);
     strcat(cache_buf, "||");
@@ -105,7 +105,17 @@ void cmd_build(int argc, char *argv[]) {
     free(cache_buf);
     strcpy(cache_dir, get_storage_path());
     strcat(cache_dir, "/cache/");
+
+    if (!file_exists(cache_dir)) {
+        makedir(cache_dir, 0700);
+    }
+
     strcat(cache_dir, cache_hash);
+    free(cache_hash);
+
+    if (!file_exists(cache_dir)) {
+        makedir(cache_dir, 0700);
+    }
 
     //
     b->os = os;
