@@ -43,6 +43,7 @@ void compile_loop(Build *b, int max_stage);
 // Pkc
 Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir);
 Nsc *pkc_get_nsc(Pkc *pkc, char *name);
+Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc);
 void pkc_cfg_save(Config *cfg);
 
 // Nsc

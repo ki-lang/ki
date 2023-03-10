@@ -12,7 +12,7 @@ Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
 
     Pkc *pkc = al(alc, sizeof(Pkc));
     pkc->b = b;
-    pkc->namespaces = al(alc, sizeof(Map));
+    pkc->namespaces = map_make(alc);
     pkc->name = name;
     pkc->dir = dir;
     pkc->hash = al(alc, 64);
