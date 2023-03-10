@@ -127,6 +127,13 @@ Value *value_init(Allocator *alc, int type, void *item, Type *rett);
 Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio);
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
 
+Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type);
+Value *vgen_ptrv(Allocator *alc, Value *on, Type *as);
+Value *vgen_op(Allocator *alc, Value *left, Value *right, Type *rett);
+Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right);
+Value *vgen_fcall(Allocator *alc, Value *on, Array *args, Type *rett);
+Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
+
 // Ast
 void read_ast(Fc *fc, Scope *scope, bool single_line);
 

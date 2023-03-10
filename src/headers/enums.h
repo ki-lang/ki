@@ -50,4 +50,12 @@ enum TOKENTYPE {
 
 enum VALUETYPE {
     v_string,
+    v_var,
+    v_vint,
+    v_ptrv,
+    v_op,
+    v_compare,
+    v_fcall,
+    v_cast,
+    v_class_pa,
 };
