@@ -8,6 +8,18 @@ Nsc *nsc_init(Allocator *alc, Build *b, Pkc *pkc, char *name) {
     nsc->pkc = pkc;
     nsc->name = name;
     nsc->scope = scope_init(alc, sct_default, NULL);
+
+    //
+    char *o_path = al(alc, KI_PATH_MAX);
+    strcpy(o_path, b->cache_dir);
+    strcat(o_path, "/nsc_");
+    strcat(o_path, pkc->hash);
+    strcat(o_path, "_");
+    strcat(o_path, nsc->name);
+    strcat(o_path, ".o");
+
+    nsc->path_o = o_path;
+
     return nsc;
 }
 

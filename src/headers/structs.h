@@ -4,6 +4,7 @@ typedef struct Build Build;
 typedef struct Fc Fc;
 typedef struct Nsc Nsc;
 typedef struct Pkc Pkc;
+typedef struct Config Config;
 typedef struct Chunk Chunk;
 typedef struct Scope Scope;
 typedef struct MacroScope MacroScope;
@@ -99,7 +100,15 @@ struct Nsc {
 struct Pkc {
     Build *b;
     char *name;
+    char *dir;
+    char *hash;
     Map *namespaces;
+    Config *config;
+};
+struct Config {
+    char *path;
+    char *content;
+    cJSON *json;
 };
 
 struct Chunk {

@@ -50,6 +50,10 @@ void cmd_build(int argc, char *argv[]) {
         verbose = 3;
     }
 
+    bool optimize = array_contains(args, "--optimize", "chars") || array_contains(args, "-O", "chars");
+    bool debug = array_contains(args, "--debug", "chars") || array_contains(args, "-d", "chars");
+    bool test = array_contains(args, "--test", "chars");
+
     //
     Build *b = al(alc, sizeof(Build));
     b->token = al(alc, KI_TOKEN_MAX);
@@ -88,12 +92,28 @@ void cmd_build(int argc, char *argv[]) {
         die(b->sbuf);
     }
 
+    // Cache dir
+    char *cache_buf = malloc(1000);
+    char cache_hash[64];
+    char *cache_dir = al(alc, KI_PATH_MAX);
+    get_dir_from_path(first_file, cache_buf);
+    strcat(cache_buf, "||");
+    strcat(cache_buf, optimize ? "1" : "0");
+    strcat(cache_buf, debug ? "1" : "0");
+    strcat(cache_buf, test ? "1" : "0");
+    md5(cache_buf, cache_hash);
+    free(cache_buf);
+    strcpy(cache_dir, get_storage_path());
+    strcat(cache_dir, "/cache/");
+    strcat(cache_dir, cache_hash);
+
     //
     b->os = os;
     b->arch = arch;
     b->ptr_size = ptr_size;
     b->alc = alc;
     b->alc_ast = alc_make();
+    b->cache_dir = cache_dir;
     //
     b->event_count = 0;
     b->events_done = 0;
