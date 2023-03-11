@@ -26,6 +26,7 @@ void stage_6(Fc *fc) {
     }
 
     // Write IR
+    stage_7(fc);
 }
 
 void stage_6_func(Fc *fc, Func *func) {

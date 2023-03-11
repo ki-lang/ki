@@ -23,6 +23,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     fc->b = b;
     fc->path_ki = path_ki;
     fc->path_ir = path_ir;
+    fc->ir_hash = "";
     fc->nsc = nsc;
     fc->alc = alc;
     fc->alc_ast = b->alc_ast;

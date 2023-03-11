@@ -91,6 +91,7 @@ struct Fc {
     char *path_ir;
     char *token;
     char *sbuf;
+    char *ir_hash;
     Id *id_buf;
     Nsc *nsc;
     Allocator *alc;

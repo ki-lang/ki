@@ -5,7 +5,7 @@ LCC=gcc
 CFLAGS=-g -pthread
 LDFLAGS=-lcurl -lm
 
-SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/build/*.c)
+SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/build/*.c) $(wildcard src/build/LLVM/*.c)
 OBJECTS=$(patsubst %.c, debug/build/%.o, $(SRC))
 TARGET=ki
 
