@@ -64,4 +64,10 @@ enum VALUETYPE {
 enum OPTYPE {
     op_add,
     op_sub,
+    op_eq,
+    op_ne,
+    op_lt,
+    op_gt,
+    op_lte,
+    op_gte,
 };

@@ -24,6 +24,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 
     if (strcmp(token, "(") == 0) {
         v = read_value(fc, alc, scope, false, 0);
+        tok_expect(fc, ")", false, true);
         //
     } else if (strcmp(token, "\"") == 0) {
         Str *str = read_string(fc);
@@ -42,13 +43,78 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         tok_expect(fc, ")", false, true);
         v = vgen_vint(alc, type->bytes, type_gen(b, alc, "u32"), false);
         //
+    } else if (is_number(token[0]) || strcmp(token, "-") == 0) {
+
+        bool is_negative = strcmp(token, "-") == 0;
+
+        if (is_negative) {
+            tok(fc, token, true, false);
+        }
+
+        bool is_float = false;
+        long int iv = 0;
+        float fv = 0;
+
+        if (strcmp(token, "0") == 0 && get_char(fc, 0) == 'x') {
+            //
+            die("TODO: hex numbers");
+        } else if (is_number(token[0])) {
+            char *num_str = dups(alc, token);
+            char *float_str = NULL;
+            if (get_char(fc, 0) == '.') {
+
+                if (is_number(get_char(fc, 1))) {
+                    is_float = true;
+
+                    chunk_move(fc->chunk, 1);
+                    tok(fc, token, true, false);
+
+                    float_str = al(alc, strlen(num_str) + strlen(token) + 2);
+                    strcpy(float_str, num_str);
+                    strcpy(float_str, ".");
+                    strcpy(float_str, token);
+                }
+            }
+            if (is_float) {
+                fv = atof(float_str);
+            } else {
+                iv = atoi(num_str);
+            }
+        } else {
+            sprintf(fc->sbuf, "Invalid number: '%s'", token);
+            fc_error(fc);
+        }
+
+        if (is_float) {
+            if (is_negative) {
+                fv *= -1;
+            }
+            v = vgen_vfloat(alc, fc->b, fv, false);
+        } else {
+            if (is_negative) {
+                iv *= -1;
+            }
+            if (get_char(fc, 0) == '#') {
+                chunk_move(fc->chunk, 1);
+                Type *type = read_type(fc, alc, scope, true, false);
+                if (type->type != type_int) {
+                    sprintf(fc->sbuf, "Invalid integer type");
+                    fc_error(fc);
+                }
+                v = vgen_vint(alc, iv, type, true);
+            } else {
+                v = vgen_vint(alc, iv, type_gen(fc->b, alc, "i32"), false);
+            }
+        }
+
+        //
     } else if (is_valid_varname_char(token[0])) {
         rtok(fc);
         Id *id = read_id(fc, sameline, true, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
         v = value_handle_idf(fc, alc, scope, id, idf);
     } else {
-        sprintf(fc->sbuf, "Unknown value: '%s'", token);
+        sprintf(fc->sbuf, "Unknown value: '%s' | %d", token, prio);
         fc_error(fc);
     }
 
@@ -119,6 +185,59 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
             v = value_op(fc, alc, scope, v, right, op);
 
             tok(fc, token, false, true);
+        }
+    }
+
+    if (prio == 0 || prio > 30) {
+        sprintf(fc->sbuf, ".%s.", token);
+        while (strstr(".==.!=.<=.>=.<.>.", fc->sbuf)) {
+            int op = op_eq;
+            if (strcmp(token, "!=") == 0) {
+                op = op_ne;
+            } else if (strcmp(token, "<") == 0) {
+                op = op_lt;
+            } else if (strcmp(token, "<=") == 0) {
+                op = op_lte;
+            } else if (strcmp(token, ">") == 0) {
+                op = op_gt;
+            } else if (strcmp(token, ">=") == 0) {
+                op = op_gte;
+            }
+
+            Value *right = read_value(fc, alc, scope, false, 30);
+
+            bool magic = false;
+
+            if (op == op_eq || op == op_ne) {
+                Class *lclass = v->rett->class;
+                // if(lclass){
+                //     let cfunc = lclass.funcs.get("__eq") or value null;
+                //     verify cfunc {
+                //         let func = cfunc.func;
+                //         let values = Array<Value>.make(2);
+                //         values.push(v);
+                //         values.push(right);
+                //         let on = value_gen_func_ptr(func, null);
+                //         fcall_type_check(fc, on, values);
+                //         v = value_gen_fcall(fc.b, scope, on, values, func.return_type);
+                //         magic = true;
+                //     }
+                // }
+            }
+
+            if (!magic) {
+                VPair *pair = malloc(sizeof(VPair));
+                pair->left = v;
+                pair->right = right;
+                value_equalize_types(alc, fc, scope, pair);
+                Value *left = pair->left;
+                Value *right = pair->right;
+                type_check(fc, left->rett, right->rett);
+                v = vgen_compare(alc, b, left, right, op);
+            }
+
+            tok(fc, token, false, true);
+            sprintf(fc->sbuf, ".%s.", token);
         }
     }
 
