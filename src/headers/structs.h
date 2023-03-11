@@ -1,4 +1,7 @@
 
+#ifndef _H_STRUCTS
+#define _H_STRUCTS
+
 typedef struct Chain Chain;
 typedef struct ChainItem ChainItem;
 typedef struct Build Build;
@@ -235,3 +238,5 @@ struct Arg {
     Value *value;
     Chunk *value_chunk;
 };
+
+#endif

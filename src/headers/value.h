@@ -1,4 +1,10 @@
 
+#ifndef _H_VALUE
+#define _H_VALUE
+
+#include "structs.h"
+#include "token.h"
+
 typedef struct Value Value;
 typedef struct VInt VInt;
 typedef struct VFloat VFloat;
@@ -54,3 +60,5 @@ struct VClassPA {
     Value *on;
     ClassProp *prop;
 };
+
+#endif

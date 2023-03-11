@@ -20,3 +20,10 @@ void name_taken_check(Fc *fc, Scope *scope, char *name) {
         fc_error(fc);
     }
 }
+
+Scope *scope_find(Scope *scope, int type) {
+    while (scope && scope->type != type) {
+        scope = scope->parent;
+    }
+    return scope;
+}

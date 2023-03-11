@@ -9,3 +9,26 @@ Token *token_init(Allocator *alc, int type, void *item) {
 
     return t;
 }
+
+TIf *tgen_tif(Allocator *alc, Value *cond, Scope *scope, TIf *else_if) {
+    //
+    TIf *tif = al(alc, sizeof(TIf));
+    tif->cond = cond;
+    tif->scope = scope;
+    tif->else_if = else_if;
+    return tif;
+}
+
+Token *tgen_declare(Allocator *alc, Var *var, Value *val) {
+    //
+    TDecl *decl = al(alc, sizeof(TDecl));
+    decl->var = var;
+    decl->value = val;
+    return token_init(alc, tkn_declare, decl);
+}
+
+Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv) {
+    //
+    fscope->did_return = true;
+    return token_init(alc, tkn_return, retv);
+}

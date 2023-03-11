@@ -43,6 +43,10 @@ bool type_is_ptr(Type *type, Build *b) {
     //
     return type->class == ki_get_class(b, "type", "ptr");
 }
+bool type_is_bool(Type *type, Build *b) {
+    //
+    return type->class == ki_get_class(b, "type", "bool");
+}
 
 Type *type_gen_class(Allocator *alc, Class *class) {
     //

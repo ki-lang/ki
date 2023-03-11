@@ -1,4 +1,7 @@
 
+#ifndef _H_ALL
+#define _H_ALL
+
 #ifdef WIN32
 #include <windows.h>
 #else
@@ -45,3 +48,5 @@ typedef struct AllocatorBlock AllocatorBlock;
 #include "headers/globals.h"
 
 #include "headers/functions.h"
+
+#endif

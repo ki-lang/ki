@@ -100,6 +100,7 @@ Idf *ki_lib_get(Build *b, char *ns, char *name);
 // Scope
 Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast);
 void name_taken_check(Fc *fc, Scope *scope, char *name);
+Scope *scope_find(Scope *scope, int type);
 
 // Func
 Func *func_init(Allocator *alc);
@@ -114,6 +115,7 @@ Type *type_init(Allocator *alc);
 int type_get_size(Build *b, Type *type);
 bool type_is_void(Type *type);
 bool type_is_ptr(Type *type, Build *b);
+bool type_is_bool(Type *type, Build *b);
 Type *type_gen_class(Allocator *alc, Class *class);
 Type *type_gen_fptr(Allocator *alc, Func *func);
 Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed);
@@ -148,3 +150,6 @@ void read_ast(Fc *fc, Scope *scope, bool single_line);
 
 // Token
 Token *token_init(Allocator *alc, int type, void *item);
+TIf *tgen_tif(Allocator *alc, Value *cond, Scope *scope, TIf *else_if);
+Token *tgen_declare(Allocator *alc, Var *var, Value *val);
+Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv);
