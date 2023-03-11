@@ -1,6 +1,7 @@
 
 typedef struct Value Value;
 typedef struct VInt VInt;
+typedef struct VFloat VFloat;
 typedef struct VPtrv VPtrv;
 typedef struct VPair VPair;
 typedef struct VOp VOp;
@@ -16,6 +17,11 @@ struct Value {
 
 struct VInt {
     long int value;
+    bool force_type;
+};
+
+struct VFloat {
+    float value;
     bool force_type;
 };
 

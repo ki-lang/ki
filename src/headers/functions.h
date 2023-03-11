@@ -30,6 +30,7 @@ char *dups(Allocator *alc, char *str);
 
 // Build
 void cmd_build(int argc, char **argv);
+Class *ki_get_class(Build *b, char *ns, char *name);
 
 // Chain
 Chain *chain_make(Allocator *alc);
@@ -112,12 +113,14 @@ bool class_check_size(Class *class);
 Type *type_init(Allocator *alc);
 int type_get_size(Build *b, Type *type);
 bool type_is_void(Type *type);
+bool type_is_ptr(Type *type, Build *b);
 Type *type_gen_class(Allocator *alc, Class *class);
 Type *type_gen_fptr(Allocator *alc, Func *func);
 Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed);
 Type *type_gen(Build *b, Allocator *alc, char *name);
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space);
 bool type_compat(Type *t1, Type *t2, char **reason);
+char *type_to_str(Type *t, char *res);
 void type_check(Fc *fc, Type *t1, Type *t2);
 
 // Var
@@ -131,6 +134,7 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
 
 Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type);
+Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type);
 Value *vgen_ptrv(Allocator *alc, Value *on, Type *as);
 Value *vgen_op(Allocator *alc, Build *b, Value *left, Value *right, int op, bool is_ptr);
 Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op);

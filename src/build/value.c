@@ -40,7 +40,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         tok_expect(fc, "(", true, false);
         Type *type = read_type(fc, alc, scope, false, true);
         tok_expect(fc, ")", false, true);
-        v = vgen_vint(alc, type->bytes, type_gen(b, alc, "i32"), false);
+        v = vgen_vint(alc, type->bytes, type_gen(b, alc, "u32"), false);
         //
     } else if (is_valid_varname_char(token[0])) {
         rtok(fc);
@@ -275,7 +275,7 @@ void value_equalize_types(Allocator *alc, Fc *fc, Scope *scope, VPair *pair) {
     if (right->type == v_vint) {
         VInt *vint = right->item;
         if (vint->force_type == false) {
-            right = try_convert(fc, alc, right, right->rett);
+            right = try_convert(fc, alc, right, left->rett);
             pair->right = right;
             rt = right->rett;
             return;
@@ -302,4 +302,85 @@ void value_equalize_types(Allocator *alc, Fc *fc, Scope *scope, VPair *pair) {
 
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type) {
     //
+    // Class* str_class = fc.b.get_ki_class("String");
+    // if totype
+    //     .class == str_class {
+    //         let this_class = this.rett.class;
+    //         verify this_class {
+    //             if this_class
+    //                 != str_class {
+    //                     let cfunc = this_class.funcs.get("__string") or value null;
+    //                     verify cfunc {
+    //                         let func = cfunc.func;
+    //                         let values = Array<Value>.make(2);
+    //                         values.push(this);
+    //                         let on = value_gen_func_ptr(func, null);
+    //                         fcall_type_check(fc, on, values);
+    //                         return value_gen_fcall(fc.b, scope, on, values, func.return_type);
+    //                     }
+    //                 }
+    //         }
+    //     }
+
+    Type *vt = val->rett;
+    if (val->type == v_vint) {
+        VInt *vint = val->item;
+        if (to_type->type == type_int || to_type->type == type_float) {
+            // vint -> vint|vfloat
+            if (!vint->force_type && (vt->bytes != to_type->bytes || vt->is_signed != to_type->is_signed)) {
+                if (to_type->type == type_float) {
+                    return vgen_vfloat(alc, fc->b, (float)vint->value, false);
+                }
+                int bytes = to_type->bytes;
+                int bits = bytes * 8;
+                // Doesnt work for some reason
+                // if bytes >= fc.b.ptr_size {
+                //    bits = fc.b.ptr_size * 8 - 1;
+                //}
+                if (bytes >= 4) {
+                    bits = 4 * 8 - 1;
+                }
+                long int max = ((long int)1) << bits;
+                long int min = 0;
+                if (to_type->is_signed) {
+                    min = max * -1;
+                }
+                if (vint->value >= min && vint->value <= max) {
+                    val->rett = to_type;
+                    // } else {
+                    //     print(f "{} || {} - {} ({})\n" {vint.value.str(), min.str(), max.str(), bits});
+                }
+            }
+        } else if (type_is_ptr(to_type, fc->b)) {
+            // vint -> ptr
+            return vgen_cast(alc, val, to_type);
+        }
+        return val;
+    }
+
+    if (vt->type == type_int || vt->type == type_float) {
+        if (to_type->type == type_int || to_type->type == type_float) {
+            if (to_type->type == type_float) {
+                // Float -> {int/float}
+                // TODO
+            } else {
+                // Int -> {int/float}
+                if (vt->bytes < to_type->bytes) {
+                    return vgen_cast(alc, val, to_type);
+                }
+            }
+        }
+        if (type_is_ptr(to_type, fc->b))
+            return vgen_cast(alc, val, to_type);
+
+        return val;
+    }
+
+    if (vt->type == type_null) {
+        if (to_type->nullable) {
+            return vgen_cast(alc, val, to_type);
+        }
+    }
+
+    return val;
 }

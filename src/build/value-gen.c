@@ -8,6 +8,13 @@ Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type) {
     item->force_type = force_type;
     return value_init(alc, v_vint, item, type);
 }
+Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type) {
+    //
+    VFloat *item = al(alc, sizeof(VFloat));
+    item->value = value;
+    item->force_type = force_type;
+    return value_init(alc, v_vint, item, type_gen(b, alc, "fxx"));
+}
 
 Value *vgen_ptrv(Allocator *alc, Value *on, Type *as) {
     //

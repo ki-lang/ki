@@ -39,6 +39,10 @@ bool type_is_void(Type *type) {
     //
     return type->type == type_void;
 }
+bool type_is_ptr(Type *type, Build *b) {
+    //
+    return type->class == ki_get_class(b, "type", "ptr");
+}
 
 Type *type_gen_class(Allocator *alc, Class *class) {
     //
@@ -342,10 +346,61 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
     }
     return true;
 }
+
+char *type_to_str(Type *t, char *res) {
+    //
+    strcpy(res, "");
+    if (t->type == type_ptr && t->class == NULL) {
+        strcat(res, "ptr");
+        return res;
+    }
+    if (t->nullable) {
+        strcat(res, "?");
+    }
+    if (t->ptr_depth - 1 > 0) {
+        strcat(res, "*");
+    }
+    if (t->class) {
+        Class *class = t->class;
+        strcat(res, class->dname);
+    } else if (t->type == type_null) {
+        strcat(res, "null");
+    } else if (t->type == type_func_ptr) {
+        strcat(res, "fn (");
+        char sub_str[256];
+        for (int i = 0; i < t->func_args->length; i++) {
+            if (i > 0) {
+                strcat(res, ", ");
+            }
+            Arg *arg = array_get_index(t->func_args, i);
+            strcat(res, type_to_str(arg->type, sub_str));
+        }
+        strcat(res, ") ");
+        strcat(res, type_to_str(t->func_rett, sub_str));
+        if (t->func_errors) {
+            strcat(res, " or ");
+            for (int i = 0; i < t->func_errors->length; i++) {
+                if (i > 0) {
+                    strcat(res, ", ");
+                }
+                strcat(res, array_get_index(t->func_errors, i));
+            }
+        }
+    } else {
+        strcat(res, "(Unknown type)");
+    }
+    return res;
+}
+
 void type_check(Fc *fc, Type *t1, Type *t2) {
     //
-    if (!type_compat(t1, t2, NULL)) {
-        sprintf(fc->sbuf, "Types are not compatible");
+    char *reason;
+    if (!type_compat(t1, t2, &reason)) {
+        char t1s[200];
+        char t2s[200];
+        type_to_str(t1, t1s);
+        type_to_str(t2, t2s);
+        sprintf(fc->sbuf, "Types are not compatible: %s <-- %s \nReason: %s", t1s, t2s, reason);
         fc_error(fc);
     }
 }

@@ -252,3 +252,17 @@ char *find_config_dir(Allocator *alc, char *ki_path) {
     }
     return dir;
 }
+
+Class *ki_get_class(Build *b, char *ns, char *name) {
+    //
+    Pkc *pkc = b->pkc_ki;
+    Nsc *nsc = pkc_get_nsc(pkc, ns);
+
+    Idf *idf = map_get(nsc->scope->identifiers, name);
+    if (!idf || idf->type != idf_class) {
+        sprintf(b->sbuf, "Class not found in ki-lib '%s:%s'", ns, name);
+        die(b->sbuf);
+    }
+
+    return idf->item;
+}
