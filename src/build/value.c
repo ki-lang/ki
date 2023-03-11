@@ -270,6 +270,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_func) {
         Func *func = idf->item;
+        return vgen_fptr(alc, func, NULL);
     }
 
     if (idf->type == idf_class) {
@@ -564,7 +565,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         Value *first_val = fp->first_arg;
 
         if (first_val) {
-            if (index + 1 == argc) {
+            if (index == argc) {
                 sprintf(fc->sbuf, "Too many arguments");
                 fc_error(fc);
             }
@@ -584,7 +585,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         if (strcmp(token, ")") != 0) {
             rtok(fc);
             while (true) {
-                if (index + 1 == argc) {
+                if (index == argc) {
                     sprintf(fc->sbuf, "Too many arguments");
                     fc_error(fc);
                 }

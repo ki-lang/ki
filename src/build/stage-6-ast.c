@@ -141,7 +141,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
 
         // Statement
-        if (type_is_void(val->rett)) {
+        if (!type_is_void(val->rett)) {
             sprintf(fc->sbuf, "Statement returns a value, but no variable to store it in");
             fc_error(fc);
         }
