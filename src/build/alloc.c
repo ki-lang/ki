@@ -11,6 +11,19 @@ Allocator *alc_make() {
 
     return alc;
 }
+void alc_wipe(Allocator *alc) {
+    //
+    AllocatorBlock *block = alc->first_block;
+    while (block) {
+        AllocatorBlock *next = block->next_block;
+        if (block->private) {
+            free_block(block);
+        } else {
+            block->current_adr = block->start_adr;
+        }
+        block = next;
+    }
+}
 AllocatorBlock *alc_block_make(AllocatorBlock *prev, AllocatorBlock *next, size_t size) {
     //
     AllocatorBlock *block = malloc(sizeof(AllocatorBlock));
@@ -18,6 +31,7 @@ AllocatorBlock *alc_block_make(AllocatorBlock *prev, AllocatorBlock *next, size_
     block->next_block = next;
     block->size = size;
     block->space_left = size;
+    block->private = false;
 
     void *adr = malloc(size);
     block->start_adr = adr;
@@ -54,6 +68,7 @@ AllocatorBlock *al_private(Allocator *alc, size_t size) {
     //
     AllocatorBlock *last = alc->last_block;
     AllocatorBlock *block = alc_block_make(last, NULL, size);
+    block->private = true;
     block->space_left = 0;
     last->next_block = block;
     return block;

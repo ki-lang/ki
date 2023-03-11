@@ -11,7 +11,7 @@ void stage_7(Fc *fc) {
     Allocator *alc = fc->alc_ast;
 
     LB *lb = al(alc, sizeof(LB));
-    lb->fc;
+    lb->fc = fc;
     lb->alc = alc;
 
     lb->_lfunc = NULL;
@@ -32,7 +32,7 @@ void stage_7(Fc *fc) {
 
     char *ir = str_to_chars(alc, lb->ir_final);
 
-    char ir_hash[64];
+    char *ir_hash = al(alc, 64);
     md5(ir, ir_hash);
 
     if (strcmp(fc->ir_hash, ir_hash) != 0) {
@@ -42,6 +42,9 @@ void stage_7(Fc *fc) {
 
         write_file(fc->path_ir, ir, false);
     }
+
+    //
+    alc_wipe(alc);
 }
 
 //

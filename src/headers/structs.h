@@ -37,6 +37,7 @@ struct AllocatorBlock {
     size_t space_left;
     void *start_adr;
     void *current_adr;
+    bool private;
 };
 struct Chain {
     Allocator *alc;
