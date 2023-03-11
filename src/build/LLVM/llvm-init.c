@@ -3,17 +3,25 @@
 
 LLVMBlock *llvm_block_init(LB *b, int nr) {
 
-    if (nr == -1) {
-        nr = b->lfunc->blockc;
-        b->lfunc->blockc++;
-    }
-
     char *name = al(b->alc, 20);
     sprintf(name, "block_%d", nr);
 
     LLVMBlock *block = al(b->alc, sizeof(LLVMBlock));
     block->name = name;
     block->ir = str_make(b->alc, 100);
+
+    return block;
+}
+
+LLVMBlock *llvm_block_init_auto(LB *b) {
+
+    LLVMFunc *lfunc = b->lfunc;
+    int nr = lfunc->blockc;
+    lfunc->blockc++;
+
+    LLVMBlock *block = llvm_block_init(b, nr);
+    array_push(lfunc->blocks, block);
+
     return block;
 }
 

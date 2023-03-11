@@ -8,6 +8,7 @@ typedef struct LLVMFunc LLVMFunc;
 Str *llvm_b_ir(LB *b);
 void llvm_build_ir(LB *b);
 LLVMBlock *llvm_block_init(LB *b, int nr);
+LLVMBlock *llvm_block_init_auto(LB *b);
 LLVMFunc *llvm_func_init(LB *b, Func *func, LLVMBlock *entry, LLVMBlock *code);
 void llvm_gen_global_ir(LB *b);
 char *llvm_var(LB *b);

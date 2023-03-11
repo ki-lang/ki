@@ -92,14 +92,14 @@ void llvm_if(LB *b, Scope *scope, TIf *ift, bool is_else, LLVMBlock *after) {
         return;
     }
 
-    LLVMBlock *code_block = llvm_block_init(b, -1);
+    LLVMBlock *code_block = llvm_block_init_auto(b);
     LLVMBlock *else_block = NULL;
 
     if (elif) {
-        else_block = llvm_block_init(b, -1);
+        else_block = llvm_block_init_auto(b);
     }
     if (after == NULL) {
-        after = llvm_block_init(b, -1);
+        after = llvm_block_init_auto(b);
     }
 
     char *lcond = llvm_value(b, scope, cond);

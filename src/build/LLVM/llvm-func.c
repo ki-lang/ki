@@ -55,13 +55,13 @@ void llvm_gen_func_ir(LB *b) {
         }
         // if (func->can_error) {
         //     if argc
-        //         > 0 { ir.append(", "); }
+        //         > 0 { str_append_chars(ir, ", "); }
         //     let var_err = b.gen_var();
         //     let var_msg = b.gen_var();
-        //     ir.append("i32* noundef ");
-        //     ir.append(var_err);
-        //     ir.append(", i8** noundef ");
-        //     ir.append(var_msg);
+        //     str_append_chars(ir, "i32* noundef ");
+        //     str_append_chars(ir, var_err);
+        //     str_append_chars(ir, ", i8** noundef ");
+        //     str_append_chars(ir, var_msg);
 
         //     b.func_arg_err = var_err;
         //     b.func_arg_msg = var_msg;

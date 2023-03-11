@@ -29,6 +29,57 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         return llvm_ir_load(b, val->rett, lval);
     }
     if (v->type == v_op) {
+        VOp *vop = v->item;
+        int op = vop->op;
+        char *lval1 = llvm_value(b, scope, vop->left);
+        char *lval2 = llvm_value(b, scope, vop->right);
+        Type *type = v->rett;
+        char *ltype = llvm_type(b, type);
+        char *var = llvm_var(b);
+
+        Str *ir = llvm_b_ir(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, var);
+        str_append_chars(ir, " = ");
+        if (op == op_add) {
+            str_append_chars(ir, "add ");
+        } else if (op == op_sub) {
+            str_append_chars(ir, "sub ");
+        } else if (op == op_mul) {
+            str_append_chars(ir, "mul ");
+        } else if (op == op_div) {
+            if (type->is_signed) {
+                str_append_chars(ir, "sdiv ");
+            } else {
+                str_append_chars(ir, "udiv ");
+            }
+        } else if (op == op_mod) {
+            if (type->is_signed) {
+                str_append_chars(ir, "srem ");
+            } else {
+                str_append_chars(ir, "urem ");
+            }
+        } else if (op == op_bit_and) {
+            str_append_chars(ir, "and ");
+        } else if (op == op_bit_or) {
+            str_append_chars(ir, "or ");
+        } else if (op == op_bit_xor) {
+            str_append_chars(ir, "xor ");
+        } else if (op == op_shl) {
+            str_append_chars(ir, "shl ");
+        } else if (op == op_shr) {
+            str_append_chars(ir, "shr ");
+        } else {
+            die("Unknown LLVM math operation (compiler bug)");
+        }
+        str_append_chars(ir, ltype);
+        str_append_chars(ir, " ");
+        str_append_chars(ir, lval1);
+        str_append_chars(ir, ", ");
+        str_append_chars(ir, lval2);
+        str_append_chars(ir, "\n");
+
+        return var;
     }
     if (v->type == v_compare) {
     }
