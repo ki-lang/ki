@@ -7,7 +7,7 @@ LLVMBlock *llvm_block_init(LB *b) {
     return block;
 }
 
-LLVMBlock *llvm_func_init(LB *b, Func *func, LLVMBlock *entry, LLVMBlock *code) {
+LLVMFunc *llvm_func_init(LB *b, Func *func, LLVMBlock *entry, LLVMBlock *code) {
     LLVMFunc *lfunc = al(b->alc, sizeof(LLVMFunc));
     lfunc->b = b;
     lfunc->func = func;

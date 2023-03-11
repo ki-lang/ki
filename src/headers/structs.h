@@ -148,7 +148,7 @@ struct Scope {
     Map *identifiers;
     Func *func;
     Array *ast;
-    Array *lvars; // LLVM vars
+    Map *lvars; // LLVM vars
     bool did_return;
 };
 struct MacroScope {

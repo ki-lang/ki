@@ -19,6 +19,9 @@ void stage_7(Fc *fc) {
     lb->defined_classes = array_make(alc, fc->classes->length + 1);
     lb->declared_funcs = array_make(alc, fc->funcs->length + 1);
 
+    lb->char_buf = al(alc, 100);
+    lb->str_buf = str_make(alc, 1000);
+
     lb->ir_final = str_make(alc, 2000);
     lb->ir_struct = str_make(alc, 1000);
     lb->ir_global = str_make(alc, 1000);

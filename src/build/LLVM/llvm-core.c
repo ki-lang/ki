@@ -69,7 +69,7 @@ void llvm_gen_global_ir(LB *b) {
     //     }
 
     //     char bytes[20];
-    //     itoa(type->bytes, bytes, 10);
+    //     sprintf(bytes, "%d", type->bytes);
 
     //     str_append_chars(ir, ", align ");
     //     str_append_chars(ir, bytes);
@@ -80,4 +80,35 @@ void llvm_gen_global_ir(LB *b) {
     //     strcat(val, name);
     //     map_set(scope->lvars, name, val);
     // }
+}
+
+char *llvm_var(LB *b) {
+    LLVMFunc *lfunc = b->lfunc;
+    char *res = al(b->alc, 10);
+    char nr[20];
+    sprintf(nr, "%d", lfunc->varc);
+    strcpy(res, "%.");
+    strcat(res, nr);
+    lfunc->varc++;
+    return res;
+}
+
+char *llvm_alloca(LB *b, Type *type) {
+    //
+    LLVMFunc *lfunc = b->lfunc;
+    LLVMBlock *block = lfunc->block_entry;
+    Str *ir = block->ir;
+
+    char bytes[20];
+    sprintf(bytes, "%d", type->bytes);
+
+    char *var = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, var);
+    str_append_chars(ir, " = alloca ");
+    str_append_chars(ir, llvm_type(b, type));
+    str_append_chars(ir, ", align ");
+    str_append_chars(ir, bytes);
+    str_append_chars(ir, "\n");
+    return var;
 }

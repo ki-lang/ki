@@ -14,6 +14,9 @@ void llvm_gen_func_ir(LB *b) {
             break;
         }
 
+        if (!fscope->lvars)
+            fscope->lvars = map_make(b->alc);
+
         LLVMBlock *block_entry = llvm_block_init(b);
         LLVMBlock *block_code = llvm_block_init(b);
 
@@ -85,7 +88,7 @@ void llvm_gen_func_ir(LB *b) {
             char *lval = map_get(fscope->lvars, arg->name);
 
             char bytes[20];
-            itoa(type->bytes, bytes, 10);
+            sprintf(bytes, "%d", type->bytes);
 
             str_append_chars(cir, "  store ");
             str_append_chars(cir, ltype);
