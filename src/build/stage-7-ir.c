@@ -14,10 +14,10 @@ void stage_7(Fc *fc) {
     lb->fc = fc;
     lb->alc = alc;
 
-    lb->_lfunc = NULL;
+    lb->lfunc = NULL;
     lb->lfuncs = array_make(alc, fc->funcs->length + 1);
     lb->defined_classes = array_make(alc, fc->classes->length + 1);
-    lb->defined_funcs = array_make(alc, fc->funcs->length + 1);
+    lb->declared_funcs = array_make(alc, fc->funcs->length + 1);
 
     lb->ir_final = str_make(alc, 2000);
     lb->ir_struct = str_make(alc, 1000);
@@ -27,6 +27,8 @@ void stage_7(Fc *fc) {
     lb->strc = 0;
     lb->while_cond = NULL;
     lb->while_after = NULL;
+
+    lb->use_stack_save = false;
 
     llvm_build_ir(lb);
 
