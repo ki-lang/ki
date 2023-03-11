@@ -113,7 +113,7 @@ void llvm_gen_func_ir(LB *b) {
 
         str_append(ir, llvm_func_collect_ir(lfunc));
 
-        str_append_chars(ir, "}\n");
+        str_append_chars(ir, "}\n\n");
 
         b->lfunc = NULL;
     }

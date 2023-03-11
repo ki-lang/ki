@@ -145,3 +145,95 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, bool can_er
     str_append_chars(ir, ")\n");
     return var;
 }
+
+char *llvm_ir_func_ptr(LB *b, Func *func) {
+    //
+    if (func->fc != b->fc) {
+        // Extern function
+        llvm_define_ext_func(b, func);
+    }
+    char buf[strlen(func->gname) + 2];
+    strcpy(buf, "@");
+    strcat(buf, func->gname);
+    return dups(b->alc, buf);
+}
+
+char *llvm_ir_cast(LB *b, char *lval, Type *from_type, Type *to_type) {
+    //
+    Str *ir = llvm_b_ir(b);
+
+    char *lfrom_type = llvm_type(b, from_type);
+    char *lto_type = llvm_type(b, to_type);
+    char *result_var = lval;
+
+    if (from_type->ptr_depth > 0 && to_type->ptr_depth == 0) {
+        // Ptr to int
+        char *var = llvm_var(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, var);
+        str_append_chars(ir, " = ptrtoint ");
+        str_append_chars(ir, lfrom_type);
+        str_append_chars(ir, " ");
+        str_append_chars(ir, result_var);
+        str_append_chars(ir, " to ");
+        str_append_chars(ir, lto_type);
+        str_append_chars(ir, "\n");
+        result_var = var;
+    } else {
+        if (from_type->bytes < to_type->bytes) {
+            // Ext
+            char *new_type = llvm_type_int(b, to_type->bytes);
+            char *var = llvm_var(b);
+            str_append_chars(ir, "  ");
+            str_append_chars(ir, var);
+            if (from_type->is_signed) {
+                str_append_chars(ir, " = sext ");
+            } else {
+                str_append_chars(ir, " = zext ");
+            }
+            str_append_chars(ir, lfrom_type);
+            str_append_chars(ir, " ");
+            str_append_chars(ir, result_var);
+            str_append_chars(ir, " to ");
+            str_append_chars(ir, new_type);
+            str_append_chars(ir, "\n");
+            lfrom_type = new_type;
+            result_var = var;
+        } else if (from_type->bytes > to_type->bytes) {
+            // Trunc
+            char *new_type = llvm_type_int(b, to_type->bytes);
+            char *var = llvm_var(b);
+            str_append_chars(ir, "  ");
+            str_append_chars(ir, var);
+            str_append_chars(ir, " = trunc ");
+            str_append_chars(ir, lfrom_type);
+            str_append_chars(ir, " ");
+            str_append_chars(ir, result_var);
+            str_append_chars(ir, " to ");
+            str_append_chars(ir, new_type);
+            str_append_chars(ir, "\n");
+            lfrom_type = new_type;
+            result_var = var;
+        }
+        if (to_type->ptr_depth > 0) {
+            // Bitcast to i8*|%struct...*
+            char *var = llvm_var(b);
+            str_append_chars(ir, "  ");
+            str_append_chars(ir, var);
+            if (from_type->ptr_depth > 0) {
+                str_append_chars(ir, " = bitcast ");
+            } else {
+                str_append_chars(ir, " = inttoptr ");
+            }
+            str_append_chars(ir, lfrom_type);
+            str_append_chars(ir, " ");
+            str_append_chars(ir, result_var);
+            str_append_chars(ir, " to ");
+            str_append_chars(ir, lto_type);
+            str_append_chars(ir, "\n");
+            result_var = var;
+        }
+    }
+
+    return result_var;
+}

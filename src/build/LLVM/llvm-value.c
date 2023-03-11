@@ -160,6 +160,8 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         return llvm_ir_func_call(b, on, values, llvm_type(b, v->rett), fcall->on->rett->func_can_error);
     }
     if (v->type == v_fptr) {
+        VFuncPtr *fptr = v->item;
+        return llvm_ir_func_ptr(b, fptr->func);
     }
     if (v->type == v_class_pa) {
         VClassPA *pa = v->item;
@@ -167,6 +169,11 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         return llvm_ir_load(b, pa->prop->type, lval);
     }
     if (v->type == v_cast) {
+        Value *val = v->item;
+        Type *from_type = val->rett;
+        Type *to_type = v->rett;
+        char *lval = llvm_value(b, scope, val);
+        return llvm_ir_cast(b, lval, from_type, to_type);
     }
     return "???";
 }
