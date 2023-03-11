@@ -159,8 +159,57 @@ char get_char(Fc *fc, int index) {
 Str *read_string(Fc *fc) {
     //
     Str *buf = fc->b->str_buf;
-    Chunk *chunk = fc->chunk;
     str_clear(buf);
+
+    Chunk *chunk = fc->chunk;
+    char *data = chunk->content;
+    int i = chunk->i;
+    int line = chunk->line;
+    int len = chunk->length;
+    while (i < len) {
+        char ch = *(data + i);
+        i++;
+
+        if (ch == '\\') {
+            if (i == len) {
+                break;
+            }
+            char add = *(data + i);
+            if (add == 'n') {
+                add = '\n';
+            } else if (add == 'r') {
+                add = '\r';
+            } else if (add == 't') {
+                add = '\t';
+            } else if (add == 'f') {
+                add = '\f';
+            } else if (add == 'b') {
+                add = '\b';
+            }
+            i++;
+
+            if (is_newline(add))
+                line++;
+            str_append_char(buf, add);
+            continue;
+        }
+
+        if (ch == '"') {
+            break;
+        }
+
+        if (is_newline(ch))
+            line++;
+        str_append_char(buf, ch);
+    }
+
+    if (i == len) {
+        sprintf(fc->sbuf, "Missing end of string");
+        fc_error(fc);
+    }
+
+    chunk->i = i;
+    chunk->line = line;
 
     return buf;
 }
