@@ -17,19 +17,29 @@ Value *vgen_ptrv(Allocator *alc, Value *on, Type *as) {
     return value_init(alc, v_ptrv, vp, as);
 }
 
-Value *vgen_op(Allocator *alc, Value *left, Value *right, Type *rett) {
+Value *vgen_op(Allocator *alc, Build *b, Value *left, Value *right, int op, bool is_ptr) {
     //
-    VPair *item = al(alc, sizeof(VPair));
+    VOp *item = al(alc, sizeof(VOp));
     item->left = left;
     item->right = right;
-    return value_init(alc, v_op, item, rett);
+    item->op = op;
+
+    Type *rett = left->rett;
+
+    Value *res = value_init(alc, v_op, item, rett);
+    if (is_ptr) {
+        res = vgen_cast(alc, res, type_gen(b, alc, "ptr"));
+    }
+
+    return res;
 }
 
-Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right) {
+Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op) {
     //
-    VPair *item = al(alc, sizeof(VPair));
+    VOp *item = al(alc, sizeof(VOp));
     item->left = left;
     item->right = right;
+    item->op = op;
     return value_init(alc, v_compare, item, type_gen(b, alc, "bool"));
 }
 
@@ -41,10 +51,23 @@ Value *vgen_fcall(Allocator *alc, Value *on, Array *args, Type *rett) {
     return value_init(alc, v_fcall, item, rett);
 }
 
+Value *vgen_fptr(Allocator *alc, Func *func, Value *first_arg) {
+    //
+    VFuncPtr *item = al(alc, sizeof(VFuncPtr));
+    item->func = func;
+    item->first_arg = first_arg;
+    return value_init(alc, v_fcall, item, type_gen_fptr(alc, func));
+}
+
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
     //
     VClassPA *item = al(alc, sizeof(VClassPA));
     item->on = on;
     item->prop = prop;
     return value_init(alc, v_class_pa, item, prop->type);
+}
+
+Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
+    //
+    return value_init(alc, v_cast, val, to_type);
 }

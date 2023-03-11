@@ -3,7 +3,9 @@ typedef struct Value Value;
 typedef struct VInt VInt;
 typedef struct VPtrv VPtrv;
 typedef struct VPair VPair;
+typedef struct VOp VOp;
 typedef struct VFcall VFcall;
+typedef struct VFuncPtr VFuncPtr;
 typedef struct VClassPA VClassPA;
 
 struct Value {
@@ -27,9 +29,19 @@ struct VPair {
     Value *right;
 };
 
+struct VOp {
+    Value *left;
+    Value *right;
+    int op;
+};
+
 struct VFcall {
     Value *on;
     Array *args;
+};
+struct VFuncPtr {
+    Func *func;
+    Value *first_arg;
 };
 
 struct VClassPA {

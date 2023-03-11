@@ -206,11 +206,13 @@ struct Func {
     Type *rett;
     Array *args;
     Map *args_by_name;
+    Array *errors;
     //
     int act; // Access type for class functions
     //
     bool is_static;
     bool is_generated;
+    bool can_error;
 };
 struct Enum {
     char *name;

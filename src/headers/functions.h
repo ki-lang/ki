@@ -113,6 +113,7 @@ Type *type_init(Allocator *alc);
 int type_get_size(Build *b, Type *type);
 bool type_is_void(Type *type);
 Type *type_gen_class(Allocator *alc, Class *class);
+Type *type_gen_fptr(Allocator *alc, Func *func);
 Type *type_gen(Build *b, Allocator *alc, char *name);
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space);
 bool type_compat(Type *t1, Type *t2, char **reason);
@@ -125,14 +126,17 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
 // Value
 Value *value_init(Allocator *alc, int type, void *item, Type *rett);
 Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio);
+Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op);
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
 
 Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type);
 Value *vgen_ptrv(Allocator *alc, Value *on, Type *as);
-Value *vgen_op(Allocator *alc, Value *left, Value *right, Type *rett);
-Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right);
+Value *vgen_op(Allocator *alc, Build *b, Value *left, Value *right, int op, bool is_ptr);
+Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op);
 Value *vgen_fcall(Allocator *alc, Value *on, Array *args, Type *rett);
+Value *vgen_fptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
+Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
 
 // Ast
 void read_ast(Fc *fc, Scope *scope, bool single_line);

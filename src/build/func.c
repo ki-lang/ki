@@ -11,5 +11,8 @@ Func *func_init(Allocator *alc) {
     func->is_static = false;
     func->is_generated = false;
 
+    func->errors = NULL;
+    func->can_error = false;
+
     return func;
 }

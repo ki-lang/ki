@@ -75,6 +75,21 @@ Type *type_gen_class(Allocator *alc, Class *class) {
     return t;
 }
 
+Type *type_gen_fptr(Allocator *alc, Func *func) {
+    //
+    Type *t = type_init(alc);
+    t->type = type_func_ptr;
+    t->bytes = func->fc->b->ptr_size;
+    t->ptr_depth = 1;
+
+    t->func_args = func->args;
+    t->func_rett = func->rett;
+    // t->func_errors = func->errors;
+    // t->func_can_error = func->can_error;
+
+    return t;
+}
+
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space) {
     //
     char *token = fc->token;
@@ -96,7 +111,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         return type;
     } else if (strcmp(token, "fn") == 0) {
         // Func Ref Type
-        type->type = type_func_ref;
+        type->type = type_func_ptr;
         type->bytes = fc->b->ptr_size;
         type->ptr_depth = 1;
 
@@ -261,8 +276,8 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
             *reason = "Trying to assign nullable type to a non nullable type";
         return false;
     }
-    if (t1t == type_func_ref) {
-        return false; // TODO
+    if (t1t == type_func_ptr) {
+        die("TODO: type check func ptr");
         //     Array *t1_args = t1->func_args;
         //     Array *t2_args = t2->func_args;
         //     if (t1_args->length != t2_args->length) {

@@ -5,7 +5,7 @@ enum TYPES {
     type_struct,
     type_int,
     type_float,
-    type_func_ref,
+    type_func_ptr,
     type_null,
 };
 
@@ -56,6 +56,12 @@ enum VALUETYPE {
     v_op,
     v_compare,
     v_fcall,
+    v_fptr,
     v_cast,
     v_class_pa,
+};
+
+enum OPTYPE {
+    op_add,
+    op_sub,
 };
