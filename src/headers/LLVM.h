@@ -19,7 +19,8 @@ Str *llvm_func_collect_ir(LLVMFunc *lfunc);
 void llvm_define_ext_func(LB *b, Func *func);
 
 // Value
-char *llvm_value(LB *b, Value *v);
+char *llvm_value(LB *b, Scope *scope, Value *v);
+char *llvm_assign_value(LB *b, Scope *scope, Value *v);
 
 // Type
 char *llvm_type(LB *b, Type *type);
@@ -31,6 +32,7 @@ char *llvm_write_ast(LB *b, Scope *scope);
 
 // IR
 void llvm_ir_jump(Str *ir, LLVMBlock *block);
+void llvm_ir_store(LB *b, Type *type, char *var, char *val);
 
 struct LB {
     Fc *fc;
