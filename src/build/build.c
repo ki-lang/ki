@@ -176,6 +176,8 @@ void cmd_build(int argc, char *argv[]) {
     build_add_files(b, files);
     compile_loop(b, 6);
 
+    b->ir_ready = true;
+
     printf("🔗 Link executable\n");
 
     printf("✅ Done\n");

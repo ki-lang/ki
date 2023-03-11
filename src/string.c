@@ -2,6 +2,9 @@
 #include "all.h"
 
 Str *str_make(Allocator *alc, int mem_size) {
+    if (mem_size == 0) {
+        mem_size = 20;
+    }
     Str *result = al(alc, sizeof(Str));
     result->alc = alc;
     result->length = 0;

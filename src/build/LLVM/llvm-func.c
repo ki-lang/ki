@@ -17,8 +17,8 @@ void llvm_gen_func_ir(LB *b) {
         if (!fscope->lvars)
             fscope->lvars = map_make(b->alc);
 
-        LLVMBlock *block_entry = llvm_block_init(b);
-        LLVMBlock *block_code = llvm_block_init(b);
+        LLVMBlock *block_entry = llvm_block_init(b, 0);
+        LLVMBlock *block_code = llvm_block_init(b, 1);
 
         LLVMFunc *lfunc = llvm_func_init(b, func, block_entry, block_code);
 
@@ -121,7 +121,33 @@ void llvm_gen_func_ir(LB *b) {
 
 Str *llvm_func_collect_ir(LLVMFunc *lfunc) {
     //
-    die("TODO collect lfunc IR");
+    LB *b = lfunc->b;
+    Allocator *alc = b->alc;
+
+    int size = 0;
+    for (int i = 0; i < lfunc->blocks->length; i++) {
+        LLVMBlock *block = array_get_index(lfunc->blocks, i);
+        size += block->ir->length;
+    }
+
+    Str *result = str_make(alc, size);
+    for (int i = 0; i < lfunc->blocks->length; i++) {
+        LLVMBlock *block = array_get_index(lfunc->blocks, i);
+        if (i == 0 && block->ir->length == 0) {
+            continue;
+        }
+        str_append_chars(result, block->name);
+        str_append_chars(result, ":\n");
+        str_append(result, block->ir);
+        if (block == lfunc->block_entry) {
+            LLVMBlock *b_code = lfunc->block_code;
+            if (b_code->ir->length > 0) {
+                llvm_ir_jump(result, b_code);
+            }
+        }
+        str_append_chars(result, "\n");
+    }
+    return result;
 }
 
 void llvm_define_ext_func(LB *b, Func *func) {

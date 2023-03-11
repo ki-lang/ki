@@ -7,7 +7,7 @@ typedef struct LLVMFunc LLVMFunc;
 
 Str *llvm_b_ir(LB *b);
 void llvm_build_ir(LB *b);
-LLVMBlock *llvm_block_init(LB *b);
+LLVMBlock *llvm_block_init(LB *b, int nr);
 LLVMFunc *llvm_func_init(LB *b, Func *func, LLVMBlock *entry, LLVMBlock *code);
 void llvm_gen_global_ir(LB *b);
 char *llvm_var(LB *b);
@@ -30,6 +30,7 @@ char *llvm_type_ixx(LB *b);
 char *llvm_write_ast(LB *b, Scope *scope);
 
 // IR
+void llvm_ir_jump(Str *ir, LLVMBlock *block);
 
 struct LB {
     Fc *fc;
@@ -51,6 +52,7 @@ struct LB {
 };
 
 struct LLVMBlock {
+    char *name;
     Str *ir;
 };
 struct LLVMFunc {

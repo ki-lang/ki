@@ -45,6 +45,7 @@ void stage_7(Fc *fc) {
         fc->ir_hash = ir_hash;
         fc->ir_changed = true;
 
+        printf("🧪 Write IR : %s\n", fc->path_ir);
         write_file(fc->path_ir, ir, false);
     }
 
