@@ -3,6 +3,7 @@
 
 Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf);
 void value_equalize_types(Allocator *alc, Fc *fc, Scope *scope, VPair *pair);
+Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on);
 
 Value *value_init(Allocator *alc, int type, void *item, Type *rett) {
     //
@@ -163,8 +164,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 
         } else if (strcmp(token, "(") == 0) {
             // // Func call
-            // v = read_func_call(fc, scope, v);
-            die("TODO: fcall");
+            v = value_func_call(alc, fc, scope, v);
         } else if (strcmp(token, "++") == 0 || strcmp(token, "--") == 0) {
             die("TODO: ++ | --");
         }
@@ -517,4 +517,99 @@ Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type) {
     }
 
     return val;
+}
+
+Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
+    //
+    char *token = fc->token;
+    Type *ont = on->rett;
+    int ontt = ont->type;
+
+    if (ontt != type_func_ptr) {
+        sprintf(fc->sbuf, "Function call on non-function value");
+        fc_error(fc);
+    }
+
+    Array *args = ont->func_args;
+    Type *rett = ont->func_rett;
+    Array *errors = ont->func_errors;
+    bool can_error = ont->func_can_error;
+
+    if (!args || !rett) {
+        sprintf(fc->sbuf, "Function pointer value is missing function type information (compiler bug)");
+        fc_error(fc);
+    }
+
+    int argc = args->length;
+    int index = 0;
+    Array *values = array_make(alc, 4);
+
+    Value *first_arg = NULL;
+    if (on->type == v_fptr) {
+        VFuncPtr *fp = on->item;
+        Value *first_val = fp->first_arg;
+
+        if (first_val) {
+            if (index + 1 == argc) {
+                sprintf(fc->sbuf, "Too many arguments");
+                fc_error(fc);
+            }
+
+            array_push(values, first_val);
+            index++;
+        }
+    }
+
+    tok(fc, token, false, true);
+    bool named_args = strcmp(token, "{") == 0;
+
+    if (named_args) {
+        sprintf(fc->sbuf, "Named arguments: TODO");
+        fc_error(fc);
+    } else {
+        if (strcmp(token, ")") != 0) {
+            rtok(fc);
+            while (true) {
+                if (index + 1 == argc) {
+                    sprintf(fc->sbuf, "Too many arguments");
+                    fc_error(fc);
+                }
+                Arg *arg = array_get_index(args, index);
+                index++;
+
+                Value *val = read_value(fc, alc, scope, false, 0);
+                Value *tval = try_convert(fc, alc, val, arg->type);
+
+                type_check(fc, arg->type, tval->rett);
+                array_push(values, tval);
+
+                tok(fc, token, false, true);
+                if (strcmp(token, ",") == 0) {
+                    continue;
+                }
+                if (strcmp(token, ")") != 0) {
+                    sprintf(fc->sbuf, "Expected ',' or ')'");
+                    fc_error(fc);
+                }
+                break;
+            }
+        }
+        // Check defaults
+        while (index < argc) {
+            Arg *arg = array_get_index(args, index);
+
+            Value *val = arg->value;
+            if (!val)
+                break;
+
+            array_push(values, val);
+            index++;
+        }
+        if (index < argc) {
+            sprintf(fc->sbuf, "Missing arguments");
+            fc_error(fc);
+        }
+    }
+
+    return vgen_fcall(alc, on, values, rett);
 }

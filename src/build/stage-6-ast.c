@@ -67,6 +67,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         // }
 
         //
+        rtok(fc);
         Value *val = read_value(fc, alc, scope, false, 0);
 
         // Statement
