@@ -30,6 +30,8 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     }
     if (v->type == v_class_pa) {
         VClassPA *pa = v->item;
+        char *lval = llvm_assign_value(b, scope, v);
+        return llvm_ir_load(b, pa->prop->type, lval);
     }
     if (v->type == v_cast) {
     }
@@ -63,6 +65,12 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
     }
     if (v->type == v_class_pa) {
         VClassPA *pa = v->item;
+        Value *on = pa->on;
+        ClassProp *prop = pa->prop;
+        Class *class = on->rett->class;
+        Type *type = prop->type;
+        char *lon = llvm_value(b, scope, on);
+        return llvm_ir_class_prop_access(b, class, lon, prop);
     }
 
     die("LLVM : Cannot assign to this value");

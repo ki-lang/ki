@@ -38,6 +38,7 @@ void llvm_ir_cond_jump(LB *b, Str *ir, char *var_i1, LLVMBlock *a_block, LLVMBlo
 void llvm_ir_store(LB *b, Type *type, char *var, char *val);
 char *llvm_ir_load(LB *b, Type *type, char *var);
 char *llvm_ir_bool_i1(LB *b, Str *ir, char *val);
+char *llvm_ir_class_prop_access(LB *b, Class *class, char *on, ClassProp *prop);
 
 struct LB {
     Fc *fc;

@@ -69,3 +69,25 @@ char *llvm_ir_bool_i1(LB *b, Str *ir, char *val) {
     str_append_chars(ir, " to i1\n");
     return var_i1;
 }
+
+char *llvm_ir_class_prop_access(LB *b, Class *class, char *on, ClassProp *prop) {
+    char *result = llvm_var(b);
+    Str *ir = llvm_b_ir(b);
+
+    char index[20];
+    sprintf(index, "%d", prop->index);
+
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, result);
+    str_append_chars(ir, " = getelementptr inbounds %struct.");
+    str_append_chars(ir, class->gname);
+    str_append_chars(ir, ", %struct.");
+    str_append_chars(ir, class->gname);
+    str_append_chars(ir, "* ");
+    str_append_chars(ir, on);
+    str_append_chars(ir, ", i32 0, i32 ");
+    str_append_chars(ir, index);
+    str_append_chars(ir, "\n");
+
+    return result;
+}
