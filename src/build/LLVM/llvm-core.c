@@ -112,3 +112,58 @@ char *llvm_alloca(LB *b, Type *type) {
     str_append_chars(ir, "\n");
     return var;
 }
+
+char *llvm_get_var(LB *b, Scope *start_scope, Var *var) {
+    //
+    if (var->is_global) {
+        return llvm_get_global(b, var);
+    }
+
+    char *name = var->name;
+    Scope *scope = start_scope;
+    while (scope) {
+        char *val = map_get(scope->lvars, name);
+        if (val) {
+            return val;
+        }
+        scope = scope->parent;
+    }
+
+    sprintf(b->fc->sbuf, "Missing llvm variable: '%s'\n", name);
+    die(b->fc->sbuf);
+}
+
+char *llvm_get_global(LB *b, Var *var) {
+    char *name = var->name;
+    Scope *scope = b->fc->scope;
+
+    char *val = map_get(scope->lvars, name);
+    if (val) {
+        return val;
+    }
+
+    Str *ir = b->ir_global;
+    Type *type = var->type;
+    char *ltype = llvm_type(b, type);
+
+    char bytes[20];
+    sprintf(bytes, "%d", type->bytes);
+
+    str_append_chars(ir, "@");
+    str_append_chars(ir, name);
+    str_append_chars(ir, " = external global ");
+    str_append_chars(ir, ltype);
+    str_append_chars(ir, ", align ");
+    str_append_chars(ir, bytes);
+    str_append_chars(ir, "\n");
+
+    char tmp[strlen(name) + 2];
+    strcpy(tmp, "@");
+    strcat(tmp, name);
+
+    char *result = dups(b->alc, tmp);
+
+    map_set(scope->lvars, name, result);
+
+    return result;
+}

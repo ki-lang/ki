@@ -8,7 +8,6 @@
 typedef struct Value Value;
 typedef struct VInt VInt;
 typedef struct VFloat VFloat;
-typedef struct VPtrv VPtrv;
 typedef struct VPair VPair;
 typedef struct VOp VOp;
 typedef struct VFcall VFcall;
@@ -29,11 +28,6 @@ struct VInt {
 struct VFloat {
     float value;
     bool force_type;
-};
-
-struct VPtrv {
-    Value *on;
-    Type *as;
 };
 
 struct VPair {

@@ -24,6 +24,7 @@ enum SCOPETYPE {
     sct_func,
     sct_class,
     sct_loop,
+    sct_fc,
 };
 
 enum CLASSTYPE {
@@ -52,6 +53,7 @@ enum VALUETYPE {
     v_string,
     v_var,
     v_vint,
+    v_float,
     v_ptrv,
     v_op,
     v_compare,

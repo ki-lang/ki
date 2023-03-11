@@ -13,15 +13,12 @@ Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type) {
     VFloat *item = al(alc, sizeof(VFloat));
     item->value = value;
     item->force_type = force_type;
-    return value_init(alc, v_vint, item, type_gen(b, alc, "fxx"));
+    return value_init(alc, v_float, item, type_gen(b, alc, "fxx"));
 }
 
 Value *vgen_ptrv(Allocator *alc, Value *on, Type *as) {
     //
-    VPtrv *vp = al(alc, sizeof(VPtrv));
-    vp->on = on;
-    vp->as = as;
-    return value_init(alc, v_ptrv, vp, as);
+    return value_init(alc, v_ptrv, on, as);
 }
 
 Value *vgen_op(Allocator *alc, Build *b, Value *left, Value *right, int op, bool is_ptr) {

@@ -12,6 +12,8 @@ LLVMFunc *llvm_func_init(LB *b, Func *func, LLVMBlock *entry, LLVMBlock *code);
 void llvm_gen_global_ir(LB *b);
 char *llvm_var(LB *b);
 char *llvm_alloca(LB *b, Type *type);
+char *llvm_get_var(LB *b, Scope *start_scope, Var *var);
+char *llvm_get_global(LB *b, Var *var);
 
 // Func
 void llvm_gen_func_ir(LB *b);
@@ -34,6 +36,7 @@ char *llvm_write_ast(LB *b, Scope *scope);
 void llvm_ir_jump(Str *ir, LLVMBlock *block);
 void llvm_ir_cond_jump(LB *b, Str *ir, char *var_i1, LLVMBlock *a_block, LLVMBlock *b_block);
 void llvm_ir_store(LB *b, Type *type, char *var, char *val);
+char *llvm_ir_load(LB *b, Type *type, char *var);
 char *llvm_ir_bool_i1(LB *b, Str *ir, char *val);
 
 struct LB {
