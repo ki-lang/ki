@@ -86,6 +86,60 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         rtok(fc);
         Value *val = read_value(fc, alc, scope, false, 0);
 
+        // Assign
+        if (value_assignable(val)) {
+            tok(fc, token, false, true);
+            sprintf(fc->sbuf, ".%s.", token);
+            if (strstr(".=.+=.-=.*=./=.", fc->sbuf)) {
+                char *sign = dups(alc, token);
+                if (val->type == v_var) {
+                    Var *var = val->item;
+                    if (!var->is_mut) {
+                        sprintf(fc->sbuf, "Cannot assign value to an immutable variable");
+                        fc_error(fc);
+                    }
+                    if (var->is_arg && val->rett->class->is_rc) {
+                        sprintf(fc->sbuf, "Assigning new values to argument variables is not allowed for performance reasons");
+                        fc_error(fc);
+                    }
+                }
+                if (val->type == v_class_pa) {
+                    VClassPA *pa = val->item;
+                    ClassProp *prop = pa->prop;
+                    // if prop.act != AccessType.public {
+                    // 	if !scope.is_sub_scope_of(prop.class.scope) {
+                    // 		fc.error("Trying to assign to a non-public property outside the class");
+                    // 	}
+                    // }
+                }
+
+                Value *right = read_value(fc, alc, scope, false, 0);
+                if (type_is_void(right->rett)) {
+                    sprintf(fc->sbuf, "Assignment invalid, right side does not return a value");
+                    fc_error(fc);
+                }
+
+                if (strcmp(sign, "=") == 0) {
+                } else if (strcmp(sign, "+=") == 0) {
+                    right = value_op(fc, alc, scope, val, right, op_add);
+                } else if (strcmp(sign, "-=") == 0) {
+                    right = value_op(fc, alc, scope, val, right, op_sub);
+                } else if (strcmp(sign, "*=") == 0) {
+                    right = value_op(fc, alc, scope, val, right, op_mul);
+                } else if (strcmp(sign, "/=") == 0) {
+                    right = value_op(fc, alc, scope, val, right, op_div);
+                }
+
+                right = try_convert(fc, alc, right, val->rett);
+                type_check(fc, val->rett, right->rett);
+
+                array_push(scope->ast, tgen_assign(alc, val, right));
+                tok_expect(fc, ";", false, true);
+                continue;
+            }
+            rtok(fc);
+        }
+
         // Statement
         if (type_is_void(val->rett)) {
             sprintf(fc->sbuf, "Statement returns a value, but no variable to store it in");

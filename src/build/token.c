@@ -27,6 +27,14 @@ Token *tgen_declare(Allocator *alc, Var *var, Value *val) {
     return token_init(alc, tkn_declare, decl);
 }
 
+Token *tgen_assign(Allocator *alc, Value *left, Value *right) {
+    //
+    VPair *pair = al(alc, sizeof(VPair));
+    pair->left = left;
+    pair->right = right;
+    return token_init(alc, tkn_assign, pair);
+}
+
 Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv) {
     //
     fscope->did_return = true;

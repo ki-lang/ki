@@ -613,3 +613,8 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
     return vgen_fcall(alc, on, values, rett);
 }
+
+bool value_assignable(Value *val) {
+    //
+    return val->type == v_var || val->type == v_class_pa || val->type == v_ptrv;
+}

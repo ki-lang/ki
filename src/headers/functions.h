@@ -134,6 +134,7 @@ Value *value_init(Allocator *alc, int type, void *item, Type *rett);
 Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio);
 Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op);
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
+bool value_assignable(Value *val);
 
 Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type);
 Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type);
@@ -152,4 +153,5 @@ void read_ast(Fc *fc, Scope *scope, bool single_line);
 Token *token_init(Allocator *alc, int type, void *item);
 TIf *tgen_tif(Allocator *alc, Value *cond, Scope *scope, TIf *else_if);
 Token *tgen_declare(Allocator *alc, Var *var, Value *val);
+Token *tgen_assign(Allocator *alc, Value *left, Value *right);
 Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv);
