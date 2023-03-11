@@ -164,6 +164,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         } else if (strcmp(token, "(") == 0) {
             // // Func call
             // v = read_func_call(fc, scope, v);
+            die("TODO: fcall");
         } else if (strcmp(token, "++") == 0 || strcmp(token, "--") == 0) {
             die("TODO: ++ | --");
         }
@@ -173,6 +174,20 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 
     rtok(fc);
     tok(fc, token, false, true);
+
+    if (prio == 0 || prio > 7) {
+        while (strcmp(token, "->") == 0) {
+            if (type_is_void(v->rett)) {
+                sprintf(fc->sbuf, "Left side of '->' must return a value");
+                fc_error(fc);
+            }
+
+            Type *type = read_type(fc, alc, scope, false, true);
+            v = vgen_cast(alc, v, type);
+
+            tok(fc, token, true, false);
+        }
+    }
 
     if (prio == 0 || prio > 20) {
         while (strcmp(token, "+") == 0 || strcmp(token, "-") == 0) {
