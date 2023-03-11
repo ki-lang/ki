@@ -8,8 +8,8 @@ class String type:ptr {
 		return (ptrv this + sizeof(uxx) as u8) == 1#u8;
 	}
 
-	func bytes() u32 {
-		return ptrv (this -> ptr) as u32;
+	func bytes() uxx {
+		return ptrv (this -> ptr) as uxx;
 	}
 
 	func rc() u32 {

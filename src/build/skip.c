@@ -55,6 +55,10 @@ void skip_string(Fc *fc, char end_char) {
         ch = chunk->content[i];
         i++;
 
+        if (is_newline(ch)) {
+            chunk->line++;
+        }
+
         if (ch == '\\') {
             i++;
             continue;
@@ -86,6 +90,10 @@ void skip_until_char(Fc *fc, char *find) {
         ch = chunk->content[i];
         i++;
 
+        if (is_newline(ch)) {
+            chunk->line++;
+        }
+
         if (depth == 0) {
             for (int o = 0; o < len; o++) {
                 char fch = find[o];
@@ -108,22 +116,22 @@ void skip_until_char(Fc *fc, char *find) {
     chunk->i = i;
 }
 
-void skip_whitespace(Fc *fc) {
-    //
-    Chunk *chunk = fc->chunk;
-    char ch;
-    int i = chunk->i;
-    const char *content = chunk->content;
-    while (chunk->i < chunk->length) {
-        //
-        ch = chunk->content[i];
-        if (!is_whitespace(ch)) {
-            break;
-        }
-        i++;
-    }
-    chunk->i = i;
-}
+// void skip_whitespace(Fc *fc) {
+//     //
+//     Chunk *chunk = fc->chunk;
+//     char ch;
+//     int i = chunk->i;
+//     const char *content = chunk->content;
+//     while (chunk->i < chunk->length) {
+//         //
+//         ch = chunk->content[i];
+//         if (!is_whitespace(ch)) {
+//             break;
+//         }
+//         i++;
+//     }
+//     chunk->i = i;
+// }
 
 void skip_macro_if(Fc *fc) {
     //
@@ -146,6 +154,8 @@ void skip_macro_if(Fc *fc) {
         if (!is_newline(ch)) {
             continue;
         }
+
+        chunk->line++;
 
         tok(fc, token, false, true);
 

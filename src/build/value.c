@@ -36,6 +36,12 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         Type *type = read_type(fc, alc, scope, true, true);
         v = vgen_ptrv(alc, on, type);
         //
+    } else if (strcmp(token, "sizeof") == 0) {
+        tok_expect(fc, "(", true, false);
+        Type *type = read_type(fc, alc, scope, false, true);
+        tok_expect(fc, ")", false, true);
+        v = vgen_vint(alc, type->bytes, type_gen(b, alc, "i32"), false);
+        //
     } else if (is_valid_varname_char(token[0])) {
         rtok(fc);
         Id *id = read_id(fc, sameline, true, true);
@@ -115,6 +121,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
             tok(fc, token, false, true);
         }
     }
+
+    rtok(fc);
 
     return v;
 }
@@ -199,6 +207,97 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
 
 void value_equalize_types(Allocator *alc, Fc *fc, Scope *scope, VPair *pair) {
     //
+    Build *b = fc->b;
+    Value *left = pair->left;
+    Value *right = pair->right;
+    Type *lt = left->rett;
+    Type *rt = right->rett;
+
+    // structs -> ptr
+    // ptr -> uxx
+    // numbers to biggest size
+
+    if (lt->type == type_struct) {
+        left = vgen_cast(alc, left, type_gen(b, alc, "ptr"));
+        pair->left = left;
+        lt = left->rett;
+    }
+    if (rt->type == type_struct) {
+        right = vgen_cast(alc, right, type_gen(b, alc, "ptr"));
+        pair->right = right;
+        rt = right->rett;
+    }
+    if (lt->type == type_ptr) {
+        left = vgen_cast(alc, left, type_gen(b, alc, "uxx"));
+        pair->left = left;
+        lt = left->rett;
+    }
+    if (rt->type == type_ptr) {
+        right = vgen_cast(alc, right, type_gen(b, alc, "uxx"));
+        pair->right = right;
+        rt = right->rett;
+    }
+    if (lt->type == type_null) {
+        left = vgen_vint(alc, 0, type_gen(b, alc, "u8"), false);
+        pair->left = left;
+        lt = left->rett;
+    }
+    if (rt->type == type_null) {
+        right = vgen_vint(alc, 0, type_gen(b, alc, "u8"), false);
+        pair->right = right;
+        rt = right->rett;
+    }
+
+    if (lt->type != type_int || rt->type != type_int) {
+        die("Could not convert value to a number\n");
+        return;
+    }
+
+    if (left->type == v_vint && right->type == v_vint) {
+        VInt *lint = left->item;
+        VInt *rint = right->item;
+        if (lint->force_type == false && rint->force_type == false) {
+            // If both are number literals, dont convert them
+            return;
+        }
+    }
+
+    if (left->type == v_vint) {
+        VInt *vint = left->item;
+        if (vint->force_type == false) {
+            left = try_convert(fc, alc, left, right->rett);
+            pair->left = left;
+            lt = left->rett;
+            return;
+        }
+    }
+
+    if (right->type == v_vint) {
+        VInt *vint = right->item;
+        if (vint->force_type == false) {
+            right = try_convert(fc, alc, right, right->rett);
+            pair->right = right;
+            rt = right->rett;
+            return;
+        }
+    }
+
+    int bytes = lt->bytes;
+    bool is_signed = lt->is_signed || rt->is_signed;
+    if (rt->bytes > bytes) {
+        bytes = rt->bytes;
+    }
+
+    if (lt->bytes < bytes) {
+        left = vgen_cast(alc, left, type_gen_int(b, alc, bytes, is_signed));
+        pair->left = left;
+        lt = left->rett;
+    }
+    if (rt->bytes < bytes) {
+        right = vgen_cast(alc, right, type_gen_int(b, alc, bytes, is_signed));
+        pair->right = right;
+        rt = right->rett;
+    }
 }
 
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type) {

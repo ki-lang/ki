@@ -114,6 +114,7 @@ int type_get_size(Build *b, Type *type);
 bool type_is_void(Type *type);
 Type *type_gen_class(Allocator *alc, Class *class);
 Type *type_gen_fptr(Allocator *alc, Func *func);
+Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed);
 Type *type_gen(Build *b, Allocator *alc, char *name);
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space);
 bool type_compat(Type *t1, Type *t2, char **reason);

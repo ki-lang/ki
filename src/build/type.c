@@ -213,6 +213,35 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     return type;
 }
 
+Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed) {
+    if (bytes == 1) {
+        if (is_signed) {
+            return type_gen(b, alc, "i8");
+        } else {
+            return type_gen(b, alc, "u8");
+        }
+    } else if (bytes == 2) {
+        if (is_signed) {
+            return type_gen(b, alc, "i16");
+        } else {
+            return type_gen(b, alc, "u16");
+        }
+    } else if (bytes == 4) {
+        if (is_signed) {
+            return type_gen(b, alc, "i32");
+        } else {
+            return type_gen(b, alc, "u32");
+        }
+    } else if (bytes == 8) {
+        if (is_signed) {
+            return type_gen(b, alc, "i64");
+        } else {
+            return type_gen(b, alc, "u64");
+        }
+    }
+    die("Cannot generate integer type (bug)");
+}
+
 Type *type_gen(Build *b, Allocator *alc, char *name) {
 
     Pkc *pkc = b->pkc_ki;
@@ -242,26 +271,25 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
             *reason = "Types are not compatible";
         return false;
     }
+    if (t1->bytes != t2->bytes) {
+        if (reason)
+            *reason = "The types have different sizes";
+        return false;
+    }
+    if (t1->ptr_depth != t2->ptr_depth) {
+        if (reason)
+            *reason = "Pointer depth difference";
+        return false;
+    }
     if (t1t == type_int) {
         if (t1->enu != NULL && t1->enu != t2->enu) {
             if (reason)
                 *reason = "Right side number must be from the same enum type";
             return false;
         }
-        if (t2->bytes != t1->bytes) {
-            if (reason)
-                *reason = "Number size mismatch";
-            return false;
-        }
         if (t2->is_signed != t1->is_signed) {
             if (reason)
                 *reason = "Signed & unsigned are not compatible, use cast";
-            return false;
-        }
-    } else if (t1t == type_float) {
-        if (t2->bytes != t1->bytes) {
-            if (reason)
-                *reason = "Number size mismatch";
             return false;
         }
     } else if (t1t == type_struct) {
@@ -311,11 +339,6 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
         //             }
         //         }
         //     }
-    }
-    if (t1->ptr_depth != t2->ptr_depth) {
-        if (reason)
-            *reason = "Pointer depth difference";
-        return false;
     }
     return true;
 }
