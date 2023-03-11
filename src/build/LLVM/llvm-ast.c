@@ -1,6 +1,8 @@
 
 #include "../../headers/LLVM.h"
 
+void llvm_if(LB *b, Scope *scope, TIf *ift, bool is_else, LLVMBlock *after);
+
 char *llvm_write_ast(LB *b, Scope *scope) {
     //
     if (!scope->lvars)
@@ -63,10 +65,66 @@ char *llvm_write_ast(LB *b, Scope *scope) {
             continue;
         }
         if (t->type == tkn_if) {
+            TIf *ift = t->item;
+            llvm_if(b, scope, ift, false, NULL);
+            continue;
         }
         if (t->type == tkn_statement) {
             Value *val = t->item;
             char *lval = llvm_value(b, scope, val);
+            continue;
         }
+    }
+}
+
+void llvm_if(LB *b, Scope *scope, TIf *ift, bool is_else, LLVMBlock *after) {
+    //
+    Value *cond = ift->cond;
+    Scope *sub = ift->scope;
+    TIf *elif = ift->else_if;
+
+    if (!cond) {
+        llvm_write_ast(b, sub);
+        if (!sub->did_return) {
+            Str *ir = llvm_b_ir(b);
+            llvm_ir_jump(ir, after);
+        }
+        return;
+    }
+
+    LLVMBlock *code_block = llvm_block_init(b, -1);
+    LLVMBlock *else_block = NULL;
+
+    if (elif) {
+        else_block = llvm_block_init(b, -1);
+    }
+    if (after == NULL) {
+        after = llvm_block_init(b, -1);
+    }
+
+    char *lcond = llvm_value(b, scope, cond);
+    Str *ir = llvm_b_ir(b);
+
+    char *lcond_i1 = llvm_ir_bool_i1(b, ir, lcond);
+    if (else_block) {
+        llvm_ir_cond_jump(b, ir, lcond_i1, code_block, else_block);
+    } else {
+        llvm_ir_cond_jump(b, ir, lcond_i1, code_block, after);
+    }
+
+    b->lfunc->block = code_block;
+    llvm_write_ast(b, sub);
+    if (!sub->did_return) {
+        Str *ir = llvm_b_ir(b);
+        llvm_ir_jump(ir, after);
+    }
+
+    if (elif) {
+        b->lfunc->block = else_block;
+        llvm_if(b, scope, elif, true, after);
+    }
+
+    if (!is_else) {
+        b->lfunc->block = after;
     }
 }

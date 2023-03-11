@@ -2,9 +2,18 @@
 #include "../../headers/LLVM.h"
 
 void llvm_ir_jump(Str *ir, LLVMBlock *block) {
-    //
     str_append_chars(ir, "  br label %");
     str_append_chars(ir, block->name);
+    str_append_chars(ir, "\n");
+}
+
+void llvm_ir_cond_jump(LB *b, Str *ir, char *var_i1, LLVMBlock *a_block, LLVMBlock *b_block) {
+    str_append_chars(ir, "  br i1 ");
+    str_append_chars(ir, var_i1);
+    str_append_chars(ir, ", label %");
+    str_append_chars(ir, a_block->name);
+    str_append_chars(ir, ", label %");
+    str_append_chars(ir, b_block->name);
     str_append_chars(ir, "\n");
 }
 
@@ -26,4 +35,14 @@ void llvm_ir_store(LB *b, Type *type, char *var, char *val) {
     str_append_chars(ir, ", align ");
     str_append_chars(ir, bytes);
     str_append_chars(ir, "\n");
+}
+
+char *llvm_ir_bool_i1(LB *b, Str *ir, char *val) {
+    char *var_i1 = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, var_i1);
+    str_append_chars(ir, " = trunc i8 ");
+    str_append_chars(ir, val);
+    str_append_chars(ir, " to i1\n");
+    return var_i1;
 }

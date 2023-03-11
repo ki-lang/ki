@@ -3,6 +3,11 @@
 
 LLVMBlock *llvm_block_init(LB *b, int nr) {
 
+    if (nr == -1) {
+        nr = b->lfunc->blockc;
+        b->lfunc->blockc++;
+    }
+
     char *name = al(b->alc, 20);
     sprintf(name, "block_%d", nr);
 
