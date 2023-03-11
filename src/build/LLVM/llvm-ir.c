@@ -91,3 +91,57 @@ char *llvm_ir_class_prop_access(LB *b, Class *class, char *on, ClassProp *prop) 
 
     return result;
 }
+
+Array *llvm_ir_fcall_args(LB *b, Scope *scope, Array *values) {
+    Array *result = array_make(b->alc, values->length + 1);
+    for (int i = 0; i < values->length; i++) {
+        Value *val = array_get_index(values, i);
+        char *lval = llvm_value(b, scope, val);
+        char *buf = b->fc->sbuf;
+        sprintf(buf, "%s noundef %s", llvm_type(b, val->rett), lval);
+        array_push(result, dups(b->alc, lval));
+    }
+    return result;
+}
+
+char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, bool can_error) {
+    Str *ir = llvm_b_ir(b);
+    if (can_error) {
+        die("TODO LLVM Func error");
+        // TODO dont reset err before each call, reset when err is caught instead
+        // llvm_ir_store(b, type_gen(b->fc->b, "i32"), b->func_buf_err, "0");
+    }
+
+    char *var = "";
+    str_append_chars(ir, "  ");
+    if (strcmp(lrett, "void") != 0) {
+        var = llvm_var(b);
+        str_append_chars(ir, var);
+        str_append_chars(ir, " = ");
+    }
+    str_append_chars(ir, "call ");
+    str_append_chars(ir, lrett);
+    str_append_chars(ir, " ");
+    str_append_chars(ir, on);
+    str_append_chars(ir, "(");
+    int argc = values->length;
+    for (int i = 0; i < values->length; i++) {
+        char *lval = array_get_index(values, i);
+        if (i > 0) {
+            str_append_chars(ir, ", ");
+        }
+        str_append_chars(ir, lval);
+    }
+    if (can_error) {
+        die("TODO LLVM Func error");
+        // if (argc > 0) {
+        //     str_append_chars(ir, ", ");
+        // }
+        // str_append_chars(ir, "i32* noundef ");
+        // str_append_chars(ir, b->func_buf_err);
+        // str_append_chars(ir, ", i8** noundef ");
+        // str_append_chars(ir, b->func_buf_msg);
+    }
+    str_append_chars(ir, ")\n");
+    return var;
+}

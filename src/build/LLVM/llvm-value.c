@@ -154,6 +154,10 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         return var_result;
     }
     if (v->type == v_fcall) {
+        VFcall *fcall = v->item;
+        char *on = llvm_value(b, scope, fcall->on);
+        Array *values = llvm_ir_fcall_args(b, scope, fcall->args);
+        return llvm_ir_func_call(b, on, values, llvm_type(b, v->rett), fcall->on->rett->func_can_error);
     }
     if (v->type == v_fptr) {
     }

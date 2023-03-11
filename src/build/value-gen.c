@@ -60,7 +60,7 @@ Value *vgen_fptr(Allocator *alc, Func *func, Value *first_arg) {
     VFuncPtr *item = al(alc, sizeof(VFuncPtr));
     item->func = func;
     item->first_arg = first_arg;
-    return value_init(alc, v_fcall, item, type_gen_fptr(alc, func));
+    return value_init(alc, v_fptr, item, type_gen_fptr(alc, func));
 }
 
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
