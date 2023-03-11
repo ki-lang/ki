@@ -12,8 +12,16 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         return llvm_ir_load(b, var->type, var_val);
     }
     if (v->type == v_vint) {
+        VInt *vint = v->item;
+        char *res = al(b->alc, 20);
+        sprintf(res, "%ld", vint->value);
+        return res;
     }
     if (v->type == v_float) {
+        VFloat *vfl = v->item;
+        char *res = al(b->alc, 20);
+        sprintf(res, "%f", vfl->value);
+        return res;
     }
     if (v->type == v_ptrv) {
         Value *val = v->item;
