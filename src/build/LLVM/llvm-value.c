@@ -82,6 +82,76 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         return var;
     }
     if (v->type == v_compare) {
+        VOp *vop = v->item;
+        int op = vop->op;
+        char *lval1 = llvm_value(b, scope, vop->left);
+        char *lval2 = llvm_value(b, scope, vop->right);
+        Type *type = v->rett;
+        char *ltype = llvm_type(b, type);
+
+        bool is_signed = type->is_signed;
+        bool is_float = type->type == type_float;
+
+        char *var_tmp = llvm_var(b);
+        char *var_result = llvm_var(b);
+
+        char *sign = "eq";
+        if (op == op_ne) {
+            sign = "ne";
+        } else if (op == op_lt) {
+            if (is_float) {
+                sign = "olt";
+            } else if (is_signed) {
+                sign = "slt";
+            } else {
+                sign = "ult";
+            }
+        } else if (op == op_lte) {
+            if (is_float) {
+                sign = "ole";
+            } else if (is_signed) {
+                sign = "sle";
+            } else {
+                sign = "ule";
+            }
+        } else if (op == op_gt) {
+            if (is_float) {
+                sign = "ogt";
+            } else if (is_signed) {
+                sign = "sgt";
+            } else {
+                sign = "ugt";
+            }
+        } else if (op == op_gte) {
+            if (is_float) {
+                sign = "oge";
+            } else if (is_signed) {
+                sign = "sge";
+            } else {
+                sign = "uge";
+            }
+        }
+
+        Str *ir = llvm_b_ir(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, var_tmp);
+        str_append_chars(ir, " = icmp ");
+        str_append_chars(ir, sign);
+        str_append_chars(ir, " ");
+        str_append_chars(ir, ltype);
+        str_append_chars(ir, " ");
+        str_append_chars(ir, lval1);
+        str_append_chars(ir, ", ");
+        str_append_chars(ir, lval2);
+        str_append_chars(ir, "\n");
+
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, var_result);
+        str_append_chars(ir, " = zext i1 ");
+        str_append_chars(ir, var_tmp);
+        str_append_chars(ir, " to i8\n");
+
+        return var_result;
     }
     if (v->type == v_fcall) {
     }
