@@ -42,7 +42,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         tok_expect(fc, "(", true, false);
         Type *type = read_type(fc, alc, scope, false, true);
         tok_expect(fc, ")", false, true);
-        v = vgen_vint(alc, type->bytes, type_gen(b, alc, "u32"), false);
+        v = vgen_vint(alc, type->bytes, type_gen(b, alc, "i32"), false);
         //
     } else if (is_number(token[0]) || strcmp(token, "-") == 0) {
 
@@ -281,6 +281,20 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 }
 
 Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op) {
+
+    if (left->type == v_vint && right->type == v_vint) {
+        VInt *lint = left->item;
+        VInt *rint = right->item;
+        if (lint->force_type == false && rint->force_type == false) {
+            // If both are number literals
+            if (op == op_add) {
+                lint->value += rint->value;
+            } else if (op == op_sub) {
+                lint->value -= rint->value;
+            }
+            return left;
+        }
+    }
 
     if (op == op_add) {
         Class *lclass = left->rett->class;
