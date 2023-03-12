@@ -33,15 +33,27 @@ class String type:ptr {
 	}
 
 	func __add(String str) String {
-		return "123\n";
-		//let this_len = this.bytes();
-		//let str_len = str.bytes();
-		//let len = this_len + str_len;
-		//let new_str = String.make_empty(len);
-		//let mut new_adr = new_str.data();
-		//mem:copy(this.data(), new_adr, this_len);
-		//new_adr += this_len;
-		//mem:copy(str.data(), new_adr, str_len);
-		//return new_str;
+		//return "123\n";
+		let this_len = this.bytes();
+		let str_len = str.bytes();
+		let len = this_len + str_len;
+		let new_str = String.make_empty(len);
+		let mut new_adr = new_str.data();
+		mem:copy(this.data(), new_adr, this_len);
+		new_adr += this_len;
+		mem:copy(str.data(), new_adr, str_len);
+		return new_str;
 	}
+
+	static func make_empty(uxx size) String {
+		let mut adr = mem:alloc(size + 16);
+		let adr_ = adr;
+		ptrv adr as uxx = size;
+		adr += sizeof(uxx);
+		ptrv adr as u8 = 0#u8;
+		adr += 4;
+		ptrv adr as u32 = 0#u32;
+		return adr_ -> String;
+	}
+
 }

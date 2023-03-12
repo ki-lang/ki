@@ -277,6 +277,25 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_class) {
         Class *class = idf->item;
+        if (get_char(fc, 0) == '.') {
+            chunk_move(fc->chunk, 1);
+            // Static func
+            tok(fc, token, true, false);
+            Func *func = map_get(class->funcs, token);
+            if (!func) {
+                sprintf(fc->sbuf, "Unknown static function: '%s'", token);
+                fc_error(fc);
+            }
+            // Property access
+            // if (cfunc->act_type == act_private) {
+            //     if (scope_is_subscope_of(scope, class->scope) == false) {
+            //         fc_error(fc, "Accessing a private function outside the class", NULL);
+            //     }
+            // }
+
+            //
+            return vgen_fptr(alc, func, NULL);
+        }
     }
 
     if (idf->type == idf_fc) {

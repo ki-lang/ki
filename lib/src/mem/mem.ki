@@ -1,4 +1,9 @@
 
+header "ki_os" as os;
+
+func alloc(uxx size) ptr {
+	return os.ki_os__alloc(size);
+}
 
 func copy(ptr mut from, ptr mut to, uxx mut len) void {
 

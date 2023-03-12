@@ -69,6 +69,39 @@ char *llvm_write_ast(LB *b, Scope *scope) {
             llvm_if(b, scope, ift, false, NULL);
             continue;
         }
+        if (t->type == tkn_while) {
+            TWhile *w = t->item;
+
+            Value *cond = w->cond;
+            Scope *sub = w->scope;
+
+            LLVMBlock *b_cond = llvm_block_init_auto(b);
+            LLVMBlock *b_code = llvm_block_init_auto(b);
+            LLVMBlock *b_after = llvm_block_init_auto(b);
+            LLVMBlock *prev_cond = b->while_cond;
+            LLVMBlock *prev_after = b->while_after;
+            b->while_cond = b_cond;
+            b->while_after = b_after;
+
+            llvm_ir_jump(llvm_b_ir(b), b_cond);
+
+            b->lfunc->block = b_cond;
+            char *lcond = llvm_value(b, scope, cond);
+            Str *ir_c = llvm_b_ir(b);
+            char *lcond_i1 = llvm_ir_bool_i1(b, ir_c, lcond);
+            llvm_ir_cond_jump(b, ir_c, lcond_i1, b_code, b_after);
+
+            b->lfunc->block = b_code;
+            llvm_write_ast(b, sub);
+            if (!sub->did_return) {
+                llvm_ir_jump(llvm_b_ir(b), b_cond);
+            }
+
+            b->lfunc->block = b_after;
+            b->while_cond = prev_cond;
+            b->while_after = prev_after;
+            continue;
+        }
         if (t->type == tkn_statement) {
             Value *val = t->item;
             char *lval = llvm_value(b, scope, val);

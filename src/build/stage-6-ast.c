@@ -202,6 +202,11 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope) {
         type = val->rett;
     }
 
+    if (type_is_void(type)) {
+        sprintf(fc->sbuf, "Variable declaration: Right side does not return a value");
+        fc_error(fc);
+    }
+
     tok_expect(fc, ";", false, true);
 
     Var *var = var_init(alc, name, type, mutable, false, false);

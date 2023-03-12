@@ -266,8 +266,10 @@ Type *type_gen(Build *b, Allocator *alc, char *name) {
 
 bool type_compat(Type *t1, Type *t2, char **reason) {
     //
-    if (t1 == NULL || t2 == NULL) {
-        return t1 == t2;
+    bool t1void = type_is_void(t1);
+    bool t2void = type_is_void(t2);
+    if (t1void || t2void) {
+        return t1void == t2void;
     }
     int t1t = t1->type;
     int t2t = t2->type;

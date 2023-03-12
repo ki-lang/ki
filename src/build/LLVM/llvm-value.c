@@ -88,7 +88,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         int op = vop->op;
         char *lval1 = llvm_value(b, scope, vop->left);
         char *lval2 = llvm_value(b, scope, vop->right);
-        Type *type = v->rett;
+        Type *type = vop->left->rett;
         char *ltype = llvm_type(b, type);
 
         bool is_signed = type->is_signed;
