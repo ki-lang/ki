@@ -68,8 +68,6 @@ Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc) {
 
                 nsc = nsc_init(alc, b, pkc, name);
 
-                map_set(pkc->namespaces, nsc->name, nsc);
-
                 Array *files = get_subfiles(alc, dir, false, true);
                 int i = files->length;
                 while (i > 0) {
