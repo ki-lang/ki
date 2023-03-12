@@ -201,23 +201,23 @@ void stage_8_link(Build *b, Array *o_files) {
         str_append_chars(cmd, " ");
     }
 
-    // for (int i = 0; i < b->link_dirs->length; i++) {
-    //     char *path = array_get_index(b->link_dirs, i);
-    //     str_append_chars(cmd, "-L");
-    //     str_append_chars(cmd, path);
-    //     str_append_chars(cmd, "/");
-    //     str_append_chars(cmd, b.os);
-    //     str_append_chars(cmd, "-");
-    //     str_append_chars(cmd, b.arch);
-    //     str_append_chars(cmd, " ");
-    // }
+    for (int i = 0; i < b->link_dirs->length; i++) {
+        char *path = array_get_index(b->link_dirs, i);
+        str_append_chars(cmd, "-L");
+        str_append_chars(cmd, path);
+        str_append_chars(cmd, "/");
+        str_append_chars(cmd, b->os);
+        str_append_chars(cmd, "-");
+        str_append_chars(cmd, b->arch);
+        str_append_chars(cmd, " ");
+    }
 
-    // for (int i = 0; i < b->link_libs->length; i++) {
-    //     char *name = array_get_index(b->link_libs, i);
-    //     str_append_chars(cmd, "-l");
-    //     str_append_chars(cmd, name);
-    //     str_append_chars(cmd, " ");
-    // }
+    for (int i = 0; i < b->link_libs->length; i++) {
+        char *name = array_get_index(b->link_libs, i);
+        str_append_chars(cmd, "-l");
+        str_append_chars(cmd, name);
+        str_append_chars(cmd, " ");
+    }
 
     // if (b->ldflags) {
     //     str_append_chars(cmd, b->ldflags);
@@ -225,5 +225,10 @@ void stage_8_link(Build *b, Array *o_files) {
     // }
 
     char *cmd_str = str_to_chars(b->alc, cmd);
+
+    if (b->verbose > 0) {
+        printf("Link cmd: %s\n", cmd_str);
+    }
+
     system(cmd_str);
 }

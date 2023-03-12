@@ -4,6 +4,8 @@
 void stage_1_func(Fc *fc);
 void stage_1_class(Fc *fc);
 void stage_1_enum(Fc *fc);
+void stage_1_header(Fc *fc);
+void stage_1_link(Fc *fc);
 
 void stage_1(Fc *fc) {
     //
@@ -32,6 +34,14 @@ void stage_1(Fc *fc) {
         }
         if (strcmp(token, "class") == 0) {
             stage_1_class(fc);
+            continue;
+        }
+        if (strcmp(token, "header") == 0) {
+            stage_1_header(fc);
+            continue;
+        }
+        if (strcmp(token, "link") == 0) {
+            stage_1_link(fc);
             continue;
         }
 
@@ -206,4 +216,72 @@ void stage_1_enum(Fc *fc) {
         sprintf(fc->sbuf, "Invalid enum name syntax '%s'", token);
         fc_error(fc);
     }
+}
+
+void stage_1_header(Fc *fc) {
+    //
+    tok_expect(fc, "\"", true, true);
+
+    Str *buf = read_string(fc);
+    char *fn = str_to_chars(fc->alc, buf);
+
+    Array *dirs = fc->nsc->pkc->header_dirs;
+    bool found = false;
+    for (int i = 0; i < dirs->length; i++) {
+        char *dir = array_get_index(dirs, i);
+        sprintf(fc->sbuf, "%s/%s.kh", dir, fn);
+
+        if (file_exists(fc->sbuf)) {
+            char *path = dups(fc->alc, fc->sbuf);
+            Fc *hfc = fc_init(fc->b, path, fc->b->nsc_main);
+
+            //
+            tok_expect(fc, "as", true, true);
+
+            char *token = fc->token;
+            tok(fc, token, true, true);
+
+            if (!is_valid_varname_char(token[0])) {
+                sprintf(fc->sbuf, "Invalid variable name syntax: '%s'", token);
+                fc_error(fc);
+            }
+            name_taken_check(fc, fc->scope, token);
+
+            char *as = dups(fc->alc, token);
+
+            tok_expect(fc, ";", true, true);
+
+            //
+            Idf *idf = idf_init(fc->alc, idf_fc);
+            idf->item = hfc;
+
+            map_set(fc->scope->identifiers, as, idf);
+
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        printf("Header directories: %d\n", dirs->length);
+        for (int i = 0; i < dirs->length; i++) {
+            char *dir = array_get_index(dirs, i);
+            sprintf(fc->sbuf, "%s/%s.kh", dir, fn);
+            printf("Lookup: %s\n", fc->sbuf);
+        }
+
+        sprintf(fc->sbuf, "Header not found: '%s'\n", fn);
+        fc_error(fc);
+    }
+}
+
+void stage_1_link(Fc *fc) {
+    //
+    tok_expect(fc, "\"", true, true);
+
+    Str *buf = read_string(fc);
+    char *fn = str_to_chars(fc->alc, buf);
+
+    array_push(fc->b->link_libs, fn);
+
+    tok_expect(fc, ";", true, true);
 }

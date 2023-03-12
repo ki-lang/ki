@@ -3,7 +3,7 @@
 
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     //
-    if (!path_ki || !file_exists(path_ki)) {
+    if (!file_exists(path_ki)) {
         sprintf(b->sbuf, "File not found: %s", path_ki);
         die(b->sbuf);
     }

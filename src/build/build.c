@@ -166,14 +166,15 @@ void cmd_build(int argc, char *argv[]) {
     strcpy(ki_dir, get_binary_dir());
     strcat(ki_dir, "/lib");
     Pkc *pkc_ki = pkc_init(alc, b, "ki", ki_dir);
-    pkc_load_nsc(pkc_ki, "type", NULL);
-    pkc_load_nsc(pkc_ki, "io", NULL);
 
     b->nsc_main = nsc_main;
     b->pkc_ki = pkc_ki;
 
     array_push(b->packages, pkc_ki);
     array_push(b->packages, pkc_main);
+
+    pkc_load_nsc(pkc_ki, "type", NULL);
+    pkc_load_nsc(pkc_ki, "io", NULL);
 
     //
     pthread_t thr;

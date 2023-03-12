@@ -129,7 +129,7 @@ void pkc_load_config(Pkc *pkc) {
 
     cJSON *headers = cJSON_GetObjectItemCaseSensitive(cfg->json, "headers");
     if (headers) {
-        cJSON *dirs = cJSON_GetObjectItemCaseSensitive(cfg->json, "dirs");
+        cJSON *dirs = cJSON_GetObjectItemCaseSensitive(headers, "dirs");
         if (dirs) {
             char fullpath[KI_PATH_MAX];
             cJSON *cdir = dirs->child;
@@ -138,7 +138,6 @@ void pkc_load_config(Pkc *pkc) {
                 strcpy(fullpath, pkc->dir);
                 strcat(fullpath, "/");
                 strcat(fullpath, cdir->valuestring);
-                strcat(fullpath, "/");
 
                 if (!file_exists(fullpath)) {
                     printf("Header directory not found: %s => (%s)\n", cdir->valuestring, fullpath);
@@ -156,7 +155,7 @@ void pkc_load_config(Pkc *pkc) {
 
     cJSON *link = cJSON_GetObjectItemCaseSensitive(cfg->json, "link");
     if (link) {
-        cJSON *dirs = cJSON_GetObjectItemCaseSensitive(cfg->json, "dirs");
+        cJSON *dirs = cJSON_GetObjectItemCaseSensitive(link, "dirs");
         if (dirs) {
             char fullpath[KI_PATH_MAX];
             cJSON *cdir = dirs->child;
@@ -165,7 +164,6 @@ void pkc_load_config(Pkc *pkc) {
                 strcpy(fullpath, pkc->dir);
                 strcat(fullpath, "/");
                 strcat(fullpath, cdir->valuestring);
-                strcat(fullpath, "/");
 
                 if (!file_exists(fullpath)) {
                     printf("Link directory not found: %s => (%s)\n", cdir->valuestring, fullpath);

@@ -10,9 +10,6 @@ void llvm_gen_func_ir(LB *b) {
         Func *func = array_get_index(fc->funcs, i);
 
         Scope *fscope = func->scope;
-        if (fscope->ast->length == 0) {
-            break;
-        }
 
         if (!fscope->lvars)
             fscope->lvars = map_make(b->alc);
