@@ -289,4 +289,6 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
 
     Scope *sub = scope_init(alc, sct_loop, scope, true);
     read_ast(fc, sub, false);
+
+    array_push(scope->ast, tgen_while(alc, cond, sub));
 }
