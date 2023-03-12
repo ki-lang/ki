@@ -14,21 +14,25 @@ shared types must be captured before use
 
 ```
 let x = MyObject{...}; # initialized with rc 1
-# x.rc += 3 // gives away ownership 3 times in this scope
-myfunc(x)
-let a = x;
-let b = x;
+# upref slot (+4 = 5)
+myfunc(x) ++ (2)
+let a = x; ++ (3)
+let b = x; ++ (4)
 if(50/50) {
-	# x.rc += 1 // gives away ownership once in this scope
-	myfunc(x);
+	# upref slot (+1 = 6)
+	let o = myfunc(x).y; ++ (5) && deref return value of func because chained of prop access
+
+	#o--; // unused
 }
-let c = x;
+let c = x; ++ (6)
 
 # we do not deref 'x' because it gave away ownership
-// myfunc will deref x somwhere because it doesnt return ownership (3)
-# a.rc-- == 0 : free(a); (2)
-# b.rc-- == 0 : free(b); (1)
-# c.rc-- == 0 : free(c); (0)
+// myfunc will deref x somwhere (5)
+// myfunc will deref x somwhere (4)
+# a-- // used == 0 (3)
+# b-- // used == 0 (2)
+# c-- // used == 0 (1)
+# x-- // used >= 2 (0)
 ```
 
 

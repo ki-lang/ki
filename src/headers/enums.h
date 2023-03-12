@@ -47,6 +47,7 @@ enum TOKENTYPE {
     tkn_panic,
     tkn_exit,
     tkn_each,
+    tkn_upref_slot,
 };
 
 enum VALUETYPE {

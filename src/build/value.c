@@ -286,6 +286,13 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
             //
             if (!is_class_pa) {
                 decl->times_used++;
+                UprefSlot *up = map_get(scope->upref_slots, decl->name);
+                if (!up) {
+                    up = upref_slot_init(alc, decl);
+                    array_push(scope->ast, token_init(alc, tkn_upref_slot, up));
+                    map_set(scope->upref_slots, decl->name, up);
+                }
+                up->count++;
             }
         }
 

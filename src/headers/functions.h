@@ -134,6 +134,7 @@ void type_check(Fc *fc, Type *t1, Type *t2);
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg, bool is_global);
 Var *var_init(Allocator *alc, Decl *decl, Type *type);
 Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
+UprefSlot *upref_slot_init(Allocator *alc, Decl *decl);
 
 // Value
 Value *value_init(Allocator *alc, int type, void *item, Type *rett);

@@ -22,6 +22,7 @@ typedef struct Enum Enum;
 typedef struct Decl Decl;
 typedef struct Var Var;
 typedef struct Arg Arg;
+typedef struct UprefSlot UprefSlot;
 
 #include "token.h"
 #include "value.h"
@@ -156,6 +157,7 @@ struct Scope {
     int type;
     Scope *parent;
     Map *identifiers;
+    Map *upref_slots;
     Func *func;
     Array *ast;
     Map *lvars; // LLVM vars
@@ -260,6 +262,10 @@ struct Arg {
     bool is_mut;
     Value *value;
     Chunk *value_chunk;
+};
+struct UprefSlot {
+    Decl *decl;
+    int count;
 };
 
 #endif

@@ -36,6 +36,12 @@ void llvm_write_ast(LB *b, Scope *scope) {
             llvm_ir_store(b, pair->left->rett, lvar, lval);
             continue;
         }
+        if (t->type == tkn_upref_slot) {
+            UprefSlot *up = t->item;
+            if (up->decl->times_used > 1 && up->count > 0) {
+                printf("UP:%d | %d\n", up->count, up->decl->times_used);
+            }
+        }
         if (t->type == tkn_return) {
             Value *val = t->item;
             LLVMFunc *lfunc = b->lfunc;

@@ -11,6 +11,7 @@ Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val
     v->is_mut = is_mut;
     v->is_arg = is_arg;
     v->is_global = is_global;
+    v->times_used = 0;
 
     return v;
 }
@@ -32,5 +33,13 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut) {
     v->value = NULL;
     v->value_chunk = NULL;
 
+    return v;
+}
+
+UprefSlot *upref_slot_init(Allocator *alc, Decl *decl) {
+    //
+    UprefSlot *v = al(alc, sizeof(UprefSlot));
+    v->decl = decl;
+    v->count = 0;
     return v;
 }
