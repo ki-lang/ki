@@ -333,6 +333,10 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
     Type *lt = left->rett;
     Type *rt = right->rett;
 
+    if ((lt->type == type_ptr && !lt->class->allow_math) || (rt->type == type_ptr && !rt->class->allow_math)) {
+        sprintf(fc->sbuf, "Cannot use math operators on these values");
+        fc_error(fc);
+    }
     if (lt->type == type_void || rt->type == type_void) {
         sprintf(fc->sbuf, "Cannot use operator on void values");
         fc_error(fc);

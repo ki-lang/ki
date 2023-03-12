@@ -5,7 +5,8 @@
 class String type:ptr {
 
 	func is_const() bool {
-		return (ptrv this + sizeof(uxx) as u8) == 1#u8;
+		let adr = this -> ptr;
+		return (ptrv adr + sizeof(uxx) as u8) == 1#u8;
 	}
 
 	func bytes() uxx {

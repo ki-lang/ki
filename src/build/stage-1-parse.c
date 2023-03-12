@@ -194,6 +194,8 @@ void stage_1_class(Fc *fc) {
             class->is_rc = false;
         } else if (strcmp(token, "packed") == 0) {
             class->packed = true;
+        } else if (strcmp(token, "math") == 0) {
+            class->allow_math = true;
         } else {
             sprintf(fc->sbuf, "Unexpected token: '%s' (class attributes)", token);
             fc_error(fc);

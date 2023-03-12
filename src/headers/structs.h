@@ -202,6 +202,7 @@ struct Class {
     bool is_signed;
     bool packed;
     bool is_generic_base;
+    bool allow_math;
 };
 struct ClassProp {
     Type *type;

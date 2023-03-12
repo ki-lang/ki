@@ -13,6 +13,7 @@ Class *class_init(Allocator *alc) {
     class->chunk_body = NULL;
     class->props = map_make(alc);
     class->funcs = map_make(alc);
+    class->allow_math = false;
 
     return class;
 }
