@@ -40,8 +40,14 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     fc->class_size_checks = array_make(alc, 4);
     fc->type_size_checks = array_make(alc, 20);
 
-    chain_add(b->read_ki_file, fc);
-    b->event_count++;
+    Str *buf = str_make(alc, 500);
+    file_get_contents(buf, fc->path_ki);
+    char *content = str_to_chars(alc, buf);
+    fc->chunk->content = content;
+    fc->chunk->length = strlen(content);
+    chain_add(b->stage_1, fc);
+    // chain_add(b->read_ki_file, fc);
+    // b->event_count++;
 
     array_push(nsc->fcs, fc);
 
