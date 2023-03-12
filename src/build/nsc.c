@@ -8,6 +8,7 @@ Nsc *nsc_init(Allocator *alc, Build *b, Pkc *pkc, char *name) {
     nsc->pkc = pkc;
     nsc->name = name;
     nsc->scope = scope_init(alc, sct_default, NULL, false);
+    nsc->fcs = array_make(alc, 40);
 
     //
     char *o_path = al(alc, KI_PATH_MAX);

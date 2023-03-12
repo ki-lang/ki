@@ -58,50 +58,60 @@ void compile_loop(Build *b, int max_stage) {
             continue;
         }
 
-        Fc *stage2 = chain_get(b->stage_2);
-        while (stage2 && max_stage > 1) {
-            stage_2(stage2);
-            stage2 = chain_get(b->stage_2);
-            did_work = true;
+        if (max_stage > 1) {
+            Fc *stage2 = chain_get(b->stage_2);
+            while (stage2) {
+                stage_2(stage2);
+                stage2 = chain_get(b->stage_2);
+                did_work = true;
+            }
+            if (did_work)
+                continue;
         }
-        if (did_work)
-            continue;
 
-        Fc *stage3 = chain_get(b->stage_3);
-        while (stage3 && max_stage > 2) {
-            stage_3(stage3);
-            stage3 = chain_get(b->stage_3);
-            did_work = true;
+        if (max_stage > 2) {
+            Fc *stage3 = chain_get(b->stage_3);
+            while (stage3) {
+                stage_3(stage3);
+                stage3 = chain_get(b->stage_3);
+                did_work = true;
+            }
+            if (did_work)
+                continue;
         }
-        if (did_work)
-            continue;
 
-        Fc *stage4 = chain_get(b->stage_4);
-        while (stage4 && max_stage > 3) {
-            stage_4(stage4);
-            stage4 = chain_get(b->stage_4);
-            did_work = true;
+        if (max_stage > 3) {
+            Fc *stage4 = chain_get(b->stage_4);
+            while (stage4) {
+                stage_4(stage4);
+                stage4 = chain_get(b->stage_4);
+                did_work = true;
+            }
+            if (did_work)
+                continue;
         }
-        if (did_work)
-            continue;
 
-        Fc *stage5 = chain_get(b->stage_5);
-        while (stage5 && max_stage > 4) {
-            stage_5(stage5);
-            stage5 = chain_get(b->stage_5);
-            did_work = true;
+        if (max_stage > 4) {
+            Fc *stage5 = chain_get(b->stage_5);
+            while (stage5) {
+                stage_5(stage5);
+                stage5 = chain_get(b->stage_5);
+                did_work = true;
+            }
+            if (did_work)
+                continue;
         }
-        if (did_work)
-            continue;
 
-        Fc *stage6 = chain_get(b->stage_6);
-        while (stage6 && max_stage > 5) {
-            stage_6(stage6);
-            stage6 = chain_get(b->stage_6);
-            did_work = true;
+        if (max_stage > 5) {
+            Fc *stage6 = chain_get(b->stage_6);
+            while (stage6) {
+                stage_6(stage6);
+                stage6 = chain_get(b->stage_6);
+                did_work = true;
+            }
+            if (did_work)
+                continue;
         }
-        if (did_work)
-            continue;
 
         if (b->event_count == b->events_done) {
             break;

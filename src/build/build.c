@@ -136,6 +136,7 @@ void cmd_build(int argc, char *argv[]) {
     b->events_done = 0;
     b->verbose = verbose;
     //
+    b->packages = array_make(alc, 100);
     b->all_ki_files = array_make(alc, 1000);
     b->main_func = NULL;
     b->str_buf = str_make(alc, 5000);
@@ -151,6 +152,9 @@ void cmd_build(int argc, char *argv[]) {
     b->stage_6 = chain_make(alc);
     //
     b->ir_ready = false;
+    b->optimize = optimize;
+    b->test = test;
+    b->debug = debug;
 
     Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));
     Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
@@ -164,6 +168,9 @@ void cmd_build(int argc, char *argv[]) {
 
     b->nsc_main = nsc_main;
     b->pkc_ki = pkc_ki;
+
+    array_push(b->packages, pkc_ki);
+    array_push(b->packages, pkc_main);
 
     //
     pthread_t thr;
@@ -179,6 +186,8 @@ void cmd_build(int argc, char *argv[]) {
     b->ir_ready = true;
 
     printf("🔗 Link executable\n");
+
+    stage_8(b);
 
     printf("✅ Done\n");
 }

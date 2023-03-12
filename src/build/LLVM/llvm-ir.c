@@ -99,7 +99,7 @@ Array *llvm_ir_fcall_args(LB *b, Scope *scope, Array *values) {
         char *lval = llvm_value(b, scope, val);
         char *buf = b->fc->sbuf;
         sprintf(buf, "%s noundef %s", llvm_type(b, val->rett), lval);
-        array_push(result, dups(b->alc, lval));
+        array_push(result, dups(b->alc, buf));
     }
     return result;
 }

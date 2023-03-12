@@ -24,9 +24,8 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         return res;
     }
     if (v->type == v_ptrv) {
-        Value *val = v->item;
         char *lval = llvm_assign_value(b, scope, v);
-        return llvm_ir_load(b, val->rett, lval);
+        return llvm_ir_load(b, v->rett, lval);
     }
     if (v->type == v_op) {
         VOp *vop = v->item;

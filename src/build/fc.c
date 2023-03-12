@@ -42,6 +42,8 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     chain_add(b->read_ki_file, fc);
     b->event_count++;
 
+    array_push(nsc->fcs, fc);
+
     return fc;
 }
 

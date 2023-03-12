@@ -65,6 +65,7 @@ void stage_4(Fc *);
 void stage_5(Fc *);
 void stage_6(Fc *);
 void stage_7(Fc *);
+void stage_8(Build *b);
 
 // Read
 Chunk *chunk_init(Allocator *alc);

@@ -65,6 +65,7 @@ struct Build {
     Pkc *pkc_ki;
     Func *main_func;
     //
+    Array *packages;
     Array *all_ki_files;
     Str *str_buf;
     Str *str_buf_io;
@@ -84,6 +85,9 @@ struct Build {
     int verbose;
     //
     bool ir_ready;
+    bool optimize;
+    bool test;
+    bool debug;
 };
 
 struct Fc {
