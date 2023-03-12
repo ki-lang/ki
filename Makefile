@@ -20,3 +20,7 @@ $(OBJECTS): debug/build/%.o: %.c
 
 clean:
 	rm -f ki $(OBJECTS) core
+
+os_linux:
+	gcc -g -O3 -c "./src/os/linux.c" -o /tmp/libki_os.o
+	ar rcs "./lib/libs/linux-x64/libki_os.a" /tmp/libki_os.o
