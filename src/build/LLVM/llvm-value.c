@@ -23,6 +23,9 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         sprintf(res, "%f", vfl->value);
         return res;
     }
+    if (v->type == v_string) {
+        return llvm_ir_string(b, v->item);
+    }
     if (v->type == v_ptrv) {
         char *lval = llvm_assign_value(b, scope, v);
         return llvm_ir_load(b, v->rett, lval);

@@ -237,3 +237,56 @@ char *llvm_ir_cast(LB *b, char *lval, Type *from_type, Type *to_type) {
 
     return result_var;
 }
+
+char *llvm_ir_string(LB *b, char *body) {
+    //
+    Fc *fc = b->fc;
+
+    b->strc++;
+    Str *ir = b->ir_global;
+
+    sprintf(fc->sbuf, "@.str.%d", b->strc);
+    char *var = dups(b->alc, fc->sbuf);
+
+    int len = strlen(body);
+    int blen = len + 8;
+
+    sprintf(fc->sbuf, "%s = private unnamed_addr constant [%d x i8] c\"\\01\\00\\00\\00", var, blen);
+    str_append_chars(ir, fc->sbuf);
+
+    // Bytes
+    // Len bytes
+    int len_buf = len;
+    char *len_ptr = (char *)&len_buf;
+    int c = 0;
+    while (c < 4) {
+        char ch = *(len_ptr + c);
+        c++;
+        str_append_char(ir, '\\');
+        char hex[20];
+        sprintf(hex, "%02X", ch);
+        if (strlen(hex) == 0) {
+            str_append_char(ir, '0');
+        }
+        str_append_chars(ir, hex);
+    }
+
+    // String bytes
+    int index = 0;
+    while (index < len) {
+        char ch = body[index];
+        index++;
+        str_append_char(ir, '\\');
+        char hex[20];
+        sprintf(hex, "%02X", ch);
+        if (strlen(hex) == 0) {
+            str_append_char(ir, '0');
+        }
+        str_append_chars(ir, hex);
+    }
+    //
+    str_append_chars(ir, "\", align 8\n");
+
+    sprintf(fc->sbuf, "getelementptr inbounds ([%d x i8], [%d x i8]* %s, i64 0, i64 0)", blen, blen, var);
+    return dups(b->alc, fc->sbuf);
+}
