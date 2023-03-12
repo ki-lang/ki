@@ -4,6 +4,7 @@
 void stage_1_func(Fc *fc);
 void stage_1_class(Fc *fc);
 void stage_1_enum(Fc *fc);
+void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
 void stage_1_link(Fc *fc);
 
@@ -34,6 +35,10 @@ void stage_1(Fc *fc) {
         }
         if (strcmp(token, "class") == 0) {
             stage_1_class(fc);
+            continue;
+        }
+        if (strcmp(token, "use") == 0) {
+            stage_1_use(fc);
             continue;
         }
         if (strcmp(token, "header") == 0) {
@@ -284,6 +289,47 @@ void stage_1_link(Fc *fc) {
     char *fn = str_to_chars(fc->alc, buf);
 
     array_push(fc->b->link_libs, fn);
+
+    tok_expect(fc, ";", true, true);
+}
+
+void stage_1_use(Fc *fc) {
+    //
+    Id *id = read_id(fc, true, true, true);
+
+    char *pkc_name = id->has_nsc ? id->nsc_name : NULL;
+    char *nsc_name = id->name;
+
+    Pkc *pkc = fc->nsc->pkc;
+    if (pkc_name) {
+        pkc = pkc_get_sub_package(pkc, pkc_name);
+        if (!pkc) {
+            sprintf(fc->sbuf, "Unknown package: '%s'", pkc_name);
+            fc_error(fc);
+        }
+    }
+
+    Nsc *nsc = pkc_load_nsc(pkc, nsc_name, fc);
+
+    char *as = nsc_name;
+    char *token = fc->token;
+    tok(fc, token, true, true);
+    if (strcmp(token, "as") == 0) {
+        tok(fc, token, true, true);
+        if (!is_valid_varname(token)) {
+            sprintf(fc->sbuf, "Invalid variable name syntax '%s'", token);
+            fc_error(fc);
+        }
+        name_taken_check(fc, fc->nsc->scope, token);
+        as = token;
+    } else {
+        rtok(fc);
+    }
+
+    Idf *idf = idf_init(fc->alc, idf_nsc);
+    idf->item = nsc;
+
+    map_set(fc->scope->identifiers, as, idf);
 
     tok_expect(fc, ";", true, true);
 }

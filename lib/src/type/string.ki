@@ -2,6 +2,8 @@
 // const:   {string_length:uxx}-1-{...string bytes...}
 // dynamic: {string_length:uxx}-0-{pad 3}-{ref_count:u32}-{...string bytes...}
 
+use mem;
+
 class String type:ptr {
 
 	func is_const() bool {
@@ -28,5 +30,18 @@ class String type:ptr {
 			adr += sizeof(uxx) + 5;
 		}
 		return adr;
+	}
+
+	func __add(String str) String {
+		return "123\n";
+		//let this_len = this.bytes();
+		//let str_len = str.bytes();
+		//let len = this_len + str_len;
+		//let new_str = String.make_empty(len);
+		//let mut new_adr = new_str.data();
+		//mem:copy(this.data(), new_adr, this_len);
+		//new_adr += this_len;
+		//mem:copy(str.data(), new_adr, str_len);
+		//return new_str;
 	}
 }

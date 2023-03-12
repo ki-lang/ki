@@ -134,6 +134,7 @@ struct Pkc {
     char *name;
     char *dir;
     char *hash;
+    Map *sub_packages;
     Map *namespaces;
     Config *config;
     Array *header_dirs;

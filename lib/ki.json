@@ -1,6 +1,7 @@
 {
 	"namespaces": {
 		"io": "src/io",
+		"mem": "src/mem",
 		"type": "src/type"
 	},
 	"headers": {

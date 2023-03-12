@@ -47,6 +47,7 @@ Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir);
 Nsc *pkc_get_nsc(Pkc *pkc, char *name);
 Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc);
 void pkc_cfg_save(Config *cfg);
+Pkc *pkc_get_sub_package(Pkc *pkc, char *name);
 
 // Nsc
 Nsc *nsc_init(Allocator *alc, Build *b, Pkc *pkc, char *name);
@@ -106,6 +107,7 @@ Scope *scope_find(Scope *scope, int type);
 
 // Func
 Func *func_init(Allocator *alc);
+void fcall_type_check(Fc *fc, Value *on, Array *values);
 
 // Class
 Class *class_init(Allocator *alc);

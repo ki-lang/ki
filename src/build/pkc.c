@@ -12,6 +12,7 @@ Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
 
     Pkc *pkc = al(alc, sizeof(Pkc));
     pkc->b = b;
+    pkc->sub_packages = map_make(alc);
     pkc->namespaces = map_make(alc);
     pkc->name = name;
     pkc->dir = dir;
@@ -185,4 +186,21 @@ void pkc_cfg_save(Config *cfg) {
     char *content = cJSON_Print(cfg->json);
     write_file(cfg->path, content, false);
     free(content);
+}
+
+Pkc *pkc_get_sub_package(Pkc *pkc, char *name) {
+    //
+    if (strcmp(name, "ki") == 0) {
+        return pkc->b->pkc_ki;
+    }
+
+    Pkc *res = map_get(pkc->sub_packages, name);
+    if (res) {
+        return res;
+    }
+
+    // Load from config
+    // TODO
+
+    return NULL;
 }

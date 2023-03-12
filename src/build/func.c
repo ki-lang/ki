@@ -16,3 +16,30 @@ Func *func_init(Allocator *alc) {
 
     return func;
 }
+
+void fcall_type_check(Fc *fc, Value *on, Array *values) {
+
+    Array *args = on->rett->func_args;
+
+    if (!args) {
+        sprintf(fc->sbuf, "Trying to call a function on a non-function value");
+        fc_error(fc);
+    }
+
+    if (values->length > args->length) {
+        sprintf(fc->sbuf, "Too many arguments");
+        fc_error(fc);
+    }
+    if (values->length < args->length) {
+        sprintf(fc->sbuf, "Missing arguments");
+        fc_error(fc);
+    }
+
+    for (int i = 0; i < args->length; i++) {
+        //
+        Arg *arg = array_get_index(args, i);
+        Value *val = array_get_index(values, i);
+
+        type_check(fc, arg->type, val->rett);
+    }
+}

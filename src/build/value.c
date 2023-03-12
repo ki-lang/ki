@@ -317,16 +317,15 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
     if (op == op_add) {
         Class *lclass = left->rett->class;
         if (lclass) {
-            // let cfunc = lclass.funcs.get("__add") or value null;
-            // verify cfunc {
-            //     let func = cfunc.func;
-            //     let values = Array<Value>.make(2);
-            //     values.push(left);
-            //     values.push(right);
-            //     let on = value_gen_func_ptr(func, null);
-            //     fcall_type_check(fc, on, values);
-            //     return value_gen_fcall(fc.b, scope, on, values, func.return_type);
-            // }
+            Func *func = map_get(lclass->funcs, "__add");
+            if (func) {
+                Array *values = array_make(alc, 4);
+                array_push(values, left);
+                array_push(values, right);
+                Value *on = vgen_fptr(alc, func, NULL);
+                fcall_type_check(fc, on, values);
+                return vgen_fcall(alc, on, values, func->rett);
+            }
         }
     }
 
