@@ -150,6 +150,8 @@ void stage_2_class_props(Fc *fc, Class *class) {
                 fc_error(fc);
             }
 
+            char *prop_name = dups(fc->alc, token);
+
             ClassProp *prop = class_prop_init(fc->alc);
             prop->index = class->props->values->length;
 
@@ -176,7 +178,7 @@ void stage_2_class_props(Fc *fc, Class *class) {
                 fc_error(fc);
             }
 
-            map_set(class->props, token, prop);
+            map_set(class->props, prop_name, prop);
 
             skip_until_char(fc, ";");
         }

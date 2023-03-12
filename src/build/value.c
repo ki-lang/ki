@@ -296,7 +296,9 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
             //
             return vgen_fptr(alc, func, NULL);
         }
-        if (get_char(fc, 0) == '{') {
+
+        tok(fc, token, true, true);
+        if (strcmp(token, "{") == 0) {
             // Class init
             Map *values = map_make(alc);
             tok(fc, token, false, true);
@@ -335,6 +337,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
             }
             return vgen_class_init(alc, class, values);
         }
+        rtok(fc);
     }
 
     if (idf->type == idf_fc) {
