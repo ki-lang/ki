@@ -112,7 +112,7 @@ void fcall_type_check(Fc *fc, Value *on, Array *values);
 
 // Class
 Class *class_init(Allocator *alc);
-ClassProp *class_prop_init(Allocator *alc);
+ClassProp *class_prop_init(Allocator *alc, Class *class, Type *type);
 bool class_check_size(Class *class);
 
 // Type

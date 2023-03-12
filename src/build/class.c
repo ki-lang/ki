@@ -17,10 +17,10 @@ Class *class_init(Allocator *alc) {
 
     return class;
 }
-ClassProp *class_prop_init(Allocator *alc) {
+ClassProp *class_prop_init(Allocator *alc, Class *class, Type *type) {
     ClassProp *prop = al(alc, sizeof(ClassProp));
-    prop->type = NULL;
-    prop->index = 0;
+    prop->type = type;
+    prop->index = class->props->keys->length;
     prop->value = NULL;
     prop->value_chunk = NULL;
 
