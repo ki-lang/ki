@@ -263,6 +263,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 
 Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) {
     //
+    char *token = fc->token;
+
     if (idf->type == idf_var) {
         Var *var = idf->item;
         return value_init(alc, v_var, idf->item, var->type);
@@ -275,6 +277,21 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_class) {
         Class *class = idf->item;
+    }
+
+    if (idf->type == idf_fc) {
+        Fc *rfc = idf->item;
+
+        tok_expect(fc, ".", true, false);
+        tok(fc, token, true, false);
+
+        Idf *idf_ = map_get(rfc->scope->identifiers, token);
+        if (!idf_) {
+            sprintf(fc->sbuf, "Unknown property: '%s'", token);
+            fc_error(fc);
+        }
+
+        return value_handle_idf(fc, alc, scope, id, idf_);
     }
 
     sprintf(fc->sbuf, "Cannot convert identifier to a value: '%s'", id->name);

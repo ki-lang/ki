@@ -249,17 +249,18 @@ char *llvm_ir_string(LB *b, char *body) {
     char *var = dups(b->alc, fc->sbuf);
 
     int len = strlen(body);
-    int blen = len + 8;
+    int blen = len + 9;
 
-    sprintf(fc->sbuf, "%s = private unnamed_addr constant [%d x i8] c\"\\01\\00\\00\\00", var, blen);
+    sprintf(fc->sbuf, "%s = private unnamed_addr constant [%d x i8] c\"", var, blen);
     str_append_chars(ir, fc->sbuf);
 
     // Bytes
+    int ptr_size = b->fc->b->ptr_size;
     // Len bytes
-    int len_buf = len;
+    size_t len_buf = len;
     char *len_ptr = (char *)&len_buf;
     int c = 0;
-    while (c < 4) {
+    while (c < ptr_size) {
         char ch = *(len_ptr + c);
         c++;
         str_append_char(ir, '\\');
@@ -270,6 +271,9 @@ char *llvm_ir_string(LB *b, char *body) {
         }
         str_append_chars(ir, hex);
     }
+
+    // Const byte
+    str_append_chars(ir, "\\01");
 
     // String bytes
     int index = 0;

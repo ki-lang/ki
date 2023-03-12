@@ -2,7 +2,7 @@
 header "ki_os" as os;
 
 func print(String str) void {
-	//let c = os.ki_os__fd_write(1, str.data(), str.bytes());
+	let c = os.ki_os__fd_write(1, str.data(), str.bytes());
 }
 
 func println(String str) void {
