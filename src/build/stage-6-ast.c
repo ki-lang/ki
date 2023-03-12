@@ -210,7 +210,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope) {
 
     tok_expect(fc, ";", false, true);
 
-    Decl *decl = decl_init(alc, name, type, val, mutable, false, false);
+    Decl *decl = decl_init(alc, scope, name, type, val, mutable, false, false);
     array_push(scope->ast, token_init(alc, tkn_declare, decl));
 
     Var *var = var_init(alc, decl, type);

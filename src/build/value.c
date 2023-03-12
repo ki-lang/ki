@@ -267,6 +267,10 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_var) {
         Var *var = idf->item;
+
+        VarInfo *vi = var_info_get(alc, scope, var->decl);
+        vi->owner_passes++;
+
         return value_init(alc, v_var, idf->item, var->type);
     }
 
