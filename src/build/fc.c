@@ -16,12 +16,13 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     fn = strip_ext(alc, fn);
 
     char *path_ir = al(alc, KI_PATH_MAX);
-    sprintf(path_ir, "%s/%s.ir", b->cache_dir, fn);
+    sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
 
     Fc *fc = al(alc, sizeof(Fc));
     fc->b = b;
     fc->path_ki = path_ki;
     fc->path_ir = path_ir;
+    fc->ir = NULL;
     fc->ir_hash = "";
     fc->nsc = nsc;
     fc->alc = alc;

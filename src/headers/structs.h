@@ -97,13 +97,13 @@ struct Fc {
     char *path_ir;
     char *token;
     char *sbuf;
+    char *ir;
     char *ir_hash;
     Id *id_buf;
     Nsc *nsc;
     Allocator *alc;
     Allocator *alc_ast;
     Array *deps;
-    Str *ir;
     Chunk *chunk;
     Chunk *chunk_prev;
     Scope *scope;

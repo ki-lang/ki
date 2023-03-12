@@ -35,7 +35,7 @@ void stage_7(Fc *fc) {
 
     llvm_build_ir(lb);
 
-    char *ir = str_to_chars(alc, lb->ir_final);
+    char *ir = str_to_chars(b->alc, lb->ir_final);
 
     char *ir_hash = al(alc, 64);
     md5(ir, ir_hash);
@@ -48,7 +48,10 @@ void stage_7(Fc *fc) {
         if (b->verbose > 1) {
             printf("🧪 Write IR : %s\n", fc->path_ir);
         }
-        write_file(fc->path_ir, ir, false);
+
+        fc->ir = ir;
+        chain_add(b->write_ir, fc);
+        b->event_count++;
     }
 
     //

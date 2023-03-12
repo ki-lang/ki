@@ -7,7 +7,7 @@ void *io_loop(void *build) {
     Chain *read_chain = b->read_ki_file;
     Chain *write_chain = b->write_ir;
 
-    while (!b->ir_ready) {
+    while (!b->ir_ready || b->event_count != b->events_done) {
         bool did_work = false;
 
         Fc *read_fc = chain_get(read_chain);
@@ -30,9 +30,7 @@ void *io_loop(void *build) {
 
         if (write_fc) {
             did_work = true;
-            char *content = str_to_chars(NULL, write_fc->ir);
-            write_file(write_fc->path_ir, content, false);
-            free(content);
+            write_file(write_fc->path_ir, write_fc->ir, false);
             b->events_done++;
             continue;
         }
