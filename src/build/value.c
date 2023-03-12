@@ -267,9 +267,27 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_var) {
         Var *var = idf->item;
+        Decl *decl = var->decl;
 
-        VarInfo *vi = var_info_get(alc, scope, var->decl);
-        vi->owner_passes++;
+        Type *type = var->type;
+        if (type->class && type->class->is_rc) {
+            //
+            bool is_class_pa = false;
+            if (get_char(fc, 0) == '.') {
+                chunk_move(fc->chunk, 1);
+                tok(fc, token, true, false);
+                ClassProp *prop = map_get(type->class->props, token);
+                if (prop) {
+                    is_class_pa = true;
+                }
+                rtok(fc);
+                chunk_move(fc->chunk, -1);
+            }
+            //
+            if (!is_class_pa) {
+                decl->times_used++;
+            }
+        }
 
         return value_init(alc, v_var, idf->item, var->type);
     }

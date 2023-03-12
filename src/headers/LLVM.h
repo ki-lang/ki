@@ -31,7 +31,7 @@ char *llvm_type_int(LB *b, int bytes);
 char *llvm_type_ixx(LB *b);
 
 // Ast
-char *llvm_write_ast(LB *b, Scope *scope);
+void llvm_write_ast(LB *b, Scope *scope);
 
 // IR
 void llvm_ir_jump(Str *ir, LLVMBlock *block);

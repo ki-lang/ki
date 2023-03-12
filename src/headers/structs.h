@@ -11,7 +11,6 @@ typedef struct Pkc Pkc;
 typedef struct Config Config;
 typedef struct Chunk Chunk;
 typedef struct Scope Scope;
-typedef struct VarInfo VarInfo;
 typedef struct MacroScope MacroScope;
 typedef struct Id Id;
 typedef struct Idf Idf;
@@ -160,12 +159,7 @@ struct Scope {
     Func *func;
     Array *ast;
     Map *lvars; // LLVM vars
-    Map *var_info;
     bool did_return;
-};
-struct VarInfo {
-    Decl *decl;
-    int owner_passes;
 };
 struct MacroScope {
     Map *identifiers;
@@ -251,6 +245,7 @@ struct Decl {
     Type *type;
     Value *value;
     Scope *scope;
+    int times_used;
     bool is_mut;
     bool is_global;
     bool is_arg;

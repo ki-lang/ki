@@ -10,7 +10,6 @@ Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast) {
     scope->func = NULL;
     scope->ast = has_ast ? array_make(alc, 10) : NULL;
     scope->lvars = NULL;
-    scope->var_info = map_make(alc);
     scope->did_return = false;
     return scope;
 }

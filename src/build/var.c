@@ -23,14 +23,6 @@ Var *var_init(Allocator *alc, Decl *decl, Type *type) {
     return v;
 }
 
-VarInfo *var_info_init(Allocator *alc, Decl *decl) {
-
-    VarInfo *v = al(alc, sizeof(VarInfo));
-    v->decl = decl;
-    v->owner_passes = 0;
-    return v;
-}
-
 Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut) {
     //
     Arg *v = al(alc, sizeof(Arg));
@@ -41,13 +33,4 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut) {
     v->value_chunk = NULL;
 
     return v;
-}
-
-VarInfo *var_info_get(Allocator *alc, Scope *scope, Decl *decl) {
-    //
-    VarInfo *vi = map_get(scope->var_info, decl->name);
-    if (!vi) {
-        vi = var_info_init(alc, decl);
-    }
-    return vi;
 }

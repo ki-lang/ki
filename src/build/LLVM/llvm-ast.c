@@ -3,7 +3,7 @@
 
 void llvm_if(LB *b, Scope *scope, TIf *ift, bool is_else, LLVMBlock *after);
 
-char *llvm_write_ast(LB *b, Scope *scope) {
+void llvm_write_ast(LB *b, Scope *scope) {
     //
     if (!scope->lvars)
         scope->lvars = map_make(b->alc);

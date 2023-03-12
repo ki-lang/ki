@@ -30,3 +30,18 @@ let c = x;
 # b.rc-- == 0 : free(b); (1)
 # c.rc-- == 0 : free(c); (0)
 ```
+
+
+
+let x = MyObject{...}; # initialized with rc 1
+let z = x;
+let a = z; ++ (2)
+let b = z; ++ (3)
+if(true) {
+	b = z; ++ (4)
+	b-- (3)
+}
+
+z--; (2)
+a--; (1) // unused
+b--; (0) // unused
