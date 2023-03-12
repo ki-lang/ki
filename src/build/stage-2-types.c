@@ -126,7 +126,7 @@ void stage_2_class_props(Fc *fc, Class *class) {
 
             // First arg
             if (!is_static) {
-                array_push(func->args, var_init(fc->alc, "this", type_gen_class(fc->alc, class), false, true, false));
+                array_push(func->args, arg_init(fc->alc, "this", type_gen_class(fc->alc, class), false));
             }
 
             skip_body(fc, ')');
@@ -246,12 +246,14 @@ void stage_2_func(Fc *fc, Func *func) {
     for (int i = 0; i < func->args->length; i++) {
         Arg *arg = array_get_index(func->args, i);
 
-        Var *var = var_init(alc, arg->name, arg->type, arg->is_mut, true, false);
+        Decl *decl = decl_init(alc, arg->name, arg->type, NULL, arg->is_mut, true, false);
+
+        Var *var = var_init(alc, decl, arg->type);
 
         Idf *idf = idf_init(alc, idf_var);
         idf->item = var;
 
-        map_set(func->scope->identifiers, var->name, idf);
+        map_set(func->scope->identifiers, arg->name, idf);
     }
 
     // Return type

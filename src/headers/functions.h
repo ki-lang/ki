@@ -130,7 +130,8 @@ char *type_to_str(Type *t, char *res);
 void type_check(Fc *fc, Type *t1, Type *t2);
 
 // Var
-Var *var_init(Allocator *alc, char *name, Type *type, bool is_mut, bool is_arg, bool is_global);
+Decl *decl_init(Allocator *alc, char *name, Type *type, Value *val, bool is_mut, bool is_arg, bool is_global);
+Var *var_init(Allocator *alc, Decl *decl, Type *type);
 Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
 
 // Value
@@ -156,7 +157,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line);
 // Token
 Token *token_init(Allocator *alc, int type, void *item);
 TIf *tgen_tif(Allocator *alc, Value *cond, Scope *scope, TIf *else_if);
-Token *tgen_declare(Allocator *alc, Var *var, Value *val);
+Token *tgen_declare(Allocator *alc, Decl *decl, Value *val);
 Token *tgen_assign(Allocator *alc, Value *left, Value *right);
 Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv);
 Token *tgen_while(Allocator *alc, Value *cond, Scope *scope);

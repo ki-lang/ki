@@ -14,20 +14,19 @@ char *llvm_write_ast(LB *b, Scope *scope) {
         Token *t = array_get_index(ast, i);
 
         if (t->type == tkn_declare) {
-            TDecl *decl = t->item;
-            Var *var = decl->var;
+            Decl *decl = t->item;
             Value *val = decl->value;
 
             char *lval = llvm_value(b, scope, val);
 
-            if (!var->is_mut) {
-                map_set(scope->lvars, var->name, lval);
+            if (!decl->is_mut) {
+                map_set(scope->lvars, decl->name, lval);
                 continue;
             }
 
-            char *lvar = llvm_alloca(b, var->type);
-            llvm_ir_store(b, var->type, lvar, lval);
-            map_set(scope->lvars, var->name, lvar);
+            char *lvar = llvm_alloca(b, decl->type);
+            llvm_ir_store(b, decl->type, lvar, lval);
+            map_set(scope->lvars, decl->name, lvar);
             continue;
         }
         if (t->type == tkn_assign) {

@@ -5,8 +5,9 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     //
     if (v->type == v_var) {
         Var *var = v->item;
+        Decl *decl = var->decl;
         char *var_val = llvm_get_var(b, scope, var);
-        if (!var->is_mut) {
+        if (!decl->is_mut) {
             return var_val;
         }
         return llvm_ir_load(b, var->type, var_val);

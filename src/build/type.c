@@ -129,7 +129,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, true);
         while (strcmp(token, ")") != 0) {
             rtok(fc);
-            Var *arg = var_init(alc, "", read_type(fc, alc, scope, true, true), false, true, false);
+            Arg *arg = arg_init(alc, "", read_type(fc, alc, scope, true, true), false);
             array_push(args, arg);
             tok(fc, token, true, true);
             if (strcmp(token, ",") == 0) {

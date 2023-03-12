@@ -19,6 +19,7 @@ typedef struct Class Class;
 typedef struct ClassProp ClassProp;
 typedef struct Func Func;
 typedef struct Enum Enum;
+typedef struct Decl Decl;
 typedef struct Var Var;
 typedef struct Arg Arg;
 
@@ -237,12 +238,18 @@ struct Enum {
     Fc *fc;
 };
 
-struct Var {
+struct Decl {
     char *name;
     Type *type;
+    Value *value;
+    int owner_passes;
     bool is_mut;
     bool is_global;
     bool is_arg;
+};
+struct Var {
+    Decl *decl;
+    Type *type;
 };
 struct Arg {
     char *name;

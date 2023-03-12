@@ -101,11 +101,12 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 char *sign = dups(alc, token);
                 if (val->type == v_var) {
                     Var *var = val->item;
-                    if (!var->is_mut) {
+                    Decl *decl = var->decl;
+                    if (!decl->is_mut) {
                         sprintf(fc->sbuf, "Cannot assign value to an immutable variable");
                         fc_error(fc);
                     }
-                    if (var->is_arg && val->rett->class->is_rc) {
+                    if (decl->is_arg && val->rett->class->is_rc) {
                         sprintf(fc->sbuf, "Assigning new values to argument variables is not allowed for performance reasons");
                         fc_error(fc);
                     }
@@ -209,8 +210,10 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope) {
 
     tok_expect(fc, ";", false, true);
 
-    Var *var = var_init(alc, name, type, mutable, false, false);
-    array_push(scope->ast, tgen_declare(alc, var, val));
+    Decl *decl = decl_init(alc, name, type, val, mutable, false, false);
+    array_push(scope->ast, token_init(alc, tkn_declare, decl));
+
+    Var *var = var_init(alc, decl, type);
 
     Idf *idf = idf_init(alc, idf_var);
     idf->item = var;

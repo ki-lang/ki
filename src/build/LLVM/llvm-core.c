@@ -115,11 +115,12 @@ char *llvm_alloca(LB *b, Type *type) {
 
 char *llvm_get_var(LB *b, Scope *start_scope, Var *var) {
     //
-    if (var->is_global) {
+    Decl *decl = var->decl;
+    if (decl->is_global) {
         return llvm_get_global(b, var);
     }
 
-    char *name = var->name;
+    char *name = decl->name;
     Scope *scope = start_scope;
     while (scope) {
         char *val = map_get(scope->lvars, name);
@@ -134,7 +135,8 @@ char *llvm_get_var(LB *b, Scope *start_scope, Var *var) {
 }
 
 char *llvm_get_global(LB *b, Var *var) {
-    char *name = var->name;
+    Decl *decl = var->decl;
+    char *name = decl->name;
     Scope *scope = b->fc->scope;
 
     char *val = map_get(scope->lvars, name);
