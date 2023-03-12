@@ -71,6 +71,16 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
     return value_init(alc, v_class_pa, item, prop->type);
 }
 
+Value *vgen_class_init(Allocator *alc, Class *class, Map *values) {
+    //
+    VClassInit *item = al(alc, sizeof(VClassInit));
+    item->class = class;
+    item->values = values;
+    Type *rett = type_gen_class(alc, class);
+    rett->owned = true;
+    return value_init(alc, v_class_init, item, rett);
+}
+
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
     //
     return value_init(alc, v_cast, val, to_type);

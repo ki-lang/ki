@@ -13,6 +13,7 @@ typedef struct VOp VOp;
 typedef struct VFcall VFcall;
 typedef struct VFuncPtr VFuncPtr;
 typedef struct VClassPA VClassPA;
+typedef struct VClassInit VClassInit;
 
 struct Value {
     int type;
@@ -53,6 +54,10 @@ struct VFuncPtr {
 struct VClassPA {
     Value *on;
     ClassProp *prop;
+};
+struct VClassInit {
+    Class *class;
+    Map *values;
 };
 
 #endif

@@ -130,6 +130,10 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             i++;
             token[pos] = nch;
             pos++;
+        } else if ((ch == '*' && nch == '*')) {
+            i++;
+            token[pos] = nch;
+            pos++;
         }
     }
 

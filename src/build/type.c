@@ -9,6 +9,8 @@ Type *type_init(Allocator *alc) {
     type->ptr_depth = 0;
     type->is_signed = false;
     type->nullable = false;
+    type->owned = false;
+    type->shared = false;
     type->class = NULL;
     type->enu = NULL;
     //

@@ -61,6 +61,7 @@ enum VALUETYPE {
     v_fptr,
     v_cast,
     v_class_pa,
+    v_class_init,
 };
 
 enum OPTYPE {

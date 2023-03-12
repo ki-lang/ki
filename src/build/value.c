@@ -296,6 +296,45 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
             //
             return vgen_fptr(alc, func, NULL);
         }
+        if (get_char(fc, 0) == '{') {
+            // Class init
+            Map *values = map_make(alc);
+            tok(fc, token, false, true);
+            while (strcmp(token, "}") != 0) {
+                ClassProp *prop = map_get(class->props, token);
+                if (!prop) {
+                    sprintf(fc->sbuf, "Unknown property: '%s'", token);
+                }
+                // TODO acct check
+
+                char name[KI_TOKEN_MAX];
+                strcpy(name, token);
+
+                tok_expect(fc, ":", false, true);
+
+                Value *value = read_value(fc, alc, scope, true, 0);
+
+                value = try_convert(fc, alc, value, prop->type);
+
+                type_check(fc, prop->type, value->rett);
+                map_set(values, name, value);
+                //
+                tok(fc, token, false, true);
+                if (strcmp(token, ",") == 0) {
+                    tok(fc, token, false, true);
+                }
+            }
+            for (int i = 0; i < class->props->keys->length; i++) {
+                char *key = array_get_index(class->props->keys, i);
+                ClassProp *prop = array_get_index(class->props->values, i);
+                Value *v = map_get(values, key);
+                if (!v && !prop->value) {
+                    sprintf(fc->sbuf, "Missing property: '%s'", key);
+                    fc_error(fc);
+                }
+            }
+            return vgen_class_init(alc, class, values);
+        }
     }
 
     if (idf->type == idf_fc) {

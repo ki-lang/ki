@@ -187,6 +187,8 @@ struct Type {
     bool is_signed;
     bool nullable;
     bool func_can_error;
+    bool owned;
+    bool shared;
 };
 
 struct Class {
