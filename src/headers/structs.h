@@ -53,6 +53,7 @@ struct ChainItem {
 struct Build {
     char *os;
     char *arch;
+    char *path_out;
     char *cache_dir;
     char *token;
     char *sbuf;

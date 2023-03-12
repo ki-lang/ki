@@ -23,7 +23,7 @@ void cmd_build(int argc, char *argv[]) {
 
     // Check options
     char *path_out = map_get(options, "-o");
-    if (!path_out || array_contains(args, "-h", "chars")) {
+    if (array_contains(args, "-h", "chars") || !path_out || strlen(path_out) == 0) {
         cmd_build_help();
     }
 
@@ -126,6 +126,7 @@ void cmd_build(int argc, char *argv[]) {
     //
     b->os = os;
     b->arch = arch;
+    b->path_out = path_out;
     b->ptr_size = ptr_size;
     b->alc = alc;
     b->alc_io = alc_io;

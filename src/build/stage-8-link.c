@@ -17,6 +17,7 @@
 
 void llvm_init(Build *b);
 void stage_8_compile_o(Build *b, Array *ir_files, char *path_o);
+void stage_8_link(Build *b, Array *o_files);
 
 LLVMTargetMachineRef g_target_machine;
 LLVMTargetDataRef g_target_data;
@@ -61,6 +62,8 @@ void stage_8(Build *b) {
             array_push(o_files, nsc->path_o);
         }
     }
+
+    stage_8_link(b, o_files);
 }
 
 void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
@@ -182,4 +185,45 @@ void llvm_init(Build *b) {
     // printf("triple: %s\n", LLVMGetDefaultTargetTriple());
     // printf("features: %s\n", LLVMGetHostCPUFeatures());
     // printf("datalayout: %s\n", datalayout_str);
+}
+
+void stage_8_link(Build *b, Array *o_files) {
+    //
+    Str *cmd = str_make(b->alc, 1000);
+
+    str_append_chars(cmd, "gcc -o ");
+    str_append_chars(cmd, b->path_out);
+    str_append_chars(cmd, " ");
+
+    for (int i = 0; i < o_files->length; i++) {
+        char *path = array_get_index(o_files, i);
+        str_append_chars(cmd, path);
+        str_append_chars(cmd, " ");
+    }
+
+    // for (int i = 0; i < b->link_dirs->length; i++) {
+    //     char *path = array_get_index(b->link_dirs, i);
+    //     str_append_chars(cmd, "-L");
+    //     str_append_chars(cmd, path);
+    //     str_append_chars(cmd, "/");
+    //     str_append_chars(cmd, b.os);
+    //     str_append_chars(cmd, "-");
+    //     str_append_chars(cmd, b.arch);
+    //     str_append_chars(cmd, " ");
+    // }
+
+    // for (int i = 0; i < b->link_libs->length; i++) {
+    //     char *name = array_get_index(b->link_libs, i);
+    //     str_append_chars(cmd, "-l");
+    //     str_append_chars(cmd, name);
+    //     str_append_chars(cmd, " ");
+    // }
+
+    // if (b->ldflags) {
+    //     str_append_chars(cmd, b->ldflags);
+    //     str_append_chars(cmd, " ");
+    // }
+
+    char *cmd_str = str_to_chars(b->alc, cmd);
+    system(cmd_str);
 }
