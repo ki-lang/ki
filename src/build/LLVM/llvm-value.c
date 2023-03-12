@@ -3,6 +3,10 @@
 
 char *llvm_value(LB *b, Scope *scope, Value *v) {
     //
+    Allocator *alc = b->alc;
+    Fc *fc = b->fc;
+    Build *build = fc->b;
+
     if (v->type == v_var) {
         Var *var = v->item;
         Decl *decl = var->decl;
@@ -14,13 +18,13 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     }
     if (v->type == v_vint) {
         VInt *vint = v->item;
-        char *res = al(b->alc, 20);
+        char *res = al(alc, 20);
         sprintf(res, "%ld", vint->value);
         return res;
     }
     if (v->type == v_float) {
         VFloat *vfl = v->item;
-        char *res = al(b->alc, 20);
+        char *res = al(alc, 20);
         sprintf(res, "%f", vfl->value);
         return res;
     }
@@ -170,6 +174,62 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         VClassPA *pa = v->item;
         char *lval = llvm_assign_value(b, scope, v);
         return llvm_ir_load(b, pa->prop->type, lval);
+    }
+    if (v->type == v_class_init) {
+        VClassInit *ci = v->item;
+        Class *class = ci->class;
+        Map *values = ci->values;
+
+        Func *func = ki_get_func(build, "mem", "alloc");
+        Value *fptr = vgen_fptr(alc, func, NULL);
+        Array *alloc_values = array_make(alc, func->args->length + 1);
+        Value *vint = vgen_vint(alc, class->size, type_gen(build, alc, "uxx"), false);
+        array_push(alloc_values, vint);
+        Value *fcall = vgen_fcall(alc, fptr, alloc_values, func->rett);
+        Value *cast = vgen_cast(alc, fcall, v->rett);
+
+        char *var_ob = llvm_value(b, scope, cast);
+        for (int i = 0; i < values->keys->length; i++) {
+            char *prop_name = array_get_index(values->keys, i);
+            Value *val = array_get_index(values->values, i);
+            ClassProp *prop = map_get(class->props, prop_name);
+            Type *type = prop->type;
+            char *ltype = llvm_type(b, type);
+            char *lval = llvm_value(b, scope, val);
+            char *pvar = llvm_var(b);
+
+            char index[10];
+            sprintf(index, "%d", prop->index);
+            char bytes[10];
+            sprintf(bytes, "%d", type->bytes);
+
+            Str *ir = llvm_b_ir(b);
+            str_append_chars(ir, "  ");
+            str_append_chars(ir, pvar);
+            str_append_chars(ir, " = getelementptr inbounds %struct.");
+            str_append_chars(ir, class->gname);
+            str_append_chars(ir, ", %struct.");
+            str_append_chars(ir, class->gname);
+            str_append_chars(ir, "* ");
+            str_append_chars(ir, var_ob);
+            str_append_chars(ir, ", i32 0, i32 ");
+            str_append_chars(ir, index);
+            str_append_chars(ir, "\n");
+
+            str_append_chars(ir, "  store ");
+            str_append_chars(ir, ltype);
+            str_append_chars(ir, " ");
+            str_append_chars(ir, lval);
+            str_append_chars(ir, ", ");
+            str_append_chars(ir, ltype);
+            str_append_chars(ir, "* ");
+            str_append_chars(ir, pvar);
+            str_append_chars(ir, ", align ");
+            str_append_chars(ir, bytes);
+            str_append_chars(ir, "\n");
+        }
+
+        return var_ob;
     }
     if (v->type == v_cast) {
         Value *val = v->item;

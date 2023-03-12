@@ -174,6 +174,7 @@ void cmd_build(int argc, char *argv[]) {
     array_push(b->packages, pkc_main);
 
     pkc_load_nsc(pkc_ki, "type", NULL);
+    pkc_load_nsc(pkc_ki, "mem", NULL);
     pkc_load_nsc(pkc_ki, "io", NULL);
 
     //
@@ -276,6 +277,20 @@ Class *ki_get_class(Build *b, char *ns, char *name) {
     Idf *idf = map_get(nsc->scope->identifiers, name);
     if (!idf || idf->type != idf_class) {
         sprintf(b->sbuf, "Class not found in ki-lib '%s:%s'", ns, name);
+        die(b->sbuf);
+    }
+
+    return idf->item;
+}
+
+Func *ki_get_func(Build *b, char *ns, char *name) {
+    //
+    Pkc *pkc = b->pkc_ki;
+    Nsc *nsc = pkc_get_nsc(pkc, ns);
+
+    Idf *idf = map_get(nsc->scope->identifiers, name);
+    if (!idf || idf->type != idf_func) {
+        sprintf(b->sbuf, "Func not found in ki-lib '%s:%s'", ns, name);
         die(b->sbuf);
     }
 

@@ -32,6 +32,7 @@ char *dups(Allocator *alc, char *str);
 // Build
 void cmd_build(int argc, char **argv);
 Class *ki_get_class(Build *b, char *ns, char *name);
+Func *ki_get_func(Build *b, char *ns, char *name);
 
 // Chain
 Chain *chain_make(Allocator *alc);
