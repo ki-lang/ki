@@ -1,2 +1,29 @@
 
 
+func copy(ptr mut from, ptr mut to, uxx mut len) void {
+
+  while(len > sizeof(ptr)){
+	  len -= sizeof(ptr);
+	  ptrv to as uxx = ptrv from as uxx;
+	  from += sizeof(ptr);
+	  to += sizeof(ptr);
+  }
+  while(len > 3){
+	  len -= 4;
+	  ptrv to as u32 = ptrv from as u32;
+	  from += 4;
+	  to += 4;
+  }
+  while(len > 1){
+	  len -= 2;
+	  ptrv to as u16 = ptrv from as u16;
+	  from += 2;
+	  to += 2;
+  }
+  while (len > 0){
+	  len-=1;
+	  ptrv to as u8 = ptrv from as u8;
+	  from+=1;
+	  to+=1;
+  }
+}

@@ -6,6 +6,7 @@ void stage_6_func(Fc *fc, Func *func);
 void token_declare(Allocator *alc, Fc *fc, Scope *scope);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
 TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond);
+void token_while(Allocator *alc, Fc *fc, Scope *scope);
 
 void stage_6(Fc *fc) {
     //
@@ -80,6 +81,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         if (strcmp(token, "if") == 0) {
             TIf *tif = token_if(alc, fc, scope, true);
             array_push(scope->ast, token_init(alc, tkn_if, tif));
+            continue;
+        }
+
+        if (strcmp(token, "while") == 0) {
+            token_while(alc, fc, scope);
             continue;
         }
 
@@ -268,4 +274,19 @@ TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond) {
     }
 
     return tgen_tif(alc, cond, sub, else_if);
+}
+
+void token_while(Allocator *alc, Fc *fc, Scope *scope) {
+    //
+    Value *cond = read_value(fc, alc, scope, true, 0);
+
+    if (!type_is_bool(cond->rett, fc->b)) {
+        sprintf(fc->sbuf, "Value must return a bool type");
+        fc_error(fc);
+    }
+
+    tok_expect(fc, "{", false, true);
+
+    Scope *sub = scope_init(alc, sct_loop, scope, true);
+    read_ast(fc, sub, false);
 }

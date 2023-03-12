@@ -6,8 +6,9 @@
 #include "value.h"
 
 typedef struct Token Token;
-typedef struct TIf TIf;
 typedef struct TDecl TDecl;
+typedef struct TIf TIf;
+typedef struct TWhile TWhile;
 
 struct Token {
     int type;
@@ -22,6 +23,10 @@ struct TIf {
     Value *cond;
     Scope *scope;
     TIf *else_if;
+};
+struct TWhile {
+    Value *cond;
+    Scope *scope;
 };
 
 #endif

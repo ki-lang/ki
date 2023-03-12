@@ -40,3 +40,11 @@ Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv) {
     fscope->did_return = true;
     return token_init(alc, tkn_return, retv);
 }
+
+Token *tgen_while(Allocator *alc, Value *cond, Scope *scope) {
+    //
+    TWhile *w = al(alc, sizeof(TWhile));
+    w->cond = cond;
+    w->scope = scope;
+    return token_init(alc, tkn_while, w);
+}
