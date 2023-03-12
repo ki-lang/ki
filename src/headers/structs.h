@@ -68,6 +68,8 @@ struct Build {
     //
     Array *packages;
     Array *all_ki_files;
+    Array *link_dirs;
+    Array *link_libs;
     Str *str_buf;
     Str *str_buf_io;
     //
@@ -134,6 +136,7 @@ struct Pkc {
     char *hash;
     Map *namespaces;
     Config *config;
+    Array *header_dirs;
 };
 struct Config {
     char *path;

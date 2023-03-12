@@ -139,6 +139,8 @@ void cmd_build(int argc, char *argv[]) {
     //
     b->packages = array_make(alc, 100);
     b->all_ki_files = array_make(alc, 1000);
+    b->link_libs = array_make(alc, 160);
+    b->link_dirs = array_make(alc, 40);
     b->main_func = NULL;
     b->str_buf = str_make(alc, 5000);
     b->str_buf_io = str_make(alc_io, 10000);

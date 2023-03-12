@@ -17,6 +17,7 @@ Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
     pkc->dir = dir;
     pkc->hash = al(alc, 64);
     pkc->config = NULL;
+    pkc->header_dirs = array_make(alc, 10);
 
     md5(dir, pkc->hash);
 
@@ -123,6 +124,62 @@ void pkc_load_config(Pkc *pkc) {
     cfg->json = json;
 
     pkc->config = cfg;
+
+    Build *b = pkc->b;
+
+    cJSON *headers = cJSON_GetObjectItemCaseSensitive(cfg->json, "headers");
+    if (headers) {
+        cJSON *dirs = cJSON_GetObjectItemCaseSensitive(cfg->json, "dirs");
+        if (dirs) {
+            char fullpath[KI_PATH_MAX];
+            cJSON *cdir = dirs->child;
+            while (cdir) {
+
+                strcpy(fullpath, pkc->dir);
+                strcat(fullpath, "/");
+                strcat(fullpath, cdir->valuestring);
+                strcat(fullpath, "/");
+
+                if (!file_exists(fullpath)) {
+                    printf("Header directory not found: %s => (%s)\n", cdir->valuestring, fullpath);
+                    exit(1);
+                }
+
+                if (!array_contains(pkc->header_dirs, fullpath, "chars")) {
+                    array_push(pkc->header_dirs, dups(b->alc, fullpath));
+                }
+
+                cdir = cdir->next;
+            }
+        }
+    }
+
+    cJSON *link = cJSON_GetObjectItemCaseSensitive(cfg->json, "link");
+    if (link) {
+        cJSON *dirs = cJSON_GetObjectItemCaseSensitive(cfg->json, "dirs");
+        if (dirs) {
+            char fullpath[KI_PATH_MAX];
+            cJSON *cdir = dirs->child;
+            while (cdir) {
+
+                strcpy(fullpath, pkc->dir);
+                strcat(fullpath, "/");
+                strcat(fullpath, cdir->valuestring);
+                strcat(fullpath, "/");
+
+                if (!file_exists(fullpath)) {
+                    printf("Link directory not found: %s => (%s)\n", cdir->valuestring, fullpath);
+                    exit(1);
+                }
+
+                if (!array_contains(b->link_dirs, fullpath, "chars")) {
+                    array_push(b->link_dirs, dups(b->alc, fullpath));
+                }
+
+                cdir = cdir->next;
+            }
+        }
+    }
 }
 
 void pkc_cfg_save(Config *cfg) {
