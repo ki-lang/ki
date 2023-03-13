@@ -204,6 +204,10 @@ struct Class {
     Chunk *chunk_body;
     Map *props;
     Map *funcs;
+    Func *func_ref;
+    Func *func_deref;
+    Func *func_deref_props;
+    Func *func_free;
     int type;
     int size;
     bool is_rc;
@@ -211,6 +215,8 @@ struct Class {
     bool packed;
     bool is_generic_base;
     bool allow_math;
+    bool must_ref;
+    bool must_deref;
 };
 struct ClassProp {
     Type *type;

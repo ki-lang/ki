@@ -7,6 +7,8 @@ Class *class_init(Allocator *alc) {
     class->type = ct_struct;
     class->size = 0;
     class->is_rc = true;
+    class->must_deref = true;
+    class->must_ref = true;
     class->is_signed = false;
     class->packed = true;
     class->is_generic_base = false;
@@ -14,6 +16,11 @@ Class *class_init(Allocator *alc) {
     class->props = map_make(alc);
     class->funcs = map_make(alc);
     class->allow_math = false;
+
+    class->func_ref = NULL;
+    class->func_deref = NULL;
+    class->func_deref_props = NULL;
+    class->func_free = NULL;
 
     return class;
 }
@@ -105,4 +112,17 @@ Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name_, Array
     map_set(class->funcs, name, func);
 
     return func;
+}
+
+void class_generate_deref_props(Class *class) {
+    //
+    Func *func = map_get(class->funcs, "__deref_props");
+    if (func->chunk_body)
+        return;
+}
+void class_generate_free(Class *class) {
+    //
+    Func *func = map_get(class->funcs, "__free");
+    if (func->chunk_body)
+        return;
 }

@@ -4,6 +4,9 @@
 void stage_5_class(Fc *fc, Class *class);
 void stage_5_func(Fc *fc, Func *func);
 
+void class_generate_free(Class *class);
+void class_generate_deref_props(Class *class);
+
 void stage_5(Fc *fc) {
     //
     Build *b = fc->b;
@@ -54,12 +57,12 @@ void stage_5_class(Fc *fc, Class *class) {
         prop->value = val;
     }
 
-    // if class.type == ClassType.struct {
-    // 	if class.use_rc {
-    // 		class.generate_sub_ref();
-    // 	}
-    // 	class.generate_free();
-    // }
+    if (class->type == ct_struct) {
+        if (class->is_rc && class->func_deref_props) {
+            class_generate_deref_props(class);
+        }
+        class_generate_free(class);
+    }
 }
 
 void stage_5_func(Fc *fc, Func *func) {

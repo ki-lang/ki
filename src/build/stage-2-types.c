@@ -4,6 +4,7 @@
 void stage_2_class(Fc *fc, Class *class);
 void stage_2_class_props(Fc *fc, Class *class);
 void stage_2_func(Fc *fc, Func *func);
+void stage_2_class_defaults(Fc *fc, Class *class);
 
 void stage_2(Fc *fc) {
     //
@@ -18,6 +19,13 @@ void stage_2(Fc *fc) {
             printf("> Scan class properties: %s\n", class->dname);
         }
         stage_2_class(fc, class);
+    }
+    for (int i = 0; i < fc->classes->length; i++) {
+        Class *class = array_get_index(fc->classes, i);
+        if (b->verbose > 1) {
+            printf("> Class generate defaults: %s\n", class->dname);
+        }
+        stage_2_class_defaults(fc, class);
     }
     for (int i = 0; i < fc->funcs->length; i++) {
         Func *func = array_get_index(fc->funcs, i);
@@ -53,11 +61,7 @@ void stage_2_class(Fc *fc, Class *class) {
             ClassProp *prop = class_prop_init(b->alc, class, type);
             prop->value = vgen_vint(b->alc, 1, type, false);
             map_set(class->props, "_RC", prop);
-            // Define __deref (TODO)
-            class_define_func(fc, class, false, "__deref", NULL, type_gen_void(b->alc));
         }
-        // Define __free (TODO)
-        class_define_func(fc, class, false, "__free", NULL, type_gen_void(b->alc));
     }
 
     //
@@ -121,6 +125,16 @@ void stage_2_class_props(Fc *fc, Class *class) {
             }
 
             Func *func = class_define_func(fc, class, is_static, token, NULL, NULL);
+
+            if (strcmp(func->name, "__ref") == 0) {
+                class->func_ref = func;
+                class->must_ref = true;
+            } else if (strcmp(func->name, "__deref") == 0) {
+                class->func_deref = func;
+                class->must_deref = true;
+            } else if (strcmp(func->name, "__free") == 0) {
+                class->func_free = func;
+            }
 
             tok_expect(fc, "(", true, true);
 
@@ -333,4 +347,29 @@ void stage_2_func(Fc *fc, Func *func) {
     //         fc_error(fc, "main() should not return errors", NULL);
     //     }
     // }
+}
+
+void stage_2_class_defaults(Fc *fc, Class *class) {
+    //
+
+    // Generate __free / __deref / _RC
+    if (class->type == ct_struct) {
+        Build *b = fc->b;
+        if (class->is_rc) {
+            // Define __deref_props
+            // Only generate the function if there are properties that can be dereferenced
+            Array *props = class->props->values;
+            for (int i = 0; i < props->length; i++) {
+                ClassProp *prop = array_get_index(props, i);
+                Class *class = prop->type->class;
+                if (class && class->must_deref) {
+                    class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, type_gen_void(b->alc));
+                    break;
+                }
+            }
+        }
+        // Define __free
+        if (!class->func_free)
+            class->func_free = class_define_func(fc, class, false, "__free", NULL, type_gen_void(b->alc));
+    }
 }

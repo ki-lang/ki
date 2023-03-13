@@ -154,10 +154,14 @@ void stage_1_class(Fc *fc) {
             if (strcmp(token, "ptr") == 0) {
                 class->type = ct_ptr;
                 class->is_rc = false;
+                class->must_ref = false;
+                class->must_deref = false;
                 class->size = fc->b->ptr_size;
             } else if (strcmp(token, "int") == 0 || strcmp(token, "float") == 0) {
                 class->type = strcmp(token, "int") == 0 ? ct_int : ct_float;
                 class->is_rc = false;
+                class->must_ref = false;
+                class->must_deref = false;
                 tok_expect(fc, ":", true, false);
                 tok(fc, token, true, false);
                 int size = 0;
@@ -197,6 +201,8 @@ void stage_1_class(Fc *fc) {
             }
         } else if (strcmp(token, "norc") == 0) {
             class->is_rc = false;
+            class->must_ref = false;
+            class->must_deref = false;
         } else if (strcmp(token, "packed") == 0) {
             class->packed = true;
         } else if (strcmp(token, "math") == 0) {
