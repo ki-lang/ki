@@ -141,6 +141,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, val->rett);
                 type_check(fc, val->rett, right->rett);
 
+                upref_value_check(alc, scope, right);
+
                 array_push(scope->ast, tgen_assign(alc, val, right));
                 tok_expect(fc, ";", false, true);
 
@@ -149,14 +151,10 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     Decl *decl = var->decl;
                     Type *type = decl->type;
                     if (type->class && type->class->is_rc) {
-                        // Assignable value should not increase uses
-                        decl->times_used--;
-                        UprefSlot *up = map_get(scope->upref_slots, decl->name);
-                        up->count--;
                         // New upref slots
                         Scope *scope_ = scope;
                         while (scope_) {
-                            up = map_get(scope_->upref_slots, decl->name);
+                            UprefSlot *up = map_get(scope_->upref_slots, decl->name);
                             if (up) {
                                 map_unset(scope_->upref_slots, decl->name);
                             }
@@ -226,6 +224,8 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope) {
     } else {
         type = val->rett;
     }
+
+    upref_value_check(alc, scope, val);
 
     if (type_is_void(type)) {
         sprintf(fc->sbuf, "Variable declaration: Right side does not return a value");
@@ -323,4 +323,27 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
     read_ast(fc, sub, false);
 
     array_push(scope->ast, tgen_while(alc, cond, sub));
+}
+
+void upref_value_check(Allocator *alc, Scope *scope, Value *val) {
+    //
+    Type *type = val->rett;
+
+    if (type->class && type->class->is_rc) {
+        if (val->type == v_var) {
+            Var *var = val->item;
+            Decl *decl = var->decl;
+            decl->times_used++;
+            UprefSlot *up = map_get(scope->upref_slots, decl->name);
+            if (!up) {
+                up = upref_slot_init(alc, decl);
+                array_push(scope->ast, token_init(alc, tkn_upref_slot, up));
+                map_set(scope->upref_slots, decl->name, up);
+            }
+            up->count++;
+        }
+        if (val->type == v_class_pa) {
+            // TODO upref token
+        }
+    }
 }

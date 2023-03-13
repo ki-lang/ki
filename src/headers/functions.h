@@ -142,13 +142,14 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op);
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
 bool value_assignable(Value *val);
+void upref_value_check(Allocator *alc, Scope *scope, Value *val);
 
 Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type);
 Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type);
 Value *vgen_ptrv(Allocator *alc, Value *on, Type *as);
 Value *vgen_op(Allocator *alc, Build *b, Value *left, Value *right, int op, bool is_ptr);
 Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op);
-Value *vgen_fcall(Allocator *alc, Value *on, Array *args, Type *rett);
+Value *vgen_fcall(Allocator *alc, Value *on, Array *args, Type *rett, Scope *scope);
 Value *vgen_fptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
 Value *vgen_class_init(Allocator *alc, Class *class, Map *values);

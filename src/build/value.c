@@ -312,35 +312,6 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_var) {
         Var *var = idf->item;
-        Decl *decl = var->decl;
-
-        Type *type = var->type;
-        if (type->class && type->class->is_rc) {
-            //
-            bool is_class_pa = false;
-            if (get_char(fc, 0) == '.') {
-                chunk_move(fc->chunk, 1);
-                tok(fc, token, true, false);
-                ClassProp *prop = map_get(type->class->props, token);
-                if (prop) {
-                    is_class_pa = true;
-                }
-                rtok(fc);
-                chunk_move(fc->chunk, -1);
-            }
-            //
-            if (!is_class_pa) {
-                decl->times_used++;
-                UprefSlot *up = map_get(scope->upref_slots, decl->name);
-                if (!up) {
-                    up = upref_slot_init(alc, decl);
-                    array_push(scope->ast, token_init(alc, tkn_upref_slot, up));
-                    map_set(scope->upref_slots, decl->name, up);
-                }
-                up->count++;
-            }
-        }
-
         return value_init(alc, v_var, idf->item, var->type);
     }
 
@@ -462,7 +433,7 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
                 array_push(values, right);
                 Value *on = vgen_fptr(alc, func, NULL);
                 fcall_type_check(fc, on, values);
-                return vgen_fcall(alc, on, values, func->rett);
+                return vgen_fcall(alc, on, values, func->rett, scope);
             }
         }
     }
@@ -784,7 +755,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    return vgen_fcall(alc, on, values, rett);
+    return vgen_fcall(alc, on, values, rett, scope);
 }
 
 bool value_assignable(Value *val) {
