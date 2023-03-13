@@ -153,10 +153,18 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                         decl->times_used--;
                         UprefSlot *up = map_get(scope->upref_slots, decl->name);
                         up->count--;
-                        // New slot
-                        up = upref_slot_init(alc, decl);
-                        array_push(scope->ast, token_init(alc, tkn_upref_slot, up));
-                        map_set(scope->upref_slots, decl->name, up);
+                        // New upref slots
+                        Scope *scope_ = scope;
+                        while (scope_) {
+                            up = map_get(scope_->upref_slots, decl->name);
+                            if (up) {
+                                map_unset(scope_->upref_slots, decl->name);
+                            }
+                            if (scope_->type == sct_func) {
+                                break;
+                            }
+                            scope_ = scope_->parent;
+                        }
                     }
                 }
                 continue;
@@ -235,12 +243,6 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope) {
     idf->item = var;
 
     map_set(scope->identifiers, name, idf);
-
-    if (type->class && type->class->is_rc) {
-        UprefSlot *up = upref_slot_init(alc, decl);
-        array_push(scope->ast, token_init(alc, tkn_upref_slot, up));
-        map_set(scope->upref_slots, name, up);
-    }
 }
 
 void token_return(Allocator *alc, Fc *fc, Scope *scope) {
