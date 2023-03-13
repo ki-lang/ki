@@ -45,6 +45,7 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, bool can_er
 char *llvm_ir_func_ptr(LB *b, Func *func);
 char *llvm_ir_cast(LB *b, char *lval, Type *from_type, Type *to_type);
 char *llvm_ir_string(LB *b, char *body);
+char *llvm_ir_RC(LB *b, char *on, Class *class, int amount, bool free_check);
 
 struct LB {
     Fc *fc;

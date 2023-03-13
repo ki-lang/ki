@@ -31,9 +31,18 @@ void llvm_write_ast(LB *b, Scope *scope) {
         }
         if (t->type == tkn_assign) {
             VPair *pair = t->item;
-            char *lvar = llvm_assign_value(b, scope, pair->left);
+            Value *left = pair->left;
+            Type *lt = left->rett;
+            char *lvar = llvm_assign_value(b, scope, left);
+
+            if (left->type == v_var && lt->class && lt->class->is_rc) {
+                // Reduce ref
+                char *load = llvm_ir_load(b, lt, lvar);
+                llvm_ir_RC(b, load, lt->class, -1, true);
+            }
+
             char *lval = llvm_value(b, scope, pair->right);
-            llvm_ir_store(b, pair->left->rett, lvar, lval);
+            llvm_ir_store(b, lt, lvar, lval);
             continue;
         }
         if (t->type == tkn_upref_slot) {
@@ -41,31 +50,14 @@ void llvm_write_ast(LB *b, Scope *scope) {
             Decl *decl = up->decl;
             if (decl->times_used > 1 && up->count > 0) {
                 // printf("UP:%d | %d\n", up->count, decl->times_used);
-                Class *class = decl->type->class;
-                ClassProp *prop = map_get(class->props, "_RC");
+                Type *type = decl->type;
 
                 char *var_val = llvm_get_var(b, scope, decl);
                 if (decl->is_mut) {
-                    var_val = llvm_ir_load(b, decl->type, var_val);
+                    var_val = llvm_ir_load(b, type, var_val);
                 }
 
-                char *rc = llvm_ir_class_prop_access(b, class, var_val, prop);
-                char *rcv = llvm_ir_load(b, prop->type, rc);
-
-                char num[20];
-                sprintf(num, "%d", up->count);
-
-                Str *ir = llvm_b_ir(b);
-                char *buf = llvm_var(b);
-                str_append_chars(ir, "  ");
-                str_append_chars(ir, buf);
-                str_append_chars(ir, " = add nsw i32 ");
-                str_append_chars(ir, rcv);
-                str_append_chars(ir, ", ");
-                str_append_chars(ir, num);
-                str_append_chars(ir, "\n");
-
-                llvm_ir_store(b, prop->type, rc, buf);
+                llvm_ir_RC(b, var_val, type->class, up->count, false);
             }
             continue;
         }

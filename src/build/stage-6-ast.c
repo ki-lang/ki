@@ -143,6 +143,22 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
                 array_push(scope->ast, tgen_assign(alc, val, right));
                 tok_expect(fc, ";", false, true);
+
+                if (val->type == v_var) {
+                    Var *var = val->item;
+                    Decl *decl = var->decl;
+                    Type *type = decl->type;
+                    if (type->class && type->class->is_rc) {
+                        // Assignable value should not increase uses
+                        decl->times_used--;
+                        UprefSlot *up = map_get(scope->upref_slots, decl->name);
+                        up->count--;
+                        // New slot
+                        up = upref_slot_init(alc, decl);
+                        array_push(scope->ast, token_init(alc, tkn_upref_slot, up));
+                        map_set(scope->upref_slots, decl->name, up);
+                    }
+                }
                 continue;
             }
             rtok(fc);

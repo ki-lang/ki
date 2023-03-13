@@ -39,5 +39,5 @@ let c = x;
 # a-- // uses == 0 (3)
 # b-- // uses == 0 (2)
 # c-- // uses == 0 (1)
-# x-- // uses > 1 (0)
+# x-- // uses > 1 (0) -> free
 ```

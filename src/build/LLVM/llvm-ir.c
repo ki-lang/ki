@@ -294,3 +294,30 @@ char *llvm_ir_string(LB *b, char *body) {
     sprintf(fc->sbuf, "getelementptr inbounds ([%d x i8], [%d x i8]* %s, i64 0, i64 0)", blen, blen, var);
     return dups(b->alc, fc->sbuf);
 }
+
+char *llvm_ir_RC(LB *b, char *on, Class *class, int amount, bool free_check) {
+    //
+    ClassProp *prop = map_get(class->props, "_RC");
+
+    char *rc = llvm_ir_class_prop_access(b, class, on, prop);
+    char *rcv = llvm_ir_load(b, prop->type, rc);
+
+    char num[20];
+    sprintf(num, "%d", amount);
+
+    Str *ir = llvm_b_ir(b);
+    char *buf = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, buf);
+    str_append_chars(ir, " = add nsw i32 ");
+    str_append_chars(ir, rcv);
+    str_append_chars(ir, ", ");
+    str_append_chars(ir, num);
+    str_append_chars(ir, "\n");
+
+    llvm_ir_store(b, prop->type, rc, buf);
+
+    if (free_check) {
+        // TODO
+    }
+}
