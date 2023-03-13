@@ -42,3 +42,7 @@ let c = x;
 # c-- // uses == 0 (1)
 # x-- // uses > 1 (0) -> free
 ```
+
+# TODO
+
+- type check internal funcs : __ref __deref ...

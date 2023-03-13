@@ -344,8 +344,8 @@ void stage_2_class_defaults(Fc *fc, Class *class) {
             Array *props = class->props->values;
             for (int i = 0; i < props->length; i++) {
                 ClassProp *prop = array_get_index(props, i);
-                Class *class = prop->type->class;
-                if (class && class->must_deref) {
+                Class *pclass = prop->type->class;
+                if (pclass && pclass->must_deref) {
                     class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, type_gen_void(b->alc));
                     break;
                 }
