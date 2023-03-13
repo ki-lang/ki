@@ -221,6 +221,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
             sprintf(fc->sbuf, "Variable not found, nothing to replace '%s'", token);
             fc_error(fc);
         }
+        map_unset(scope->upref_slots, token);
     } else {
         name_taken_check(fc, scope, token);
     }

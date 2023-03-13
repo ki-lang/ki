@@ -5,7 +5,6 @@ func alloc(uxx size) ptr {
 	return os.ki_os__alloc(size);
 }
 func free(ptr adr) void {
-	print("FREE\n");
 	os.ki_os__free(adr);
 }
 
