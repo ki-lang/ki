@@ -49,7 +49,6 @@ enum TOKENTYPE {
     tkn_each,
     tkn_upref_slot,
     tkn_ref,
-    tkn_deref,
     tkn_tmp_var,
 };
 

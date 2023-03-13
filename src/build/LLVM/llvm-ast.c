@@ -54,13 +54,6 @@ void llvm_write_ast(LB *b, Scope *scope) {
             }
             continue;
         }
-        if (t->type == tkn_deref) {
-            Value *val = t->item;
-            Scope *sub = scope_init(alc, sct_default, scope, true);
-            class_ref_change(alc, sub, val, -1);
-            llvm_write_ast(b, sub);
-            continue;
-        }
         if (t->type == tkn_tmp_var) {
             TempVar *tmp = t->item;
             tmp->ir_value = llvm_value(b, scope, tmp->value);
