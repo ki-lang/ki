@@ -8,10 +8,12 @@ Func *func_init(Allocator *alc) {
     func->args = array_make(alc, 8);
     func->args_by_name = map_make(alc);
     func->act = 0;
-    func->is_static = false;
-    func->is_generated = false;
     func->chunk_args = NULL;
     func->chunk_body = NULL;
+
+    func->is_static = false;
+    func->is_generated = false;
+    func->call_derefs = true;
 
     func->errors = NULL;
     func->can_error = false;
@@ -49,6 +51,7 @@ void fcall_type_check(Fc *fc, Value *on, Array *values) {
 void func_make_arg_decls(Func *func) {
     //
     Allocator *alc = func->fc->alc;
+    Scope *fscope = func->scope;
 
     for (int i = 0; i < func->args->length; i++) {
         Arg *arg = array_get_index(func->args, i);
@@ -63,5 +66,9 @@ void func_make_arg_decls(Func *func) {
         map_set(func->scope->identifiers, arg->name, idf);
 
         arg->decl = decl;
+
+        if (!fscope->decls)
+            fscope->decls = array_make(alc, 8);
+        array_push(fscope->decls, decl);
     }
 }

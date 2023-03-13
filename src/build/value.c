@@ -286,7 +286,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
             }
 
             if (!magic) {
-                VPair *pair = malloc(sizeof(VPair));
+                VPair *pair = al(alc, sizeof(VPair));
                 pair->left = v;
                 pair->right = right;
                 value_equalize_types(alc, fc, scope, pair);

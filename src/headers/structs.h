@@ -242,6 +242,7 @@ struct Func {
     bool is_static;
     bool is_generated;
     bool can_error;
+    bool call_derefs;
 };
 struct Enum {
     char *name;
