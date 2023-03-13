@@ -48,6 +48,8 @@ enum TOKENTYPE {
     tkn_exit,
     tkn_each,
     tkn_upref_slot,
+    tkn_ref,
+    tkn_deref,
 };
 
 enum VALUETYPE {

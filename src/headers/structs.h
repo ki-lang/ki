@@ -160,6 +160,7 @@ struct Scope {
     Map *upref_slots;
     Func *func;
     Array *ast;
+    Array *decls;
     Map *lvars; // LLVM vars
     bool did_return;
 };

@@ -12,6 +12,7 @@ Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast) {
     scope->ast = has_ast ? array_make(alc, 10) : NULL;
     scope->lvars = NULL;
     scope->did_return = false;
+    scope->decls = NULL;
     return scope;
 }
 

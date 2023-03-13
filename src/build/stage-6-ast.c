@@ -7,6 +7,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
 TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond);
 void token_while(Allocator *alc, Fc *fc, Scope *scope);
+void deref_scope(Allocator *alc, Scope *scope);
 
 void stage_6(Fc *fc) {
     //
@@ -179,6 +180,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         array_push(scope->ast, token_init(alc, tkn_statement, val));
         tok_expect(fc, ";", false, true);
     }
+
+    // Derefs
+    if (!scope->did_return) {
+        deref_scope(alc, scope);
+    }
 }
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope) {
@@ -243,6 +249,10 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope) {
     idf->item = var;
 
     map_set(scope->identifiers, name, idf);
+
+    if (!scope->decls)
+        scope->decls = array_make(alc, 8);
+    array_push(scope->decls, decl);
 }
 
 void token_return(Allocator *alc, Fc *fc, Scope *scope) {
@@ -263,6 +273,8 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
         type_check(fc, frett, tval->rett);
         retval = tval;
     }
+
+    deref_scope(alc, scope);
 
     array_push(scope->ast, tgen_return(alc, fscope, retval));
     tok_expect(fc, ";", false, true);
@@ -344,6 +356,21 @@ void upref_value_check(Allocator *alc, Scope *scope, Value *val) {
         }
         if (val->type == v_class_pa) {
             // TODO upref token
+        }
+    }
+}
+
+void deref_scope(Allocator *alc, Scope *scope) {
+    Array *decls = scope->decls;
+    if (!decls)
+        return;
+    for (int i = 0; i < decls->length; i++) {
+        Decl *decl = array_get_index(decls, i);
+        Type *type = decl->type;
+        if (type->class && type->class->is_rc && decl->times_used != 1) {
+            Var *var = var_init(alc, decl, type);
+            Value *val = value_init(alc, v_var, var, var->type);
+            array_push(scope->ast, token_init(alc, tkn_deref, val));
         }
     }
 }

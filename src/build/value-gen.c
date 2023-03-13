@@ -47,18 +47,18 @@ Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op)
     return value_init(alc, v_compare, item, type_gen(b, alc, "bool"));
 }
 
-Value *vgen_fcall(Allocator *alc, Value *on, Array *args, Type *rett, Scope *scope) {
+Value *vgen_fcall(Allocator *alc, Value *on, Array *values, Type *rett, Scope *scope) {
     //
     if (scope && scope->ast) {
-        for (int i = 0; i < args->length; i++) {
-            Arg *arg = array_get_index(args, i);
+        for (int i = 0; i < values->length; i++) {
+            Value *arg = array_get_index(values, i);
             upref_value_check(alc, scope, arg);
         }
     }
 
     VFcall *item = al(alc, sizeof(VFcall));
     item->on = on;
-    item->args = args;
+    item->args = values;
     return value_init(alc, v_fcall, item, rett);
 }
 
