@@ -67,8 +67,10 @@ void func_make_arg_decls(Func *func) {
 
         arg->decl = decl;
 
-        if (!fscope->decls)
-            fscope->decls = array_make(alc, 8);
-        array_push(fscope->decls, decl);
+        if (func->call_derefs) {
+            if (!fscope->decls)
+                fscope->decls = array_make(alc, 8);
+            array_push(fscope->decls, decl);
+        }
     }
 }

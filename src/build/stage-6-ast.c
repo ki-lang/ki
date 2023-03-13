@@ -386,11 +386,6 @@ void upref_value_check(Allocator *alc, Scope *scope, Value *val) {
 }
 
 void deref_scope(Allocator *alc, Scope *scope) {
-    Scope *fscope = scope_find(scope, sct_func);
-    if (!fscope || !fscope->func->call_derefs) {
-        return;
-    }
-
     Array *decls = scope->decls;
     if (!decls)
         return;
