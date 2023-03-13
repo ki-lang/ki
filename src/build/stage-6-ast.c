@@ -394,7 +394,8 @@ void deref_scope(Allocator *alc, Scope *scope) {
                 Value *on = vgen_fptr(alc, class->func_deref, NULL);
                 Array *values = array_make(alc, 2);
                 array_push(values, val);
-                Value *fcall = vgen_fcall(alc, on, values, type_gen_void(alc), scope);
+                array_push(values, vgen_vint(alc, 1, type_gen(class->fc->b, alc, "i32"), false));
+                Value *fcall = vgen_fcall(alc, on, values, type_gen_void(alc), scope, false);
                 array_push(scope->ast, token_init(alc, tkn_statement, fcall));
 
             } else if (class->is_rc) {
@@ -426,7 +427,7 @@ void deref_scope(Allocator *alc, Scope *scope) {
                 Value *on = vgen_fptr(alc, class->func_free, NULL);
                 Array *values = array_make(alc, 2);
                 array_push(values, val);
-                Value *fcall = vgen_fcall(alc, on, values, type_gen_void(alc), code);
+                Value *fcall = vgen_fcall(alc, on, values, type_gen_void(alc), code, false);
                 array_push(code->ast, token_init(alc, tkn_statement, fcall));
 
                 // != 0 : else update _RC

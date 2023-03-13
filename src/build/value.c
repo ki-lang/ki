@@ -433,7 +433,7 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
                 array_push(values, right);
                 Value *on = vgen_fptr(alc, func, NULL);
                 fcall_type_check(fc, on, values);
-                return vgen_fcall(alc, on, values, func->rett, scope);
+                return vgen_fcall(alc, on, values, func->rett, scope, true);
             }
         }
     }
@@ -755,7 +755,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    return vgen_fcall(alc, on, values, rett, scope);
+    return vgen_fcall(alc, on, values, rett, scope, true);
 }
 
 bool value_assignable(Value *val) {

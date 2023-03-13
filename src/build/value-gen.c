@@ -47,9 +47,9 @@ Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op)
     return value_init(alc, v_compare, item, type_gen(b, alc, "bool"));
 }
 
-Value *vgen_fcall(Allocator *alc, Value *on, Array *values, Type *rett, Scope *scope) {
+Value *vgen_fcall(Allocator *alc, Value *on, Array *values, Type *rett, Scope *scope, bool upref_args) {
     //
-    if (scope && scope->ast) {
+    if (upref_args && scope->ast) {
         for (int i = 0; i < values->length; i++) {
             Value *arg = array_get_index(values, i);
             upref_value_check(alc, scope, arg);

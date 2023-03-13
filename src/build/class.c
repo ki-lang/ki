@@ -167,7 +167,7 @@ void class_generate_free(Class *class) {
     Value *on = vgen_fptr(alc, ff, NULL);
     Array *values = array_make(alc, 2);
     array_push(values, this_ptr);
-    Value *fcall = vgen_fcall(alc, on, values, type_gen_void(alc), fscope);
+    Value *fcall = vgen_fcall(alc, on, values, type_gen_void(alc), fscope, false);
 
     array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
 }

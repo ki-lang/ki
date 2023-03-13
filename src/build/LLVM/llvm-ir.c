@@ -103,6 +103,11 @@ Array *llvm_ir_fcall_args(LB *b, Scope *scope, Array *values) {
     }
     return result;
 }
+char *llvm_ir_fcall_arg(LB *b, char *lval, char *ltype) {
+    char *buf = b->fc->sbuf;
+    sprintf(buf, "%s noundef %s", ltype, lval);
+    return dups(b->alc, buf);
+}
 
 char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, bool can_error) {
     Str *ir = llvm_b_ir(b);
@@ -295,30 +300,54 @@ char *llvm_ir_string(LB *b, char *body) {
     return dups(b->alc, fc->sbuf);
 }
 
-char *llvm_ir_RC(LB *b, char *on, Type *type, int amount, bool free_check) {
+void llvm_ir_RC(LB *b, char *on, Type *type, int amount, bool free_check) {
     //
-    Class *class = type->class;
-    ClassProp *prop = map_get(class->props, "_RC");
-
-    char *rc = llvm_ir_class_prop_access(b, class, on, prop);
-    char *rcv = llvm_ir_load(b, prop->type, rc);
-
     char num[20];
     sprintf(num, "%d", amount);
 
-    Str *ir = llvm_b_ir(b);
-    char *buf = llvm_var(b);
-    str_append_chars(ir, "  ");
-    str_append_chars(ir, buf);
-    str_append_chars(ir, " = add nsw i32 ");
-    str_append_chars(ir, rcv);
-    str_append_chars(ir, ", ");
-    str_append_chars(ir, num);
-    str_append_chars(ir, "\n");
+    Class *class = type->class;
+    if (amount > 0 && class->func_ref) {
 
-    llvm_ir_store(b, prop->type, rc, buf);
+        Func *func = class->func_ref;
+        Array *values = array_make(b->alc, 2);
+        array_push(values, llvm_ir_fcall_arg(b, on, llvm_type(b, type)));
+        array_push(values, llvm_ir_fcall_arg(b, num, "i32"));
+        char *lrett = llvm_type(b, func->rett);
+        llvm_ir_func_call(b, llvm_ir_func_ptr(b, func), values, lrett, false);
 
-    if (free_check) {
-        // TODO
+    } else if (amount < 0 && class->func_deref) {
+
+        char num_pos[20];
+        sprintf(num_pos, "%d", amount * -1);
+
+        Func *func = class->func_deref;
+        Array *values = array_make(b->alc, 2);
+        array_push(values, llvm_ir_fcall_arg(b, on, llvm_type(b, type)));
+        array_push(values, llvm_ir_fcall_arg(b, num_pos, "i32"));
+        char *lrett = llvm_type(b, func->rett);
+        llvm_ir_func_call(b, llvm_ir_func_ptr(b, func), values, lrett, false);
+
+    } else {
+
+        ClassProp *prop = map_get(class->props, "_RC");
+
+        char *rc = llvm_ir_class_prop_access(b, class, on, prop);
+        char *rcv = llvm_ir_load(b, prop->type, rc);
+
+        Str *ir = llvm_b_ir(b);
+        char *buf = llvm_var(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, buf);
+        str_append_chars(ir, " = add nsw i32 ");
+        str_append_chars(ir, rcv);
+        str_append_chars(ir, ", ");
+        str_append_chars(ir, num);
+        str_append_chars(ir, "\n");
+
+        llvm_ir_store(b, prop->type, rc, buf);
+
+        if (free_check) {
+            // TODO
+        }
     }
 }

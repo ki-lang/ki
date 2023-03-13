@@ -185,7 +185,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Array *alloc_values = array_make(alc, func->args->length + 1);
         Value *vint = vgen_vint(alc, class->size, type_gen(build, alc, "uxx"), false);
         array_push(alloc_values, vint);
-        Value *fcall = vgen_fcall(alc, fptr, alloc_values, func->rett, NULL);
+        Value *fcall = vgen_fcall(alc, fptr, alloc_values, func->rett, NULL, false);
         Value *cast = vgen_cast(alc, fcall, v->rett);
 
         char *var_ob = llvm_value(b, scope, cast);
