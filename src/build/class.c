@@ -75,3 +75,34 @@ bool class_check_size(Class *class) {
 
     return true;
 }
+
+Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name_, Array *args, Type *rett) {
+    //
+    if (map_get(class->funcs, name_)) {
+        return NULL;
+    }
+
+    char *name = dups(fc->alc, name_);
+
+    char *gname = al(fc->alc, strlen(name) + strlen(class->gname) + 10);
+    sprintf(gname, "%s__%s", class->gname, name);
+    char *dname = al(fc->alc, strlen(name) + strlen(class->dname) + 10);
+    sprintf(dname, "%s.%s", class->dname, name);
+
+    Func *func = func_init(fc->alc);
+    func->fc = fc;
+    func->name = name;
+    func->gname = gname;
+    func->dname = dname;
+    func->scope = scope_init(fc->alc, sct_func, fc->scope, true);
+    func->scope->func = func;
+    func->is_static = is_static;
+    if (args)
+        func->args = args;
+    func->rett = rett;
+
+    array_push(fc->funcs, func);
+    map_set(class->funcs, name, func);
+
+    return func;
+}

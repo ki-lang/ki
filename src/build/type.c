@@ -100,6 +100,12 @@ Type *type_gen_fptr(Allocator *alc, Func *func) {
     return t;
 }
 
+Type *type_gen_void(Allocator *alc) {
+    Type *t = type_init(alc);
+    t->type = type_void;
+    return t;
+}
+
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space) {
     //
     char *token = fc->token;

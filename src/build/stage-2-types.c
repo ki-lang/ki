@@ -21,6 +21,8 @@ void stage_2(Fc *fc) {
     }
     for (int i = 0; i < fc->funcs->length; i++) {
         Func *func = array_get_index(fc->funcs, i);
+        if (!func->chunk_args)
+            continue;
         if (b->verbose > 1) {
             printf("> Scan func types: %s\n", func->dname);
         }
@@ -52,8 +54,10 @@ void stage_2_class(Fc *fc, Class *class) {
             prop->value = vgen_vint(b->alc, 1, type, false);
             map_set(class->props, "_RC", prop);
             // Define __deref (TODO)
+            class_define_func(fc, class, false, "__deref", NULL, type_gen_void(b->alc));
         }
         // Define __free (TODO)
+        class_define_func(fc, class, false, "__free", NULL, type_gen_void(b->alc));
     }
 
     //
@@ -116,24 +120,7 @@ void stage_2_class_props(Fc *fc, Class *class) {
                 fc_error(fc);
             }
 
-            char *name = dups(fc->alc, token);
-
-            char *gname = al(fc->alc, strlen(name) + strlen(class->gname) + 10);
-            sprintf(gname, "%s__%s", class->gname, name);
-            char *dname = al(fc->alc, strlen(name) + strlen(class->dname) + 10);
-            sprintf(dname, "%s.%s", class->dname, name);
-
-            Func *func = func_init(fc->alc);
-            func->fc = fc;
-            func->name = name;
-            func->gname = gname;
-            func->dname = dname;
-            func->scope = scope_init(fc->alc, sct_func, fc->scope, true);
-            func->scope->func = func;
-            func->is_static = is_static;
-
-            array_push(fc->funcs, func);
-            map_set(class->funcs, name, func);
+            Func *func = class_define_func(fc, class, is_static, token, NULL, NULL);
 
             tok_expect(fc, "(", true, true);
 

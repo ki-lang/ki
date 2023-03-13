@@ -21,6 +21,8 @@ void stage_6(Fc *fc) {
 
     for (int i = 0; i < fc->funcs->length; i++) {
         Func *func = array_get_index(fc->funcs, i);
+        if (!func->chunk_body)
+            continue;
         if (b->verbose > 1) {
             printf("> Read func AST: %s\n", func->dname);
         }

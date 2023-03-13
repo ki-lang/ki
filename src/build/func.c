@@ -10,6 +10,8 @@ Func *func_init(Allocator *alc) {
     func->act = 0;
     func->is_static = false;
     func->is_generated = false;
+    func->chunk_args = NULL;
+    func->chunk_body = NULL;
 
     func->errors = NULL;
     func->can_error = false;

@@ -114,6 +114,7 @@ void fcall_type_check(Fc *fc, Value *on, Array *values);
 Class *class_init(Allocator *alc);
 ClassProp *class_prop_init(Allocator *alc, Class *class, Type *type);
 bool class_check_size(Class *class);
+Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name, Array *args, Type *rett);
 
 // Type
 Type *type_init(Allocator *alc);
@@ -124,6 +125,7 @@ bool type_is_bool(Type *type, Build *b);
 Type *type_gen_class(Allocator *alc, Class *class);
 Type *type_gen_fptr(Allocator *alc, Func *func);
 Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed);
+Type *type_gen_void(Allocator *alc);
 Type *type_gen(Build *b, Allocator *alc, char *name);
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space);
 bool type_compat(Type *t1, Type *t2, char **reason);
