@@ -8,7 +8,8 @@ void llvm_write_ast(LB *b, Scope *scope) {
     if (!scope->lvars)
         scope->lvars = map_make(b->alc);
 
-    // die("AST TODO");
+    Allocator *alc = b->alc;
+
     Array *ast = scope->ast;
     for (int i = 0; i < ast->length; i++) {
         Token *t = array_get_index(ast, i);
@@ -34,13 +35,6 @@ void llvm_write_ast(LB *b, Scope *scope) {
             Value *left = pair->left;
             Type *lt = left->rett;
             char *lvar = llvm_assign_value(b, scope, left);
-
-            if (left->type == v_var && lt->class && lt->class->is_rc) {
-                // Reduce ref
-                char *load = llvm_ir_load(b, lt, lvar);
-                llvm_ir_RC(b, load, pair->right->rett, -1, true);
-            }
-
             char *lval = llvm_value(b, scope, pair->right);
             llvm_ir_store(b, lt, lvar, lval);
             continue;
@@ -52,19 +46,19 @@ void llvm_write_ast(LB *b, Scope *scope) {
                 // printf("UP:%d | %d\n", up->count, decl->times_used);
                 Type *type = decl->type;
 
-                char *var_val = llvm_get_var(b, scope, decl);
-                if (decl->is_mut) {
-                    var_val = llvm_ir_load(b, type, var_val);
-                }
+                Value *var = value_init(alc, v_var, var_init(alc, decl, type), type);
+                Scope *sub = scope_init(alc, sct_default, scope, true);
+                class_ref_change(alc, sub, var, -1);
 
-                llvm_ir_RC(b, var_val, type, up->count, false);
+                llvm_write_ast(b, sub);
             }
             continue;
         }
         if (t->type == tkn_deref) {
             Value *val = t->item;
-            char *lval = llvm_value(b, scope, val);
-            llvm_ir_RC(b, lval, val->rett, -1, true);
+            Scope *sub = scope_init(alc, sct_default, scope, true);
+            class_ref_change(alc, sub, val, -1);
+            llvm_write_ast(b, sub);
             continue;
         }
         if (t->type == tkn_tmp_var) {

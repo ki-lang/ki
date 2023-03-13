@@ -116,7 +116,7 @@ Class *class_init(Allocator *alc);
 ClassProp *class_prop_init(Allocator *alc, Class *class, Type *type);
 bool class_check_size(Class *class);
 Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name, Array *args, Type *rett);
-void class_call_deref(Allocator *alc, Scope *scope, Value *on);
+void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount);
 
 // Type
 Type *type_init(Allocator *alc);
@@ -158,6 +158,7 @@ Value *vgen_fptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
 Value *vgen_class_init(Allocator *alc, Class *class, Map *values);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
+Value *vgen_null(Allocator *alc, Build *b);
 
 // Ast
 void read_ast(Fc *fc, Scope *scope, bool single_line);

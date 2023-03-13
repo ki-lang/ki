@@ -67,6 +67,7 @@ enum VALUETYPE {
     v_class_pa,
     v_class_init,
     v_tmp_var,
+    v_null,
 };
 
 enum OPTYPE {

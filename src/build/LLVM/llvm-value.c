@@ -31,6 +31,9 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_string) {
         return llvm_ir_string(b, v->item);
     }
+    if (v->type == v_null) {
+        return "null";
+    }
     if (v->type == v_ptrv) {
         char *lval = llvm_assign_value(b, scope, v);
         return llvm_ir_load(b, v->rett, lval);

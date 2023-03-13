@@ -61,6 +61,12 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 
         v = vgen_vint(alc, ch, type_gen(b, alc, "u8"), true);
         //
+    } else if (strcmp(token, "true") == 0) {
+        v = vgen_vint(alc, 1, type_gen(b, alc, "bool"), true);
+    } else if (strcmp(token, "false") == 0) {
+        v = vgen_vint(alc, 0, type_gen(b, alc, "bool"), true);
+    } else if (strcmp(token, "null") == 0) {
+        v = vgen_null(alc, b);
     } else if (strcmp(token, "ptrv") == 0) {
         Value *on = read_value(fc, alc, scope, false, 0);
         tok_expect(fc, "as", true, true);

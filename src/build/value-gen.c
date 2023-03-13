@@ -92,3 +92,11 @@ Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
     //
     return value_init(alc, v_cast, val, to_type);
 }
+
+Value *vgen_null(Allocator *alc, Build *b) {
+    Type *type = type_gen(b, alc, "ptr");
+    type->type = type_null;
+    type->nullable = true;
+    type->class = NULL;
+    return value_init(alc, v_null, NULL, type);
+}

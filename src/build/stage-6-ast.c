@@ -106,6 +106,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             sprintf(fc->sbuf, ".%s.", token);
             if (strstr(".=.+=.-=.*=./=.", fc->sbuf)) {
                 char *sign = dups(alc, token);
+
                 if (val->type == v_var) {
                     Var *var = val->item;
                     Decl *decl = var->decl;
@@ -126,6 +127,12 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     // 		fc.error("Trying to assign to a non-public property outside the class");
                     // 	}
                     // }
+                }
+
+                // Deref current value
+                Class *class = val->rett->class;
+                if (class && class->must_deref) {
+                    class_ref_change(alc, scope, val, -1);
                 }
 
                 Value *right = read_value(fc, alc, scope, false, 0);
@@ -398,7 +405,7 @@ void deref_scope(Allocator *alc, Scope *scope) {
             Var *var = var_init(alc, decl, type);
             Value *val = value_init(alc, v_var, var, var->type);
 
-            class_call_deref(alc, scope, val);
+            class_ref_change(alc, scope, val, -1);
         }
     }
 }
