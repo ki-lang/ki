@@ -65,6 +65,12 @@ void llvm_write_ast(LB *b, Scope *scope) {
             Value *val = t->item;
             char *lval = llvm_value(b, scope, val);
             llvm_ir_RC(b, lval, val->rett, -1, true);
+            continue;
+        }
+        if (t->type == tkn_tmp_var) {
+            TempVar *tmp = t->item;
+            tmp->ir_value = llvm_value(b, scope, tmp->value);
+            continue;
         }
         if (t->type == tkn_return) {
             Value *val = t->item;

@@ -271,8 +271,17 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
         Value *val = read_value(fc, alc, scope, true, 0);
         Value *tval = try_convert(fc, alc, val, frett);
         type_check(fc, frett, tval->rett);
-        retval = tval;
-        upref_value_check(alc, scope, retval);
+
+        upref_value_check(alc, scope, tval);
+
+        TempVar *tvar = al(alc, sizeof(TempVar));
+        tvar->value = tval;
+        tvar->ir_value = NULL;
+        Token *t = token_init(alc, tkn_tmp_var, tvar);
+        array_push(scope->ast, t);
+
+        Value *tmp_var = value_init(alc, v_tmp_var, tvar, tval->rett);
+        retval = tmp_var;
     }
 
     deref_scope(alc, scope);

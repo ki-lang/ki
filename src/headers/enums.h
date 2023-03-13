@@ -50,6 +50,7 @@ enum TOKENTYPE {
     tkn_upref_slot,
     tkn_ref,
     tkn_deref,
+    tkn_tmp_var,
 };
 
 enum VALUETYPE {
@@ -65,6 +66,7 @@ enum VALUETYPE {
     v_cast,
     v_class_pa,
     v_class_init,
+    v_tmp_var,
 };
 
 enum OPTYPE {

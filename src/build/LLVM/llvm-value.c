@@ -238,6 +238,10 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char *lval = llvm_value(b, scope, val);
         return llvm_ir_cast(b, lval, from_type, to_type);
     }
+    if (v->type == v_tmp_var) {
+        TempVar *tmp = v->item;
+        return tmp->ir_value;
+    }
     return "???";
 }
 

@@ -21,6 +21,7 @@ typedef struct Func Func;
 typedef struct Enum Enum;
 typedef struct Decl Decl;
 typedef struct Var Var;
+typedef struct TempVar TempVar;
 typedef struct Arg Arg;
 typedef struct UprefSlot UprefSlot;
 
@@ -256,6 +257,10 @@ struct Decl {
 struct Var {
     Decl *decl;
     Type *type;
+};
+struct TempVar {
+    Value *value;
+    char *ir_value;
 };
 struct Arg {
     char *name;
