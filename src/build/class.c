@@ -144,8 +144,20 @@ void class_generate_deref_props(Class *class) {
         ClassProp *prop = array_get_index(props, i);
         Class *pclass = prop->type->class;
         if (pclass && pclass->must_deref) {
+
             Value *pa = vgen_class_pa(alc, this, prop);
-            class_ref_change(b->alc, fscope, pa, -1);
+
+            Scope *scope = fscope;
+            if (prop->type->nullable) {
+                Value *is_null = vgen_compare(alc, class->fc->b, pa, vgen_null(alc, b), op_ne);
+                Scope *sub = scope_init(alc, sct_default, scope, true);
+                TIf *ift = tgen_tif(alc, is_null, sub, NULL);
+                Token *t = token_init(alc, tkn_if, ift);
+                array_push(scope->ast, t);
+                scope = sub;
+            }
+
+            class_ref_change(b->alc, scope, pa, -1);
         }
     }
 }
@@ -202,7 +214,18 @@ void class_generate_free(Class *class) {
 
 void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
     //
-    Class *class = on->rett->class;
+    Type *type = on->rett;
+    Class *class = type->class;
+    Build *b = class->fc->b;
+
+    if (type->nullable) {
+        Value *is_null = vgen_compare(alc, class->fc->b, on, vgen_null(alc, b), op_ne);
+        Scope *sub = scope_init(alc, sct_default, scope, true);
+        TIf *ift = tgen_tif(alc, is_null, sub, NULL);
+        Token *t = token_init(alc, tkn_if, ift);
+        array_push(scope->ast, t);
+        scope = sub;
+    }
 
     if (amount < 0 && class->func_deref) {
 

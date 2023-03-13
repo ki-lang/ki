@@ -48,7 +48,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
 
                 Value *var = value_init(alc, v_var, var_init(alc, decl, type), type);
                 Scope *sub = scope_init(alc, sct_default, scope, true);
-                class_ref_change(alc, sub, var, -1);
+                class_ref_change(alc, sub, var, up->count);
 
                 llvm_write_ast(b, sub);
             }
