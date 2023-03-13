@@ -45,3 +45,23 @@ void fcall_type_check(Fc *fc, Value *on, Array *values) {
         type_check(fc, arg->type, val->rett);
     }
 }
+
+void func_make_arg_decls(Func *func) {
+    //
+    Allocator *alc = func->fc->alc;
+
+    for (int i = 0; i < func->args->length; i++) {
+        Arg *arg = array_get_index(func->args, i);
+
+        Decl *decl = decl_init(alc, func->scope, arg->name, arg->type, NULL, arg->is_mut, true, false);
+
+        Var *var = var_init(alc, decl, arg->type);
+
+        Idf *idf = idf_init(alc, idf_var);
+        idf->item = var;
+
+        map_set(func->scope->identifiers, arg->name, idf);
+
+        arg->decl = decl;
+    }
+}

@@ -140,11 +140,6 @@ void stage_2_class_props(Fc *fc, Class *class) {
 
             func->chunk_args = chunk_clone(fc->alc, fc->chunk);
 
-            // First arg
-            if (!is_static) {
-                array_push(func->args, arg_init(fc->alc, "this", type_gen_class(fc->alc, class), false));
-            }
-
             skip_body(fc, ')');
             skip_until_char(fc, "{");
             func->chunk_body = chunk_clone(fc->alc, fc->chunk);
@@ -260,18 +255,7 @@ void stage_2_func(Fc *fc, Func *func) {
     }
 
     // Define arguments in AST
-    for (int i = 0; i < func->args->length; i++) {
-        Arg *arg = array_get_index(func->args, i);
-
-        Decl *decl = decl_init(alc, func->scope, arg->name, arg->type, NULL, arg->is_mut, true, false);
-
-        Var *var = var_init(alc, decl, arg->type);
-
-        Idf *idf = idf_init(alc, idf_var);
-        idf->item = var;
-
-        map_set(func->scope->identifiers, arg->name, idf);
-    }
+    func_make_arg_decls(func);
 
     // Return type
     func->rett = read_type(fc, alc, func->scope->parent, true, true);

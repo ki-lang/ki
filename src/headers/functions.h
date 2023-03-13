@@ -109,6 +109,7 @@ Scope *scope_find(Scope *scope, int type);
 // Func
 Func *func_init(Allocator *alc);
 void fcall_type_check(Fc *fc, Value *on, Array *values);
+void func_make_arg_decls(Func *func);
 
 // Class
 Class *class_init(Allocator *alc);

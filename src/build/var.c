@@ -32,6 +32,7 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut) {
     v->is_mut = is_mut;
     v->value = NULL;
     v->value_chunk = NULL;
+    v->decl = NULL;
 
     return v;
 }

@@ -274,6 +274,7 @@ struct Arg {
     bool is_mut;
     Value *value;
     Chunk *value_chunk;
+    Decl *decl;
 };
 struct UprefSlot {
     Decl *decl;

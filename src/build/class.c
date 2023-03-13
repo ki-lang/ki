@@ -111,18 +111,63 @@ Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name_, Array
     array_push(fc->funcs, func);
     map_set(class->funcs, name, func);
 
+    if (!args && !is_static) {
+        array_push(func->args, arg_init(fc->alc, "this", type_gen_class(fc->alc, class), false));
+    }
+
     return func;
 }
 
 void class_generate_deref_props(Class *class) {
     //
-    Func *func = map_get(class->funcs, "__deref_props");
+    Func *func = class->func_deref_props;
     if (func->chunk_body)
         return;
+
+    func_make_arg_decls(func);
 }
 void class_generate_free(Class *class) {
     //
-    Func *func = map_get(class->funcs, "__free");
+    Func *func = class->func_free;
     if (func->chunk_body)
         return;
+
+    func_make_arg_decls(func);
+
+    Build *b = class->fc->b;
+    Allocator *alc = b->alc;
+
+    Scope *fscope = func->scope;
+    Type *type_uxx = type_gen(b, alc, "uxx");
+    Type *type_ptr = type_gen(b, alc, "ptr");
+    Type *type_class = type_gen_class(alc, class);
+
+    Arg *this_arg = array_get_index(func->args, 0);
+    Decl *this_decl = this_arg->decl;
+    Var *this_var = var_init(alc, this_decl, type_class);
+    Value *this = value_init(alc, v_var, this_var, type_class);
+
+    // Call __before_free
+    // let bff = this.funcs.get("__before_free") or value null;
+    // verify bff {
+    //     let ff = bff.func;
+    //     let on = value_gen_func_ptr(ff, null);
+    //     let values = Array<Value>.make();
+    //     values.push(var_this);
+    //     let fcall = value_gen_fcall(fc.b, fscope, on, values, type_gen_void());
+    //     fscope.ast.push(Token{statement : fcall});
+    // }
+
+    // Deref props
+    // Call __deref_props (TODO)
+
+    // Free mem
+    Value *this_ptr = vgen_cast(alc, this, type_ptr);
+    Func *ff = ki_get_func(b, "mem", "free");
+    Value *on = vgen_fptr(alc, ff, NULL);
+    Array *values = array_make(alc, 2);
+    array_push(values, this_ptr);
+    Value *fcall = vgen_fcall(alc, on, values, type_gen_void(alc), fscope);
+
+    array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
 }
