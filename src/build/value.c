@@ -303,6 +303,15 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 
     rtok(fc);
 
+    if (v->type == v_fptr) {
+        VFuncPtr *fptr = v->item;
+        Func *func = fptr->func;
+        if (!func->call_derefs) {
+            sprintf(fc->sbuf, "You cannot reference internal refcount functions (limitation)");
+            fc_error(fc);
+        }
+    }
+
     return v;
 }
 
@@ -689,9 +698,15 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     Array *values = array_make(alc, 4);
 
     Value *first_arg = NULL;
+    bool upref = true;
     if (on->type == v_fptr) {
         VFuncPtr *fp = on->item;
+        Func *func = fp->func;
         Value *first_val = fp->first_arg;
+
+        if (!func->call_derefs) {
+            upref = false;
+        }
 
         if (first_val) {
             if (index == argc) {
@@ -755,7 +770,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    return vgen_fcall(alc, on, values, rett, scope, true);
+    return vgen_fcall(alc, on, values, rett, scope, upref);
 }
 
 bool value_assignable(Value *val) {
