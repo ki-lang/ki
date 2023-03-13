@@ -295,8 +295,9 @@ char *llvm_ir_string(LB *b, char *body) {
     return dups(b->alc, fc->sbuf);
 }
 
-char *llvm_ir_RC(LB *b, char *on, Class *class, int amount, bool free_check) {
+char *llvm_ir_RC(LB *b, char *on, Type *type, int amount, bool free_check) {
     //
+    Class *class = type->class;
     ClassProp *prop = map_get(class->props, "_RC");
 
     char *rc = llvm_ir_class_prop_access(b, class, on, prop);

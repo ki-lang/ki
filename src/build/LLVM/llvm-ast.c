@@ -38,7 +38,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
             if (left->type == v_var && lt->class && lt->class->is_rc) {
                 // Reduce ref
                 char *load = llvm_ir_load(b, lt, lvar);
-                llvm_ir_RC(b, load, lt->class, -1, true);
+                llvm_ir_RC(b, load, pair->right->rett, -1, true);
             }
 
             char *lval = llvm_value(b, scope, pair->right);
@@ -57,7 +57,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
                     var_val = llvm_ir_load(b, type, var_val);
                 }
 
-                llvm_ir_RC(b, var_val, type->class, up->count, false);
+                llvm_ir_RC(b, var_val, type, up->count, false);
             }
             continue;
         }
