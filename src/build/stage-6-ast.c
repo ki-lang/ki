@@ -3,7 +3,7 @@
 
 void stage_6_func(Fc *fc, Func *func);
 
-void token_declare(Allocator *alc, Fc *fc, Scope *scope);
+void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
 TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond);
 void token_while(Allocator *alc, Fc *fc, Scope *scope);
@@ -72,7 +72,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
 
         if (strcmp(token, "let") == 0) {
-            token_declare(alc, fc, scope);
+            token_declare(alc, fc, scope, false);
+            continue;
+        }
+        if (strcmp(token, "rep") == 0) {
+            token_declare(alc, fc, scope, true);
             continue;
         }
 
@@ -189,7 +193,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
     }
 }
 
-void token_declare(Allocator *alc, Fc *fc, Scope *scope) {
+void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
     //
     char *token = fc->token;
 
@@ -203,6 +207,15 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope) {
     }
     if (is_valid_varname_char(token[0])) {
         sprintf(fc->sbuf, "Invalid variable name syntax '%s'", token);
+    }
+    if (replace) {
+        Idf *idf = map_get(scope->identifiers, token);
+        if (!idf) {
+            sprintf(fc->sbuf, "Variable not found, nothing to replace '%s'", token);
+            fc_error(fc);
+        }
+    } else {
+        name_taken_check(fc, scope, token);
     }
 
     char *name = dups(alc, token);

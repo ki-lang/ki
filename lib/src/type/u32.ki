@@ -31,7 +31,7 @@ class u32 type:int:4:false {
         }
  
         // Reverse the string
-        let str = String.make_empty(len);
+        rep str = String.make_empty(len);
         let mut str_adr = str.data();
         while(len > 0){
             len-=1;
