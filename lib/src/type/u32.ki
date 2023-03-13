@@ -1,4 +1,44 @@
 
 class u32 type:int:4:false {
 
+	func str() String {
+		let base = 10#u8;
+        let mut num = this;
+
+        // Handle 0 explicitly, otherwise empty string is printed for 0
+        if (num == 0) {
+            return "0";
+        }
+ 
+        let mut abs = num -> uxx;
+ 
+        // Process individual digits
+        let str = String.make_empty(32);
+        let mut buf_adr = str.data();
+        let mut len : u32 = 0;
+        let mut ch : u8 = 0;
+        while (abs != 0) {
+            let rem : u8 = (abs % base) -> u8;
+            if(rem > 9){
+                ch = (rem-10) + 'a';
+            } else {
+                ch = rem + '0';
+            }
+			ptrv buf_adr as u8 = ch;
+            buf_adr+=1;
+            len+=1;
+            abs = abs/base;
+        }
+ 
+        // Reverse the string
+        let str = String.make_empty(len);
+        let mut str_adr = str.data();
+        while(len > 0){
+            len-=1;
+            buf_adr-=1;
+			ptrv str_adr as u8 = ptrv buf_adr as u8;
+            str_adr+=1;
+        }
+        return str;
+    }
 }

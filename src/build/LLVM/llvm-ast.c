@@ -38,9 +38,36 @@ void llvm_write_ast(LB *b, Scope *scope) {
         }
         if (t->type == tkn_upref_slot) {
             UprefSlot *up = t->item;
-            if (up->decl->times_used > 1 && up->count > 0) {
-                printf("UP:%d | %d\n", up->count, up->decl->times_used);
+            Decl *decl = up->decl;
+            if (decl->times_used > 1 && up->count > 0) {
+                // printf("UP:%d | %d\n", up->count, decl->times_used);
+                Class *class = decl->type->class;
+                ClassProp *prop = map_get(class->props, "_RC");
+
+                char *var_val = llvm_get_var(b, scope, decl);
+                if (decl->is_mut) {
+                    var_val = llvm_ir_load(b, decl->type, var_val);
+                }
+
+                char *rc = llvm_ir_class_prop_access(b, class, var_val, prop);
+                char *rcv = llvm_ir_load(b, prop->type, rc);
+
+                char num[20];
+                sprintf(num, "%d", up->count);
+
+                Str *ir = llvm_b_ir(b);
+                char *buf = llvm_var(b);
+                str_append_chars(ir, "  ");
+                str_append_chars(ir, buf);
+                str_append_chars(ir, " = add nsw i32 ");
+                str_append_chars(ir, rcv);
+                str_append_chars(ir, ", ");
+                str_append_chars(ir, num);
+                str_append_chars(ir, "\n");
+
+                llvm_ir_store(b, prop->type, rc, buf);
             }
+            continue;
         }
         if (t->type == tkn_return) {
             Value *val = t->item;

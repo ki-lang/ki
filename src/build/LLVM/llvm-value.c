@@ -10,7 +10,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_var) {
         Var *var = v->item;
         Decl *decl = var->decl;
-        char *var_val = llvm_get_var(b, scope, var);
+        char *var_val = llvm_get_var(b, scope, decl);
         if (!decl->is_mut) {
             return var_val;
         }
@@ -245,7 +245,7 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
     //
     if (v->type == v_var) {
         Var *var = v->item;
-        return llvm_get_var(b, scope, var);
+        return llvm_get_var(b, scope, var->decl);
     }
     if (v->type == v_ptrv) {
         Value *val = v->item;

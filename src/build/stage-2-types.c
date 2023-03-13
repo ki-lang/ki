@@ -117,8 +117,11 @@ void stage_2_class_props(Fc *fc, Class *class) {
             }
 
             char *name = dups(fc->alc, token);
-            char *gname = nsc_gname(fc->nsc, name);
-            char *dname = nsc_dname(fc->nsc, name);
+
+            char *gname = al(fc->alc, strlen(name) + strlen(class->gname) + 10);
+            sprintf(gname, "%s__%s", class->gname, name);
+            char *dname = al(fc->alc, strlen(name) + strlen(class->dname) + 10);
+            sprintf(dname, "%s.%s", class->dname, name);
 
             Func *func = func_init(fc->alc);
             func->fc = fc;

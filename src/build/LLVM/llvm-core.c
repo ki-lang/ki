@@ -113,11 +113,10 @@ char *llvm_alloca(LB *b, Type *type) {
     return var;
 }
 
-char *llvm_get_var(LB *b, Scope *start_scope, Var *var) {
+char *llvm_get_var(LB *b, Scope *start_scope, Decl *decl) {
     //
-    Decl *decl = var->decl;
     if (decl->is_global) {
-        return llvm_get_global(b, var);
+        return llvm_get_global(b, decl);
     }
 
     char *name = decl->name;
@@ -134,8 +133,7 @@ char *llvm_get_var(LB *b, Scope *start_scope, Var *var) {
     die(b->fc->sbuf);
 }
 
-char *llvm_get_global(LB *b, Var *var) {
-    Decl *decl = var->decl;
+char *llvm_get_global(LB *b, Decl *decl) {
     char *name = decl->name;
     Scope *scope = b->fc->scope;
 
@@ -145,7 +143,7 @@ char *llvm_get_global(LB *b, Var *var) {
     }
 
     Str *ir = b->ir_global;
-    Type *type = var->type;
+    Type *type = decl->type;
     char *ltype = llvm_type(b, type);
 
     char bytes[20];

@@ -32,6 +32,35 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         char *body = str_to_chars(alc, str);
         v = value_init(alc, v_string, body, type_gen(fc->b, alc, "String"));
         //
+    } else if (strcmp(token, "'") == 0) {
+        char ch = get_char(fc, 0);
+        chunk_move(fc->chunk, 1);
+        if (ch == '\\') {
+            char nch = get_char(fc, 0);
+            chunk_move(fc->chunk, 1);
+            if (ch == '0') {
+                ch = '\0';
+            } else if (ch == 'n') {
+                ch = '\n';
+            } else if (ch == 'r') {
+                ch = '\r';
+            } else if (ch == 't') {
+                ch = '\t';
+            } else if (ch == 'v') {
+                ch = '\v';
+            } else if (ch == 'f') {
+                ch = '\f';
+            } else if (ch == 'b') {
+                ch = '\b';
+            } else if (ch == 'a') {
+                ch = '\a';
+            }
+        }
+
+        tok_expect(fc, "'", true, false);
+
+        v = vgen_vint(alc, ch, type_gen(b, alc, "u8"), true);
+        //
     } else if (strcmp(token, "ptrv") == 0) {
         Value *on = read_value(fc, alc, scope, false, 0);
         tok_expect(fc, "as", true, true);
@@ -186,6 +215,22 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
             v = vgen_cast(alc, v, type);
 
             tok(fc, token, true, false);
+        }
+    }
+
+    if (prio == 0 || prio > 30) {
+        while (strcmp(token, "*") == 0 || strcmp(token, "/") == 0 || strcmp(token, "%") == 0) {
+            int op = op_mul;
+            if (strcmp(token, "/") == 0) {
+                op = op_div;
+            } else if (strcmp(token, "%") == 0) {
+                op = op_mod;
+            }
+
+            Value *right = read_value(fc, alc, scope, false, 20);
+            v = value_op(fc, alc, scope, v, right, op);
+
+            tok(fc, token, false, true);
         }
     }
 
