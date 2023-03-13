@@ -13,8 +13,8 @@ shared types must be captured before use
 # Ref counting
 
 - Track uses of variables (logic per scope)
--- upref at start of scope by number of uses until end of scope or mutation of the variable
--- if mutating a variable, setup a new upref slot with count 0
+-- upref var the line before first use by number of uses until end of scope or mutation of the variable
+-- if mutating a variable, setup a new upref slots on every scope where the var was used
 -- if mutating a variable, deref previous value
 -- if uses 0 deref at end of scope
 -- if uses 1 do nothing (ownership got passed)
