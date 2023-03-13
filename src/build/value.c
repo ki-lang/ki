@@ -404,10 +404,13 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
                 char *key = array_get_index(class->props->keys, i);
                 ClassProp *prop = array_get_index(class->props->values, i);
                 Value *v = map_get(values, key);
-                if (!v && !prop->value) {
+                if (v)
+                    continue;
+                if (!prop->value) {
                     sprintf(fc->sbuf, "Missing property: '%s'", key);
                     fc_error(fc);
                 }
+                map_set(values, key, prop->value);
             }
             return vgen_class_init(alc, class, values);
         }

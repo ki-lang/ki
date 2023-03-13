@@ -12,40 +12,32 @@ shared types must be captured before use
 
 # Ref counting
 
+- Track uses of variables (logic per scope)
+-- upref at start of scope by number of uses until end of scope or mutation of the variable
+-- if mutating a variable, setup a new upref slot with count 0
+-- if uses 0 deref at end of scope
+-- if uses 1 do nothing (ownership got passed)
+-- if uses > 1 deref at end of scope
+
 ```
 let x = MyObject{...}; # initialized with rc 1
 # upref slot (+4 = 5)
-myfunc(x) ++ (2)
-let a = x; ++ (3)
-let b = x; ++ (4)
+myfunc(x)
+let a = x;
+let b = x;
 if(50/50) {
 	# upref slot (+1 = 6)
-	let o = myfunc(x).y; ++ (5) && deref return value of func because chained of prop access
+	let o = myfunc(x).y; deref return value of func because chained of prop access
 
 	#o--; // unused
 }
-let c = x; ++ (6)
+let c = x;
 
 # we do not deref 'x' because it gave away ownership
 // myfunc will deref x somwhere (5)
 // myfunc will deref x somwhere (4)
-# a-- // used == 0 (3)
-# b-- // used == 0 (2)
-# c-- // used == 0 (1)
-# x-- // used >= 2 (0)
+# a-- // uses == 0 (3)
+# b-- // uses == 0 (2)
+# c-- // uses == 0 (1)
+# x-- // uses > 1 (0)
 ```
-
-
-
-let x = MyObject{...}; # initialized with rc 1
-let z = x;
-let a = z; ++ (2)
-let b = z; ++ (3)
-if(true) {
-	b = z; ++ (4)
-	b-- (3)
-}
-
-z--; (2)
-a--; (1) // unused
-b--; (0) // unused
