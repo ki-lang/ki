@@ -61,6 +61,11 @@ void llvm_write_ast(LB *b, Scope *scope) {
             }
             continue;
         }
+        if (t->type == tkn_deref) {
+            Value *val = t->item;
+            char *lval = llvm_value(b, scope, val);
+            llvm_ir_RC(b, lval, val->rett, -1, true);
+        }
         if (t->type == tkn_return) {
             Value *val = t->item;
             LLVMFunc *lfunc = b->lfunc;

@@ -272,6 +272,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
         Value *tval = try_convert(fc, alc, val, frett);
         type_check(fc, frett, tval->rett);
         retval = tval;
+        upref_value_check(alc, scope, retval);
     }
 
     deref_scope(alc, scope);
