@@ -15,6 +15,7 @@ class Block norc {
 	tail: u8;
 	align_bytes: u8;
 	misalign_bytes: u8;
+	has_free_slots: bool;
 
 	static func create(Allocator alc, uxx slot_size, u8 slot_count, u8 mut misalign_bytes) Block {
 
@@ -30,6 +31,7 @@ class Block norc {
 		b.head = 0;
 		b.tail = 0;
 		b.misalign_bytes = misalign_bytes;
+		b.has_free_slots = true;
 
 		// Alignment
 		let mut tmp = 0#i32 + slot_count + 2;
@@ -77,32 +79,29 @@ class Block norc {
 		return b;
 	}
 
-	func has_open_slot() bool {
-		let mut next_head = this.head + 1;
-		if next_head == this.slot_count {
-			next_head = 0;
-		}
-		return next_head != this.tail;
+	func is_empty() bool {
+		return this.tail == this.head && this.has_free_slots;
 	}
 
 	func get_slot() ptr {
-		let mut next_head = this.head + 1;
-		if next_head == this.slot_count {
-			next_head = 0;
-		}
-		let head = next_head;
-		this.head = head;
+		let head = this.head;
 
-		let slot_nr_adr = this.data_slot_nrs + sizeof(ptr) + head;
+		let slot_nr_adr = this.data_slot_nrs + head;
 		let slot_nr = ptrv slot_nr_adr as u8;
 
 		let slot_adr = this.data_slots + (slot_nr * this.slot_size);
 
-		return slot_adr + 1;
-	}
+		let mut next_head = head + 1;
+		if next_head == this.slot_count {
+			next_head = 0;
+		}
+		this.head = next_head;
 
-	func is_empty() bool {
-		return this.tail == this.head;
+		if next_head == this.tail {
+			this.has_free_slots = false;
+		}
+
+		return slot_adr + 1;
 	}
 
 	func free_slot(u8 slot_nr) void {
@@ -127,6 +126,8 @@ class Block norc {
 			next_tail = 0;
 		}
 		this.tail = next_tail;
+
+		this.has_free_slots = true;
 	}
 
 	func free() void {

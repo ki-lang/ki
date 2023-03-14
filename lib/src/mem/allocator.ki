@@ -34,20 +34,20 @@ class Allocator norc {
 	}
 
 	func get_slot() ptr {
+		this.total_slots_used += 1;
 		let mut b = this.current;
 		while true {
-			if b.is_empty() {
+			if b.is_empty() && false {
 				// Decide wether to free the block or not
 				if (this.total_slots / this.total_slots_used) > 2 {
 					this.total_slots -= b.slot_count;
 					let next = b.next;
 					b.free();
-					//b = next ?? this.first;
+					b = next ?? this.first;
 					continue;
 				}
 			}
-			if b.has_open_slot() {
-				this.total_slots_used += 1;
+			if b.has_free_slots {
 				return b.get_slot();
 			}
 			b = b.next ?! break;;
@@ -61,8 +61,8 @@ class Allocator norc {
 				pow = 10;
 			}
 			let mut count = 4 << pow;
-			if count > 250 {
-				count = 250;
+			if count > 240 {
+				count = 240;
 			}
 			let nb = Block.create(this, this.slot_size_real, count -> u8, this.misalign_bytes);
 			b.next = nb;
@@ -70,11 +70,11 @@ class Allocator norc {
 			this.current = nb;
 			this.block_count += 1;
 			this.total_slots += count;
-			this.total_slots_used += 1;
 			return nb.get_slot();
 		}
 		// Use previous blocks
 		this.current = this.first;
+		this.total_slots_used -= 1;
 		return this.get_slot();
 	}
 
@@ -87,6 +87,7 @@ class Allocator norc {
 		let align_bytes = ptrv adr as u8;
 		adr -= align_bytes + 1;
 		let slot_count = ptrv adr as u8;
+		//println((slot_count -> u32).str());
 		adr -= slot_count + sizeof(ptr);
 
 		let b = ptrv adr as Block;

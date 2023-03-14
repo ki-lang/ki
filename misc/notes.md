@@ -52,14 +52,7 @@ while true {
 
 # TODO
 
-x ?? y;
-
-let res = x;
-if x == null {
-	res = y;
-	# deref scope
-}
-
+- prop access | deref on value instantly
 - When using variables in recurrent pieces of code, decl->uses += 2; instead of += 1;
 
 - type check internal funcs : __ref __deref ...
