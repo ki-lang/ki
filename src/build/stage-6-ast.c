@@ -424,7 +424,7 @@ Value *upref_value_check(Allocator *alc, Scope *scope, Value *val) {
             up->count++;
         }
         if (val->type == v_class_pa) {
-            // TODO upref token
+            val = value_init(alc, v_upref_value, val, val->rett);
         }
         if (val->type == v_or_break) {
             val = value_init(alc, v_upref_value, val, val->rett);
