@@ -300,6 +300,20 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         }
     }
 
+    if (prio == 0 || prio > 25) {
+        while (strcmp(token, "<<") == 0 || strcmp(token, ">>") == 0) {
+            int op = op_shl;
+            if (strcmp(token, ">>") == 0) {
+                op = op_shr;
+            }
+
+            Value *right = read_value(fc, alc, scope, false, 25);
+            v = value_op(fc, alc, scope, v, right, op);
+
+            tok(fc, token, false, true);
+        }
+    }
+
     if (prio == 0 || prio > 30) {
         sprintf(fc->sbuf, ".%s.", token);
         while (strstr(".==.!=.<=.>=.<.>.", fc->sbuf)) {

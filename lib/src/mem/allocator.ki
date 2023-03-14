@@ -7,7 +7,6 @@ class Allocator norc {
 	total_slots_used: uxx;
 	slot_size: uxx;
 	slot_size_real: uxx;
-	slot_count: u16;
 	misalign_bytes: u8;
 
 	static func init(uxx slot_size, u8 misalign_bytes = 0) Allocator {
@@ -27,7 +26,6 @@ class Allocator norc {
 		alc.block_count = 1;
 		alc.slot_size = slot_size;
 		alc.slot_size_real = real_size;
-		alc.slot_count = count;
 		alc.total_slots = count;
 		alc.total_slots_used = 0;
 		alc.misalign_bytes = misalign_bytes;
@@ -38,6 +36,9 @@ class Allocator norc {
 	func get_slot() ptr {
 		let mut b = this.current;
 		while true {
+			if b.is_empty() {
+				// Decide wether to free the block or not
+			}
 			if b.has_open_slot() {
 				this.total_slots_used += 1;
 				return b.get_slot();
@@ -48,12 +49,14 @@ class Allocator norc {
 		// Decide to create new block or use previous blocks
 		if this.block_count < 10 || (this.total_slots / this.total_slots_used) < 2 {
 			// Create new block
-			let mut count = this.slot_count;
-			count *= 2;
+			let mut pow = this.block_count;
+			if pow > 10 {
+				pow = 10;
+			}
+			let mut count = 4 << pow;
 			if count > 250 {
 				count = 250;
 			}
-			this.slot_count = count;
 			let nb = Block.create(this, this.slot_size_real, count -> u8, this.misalign_bytes);
 			b.next = nb;
 			nb.prev = b;
@@ -63,7 +66,7 @@ class Allocator norc {
 			this.total_slots_used += 1;
 			return nb.get_slot();
 		}
-		//
+		// Use previous blocks
 		this.current = this.first;
 		return this.get_slot();
 	}
