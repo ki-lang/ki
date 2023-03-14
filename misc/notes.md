@@ -1,13 +1,16 @@
 
 # Race conditions
 
-Ownership type: *MyClass
-shared token: **MyClass
+strict ownership type: *MyClass
+shared ownership type: **MyClass
 
 only these types can be shared with other threads or globals
 All it's properties must also be owned or shared types
 
 shared types must be captured before use
+strict ownership type cannot be used in:
+- uncertain scopes, such as if statement
+- inside loops
 
 
 # Ref counting

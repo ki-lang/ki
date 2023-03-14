@@ -437,23 +437,29 @@ Value *upref_value_check(Allocator *alc, Scope *scope, Value *val) {
     return val;
 }
 
-void deref_scope(Allocator *alc, Scope *scope, Scope *until) {
-    Scope *cur_scope = scope;
+void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
+    Scope *scope = scope_;
     while (true) {
-        Array *decls = cur_scope->decls;
+        Array *decls = scope->decls;
         if (decls) {
             for (int i = 0; i < decls->length; i++) {
                 Decl *decl = array_get_index(decls, i);
                 Type *type = decl->type;
                 Class *class = type->class;
-                if (class && decl->times_used != 1) {
-                    Value *val = value_init(alc, v_decl, decl, type);
-                    class_ref_change(alc, scope, val, -1);
-                }
+
+                Scope *sub = scope_init(alc, sct_default, scope_, true);
+                array_push(scope_->ast, tgen_deref_decl_used(alc, decl, sub));
+
+                Value *val = value_init(alc, v_decl, decl, type);
+                class_ref_change(alc, sub, val, -1);
             }
         }
-        if (cur_scope == until)
+
+        // Clear upref slots
+        scope->upref_slots = map_make(alc);
+
+        if (scope == until)
             break;
-        cur_scope = cur_scope->parent;
+        scope = scope->parent;
     }
 }

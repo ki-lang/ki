@@ -51,6 +51,7 @@ enum TOKENTYPE {
     tkn_ref,
     tkn_ir_val,
     tkn_ir_assign_val,
+    tkn_deref_decl_used,
 };
 
 enum VALUETYPE {

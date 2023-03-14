@@ -40,3 +40,11 @@ Token *tgen_while(Allocator *alc, Value *cond, Scope *scope) {
     w->scope = scope;
     return token_init(alc, tkn_while, w);
 }
+
+Token *tgen_deref_decl_used(Allocator *alc, Decl *decl, Scope *scope) {
+    //
+    TDerefDeclUsed *item = al(alc, sizeof(TDerefDeclUsed));
+    item->decl = decl;
+    item->scope = scope;
+    return token_init(alc, tkn_deref_decl_used, item);
+}
