@@ -424,6 +424,14 @@ void upref_value_check(Allocator *alc, Scope *scope, Value *val) {
         if (val->type == v_class_pa) {
             // TODO upref token
         }
+        if (val->type == v_or_break) {
+            VOrBreak *orb = val->item;
+            upref_value_check(alc, scope, orb->value);
+        }
+        if (val->type == v_or_value) {
+            VOrValue *orv = val->item;
+            upref_value_check(alc, scope, orv->left);
+        }
     }
 }
 

@@ -52,7 +52,7 @@ while true {
 
 # TODO
 
-- prop access | deref on value instantly
+- prop access | deref on value instantly when on value is func call or class init
 - When using variables in recurrent pieces of code, decl->uses += 2; instead of += 1;
 
 - type check internal funcs : __ref __deref ...
