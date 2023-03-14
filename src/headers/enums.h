@@ -49,7 +49,8 @@ enum TOKENTYPE {
     tkn_each,
     tkn_upref_slot,
     tkn_ref,
-    tkn_tmp_var,
+    tkn_ir_val,
+    tkn_ir_assign_val,
 };
 
 enum VALUETYPE {
@@ -74,6 +75,9 @@ enum VALUETYPE {
     v_getptr,
     v_ir_value,
     v_upref_value,
+    v_ir_val,
+    v_ir_assign_val,
+    v_ir_load,
 };
 
 enum OPTYPE {

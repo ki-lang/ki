@@ -56,9 +56,14 @@ void llvm_write_ast(LB *b, Scope *scope) {
             }
             continue;
         }
-        if (t->type == tkn_tmp_var) {
-            TempVar *tmp = t->item;
-            tmp->ir_value = llvm_value(b, scope, tmp->value);
+        if (t->type == tkn_ir_val) {
+            IRVal *item = t->item;
+            item->ir_value = llvm_value(b, scope, item->value);
+            continue;
+        }
+        if (t->type == tkn_ir_assign_val) {
+            IRAssignVal *item = t->item;
+            item->ir_value = llvm_assign_value(b, scope, item->value);
             continue;
         }
         if (t->type == tkn_return) {

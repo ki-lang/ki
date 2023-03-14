@@ -2,12 +2,12 @@
 #ifndef _H_TOKEN
 #define _H_TOKEN
 
-#include "structs.h"
-#include "value.h"
-
 typedef struct Token Token;
 typedef struct TIf TIf;
 typedef struct TWhile TWhile;
+
+#include "structs.h"
+#include "value.h"
 
 struct Token {
     int type;

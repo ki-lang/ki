@@ -331,13 +331,13 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
 
         val = upref_value_check(alc, scope, val);
 
-        TempVar *tvar = al(alc, sizeof(TempVar));
+        IRVal *tvar = al(alc, sizeof(IRVal));
         tvar->value = val;
         tvar->ir_value = NULL;
-        Token *t = token_init(alc, tkn_tmp_var, tvar);
+        Token *t = token_init(alc, tkn_ir_val, tvar);
         array_push(scope->ast, t);
 
-        Value *tmp_var = value_init(alc, v_tmp_var, tvar, val->rett);
+        Value *tmp_var = value_init(alc, v_ir_val, tvar, val->rett);
         retval = tmp_var;
     }
 

@@ -16,6 +16,9 @@ typedef struct VClassPA VClassPA;
 typedef struct VClassInit VClassInit;
 typedef struct VOrBreak VOrBreak;
 typedef struct VOrValue VOrValue;
+typedef struct IRVal IRVal;
+typedef struct IRAssignVal IRAssignVal;
+typedef struct IRLoad IRLoad;
 
 struct Value {
     int type;
@@ -68,6 +71,14 @@ struct VOrBreak {
 struct VOrValue {
     Value *left;
     Value *right;
+};
+struct IRVal {
+    Value *value;
+    char *ir_value;
+};
+struct IRAssignVal {
+    Value *value;
+    char *ir_value;
 };
 
 #endif

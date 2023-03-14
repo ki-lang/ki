@@ -253,41 +253,43 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
     } else if (class->is_rc) {
 
         // _RC-- or _RC++
+        Value *ir_on = vgen_ir_val(alc, on, on->rett);
+        array_push(scope->ast, token_init(alc, tkn_ir_val, ir_on->item));
+
         ClassProp *prop = map_get(class->props, "_RC");
-        Value *pa = vgen_class_pa(alc, on, prop);
+        Value *pa = vgen_class_pa(alc, ir_on, prop);
+
+        Value *ir_pa = vgen_ir_assign_val(alc, pa, prop->type);
+        array_push(scope->ast, token_init(alc, tkn_ir_assign_val, ir_pa->item));
+
+        Value *ir_pa_load = value_init(alc, v_ir_load, ir_pa, prop->type);
 
         if (amount > 0) {
 
-            Value *add = vgen_op(alc, class->fc->b, pa, vgen_vint(alc, amount, prop->type, false), op_add, false);
-            Token *as = tgen_assign(alc, pa, add);
+            Value *add = vgen_op(alc, class->fc->b, ir_pa_load, vgen_vint(alc, amount, prop->type, false), op_add, false);
+            Token *as = tgen_assign(alc, ir_pa, add);
             array_push(scope->ast, as);
 
         } else if (amount < 0) {
-            TempVar *tvar = al(alc, sizeof(TempVar));
-            tvar->value = pa;
-            tvar->ir_value = NULL;
-            Token *tmpt = token_init(alc, tkn_tmp_var, tvar);
-            array_push(scope->ast, tmpt);
-
-            Value *tmp_var = value_init(alc, v_tmp_var, tvar, prop->type);
-
             //
-            Value *sub = vgen_op(alc, class->fc->b, tmp_var, vgen_vint(alc, amount * -1, prop->type, false), op_sub, false);
+            Value *sub = vgen_op(alc, class->fc->b, ir_pa_load, vgen_vint(alc, amount * -1, prop->type, false), op_sub, false);
 
-            VPair *pair = al(alc, sizeof(VPair));
-            Value *is_zero = vgen_compare(alc, class->fc->b, sub, vgen_vint(alc, 0, prop->type, false), op_eq);
+            Value *ir_sub = vgen_ir_val(alc, sub, prop->type);
+            array_push(scope->ast, token_init(alc, tkn_ir_val, ir_sub->item));
+
+            Value *is_zero = vgen_compare(alc, class->fc->b, ir_sub, vgen_vint(alc, 0, prop->type, false), op_eq);
 
             Scope *code = scope_init(alc, sct_default, scope, true);
             Scope *elif = scope_init(alc, sct_default, scope, true);
             // == 0 : Call free
             Value *fptr = vgen_fptr(alc, class->func_free, NULL);
             Array *values = array_make(alc, 2);
-            array_push(values, on);
+            array_push(values, ir_on);
             Value *fcall = vgen_fcall(alc, fptr, values, type_gen_void(alc), code, false);
             array_push(code->ast, token_init(alc, tkn_statement, fcall));
 
             // != 0 : else update _RC
-            Token *as = tgen_assign(alc, pa, sub);
+            Token *as = tgen_assign(alc, ir_pa, ir_sub);
             array_push(elif->ast, as);
 
             //

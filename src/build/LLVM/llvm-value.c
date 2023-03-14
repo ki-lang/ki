@@ -277,10 +277,6 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char *lval = llvm_value(b, scope, val);
         return llvm_ir_cast(b, lval, from_type, to_type);
     }
-    if (v->type == v_tmp_var) {
-        TempVar *tmp = v->item;
-        return tmp->ir_value;
-    }
     if (v->type == v_or_break) {
         VOrBreak *vob = v->item;
         Value *val = vob->value;
@@ -428,6 +424,19 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         llvm_write_ast(b, sub);
         return lval;
     }
+    if (v->type == v_ir_val) {
+        IRVal *item = v->item;
+        return item->ir_value;
+    }
+    if (v->type == v_ir_assign_val) {
+        IRAssignVal *item = v->item;
+        return item->ir_value;
+    }
+    if (v->type == v_ir_load) {
+        Value *val = v->item;
+        char *lval = llvm_value(b, scope, val);
+        return llvm_ir_load(b, v->rett, lval);
+    }
     return "???";
 }
 
@@ -464,6 +473,10 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
         Type *type = prop->type;
         char *lon = llvm_value(b, scope, on);
         return llvm_ir_class_prop_access(b, class, lon, prop);
+    }
+    if (v->type == v_ir_assign_val) {
+        IRAssignVal *item = v->item;
+        return item->ir_value;
     }
 
     die("LLVM : Cannot assign to this value");

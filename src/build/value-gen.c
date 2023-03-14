@@ -126,3 +126,19 @@ Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op) 
     Type *rett = type_gen(b, alc, "bool");
     return value_init(alc, v_and_or, item, rett);
 }
+
+Value *vgen_ir_val(Allocator *alc, Value *value, Type *rett) {
+    //
+    IRVal *item = al(alc, sizeof(IRVal));
+    item->value = value;
+    item->ir_value = NULL;
+    return value_init(alc, v_ir_val, item, rett);
+}
+
+Value *vgen_ir_assign_val(Allocator *alc, Value *value, Type *rett) {
+    //
+    IRAssignVal *item = al(alc, sizeof(IRAssignVal));
+    item->value = value;
+    item->ir_value = NULL;
+    return value_init(alc, v_ir_assign_val, item, rett);
+}
