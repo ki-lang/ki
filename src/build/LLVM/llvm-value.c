@@ -19,6 +19,10 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_decl) {
         Decl *decl = v->item;
         char *var_val = decl->llvm_val;
+        if (!var_val) {
+            printf("Missing decl value (compiler bug)\n");
+            raise(11);
+        }
         if (!decl->is_mut) {
             return var_val;
         }

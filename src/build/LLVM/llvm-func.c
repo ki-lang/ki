@@ -74,15 +74,20 @@ void llvm_gen_func_ir(LB *b) {
         // Store mutable args in variables
         Str *cir = llvm_b_ir(b);
         for (int o = 0; o < func->args->length; o++) {
+
             Arg *arg = array_get_index(func->args, o);
+            char *lval = map_get(fscope->lvars, arg->name);
+
             if (!arg->is_mut) {
+                arg->decl->llvm_val = lval;
                 continue;
             }
+
             Type *type = arg->type;
             char *ltype = llvm_type(b, type);
             char *var = llvm_alloca(b, type);
 
-            char *lval = map_get(fscope->lvars, arg->name);
+            arg->decl->llvm_val = var;
 
             char bytes[20];
             sprintf(bytes, "%d", type->bytes);

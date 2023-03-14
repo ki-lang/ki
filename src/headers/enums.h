@@ -58,17 +58,17 @@ enum VALUETYPE {
     v_vint,
     v_float,
     v_ptrv,
-    v_op,
+    v_op, // 5
     v_compare,
     v_fcall,
     v_fptr,
     v_cast,
-    v_class_pa,
+    v_class_pa, // 10
     v_class_init,
     v_tmp_var,
     v_null,
     v_or_break,
-    v_or_value,
+    v_or_value, // 15
     v_decl,
 };
 
