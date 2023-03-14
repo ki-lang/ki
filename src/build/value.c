@@ -73,11 +73,30 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         Type *type = read_type(fc, alc, scope, true, true);
         v = vgen_ptrv(alc, on, type);
         //
+    } else if (strcmp(token, "getptr") == 0) {
+        Value *on = read_value(fc, alc, scope, false, 0);
+        if (!value_assignable(on)) {
+            sprintf(fc->sbuf, "Value must be assignable, such as a mutable variable");
+            fc_error(fc);
+        }
+        if (on->type == v_var) {
+            Var *var = v->item;
+            if (!var->decl->is_mut) {
+                sprintf(fc->sbuf, "Variable must be mutable, otherwise it has no address in memory");
+                fc_error(fc);
+            }
+        }
+        v = value_init(alc, v_getptr, on, type_gen(b, alc, "ptr"));
+        //
     } else if (strcmp(token, "sizeof") == 0) {
         tok_expect(fc, "(", true, false);
         Type *type = read_type(fc, alc, scope, false, true);
         tok_expect(fc, ")", false, true);
-        v = vgen_vint(alc, type->bytes, type_gen(b, alc, "i32"), false);
+        int size = type->bytes;
+        if (type->type == type_struct) {
+            size = type->class->size;
+        }
+        v = vgen_vint(alc, size, type_gen(b, alc, "i32"), false);
         //
     } else if (is_number(token[0]) || strcmp(token, "-") == 0) {
 
@@ -698,9 +717,6 @@ Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type) {
                     //     print(f "{} || {} - {} ({})\n" {vint.value.str(), min.str(), max.str(), bits});
                 }
             }
-        } else if (type_is_ptr(to_type, fc->b)) {
-            // vint -> ptr
-            return vgen_cast(alc, val, to_type);
         }
         return val;
     }

@@ -5,7 +5,7 @@ func alloc(uxx size) ptr {
 	return os.ki_os__alloc(size);
 }
 func free(ptr adr) void {
-	os.ki_os__free(adr);
+	//os.ki_os__free(adr);
 }
 
 func sys_alloc(uxx size) ptr {
@@ -13,6 +13,29 @@ func sys_alloc(uxx size) ptr {
 }
 func sys_free(ptr adr) void {
 	os.ki_os__free(adr);
+}
+
+func clear(ptr mut adrc, uxx mut size) void {
+	while(size > sizeof(ptr)){
+		ptrv adrc as uxx = 0#uxx;
+		adrc += sizeof(ptr);
+		size -= sizeof(ptr);
+	}
+	while(size > 3){
+		ptrv adrc as u32 = 0#u32;
+		adrc += 4;
+		size -= 4;
+	}
+	while(size > 1){
+		ptrv adrc as u16 = 0#u16;
+		adrc += 2;
+		size -= 2;
+	}
+	while(size > 0){
+		ptrv adrc as u8 = 0#u8;
+		adrc+=1;
+		size-=1;
+	}
 }
 
 func copy(ptr mut from, ptr mut to, uxx mut len) void {

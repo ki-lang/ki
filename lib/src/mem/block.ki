@@ -1,28 +1,86 @@
 
-class Block {
+class Block norc {
 	alc: Allocator;
 	prev: ?Block = null;
 	next: ?Block = null;
-	slot_count: u32;
-	slot_size: uxx;
 	data: ptr;
+	data_slot_nrs: ptr;
+	data_slots: ptr;
+	slot_size: uxx;
+	slot_real_size: uxx;
+	slot_count: u8;
+	head: u8;
+	tail: u8;
+	align_bytes: u8;
 
-	static func create(Allocator alc, uxx slot_size, u32 slot_count) Block {
+	static func create(Allocator alc, uxx slot_size, u8 slot_count) Block {
+
 		let b = sys_alloc(sizeof(Block)) -> Block;
 		b.alc = alc;
 		b.prev = null;
 		b.next = null;
 		b.slot_count = slot_count;
 		b.slot_size = slot_size;
-		b.data = sys_alloc(sizeof(u32) + slot_count + (slot_count * (slot_size + 1)));
+		b.head = 0;
+		b.tail = 0;
+		b.align_bytes = 0;
+
+		let real_size = slot_size + 1;
+		b.slot_real_size = real_size;
+
+		let size : uxx = sizeof(ptr) + sizeof(u8) + slot_count + (slot_count * real_size);
+		let data = sys_alloc(size);
+		b.data = data;
+
+		let mut adr = data;
+		ptrv adr as ptr = b -> ptr;
+		adr += sizeof(ptr);
+
+		b.data_slot_nrs = adr;
+
+		let mut i = 0#u8;
+		while i < slot_count {
+			ptrv adr as u8 = i;
+			adr += 1;
+			i += 1;
+		}
+
+		ptrv adr as ptr = slot_count;
+		adr += 1;
+
+		b.data_slots = adr;
+
+		i = 0;
+		while i < slot_count {
+			ptrv adr as u8 = i;
+			adr += real_size;
+			i += 1;
+		}
+
 		return b;
 	}
 
 	func has_open_slot() bool {
-		return true;
+		let mut next_head = this.head + 1;
+		if next_head == this.slot_count {
+			next_head = 0;
+		}
+		return next_head != this.tail;
 	}
 
 	func get_slot() ptr {
-		return 0 -> ptr;
+		let mut next_head = this.head + 1;
+		if next_head == this.slot_count {
+			next_head = 0;
+		}
+		let head = next_head;
+		this.head = head;
+
+		let slot_nr_adr = this.data_slot_nrs + sizeof(ptr) + head;
+		let slot_nr = ptrv slot_nr_adr as u8;
+
+		let slot_adr = this.data_slots + (slot_nr * this.slot_real_size);
+
+		return slot_adr + 1;
 	}
 }

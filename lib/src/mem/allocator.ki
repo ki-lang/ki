@@ -1,17 +1,17 @@
 
-class Allocator {
+class Allocator norc {
 	first: Block = null;
 	current: Block;
 	block_count: uxx;
-	slot_size: uxx;
-	slot_count: u32;
 	total_slots: uxx;
 	total_slots_used: uxx;
+	slot_size: uxx;
+	slot_count: u16;
 
 	static func init(uxx slot_size) Allocator {
-		let count = 4#u32;
+		let count = 4#u16;
 		let alc = sys_alloc(sizeof(Allocator)) -> Allocator;
-		let block = Block.create(alc, slot_size, count);
+		let block = Block.create(alc, slot_size, count -> u8);
 		alc.first = block;
 		alc.current = block;
 		alc.block_count = 1;
@@ -23,7 +23,7 @@ class Allocator {
 		return alc;
 	}
 
-	func alloc(uxx size) ptr {
+	func get_slot() ptr {
 		let mut b = this.current;
 		while true {
 			if b.has_open_slot() {
@@ -41,7 +41,7 @@ class Allocator {
 				count = 250;
 			}
 			this.slot_count = count;
-			let nb = Block.create(this, this.slot_size, count);
+			let nb = Block.create(this, this.slot_size, count -> u8);
 			b.next = nb;
 			nb.prev = b;
 			this.current = nb;
@@ -50,7 +50,7 @@ class Allocator {
 		}
 		//
 		this.current = this.first;
-		return this.alloc(size);
+		return this.get_slot();
 	}
 
 }

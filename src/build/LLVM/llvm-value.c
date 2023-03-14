@@ -50,6 +50,20 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char *lval = llvm_assign_value(b, scope, v);
         return llvm_ir_load(b, v->rett, lval);
     }
+    if (v->type == v_getptr) {
+        Value *val = v->item;
+        char *lval = llvm_assign_value(b, scope, val);
+        char *var = llvm_var(b);
+        Str *ir = llvm_b_ir(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, var);
+        str_append_chars(ir, " = bitcast ");
+        str_append_chars(ir, llvm_type(b, val->rett));
+        str_append_chars(ir, "* ");
+        str_append_chars(ir, lval);
+        str_append_chars(ir, " to i8*\n");
+        return var;
+    }
     if (v->type == v_op) {
         VOp *vop = v->item;
         int op = vop->op;

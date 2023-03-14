@@ -71,6 +71,7 @@ enum VALUETYPE {
     v_or_value, // 15
     v_decl,
     v_and_or,
+    v_getptr,
 };
 
 enum OPTYPE {
