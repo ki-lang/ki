@@ -38,6 +38,13 @@ class Allocator norc {
 		while true {
 			if b.is_empty() {
 				// Decide wether to free the block or not
+				if (this.total_slots / this.total_slots_used) > 2 {
+					this.total_slots -= b.slot_count;
+					let next = b.next;
+					b.free();
+					//b = next ?? this.first;
+					continue;
+				}
 			}
 			if b.has_open_slot() {
 				this.total_slots_used += 1;
@@ -85,6 +92,8 @@ class Allocator norc {
 		let b = ptrv adr as Block;
 		b.free_slot(slot_nr);
 
+		// Make atomic
+		// let used = atomicop this.total_slots_used SUB 1;
 		this.total_slots_used -= 1;
 	}
 

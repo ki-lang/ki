@@ -160,6 +160,7 @@ Value *vgen_class_init(Allocator *alc, Class *class, Map *values);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
 Value *vgen_null(Allocator *alc, Build *b);
 Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope);
+Value *vgen_or_value(Allocator *alc, Value *left, Value *right);
 Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op);
 
 // Ast

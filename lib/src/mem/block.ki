@@ -106,13 +106,24 @@ class Block norc {
 	}
 
 	func free_slot(u8 slot_nr) void {
+
+		let slot_count = this.slot_count;
+
+		// Make atomic
 		let tail = this.tail;
+		// let tail = atomicop this.tail ADD 1;
+		// if tail == slot_count {
+		//     let reduce = atomicop this.tail SUB slot_count;
+		// } else if (tail > slot_count) {
+		//     tail -= slot_count;
+		// }
 
 		let slot_nr_adr = this.data_slot_nrs + tail;
 		ptrv slot_nr_adr as u8 = slot_nr;
 
+		// Remove when atomic
 		let mut next_tail = tail + 1;
-		if next_tail == this.slot_count {
+		if next_tail == slot_count {
 			next_tail = 0;
 		}
 		this.tail = next_tail;

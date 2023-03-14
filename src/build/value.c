@@ -244,15 +244,16 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
     }
 
     if (prio == 0 || prio > 8) {
-        while (strcmp(token, "?!") == 0) {
+        while (strcmp(token, "?!") == 0 || strcmp(token, "??") == 0) {
+
+            Type *ltype = v->rett;
+            if (!ltype->nullable) {
+                sprintf(fc->sbuf, "Left side will never be null");
+                fc_error(fc);
+            }
 
             if (strcmp(token, "?!") == 0) {
-                Type *ltype = v->rett;
-                if (!ltype->nullable) {
-                    sprintf(fc->sbuf, "Left side will never be null");
-                    fc_error(fc);
-                }
-
+                // ?!
                 Scope *sub = scope_init(alc, sct_default, scope, true);
                 tok(fc, token, false, true);
                 bool single_line = strcmp(token, "{") != 0;
@@ -264,6 +265,13 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
                     fc_error(fc);
                 }
                 v = vgen_or_break(alc, v, sub);
+            } else {
+                // ??
+                Value *right = read_value(fc, alc, scope, true, 0);
+
+                type_check(fc, v->rett, right->rett);
+
+                v = vgen_or_value(alc, v, right);
             }
 
             tok(fc, token, false, true);

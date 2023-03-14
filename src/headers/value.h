@@ -15,6 +15,7 @@ typedef struct VFuncPtr VFuncPtr;
 typedef struct VClassPA VClassPA;
 typedef struct VClassInit VClassInit;
 typedef struct VOrBreak VOrBreak;
+typedef struct VOrValue VOrValue;
 
 struct Value {
     int type;
@@ -63,6 +64,10 @@ struct VClassInit {
 struct VOrBreak {
     Value *value;
     Scope *or_scope;
+};
+struct VOrValue {
+    Value *left;
+    Value *right;
 };
 
 #endif

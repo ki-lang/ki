@@ -111,6 +111,13 @@ Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope) {
     return value_init(alc, v_or_break, item, rett);
 }
 
+Value *vgen_or_value(Allocator *alc, Value *left, Value *right) {
+    VOrValue *item = al(alc, sizeof(VOrValue));
+    item->left = left;
+    item->right = right;
+    return value_init(alc, v_or_value, item, right->rett);
+}
+
 Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op) {
     VOp *item = al(alc, sizeof(VOp));
     item->op = op;

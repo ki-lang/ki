@@ -214,6 +214,9 @@ void class_generate_free(Class *class) {
 
 void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
     //
+    if (amount == 0)
+        return;
+
     Type *type = on->rett;
     Class *class = type->class;
     Build *b = class->fc->b;

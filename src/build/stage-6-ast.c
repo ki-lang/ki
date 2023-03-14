@@ -100,9 +100,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 sprintf(fc->sbuf, "You can only use 'break' inside a loop");
                 fc_error(fc);
             }
+            deref_scope(alc, scope, loop);
             array_push(scope->ast, token_init(alc, tkn_break, loop));
             tok_expect(fc, ";", false, true);
-            deref_scope(alc, scope, loop);
             scope->did_return = true;
             continue;
         }
@@ -112,9 +112,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 sprintf(fc->sbuf, "You can only use 'break' inside a loop");
                 fc_error(fc);
             }
+            deref_scope(alc, scope, loop);
             array_push(scope->ast, token_init(alc, tkn_continue, loop));
             tok_expect(fc, ";", false, true);
-            deref_scope(alc, scope, loop);
             scope->did_return = true;
             continue;
         }

@@ -12,9 +12,19 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Decl *decl = var->decl;
         char *var_val = llvm_get_var(b, scope, decl);
         if (!decl->is_mut) {
+            // char *var = llvm_var(b);
+            // Str *ir = llvm_b_ir(b);
+            // str_append_chars(ir, "  ");
+            // str_append_chars(ir, var);
+            // str_append_chars(ir, " = alias ");
+            // str_append_chars(ir, var_val);
+            // str_append_chars(ir, "\n");
             return var_val;
         }
         return llvm_ir_load(b, var->type, var_val);
+    }
+    if (v->type == v_ir_value) {
+        return v->item;
     }
     if (v->type == v_decl) {
         Decl *decl = v->item;
@@ -291,6 +301,54 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         b->lfunc->block = b_after;
         return lval;
     }
+    if (v->type == v_or_value) {
+        VOrValue *orv = v->item;
+        Value *left = orv->left;
+        Value *right = orv->right;
+
+        char *llval = llvm_value(b, scope, left);
+        char *lltype = llvm_type(b, left->rett);
+        char *isnull = llvm_ir_isnull_i1(b, lltype, llval);
+
+        LLVMBlock *b_code = llvm_block_init_auto(b);
+        LLVMBlock *b_after = llvm_block_init_auto(b);
+
+        char *current_block_name = b->lfunc->block->name;
+
+        llvm_ir_cond_jump(b, llvm_b_ir(b), isnull, b_code, b_after);
+
+        b->lfunc->block = b_code;
+        char *rlval = llvm_value(b, scope, right);
+
+        Scope *sub = scope_init(alc, sct_default, scope, true);
+        class_ref_change(alc, sub, value_init(alc, v_ir_value, rlval, right->rett), 1);
+        llvm_write_ast(b, sub);
+
+        llvm_ir_jump(llvm_b_ir(b), b_after);
+
+        char *last_block = b->lfunc->block->name;
+
+        b->lfunc->block = b_after;
+        Str *ir = b_after->ir;
+
+        char *var_result = llvm_var(b);
+
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, var_result);
+        str_append_chars(ir, " = phi ");
+        str_append_chars(ir, lltype);
+        str_append_chars(ir, " [ ");
+        str_append_chars(ir, llval);
+        str_append_chars(ir, ", %");
+        str_append_chars(ir, current_block_name);
+        str_append_chars(ir, " ], [ ");
+        str_append_chars(ir, rlval);
+        str_append_chars(ir, ", %");
+        str_append_chars(ir, last_block);
+        str_append_chars(ir, " ]\n");
+
+        return var_result;
+    }
     if (v->type == v_and_or) {
         VOp *vop = v->item;
         bool is_or = vop->op == op_or;
@@ -340,6 +398,8 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
         LLVMBlock *next_block_last = b->lfunc->block;
 
+        char *last_block = b->lfunc->block->name;
+
         b->lfunc->block = after_block;
         Str *air = after_block->ir;
 
@@ -354,7 +414,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         str_append_chars(air, " ], [ ");
         str_append_chars(air, var_right);
         str_append_chars(air, ", %");
-        str_append_chars(air, next_block_last->name);
+        str_append_chars(air, last_block);
         str_append_chars(air, " ]\n");
 
         str_append_chars(air, "  ");
