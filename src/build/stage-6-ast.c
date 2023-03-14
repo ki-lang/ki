@@ -345,6 +345,8 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
 
     array_push(scope->ast, tgen_return(alc, fscope, retval));
     tok_expect(fc, ";", false, true);
+
+    scope->did_return = true;
 }
 
 TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond) {
@@ -425,8 +427,7 @@ Value *upref_value_check(Allocator *alc, Scope *scope, Value *val) {
             // TODO upref token
         }
         if (val->type == v_or_break) {
-            VOrBreak *orb = val->item;
-            val = upref_value_check(alc, scope, orb->value);
+            val = value_init(alc, v_upref_value, val, val->rett);
         }
         if (val->type == v_or_value) {
             val = value_init(alc, v_upref_value, val, val->rett);
