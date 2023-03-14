@@ -1,6 +1,6 @@
 
 
-// { ptr : block adr } { u8[slot_count] : slot nrs } { u8 : slot_count } { u8[align_bytes] } { u8 : align_bytes } | slot_count * { real_size }
+// { ptr : block adr } { u8[slot_count] : slot nrs } { u8 : slot_count } { u8[align_bytes] } { u8 : align_bytes } | slot_count * { slot_size }
 
 class Block norc {
 	alc: Allocator;
@@ -10,7 +10,6 @@ class Block norc {
 	data_slot_nrs: ptr;
 	data_slots: ptr;
 	slot_size: uxx;
-	slot_real_size: uxx;
 	slot_count: u8;
 	head: u8;
 	tail: u8;
@@ -32,16 +31,15 @@ class Block norc {
 		b.tail = 0;
 		b.misalign_bytes = misalign_bytes;
 
-		// Calculate size
-		let mut real_size = slot_size + 1;
-		// 8 - 9 % 8 = 7 
-		let mut mod = slot_size;
-		if mod > 8 { mod = 8; }
-		real_size += mod - real_size % mod;
-		b.slot_real_size = real_size;
+		// Alignment
+		let mut tmp = 0#i32 + slot_count + 2;
+		tmp = 8 - tmp % 8;
+		tmp -= misalign_bytes;
+		if tmp < 0 { tmp += 8; }
+		let align_bytes = tmp -> u8;
 
 		// Setup data
-		let size : uxx = sizeof(ptr) + sizeof(u8) + slot_count + (slot_count * real_size);
+		let size : uxx = sizeof(ptr) + 2 + slot_count + align_bytes + (slot_count * slot_size);
 		let data = sys_alloc(size);
 		b.data = data;
 
@@ -61,13 +59,6 @@ class Block norc {
 		ptrv adr as ptr = slot_count;
 		adr += 1;
 
-		// Alignment
-		let mut tmp = 0#i32 + slot_count + 2;
-		tmp = 8 - tmp % 8;
-		tmp -= misalign_bytes;
-		if tmp < 0 { tmp += 8; }
-		let align_bytes = tmp -> u8;
-
 		//
 		b.align_bytes = align_bytes;
 		adr += align_bytes;
@@ -79,7 +70,7 @@ class Block norc {
 		i = 0;
 		while i < slot_count {
 			ptrv adr as u8 = i;
-			adr += real_size;
+			adr += slot_size;
 			i += 1;
 		}
 
@@ -105,8 +96,29 @@ class Block norc {
 		let slot_nr_adr = this.data_slot_nrs + sizeof(ptr) + head;
 		let slot_nr = ptrv slot_nr_adr as u8;
 
-		let slot_adr = this.data_slots + (slot_nr * this.slot_real_size);
+		let slot_adr = this.data_slots + (slot_nr * this.slot_size);
 
 		return slot_adr + 1;
+	}
+
+	func is_empty() bool {
+		return this.tail == this.head;
+	}
+
+	func free_slot(u8 slot_nr) void {
+		let tail = this.tail;
+
+		let slot_nr_adr = this.data_slot_nrs + tail;
+		ptrv slot_nr_adr as u8 = slot_nr;
+
+		let mut next_tail = tail + 1;
+		if next_tail == this.slot_count {
+			next_tail = 0;
+		}
+		this.tail = next_tail;
+	}
+
+	func free() void {
+		sys_free(this.data);
 	}
 }

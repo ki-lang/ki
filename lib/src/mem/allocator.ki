@@ -6,17 +6,27 @@ class Allocator norc {
 	total_slots: uxx;
 	total_slots_used: uxx;
 	slot_size: uxx;
+	slot_size_real: uxx;
 	slot_count: u16;
 	misalign_bytes: u8;
 
 	static func init(uxx slot_size, u8 misalign_bytes = 0) Allocator {
+
+		// Calculate size
+		let mut real_size = slot_size + 1;
+		// 8 - 9 % 8 = 7 
+		let mut mod = slot_size;
+		if mod > 8 { mod = 8; }
+		real_size += mod - real_size % mod;
+
 		let count = 4#u16;
 		let alc = sys_alloc(sizeof(Allocator)) -> Allocator;
-		let block = Block.create(alc, slot_size, count -> u8, misalign_bytes);
+		let block = Block.create(alc, real_size, count -> u8, misalign_bytes);
 		alc.first = block;
 		alc.current = block;
 		alc.block_count = 1;
 		alc.slot_size = slot_size;
+		alc.slot_size_real = real_size;
 		alc.slot_count = count;
 		alc.total_slots = count;
 		alc.total_slots_used = 0;
@@ -26,10 +36,10 @@ class Allocator norc {
 	}
 
 	func get_slot() ptr {
-		this.total_slots_used += 1;
 		let mut b = this.current;
 		while true {
 			if b.has_open_slot() {
+				this.total_slots_used += 1;
 				return b.get_slot();
 			}
 			b = b.next ?! break;;
@@ -44,17 +54,35 @@ class Allocator norc {
 				count = 250;
 			}
 			this.slot_count = count;
-			let nb = Block.create(this, this.slot_size, count -> u8, this.misalign_bytes);
+			let nb = Block.create(this, this.slot_size_real, count -> u8, this.misalign_bytes);
 			b.next = nb;
 			nb.prev = b;
 			this.current = nb;
 			this.block_count += 1;
 			this.total_slots += count;
+			this.total_slots_used += 1;
 			return nb.get_slot();
 		}
 		//
 		this.current = this.first;
 		return this.get_slot();
+	}
+
+	func free(ptr mut adr) void {
+		adr -= 1;
+		let slot_nr = ptrv adr as u8;
+		adr -= (slot_nr * this.slot_size_real);
+
+		adr -= 1;
+		let align_bytes = ptrv adr as u8;
+		adr -= align_bytes + 1;
+		let slot_count = ptrv adr as u8;
+		adr -= slot_count + sizeof(ptr);
+
+		let b = ptrv adr as Block;
+		b.free_slot(slot_nr);
+
+		this.total_slots_used -= 1;
 	}
 
 }
