@@ -73,6 +73,7 @@ enum VALUETYPE {
     v_and_or,
     v_getptr,
     v_ir_value,
+    v_upref_value,
 };
 
 enum OPTYPE {

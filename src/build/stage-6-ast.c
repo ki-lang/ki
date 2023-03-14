@@ -189,7 +189,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, val->rett);
                 type_check(fc, val->rett, right->rett);
 
-                upref_value_check(alc, scope, right);
+                right = upref_value_check(alc, scope, right);
 
                 array_push(scope->ast, tgen_assign(alc, val, right));
                 tok_expect(fc, ";", false, true);
@@ -288,7 +288,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
         type = val->rett;
     }
 
-    upref_value_check(alc, scope, val);
+    val = upref_value_check(alc, scope, val);
 
     if (type_is_void(type)) {
         sprintf(fc->sbuf, "Variable declaration: Right side does not return a value");
@@ -326,18 +326,18 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
 
     if (!type_is_void(frett)) {
         Value *val = read_value(fc, alc, scope, true, 0);
-        Value *tval = try_convert(fc, alc, val, frett);
-        type_check(fc, frett, tval->rett);
+        val = try_convert(fc, alc, val, frett);
+        type_check(fc, frett, val->rett);
 
-        upref_value_check(alc, scope, tval);
+        val = upref_value_check(alc, scope, val);
 
         TempVar *tvar = al(alc, sizeof(TempVar));
-        tvar->value = tval;
+        tvar->value = val;
         tvar->ir_value = NULL;
         Token *t = token_init(alc, tkn_tmp_var, tvar);
         array_push(scope->ast, t);
 
-        Value *tmp_var = value_init(alc, v_tmp_var, tvar, tval->rett);
+        Value *tmp_var = value_init(alc, v_tmp_var, tvar, val->rett);
         retval = tmp_var;
     }
 
@@ -404,7 +404,7 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
     array_push(scope->ast, tgen_while(alc, cond, sub));
 }
 
-void upref_value_check(Allocator *alc, Scope *scope, Value *val) {
+Value *upref_value_check(Allocator *alc, Scope *scope, Value *val) {
     //
     Type *type = val->rett;
 
@@ -426,13 +426,14 @@ void upref_value_check(Allocator *alc, Scope *scope, Value *val) {
         }
         if (val->type == v_or_break) {
             VOrBreak *orb = val->item;
-            upref_value_check(alc, scope, orb->value);
+            val = upref_value_check(alc, scope, orb->value);
         }
         if (val->type == v_or_value) {
-            VOrValue *orv = val->item;
-            upref_value_check(alc, scope, orv->left);
+            val = value_init(alc, v_upref_value, val, val->rett);
         }
     }
+
+    return val;
 }
 
 void deref_scope(Allocator *alc, Scope *scope, Scope *until) {

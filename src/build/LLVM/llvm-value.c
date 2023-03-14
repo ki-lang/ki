@@ -320,10 +320,6 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         b->lfunc->block = b_code;
         char *rlval = llvm_value(b, scope, right);
 
-        Scope *sub = scope_init(alc, sct_default, scope, true);
-        class_ref_change(alc, sub, value_init(alc, v_ir_value, rlval, right->rett), 1);
-        llvm_write_ast(b, sub);
-
         llvm_ir_jump(llvm_b_ir(b), b_after);
 
         char *last_block = b->lfunc->block->name;
@@ -424,6 +420,13 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         str_append_chars(air, " to i8\n");
 
         return var_result;
+    }
+    if (v->type == v_upref_value) {
+        char *lval = llvm_value(b, scope, v->item);
+        Scope *sub = scope_init(alc, sct_default, scope, true);
+        class_ref_change(alc, sub, value_init(alc, v_ir_value, lval, v->rett), 1);
+        llvm_write_ast(b, sub);
+        return lval;
     }
     return "???";
 }
