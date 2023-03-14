@@ -7,11 +7,12 @@ class Allocator norc {
 	total_slots_used: uxx;
 	slot_size: uxx;
 	slot_count: u16;
+	misalign_bytes: u8;
 
-	static func init(uxx slot_size) Allocator {
+	static func init(uxx slot_size, u8 misalign_bytes = 0) Allocator {
 		let count = 4#u16;
 		let alc = sys_alloc(sizeof(Allocator)) -> Allocator;
-		let block = Block.create(alc, slot_size, count -> u8);
+		let block = Block.create(alc, slot_size, count -> u8, misalign_bytes);
 		alc.first = block;
 		alc.current = block;
 		alc.block_count = 1;
@@ -19,6 +20,7 @@ class Allocator norc {
 		alc.slot_count = count;
 		alc.total_slots += count;
 		alc.total_slots_used = 0;
+		alc.misalign_bytes = misalign_bytes;
 
 		return alc;
 	}
@@ -41,7 +43,7 @@ class Allocator norc {
 				count = 250;
 			}
 			this.slot_count = count;
-			let nb = Block.create(this, this.slot_size, count -> u8);
+			let nb = Block.create(this, this.slot_size, count -> u8, this.misalign_bytes);
 			b.next = nb;
 			nb.prev = b;
 			this.current = nb;

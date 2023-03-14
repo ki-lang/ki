@@ -1,4 +1,7 @@
 
+
+// { ptr : block adr } { u8[slot_count] : slot nrs } { u8 : slot_count } { u8[align_bytes] } { u8 : align_bytes } | slot_count * { real_size }
+
 class Block norc {
 	alc: Allocator;
 	prev: ?Block = null;
@@ -12,8 +15,12 @@ class Block norc {
 	head: u8;
 	tail: u8;
 	align_bytes: u8;
+	misalign_bytes: u8;
 
-	static func create(Allocator alc, uxx slot_size, u8 slot_count) Block {
+	static func create(Allocator alc, uxx slot_size, u8 slot_count, u8 mut misalign_bytes) Block {
+
+		misalign_bytes += 1; // Slot byte
+		misalign_bytes = misalign_bytes % 8;
 
 		let b = sys_alloc(sizeof(Block)) -> Block;
 		b.alc = alc;
@@ -23,11 +30,17 @@ class Block norc {
 		b.slot_size = slot_size;
 		b.head = 0;
 		b.tail = 0;
-		b.align_bytes = 0;
+		b.misalign_bytes = misalign_bytes;
 
-		let real_size = slot_size + 1;
+		// Calculate size
+		let mut real_size = slot_size + 1;
+		// 8 - 9 % 8 = 7 
+		let mut mod = slot_size;
+		if mod > 8 { mod = 8; }
+		real_size += mod - real_size % mod;
 		b.slot_real_size = real_size;
 
+		// Setup data
 		let size : uxx = sizeof(ptr) + sizeof(u8) + slot_count + (slot_count * real_size);
 		let data = sys_alloc(size);
 		b.data = data;
@@ -38,14 +51,27 @@ class Block norc {
 
 		b.data_slot_nrs = adr;
 
+		// Setup slot positions
 		let mut i = 0#u8;
 		while i < slot_count {
 			ptrv adr as u8 = i;
 			adr += 1;
 			i += 1;
 		}
-
 		ptrv adr as ptr = slot_count;
+		adr += 1;
+
+		// Alignment
+		let mut tmp = 0#i32 + slot_count + 2;
+		tmp = 8 - tmp % 8;
+		tmp -= misalign_bytes;
+		if tmp < 0 { tmp += 8; }
+		let align_bytes = tmp -> u8;
+
+		//
+		b.align_bytes = align_bytes;
+		adr += align_bytes;
+		ptrv adr as ptr = align_bytes;
 		adr += 1;
 
 		b.data_slots = adr;
