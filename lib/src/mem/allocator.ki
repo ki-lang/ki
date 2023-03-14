@@ -18,7 +18,7 @@ class Allocator norc {
 		alc.block_count = 1;
 		alc.slot_size = slot_size;
 		alc.slot_count = count;
-		alc.total_slots += count;
+		alc.total_slots = count;
 		alc.total_slots_used = 0;
 		alc.misalign_bytes = misalign_bytes;
 
@@ -26,6 +26,7 @@ class Allocator norc {
 	}
 
 	func get_slot() ptr {
+		this.total_slots_used += 1;
 		let mut b = this.current;
 		while true {
 			if b.has_open_slot() {
@@ -47,7 +48,8 @@ class Allocator norc {
 			b.next = nb;
 			nb.prev = b;
 			this.current = nb;
-			this.block_count+=1;
+			this.block_count += 1;
+			this.total_slots += count;
 			return nb.get_slot();
 		}
 		//
