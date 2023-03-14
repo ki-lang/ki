@@ -225,8 +225,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
     }
 
     if (prio == 0 || prio > 8) {
-        sprintf(fc->sbuf, ".%s.", token);
-        while (strstr(".?!.", fc->sbuf)) {
+        while (strcmp(token, "?!") == 0) {
 
             if (strcmp(token, "?!") == 0) {
                 Type *ltype = v->rett;
@@ -252,7 +251,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         }
     }
 
-    if (prio == 0 || prio > 30) {
+    if (prio == 0 || prio > 10) {
         while (strcmp(token, "*") == 0 || strcmp(token, "/") == 0 || strcmp(token, "%") == 0) {
             int op = op_mul;
             if (strcmp(token, "/") == 0) {
@@ -332,6 +331,33 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 
             tok(fc, token, false, true);
             sprintf(fc->sbuf, ".%s.", token);
+        }
+    }
+
+    if (prio == 0 || prio > 40) {
+        Class *bool_class = ki_get_class(b, "type", "bool");
+        while (strcmp(token, "&&") == 0 || strcmp(token, "||") == 0) {
+
+            if (v->rett->class != bool_class) {
+                sprintf(fc->sbuf, "Left side must return a bool");
+                fc_error(fc);
+            }
+
+            int op = op_and;
+            if (strcmp(token, "||") == 0) {
+                op = op_or;
+            }
+
+            Value *right = read_value(fc, alc, scope, false, 40);
+
+            if (right->rett->class != bool_class) {
+                sprintf(fc->sbuf, "Right side must return a bool");
+                fc_error(fc);
+            }
+
+            v = vgen_and_or(alc, b, v, right, op);
+
+            tok(fc, token, false, true);
         }
     }
 

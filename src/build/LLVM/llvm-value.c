@@ -277,6 +277,80 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         b->lfunc->block = b_after;
         return lval;
     }
+    if (v->type == v_and_or) {
+        VOp *vop = v->item;
+        bool is_or = vop->op == op_or;
+        Value *left = vop->left;
+        Value *right = vop->right;
+
+        char *lval_left = llvm_value(b, scope, left);
+        LLVMBlock *next_block = llvm_block_init_auto(b);
+        LLVMBlock *after_block = llvm_block_init_auto(b);
+        char *var_left = llvm_var(b);
+        char *var_right = llvm_var(b);
+        char *var_tmp = llvm_var(b);
+        char *var_result = llvm_var(b);
+
+        char *current_block_name = b->lfunc->block->name;
+
+        Str *ir = llvm_b_ir(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, var_left);
+        str_append_chars(ir, " = icmp ne i8 ");
+        str_append_chars(ir, lval_left);
+        str_append_chars(ir, ", 0\n");
+
+        str_append_chars(ir, "  br i1 ");
+        str_append_chars(ir, var_left);
+        str_append_chars(ir, ", label %");
+        if (is_or) {
+            str_append_chars(ir, after_block->name);
+            str_append_chars(ir, ", label %");
+            str_append_chars(ir, next_block->name);
+        } else {
+            str_append_chars(ir, next_block->name);
+            str_append_chars(ir, ", label %");
+            str_append_chars(ir, after_block->name);
+        }
+        str_append_chars(ir, "\n");
+
+        b->lfunc->block = next_block;
+        char *lval_right = llvm_value(b, scope, right);
+        Str *nir = llvm_b_ir(b);
+        str_append_chars(nir, "  ");
+        str_append_chars(nir, var_right);
+        str_append_chars(nir, " = icmp ne i8 ");
+        str_append_chars(nir, lval_right);
+        str_append_chars(nir, ", 0\n");
+        llvm_ir_jump(nir, after_block);
+
+        LLVMBlock *next_block_last = b->lfunc->block;
+
+        b->lfunc->block = after_block;
+        Str *air = after_block->ir;
+
+        str_append_chars(air, "  ");
+        str_append_chars(air, var_tmp);
+        if (is_or) {
+            str_append_chars(air, " = phi i1 [ true, %");
+        } else {
+            str_append_chars(air, " = phi i1 [ false, %");
+        }
+        str_append_chars(air, current_block_name);
+        str_append_chars(air, " ], [ ");
+        str_append_chars(air, var_right);
+        str_append_chars(air, ", %");
+        str_append_chars(air, next_block_last->name);
+        str_append_chars(air, " ]\n");
+
+        str_append_chars(air, "  ");
+        str_append_chars(air, var_result);
+        str_append_chars(air, " = zext i1 ");
+        str_append_chars(air, var_tmp);
+        str_append_chars(air, " to i8\n");
+
+        return var_result;
+    }
     return "???";
 }
 

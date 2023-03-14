@@ -110,3 +110,12 @@ Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope) {
     rett->nullable = false;
     return value_init(alc, v_or_break, item, rett);
 }
+
+Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op) {
+    VOp *item = al(alc, sizeof(VOp));
+    item->op = op;
+    item->left = left;
+    item->right = right;
+    Type *rett = type_gen(b, alc, "bool");
+    return value_init(alc, v_and_or, item, rett);
+}

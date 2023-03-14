@@ -44,6 +44,11 @@ void stage_6_func(Fc *fc, Func *func) {
     fc->chunk = chunk;
 
     read_ast(fc, func->scope, false);
+
+    if (!type_is_void(func->rett) && !func->scope->did_return) {
+        sprintf(fc->sbuf, "Function did not return a value");
+        fc_error(fc);
+    }
 }
 
 void read_ast(Fc *fc, Scope *scope, bool single_line) {

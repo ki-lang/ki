@@ -19,6 +19,8 @@ class Allocator {
 		alc.slot_count = count;
 		alc.total_slots += count;
 		alc.total_slots_used = 0;
+
+		return alc;
 	}
 
 	func alloc(uxx size) ptr {
@@ -27,11 +29,11 @@ class Allocator {
 			if b.has_open_slot() {
 				return b.get_slot();
 			}
-			b = b.next ?! break;
+			b = b.next ?! break;;
 		}
 		// No open slots
 		// Decide to create new block or use previous blocks
-		if block_count < 10 || (total_slots / total_slots_used) < 2 {
+		if this.block_count < 10 || (this.total_slots / this.total_slots_used) < 2 {
 			// Create new block
 			let mut count = this.slot_count;
 			count *= 2;
@@ -39,10 +41,11 @@ class Allocator {
 				count = 250;
 			}
 			this.slot_count = count;
-			let nb = Block.create(alc, slot_size, count);
+			let nb = Block.create(this, this.slot_size, count);
 			b.next = nb;
 			nb.prev = b;
 			this.current = nb;
+			this.block_count+=1;
 			return nb.get_slot();
 		}
 		//

@@ -70,6 +70,7 @@ enum VALUETYPE {
     v_or_break,
     v_or_value, // 15
     v_decl,
+    v_and_or,
 };
 
 enum OPTYPE {
@@ -83,10 +84,14 @@ enum OPTYPE {
     op_bit_xor,
     op_shl,
     op_shr,
+    //
     op_eq,
     op_ne,
     op_lt,
     op_gt,
     op_lte,
     op_gte,
+    //
+    op_and,
+    op_or,
 };
