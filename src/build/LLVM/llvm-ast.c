@@ -21,11 +21,13 @@ void llvm_write_ast(LB *b, Scope *scope) {
             char *lval = llvm_value(b, scope, val);
 
             if (!decl->is_mut) {
+                decl->llvm_val = lval;
                 map_set(scope->lvars, decl->name, lval);
                 continue;
             }
 
             char *lvar = llvm_alloca(b, decl->type);
+            decl->llvm_val = lvar;
             llvm_ir_store(b, decl->type, lvar, lval);
             map_set(scope->lvars, decl->name, lvar);
             continue;
@@ -122,6 +124,16 @@ void llvm_write_ast(LB *b, Scope *scope) {
             b->lfunc->block = b_after;
             b->while_cond = prev_cond;
             b->while_after = prev_after;
+            continue;
+        }
+        if (t->type == tkn_break) {
+            LLVMBlock *after_block = b->while_after;
+            llvm_ir_jump(llvm_b_ir(b), after_block);
+            continue;
+        }
+        if (t->type == tkn_continue) {
+            LLVMBlock *cond_block = b->while_cond;
+            llvm_ir_jump(llvm_b_ir(b), cond_block);
             continue;
         }
         if (t->type == tkn_statement) {

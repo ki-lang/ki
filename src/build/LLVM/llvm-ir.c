@@ -1,6 +1,37 @@
 
 #include "../../headers/LLVM.h"
 
+char *llvm_ir_isnull_i1(LB *b, char *ltype, char *val) {
+    Str *ir = llvm_b_ir(b);
+    char *var_i1 = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, var_i1);
+    str_append_chars(ir, " = icmp eq ");
+    str_append_chars(ir, ltype);
+    str_append_chars(ir, " ");
+    str_append_chars(ir, val);
+    str_append_chars(ir, ", null\n");
+    return var_i1;
+}
+
+char *llvm_ir_cmp(LB *b, char *ltype, char *val, char *cmd, char *with) {
+    // cmd: eq,ne
+    Str *ir = llvm_b_ir(b);
+    char *var_i1 = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, var_i1);
+    str_append_chars(ir, " = icmp ");
+    str_append_chars(ir, cmd);
+    str_append_chars(ir, " ");
+    str_append_chars(ir, ltype);
+    str_append_chars(ir, " ");
+    str_append_chars(ir, val);
+    str_append_chars(ir, ", ");
+    str_append_chars(ir, with);
+    str_append_chars(ir, "\n");
+    return var_i1;
+}
+
 void llvm_ir_jump(Str *ir, LLVMBlock *block) {
     str_append_chars(ir, "  br label %");
     str_append_chars(ir, block->name);

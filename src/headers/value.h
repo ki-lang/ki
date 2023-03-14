@@ -14,6 +14,7 @@ typedef struct VFcall VFcall;
 typedef struct VFuncPtr VFuncPtr;
 typedef struct VClassPA VClassPA;
 typedef struct VClassInit VClassInit;
+typedef struct VOrBreak VOrBreak;
 
 struct Value {
     int type;
@@ -58,6 +59,10 @@ struct VClassPA {
 struct VClassInit {
     Class *class;
     Map *values;
+};
+struct VOrBreak {
+    Value *value;
+    Scope *or_scope;
 };
 
 #endif

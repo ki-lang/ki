@@ -122,11 +122,15 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             i++;
             token[pos] = nch;
             pos++;
-        } else if ((ch == '-' && nch == '>') || (ch == '?' && nch == '?')) {
+        } else if ((ch == '-' && nch == '>')) {
             i++;
             token[pos] = nch;
             pos++;
-        } else if ((ch == '!' && nch == '!')) {
+        } else if ((ch == '?' && nch == '?') || (ch == '?' && nch == '!')) {
+            i++;
+            token[pos] = nch;
+            pos++;
+        } else if ((ch == '!' && nch == '!') || (ch == '!' && nch == '?')) {
             i++;
             token[pos] = nch;
             pos++;

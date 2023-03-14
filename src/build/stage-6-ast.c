@@ -7,7 +7,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
 TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond);
 void token_while(Allocator *alc, Fc *fc, Scope *scope);
-void deref_scope(Allocator *alc, Scope *scope);
+void deref_scope(Allocator *alc, Scope *scope, Scope *until);
 
 void stage_6(Fc *fc) {
     //
@@ -65,6 +65,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             read_macro(fc, alc, scope);
             continue;
         }
+
+        if (single_line && !first_line) {
+            rtok(fc);
+            break;
+        }
         first_line = false;
 
         if (strcmp(token, "}") == 0 && !single_line) {
@@ -82,6 +87,30 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         if (strcmp(token, "return") == 0) {
             token_return(alc, fc, scope);
+            continue;
+        }
+        if (strcmp(token, "break") == 0) {
+            Scope *loop = scope_find(scope, sct_loop);
+            if (!loop) {
+                sprintf(fc->sbuf, "You can only use 'break' inside a loop");
+                fc_error(fc);
+            }
+            array_push(scope->ast, token_init(alc, tkn_break, loop));
+            tok_expect(fc, ";", false, true);
+            deref_scope(alc, scope, loop);
+            scope->did_return = true;
+            continue;
+        }
+        if (strcmp(token, "continue") == 0) {
+            Scope *loop = scope_find(scope, sct_loop);
+            if (!loop) {
+                sprintf(fc->sbuf, "You can only use 'break' inside a loop");
+                fc_error(fc);
+            }
+            array_push(scope->ast, token_init(alc, tkn_continue, loop));
+            tok_expect(fc, ";", false, true);
+            deref_scope(alc, scope, loop);
+            scope->did_return = true;
             continue;
         }
 
@@ -196,7 +225,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
     // Derefs
     if (!scope->did_return) {
-        deref_scope(alc, scope);
+        deref_scope(alc, scope, scope);
     }
 }
 
@@ -307,7 +336,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
         retval = tmp_var;
     }
 
-    deref_scope(alc, scope);
+    deref_scope(alc, scope, fscope);
 
     array_push(scope->ast, tgen_return(alc, fscope, retval));
     tok_expect(fc, ";", false, true);
@@ -393,20 +422,23 @@ void upref_value_check(Allocator *alc, Scope *scope, Value *val) {
     }
 }
 
-void deref_scope(Allocator *alc, Scope *scope) {
-    Array *decls = scope->decls;
-    if (!decls)
-        return;
-    for (int i = 0; i < decls->length; i++) {
-        Decl *decl = array_get_index(decls, i);
-        Type *type = decl->type;
-        Class *class = type->class;
-        if (class && decl->times_used != 1) {
-
-            Var *var = var_init(alc, decl, type);
-            Value *val = value_init(alc, v_var, var, var->type);
-
-            class_ref_change(alc, scope, val, -1);
+void deref_scope(Allocator *alc, Scope *scope, Scope *until) {
+    Scope *cur_scope = scope;
+    while (true) {
+        Array *decls = cur_scope->decls;
+        if (decls) {
+            for (int i = 0; i < decls->length; i++) {
+                Decl *decl = array_get_index(decls, i);
+                Type *type = decl->type;
+                Class *class = type->class;
+                if (class && decl->times_used != 1) {
+                    Value *val = value_init(alc, v_decl, decl, type);
+                    class_ref_change(alc, scope, val, -1);
+                }
+            }
         }
+        if (cur_scope == until)
+            break;
+        cur_scope = cur_scope->parent;
     }
 }

@@ -8,6 +8,13 @@ func free(ptr adr) void {
 	os.ki_os__free(adr);
 }
 
+func sys_alloc(uxx size) ptr {
+	return os.ki_os__alloc(size);
+}
+func sys_free(ptr adr) void {
+	os.ki_os__free(adr);
+}
+
 func copy(ptr mut from, ptr mut to, uxx mut len) void {
 
   while(len > sizeof(ptr)){

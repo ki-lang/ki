@@ -27,7 +27,7 @@ char *llvm_type(LB *b, Type *type) {
                 }
                 str_append_chars(ir, llvm_type(b, prop->type));
             }
-            str_append_chars(ir, "}\n");
+            str_append_chars(ir, " }\n");
 
             str_append(b->ir_struct, ir);
         }

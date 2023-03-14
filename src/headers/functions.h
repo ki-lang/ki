@@ -159,6 +159,7 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
 Value *vgen_class_init(Allocator *alc, Class *class, Map *values);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
 Value *vgen_null(Allocator *alc, Build *b);
+Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope);
 
 // Ast
 void read_ast(Fc *fc, Scope *scope, bool single_line);

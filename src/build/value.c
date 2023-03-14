@@ -220,7 +220,35 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
             Type *type = read_type(fc, alc, scope, false, true);
             v = vgen_cast(alc, v, type);
 
-            tok(fc, token, true, false);
+            tok(fc, token, false, true);
+        }
+    }
+
+    if (prio == 0 || prio > 8) {
+        sprintf(fc->sbuf, ".%s.", token);
+        while (strstr(".?!.", fc->sbuf)) {
+
+            if (strcmp(token, "?!") == 0) {
+                Type *ltype = v->rett;
+                if (!ltype->nullable) {
+                    sprintf(fc->sbuf, "Left side will never be null");
+                    fc_error(fc);
+                }
+
+                Scope *sub = scope_init(alc, sct_default, scope, true);
+                tok(fc, token, false, true);
+                bool single_line = strcmp(token, "{") != 0;
+                if (single_line)
+                    rtok(fc);
+                read_ast(fc, sub, single_line);
+                if (!sub->did_return) {
+                    sprintf(fc->sbuf, "Scope did not use return, break, continue, exit or panic");
+                    fc_error(fc);
+                }
+                v = vgen_or_break(alc, v, sub);
+            }
+
+            tok(fc, token, false, true);
         }
     }
 

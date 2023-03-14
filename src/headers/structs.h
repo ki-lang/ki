@@ -256,6 +256,7 @@ struct Decl {
     Type *type;
     Value *value;
     Scope *scope;
+    char *llvm_val;
     int times_used;
     bool is_mut;
     bool is_global;

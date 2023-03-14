@@ -67,6 +67,9 @@ enum VALUETYPE {
     v_class_init,
     v_tmp_var,
     v_null,
+    v_or_break,
+    v_or_value,
+    v_decl,
 };
 
 enum OPTYPE {

@@ -1,0 +1,28 @@
+
+class Block {
+	alc: Allocator;
+	prev: ?Block = null;
+	next: ?Block = null;
+	slot_count: u32;
+	slot_size: uxx;
+	data: ptr;
+
+	static func create(Allocator alc, uxx slot_size, u32 slot_count) Block {
+		let b = sys_alloc(sizeof(Block)) -> Block;
+		b.alc = alc;
+		b.prev = null;
+		b.next = null;
+		b.slot_count = slot_count;
+		b.slot_size = slot_size;
+		b.data = sys_alloc(sizeof(u32) + slot_count + (slot_count * (slot_size + 1)));
+		return b;
+	}
+
+	func has_open_slot() bool {
+		return true;
+	}
+
+	func get_slot() ptr {
+		return 0 -> ptr;
+	}
+}

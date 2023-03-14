@@ -1,1 +1,53 @@
 
+class Allocator {
+	first: Block = null;
+	current: Block;
+	block_count: uxx;
+	slot_size: uxx;
+	slot_count: u32;
+	total_slots: uxx;
+	total_slots_used: uxx;
+
+	static func init(uxx slot_size) Allocator {
+		let count = 4#u32;
+		let alc = sys_alloc(sizeof(Allocator)) -> Allocator;
+		let block = Block.create(alc, slot_size, count);
+		alc.first = block;
+		alc.current = block;
+		alc.block_count = 1;
+		alc.slot_size = slot_size;
+		alc.slot_count = count;
+		alc.total_slots += count;
+		alc.total_slots_used = 0;
+	}
+
+	func alloc(uxx size) ptr {
+		let mut b = this.current;
+		while true {
+			if b.has_open_slot() {
+				return b.get_slot();
+			}
+			b = b.next ?! break;
+		}
+		// No open slots
+		// Decide to create new block or use previous blocks
+		if block_count < 10 || (total_slots / total_slots_used) < 2 {
+			// Create new block
+			let mut count = this.slot_count;
+			count *= 2;
+			if count > 250 {
+				count = 250;
+			}
+			this.slot_count = count;
+			let nb = Block.create(alc, slot_size, count);
+			b.next = nb;
+			nb.prev = b;
+			this.current = nb;
+			return nb.get_slot();
+		}
+		//
+		this.current = this.first;
+		return this.alloc(size);
+	}
+
+}

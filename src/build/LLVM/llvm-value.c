@@ -16,6 +16,14 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         }
         return llvm_ir_load(b, var->type, var_val);
     }
+    if (v->type == v_decl) {
+        Decl *decl = v->item;
+        char *var_val = decl->llvm_val;
+        if (!decl->is_mut) {
+            return var_val;
+        }
+        return llvm_ir_load(b, decl->type, var_val);
+    }
     if (v->type == v_vint) {
         VInt *vint = v->item;
         char *res = al(alc, 20);
@@ -244,6 +252,26 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_tmp_var) {
         TempVar *tmp = v->item;
         return tmp->ir_value;
+    }
+    if (v->type == v_or_break) {
+        VOrBreak *vob = v->item;
+        Value *val = vob->value;
+        Scope *sub = vob->or_scope;
+
+        char *lval = llvm_value(b, scope, val);
+        char *ltype = llvm_type(b, val->rett);
+        char *isnull = llvm_ir_isnull_i1(b, ltype, lval);
+
+        LLVMBlock *b_code = llvm_block_init_auto(b);
+        LLVMBlock *b_after = llvm_block_init_auto(b);
+
+        llvm_ir_cond_jump(b, llvm_b_ir(b), isnull, b_code, b_after);
+
+        b->lfunc->block = b_code;
+        llvm_write_ast(b, sub);
+
+        b->lfunc->block = b_after;
+        return lval;
     }
     return "???";
 }
