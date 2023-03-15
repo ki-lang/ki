@@ -66,8 +66,27 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
         Decl *decl = var->decl;
         UsageLine *ul = usage_line_get(scope, decl);
 
-        ul->moves_max++;
-        ul->moves_min++;
+        // Check if in loop
+        bool in_loop = false;
+        Scope *s = scope;
+        while (true) {
+            if (s == decl->scope) {
+                break;
+            }
+            if (s->type == sct_loop) {
+                in_loop = true;
+                break;
+            }
+            s = s->parent;
+        }
+
+        if (in_loop) {
+            ul->moves_max += 2;
+            ul->moves_min += 2;
+        } else {
+            ul->moves_max++;
+            ul->moves_min++;
+        }
 
         if (!ul->first_move) {
             ul->first_move = chunk_clone(alc, chunk);
@@ -167,17 +186,6 @@ void usage_merge_scopes(Allocator *alc, Scope *left, Scope *right, Scope *else_s
             }
             if (right_ok) {
                 l_ul->moves_min = 1;
-
-                // if (right != else_scope) {
-                //     Type *type = decl->type;
-                //     Class *class = type->class;
-                //     if (class && class->must_deref) {
-                //         Scope *sub = scope_init(alc, sct_default, else_scope, true);
-                //         Value *val = value_init(alc, v_decl, decl, decl->type);
-                //         class_ref_change(alc, sub, val, -1);
-                //         array_shift(else_scope->ast, tgen_exec_if_moved_once(alc, sub, l_ul));
-                //     }
-                // }
             }
         }
 
