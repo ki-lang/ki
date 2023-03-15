@@ -307,18 +307,24 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char *isnull = llvm_ir_isnull_i1(b, lltype, llval);
 
         LLVMBlock *b_code = llvm_block_init_auto(b);
+        LLVMBlock *b_else = llvm_block_init_auto(b);
         LLVMBlock *b_after = llvm_block_init_auto(b);
 
         char *current_block_name = b->lfunc->block->name;
 
-        llvm_ir_cond_jump(b, llvm_b_ir(b), isnull, b_code, b_after);
+        llvm_ir_cond_jump(b, llvm_b_ir(b), isnull, b_code, b_else);
 
         b->lfunc->block = b_code;
         char *rlval = llvm_value(b, scope, right);
-
         llvm_ir_jump(llvm_b_ir(b), b_after);
 
-        char *last_block = b->lfunc->block->name;
+        char *last_block_code = b->lfunc->block->name;
+
+        b->lfunc->block = b_else;
+        llvm_write_ast(b, orv->else_scope);
+        llvm_ir_jump(llvm_b_ir(b), b_after);
+
+        char *last_block_else = b->lfunc->block->name;
 
         b->lfunc->block = b_after;
         Str *ir = b_after->ir;
@@ -332,11 +338,11 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         str_append_chars(ir, " [ ");
         str_append_chars(ir, llval);
         str_append_chars(ir, ", %");
-        str_append_chars(ir, current_block_name);
+        str_append_chars(ir, last_block_else);
         str_append_chars(ir, " ], [ ");
         str_append_chars(ir, rlval);
         str_append_chars(ir, ", %");
-        str_append_chars(ir, last_block);
+        str_append_chars(ir, last_block_code);
         str_append_chars(ir, " ]\n");
 
         return var_result;

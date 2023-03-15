@@ -5,7 +5,7 @@ void stage_6_func(Fc *fc, Func *func);
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
-TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond);
+TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array **used_decls);
 void token_while(Allocator *alc, Fc *fc, Scope *scope);
 
 void stage_6(Fc *fc) {
@@ -119,8 +119,18 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
 
         if (strcmp(token, "if") == 0) {
-            TIf *tif = token_if(alc, fc, scope, true);
+            Array *used_decls = NULL;
+            TIf *tif = token_if(alc, fc, scope, true, &used_decls);
             array_push(scope->ast, token_init(alc, tkn_if, tif));
+
+            if (scope->usage_keys) {
+                TIf *tif_ = tif;
+                while (tif_) {
+                    Scope *sub = tif_->scope;
+                    usage_merge_scopes(alc, scope, sub, used_decls);
+                    tif_ = tif_->else_if;
+                }
+            }
             continue;
         }
 
@@ -339,7 +349,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
     scope->did_return = true;
 }
 
-TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond) {
+TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array **used_decls) {
     //
     char *token = fc->token;
     Value *cond = NULL;
@@ -363,31 +373,26 @@ TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond) {
 
     read_ast(fc, sub, single);
 
+    usage_collect_used_decls(alc, scope, sub, used_decls);
+
     tok(fc, token, false, true);
     TIf *else_if = NULL;
     if (strcmp(token, "else") == 0) {
-
-        Scope *usage_scope = usage_scope_init(alc, scope, sct_default);
 
         tok(fc, token, true, true);
         bool has_if = strcmp(token, "if") == 0;
         if (!has_if) {
             rtok(fc);
         }
-        else_if = token_if(alc, fc, usage_scope, has_if);
+        else_if = token_if(alc, fc, scope, has_if, used_decls);
 
     } else {
         // Generate else for usage algorithm
         if (has_cond) {
-            // Scope *sub = usage_scope_init(alc, scope, sct_default);
-            Scope *sub = scope_init(alc, sct_default, scope, true);
+            Scope *sub = usage_scope_init(alc, scope, sct_default);
             else_if = tgen_tif(alc, NULL, sub, NULL);
         }
         rtok(fc);
-    }
-
-    if (scope->usage_keys) {
-        usage_merge_scopes(alc, scope, sub, !has_cond ? sub : else_if->scope);
     }
 
     return tgen_tif(alc, cond, sub, else_if);

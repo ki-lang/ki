@@ -94,20 +94,22 @@ Value *vgen_null(Allocator *alc, Build *b) {
     return value_init(alc, v_null, NULL, type);
 }
 
-Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope) {
+Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope, Scope *else_scope) {
     VOrBreak *item = al(alc, sizeof(VOrBreak));
     item->value = value;
     item->or_scope = or_scope;
+    item->else_scope = else_scope;
     Type *rett = type_init(alc);
     *rett = *value->rett;
     rett->nullable = false;
     return value_init(alc, v_or_break, item, rett);
 }
 
-Value *vgen_or_value(Allocator *alc, Value *left, Value *right) {
+Value *vgen_or_value(Allocator *alc, Value *left, Value *right, Scope *else_scope) {
     VOrValue *item = al(alc, sizeof(VOrValue));
     item->left = left;
     item->right = right;
+    item->else_scope = else_scope;
     return value_init(alc, v_or_value, item, right->rett);
 }
 

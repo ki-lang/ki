@@ -68,6 +68,7 @@ void array_shift(Array *arr, void *item) {
     }
     uintptr_t *adr = arr->data;
     *adr = (uintptr_t)item;
+    arr->length++;
 }
 
 void *array_get_index(Array *arr, int index) {

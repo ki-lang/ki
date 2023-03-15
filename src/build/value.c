@@ -262,26 +262,37 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
                 fc_error(fc);
             }
 
+            Array *used_decls = NULL;
+            Scope *else_scope = usage_scope_init(alc, scope, sct_default);
+            Scope *usage_scope = usage_scope_init(alc, scope, sct_default);
+
             if (strcmp(token, "?!") == 0) {
                 // ?!
-                Scope *sub = scope_init(alc, sct_default, scope, true);
                 tok(fc, token, false, true);
                 bool single_line = strcmp(token, "{") != 0;
                 if (single_line)
                     rtok(fc);
-                read_ast(fc, sub, single_line);
-                if (!sub->did_return) {
+
+                read_ast(fc, usage_scope, single_line);
+                usage_collect_used_decls(alc, scope, usage_scope, &used_decls);
+                usage_merge_scopes(alc, scope, usage_scope, used_decls);
+                usage_merge_scopes(alc, scope, else_scope, used_decls);
+
+                if (!usage_scope->did_return) {
                     sprintf(fc->sbuf, "Scope did not use return, break, continue, exit or panic");
                     fc_error(fc);
                 }
-                v = vgen_or_break(alc, v, sub);
+                v = vgen_or_break(alc, v, usage_scope, else_scope);
             } else {
                 // ??
-                Value *right = read_value(fc, alc, scope, true, 0);
+                Value *right = read_value(fc, alc, usage_scope, true, 0);
+                usage_collect_used_decls(alc, scope, usage_scope, &used_decls);
+                usage_merge_scopes(alc, scope, usage_scope, used_decls);
+                usage_merge_scopes(alc, scope, else_scope, used_decls);
 
                 type_check(fc, v->rett, right->rett);
 
-                v = vgen_or_value(alc, v, right);
+                v = vgen_or_value(alc, v, right, else_scope);
             }
 
             tok(fc, token, false, true);

@@ -67,10 +67,12 @@ struct VClassInit {
 struct VOrBreak {
     Value *value;
     Scope *or_scope;
+    Scope *else_scope;
 };
 struct VOrValue {
     Value *left;
     Value *right;
+    Scope *else_scope;
 };
 struct IRVal {
     Value *value;

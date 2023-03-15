@@ -145,8 +145,9 @@ bool is_moved_once(UsageLine *ul);
 void usage_read_value(Allocator *alc, Scope *scope, Value *val);
 Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val);
 Scope *usage_scope_init(Allocator *alc, Scope *parent, int type);
-void usage_merge_scopes(Allocator *alc, Scope *left, Scope *right, Scope *else_scope);
+void usage_merge_scopes(Allocator *alc, Scope *left, Scope *right, Array *used_decls);
 void deref_scope(Allocator *alc, Scope *scope, Scope *until);
+void usage_collect_used_decls(Allocator *alc, Scope *left, Scope *right, Array **list);
 
 // Value
 Value *value_init(Allocator *alc, int type, void *item, Type *rett);
@@ -165,8 +166,8 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
 Value *vgen_class_init(Allocator *alc, Class *class, Map *values);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
 Value *vgen_null(Allocator *alc, Build *b);
-Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope);
-Value *vgen_or_value(Allocator *alc, Value *left, Value *right);
+Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope, Scope *else_scope);
+Value *vgen_or_value(Allocator *alc, Value *left, Value *right, Scope *else_scope);
 Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op);
 Value *vgen_ir_val(Allocator *alc, Value *value, Type *rett);
 Value *vgen_ir_assign_val(Allocator *alc, Value *value, Type *rett);
