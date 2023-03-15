@@ -36,6 +36,7 @@ Rules:
 -- then we loop over all scopes again and merge with the last line (if the scope did not return)
 - if there is no else scope we must generate one, but only if moves_max = 1 and moves_min = 0
 -- we add a token to the scope tkn_deref_if_single_use, and update moves_min to 1
+--> we also need to add this token to each existing scope where the clone has moves_min 0. (must be added to the start of the ast)
 -- now we have a 1,1 declaration, which means ownership
 
 - a 'move' means every time we pass it as a func argument or use it as the right side value in an assign/declare
