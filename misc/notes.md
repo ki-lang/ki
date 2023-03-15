@@ -18,6 +18,7 @@ strict ownership type cannot be used in:
 Rules:
 - every declare create a Decl and a UsageLine
 - every assign creates a new UsageLine in the current scope and adds it to scope->usage_lines[decl] (return an array of usage lines for that decl)
+-- if the scope already has usage lines, we create a new array
 - at the end of each scope we pass the usage lines to the parent if the scope did not return
 - on a return (including break/continue) we loop over the usage-lines of each decl and make conclusions (usage_line->ownership = true/false)
 - when making a conclusion, we can make seperrate conclusions per line for non-mut decls, for mut decls, we must group them
