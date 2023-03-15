@@ -28,8 +28,9 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
     return v;
 }
 
-void usage_move_var(Allocator *alc, Chunk *chunk, Scope *scope, Decl *decl) {
+Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) {
     //
+    return val;
 }
 
 void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {

@@ -142,7 +142,7 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
 // UsageLine
 UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl);
 void deref_scope(Allocator *alc, Scope *scope, Scope *until);
-void usage_move_var(Allocator *alc, Chunk *chunk, Scope *scope, Decl *decl);
+Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val);
 
 // Value
 Value *value_init(Allocator *alc, int type, void *item, Type *rett);

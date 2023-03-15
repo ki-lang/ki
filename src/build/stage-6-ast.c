@@ -178,12 +178,6 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     // }
                 }
 
-                // Deref current value
-                Class *class = left->rett->class;
-                if (class && class->must_deref) {
-                    class_ref_change(alc, scope, left, -1);
-                }
-
                 Value *right = read_value(fc, alc, scope, false, 0);
                 if (type_is_void(right->rett)) {
                     sprintf(fc->sbuf, "Assignment invalid, right side does not return a value");

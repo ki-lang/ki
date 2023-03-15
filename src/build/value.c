@@ -243,6 +243,15 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         }
     }
 
+    ////////////////
+
+    Class *class = v->rett->class;
+    if (class && class->must_deref) {
+        v = usage_move_value(alc, fc->chunk, scope, v);
+    }
+
+    ////////////////
+
     if (prio == 0 || prio > 8) {
         while (strcmp(token, "?!") == 0 || strcmp(token, "??") == 0) {
 
