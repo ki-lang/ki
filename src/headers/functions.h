@@ -141,8 +141,9 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
 
 // UsageLine
 UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl);
-void deref_scope(Allocator *alc, Scope *scope, Scope *until);
+bool is_moved_once(UsageLine *ul);
 Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val);
+void deref_scope(Allocator *alc, Scope *scope, Scope *until);
 
 // Value
 Value *value_init(Allocator *alc, int type, void *item, Type *rett);
@@ -177,4 +178,4 @@ Token *tgen_declare(Allocator *alc, Decl *decl, Value *val);
 Token *tgen_assign(Allocator *alc, Value *left, Value *right);
 Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv);
 Token *tgen_while(Allocator *alc, Value *cond, Scope *scope);
-Token *tgen_deref_decl_used(Allocator *alc, Decl *decl, Scope *scope);
+Token *tgen_deref_unless_moved_once(Allocator *alc, Scope *scope, UsageLine *ul);

@@ -5,7 +5,7 @@
 typedef struct Token Token;
 typedef struct TIf TIf;
 typedef struct TWhile TWhile;
-typedef struct TDerefDeclUsed TDerefDeclUsed;
+typedef struct TDerefUnlessMovedOnce TDerefUnlessMovedOnce;
 
 #include "structs.h"
 #include "value.h"
@@ -24,9 +24,9 @@ struct TWhile {
     Value *cond;
     Scope *scope;
 };
-struct TDerefDeclUsed {
-    Decl *decl;
+struct TDerefUnlessMovedOnce {
     Scope *scope;
+    UsageLine *usage_line;
 };
 
 #endif

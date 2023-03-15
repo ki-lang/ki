@@ -131,9 +131,10 @@ void llvm_write_ast(LB *b, Scope *scope) {
             char *lval = llvm_value(b, scope, val);
             continue;
         }
-        if (t->type == tkn_deref_decl_used) {
-            TDerefDeclUsed *item = t->item;
-            if (item->decl->times_used != 1) {
+        if (t->type == tkn_deref_unless_moved_once) {
+            TDerefUnlessMovedOnce *item = t->item;
+            UsageLine *ul = item->usage_line;
+            if (!is_moved_once(ul)) {
                 llvm_write_ast(b, item->scope);
             }
         }

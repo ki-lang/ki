@@ -41,10 +41,10 @@ Token *tgen_while(Allocator *alc, Value *cond, Scope *scope) {
     return token_init(alc, tkn_while, w);
 }
 
-Token *tgen_deref_decl_used(Allocator *alc, Decl *decl, Scope *scope) {
+Token *tgen_deref_unless_moved_once(Allocator *alc, Scope *scope, UsageLine *ul) {
     //
-    TDerefDeclUsed *item = al(alc, sizeof(TDerefDeclUsed));
-    item->decl = decl;
+    TDerefUnlessMovedOnce *item = al(alc, sizeof(TDerefUnlessMovedOnce));
     item->scope = scope;
-    return token_init(alc, tkn_deref_decl_used, item);
+    item->usage_line = ul;
+    return token_init(alc, tkn_deref_unless_moved_once, item);
 }

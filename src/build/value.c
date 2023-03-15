@@ -23,9 +23,12 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 
     tok(fc, token, sameline, true);
 
+    bool skip_move = false;
+
     if (strcmp(token, "(") == 0) {
         v = read_value(fc, alc, scope, false, 0);
         tok_expect(fc, ")", false, true);
+        skip_move = true;
         //
     } else if (strcmp(token, "\"") == 0) {
         Str *str = read_string(fc);
@@ -245,10 +248,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 
     ////////////////
 
-    Class *class = v->rett->class;
-    if (class && class->must_deref) {
+    if (!skip_move)
         v = usage_move_value(alc, fc->chunk, scope, v);
-    }
 
     ////////////////
 
