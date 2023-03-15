@@ -122,9 +122,11 @@ char *llvm_get_var(LB *b, Scope *start_scope, Decl *decl) {
     char *name = decl->name;
     Scope *scope = start_scope;
     while (scope) {
-        char *val = map_get(scope->lvars, name);
-        if (val) {
-            return val;
+        if (scope->lvars) {
+            char *val = map_get(scope->lvars, name);
+            if (val) {
+                return val;
+            }
         }
         scope = scope->parent;
     }

@@ -46,7 +46,11 @@ UsageLine *usage_line_get(Scope *scope, Decl *decl) {
 
 bool is_moved_once(UsageLine *ul) {
     //
-    return true;
+    return ul->moves_min == 1 && ul->moves_max == 1 && ul->reads_after_move == 0;
+}
+
+void usage_read_value(Allocator *alc, Scope *scope, Value *val) {
+    //
 }
 
 Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) {
@@ -74,6 +78,83 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
 
     //
     return val;
+}
+
+Scope *usage_scope_init(Allocator *alc, Scope *parent, int type) {
+    //
+    Scope *scope = scope_init(alc, sct_default, parent, true);
+
+    if (parent->usage_keys) {
+        // Clone all usage lines from parent
+        Array *keys = array_make(alc, 8);
+        Array *vals = array_make(alc, 8);
+
+        Array *par_keys = parent->usage_keys;
+        Array *par_vals = parent->usage_values;
+        for (int i = 0; i < par_keys->length; i++) {
+            Decl *decl = array_get_index(par_keys, i);
+            UsageLine *par_ul = array_get_index(par_vals, i);
+            UsageLine *ul = al(alc, sizeof(UsageLine));
+            *ul = *par_ul;
+
+            array_push(keys, decl);
+            array_push(vals, ul);
+        }
+
+        scope->usage_keys = keys;
+        scope->usage_values = vals;
+    }
+
+    return scope;
+}
+
+void usage_merge_scopes(Scope *left, Scope *right) {
+    //
+    // 1. merge left lines with right && set follow up on right
+    // 2. check if right scope has new lines, if so, merge them if they arent declare (look at init_scope)
+
+    if (!left->usage_keys) {
+        return;
+    }
+
+    Array *lkeys = left->usage_keys;
+    Array *lvals = left->usage_values;
+    Array *rkeys = right->usage_keys;
+    Array *rvals = right->usage_values;
+    int i = 0;
+    while (i < lkeys->length) {
+        Decl *decl = array_get_index(lkeys, i);
+        UsageLine *l_ul = array_get_index(lvals, i);
+        UsageLine *r_ul = array_get_index(rvals, i);
+
+        l_ul->moves_max = max_num(l_ul->moves_max, r_ul->moves_max);
+        l_ul->moves_min = min_num(l_ul->moves_min, r_ul->moves_min);
+        l_ul->reads_after_move = max_num(l_ul->reads_after_move, r_ul->reads_after_move);
+
+        r_ul->follow_up = l_ul;
+        i++;
+    }
+    while (i < rkeys->length) {
+        Decl *decl = array_get_index(rkeys, i);
+        UsageLine *r_ul = array_get_index(rvals, i);
+        i++;
+
+        if (r_ul->init_scope == right) {
+            continue;
+        }
+
+        int index = array_find(lkeys, decl, arr_find_adr);
+        if (index < 0) {
+            die("Missing left side usage line (compiler bug)\n");
+        }
+        UsageLine *l_ul = array_get_index(lvals, index);
+
+        l_ul->moves_max = max_num(l_ul->moves_max, r_ul->moves_max);
+        l_ul->moves_min = min_num(l_ul->moves_min, r_ul->moves_min);
+        l_ul->reads_after_move = max_num(l_ul->reads_after_move, r_ul->reads_after_move);
+
+        r_ul->follow_up = l_ul;
+    }
 }
 
 void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {

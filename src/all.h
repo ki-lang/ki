@@ -33,6 +33,9 @@
 #define KI_TOKEN_MAX 256
 #define KI_VERSION "0.1.0"
 
+#define max_num(x, y) (((x) >= (y)) ? (x) : (y))
+#define min_num(x, y) (((x) <= (y)) ? (x) : (y))
+
 typedef struct Allocator Allocator;
 typedef struct AllocatorBlock AllocatorBlock;
 

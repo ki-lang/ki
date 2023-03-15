@@ -359,22 +359,29 @@ TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond) {
         rtok(fc);
     }
 
-    Scope *sub = scope_init(alc, sct_default, scope, true);
+    Scope *sub = usage_scope_init(alc, scope, sct_default);
 
     read_ast(fc, sub, single);
 
     tok(fc, token, false, true);
     TIf *else_if = NULL;
     if (strcmp(token, "else") == 0) {
+
+        Scope *usage_scope = usage_scope_init(alc, scope, sct_default);
+
         tok(fc, token, true, true);
         bool has_if = strcmp(token, "if") == 0;
         if (!has_if) {
             rtok(fc);
         }
-        else_if = token_if(alc, fc, scope, has_if);
+        else_if = token_if(alc, fc, usage_scope, has_if);
+
     } else {
         rtok(fc);
     }
+
+    if (scope->usage_keys)
+        usage_merge_scopes(scope, sub);
 
     return tgen_tif(alc, cond, sub, else_if);
 }
