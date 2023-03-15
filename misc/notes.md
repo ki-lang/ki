@@ -41,6 +41,7 @@ Rules:
 
 - a 'move' means every time we pass it as a func argument or use it as the right side value in an assign/declare
 -- a move will increase both moves_max and moves_min
+-- a move in side a loop scope will add +2
 
 # TODO
 
