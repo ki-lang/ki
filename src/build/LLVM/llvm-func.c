@@ -156,7 +156,7 @@ void llvm_define_ext_func(LB *b, Func *func) {
 
     Array *decls = b->declared_funcs;
 
-    if (array_contains(decls, func, "address"))
+    if (array_contains(decls, func, arr_find_adr))
         return;
 
     array_push(decls, func);

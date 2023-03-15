@@ -33,12 +33,12 @@ void array_push(Array *arr, void *item) {
 }
 
 void array_push_unique(Array *arr, void *item) {
-    if (!array_contains(arr, item, "address")) {
+    if (!array_contains(arr, item, arr_find_str)) {
         array_push(arr, item);
     }
 }
 void array_push_unique_chars(Array *arr, void *item) {
-    if (!array_contains(arr, item, "chars")) {
+    if (!array_contains(arr, item, arr_find_str)) {
         array_push(arr, item);
     }
 }
@@ -89,29 +89,28 @@ void array_set_index(Array *arr, int index, void *item) {
     *adr = (uintptr_t)item;
 }
 
-bool array_contains(Array *arr, void *item, char *type) {
+bool array_contains(Array *arr, void *item, int type) {
     int index = array_find(arr, item, type);
     return index > -1;
 }
 
-int array_find(Array *arr, void *item, char *type) {
+int array_find(Array *arr, void *item, int type) {
     int x = arr->length;
     while (x > 0) {
         x--;
         uintptr_t *adr = arr->data + (x * sizeof(void *));
-        if (strcmp(type, "address") == 0) {
+        if (type == arr_find_adr) {
             if (*adr == (uintptr_t)item)
                 return x;
-        } else if (strcmp(type, "chars") == 0) {
+        } else if (type == arr_find_str) {
             char *a = (char *)*adr;
             char *b = (char *)item;
             if (strcmp(a, b) == 0)
                 return x;
-        } else if (strcmp(type, "int") == 0) {
+        } else if (type == arr_find_int) {
             if ((int)(*adr) == *(int *)item)
                 return x;
         } else {
-            printf("%s\n", type);
             die("array.c invalid search type");
         }
     }

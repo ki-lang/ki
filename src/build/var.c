@@ -36,11 +36,3 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut) {
 
     return v;
 }
-
-UprefSlot *upref_slot_init(Allocator *alc, Decl *decl) {
-    //
-    UprefSlot *v = al(alc, sizeof(UprefSlot));
-    v->decl = decl;
-    v->count = 0;
-    return v;
-}

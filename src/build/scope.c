@@ -12,7 +12,15 @@ Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast) {
     scope->ast = has_ast ? array_make(alc, 10) : NULL;
     scope->lvars = NULL;
     scope->did_return = false;
-    scope->decls = NULL;
+    scope->usage_keys = NULL;
+    scope->usage_values = NULL;
+    scope->in_loop = type == sct_loop;
+
+    if (parent) {
+        scope->func = parent->func;
+        scope->in_loop = parent->in_loop;
+    }
+
     return scope;
 }
 

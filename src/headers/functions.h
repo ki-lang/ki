@@ -138,7 +138,11 @@ void type_check(Fc *fc, Type *t1, Type *t2);
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg, bool is_global);
 Var *var_init(Allocator *alc, Decl *decl, Type *type);
 Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
-UprefSlot *upref_slot_init(Allocator *alc, Decl *decl);
+
+// UsageLine
+UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl);
+Value *move_check(Allocator *alc, Scope *scope, Value *val);
+void deref_scope(Allocator *alc, Scope *scope, Scope *until);
 
 // Value
 Value *value_init(Allocator *alc, int type, void *item, Type *rett);
@@ -146,7 +150,6 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op);
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
 bool value_assignable(Value *val);
-Value *upref_value_check(Allocator *alc, Scope *scope, Value *val);
 
 Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type);
 Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type);

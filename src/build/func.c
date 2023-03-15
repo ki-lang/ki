@@ -56,7 +56,7 @@ void func_make_arg_decls(Func *func) {
     for (int i = 0; i < func->args->length; i++) {
         Arg *arg = array_get_index(func->args, i);
 
-        Decl *decl = decl_init(alc, func->scope, arg->name, arg->type, NULL, arg->is_mut, true, false);
+        Decl *decl = decl_init(alc, fscope, arg->name, arg->type, NULL, arg->is_mut, true, false);
 
         Var *var = var_init(alc, decl, arg->type);
 
@@ -68,9 +68,7 @@ void func_make_arg_decls(Func *func) {
         arg->decl = decl;
 
         if (func->call_derefs) {
-            if (!fscope->decls)
-                fscope->decls = array_make(alc, 8);
-            array_push(fscope->decls, decl);
+            usage_line_init(alc, fscope, decl);
         }
     }
 }

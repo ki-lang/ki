@@ -13,7 +13,7 @@ char *llvm_type(LB *b, Type *type) {
     if (class->type == ct_struct) {
         char name[100];
         sprintf(name, "%%struct.%s", class->gname);
-        if (!array_contains(b->defined_classes, class, "address")) {
+        if (!array_contains(b->defined_classes, class, arr_find_adr)) {
             array_push(b->defined_classes, class);
 
             Str *ir = str_make(b->alc, 1000);

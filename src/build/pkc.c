@@ -145,7 +145,7 @@ void pkc_load_config(Pkc *pkc) {
                     exit(1);
                 }
 
-                if (!array_contains(pkc->header_dirs, fullpath, "chars")) {
+                if (!array_contains(pkc->header_dirs, fullpath, arr_find_str)) {
                     array_push(pkc->header_dirs, dups(b->alc, fullpath));
                 }
 
@@ -171,7 +171,7 @@ void pkc_load_config(Pkc *pkc) {
                     exit(1);
                 }
 
-                if (!array_contains(b->link_dirs, fullpath, "chars")) {
+                if (!array_contains(b->link_dirs, fullpath, arr_find_str)) {
                     array_push(b->link_dirs, dups(b->alc, fullpath));
                 }
 

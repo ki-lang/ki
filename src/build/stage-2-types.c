@@ -273,7 +273,7 @@ void stage_2_func(Fc *fc, Func *func) {
     //         if (!is_valid_varname(token)) {
     //             fc_error(fc, "Invalid error code syntax: '%s'", token);
     //         }
-    //         if (array_contains(func->error_codes, token, "chars")) {
+    //         if (array_contains(func->error_codes, token, arr_find_str)) {
     //             fc_error(fc, "Duplicate error code: '%s'", token);
     //         }
 

@@ -41,21 +41,6 @@ void llvm_write_ast(LB *b, Scope *scope) {
             llvm_ir_store(b, lt, lvar, lval);
             continue;
         }
-        if (t->type == tkn_upref_slot) {
-            UprefSlot *up = t->item;
-            Decl *decl = up->decl;
-            if (decl->times_used > 1 && up->count > 0) {
-                // printf("UP:%d | %d\n", up->count, decl->times_used);
-                Type *type = decl->type;
-
-                Value *var = value_init(alc, v_var, var_init(alc, decl, type), type);
-                Scope *sub = scope_init(alc, sct_default, scope, true);
-                class_ref_change(alc, sub, var, up->count);
-
-                llvm_write_ast(b, sub);
-            }
-            continue;
-        }
         if (t->type == tkn_ir_val) {
             IRVal *item = t->item;
             item->ir_value = llvm_value(b, scope, item->value);

@@ -162,7 +162,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         //         if (!is_valid_varname(token)) {
         //             fc_error(fc, "Invalid error code syntax: '%s'", token);
         //         }
-        //         if (array_contains(type->func_error_codes, token, "chars")) {
+        //         if (array_contains(type->func_error_codes, token, arr_find_str)) {
         //             fc_error(fc, "Duplicate error code: '%s'", token);
         //         }
 

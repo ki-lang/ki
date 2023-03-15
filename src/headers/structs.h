@@ -22,7 +22,7 @@ typedef struct Enum Enum;
 typedef struct Decl Decl;
 typedef struct Var Var;
 typedef struct Arg Arg;
-typedef struct UprefSlot UprefSlot;
+typedef struct UsageLine UsageLine;
 
 #include "token.h"
 #include "value.h"
@@ -160,9 +160,11 @@ struct Scope {
     Map *upref_slots;
     Func *func;
     Array *ast;
-    Array *decls;
+    Array *usage_keys;
+    Array *usage_values;
     Map *lvars; // LLVM vars
     bool did_return;
+    bool in_loop;
 };
 struct MacroScope {
     Map *identifiers;
@@ -273,9 +275,13 @@ struct Arg {
     Chunk *value_chunk;
     Decl *decl;
 };
-struct UprefSlot {
-    Decl *decl;
-    int count;
+struct UsageLine {
+    Scope *init_scope;
+    Chunk *first_move;
+    UsageLine *follow_up;
+    int moves_max;
+    int moves_min;
+    int reads_after_move;
 };
 
 #endif

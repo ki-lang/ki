@@ -23,7 +23,7 @@ void cmd_build(int argc, char *argv[]) {
 
     // Check options
     char *path_out = map_get(options, "-o");
-    if (array_contains(args, "-h", "chars") || !path_out || strlen(path_out) == 0) {
+    if (array_contains(args, "-h", arr_find_str) || !path_out || strlen(path_out) == 0) {
         cmd_build_help();
     }
 
@@ -41,19 +41,19 @@ void cmd_build(int argc, char *argv[]) {
 
     int verbose = 0;
     ;
-    if (array_contains(args, "-v", "chars")) {
+    if (array_contains(args, "-v", arr_find_str)) {
         verbose = 1;
     }
-    if (array_contains(args, "-vv", "chars")) {
+    if (array_contains(args, "-vv", arr_find_str)) {
         verbose = 2;
     }
-    if (array_contains(args, "-vvv", "chars")) {
+    if (array_contains(args, "-vvv", arr_find_str)) {
         verbose = 3;
     }
 
-    bool optimize = array_contains(args, "--optimize", "chars") || array_contains(args, "-O", "chars");
-    bool debug = array_contains(args, "--debug", "chars") || array_contains(args, "-d", "chars");
-    bool test = array_contains(args, "--test", "chars");
+    bool optimize = array_contains(args, "--optimize", arr_find_str) || array_contains(args, "-O", arr_find_str);
+    bool debug = array_contains(args, "--debug", arr_find_str) || array_contains(args, "-d", arr_find_str);
+    bool test = array_contains(args, "--test", arr_find_str);
 
     //
     Build *b = al(alc, sizeof(Build));

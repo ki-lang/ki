@@ -10,7 +10,7 @@ void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *optio
     //
     for (int i = 0; i < argc; i++) {
         char *arg = argv[i];
-        int index = array_find(has_value, arg, "chars");
+        int index = array_find(has_value, arg, arr_find_str);
         if (index == -1) {
             array_push(args, arg);
             continue;

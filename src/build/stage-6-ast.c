@@ -7,7 +7,6 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
 TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond);
 void token_while(Allocator *alc, Fc *fc, Scope *scope);
-void deref_scope(Allocator *alc, Scope *scope, Scope *until);
 
 void stage_6(Fc *fc) {
     //
@@ -189,7 +188,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, val->rett);
                 type_check(fc, val->rett, right->rett);
 
-                right = upref_value_check(alc, scope, right);
+                right = move_check(alc, scope, right);
 
                 array_push(scope->ast, tgen_assign(alc, val, right));
                 tok_expect(fc, ";", false, true);
@@ -197,22 +196,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 if (val->type == v_var) {
                     Var *var = val->item;
                     Decl *decl = var->decl;
-                    Type *type = decl->type;
-                    if (type->class && type->class->is_rc) {
-                        // New upref slots
-                        Scope *scope_ = scope;
-                        while (scope_) {
-                            UprefSlot *up = map_get(scope_->upref_slots, decl->name);
-                            if (up) {
-                                map_unset(scope_->upref_slots, decl->name);
-                            }
-                            if (scope_->type == sct_func) {
-                                break;
-                            }
-                            scope_ = scope_->parent;
-                        }
-                    }
+                    usage_line_init(alc, scope, decl);
                 }
+
                 continue;
             }
             rtok(fc);
@@ -288,7 +274,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
         type = val->rett;
     }
 
-    val = upref_value_check(alc, scope, val);
+    val = move_check(alc, scope, val);
 
     if (type_is_void(type)) {
         sprintf(fc->sbuf, "Variable declaration: Right side does not return a value");
@@ -307,9 +293,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
 
     map_set(scope->identifiers, name, idf);
 
-    if (!scope->decls)
-        scope->decls = array_make(alc, 8);
-    array_push(scope->decls, decl);
+    usage_line_init(alc, scope, decl);
 }
 
 void token_return(Allocator *alc, Fc *fc, Scope *scope) {
@@ -329,7 +313,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
         val = try_convert(fc, alc, val, frett);
         type_check(fc, frett, val->rett);
 
-        val = upref_value_check(alc, scope, val);
+        val = move_check(alc, scope, val);
 
         IRVal *tvar = al(alc, sizeof(IRVal));
         tvar->value = val;
@@ -391,7 +375,9 @@ TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond) {
 
 void token_while(Allocator *alc, Fc *fc, Scope *scope) {
     //
-    Value *cond = read_value(fc, alc, scope, true, 0);
+    Scope *sub = scope_init(alc, sct_loop, scope, true);
+
+    Value *cond = read_value(fc, alc, sub, true, 0);
 
     if (!type_is_bool(cond->rett, fc->b)) {
         sprintf(fc->sbuf, "Value must return a bool type");
@@ -400,68 +386,7 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
 
     tok_expect(fc, "{", false, true);
 
-    Scope *sub = scope_init(alc, sct_loop, scope, true);
     read_ast(fc, sub, false);
 
     array_push(scope->ast, tgen_while(alc, cond, sub));
-}
-
-Value *upref_value_check(Allocator *alc, Scope *scope, Value *val) {
-    //
-    Type *type = val->rett;
-
-    if (type->class && type->class->is_rc) {
-        if (val->type == v_var) {
-            Var *var = val->item;
-            Decl *decl = var->decl;
-            decl->times_used++;
-            UprefSlot *up = map_get(scope->upref_slots, decl->name);
-            if (!up) {
-                up = upref_slot_init(alc, decl);
-                array_push(scope->ast, token_init(alc, tkn_upref_slot, up));
-                map_set(scope->upref_slots, decl->name, up);
-            }
-            up->count++;
-        }
-        if (val->type == v_class_pa) {
-            val = value_init(alc, v_upref_value, val, val->rett);
-        }
-        if (val->type == v_or_break) {
-            val = value_init(alc, v_upref_value, val, val->rett);
-        }
-        if (val->type == v_or_value) {
-            val = value_init(alc, v_upref_value, val, val->rett);
-        }
-    }
-
-    return val;
-}
-
-void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
-    Scope *scope = scope_;
-    while (true) {
-        Array *decls = scope->decls;
-        if (decls) {
-            for (int i = 0; i < decls->length; i++) {
-                Decl *decl = array_get_index(decls, i);
-                Type *type = decl->type;
-                Class *class = type->class;
-
-                Scope *sub = scope_init(alc, sct_default, scope_, true);
-                Value *val = value_init(alc, v_decl, decl, type);
-                class_ref_change(alc, sub, val, -1);
-
-                if (sub->ast->length > 0) {
-                    array_push(scope_->ast, tgen_deref_decl_used(alc, decl, sub));
-                }
-            }
-        }
-
-        // Clear upref slots
-        scope->upref_slots = map_make(alc);
-
-        if (scope == until)
-            break;
-        scope = scope->parent;
-    }
 }

@@ -10,7 +10,7 @@ Map *map_make(Allocator *alc) {
 }
 
 bool map_contains(Map *map, char *key) {
-    int i = array_find(map->keys, key, "chars");
+    int i = array_find(map->keys, key, arr_find_str);
     if (i == -1) {
         return false;
     }
@@ -18,7 +18,7 @@ bool map_contains(Map *map, char *key) {
 }
 
 void *map_get(Map *map, char *key) {
-    int i = array_find(map->keys, key, "chars");
+    int i = array_find(map->keys, key, arr_find_str);
     if (i == -1) {
         return NULL;
     }
@@ -26,7 +26,7 @@ void *map_get(Map *map, char *key) {
 }
 
 void map_set(Map *map, char *key, void *value) {
-    int i = array_find(map->keys, key, "chars");
+    int i = array_find(map->keys, key, arr_find_str);
     if (i == -1) {
         array_push(map->keys, dups(map->alc, key));
         array_push(map->values, value);
@@ -36,7 +36,7 @@ void map_set(Map *map, char *key, void *value) {
 }
 
 bool map_unset(Map *map, char *key) {
-    int i = array_find(map->keys, key, "chars");
+    int i = array_find(map->keys, key, arr_find_str);
     if (i == -1) {
         return false;
     }
