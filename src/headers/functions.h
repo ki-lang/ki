@@ -141,7 +141,6 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
 
 // UsageLine
 UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl);
-Value *move_check(Allocator *alc, Scope *scope, Value *val);
 void deref_scope(Allocator *alc, Scope *scope, Scope *until);
 
 // Value
@@ -156,7 +155,7 @@ Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type);
 Value *vgen_ptrv(Allocator *alc, Value *on, Type *as);
 Value *vgen_op(Allocator *alc, Build *b, Value *left, Value *right, int op, bool is_ptr);
 Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op);
-Value *vgen_fcall(Allocator *alc, Value *on, Array *values, Type *rett, Scope *scope, bool upref_args);
+Value *vgen_fcall(Allocator *alc, Value *on, Array *values, Type *rett);
 Value *vgen_fptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
 Value *vgen_class_init(Allocator *alc, Class *class, Map *values);

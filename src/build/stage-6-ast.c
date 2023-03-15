@@ -188,8 +188,6 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, val->rett);
                 type_check(fc, val->rett, right->rett);
 
-                right = move_check(alc, scope, right);
-
                 array_push(scope->ast, tgen_assign(alc, val, right));
                 tok_expect(fc, ";", false, true);
 
@@ -274,8 +272,6 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
         type = val->rett;
     }
 
-    val = move_check(alc, scope, val);
-
     if (type_is_void(type)) {
         sprintf(fc->sbuf, "Variable declaration: Right side does not return a value");
         fc_error(fc);
@@ -312,8 +308,6 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
         Value *val = read_value(fc, alc, scope, true, 0);
         val = try_convert(fc, alc, val, frett);
         type_check(fc, frett, val->rett);
-
-        val = move_check(alc, scope, val);
 
         IRVal *tvar = al(alc, sizeof(IRVal));
         tvar->value = val;

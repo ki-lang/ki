@@ -28,38 +28,6 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
     return v;
 }
 
-Value *move_check(Allocator *alc, Scope *scope, Value *val) {
-    return val;
-    //
-    // Type *type = val->rett;
-
-    // if (type->class && type->class->is_rc) {
-    //     if (val->type == v_var) {
-    //         Var *var = val->item;
-    //         Decl *decl = var->decl;
-    //         decl->times_used++;
-    //         UprefSlot *up = map_get(scope->upref_slots, decl->name);
-    //         if (!up) {
-    //             up = upref_slot_init(alc, decl);
-    //             array_push(scope->ast, token_init(alc, tkn_upref_slot, up));
-    //             map_set(scope->upref_slots, decl->name, up);
-    //         }
-    //         up->count++;
-    //     }
-    //     if (val->type == v_class_pa) {
-    //         val = value_init(alc, v_upref_value, val, val->rett);
-    //     }
-    //     if (val->type == v_or_break) {
-    //         val = value_init(alc, v_upref_value, val, val->rett);
-    //     }
-    //     if (val->type == v_or_value) {
-    //         val = value_init(alc, v_upref_value, val, val->rett);
-    //     }
-    // }
-
-    // return val;
-}
-
 void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
     // Scope *scope = scope_;
     // while (true) {
