@@ -46,6 +46,11 @@ UsageLine *usage_line_get(Scope *scope, Decl *decl) {
 
 bool is_moved_once(UsageLine *ul) {
     //
+    while (ul->follow_up) {
+        ul = ul->follow_up;
+    }
+    printf("%s\n", ul->init_scope->func->dname);
+    printf("%d,%d\n", ul->moves_min, ul->moves_max);
     return ul->moves_min == 1 && ul->moves_max == 1 && ul->reads_after_move == 0;
 }
 
@@ -67,6 +72,19 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
         if (!ul->first_move) {
             ul->first_move = chunk_clone(alc, chunk);
         }
+
+        Type *type = val->rett;
+        Class *class = type->class;
+        if (class && class->must_ref) {
+
+            Scope *sub = scope_init(alc, sct_default, scope, true);
+            Value *val = value_init(alc, v_decl, decl, type);
+            class_ref_change(alc, sub, val, 1);
+
+            if (sub->ast->length > 0) {
+                array_push(scope->ast, tgen_exec_unless_moved_once(alc, sub, ul));
+            }
+        }
     } else {
         // TODO : upref class prop access that have a type class with must_ref = true
         if (vt == v_class_pa) {
@@ -82,7 +100,7 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
 
 Scope *usage_scope_init(Allocator *alc, Scope *parent, int type) {
     //
-    Scope *scope = scope_init(alc, sct_default, parent, true);
+    Scope *scope = scope_init(alc, type, parent, true);
 
     if (parent->usage_keys) {
         // Clone all usage lines from parent
@@ -108,7 +126,7 @@ Scope *usage_scope_init(Allocator *alc, Scope *parent, int type) {
     return scope;
 }
 
-void usage_merge_scopes(Scope *left, Scope *right) {
+void usage_merge_scopes(Allocator *alc, Scope *left, Scope *right, Scope *else_scope) {
     //
     // 1. merge left lines with right && set follow up on right
     // 2. check if right scope has new lines, if so, merge them if they arent declare (look at init_scope)
@@ -127,9 +145,41 @@ void usage_merge_scopes(Scope *left, Scope *right) {
         UsageLine *l_ul = array_get_index(lvals, i);
         UsageLine *r_ul = array_get_index(rvals, i);
 
+        bool right_ok = is_moved_once(r_ul);
+        bool left_ok = is_moved_once(l_ul);
+
         l_ul->moves_max = max_num(l_ul->moves_max, r_ul->moves_max);
         l_ul->moves_min = min_num(l_ul->moves_min, r_ul->moves_min);
         l_ul->reads_after_move = max_num(l_ul->reads_after_move, r_ul->reads_after_move);
+
+        if (left_ok != right_ok && else_scope) {
+            if (left_ok) {
+                l_ul->moves_min = 1;
+
+                Type *type = decl->type;
+                Class *class = type->class;
+                if (class && class->must_deref) {
+                    Scope *sub = scope_init(alc, sct_default, else_scope, true);
+                    Value *val = value_init(alc, v_decl, decl, decl->type);
+                    class_ref_change(alc, sub, val, -1);
+                    array_shift(right->ast, tgen_exec_if_moved_once(alc, sub, l_ul));
+                }
+            }
+            if (right_ok) {
+                l_ul->moves_min = 1;
+
+                // if (right != else_scope) {
+                //     Type *type = decl->type;
+                //     Class *class = type->class;
+                //     if (class && class->must_deref) {
+                //         Scope *sub = scope_init(alc, sct_default, else_scope, true);
+                //         Value *val = value_init(alc, v_decl, decl, decl->type);
+                //         class_ref_change(alc, sub, val, -1);
+                //         array_shift(else_scope->ast, tgen_exec_if_moved_once(alc, sub, l_ul));
+                //     }
+                // }
+            }
+        }
 
         r_ul->follow_up = l_ul;
         i++;
@@ -139,12 +189,13 @@ void usage_merge_scopes(Scope *left, Scope *right) {
         UsageLine *r_ul = array_get_index(rvals, i);
         i++;
 
-        if (r_ul->init_scope == right) {
+        if (decl->scope == right) {
             continue;
         }
 
         int index = array_find(lkeys, decl, arr_find_adr);
         if (index < 0) {
+            printf("Var name: %s\n", decl->name);
             die("Missing left side usage line (compiler bug)\n");
         }
         UsageLine *l_ul = array_get_index(lvals, index);
@@ -167,6 +218,9 @@ void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
                 Decl *decl = array_get_index(decls, i);
                 UsageLine *ul = array_get_index(scope->usage_values, i);
 
+                if (ul->init_scope != scope)
+                    continue;
+
                 Type *type = decl->type;
                 Class *class = type->class;
 
@@ -179,7 +233,7 @@ void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
                 class_ref_change(alc, sub, val, -1);
 
                 if (sub->ast->length > 0) {
-                    array_push(scope_->ast, tgen_deref_unless_moved_once(alc, sub, ul));
+                    array_push(scope_->ast, tgen_exec_unless_moved_once(alc, sub, ul));
                 }
             }
         }

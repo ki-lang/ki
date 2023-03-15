@@ -145,7 +145,7 @@ bool is_moved_once(UsageLine *ul);
 void usage_read_value(Allocator *alc, Scope *scope, Value *val);
 Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val);
 Scope *usage_scope_init(Allocator *alc, Scope *parent, int type);
-void usage_merge_scopes(Scope *left, Scope *right);
+void usage_merge_scopes(Allocator *alc, Scope *left, Scope *right, Scope *else_scope);
 void deref_scope(Allocator *alc, Scope *scope, Scope *until);
 
 // Value
@@ -181,4 +181,5 @@ Token *tgen_declare(Allocator *alc, Decl *decl, Value *val);
 Token *tgen_assign(Allocator *alc, Value *left, Value *right);
 Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv);
 Token *tgen_while(Allocator *alc, Value *cond, Scope *scope);
-Token *tgen_deref_unless_moved_once(Allocator *alc, Scope *scope, UsageLine *ul);
+Token *tgen_exec_unless_moved_once(Allocator *alc, Scope *scope, UsageLine *ul);
+Token *tgen_exec_if_moved_once(Allocator *alc, Scope *scope, UsageLine *ul);

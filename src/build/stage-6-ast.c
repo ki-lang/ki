@@ -377,18 +377,26 @@ TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond) {
         else_if = token_if(alc, fc, usage_scope, has_if);
 
     } else {
+        // Generate else for usage algorithm
+        if (has_cond) {
+            // Scope *sub = usage_scope_init(alc, scope, sct_default);
+            Scope *sub = scope_init(alc, sct_default, scope, true);
+            else_if = tgen_tif(alc, NULL, sub, NULL);
+        }
         rtok(fc);
     }
 
-    if (scope->usage_keys)
-        usage_merge_scopes(scope, sub);
+    if (scope->usage_keys) {
+        usage_merge_scopes(alc, scope, sub, !has_cond ? sub : else_if->scope);
+    }
 
     return tgen_tif(alc, cond, sub, else_if);
 }
 
 void token_while(Allocator *alc, Fc *fc, Scope *scope) {
     //
-    Scope *sub = scope_init(alc, sct_loop, scope, true);
+    Scope *sub = usage_scope_init(alc, scope, sct_loop);
+    // Scope *sub = scope_init(alc, sct_loop, scope, true);
 
     Value *cond = read_value(fc, alc, sub, true, 0);
 

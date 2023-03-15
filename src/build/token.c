@@ -41,10 +41,19 @@ Token *tgen_while(Allocator *alc, Value *cond, Scope *scope) {
     return token_init(alc, tkn_while, w);
 }
 
-Token *tgen_deref_unless_moved_once(Allocator *alc, Scope *scope, UsageLine *ul) {
+Token *tgen_exec_unless_moved_once(Allocator *alc, Scope *scope, UsageLine *ul) {
     //
-    TDerefUnlessMovedOnce *item = al(alc, sizeof(TDerefUnlessMovedOnce));
+    TExecIfMovedOnce *item = al(alc, sizeof(TExecIfMovedOnce));
     item->scope = scope;
     item->usage_line = ul;
-    return token_init(alc, tkn_deref_unless_moved_once, item);
+    item->inverse = true;
+    return token_init(alc, tkn_exec_if_moved_once, item);
+}
+Token *tgen_exec_if_moved_once(Allocator *alc, Scope *scope, UsageLine *ul) {
+    //
+    TExecIfMovedOnce *item = al(alc, sizeof(TExecIfMovedOnce));
+    item->scope = scope;
+    item->usage_line = ul;
+    item->inverse = false;
+    return token_init(alc, tkn_exec_if_moved_once, item);
 }

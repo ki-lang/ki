@@ -23,6 +23,7 @@ void array_push_unique_chars(Array *arr, void *item);
 void *array_pop(Array *arr);
 bool array_contains(Array *, void *, int);
 int array_find(Array *, void *, int);
+void array_shift(Array *arr, void *item);
 void *array_get_index(Array *, int);
 void array_set_index(Array *, int, void *);
 
