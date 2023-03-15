@@ -448,10 +448,12 @@ void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
                 Class *class = type->class;
 
                 Scope *sub = scope_init(alc, sct_default, scope_, true);
-                array_push(scope_->ast, tgen_deref_decl_used(alc, decl, sub));
-
                 Value *val = value_init(alc, v_decl, decl, type);
                 class_ref_change(alc, sub, val, -1);
+
+                if (sub->ast->length > 0) {
+                    array_push(scope_->ast, tgen_deref_decl_used(alc, decl, sub));
+                }
             }
         }
 
