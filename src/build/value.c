@@ -75,7 +75,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
         //
     } else if (strcmp(token, "getptr") == 0) {
         Value *on = read_value(fc, alc, scope, false, 0);
-        if (!value_assignable(on)) {
+        if (on->type != v_class_pa && on->type != v_ptrv && on->type != v_var) {
             sprintf(fc->sbuf, "Value must be assignable, such as a mutable variable");
             fc_error(fc);
         }
@@ -869,9 +869,4 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     }
 
     return vgen_fcall(alc, on, values, rett);
-}
-
-bool value_assignable(Value *val) {
-    //
-    return val->type == v_var || val->type == v_class_pa || val->type == v_ptrv;
 }

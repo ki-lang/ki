@@ -129,31 +129,47 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             continue;
         }
 
-        //
         rtok(fc);
-        Value *val = read_value(fc, alc, scope, false, 0);
+
+        Chunk *before = chunk_clone(alc, fc->chunk);
+
+        // Check if var assign
+        Value *left = NULL;
+
+        Id *id = read_id(fc, false, true, true);
+        Idf *idf = idf_by_id(fc, scope, id, false);
+        if (idf && idf->type == idf_var) {
+            tok(fc, token, false, true);
+            if (strcmp(token, "=") == 0) {
+                Var *var = idf->item;
+                left = value_init(alc, v_var, var, var->type);
+            }
+            rtok(fc);
+        }
+
+        //
+        if (!left) {
+            fc->chunk = before;
+            left = read_value(fc, alc, scope, false, 0);
+        }
 
         // Assign
-        if (value_assignable(val)) {
+        if (left->type == v_var || left->type == v_class_pa || left->type == v_ptrv) {
             tok(fc, token, false, true);
             sprintf(fc->sbuf, ".%s.", token);
             if (strstr(".=.+=.-=.*=./=.", fc->sbuf)) {
                 char *sign = dups(alc, token);
 
-                if (val->type == v_var) {
-                    Var *var = val->item;
+                if (left->type == v_var) {
+                    Var *var = left->item;
                     Decl *decl = var->decl;
                     if (!decl->is_mut) {
                         sprintf(fc->sbuf, "Cannot assign value to an immutable variable");
                         fc_error(fc);
                     }
-                    if (decl->is_arg && val->rett->class->is_rc) {
-                        sprintf(fc->sbuf, "Assigning new values to argument variables is not allowed for performance reasons");
-                        fc_error(fc);
-                    }
                 }
-                if (val->type == v_class_pa) {
-                    VClassPA *pa = val->item;
+                if (left->type == v_class_pa) {
+                    VClassPA *pa = left->item;
                     ClassProp *prop = pa->prop;
                     // if prop.act != AccessType.public {
                     // 	if !scope.is_sub_scope_of(prop.class.scope) {
@@ -163,9 +179,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 }
 
                 // Deref current value
-                Class *class = val->rett->class;
+                Class *class = left->rett->class;
                 if (class && class->must_deref) {
-                    class_ref_change(alc, scope, val, -1);
+                    class_ref_change(alc, scope, left, -1);
                 }
 
                 Value *right = read_value(fc, alc, scope, false, 0);
@@ -176,23 +192,23 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
                 if (strcmp(sign, "=") == 0) {
                 } else if (strcmp(sign, "+=") == 0) {
-                    right = value_op(fc, alc, scope, val, right, op_add);
+                    right = value_op(fc, alc, scope, left, right, op_add);
                 } else if (strcmp(sign, "-=") == 0) {
-                    right = value_op(fc, alc, scope, val, right, op_sub);
+                    right = value_op(fc, alc, scope, left, right, op_sub);
                 } else if (strcmp(sign, "*=") == 0) {
-                    right = value_op(fc, alc, scope, val, right, op_mul);
+                    right = value_op(fc, alc, scope, left, right, op_mul);
                 } else if (strcmp(sign, "/=") == 0) {
-                    right = value_op(fc, alc, scope, val, right, op_div);
+                    right = value_op(fc, alc, scope, left, right, op_div);
                 }
 
-                right = try_convert(fc, alc, right, val->rett);
-                type_check(fc, val->rett, right->rett);
+                right = try_convert(fc, alc, right, left->rett);
+                type_check(fc, left->rett, right->rett);
 
-                array_push(scope->ast, tgen_assign(alc, val, right));
+                array_push(scope->ast, tgen_assign(alc, left, right));
                 tok_expect(fc, ";", false, true);
 
-                if (val->type == v_var) {
-                    Var *var = val->item;
+                if (left->type == v_var) {
+                    Var *var = idf->item;
                     Decl *decl = var->decl;
                     usage_line_init(alc, scope, decl);
                 }
@@ -203,6 +219,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
 
         // Statement
+        Value *val = left;
+
         if (!type_is_void(val->rett)) {
             sprintf(fc->sbuf, "Statement returns a value, but no variable to store it in");
             fc_error(fc);

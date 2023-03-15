@@ -142,13 +142,13 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
 // UsageLine
 UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl);
 void deref_scope(Allocator *alc, Scope *scope, Scope *until);
+void usage_move_var(Allocator *alc, Chunk *chunk, Scope *scope, Decl *decl);
 
 // Value
 Value *value_init(Allocator *alc, int type, void *item, Type *rett);
 Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio);
 Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op);
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
-bool value_assignable(Value *val);
 
 Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type);
 Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type);

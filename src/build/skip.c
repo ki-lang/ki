@@ -116,22 +116,25 @@ void skip_until_char(Fc *fc, char *find) {
     chunk->i = i;
 }
 
-// void skip_whitespace(Fc *fc) {
-//     //
-//     Chunk *chunk = fc->chunk;
-//     char ch;
-//     int i = chunk->i;
-//     const char *content = chunk->content;
-//     while (chunk->i < chunk->length) {
-//         //
-//         ch = chunk->content[i];
-//         if (!is_whitespace(ch)) {
-//             break;
-//         }
-//         i++;
-//     }
-//     chunk->i = i;
-// }
+void skip_whitespace(Fc *fc) {
+    //
+    Chunk *chunk = fc->chunk;
+    char ch;
+    int i = chunk->i;
+    const char *content = chunk->content;
+    while (chunk->i < chunk->length) {
+        //
+        ch = chunk->content[i];
+        if (!is_whitespace(ch)) {
+            break;
+        }
+        if (is_newline(ch)) {
+            chunk->line++;
+        }
+        i++;
+    }
+    chunk->i = i;
+}
 
 void skip_macro_if(Fc *fc) {
     //
