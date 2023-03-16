@@ -6,8 +6,8 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
     UsageLine *v = al(alc, sizeof(UsageLine));
     v->init_scope = scope;
     v->first_move = NULL;
+    v->update_chain = NULL;
     v->parent = NULL;
-    v->follow_up = NULL;
     v->moves_max = 0;
     v->moves_min = 0;
     v->reads_after_move = 0;
@@ -48,10 +48,6 @@ UsageLine *usage_line_get(Scope *scope, Decl *decl) {
 }
 
 bool is_moved_once(UsageLine *ul) {
-    //
-    while (ul->follow_up) {
-        ul = ul->follow_up;
-    }
     // printf("%s\n", ul->init_scope->func->dname);
     // printf("%d,%d\n", ul->moves_min, ul->moves_max);
     return ul->moves_min == 1 && ul->moves_max == 1 && ul->reads_after_move == 0;
@@ -59,6 +55,20 @@ bool is_moved_once(UsageLine *ul) {
 
 void usage_read_value(Allocator *alc, Scope *scope, Value *val) {
     //
+}
+
+void usage_line_incr_moves(UsageLine *ul, int amount) {
+    //
+    ul->moves_max += amount;
+    ul->moves_min += amount;
+
+    if (ul->update_chain) {
+        Array *list = ul->update_chain;
+        for (int i = 0; i < list->length; i++) {
+            UsageLine *ul = array_get_index(list, i);
+            usage_line_incr_moves(ul, amount);
+        }
+    }
 }
 
 Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) {
@@ -83,13 +93,8 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
             s = s->parent;
         }
 
-        if (in_loop) {
-            ul->moves_max += 2;
-            ul->moves_min += 2;
-        } else {
-            ul->moves_max++;
-            ul->moves_min++;
-        }
+        int incr = in_loop ? 2 : 1;
+        usage_line_incr_moves(ul, incr);
 
         if (!ul->first_move) {
             ul->first_move = chunk_clone(alc, chunk);
@@ -136,6 +141,8 @@ Scope *usage_scope_init(Allocator *alc, Scope *parent, int type) {
             UsageLine *par_ul = array_get_index(par_vals, i);
             UsageLine *ul = al(alc, sizeof(UsageLine));
             *ul = *par_ul;
+            ul->update_chain = NULL;
+            ul->parent = NULL;
 
             array_push(keys, decl);
             array_push(vals, ul);
@@ -171,10 +178,10 @@ void usage_collect_used_decls(Allocator *alc, Scope *left, Scope *right, Array *
             r_ul = r_ul->parent;
         }
 
-        bool left_ok = is_moved_once(l_ul);
-        bool right_ok = is_moved_once(r_ul);
+        bool right_moved_once = is_moved_once(r_ul);
 
-        if (r_ul->moves_max > l_ul->moves_max && right_ok) {
+        // Moves changed, right side has 1 move, add to array
+        if (r_ul->moves_max > l_ul->moves_max && right_moved_once) {
             if (!list) {
                 list = array_make(alc, 20);
                 *list_ = list;
@@ -187,9 +194,6 @@ void usage_collect_used_decls(Allocator *alc, Scope *left, Scope *right, Array *
 
 void usage_merge_scopes(Allocator *alc, Scope *left, Scope *right, Array *used_decls) {
     //
-    // 1. merge left lines with right && set follow up on right
-    // 2. check if right scope has new lines, if so, merge them if they arent declare (look at init_scope)
-
     if (!left->usage_keys) {
         return;
     }
@@ -206,49 +210,35 @@ void usage_merge_scopes(Allocator *alc, Scope *left, Scope *right, Array *used_d
         UsageLine *l_ul = array_get_index(lvals, i);
         UsageLine *r_ul = array_get_index(rvals, i);
 
-        while (r_ul->parent) {
-            r_ul = r_ul->parent;
-        }
-
-        bool right_ok = is_moved_once(r_ul);
-
+        // Merge with oldest line
         l_ul->moves_max = max_num(l_ul->moves_max, r_ul->moves_max);
         l_ul->moves_min = min_num(l_ul->moves_min, r_ul->moves_min);
         l_ul->reads_after_move = max_num(l_ul->reads_after_move, r_ul->reads_after_move);
 
-        r_ul->follow_up = l_ul; // Important
-
+        // Moves changed, right side has 1 move, add to array
         if (used_decls && array_contains(used_decls, decl, arr_find_adr)) {
             l_ul->moves_min = 1;
 
-            if (!right_ok) {
+            // If it's the original line && right side is 0, add a deref to the scope
+            if (r_ul->parent == NULL && r_ul->moves_max == 0) {
+
                 Type *type = decl->type;
                 Class *class = type->class;
                 if (class && class->must_deref) {
                     Scope *sub = scope_init(alc, sct_default, right, true);
                     Value *val = value_init(alc, v_decl, decl, decl->type);
                     class_ref_change(alc, sub, val, -1);
-                    array_shift(right->ast, tgen_exec_if_moved_once(alc, sub, l_ul));
+                    array_shift(right->ast, tgen_exec_if_moved_once(alc, sub, r_ul));
                 }
             }
         }
 
-        i++;
-    }
+        // Add to update chain
+        if (!l_ul->update_chain)
+            l_ul->update_chain = array_make(alc, 8);
 
-    // Now do it again, but compare against the latest version of the usage line
-    // And set there follow up
-    i = 0;
-    while (i < lkeys->length) {
-        Decl *decl = array_get_index(lkeys, i);
-        UsageLine *l_ul = array_get_index(lvals, i);
-        UsageLine *r_ul = array_get_index(rvals, i);
+        array_push(l_ul->update_chain, r_ul);
 
-        l_ul->moves_max = max_num(l_ul->moves_max, r_ul->moves_max);
-        l_ul->moves_min = min_num(l_ul->moves_min, r_ul->moves_min);
-        l_ul->reads_after_move = max_num(l_ul->reads_after_move, r_ul->reads_after_move);
-
-        r_ul->follow_up = l_ul;
         i++;
     }
 }
