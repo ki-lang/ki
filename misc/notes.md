@@ -13,56 +13,12 @@ strict ownership type cannot be used in:
 
 # Ref counting
 
-UsageLine {
-	Scope* init_scope          // Used to get context inside loops
-	Chunk* first_move          // Used for error messages for strict ownership
-	UsageLine* follow_up
-	int moves_min              // lowest(previous)
-	int moves_max              // max(previous)
-	int reads_after_move
-}
-
-Notation:
-- 0,1 means: min 0 moves and max 1 move
-- The logic below is focussed on a single declaration, logic must be applied for each declaration
-
-Rules:
-- every declare create a Decl and a UsageLine
-- every assign creates a new UsageLine in the current scope and saves it in scope->usage_lines[decl]
--- if the scope already has a usage line, we replace it
-- at the end of each scope we merge the usage line with the parent if the scope did not return
--- current->moves_min = min(current->moves_min, child->moves_min)
--- current->moves_max = max(current->moves_max, child->moves_max)
--- current->first_move = current->first_move ?? child->first_move;
-
-- if/else/??/?!
-- parse all scopes
-- get min max from scopes
--- max: 0, do nothing
--- max: 1, min: 1, do nothing
--- max: 1, min: 0, all derefs to scopes with 0 uses
--- max: 2+, do nothing
-- update left line uses +max
-
-
-- left ?!/?? right, we must generate an 'else' if the clone line is a 0,1
-```
-%0 = left
-if %0 == null {
-	%0 = right
-} <-- generate else if 0,1 usage
-```
-
-- while
--- clone usage line, merge with current line after
--- after loop also merge with last line (if mutable decl)
-
-- a 'move' means every time we pass it as a func argument or use it as the right side value in an assign/declare
--- a move will increase both moves_max and moves_min
--- a move in side a loop scope we must add +2 if the usage line starts outside the loop
-
-- return/break/continue
--- for each decl we create a token tkn_deref_unless_single_use and attach the value and usage line
+- We keep track of variable usage via usage lines
+- When we redeclare a variable, or reach the end of a scope, we end the usage line
+- logic for ending an usage line:
+-- if has ancestors, traverse ancestors and call end_usage_line on them
+-- else if has a ref token, disable token
+-- else add deref to usage line scope
 
 # TODO
 
