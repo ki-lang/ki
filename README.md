@@ -11,11 +11,9 @@
 
 (We are still in alpha, some things might change)
 
-ki is a programming language designed to be fast and easy to use. We want fast compile times, fast runtimes, great package management and no seg faults. We feel like current languages always have 1 thing missing. E.g. Rust is an amazing language, but often it gets too complex. Or go, go is amazing, but their package management and cli tools are really bad. Zig has manual memory management, which is great, but not for everyone.
+ki is a programming language designed to be super fast and easy to use. You can choose between manual memory management (structs) or reference counted objects (classes (no OOP)). The compiler keeps track of ownership and uses reference counting as a fallback. Meaning if you write your code like rust, it runs like rust. But if you want to use an object twice, just do it and it will work. We also offer strict ownership which prevent you from doing this.
 
-ki is focussed on making applications and servers. We want programmers to feel like it's easy to create things. We want things to be simple, but also not limit the developer. By default things work with ownership based reference counting. If you want to manage your own memory, no problem, just use structs instead of classes. For now we only have automatic ownership, but are working on strict ownership types and shared ownership types.
-
-* auto ownership means it will only use reference counting if an object is stored in multiple places (No overhead. Everything is decided at compile time.)
+Goals: fast run time, fast compile times, simplicity and great package management.
 
 ## Basic usage
 
