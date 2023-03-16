@@ -264,7 +264,7 @@ void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
             Scope *scope = scope_;
             while (scope) {
 
-                if (scope == ul->scope) {
+                if (scope == decl->scope) {
                     end_usage_line(alc, ul);
                     break;
                 }
@@ -273,6 +273,20 @@ void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
                     break;
                 scope = scope->parent;
             }
+        }
+    }
+}
+
+void usage_clear_ancestors(Scope *scope) {
+    //
+    Array *decls = scope->usage_keys;
+    if (decls) {
+        for (int i = 0; i < decls->length; i++) {
+            Decl *decl = array_get_index(decls, i);
+            UsageLine *ul = array_get_index(scope->usage_values, i);
+
+            ul->ancestors = NULL;
+            ul->upref_token = NULL;
         }
     }
 }
