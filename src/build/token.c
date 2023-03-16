@@ -29,7 +29,6 @@ Token *tgen_assign(Allocator *alc, Value *left, Value *right) {
 
 Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv) {
     //
-    fscope->did_return = true;
     return token_init(alc, tkn_return, retv);
 }
 
@@ -41,19 +40,10 @@ Token *tgen_while(Allocator *alc, Value *cond, Scope *scope) {
     return token_init(alc, tkn_while, w);
 }
 
-Token *tgen_exec_unless_moved_once(Allocator *alc, Scope *scope, UsageLine *ul) {
+Token *tgen_optional(Allocator *alc, Token *token, bool enable) {
     //
-    TExecIfMovedOnce *item = al(alc, sizeof(TExecIfMovedOnce));
-    item->scope = scope;
-    item->usage_line = ul;
-    item->inverse = true;
-    return token_init(alc, tkn_exec_if_moved_once, item);
-}
-Token *tgen_exec_if_moved_once(Allocator *alc, Scope *scope, UsageLine *ul) {
-    //
-    TExecIfMovedOnce *item = al(alc, sizeof(TExecIfMovedOnce));
-    item->scope = scope;
-    item->usage_line = ul;
-    item->inverse = false;
-    return token_init(alc, tkn_exec_if_moved_once, item);
+    TOptional *item = al(alc, sizeof(TOptional));
+    item->token = token;
+    item->enable = enable;
+    return token_init(alc, tkn_optional, item);
 }

@@ -50,7 +50,8 @@ enum TOKENTYPE {
     tkn_ref,
     tkn_ir_val,
     tkn_ir_assign_val,
-    tkn_exec_if_moved_once,
+    tkn_exec,
+    tkn_optional,
 };
 
 enum VALUETYPE {

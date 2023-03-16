@@ -5,7 +5,7 @@ void stage_6_func(Fc *fc, Func *func);
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
-TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array **used_decls);
+TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array *ancestors);
 void token_while(Allocator *alc, Fc *fc, Scope *scope);
 
 void stage_6(Fc *fc) {
@@ -70,6 +70,18 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             continue;
         }
 
+        if (scope->did_return) {
+            if (single_line) {
+                rtok(fc);
+                break;
+            }
+            if (strcmp(token, "}") != 0) {
+                sprintf(fc->sbuf, "Expected '}'");
+                fc_error(fc);
+            }
+            break;
+        }
+
         if (single_line && !first_line) {
             rtok(fc);
             break;
@@ -119,18 +131,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
 
         if (strcmp(token, "if") == 0) {
-            Array *used_decls = NULL;
-            TIf *tif = token_if(alc, fc, scope, true, &used_decls);
+            Array *ancestors = array_make(alc, 10);
+            TIf *tif = token_if(alc, fc, scope, true, ancestors);
             array_push(scope->ast, token_init(alc, tkn_if, tif));
+            usage_merge_ancestors(alc, scope, ancestors);
 
-            if (scope->usage_keys) {
-                TIf *tif_ = tif;
-                while (tif_) {
-                    Scope *sub = tif_->scope;
-                    usage_merge_scopes(alc, scope, sub, used_decls);
-                    tif_ = tif_->else_if;
-                }
-            }
             continue;
         }
 
@@ -211,11 +216,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 if (left->type == v_var) {
                     Var *var = idf->item;
                     Decl *decl = var->decl;
-                    Scope *sub = scope_init(alc, sct_default, scope, true);
-                    Value *val = value_init(alc, v_decl, decl, decl->type);
                     UsageLine *ul = usage_line_get(scope, decl);
-                    class_ref_change(alc, sub, val, -1);
-                    array_push(scope->ast, tgen_exec_unless_moved_once(alc, sub, ul));
+                    end_usage_line(alc, ul);
                 }
 
                 array_push(scope->ast, tgen_assign(alc, left, right));
@@ -359,7 +361,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
     scope->did_return = true;
 }
 
-TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array **used_decls) {
+TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array *ancestors) {
     //
     char *token = fc->token;
     Value *cond = NULL;
@@ -380,10 +382,9 @@ TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array **used_
     }
 
     Scope *sub = usage_scope_init(alc, scope, sct_default);
+    array_push(ancestors, sub);
 
     read_ast(fc, sub, single);
-
-    usage_collect_used_decls(alc, scope, sub, used_decls);
 
     tok(fc, token, false, true);
     TIf *else_if = NULL;
@@ -394,12 +395,13 @@ TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array **used_
         if (!has_if) {
             rtok(fc);
         }
-        else_if = token_if(alc, fc, scope, has_if, used_decls);
+        else_if = token_if(alc, fc, scope, has_if, ancestors);
 
     } else {
         // Generate else for usage algorithm
         if (has_cond) {
             Scope *sub = usage_scope_init(alc, scope, sct_default);
+            array_push(ancestors, sub);
             else_if = tgen_tif(alc, NULL, sub, NULL);
         }
         rtok(fc);

@@ -274,9 +274,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
                     rtok(fc);
 
                 read_ast(fc, usage_scope, single_line);
-                usage_collect_used_decls(alc, scope, usage_scope, &used_decls);
-                usage_merge_scopes(alc, scope, usage_scope, used_decls);
-                usage_merge_scopes(alc, scope, else_scope, used_decls);
+                // usage_collect_used_decls(alc, scope, usage_scope, &used_decls);
+                // usage_merge_scopes(alc, scope, usage_scope, used_decls);
+                // usage_merge_scopes(alc, scope, else_scope, used_decls);
 
                 if (!usage_scope->did_return) {
                     sprintf(fc->sbuf, "Scope did not use return, break, continue, exit or panic");
@@ -286,9 +286,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
             } else {
                 // ??
                 Value *right = read_value(fc, alc, usage_scope, true, 0);
-                usage_collect_used_decls(alc, scope, usage_scope, &used_decls);
-                usage_merge_scopes(alc, scope, usage_scope, used_decls);
-                usage_merge_scopes(alc, scope, else_scope, used_decls);
+                // usage_collect_used_decls(alc, scope, usage_scope, &used_decls);
+                // usage_merge_scopes(alc, scope, usage_scope, used_decls);
+                // usage_merge_scopes(alc, scope, else_scope, used_decls);
 
                 type_check(fc, v->rett, right->rett);
 

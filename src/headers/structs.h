@@ -276,12 +276,12 @@ struct Arg {
     Decl *decl;
 };
 struct UsageLine {
-    Scope *init_scope;
+    Decl *decl;
+    Scope *scope;
     Chunk *first_move;
-    Array *update_chain;
-    UsageLine *parent;
-    int moves_max;
-    int moves_min;
+    TOptional *upref_token;
+    Array *ancestors;
+    int moves;
     int reads_after_move;
 };
 

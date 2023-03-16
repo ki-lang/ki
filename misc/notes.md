@@ -36,11 +36,13 @@ Rules:
 -- current->first_move = current->first_move ?? child->first_move;
 
 - if/else/??/?!
--- create a new scope for each block, and clone all usage lines into them
--- parse the ast of each block
--- loop over all scopes and check which decls have single usage in the new scope but not old, store them in an array `moved_decls`
--- merge all the new scopes with the parent scope
---- when the decl is in moved_decls but has 0 uses in the new scope, we add a deref_if_moved_once token
+- parse all scopes
+- get min max from scopes
+-- max: 0, do nothing
+-- max: 1, min: 1, do nothing
+-- max: 1, min: 0, all derefs to scopes with 0 uses
+-- max: 2+, do nothing
+- update left line uses +max
 
 
 - left ?!/?? right, we must generate an 'else' if the clone line is a 0,1

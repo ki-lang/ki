@@ -131,11 +131,16 @@ void llvm_write_ast(LB *b, Scope *scope) {
             char *lval = llvm_value(b, scope, val);
             continue;
         }
-        if (t->type == tkn_exec_if_moved_once) {
-            TExecIfMovedOnce *item = t->item;
-            UsageLine *ul = item->usage_line;
-            if (is_moved_once(ul) != item->inverse) {
-                llvm_write_ast(b, item->scope);
+        if (t->type == tkn_exec) {
+            llvm_write_ast(b, t->item);
+            continue;
+        }
+        if (t->type == tkn_optional) {
+            TOptional *opt = t->item;
+            if (opt->enable) {
+                Scope *sub = scope_init(alc, sct_default, scope, true);
+                array_push(sub->ast, opt->token);
+                llvm_write_ast(b, sub);
             }
             continue;
         }
