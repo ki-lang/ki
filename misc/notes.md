@@ -36,13 +36,12 @@ Rules:
 -- current->first_move = current->first_move ?? child->first_move;
 
 - if/else/??/?!
--- clone the current usage line into each scopes, after parsing a scope set follow up as current if it didnt return
--- after all if/else scopes have been parsed, we loop over the clones and merge the clone with the current
--- then we loop over all scopes again and merge with the last line (if the scope did not return) (if mutable decl)
-- if there is no else scope we must generate one, but only if moves_max = 1 and moves_min = 0
--- we add a token to the scope tkn_deref_if_single_use, and update moves_min to 1
---> we also need to add this token to each existing scope where the clone has moves_min 0. (must be added to the start of the ast)
--- now we have a 1,1 declaration, which means ownership
+-- create a new scope for each block, and clone all usage lines into them
+-- parse the ast of each block
+-- loop over all scopes and check which decls have single usage in the new scope but not old, store them in an array `moved_decls`
+-- merge all the new scopes with the parent scope
+--- when the decl is in moved_decls but has 0 uses in the new scope, we add a deref_if_moved_once token
+
 
 - left ?!/?? right, we must generate an 'else' if the clone line is a 0,1
 ```

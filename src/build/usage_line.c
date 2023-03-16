@@ -6,6 +6,7 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
     UsageLine *v = al(alc, sizeof(UsageLine));
     v->init_scope = scope;
     v->first_move = NULL;
+    v->parent = NULL;
     v->follow_up = NULL;
     v->moves_max = 0;
     v->moves_min = 0;
@@ -18,6 +19,8 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
 
     int index = array_find(scope->usage_keys, decl, arr_find_adr);
     if (index > -1) {
+        UsageLine *parent = array_get_index(scope->usage_values, index);
+        v->parent = parent;
         array_set_index(scope->usage_keys, index, decl);
         array_set_index(scope->usage_values, index, v);
     } else {
@@ -160,8 +163,13 @@ void usage_collect_used_decls(Allocator *alc, Scope *left, Scope *right, Array *
     int i = 0;
     while (i < lkeys->length) {
         Decl *decl = array_get_index(lkeys, i);
+
         UsageLine *l_ul = array_get_index(lvals, i);
         UsageLine *r_ul = array_get_index(rvals, i);
+
+        while (r_ul->parent) {
+            r_ul = r_ul->parent;
+        }
 
         bool left_ok = is_moved_once(l_ul);
         bool right_ok = is_moved_once(r_ul);
@@ -190,11 +198,17 @@ void usage_merge_scopes(Allocator *alc, Scope *left, Scope *right, Array *used_d
     Array *lvals = left->usage_values;
     Array *rkeys = right->usage_keys;
     Array *rvals = right->usage_values;
+
+    // Compare old usage line with the new youngest usage line
     int i = 0;
     while (i < lkeys->length) {
         Decl *decl = array_get_index(lkeys, i);
         UsageLine *l_ul = array_get_index(lvals, i);
         UsageLine *r_ul = array_get_index(rvals, i);
+
+        while (r_ul->parent) {
+            r_ul = r_ul->parent;
+        }
 
         bool right_ok = is_moved_once(r_ul);
 
@@ -217,30 +231,23 @@ void usage_merge_scopes(Allocator *alc, Scope *left, Scope *right, Array *used_d
             }
         }
 
-        r_ul->follow_up = l_ul;
         i++;
     }
-    while (i < rkeys->length) {
-        Decl *decl = array_get_index(rkeys, i);
+
+    // Now do it again, but compare against the latest version of the usage line
+    // And set there follow up
+    i = 0;
+    while (i < lkeys->length) {
+        Decl *decl = array_get_index(lkeys, i);
+        UsageLine *l_ul = array_get_index(lvals, i);
         UsageLine *r_ul = array_get_index(rvals, i);
-        i++;
-
-        if (decl->scope == right) {
-            continue;
-        }
-
-        int index = array_find(lkeys, decl, arr_find_adr);
-        if (index < 0) {
-            printf("Var name: %s\n", decl->name);
-            die("Missing left side usage line (compiler bug)\n");
-        }
-        UsageLine *l_ul = array_get_index(lvals, index);
 
         l_ul->moves_max = max_num(l_ul->moves_max, r_ul->moves_max);
         l_ul->moves_min = min_num(l_ul->moves_min, r_ul->moves_min);
         l_ul->reads_after_move = max_num(l_ul->reads_after_move, r_ul->reads_after_move);
 
         r_ul->follow_up = l_ul;
+        i++;
     }
 }
 

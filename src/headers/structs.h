@@ -278,6 +278,7 @@ struct Arg {
 struct UsageLine {
     Scope *init_scope;
     Chunk *first_move;
+    UsageLine *parent;
     UsageLine *follow_up;
     int moves_max;
     int moves_min;

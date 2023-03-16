@@ -61,14 +61,17 @@ void array_shift(Array *arr, void *item) {
         arr->data = new;
         arr->max_length = newlen;
     }
-    for (int i = arr->length - 1; i > 0; i--) {
-        uintptr_t *from = arr->data + (i * sizeof(void *));
-        uintptr_t *to = arr->data + ((i + 1) * sizeof(void *));
-        *to = (uintptr_t)from;
+    int i = arr->length;
+    void *data = arr->data;
+    while (i > 0) {
+        void **from = data + (i - 1) * sizeof(void *);
+        void **to = data + i * sizeof(void *);
+        *to = *from;
+        i--;
     }
-    uintptr_t *adr = arr->data;
-    *adr = (uintptr_t)item;
     arr->length++;
+    void **adr = arr->data;
+    *adr = item;
 }
 
 void *array_get_index(Array *arr, int index) {
