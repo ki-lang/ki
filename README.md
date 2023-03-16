@@ -15,7 +15,7 @@ ki is a programming language designed to be fast and easy to use. We want fast c
 
 ki is focussed on making applications and servers. We want programmers to feel like it's easy to create things. We want things to be simple, but also not limit the developer. By default things work with ownership based reference counting. If you want to manage your own memory, no problem, just use structs instead of classes. For now we only have automatic ownership, but are working on strict ownership types and shared ownership types.
 
-* auto ownership means it will only use reference counting if an object is stored in multiple places.
+* auto ownership means it will only use reference counting if an object is stored in multiple places (No overhead. Everything is decided at compile time.)
 
 ## Basic usage
 
