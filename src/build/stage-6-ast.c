@@ -248,7 +248,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
     // Derefs
     if (!scope->did_return) {
-        deref_scope(alc, scope, scope);
+        deref_expired_decls(alc, scope);
     }
 }
 

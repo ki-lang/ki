@@ -239,16 +239,40 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
     }
 }
 
-void deref_scope(Allocator *alc, Scope *scope, Scope *until) {
+void deref_expired_decls(Allocator *alc, Scope *scope) {
+    //
     Array *decls = scope->usage_keys;
     if (decls) {
         for (int i = 0; i < decls->length; i++) {
-
             Decl *decl = array_get_index(decls, i);
             UsageLine *ul = array_get_index(scope->usage_values, i);
 
-            if (ul->scope == decl->scope)
+            if (decl->scope == scope) {
                 end_usage_line(alc, ul);
+            }
+        }
+    }
+}
+
+void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
+    Array *decls = scope_->usage_keys;
+    if (decls) {
+        for (int i = 0; i < decls->length; i++) {
+            Decl *decl = array_get_index(decls, i);
+            UsageLine *ul = array_get_index(scope_->usage_values, i);
+
+            Scope *scope = scope_;
+            while (scope) {
+
+                if (scope == ul->scope) {
+                    end_usage_line(alc, ul);
+                    break;
+                }
+
+                if (scope == until)
+                    break;
+                scope = scope->parent;
+            }
         }
     }
 }

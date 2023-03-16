@@ -150,6 +150,7 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors);
 void usage_collect_used_decls(Allocator *alc, Scope *left, Scope *right, Array **list);
 void end_usage_line(Allocator *alc, UsageLine *ul);
 void deref_scope(Allocator *alc, Scope *scope, Scope *until);
+void deref_expired_decls(Allocator *alc, Scope *scope);
 
 // Value
 Value *value_init(Allocator *alc, int type, void *item, Type *rett);
