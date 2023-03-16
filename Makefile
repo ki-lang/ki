@@ -9,18 +9,21 @@ SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/build/*.c) $(wil
 OBJECTS=$(patsubst %.c, debug/build/%.o, $(SRC))
 TARGET=ki
 
-ki: $(OBJECTS)
-	$(LCC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+ki: ./lib/libs/linux-x64/libki_os.a $(OBJECTS)
+	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) $(LDFLAGS)
 
 $(OBJECTS): debug/build/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-.PHONY: clean
+./lib/libs/linux-x64/libki_os.a: ./src/os/linux.c
+	gcc -g -O3 -c "./src/os/linux.c" -o /tmp/libki_os.o
+	ar rcs "./lib/libs/linux-x64/libki_os.a" /tmp/libki_os.o
+
+.PHONY: clean all
 
 clean:
 	rm -f ki $(OBJECTS) core
 
-os_linux:
-	gcc -g -O3 -c "./src/os/linux.c" -o /tmp/libki_os.o
-	ar rcs "./lib/libs/linux-x64/libki_os.a" /tmp/libki_os.o
+all: ki os_linux
+
