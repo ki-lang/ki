@@ -69,3 +69,45 @@ if %0 == null {
 
 - type check internal funcs : __ref __deref ...
 - exit & panic
+
+
+# Future readme
+
+## Install
+
+Linux / macOS / WSL:
+```bash
+wget -O - https://ki-lang.dev/dist/install.sh | bash -s dev
+```
+
+Windows
+```
+Not supported yet, working on it
+```
+
+Uninstall
+```bash
+sudo rm -f /usr/local/bin/ki
+sudo rm -rf /opt/ki/{version}
+```
+
+## Http server example
+
+```
+use ki:http;
+
+func handler(http:Request req) http:Response {
+	return http:Response.html("Hello from example");
+}
+
+func main() i32 {
+
+	let s = http:Server.init({ port: 9000, handler: handler }) or {
+		println("Failed to initialize http server");
+		return 1;
+	};
+	s.start();
+
+	return 0;
+}
+```

@@ -9,29 +9,13 @@
 
 [Website](https://ki-lang.dev) | [Documentation](https://ki-lang.dev/docs)
 
-(We are still in alpha, alot of things can change)
+(We are still in alpha, some things might change)
 
 ki is a programming language designed to be fast and easy to use. We want fast compile times, fast runtimes, great package management and no seg faults. We feel like current languages always have 1 thing missing. E.g. Rust is an amazing language, but often it gets too complex. Or go, go is amazing, but their package management and cli tools are really bad. Zig has manual memory management, which is great, but not for everyone.
 
-ki is focussed on making applications and servers. We want programmers to feel like it's easy to create things. We want things to be simple, but also not limit the developer. E.g. You can allocate your own memory and manipulate it in any way you want. You can tell the compiler how objects should be free'd. You can create header files and link with prebuilt libraries from other languages.
+ki is focussed on making applications and servers. We want programmers to feel like it's easy to create things. We want things to be simple, but also not limit the developer. By default things work with ownership based reference counting. If you want to manage your own memory, no problem, just use structs instead of classes. For now we only have automatic ownership, but are working on strict ownership types and shared ownership types.
 
-## Install
-
-Linux / macOS / WSL:
-```bash
-wget -O - https://ki-lang.dev/dist/install.sh | bash -s dev
-```
-
-Windows
-```
-Not supported yet, working on it
-```
-
-Uninstall
-```bash
-sudo rm -f /usr/local/bin/ki
-sudo rm -rf /opt/ki/{version}
-```
+* auto ownership means it will only use reference counting if an object is stored in multiple places.
 
 ## Basic usage
 
@@ -39,27 +23,6 @@ sudo rm -rf /opt/ki/{version}
 # ki -h for help
 ki build src/*.ki -o hello
 ./hello
-```
-
-## Http server example
-
-```
-use ki:http;
-
-func handler(http:Request req) http:Response {
-	return http:Response.html("Hello from example");
-}
-
-func main() i32 {
-
-	let s = http:Server.init({ port: 9000, handler: handler }) or {
-		println("Failed to initialize http server");
-		return 1;
-	};
-	s.start();
-
-	return 0;
-}
 ```
 
 ## Build from source (Linux / macOS / WSL)
@@ -72,9 +35,6 @@ Linux: `sudo apt install llvm`
 git clone git@github.com:ki-lang/ki.git
 cd ki
 make
-# ./ki
-# Optional: install.sh copies files to /opt/ki and puts executable in /usr/local/bin
-./install.sh
 ```
 
 ## Build from source (Windows)
@@ -98,7 +58,7 @@ use {namespace};
 header "{path}";
 link "{lib-name}";
 
-global/shared_global {type} {name} = {default-value};
+global/shared_global {type} {name};
 
 func ({type1} {arg1-name}, {type2} {arg2-name}) {return-type} [or err1,err2] {...code...}
 
@@ -108,9 +68,10 @@ enum {name} {
 	{item3}: {int-value},
 }
 
-class {name} [traits:{trait1},{trait2}] {
+class {name} {
 	public|private|readonly {type} {prop-name} [ = {default-value}];
 	public|private [static] func {name}(...args...) {return-type} {...code...};
+	trait {name};
 }
 
 trait {name} {
@@ -134,15 +95,11 @@ each {value} as v/k,v { ...code... }
 break;
 continue;
 
-ifnull {var1}, {var2} { ...exit-code... }
-notnull {var1}, {var2} { ...code... }
-
 return {value};
 throw {error-name};
 exit {int-value};
 panic {string-value};
 
-try { ...code... } catch { ...code... }
 ```
 
 Values
@@ -164,7 +121,6 @@ sizeof({type})
 stack_alloc({int})
 
 getptr {var-name}
-setptrv {ptr-value} to {value};
 ptrv {ptr-value} as {type}; (reads ptr address as {type})
 ptrv {ptr-value} as {type} = {value}; (same as setptrv)
 
