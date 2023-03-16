@@ -208,6 +208,16 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, left->rett);
                 type_check(fc, left->rett, right->rett);
 
+                if (left->type == v_var) {
+                    Var *var = idf->item;
+                    Decl *decl = var->decl;
+                    Scope *sub = scope_init(alc, sct_default, scope, true);
+                    Value *val = value_init(alc, v_decl, decl, decl->type);
+                    UsageLine *ul = usage_line_get(scope, decl);
+                    class_ref_change(alc, sub, val, -1);
+                    array_shift(scope->ast, tgen_exec_unless_moved_once(alc, sub, ul));
+                }
+
                 array_push(scope->ast, tgen_assign(alc, left, right));
                 tok_expect(fc, ";", false, true);
 

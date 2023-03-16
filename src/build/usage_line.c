@@ -216,6 +216,8 @@ void usage_merge_scopes(Allocator *alc, Scope *left, Scope *right, Array *used_d
         l_ul->moves_min = min_num(l_ul->moves_min, r_ul->moves_min);
         l_ul->reads_after_move = max_num(l_ul->reads_after_move, r_ul->reads_after_move);
 
+        r_ul->follow_up = l_ul; // Important
+
         if (used_decls && array_contains(used_decls, decl, arr_find_adr)) {
             l_ul->moves_min = 1;
 
