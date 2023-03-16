@@ -30,6 +30,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Decl *decl = v->item;
         char *var_val = decl->llvm_val;
         if (!var_val) {
+            printf("Decl name: %s\n", decl->name);
             printf("Missing decl value (compiler bug)\n");
             raise(11);
         }
