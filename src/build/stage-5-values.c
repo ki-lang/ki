@@ -10,22 +10,22 @@ void class_generate_deref_props(Class *class);
 void stage_5(Fc *fc) {
     //
     Build *b = fc->b;
-    if (b->verbose > 1) {
+    if (b->verbose > 2) {
         printf("# Stage 5 : Read values : %s\n", fc->path_ki);
     }
 
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
-            return;
-        if (b->verbose > 1) {
+            continue;
+        if (b->verbose > 2) {
             printf("> Read class values: %s\n", class->dname);
         }
         stage_5_class(fc, class);
     }
     for (int i = 0; i < fc->funcs->length; i++) {
         Func *func = array_get_index(fc->funcs, i);
-        if (b->verbose > 1) {
+        if (b->verbose > 2) {
             printf("> Read func values: %s\n", func->dname);
         }
         stage_5_func(fc, func);

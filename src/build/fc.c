@@ -36,13 +36,14 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     fc->chunk = chunk_init(alc);
     fc->chunk_prev = chunk_init(alc);
     fc->scope = scope_init(alc, sct_fc, nsc->scope, false);
-    fc->is_header = is_header;
     fc->funcs = array_make(alc, 20);
     fc->classes = array_make(alc, 4);
     fc->globals = array_make(alc, 4);
     fc->id_buf = id_init(alc);
     fc->class_size_checks = array_make(alc, 4);
     fc->type_size_checks = array_make(alc, 20);
+    fc->is_header = is_header;
+    fc->ir_changed = false;
     fc->generated = generated;
 
     if (!generated) {

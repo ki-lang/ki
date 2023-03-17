@@ -9,7 +9,7 @@ void stage_2_class_defaults(Fc *fc, Class *class);
 void stage_2(Fc *fc) {
     //
     Build *b = fc->b;
-    if (b->verbose > 1) {
+    if (b->verbose > 2) {
         printf("# Stage 2 : Read types : %s\n", fc->path_ki);
     }
 
@@ -17,7 +17,7 @@ void stage_2(Fc *fc) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
             continue;
-        if (b->verbose > 1) {
+        if (b->verbose > 2) {
             printf("> Scan class properties: %s\n", class->dname);
         }
         stage_2_class(fc, class);
@@ -26,7 +26,7 @@ void stage_2(Fc *fc) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
             continue;
-        if (b->verbose > 1) {
+        if (b->verbose > 2) {
             printf("> Class generate defaults: %s\n", class->dname);
         }
         stage_2_class_defaults(fc, class);
@@ -35,7 +35,7 @@ void stage_2(Fc *fc) {
         Func *func = array_get_index(fc->funcs, i);
         if (!func->chunk_args)
             continue;
-        if (b->verbose > 1) {
+        if (b->verbose > 2) {
             printf("> Scan func types: %s\n", func->dname);
         }
         stage_2_func(fc, func);

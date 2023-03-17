@@ -14,7 +14,7 @@ void stage_6(Fc *fc) {
         return;
 
     Build *b = fc->b;
-    if (b->verbose > 1) {
+    if (b->verbose > 2) {
         printf("# Stage 6 : AST : %s\n", fc->path_ki);
     }
 
@@ -22,7 +22,7 @@ void stage_6(Fc *fc) {
         Func *func = array_get_index(fc->funcs, i);
         if (!func->chunk_body)
             continue;
-        if (b->verbose > 1) {
+        if (b->verbose > 2) {
             printf("> Read func AST: %s\n", func->dname);
         }
         stage_6_func(fc, func);
