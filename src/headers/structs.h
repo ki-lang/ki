@@ -225,6 +225,7 @@ struct Class {
     bool allow_math;
     bool must_ref;
     bool must_deref;
+    bool is_struct;
 };
 struct ClassProp {
     Type *type;

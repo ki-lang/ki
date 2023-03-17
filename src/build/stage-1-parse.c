@@ -2,7 +2,7 @@
 #include "../all.h"
 
 void stage_1_func(Fc *fc);
-void stage_1_class(Fc *fc);
+void stage_1_class(Fc *fc, bool is_struct);
 void stage_1_enum(Fc *fc);
 void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
@@ -35,7 +35,11 @@ void stage_1(Fc *fc) {
             continue;
         }
         if (strcmp(token, "class") == 0) {
-            stage_1_class(fc);
+            stage_1_class(fc, false);
+            continue;
+        }
+        if (strcmp(token, "struct") == 0) {
+            stage_1_class(fc, true);
             continue;
         }
         if (strcmp(token, "use") == 0) {
@@ -116,7 +120,7 @@ void stage_1_func(Fc *fc) {
     }
 }
 
-void stage_1_class(Fc *fc) {
+void stage_1_class(Fc *fc, bool is_struct) {
     //
     char *token = fc->token;
     tok(fc, token, true, true);
@@ -137,6 +141,10 @@ void stage_1_class(Fc *fc) {
     class->gname = gname;
     class->dname = dname;
     class->scope = scope_init(fc->alc, sct_class, fc->scope, false);
+    class->is_struct = is_struct;
+    class->is_rc = !is_struct;
+    class->must_ref = !is_struct;
+    class->must_deref = !is_struct;
 
     array_push(fc->classes, class);
 
@@ -235,7 +243,7 @@ void stage_1_class(Fc *fc) {
                 sprintf(fc->sbuf, "Unknown class type: '%s'", token);
                 fc_error(fc);
             }
-        } else if (strcmp(token, "norc") == 0) {
+        } else if (class->is_rc && strcmp(token, "norc") == 0) {
             class->is_rc = false;
             class->must_ref = false;
             class->must_deref = false;
