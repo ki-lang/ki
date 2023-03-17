@@ -138,6 +138,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 bool type_compat(Type *t1, Type *t2, char **reason);
 char *type_to_str(Type *t, char *res);
 void type_check(Fc *fc, Type *t1, Type *t2);
+Type *type_clone(Allocator *alc, Type *type);
 
 // Var
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg, bool is_global);

@@ -366,7 +366,8 @@ Class *class_get_generic_class(Class *class, Array *types) {
         char *gname = dups(alc, fc->sbuf);
 
         gclass = class_init(alc);
-        class->name = name;
+        *gclass = *class;
+        gclass->name = name;
         gclass->dname = dname;
         gclass->gname = gname;
 
@@ -376,6 +377,13 @@ Class *class_get_generic_class(Class *class, Array *types) {
         gclass->fc = new_fc;
         gclass->chunk_body = chunk_clone(alc, class->chunk_body);
         gclass->scope = scope_init(alc, sct_class, new_fc->scope, false);
+
+        gclass->is_generic_base = false;
+        gclass->generic_names = NULL;
+        gclass->generic_types = types;
+        gclass->generics = NULL;
+        gclass->props = map_make(alc);
+        gclass->funcs = map_make(alc);
 
         map_set(class->generics, hash, gclass);
 
@@ -401,11 +409,20 @@ Class *class_get_generic_class(Class *class, Array *types) {
 
 Array *read_generic_types(Fc *fc, Scope *scope, Class *class) {
     //
+    char *token = fc->token;
     tok_expect(fc, "[", true, true);
     Array *types = array_make(fc->alc, class->generic_names->length + 1);
     while (true) {
         Type *type = read_type(fc, fc->alc, scope, true, true);
         array_push(types, type);
+
+        tok(fc, token, true, true);
+        if (strcmp(token, ",") != 0 && strcmp(token, "]") != 0) {
+            sprintf(fc->sbuf, "Unexpected token '%s'", token);
+            fc_error(fc);
+        }
+        if (strcmp(token, "]") == 0)
+            break;
     }
     if (types->length < class->generic_names->length) {
         sprintf(fc->sbuf, "Missing types");

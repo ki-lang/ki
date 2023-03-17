@@ -40,7 +40,6 @@ func free(ptr mut adr) void {
 	let alc_adr = alcs + (pow * sizeof(ptr));
 	let mut alc = ptrv alc_adr as Allocator;
 	alc.free(adr);
-	print("free\n");
 	return;
 }
 

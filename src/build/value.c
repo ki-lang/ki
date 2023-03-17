@@ -474,6 +474,12 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_class) {
         Class *class = idf->item;
+
+        if (class->is_generic_base) {
+            Array *generic_types = read_generic_types(fc, scope, class);
+            class = class_get_generic_class(class, generic_types);
+        }
+
         if (get_char(fc, 0) == '.') {
             chunk_move(fc->chunk, 1);
             // Static func

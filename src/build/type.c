@@ -198,6 +198,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
                 }
                 type = type_gen_class(alc, class);
                 //
+            } else if (idf->type == idf_type) {
+                Type *t = idf->item;
+                *type = *t;
             } else if (idf->type == idf_enum) {
                 type = type_gen(fc->b, alc, "i32");
                 type->enu = idf->item;
@@ -225,6 +228,12 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         array_push(fc->type_size_checks, type);
     }
 
+    return type;
+}
+
+Type *type_clone(Allocator *alc, Type *type) {
+    //
+    die("TODO : type clone");
     return type;
 }
 
@@ -371,6 +380,9 @@ char *type_to_str(Type *t, char *res) {
         strcat(res, "?");
     }
     if (t->ptr_depth - 1 > 0) {
+        strcat(res, "*=>");
+    }
+    if (t->is_strict) {
         strcat(res, "*");
     }
     if (t->class) {

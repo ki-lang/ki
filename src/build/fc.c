@@ -3,11 +3,6 @@
 
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     //
-    if (!file_exists(path_ki)) {
-        sprintf(b->sbuf, "File not found: %s", path_ki);
-        die(b->sbuf);
-    }
-
     bool is_header = ends_with(path_ki, ".kh");
 
     Allocator *alc = b->alc;
@@ -16,6 +11,11 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     if (generated) {
         sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, path_ki, nsc->pkc->hash);
     } else {
+        if (!file_exists(path_ki)) {
+            sprintf(b->sbuf, "File not found: %s", path_ki);
+            die(b->sbuf);
+        }
+
         char *fn = get_path_basename(alc, path_ki);
         fn = strip_ext(alc, fn);
         sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
