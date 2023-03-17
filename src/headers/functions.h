@@ -192,4 +192,3 @@ Token *tgen_declare(Allocator *alc, Decl *decl, Value *val);
 Token *tgen_assign(Allocator *alc, Value *left, Value *right);
 Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv);
 Token *tgen_while(Allocator *alc, Value *cond, Scope *scope);
-Token *tgen_optional(Allocator *alc, Token *token, bool enable);

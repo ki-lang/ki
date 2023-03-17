@@ -212,6 +212,7 @@ struct Class {
     Func *func_deref;
     Func *func_deref_props;
     Func *func_free;
+    Array *generic_names;
     int type;
     int size;
     bool is_rc;

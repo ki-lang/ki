@@ -151,6 +151,36 @@ void stage_1_class(Fc *fc) {
 
     map_set(class->scope->identifiers, "CLASS", idf);
 
+    if (get_char(fc, 0) == '[') {
+        chunk_move(fc->chunk, 1);
+        // Generic
+        class->is_generic_base = true;
+        class->generic_names = array_make(fc->alc, 4);
+
+        tok(fc, token, true, true);
+        while (true) {
+            if (!is_valid_varname_char(token[0])) {
+                sprintf(fc->sbuf, "Invalid name");
+                fc_error(fc);
+            }
+            name_taken_check(fc, class->scope, token);
+
+            if (array_contains(class->generic_names, token, arr_find_str)) {
+                sprintf(fc->sbuf, "Duplicate name");
+                fc_error(fc);
+            }
+
+            char *name = dups(fc->alc, token);
+            array_push(class->generic_names, name);
+
+            tok(fc, token, true, true);
+            if (strcmp(token, ",") == 0)
+                tok(fc, token, true, true);
+            if (strcmp(token, "]") == 0)
+                break;
+        }
+    }
+
     tok(fc, token, true, true);
     while (strcmp(token, "{") != 0) {
         if (strcmp(token, "type") == 0) {

@@ -39,11 +39,3 @@ Token *tgen_while(Allocator *alc, Value *cond, Scope *scope) {
     w->scope = scope;
     return token_init(alc, tkn_while, w);
 }
-
-Token *tgen_optional(Allocator *alc, Token *token, bool enable) {
-    //
-    TOptional *item = al(alc, sizeof(TOptional));
-    item->token = token;
-    item->enable = enable;
-    return token_init(alc, tkn_optional, item);
-}

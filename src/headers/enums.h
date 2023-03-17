@@ -52,7 +52,6 @@ enum TOKENTYPE {
     tkn_ir_val,
     tkn_ir_assign_val,
     tkn_exec,
-    tkn_optional,
 };
 
 enum VALUETYPE {
