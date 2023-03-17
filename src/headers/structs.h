@@ -196,6 +196,7 @@ struct Type {
     bool func_can_error;
     bool owned;
     bool shared;
+    bool is_strict;
 };
 
 struct Class {

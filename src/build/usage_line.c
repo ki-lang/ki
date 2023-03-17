@@ -255,10 +255,17 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
         } else {
             // Add deref token
             if (class->must_deref) {
-                Scope *sub = scope_init(alc, sct_default, ul->scope, true);
-                Value *val = value_init(alc, v_decl, decl, type);
-                class_ref_change(alc, sub, val, -1);
-                array_push(ul->scope->ast, token_init(alc, tkn_exec, sub));
+                if (decl->type->is_strict) {
+                    Scope *sub = scope_init(alc, sct_default, ul->scope, true);
+                    Value *val = value_init(alc, v_decl, decl, type);
+                    class_free_value(alc, sub, val);
+                    array_push(ul->scope->ast, token_init(alc, tkn_exec, sub));
+                } else {
+                    Scope *sub = scope_init(alc, sct_default, ul->scope, true);
+                    Value *val = value_init(alc, v_decl, decl, type);
+                    class_ref_change(alc, sub, val, -1);
+                    array_push(ul->scope->ast, token_init(alc, tkn_exec, sub));
+                }
             }
         }
     }

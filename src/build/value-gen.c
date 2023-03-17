@@ -154,5 +154,5 @@ Value *vgen_value_then_ir_value(Allocator *alc, Value *value) {
     ValueThenIRValue *item = al(alc, sizeof(ValueThenIRValue));
     item->value = value;
     item->ir_value = NULL;
-    return value_init(alc, v_value_and_exec, item, value->rett);
+    return value_init(alc, v_value_then_ir_value, item, value->rett);
 }

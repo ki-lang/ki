@@ -300,3 +300,26 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
         }
     }
 }
+
+void class_free_value(Allocator *alc, Scope *scope, Value *value) {
+
+    Type *type = value->rett;
+    Class *class = type->class;
+    Build *b = class->fc->b;
+
+    if (type->nullable) {
+        Value *is_null = vgen_compare(alc, class->fc->b, value, vgen_null(alc, b), op_ne);
+        Scope *sub = scope_init(alc, sct_default, scope, true);
+        TIf *ift = tgen_tif(alc, is_null, sub, NULL);
+        Token *t = token_init(alc, tkn_if, ift);
+        array_push(scope->ast, t);
+        scope = sub;
+    }
+
+    // Call __deref
+    Value *fptr = vgen_fptr(alc, class->func_free, NULL);
+    Array *values = array_make(alc, 2);
+    array_push(values, value);
+    Value *fcall = vgen_fcall(alc, fptr, values, type_gen_void(alc));
+    array_push(scope->ast, token_init(alc, tkn_statement, fcall));
+}

@@ -8,6 +8,7 @@ Type *type_init(Allocator *alc) {
     type->bytes = 0;
     type->ptr_depth = 0;
     type->is_signed = false;
+    type->is_strict = false;
     type->nullable = false;
     type->owned = false;
     type->shared = false;
