@@ -20,7 +20,7 @@ func alloc(uxx size) ptr {
 		pow += 1;
 	}
 
-	let adr : ptr = (alcs ?? 0 -> ptr) + (pow * sizeof(ptr));
+	let adr : ptr = (alcs -> ptr) + (pow * sizeof(ptr));
 	let mut alc = ptrv adr as ?Allocator;
 	if alc == null {
 		alc = Allocator.init(1#uxx << pow + 1, 1);
