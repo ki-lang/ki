@@ -32,7 +32,7 @@ Linux: `sudo apt install llvm`
 ```bash
 git clone git@github.com:ki-lang/ki.git
 cd ki
-make
+make {linux|macos}
 ```
 
 ## Build from source (Windows)

@@ -11,7 +11,10 @@ SRC := $(filter-out src/build/stage-8-link.c, $(SRC))
 OBJECTS=$(patsubst %.c, debug/build/%.o, $(SRC))
 TARGET=ki
 
-ki: ./lib/libs/linux-x64/libki_os.a $(OBJECTS) debug/build/link.o
+os_linux=./lib/libs/linux-x64/libki_os.a
+os_macos=./lib/libs/macos-x64/libki_os.a
+
+ki: $(OBJECTS) $(os_linux) debug/build/link.o
 	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) debug/build/link.o $(LDFLAGS)
 
 debug/build/link.o: src/build/stage-8-link.c
@@ -21,14 +24,21 @@ $(OBJECTS): debug/build/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-./lib/libs/linux-x64/libki_os.a: ./src/os/linux.c
+$(os_linux): ./src/os/linux.c
+	mkdir -p ./lib/libs/linux-x64/
 	gcc -g -O3 -c "./src/os/linux.c" -o /tmp/libki_os.o
-	ar rcs "./lib/libs/linux-x64/libki_os.a" /tmp/libki_os.o
+	ar rcs $(os_linux) /tmp/libki_os.o
+
+$(os_macos): ./src/os/macos.c
+	mkdir -p ./lib/libs/macos-x64/
+	gcc -g -O3 -c "./src/os/macos.c" -o /tmp/libki_os.o
+	ar rcs $(os_macos) /tmp/libki_os.o
 
 .PHONY: clean all
 
 clean:
-	rm -f ki $(OBJECTS) core
+	rm -f ki $(OBJECTS)
 
-all: ki os_linux
+linux: ki $(os_linux)
+macos: ki $(os_macos)
 
