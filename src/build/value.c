@@ -223,7 +223,25 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             // // Func call
             v = value_func_call(alc, fc, scope, v);
         } else if (strcmp(token, "++") == 0 || strcmp(token, "--") == 0) {
-            die("TODO: ++ | --");
+            if (!value_is_assignable(v)) {
+                sprintf(fc->sbuf, "Cannot use ++ or -- on this value (not assignable)");
+                fc_error(fc);
+            }
+            if (v->type == v_var) {
+                Var *var = v->item;
+                if (!var->decl->is_mut) {
+                    sprintf(fc->sbuf, "Variable must be mutable");
+                    fc_error(fc);
+                }
+            }
+            Type *vt = v->rett;
+            int vtt = vt->type;
+            if (vtt != type_int && vtt != type_ptr) {
+                sprintf(fc->sbuf, "Cannot use ++ or -- on this value");
+                fc_error(fc);
+            }
+            bool is_ptr = vtt == type_ptr;
+            v = vgen_incr_decr(alc, v, strcmp(token, "++") == 0);
         }
 
         tok(fc, token, true, false);
@@ -891,4 +909,9 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     }
 
     return vgen_fcall(alc, on, values, rett);
+}
+
+bool value_is_assignable(Value *v) {
+    //
+    return (v->type == v_var || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global);
 }

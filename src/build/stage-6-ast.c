@@ -146,30 +146,10 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         rtok(fc);
 
-        // Chunk *before = chunk_clone(alc, fc->chunk);
-
-        // // Check if var assign
-        // Value *left = NULL;
-
-        // Id *id = read_id(fc, false, true, true);
-        // Idf *idf = idf_by_id(fc, scope, id, false);
-        // if (idf && idf->type == idf_var) {
-        //     tok(fc, token, false, true);
-        //     if (strcmp(token, "=") == 0) {
-        //         Var *var = idf->item;
-        //         left = value_init(alc, v_var, var, var->type);
-        //     }
-        //     rtok(fc);
-        // }
-
-        // //
-        // if (!left) {
-        //     fc->chunk = before;
         Value *left = read_value(fc, alc, scope, false, 0, true);
-        // }
 
         // Assign
-        if (left->type == v_var || left->type == v_class_pa || left->type == v_ptrv || left->type == v_global) {
+        if (value_is_assignable(left)) {
             tok(fc, token, false, true);
             sprintf(fc->sbuf, ".%s.", token);
             if (strstr(".=.+=.-=.*=./=.", fc->sbuf)) {
@@ -239,8 +219,10 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         // Statement
         Value *val = left;
+        Type *rett = val->rett;
+        Class *class = rett->class;
 
-        if (!type_is_void(val->rett)) {
+        if (!type_is_void(val->rett) && (class->must_deref || class->must_ref)) {
             sprintf(fc->sbuf, "Statement returns a value, but no variable to store it in");
             fc_error(fc);
         }

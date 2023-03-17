@@ -160,6 +160,7 @@ Value *value_init(Allocator *alc, int type, void *item, Type *rett);
 Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio, bool assignable);
 Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op);
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
+bool value_is_assignable(Value *v);
 
 Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type);
 Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type);
@@ -179,6 +180,7 @@ Value *vgen_ir_val(Allocator *alc, Value *value, Type *rett);
 Value *vgen_ir_assign_val(Allocator *alc, Value *value, Type *rett);
 Value *vgen_value_and_exec(Allocator *alc, Value *value, Scope *exec_scope, bool before_value, bool enable_exec);
 Value *vgen_value_then_ir_value(Allocator *alc, Value *value);
+Value *vgen_incr_decr(Allocator *alc, Value *on, bool is_incr);
 
 // Ast
 void read_ast(Fc *fc, Scope *scope, bool single_line);

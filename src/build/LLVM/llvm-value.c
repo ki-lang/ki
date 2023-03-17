@@ -469,6 +469,62 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         }
         return lval;
     }
+    if (v->type == v_incr_decr) {
+        VIncrDecr *item = v->item;
+        Value *val = item->value;
+        bool is_incr = item->is_incr;
+        char *lval = llvm_value(b, scope, val);
+        char *lvarval = llvm_assign_value(b, scope, val);
+        Type *type = v->rett;
+        Type *vtype = type;
+        char *ltype = llvm_type(b, type);
+        char *lotype = ltype;
+
+        bool is_ptr = type->type == type_ptr;
+
+        if (is_ptr) {
+            vtype = type_gen(b->fc->b, alc, "uxx");
+            ltype = llvm_type(b, vtype);
+            lval = llvm_ir_cast(b, lval, type, vtype);
+        }
+
+        Str *ir = llvm_b_ir(b);
+        char *var_result = llvm_var(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, var_result);
+        str_append_chars(ir, " = add nsw ");
+        str_append_chars(ir, ltype);
+        str_append_chars(ir, " ");
+        str_append_chars(ir, lval);
+        str_append_chars(ir, ", ");
+        if (is_incr) {
+            str_append_chars(ir, " 1\n");
+        } else {
+            str_append_chars(ir, " -1\n");
+        }
+
+        if (is_ptr) {
+            var_result = llvm_ir_cast(b, var_result, vtype, type);
+        }
+
+        char bytes[10];
+        sprintf(bytes, "%d", type->bytes);
+
+        llvm_ir_store(b, type, lvarval, var_result);
+        // str_append_chars(ir, "  store ");
+        // str_append_chars(ir, lotype);
+        // str_append_chars(ir, " ");
+        // str_append_chars(ir, var_result);
+        // str_append_chars(ir, ", ");
+        // str_append_chars(ir, lotype);
+        // str_append_chars(ir, "* ");
+        // str_append_chars(ir, lvarval);
+        // str_append_chars(ir, ", align ");
+        // str_append_chars(ir, bytes);
+        // str_append_chars(ir, "\n");
+
+        return var_result;
+    }
     return "???";
 }
 

@@ -83,6 +83,7 @@ enum VALUETYPE {
     v_global,
     v_value_and_exec,
     v_value_then_ir_value,
+    v_incr_decr,
 };
 
 enum OPTYPE {

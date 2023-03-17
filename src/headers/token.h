@@ -5,7 +5,6 @@
 typedef struct Token Token;
 typedef struct TIf TIf;
 typedef struct TWhile TWhile;
-typedef struct TExecIfMovedOnce TExecIfMovedOnce;
 
 #include "structs.h"
 #include "value.h"
@@ -23,11 +22,6 @@ struct TIf {
 struct TWhile {
     Value *cond;
     Scope *scope;
-};
-struct TExecIfMovedOnce {
-    Scope *scope;
-    UsageLine *usage_line;
-    bool inverse;
 };
 
 #endif

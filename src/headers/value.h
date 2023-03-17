@@ -21,6 +21,7 @@ typedef struct IRAssignVal IRAssignVal;
 typedef struct IRLoad IRLoad;
 typedef struct ValueThenIRValue ValueThenIRValue;
 typedef struct ValueAndExec ValueAndExec;
+typedef struct VIncrDecr VIncrDecr;
 
 struct Value {
     int type;
@@ -94,6 +95,10 @@ struct ValueAndExec {
     Scope *exec_scope;
     bool before;
     bool enable_exec;
+};
+struct VIncrDecr {
+    Value *value;
+    bool is_incr;
 };
 
 #endif

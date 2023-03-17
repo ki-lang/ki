@@ -156,3 +156,11 @@ Value *vgen_value_then_ir_value(Allocator *alc, Value *value) {
     item->ir_value = NULL;
     return value_init(alc, v_value_then_ir_value, item, value->rett);
 }
+
+Value *vgen_incr_decr(Allocator *alc, Value *on, bool is_incr) {
+    //
+    VIncrDecr *item = al(alc, sizeof(VIncrDecr));
+    item->value = on;
+    item->is_incr = is_incr;
+    return value_init(alc, v_incr_decr, item, on->rett);
+}
