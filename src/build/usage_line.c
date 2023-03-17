@@ -148,11 +148,41 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
     Array *lkeys = left->usage_keys;
     Array *lvals = left->usage_values;
 
-    // Compare old usage line with the new youngest usage line
+    Array *used_decls = array_make(alc, lkeys->length);
+
     int i = 0;
     while (i < lkeys->length) {
         Decl *decl = array_get_index(lkeys, i);
         UsageLine *l_ul = array_get_index(lvals, i);
+
+        l_ul->ancestors = NULL;
+        l_ul->upref_token = NULL;
+
+        for (int o = 0; o < ancestors->length; o++) {
+            Scope *right = array_get_index(ancestors, o);
+            Array *rkeys = right->usage_keys;
+            Array *rvals = right->usage_values;
+
+            UsageLine *r_ul = array_get_index(rvals, i);
+
+            if (r_ul->moves > l_ul->moves) {
+                array_push(used_decls, decl);
+                break;
+            }
+        }
+        i++;
+    }
+
+    // Compare old usage line with the new youngest usage line
+    i = 0;
+    while (i < lkeys->length) {
+        Decl *decl = array_get_index(lkeys, i);
+        UsageLine *l_ul = array_get_index(lvals, i);
+
+        if (!array_contains(used_decls, decl, arr_find_adr)) {
+            i++;
+            continue;
+        }
 
         l_ul->ancestors = NULL;
         l_ul->upref_token = NULL;

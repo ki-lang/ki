@@ -213,6 +213,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, left->rett);
                 type_check(fc, left->rett, right->rett);
 
+                Value *ir_right = vgen_ir_val(alc, right, right->rett);
+                array_push(scope->ast, token_init(alc, tkn_ir_val, ir_right->item));
+
                 if (left->type == v_var) {
                     Var *var = left->item;
                     Decl *decl = var->decl;
@@ -220,7 +223,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     end_usage_line(alc, ul);
                 }
 
-                array_push(scope->ast, tgen_assign(alc, left, right));
+                array_push(scope->ast, tgen_assign(alc, left, ir_right));
                 tok_expect(fc, ";", false, true);
 
                 if (left->type == v_var) {

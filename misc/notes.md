@@ -22,7 +22,7 @@ strict ownership type cannot be used in:
 
 # TODO
 
-- prop access | deref on value instantly when on value is func call or class init
+- on assign, store right->type->nullable in the usage line, and use this in the type check (also do this with declares)
 
 - type check internal funcs : __ref __deref ...
 - exit & panic
