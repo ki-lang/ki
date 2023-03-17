@@ -136,7 +136,7 @@ void stage_1_class(Fc *fc) {
     class->name = name;
     class->gname = gname;
     class->dname = dname;
-    class->scope = scope_init(fc->alc, sct_func, fc->scope, false);
+    class->scope = scope_init(fc->alc, sct_class, fc->scope, false);
 
     array_push(fc->classes, class);
 
@@ -156,6 +156,7 @@ void stage_1_class(Fc *fc) {
         // Generic
         class->is_generic_base = true;
         class->generic_names = array_make(fc->alc, 4);
+        class->generics = map_make(fc->alc);
 
         tok(fc, token, true, true);
         while (true) {
@@ -281,7 +282,7 @@ void stage_1_header(Fc *fc) {
 
         if (file_exists(fc->sbuf)) {
             char *path = dups(fc->alc, fc->sbuf);
-            Fc *hfc = fc_init(fc->b, path, fc->b->nsc_main);
+            Fc *hfc = fc_init(fc->b, path, fc->b->nsc_main, false);
 
             //
             tok_expect(fc, "as", true, true);

@@ -191,13 +191,11 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
             if (idf->type == idf_class) {
                 Class *class = idf->item;
                 // Check generic
-                // if (class->is_generic_base) {
-                //     //
-                //     Array *generic_types = read_generic_types(fc, scope, class);
-                //     char hash[33];
-                //     class_generate_generic_hash(generic_types, hash);
-                //     class = class_get_generic_class(class, hash, generic_types, class->fc != fc);
-                // }
+                if (class->is_generic_base) {
+                    //
+                    Array *generic_types = read_generic_types(fc, scope, class);
+                    class = class_get_generic_class(class, generic_types);
+                }
                 type = type_gen_class(alc, class);
                 //
             } else if (idf->type == idf_enum) {
@@ -378,6 +376,20 @@ char *type_to_str(Type *t, char *res) {
     if (t->class) {
         Class *class = t->class;
         strcat(res, class->dname);
+        if (class->generic_types) {
+            strcat(res, "[");
+            Array *types = class->generic_types;
+            char sub_str[256];
+            for (int i = 0; i < types->length; i++) {
+                Type *type = array_get_index(types, i);
+                if (i > 0) {
+                    strcat(res, ", ");
+                }
+                type_to_str(type, sub_str);
+                strcat(res, sub_str);
+            }
+            strcat(res, "]");
+        }
     } else if (t->type == type_null) {
         strcat(res, "null");
     } else if (t->type == type_func_ptr) {

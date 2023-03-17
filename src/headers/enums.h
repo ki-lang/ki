@@ -18,6 +18,7 @@ enum IDFOR {
     idf_enum,
     idf_fc,
     idf_global,
+    idf_type,
 };
 
 enum SCOPETYPE {

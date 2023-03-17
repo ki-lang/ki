@@ -56,7 +56,7 @@ char *nsc_gname(Nsc *nsc, char *name);
 char *nsc_dname(Nsc *nsc, char *name);
 
 // Fc
-Fc *fc_init(Build *b, char *path_ki, Nsc *nsc);
+Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated);
 void fc_error(Fc *fc);
 
 //
@@ -119,6 +119,9 @@ bool class_check_size(Class *class);
 Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name, Array *args, Type *rett);
 void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount);
 void class_free_value(Allocator *alc, Scope *scope, Value *value);
+void class_generate_generic_hash(Class *class, Array *types, char *buf);
+Class *class_get_generic_class(Class *class, Array *types);
+Array *read_generic_types(Fc *fc, Scope *scope, Class *class);
 
 // Type
 Type *type_init(Allocator *alc);

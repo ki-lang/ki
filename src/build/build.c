@@ -202,7 +202,7 @@ void build_add_files(Build *b, Array *files) {
     int filec = files->length;
     for (int i = 0; i < filec; i++) {
         char *path = array_get_index(files, i);
-        Fc *fc = fc_init(b, path, b->nsc_main);
+        Fc *fc = fc_init(b, path, b->nsc_main, false);
     }
 }
 

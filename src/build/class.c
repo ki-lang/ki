@@ -12,6 +12,9 @@ Class *class_init(Allocator *alc) {
     class->is_signed = false;
     class->packed = true;
     class->is_generic_base = false;
+    class->generic_names = NULL;
+    class->generic_types = NULL;
+    class->generics = NULL;
     class->chunk_body = NULL;
     class->props = map_make(alc);
     class->funcs = map_make(alc);
@@ -322,4 +325,95 @@ void class_free_value(Allocator *alc, Scope *scope, Value *value) {
     array_push(values, value);
     Value *fcall = vgen_fcall(alc, fptr, values, type_gen_void(alc));
     array_push(scope->ast, token_init(alc, tkn_statement, fcall));
+}
+
+void class_generate_generic_hash(Class *class, Array *types, char *buf) {
+    //
+}
+
+Class *class_get_generic_class(Class *class, Array *types) {
+    //
+    char hash[33];
+    strcpy(hash, "");
+
+    Fc *fc = class->fc;
+    Build *b = fc->b;
+    Allocator *alc = b->alc;
+
+    Str *hash_buf = b->str_buf;
+    char *type_buf = b->sbuf;
+    str_append_chars(hash_buf, "[");
+    for (int i = 0; i < types->length; i++) {
+        if (i > 0)
+            str_append_chars(hash_buf, ", ");
+        Type *type = array_get_index(types, i);
+        type_to_str(type, type_buf);
+        str_append_chars(hash_buf, type_buf);
+    }
+    str_append_chars(hash_buf, "]");
+    char *hash_content = str_to_chars(alc, hash_buf);
+    md5(hash_content, hash);
+
+    Class *gclass = map_get(class->generics, hash);
+    if (!gclass) {
+        // Generate class
+
+        sprintf(fc->sbuf, "%s[%s]", class->name, hash_content);
+        char *name = dups(alc, fc->sbuf);
+        sprintf(fc->sbuf, "%s[%s]", class->dname, hash_content);
+        char *dname = dups(alc, fc->sbuf);
+        sprintf(fc->sbuf, "%s__%s", class->gname, hash);
+        char *gname = dups(alc, fc->sbuf);
+
+        gclass = class_init(alc);
+        class->name = name;
+        gclass->dname = dname;
+        gclass->gname = gname;
+
+        Fc *new_fc = fc_init(b, gname, fc->nsc, true);
+        new_fc->chunk = chunk_clone(alc, fc->chunk);
+
+        gclass->fc = new_fc;
+        gclass->chunk_body = chunk_clone(alc, class->chunk_body);
+        gclass->scope = scope_init(alc, sct_class, new_fc->scope, false);
+
+        map_set(class->generics, hash, gclass);
+
+        for (int i = 0; i < types->length; i++) {
+            Type *type = array_get_index(types, i);
+            char *name = array_get_index(class->generic_names, i);
+            Idf *idf = idf_init(alc, idf_type);
+            idf->item = type;
+            map_set(gclass->scope->identifiers, name, idf);
+        }
+
+        array_push(new_fc->classes, gclass);
+
+        Idf *idf = idf_init(alc, idf_class);
+        idf->item = gclass;
+        map_set(gclass->scope->identifiers, "CLASS", idf);
+
+        stage_2(new_fc);
+    }
+
+    return gclass;
+}
+
+Array *read_generic_types(Fc *fc, Scope *scope, Class *class) {
+    //
+    tok_expect(fc, "[", true, true);
+    Array *types = array_make(fc->alc, class->generic_names->length + 1);
+    while (true) {
+        Type *type = read_type(fc, fc->alc, scope, true, true);
+        array_push(types, type);
+    }
+    if (types->length < class->generic_names->length) {
+        sprintf(fc->sbuf, "Missing types");
+        fc_error(fc);
+    }
+    if (types->length > class->generic_names->length) {
+        sprintf(fc->sbuf, "Too many types");
+        fc_error(fc);
+    }
+    return types;
 }

@@ -122,6 +122,7 @@ struct Fc {
     //
     bool is_header;
     bool ir_changed;
+    bool generated;
 };
 
 struct Nsc {
@@ -213,6 +214,8 @@ struct Class {
     Func *func_deref_props;
     Func *func_free;
     Array *generic_names;
+    Array *generic_types;
+    Map *generics;
     int type;
     int size;
     bool is_rc;

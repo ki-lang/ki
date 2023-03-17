@@ -1,7 +1,7 @@
 
 #include "../all.h"
 
-Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
+Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     //
     if (!file_exists(path_ki)) {
         sprintf(b->sbuf, "File not found: %s", path_ki);
@@ -12,11 +12,14 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
 
     Allocator *alc = b->alc;
 
-    char *fn = get_path_basename(alc, path_ki);
-    fn = strip_ext(alc, fn);
-
     char *path_ir = al(alc, KI_PATH_MAX);
-    sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
+    if (generated) {
+        sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, path_ki, nsc->pkc->hash);
+    } else {
+        char *fn = get_path_basename(alc, path_ki);
+        fn = strip_ext(alc, fn);
+        sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
+    }
 
     Fc *fc = al(alc, sizeof(Fc));
     fc->b = b;
@@ -40,15 +43,18 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     fc->id_buf = id_init(alc);
     fc->class_size_checks = array_make(alc, 4);
     fc->type_size_checks = array_make(alc, 20);
+    fc->generated = generated;
 
-    Str *buf = str_make(alc, 500);
-    file_get_contents(buf, fc->path_ki);
-    char *content = str_to_chars(alc, buf);
-    fc->chunk->content = content;
-    fc->chunk->length = strlen(content);
-    chain_add(b->stage_1, fc);
-    // chain_add(b->read_ki_file, fc);
-    // b->event_count++;
+    if (!generated) {
+        Str *buf = str_make(alc, 500);
+        file_get_contents(buf, fc->path_ki);
+        char *content = str_to_chars(alc, buf);
+        fc->chunk->content = content;
+        fc->chunk->length = strlen(content);
+        chain_add(b->stage_1, fc);
+        // chain_add(b->read_ki_file, fc);
+        // b->event_count++;
+    }
 
     array_push(nsc->fcs, fc);
 

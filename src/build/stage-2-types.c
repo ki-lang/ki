@@ -15,6 +15,8 @@ void stage_2(Fc *fc) {
 
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
+        if (class->is_generic_base)
+            continue;
         if (b->verbose > 1) {
             printf("> Scan class properties: %s\n", class->dname);
         }
@@ -22,6 +24,8 @@ void stage_2(Fc *fc) {
     }
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
+        if (class->is_generic_base)
+            continue;
         if (b->verbose > 1) {
             printf("> Class generate defaults: %s\n", class->dname);
         }
@@ -52,11 +56,6 @@ void stage_2(Fc *fc) {
 }
 
 void stage_2_class(Fc *fc, Class *class) {
-    //
-    if (class->is_generic_base) {
-        return;
-    }
-    //
 
     //
     fc->chunk = class->chunk_body;

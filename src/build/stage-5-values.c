@@ -16,6 +16,8 @@ void stage_5(Fc *fc) {
 
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
+        if (class->is_generic_base)
+            return;
         if (b->verbose > 1) {
             printf("> Read class values: %s\n", class->dname);
         }
@@ -34,10 +36,6 @@ void stage_5(Fc *fc) {
 }
 
 void stage_5_class(Fc *fc, Class *class) {
-    //
-    if (class->is_generic_base) {
-        return;
-    }
 
     Allocator *alc = fc->alc;
     Map *props = class->props;
