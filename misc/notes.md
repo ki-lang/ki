@@ -14,11 +14,15 @@ strict ownership type cannot be used in:
 # Ref counting
 
 - We keep track of variable usage via usage lines
-- When we redeclare a variable, or reach the end of a scope, we end the usage line
+- When we redeclare a variable, or reach a scope endpoint (return,break,continue), we end the usage line
+-- The end of a scope is also an endpoint for the variables that were declared in that scope
 - logic for ending an usage line:
 -- if has ancestors, traverse ancestors and call end_usage_line on them
 -- else if has a ref token, disable token
 -- else add deref to usage line scope
+
+Simply. When we reach the end of a variable, we disable the last upref, if there is no upref, we check if there are ancestors
+if so, we apply the logic to the ancestors instead, if there are no ancestors, we deref in the current scope
 
 # TODO
 

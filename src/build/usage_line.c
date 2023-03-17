@@ -94,6 +94,7 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
 
             val = vgen_value_and_exec(alc, v, sub, true, true);
 
+            ul->ancestors = NULL;
             ul->upref_token = val->item;
         }
 
@@ -157,9 +158,6 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
         Decl *decl = array_get_index(lkeys, i);
         UsageLine *l_ul = array_get_index(lvals, i);
 
-        l_ul->ancestors = NULL;
-        l_ul->upref_token = NULL;
-
         for (int o = 0; o < ancestors->length; o++) {
             Scope *right = array_get_index(ancestors, o);
             Array *rkeys = right->usage_keys;
@@ -201,28 +199,7 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
             if (!l_ul->first_move)
                 l_ul->first_move = r_ul->first_move;
 
-            // l_ul->reads_after_move = max_num(l_ul->reads_after_move, r_ul->reads_after_move);
-
-            // Moves changed, right side has 1 move, add to array
-            // if (used_decls && array_contains(used_decls, decl, arr_find_adr)) {
-
-            // If it's the original line && right side is 0, add a deref to the scope
-            // if (is_original && r_ul->moves_min == 0) {
-            //     o_ul->moves_min = 1;
-            //     o_ul->moves_max = 1;
-
-            //     Type *type = decl->type;
-            //     Class *class = type->class;
-            //     if (class && class->must_deref) {
-            //         Scope *sub = scope_init(alc, sct_default, right, true);
-            //         Value *val = value_init(alc, v_decl, decl, decl->type);
-            //         class_ref_change(alc, sub, val, -1);
-            //         array_shift(right->ast, tgen_exec_if_moved_once(alc, sub, l_ul));
-            //     }
-            // }
-            // }
-
-            if (!right->did_return) {
+            if (!right->did_return && right->type != sct_loop) {
                 Type *type = decl->type;
                 Class *class = type->class;
                 if (class && (class->must_deref || class->must_ref)) {

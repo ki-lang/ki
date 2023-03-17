@@ -429,7 +429,10 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
 
     read_ast(fc, sub, false);
 
-    usage_clear_ancestors(scope);
+    // usage_clear_ancestors(scope);
+    Array *ancestors = array_make(alc, 2);
+    array_push(ancestors, sub);
+    usage_merge_ancestors(alc, scope, ancestors);
 
     array_push(scope->ast, tgen_while(alc, cond, sub));
 }
