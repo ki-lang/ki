@@ -50,36 +50,40 @@ void llvm_gen_global_ir(LB *b) {
     Scope *scope = fc->scope;
     Str *ir = b->ir_global;
 
-    // for (int i = 0; i < fc->globals->length; i++) {
-    //     Global *g = array_get_index(fc->globals, i);
+    if (!scope->lvars) {
+        scope->lvars = map_make(b->alc);
+    }
 
-    //     char *name = g->gname;
-    //     Type *type = g->type;
+    for (int i = 0; i < fc->globals->length; i++) {
+        Global *g = array_get_index(fc->globals, i);
 
-    //     char *ltype = llvm_type(b, type);
-    //     str_append_chars(ir, "@");
-    //     str_append_chars(ir, name);
-    //     str_append_chars(ir, " = dso_local global ");
-    //     str_append_chars(ir, ltype);
-    //     str_append_chars(ir, " ");
-    //     if (type->ptr_depth > 0) {
-    //         str_append_chars(ir, "null");
-    //     } else {
-    //         str_append_chars(ir, "0");
-    //     }
+        char *name = g->gname;
+        Type *type = g->type;
 
-    //     char bytes[20];
-    //     sprintf(bytes, "%d", type->bytes);
+        char *ltype = llvm_type(b, type);
+        str_append_chars(ir, "@");
+        str_append_chars(ir, name);
+        str_append_chars(ir, " = dso_local global ");
+        str_append_chars(ir, ltype);
+        str_append_chars(ir, " ");
+        if (type->ptr_depth > 0) {
+            str_append_chars(ir, "null");
+        } else {
+            str_append_chars(ir, "0");
+        }
 
-    //     str_append_chars(ir, ", align ");
-    //     str_append_chars(ir, bytes);
-    //     str_append_chars(ir, "\n");
+        char bytes[20];
+        sprintf(bytes, "%d", type->bytes);
 
-    //     char *val = al(b->alc, strlen(name) + 2);
-    //     strcpy(val, "@");
-    //     strcat(val, name);
-    //     map_set(scope->lvars, name, val);
-    // }
+        str_append_chars(ir, ", align ");
+        str_append_chars(ir, bytes);
+        str_append_chars(ir, "\n");
+
+        char *val = al(b->alc, strlen(name) + 2);
+        strcpy(val, "@");
+        strcat(val, name);
+        map_set(scope->lvars, name, val);
+    }
 }
 
 char *llvm_var(LB *b) {
@@ -115,10 +119,6 @@ char *llvm_alloca(LB *b, Type *type) {
 
 char *llvm_get_var(LB *b, Scope *start_scope, Decl *decl) {
     //
-    if (decl->is_global) {
-        return llvm_get_global(b, decl);
-    }
-
     char *name = decl->name;
     Scope *scope = start_scope;
     while (scope) {
@@ -135,8 +135,8 @@ char *llvm_get_var(LB *b, Scope *start_scope, Decl *decl) {
     die(b->fc->sbuf);
 }
 
-char *llvm_get_global(LB *b, Decl *decl) {
-    char *name = decl->name;
+char *llvm_get_global(LB *b, char *name, Type *type) {
+    //
     Scope *scope = b->fc->scope;
 
     char *val = map_get(scope->lvars, name);
@@ -145,7 +145,6 @@ char *llvm_get_global(LB *b, Decl *decl) {
     }
 
     Str *ir = b->ir_global;
-    Type *type = decl->type;
     char *ltype = llvm_type(b, type);
 
     char bytes[20];

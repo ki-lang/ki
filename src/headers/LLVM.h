@@ -14,7 +14,7 @@ void llvm_gen_global_ir(LB *b);
 char *llvm_var(LB *b);
 char *llvm_alloca(LB *b, Type *type);
 char *llvm_get_var(LB *b, Scope *start_scope, Decl *decl);
-char *llvm_get_global(LB *b, Decl *decl);
+char *llvm_get_global(LB *b, char *name, Type *type);
 
 // Func
 void llvm_gen_func_ir(LB *b);

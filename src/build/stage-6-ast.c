@@ -169,7 +169,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
 
         // Assign
-        if (left->type == v_var || left->type == v_class_pa || left->type == v_ptrv) {
+        if (left->type == v_var || left->type == v_class_pa || left->type == v_ptrv || left->type == v_global) {
             tok(fc, token, false, true);
             sprintf(fc->sbuf, ".%s.", token);
             if (strstr(".=.+=.-=.*=./=.", fc->sbuf)) {

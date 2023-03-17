@@ -4,9 +4,7 @@ header "ki_os" as os;
 global allocators : ?ptr;
 
 func alloc(uxx size) ptr {
-	print("yolo\n");
-	//let alcs = allocators;
-	//println((alcs -> u32).str());
+	let alcs = allocators;
 	return os.ki_os__alloc(size);
 }
 func free(ptr adr) void {
