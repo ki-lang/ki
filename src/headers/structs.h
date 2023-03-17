@@ -281,7 +281,7 @@ struct UsageLine {
     Decl *decl;
     Scope *scope;
     Chunk *first_move;
-    TOptional *upref_token;
+    ValueAndExec *upref_token;
     Array *ancestors;
     int moves;
     int reads_after_move;

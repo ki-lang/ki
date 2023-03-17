@@ -276,7 +276,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     rtok(fc);
 
                 read_ast(fc, usage_scope, single_line);
-                usage_merge_ancestors(alc, scope, ancestors);
+                // usage_merge_ancestors(alc, scope, ancestors);
 
                 if (!usage_scope->did_return) {
                     sprintf(fc->sbuf, "Scope did not use return, break, continue, exit or panic");
@@ -290,7 +290,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
                 type_check(fc, v->rett, right->rett);
 
-                v = vgen_or_value(alc, v, right, else_scope);
+                v = vgen_or_value(alc, v, right, usage_scope, else_scope);
             }
 
             tok(fc, token, false, true);
@@ -857,10 +857,10 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 index++;
 
                 Value *val = read_value(fc, alc, scope, false, 0, false);
-                Value *tval = try_convert(fc, alc, val, arg->type);
+                val = try_convert(fc, alc, val, arg->type);
 
-                type_check(fc, arg->type, tval->rett);
-                array_push(values, tval);
+                type_check(fc, arg->type, val->rett);
+                array_push(values, val);
 
                 tok(fc, token, false, true);
                 if (strcmp(token, ",") == 0) {

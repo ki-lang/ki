@@ -6,7 +6,6 @@ typedef struct Token Token;
 typedef struct TIf TIf;
 typedef struct TWhile TWhile;
 typedef struct TExecIfMovedOnce TExecIfMovedOnce;
-typedef struct TOptional TOptional;
 
 #include "structs.h"
 #include "value.h"
@@ -29,10 +28,6 @@ struct TExecIfMovedOnce {
     Scope *scope;
     UsageLine *usage_line;
     bool inverse;
-};
-struct TOptional {
-    Token *token;
-    bool enable;
 };
 
 #endif

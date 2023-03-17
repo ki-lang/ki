@@ -81,6 +81,8 @@ enum VALUETYPE {
     v_ir_assign_val,
     v_ir_load,
     v_global,
+    v_value_and_exec,
+    v_value_then_ir_value,
 };
 
 enum OPTYPE {

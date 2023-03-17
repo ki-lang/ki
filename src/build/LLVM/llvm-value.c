@@ -320,6 +320,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         llvm_ir_cond_jump(b, llvm_b_ir(b), isnull, b_code, b_else);
 
         b->lfunc->block = b_code;
+        llvm_write_ast(b, orv->value_scope);
         char *rlval = llvm_value(b, scope, right);
         llvm_ir_jump(llvm_b_ir(b), b_after);
 
@@ -447,6 +448,26 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Value *val = v->item;
         char *lval = llvm_value(b, scope, val);
         return llvm_ir_load(b, v->rett, lval);
+    }
+    if (v->type == v_value_then_ir_value) {
+        ValueThenIRValue *item = v->item;
+        char *lval = item->ir_value;
+        if (!lval) {
+            lval = llvm_value(b, scope, item->value);
+            item->ir_value = lval;
+        }
+        return lval;
+    }
+    if (v->type == v_value_and_exec) {
+        ValueAndExec *item = v->item;
+        if (item->before && item->enable_exec) {
+            llvm_write_ast(b, item->exec_scope);
+        }
+        char *lval = llvm_value(b, scope, item->value);
+        if (!item->before && item->enable_exec) {
+            llvm_write_ast(b, item->exec_scope);
+        }
+        return lval;
     }
     return "???";
 }

@@ -19,6 +19,8 @@ typedef struct VOrValue VOrValue;
 typedef struct IRVal IRVal;
 typedef struct IRAssignVal IRAssignVal;
 typedef struct IRLoad IRLoad;
+typedef struct ValueThenIRValue ValueThenIRValue;
+typedef struct ValueAndExec ValueAndExec;
 
 struct Value {
     int type;
@@ -72,6 +74,7 @@ struct VOrBreak {
 struct VOrValue {
     Value *left;
     Value *right;
+    Scope *value_scope;
     Scope *else_scope;
 };
 struct IRVal {
@@ -81,6 +84,16 @@ struct IRVal {
 struct IRAssignVal {
     Value *value;
     char *ir_value;
+};
+struct ValueThenIRValue {
+    Value *value;
+    char *ir_value;
+};
+struct ValueAndExec {
+    Value *value;
+    Scope *exec_scope;
+    bool before;
+    bool enable_exec;
 };
 
 #endif

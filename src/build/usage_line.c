@@ -87,12 +87,14 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
         Class *class = type->class;
         if (class && class->must_ref) {
 
+            Value *v = vgen_value_then_ir_value(alc, val);
+
             Scope *sub = scope_init(alc, sct_default, scope, true);
-            Value *val = value_init(alc, v_decl, decl, type);
-            class_ref_change(alc, sub, val, 1);
-            Token *opt = tgen_optional(alc, token_init(alc, tkn_exec, sub), true);
-            array_push(scope->ast, opt);
-            ul->upref_token = opt->item;
+            class_ref_change(alc, sub, v, 1);
+
+            val = vgen_value_and_exec(alc, v, sub, true, true);
+
+            ul->upref_token = val->item;
         }
 
     } else if (vt == v_class_pa) {
@@ -249,7 +251,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
             }
         } else if (ul->upref_token) {
             // Disable upref
-            ul->upref_token->enable = false;
+            ul->upref_token->enable_exec = false;
         } else {
             // Add deref token
             if (class->must_deref) {

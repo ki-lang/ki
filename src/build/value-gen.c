@@ -105,10 +105,11 @@ Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope, Scope *else_
     return value_init(alc, v_or_break, item, rett);
 }
 
-Value *vgen_or_value(Allocator *alc, Value *left, Value *right, Scope *else_scope) {
+Value *vgen_or_value(Allocator *alc, Value *left, Value *right, Scope *value_scope, Scope *else_scope) {
     VOrValue *item = al(alc, sizeof(VOrValue));
     item->left = left;
     item->right = right;
+    item->value_scope = value_scope;
     item->else_scope = else_scope;
     return value_init(alc, v_or_value, item, right->rett);
 }
@@ -136,4 +137,22 @@ Value *vgen_ir_assign_val(Allocator *alc, Value *value, Type *rett) {
     item->value = value;
     item->ir_value = NULL;
     return value_init(alc, v_ir_assign_val, item, rett);
+}
+
+Value *vgen_value_and_exec(Allocator *alc, Value *value, Scope *exec_scope, bool before_value, bool enable_exec) {
+    //
+    ValueAndExec *item = al(alc, sizeof(ValueAndExec));
+    item->value = value;
+    item->exec_scope = exec_scope;
+    item->before = before_value;
+    item->enable_exec = enable_exec;
+    return value_init(alc, v_value_and_exec, item, value->rett);
+}
+
+Value *vgen_value_then_ir_value(Allocator *alc, Value *value) {
+    //
+    ValueThenIRValue *item = al(alc, sizeof(ValueThenIRValue));
+    item->value = value;
+    item->ir_value = NULL;
+    return value_init(alc, v_value_and_exec, item, value->rett);
 }

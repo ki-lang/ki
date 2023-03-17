@@ -172,10 +172,12 @@ Value *vgen_class_init(Allocator *alc, Class *class, Map *values);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
 Value *vgen_null(Allocator *alc, Build *b);
 Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope, Scope *else_scope);
-Value *vgen_or_value(Allocator *alc, Value *left, Value *right, Scope *else_scope);
+Value *vgen_or_value(Allocator *alc, Value *left, Value *right, Scope *value_scope, Scope *else_scope);
 Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op);
 Value *vgen_ir_val(Allocator *alc, Value *value, Type *rett);
 Value *vgen_ir_assign_val(Allocator *alc, Value *value, Type *rett);
+Value *vgen_value_and_exec(Allocator *alc, Value *value, Scope *exec_scope, bool before_value, bool enable_exec);
+Value *vgen_value_then_ir_value(Allocator *alc, Value *value);
 
 // Ast
 void read_ast(Fc *fc, Scope *scope, bool single_line);
