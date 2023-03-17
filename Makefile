@@ -34,7 +34,7 @@ $(os_macos): ./src/os/macos.c
 	gcc -g -O3 -c "./src/os/macos.c" -o /tmp/libki_os.o
 	ar rcs $(os_macos) /tmp/libki_os.o
 
-.PHONY: clean all
+.PHONY: clean linux macos
 
 clean:
 	rm -f ki $(OBJECTS)
