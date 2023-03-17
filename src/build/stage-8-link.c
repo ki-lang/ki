@@ -101,7 +101,7 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
     char *error = NULL;
     if (LLVMVerifyModule(nsc_mod, LLVMReturnStatusAction, &error) != 0) {
         char *ir_code = LLVMPrintModuleToString(nsc_mod);
-        printf("LLVM IR Code:\n%s\n", ir_code);
+        // printf("LLVM IR Code:\n%s\n", ir_code);
         printf("File: %s\n", path_o);
         printf("ERROR: %s\n", error);
         exit(1);

@@ -36,6 +36,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc) {
     fc->is_header = is_header;
     fc->funcs = array_make(alc, 20);
     fc->classes = array_make(alc, 4);
+    fc->globals = array_make(alc, 4);
     fc->id_buf = id_init(alc);
     fc->class_size_checks = array_make(alc, 4);
     fc->type_size_checks = array_make(alc, 20);

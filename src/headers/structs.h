@@ -23,6 +23,7 @@ typedef struct Decl Decl;
 typedef struct Var Var;
 typedef struct Arg Arg;
 typedef struct UsageLine UsageLine;
+typedef struct Global Global;
 
 #include "token.h"
 #include "value.h"
@@ -117,6 +118,7 @@ struct Fc {
     Array *classes;
     Array *class_size_checks;
     Array *type_size_checks;
+    Array *globals;
     //
     bool is_header;
     bool ir_changed;
@@ -283,6 +285,16 @@ struct UsageLine {
     Array *ancestors;
     int moves;
     int reads_after_move;
+};
+
+struct Global {
+    char *name;
+    char *gname;
+    char *dname;
+    Fc *fc;
+    Type *type;
+    Chunk *type_chunk;
+    bool shared;
 };
 
 #endif

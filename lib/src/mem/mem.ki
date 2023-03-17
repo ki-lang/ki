@@ -1,11 +1,16 @@
 
 header "ki_os" as os;
 
+global allocators : ?ptr;
+
 func alloc(uxx size) ptr {
+	print("yolo\n");
+	//let alcs = allocators;
+	//println((alcs -> u32).str());
 	return os.ki_os__alloc(size);
 }
 func free(ptr adr) void {
-	//os.ki_os__free(adr);
+	os.ki_os__free(adr);
 }
 
 func sys_alloc(uxx size) ptr {

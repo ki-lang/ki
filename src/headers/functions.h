@@ -87,6 +87,7 @@ void skip_whitespace(Fc *fc);
 void skip_macro_if(Fc *fc);
 void skip_traits(Fc *fc);
 void skip_value(Fc *fc);
+void skip_type(Fc *fc);
 
 // Macro
 MacroScope *init_macro_scope(Allocator *alc);

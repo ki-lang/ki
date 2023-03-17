@@ -36,6 +36,16 @@ void stage_2(Fc *fc) {
         }
         stage_2_func(fc, func);
     }
+    for (int i = 0; i < fc->globals->length; i++) {
+        Global *g = array_get_index(fc->globals, i);
+        fc->chunk = g->type_chunk;
+        Type *type = read_type(fc, fc->alc, fc->scope, true, true);
+        if (type->ptr_depth > 0 && !type->nullable) {
+            sprintf(fc->sbuf, "Global types must be prefixed with '?' because the default value of a global is 'null' for pointer types");
+            fc_error(fc);
+        }
+        g->type = type;
+    }
 
     //
     chain_add(b->stage_3, fc);

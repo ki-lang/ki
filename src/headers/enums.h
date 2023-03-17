@@ -17,6 +17,7 @@ enum IDFOR {
     idf_trait,
     idf_enum,
     idf_fc,
+    idf_global,
 };
 
 enum SCOPETYPE {
@@ -79,6 +80,7 @@ enum VALUETYPE {
     v_ir_val,
     v_ir_assign_val,
     v_ir_load,
+    v_global,
 };
 
 enum OPTYPE {

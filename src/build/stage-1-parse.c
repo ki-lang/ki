@@ -7,6 +7,7 @@ void stage_1_enum(Fc *fc);
 void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
 void stage_1_link(Fc *fc);
+void stage_1_global(Fc *fc);
 
 void stage_1(Fc *fc) {
     //
@@ -47,6 +48,10 @@ void stage_1(Fc *fc) {
         }
         if (strcmp(token, "link") == 0) {
             stage_1_link(fc);
+            continue;
+        }
+        if (strcmp(token, "global") == 0) {
+            stage_1_global(fc);
             continue;
         }
 
@@ -338,4 +343,47 @@ void stage_1_use(Fc *fc) {
     map_set(fc->scope->identifiers, as, idf);
 
     tok_expect(fc, ";", true, true);
+}
+
+void stage_1_global(Fc *fc) {
+    //
+    char *token = fc->token;
+    tok(fc, token, true, true);
+
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid class name syntax '%s'", token);
+        fc_error(fc);
+    }
+    name_taken_check(fc, fc->nsc->scope, token);
+
+    char *name = dups(fc->alc, token);
+    char *gname = nsc_gname(fc->nsc, name);
+    char *dname = nsc_dname(fc->nsc, name);
+
+    Global *g = al(fc->alc, sizeof(Global));
+    g->fc = fc;
+    g->name = name;
+    g->gname = gname;
+    g->dname = dname;
+    g->shared = false;
+    g->type = NULL;
+
+    array_push(fc->globals, g);
+
+    tok_expect(fc, ":", true, true);
+
+    g->type_chunk = chunk_clone(fc->alc, fc->chunk);
+
+    skip_type(fc);
+
+    tok_expect(fc, ";", true, true);
+
+    Idf *idf = idf_init(fc->alc, idf_global);
+    idf->item = g;
+
+    if (fc->is_header) {
+        map_set(fc->scope->identifiers, name, idf);
+    } else {
+        map_set(fc->nsc->scope->identifiers, name, idf);
+    }
 }

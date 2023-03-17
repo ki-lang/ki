@@ -247,3 +247,47 @@ void skip_value(Fc *fc) {
         break;
     }
 }
+
+void skip_type(Fc *fc) {
+
+    skip_whitespace(fc);
+
+    //
+    Chunk *chunk = fc->chunk;
+    char ch;
+    int i = chunk->i;
+    const char *content = chunk->content;
+    while (chunk->i < chunk->length) {
+        //
+        ch = chunk->content[i];
+        i++;
+
+        if (ch == '?') {
+            continue;
+        }
+        if (ch == '.') {
+            continue;
+        }
+        if (ch == '!') {
+            continue;
+        }
+        if (ch == '(') {
+            chunk->i = i;
+            skip_body(fc, ')');
+            i = chunk->i;
+        }
+        if (ch == '[') {
+            chunk->i = i;
+            skip_body(fc, ']');
+            i = chunk->i;
+        }
+        if (is_valid_varname_char(ch)) {
+            continue;
+        }
+
+        i--;
+        break;
+    }
+
+    chunk->i = i;
+}

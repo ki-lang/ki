@@ -444,6 +444,11 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         return value_init(alc, v_var, idf->item, var->type);
     }
 
+    if (idf->type == idf_global) {
+        Global *g = idf->item;
+        return value_init(alc, v_global, g, g->type);
+    }
+
     if (idf->type == idf_func) {
         Func *func = idf->item;
         return vgen_fptr(alc, func, NULL);

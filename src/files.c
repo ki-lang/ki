@@ -268,8 +268,9 @@ int mod_time(char *path) {
 void write_file(char *filepath, char *content, bool append) {
     FILE *fp = fopen(filepath, append ? "a" : "w+");
     if (!fp) {
-        sprintf(die_buf, "Failed to write file: %s\n", filepath);
-        die(die_buf);
+        char msg[KI_PATH_MAX];
+        sprintf(msg, "Failed to write file: %s\n", filepath);
+        die(msg);
     }
     fputs(content, fp);
     fclose(fp);

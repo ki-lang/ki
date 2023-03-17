@@ -48,8 +48,6 @@ typedef struct AllocatorBlock AllocatorBlock;
 #include "headers/enums.h"
 #include "headers/structs.h"
 
-#include "headers/globals.h"
-
 #include "headers/functions.h"
 
 #endif
