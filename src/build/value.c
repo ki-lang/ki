@@ -15,7 +15,7 @@ Value *value_init(Allocator *alc, int type, void *item, Type *rett) {
     return v;
 }
 
-Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio) {
+Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio, bool assignable) {
     //
     char *token = fc->token;
     Build *b = fc->b;
@@ -23,10 +23,10 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
 
     tok(fc, token, sameline, true);
 
-    bool skip_move = false;
+    bool skip_move = assignable;
 
     if (strcmp(token, "(") == 0) {
-        v = read_value(fc, alc, scope, false, 0);
+        v = read_value(fc, alc, scope, false, 0, false);
         tok_expect(fc, ")", false, true);
         skip_move = true;
         //
@@ -71,13 +71,13 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
     } else if (strcmp(token, "null") == 0) {
         v = vgen_null(alc, b);
     } else if (strcmp(token, "ptrv") == 0) {
-        Value *on = read_value(fc, alc, scope, false, 0);
+        Value *on = read_value(fc, alc, scope, false, 0, false);
         tok_expect(fc, "as", true, true);
         Type *type = read_type(fc, alc, scope, true, true);
         v = vgen_ptrv(alc, on, type);
         //
     } else if (strcmp(token, "getptr") == 0) {
-        Value *on = read_value(fc, alc, scope, false, 0);
+        Value *on = read_value(fc, alc, scope, false, 0, false);
         if (on->type != v_class_pa && on->type != v_ptrv && on->type != v_var) {
             sprintf(fc->sbuf, "Value must be assignable, such as a mutable variable");
             fc_error(fc);
@@ -285,7 +285,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
                 v = vgen_or_break(alc, v, usage_scope, else_scope);
             } else {
                 // ??
-                Value *right = read_value(fc, alc, usage_scope, true, 0);
+                Value *right = read_value(fc, alc, usage_scope, true, 0, false);
                 usage_merge_ancestors(alc, scope, ancestors);
 
                 type_check(fc, v->rett, right->rett);
@@ -306,7 +306,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
                 op = op_mod;
             }
 
-            Value *right = read_value(fc, alc, scope, false, 20);
+            Value *right = read_value(fc, alc, scope, false, 20, false);
             v = value_op(fc, alc, scope, v, right, op);
 
             tok(fc, token, false, true);
@@ -320,7 +320,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
                 op = op_sub;
             }
 
-            Value *right = read_value(fc, alc, scope, false, 20);
+            Value *right = read_value(fc, alc, scope, false, 20, false);
             v = value_op(fc, alc, scope, v, right, op);
 
             tok(fc, token, false, true);
@@ -334,7 +334,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
                 op = op_shr;
             }
 
-            Value *right = read_value(fc, alc, scope, false, 25);
+            Value *right = read_value(fc, alc, scope, false, 25, false);
             v = value_op(fc, alc, scope, v, right, op);
 
             tok(fc, token, false, true);
@@ -357,7 +357,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
                 op = op_gte;
             }
 
-            Value *right = read_value(fc, alc, scope, false, 30);
+            Value *right = read_value(fc, alc, scope, false, 30, false);
 
             bool magic = false;
 
@@ -408,7 +408,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio)
                 op = op_or;
             }
 
-            Value *right = read_value(fc, alc, scope, false, 40);
+            Value *right = read_value(fc, alc, scope, false, 40, false);
 
             if (right->rett->class != bool_class) {
                 sprintf(fc->sbuf, "Right side must return a bool");
@@ -493,7 +493,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
                 tok_expect(fc, ":", false, true);
 
-                Value *value = read_value(fc, alc, scope, true, 0);
+                Value *value = read_value(fc, alc, scope, true, 0, false);
 
                 value = try_convert(fc, alc, value, prop->type);
 
@@ -779,8 +779,6 @@ Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type) {
                 }
             }
         }
-        if (type_is_ptr(to_type, fc->b))
-            return vgen_cast(alc, val, to_type);
 
         return val;
     }
@@ -858,7 +856,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 Arg *arg = array_get_index(args, index);
                 index++;
 
-                Value *val = read_value(fc, alc, scope, false, 0);
+                Value *val = read_value(fc, alc, scope, false, 0, false);
                 Value *tval = try_convert(fc, alc, val, arg->type);
 
                 type_check(fc, arg->type, tval->rett);

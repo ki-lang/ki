@@ -19,8 +19,6 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
 
     int index = array_find(scope->usage_keys, decl, arr_find_adr);
     if (index > -1) {
-        // UsageLine *parent = array_get_index(scope->usage_values, index);
-        // v->parent = parent;
         array_set_index(scope->usage_keys, index, decl);
         array_set_index(scope->usage_values, index, v);
     } else {
@@ -46,12 +44,6 @@ UsageLine *usage_line_get(Scope *scope, Decl *decl) {
     printf("Usage line not found (compiler bug)\n");
     raise(11);
 }
-
-// bool is_moved_once(UsageLine *ul) {
-//     // printf("%s\n", ul->scope->func->dname);
-//     // printf("%d,%d\n", ul->moves_min, ul->moves_max);
-//     return ul->moves_min == 1 && ul->moves_max == 1 && ul->reads_after_move == 0;
-// }
 
 void usage_read_value(Allocator *alc, Scope *scope, Value *val) {
     //
@@ -102,13 +94,14 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
             array_push(scope->ast, opt);
             ul->upref_token = opt->item;
         }
-    } else {
-        // TODO : upref class prop access that have a type class with must_ref = true
-        if (vt == v_class_pa) {
-            Class *class = val->rett->class;
-            if (class && class->must_ref) {
-            }
+
+    } else if (vt == v_class_pa) {
+        Class *class = val->rett->class;
+        if (class && class->must_ref) {
+            val = value_init(alc, v_upref_value, val, val->rett);
         }
+    } else if (vt == v_global) {
+        val = value_init(alc, v_upref_value, val, val->rett);
     }
 
     //

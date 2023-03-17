@@ -156,7 +156,7 @@ void usage_clear_ancestors(Scope *scope);
 
 // Value
 Value *value_init(Allocator *alc, int type, void *item, Type *rett);
-Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio);
+Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio, bool assignable);
 Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op);
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
 

@@ -146,27 +146,27 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         rtok(fc);
 
-        Chunk *before = chunk_clone(alc, fc->chunk);
+        // Chunk *before = chunk_clone(alc, fc->chunk);
 
-        // Check if var assign
-        Value *left = NULL;
+        // // Check if var assign
+        // Value *left = NULL;
 
-        Id *id = read_id(fc, false, true, true);
-        Idf *idf = idf_by_id(fc, scope, id, false);
-        if (idf && idf->type == idf_var) {
-            tok(fc, token, false, true);
-            if (strcmp(token, "=") == 0) {
-                Var *var = idf->item;
-                left = value_init(alc, v_var, var, var->type);
-            }
-            rtok(fc);
-        }
+        // Id *id = read_id(fc, false, true, true);
+        // Idf *idf = idf_by_id(fc, scope, id, false);
+        // if (idf && idf->type == idf_var) {
+        //     tok(fc, token, false, true);
+        //     if (strcmp(token, "=") == 0) {
+        //         Var *var = idf->item;
+        //         left = value_init(alc, v_var, var, var->type);
+        //     }
+        //     rtok(fc);
+        // }
 
-        //
-        if (!left) {
-            fc->chunk = before;
-            left = read_value(fc, alc, scope, false, 0);
-        }
+        // //
+        // if (!left) {
+        //     fc->chunk = before;
+        Value *left = read_value(fc, alc, scope, false, 0, true);
+        // }
 
         // Assign
         if (left->type == v_var || left->type == v_class_pa || left->type == v_ptrv || left->type == v_global) {
@@ -193,7 +193,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     // }
                 }
 
-                Value *right = read_value(fc, alc, scope, false, 0);
+                Value *right = read_value(fc, alc, scope, false, 0, false);
                 if (type_is_void(right->rett)) {
                     sprintf(fc->sbuf, "Assignment invalid, right side does not return a value");
                     fc_error(fc);
@@ -214,7 +214,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 type_check(fc, left->rett, right->rett);
 
                 if (left->type == v_var) {
-                    Var *var = idf->item;
+                    Var *var = left->item;
                     Decl *decl = var->decl;
                     UsageLine *ul = usage_line_get(scope, decl);
                     end_usage_line(alc, ul);
@@ -224,7 +224,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 tok_expect(fc, ";", false, true);
 
                 if (left->type == v_var) {
-                    Var *var = idf->item;
+                    Var *var = left->item;
                     Decl *decl = var->decl;
                     usage_line_init(alc, scope, decl);
                 }
@@ -297,7 +297,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
         fc_error(fc);
     }
 
-    Value *val = read_value(fc, alc, scope, false, 0);
+    Value *val = read_value(fc, alc, scope, false, 0, false);
 
     if (type) {
         val = try_convert(fc, alc, val, type);
@@ -339,7 +339,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
     Value *retval = NULL;
 
     if (!type_is_void(frett)) {
-        Value *val = read_value(fc, alc, scope, true, 0);
+        Value *val = read_value(fc, alc, scope, true, 0, false);
         val = try_convert(fc, alc, val, frett);
         type_check(fc, frett, val->rett);
 
@@ -367,7 +367,7 @@ TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array *ancest
     Value *cond = NULL;
 
     if (has_cond) {
-        Value *val = read_value(fc, alc, scope, true, 0);
+        Value *val = read_value(fc, alc, scope, true, 0, false);
         if (!type_is_bool(val->rett, fc->b)) {
             sprintf(fc->sbuf, "Condition value must return a bool");
             fc_error(fc);
@@ -415,7 +415,7 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
     Scope *sub = usage_scope_init(alc, scope, sct_loop);
     // Scope *sub = scope_init(alc, sct_loop, scope, true);
 
-    Value *cond = read_value(fc, alc, sub, true, 0);
+    Value *cond = read_value(fc, alc, sub, true, 0, false);
 
     if (!type_is_bool(cond->rett, fc->b)) {
         sprintf(fc->sbuf, "Value must return a bool type");

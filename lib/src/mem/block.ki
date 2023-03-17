@@ -58,13 +58,13 @@ class Block norc {
 			adr += 1;
 			i += 1;
 		}
-		ptrv adr as ptr = slot_count;
+		ptrv adr as u8 = slot_count;
 		adr += 1;
 
 		//
 		b.align_bytes = align_bytes;
 		adr += align_bytes;
-		ptrv adr as ptr = align_bytes;
+		ptrv adr as u8 = align_bytes;
 		adr += 1;
 
 		b.data_slots = adr;
