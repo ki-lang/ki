@@ -160,7 +160,7 @@ void stage_1_class(Fc *fc) {
 
         tok(fc, token, true, true);
         while (true) {
-            if (!is_valid_varname_char(token[0])) {
+            if (!is_valid_varname(token)) {
                 sprintf(fc->sbuf, "Invalid name");
                 fc_error(fc);
             }

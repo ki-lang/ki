@@ -316,6 +316,10 @@ char *llvm_ir_string(LB *b, char *body) {
     while (index < len) {
         char ch = body[index];
         index++;
+        if (ch > 32 && ch < 127) {
+            str_append_char(ir, ch);
+            continue;
+        }
         str_append_char(ir, '\\');
         char hex[20];
         sprintf(hex, "%02X", ch);
