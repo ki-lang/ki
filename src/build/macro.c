@@ -83,9 +83,9 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         result = macro_resolve_if_value(fc, scope, mc);
         result = !result;
     } else if (strcmp(token, "1") == 0) {
-        result = "1";
+        result = true;
     } else if (strcmp(token, "0") == 0) {
-        result = "0";
+        result = false;
     } else if (strcmp(token, "IS_REFCOUNTED_TYPE") == 0) {
 
         Id *id = read_id(fc, true, true, true);

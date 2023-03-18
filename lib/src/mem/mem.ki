@@ -21,8 +21,8 @@ func alloc(uxx size) ptr {
 		alcs = list;
 	}
 
-	let mut pow = 0#u8;
-	let mut cmp = 1#uxx;
+	let mut pow = 4#u8;
+	let mut cmp = 16#uxx;
 	while cmp < size {
 		cmp = cmp << 1;
 		pow += 1;

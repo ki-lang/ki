@@ -48,9 +48,11 @@ class Allocator norc {
 				}
 			}
 			if b.has_free_slots {
+				this.current = b;
 				return b.get_slot();
 			}
-			b = b.next ?! break;;
+			let next = b.next;
+			b = next ?! break;;
 		}
 		// No open slots
 		// Decide to create new block or use previous blocks
