@@ -288,7 +288,10 @@ struct UsageLine {
     Scope *scope;
     Chunk *first_move;
     ValueAndExec *upref_token;
+    TExec *deref_token;
     Array *ancestors;
+    UsageLine *parent;
+    UsageLine *clone_from;
     int moves;
     int reads_after_move;
 };

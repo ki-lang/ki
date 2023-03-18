@@ -24,6 +24,21 @@ strict ownership type cannot be used in:
 Simply. When we reach the end of a variable, we disable the last upref, if there is no upref, we check if there are ancestors
 if so, we apply the logic to the ancestors instead, if there are no ancestors, we deref in the current scope
 
+-- end of line
+if upref, disable
+if ancestors {
+  each end_of_line(ancestor)
+  if ul->clone_from
+    bool all_deref = true;
+    each ancestors
+       if(!oldest->deref_token) all_deref = false; break;
+    if all_deref
+       disable all deref tokens from oldest ancestors
+       end_of_line(ul->clone_from);
+}
+else add deref
+
+
 # TODO
 
 - on assign, store right->type->nullable in the usage line, and use this in the type check (also do this with declares)

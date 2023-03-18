@@ -132,7 +132,9 @@ void llvm_write_ast(LB *b, Scope *scope) {
             continue;
         }
         if (t->type == tkn_exec) {
-            llvm_write_ast(b, t->item);
+            TExec *exec = t->item;
+            if (exec->enable)
+                llvm_write_ast(b, exec->scope);
             continue;
         }
     }

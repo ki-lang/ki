@@ -39,3 +39,11 @@ Token *tgen_while(Allocator *alc, Value *cond, Scope *scope) {
     w->scope = scope;
     return token_init(alc, tkn_while, w);
 }
+
+Token *tgen_exec(Allocator *alc, Scope *scope, bool enable) {
+    //
+    TExec *item = al(alc, sizeof(TExec));
+    item->scope = scope;
+    item->enable = enable;
+    return token_init(alc, tkn_exec, item);
+}

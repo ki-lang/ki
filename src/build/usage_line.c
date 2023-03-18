@@ -8,7 +8,10 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
     v->scope = scope;
     v->first_move = NULL;
     v->upref_token = NULL;
+    v->deref_token = NULL;
     v->ancestors = NULL;
+    v->parent = NULL;
+    v->clone_from = NULL;
     v->moves = 0;
     v->reads_after_move = 0;
 
@@ -19,6 +22,8 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
 
     int index = array_find(scope->usage_keys, decl, arr_find_adr);
     if (index > -1) {
+        UsageLine *prev = array_get_index(scope->usage_values, index);
+        v->parent = prev;
         array_set_index(scope->usage_keys, index, decl);
         array_set_index(scope->usage_values, index, v);
     } else {
@@ -162,8 +167,13 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
     Array *lvals = left->usage_values;
 
     bool right_returned = false;
+    bool is_loop = false;
+
     for (int o = 0; o < ancestors->length; o++) {
         Scope *right = array_get_index(ancestors, o);
+
+        is_loop = right->type == sct_loop;
+
         if (right->did_return) {
             right_returned = true;
             break;
@@ -220,7 +230,7 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
             if (!l_ul->first_move)
                 l_ul->first_move = r_ul->first_move;
 
-            if (!right->did_return && right->type != sct_loop) {
+            if (!right->did_return && !is_loop) {
                 Type *type = decl->type;
                 Class *class = type->class;
                 if (used && class && (class->must_deref || class->must_ref)) {
@@ -257,12 +267,16 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
                     Scope *sub = scope_init(alc, sct_default, ul->scope, true);
                     Value *val = value_init(alc, v_decl, decl, type);
                     class_free_value(alc, sub, val);
-                    array_push(ul->scope->ast, token_init(alc, tkn_exec, sub));
+                    Token *t = tgen_exec(alc, sub, true);
+                    array_push(ul->scope->ast, t);
+                    ul->deref_token = t->item;
                 } else {
                     Scope *sub = scope_init(alc, sct_default, ul->scope, true);
                     Value *val = value_init(alc, v_decl, decl, type);
                     class_ref_change(alc, sub, val, -1);
-                    array_push(ul->scope->ast, token_init(alc, tkn_exec, sub));
+                    Token *t = tgen_exec(alc, sub, true);
+                    array_push(ul->scope->ast, t);
+                    ul->deref_token = t->item;
                 }
             }
         }
