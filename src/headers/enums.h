@@ -68,11 +68,10 @@ enum VALUETYPE {
     v_cast,
     v_class_pa, // 10
     v_class_init,
-    v_tmp_var,
     v_null,
     v_or_break,
-    v_or_value, // 15
-    v_decl,
+    v_or_value,
+    v_decl, // 15
     v_and_or,
     v_getptr,
     v_ir_value,
