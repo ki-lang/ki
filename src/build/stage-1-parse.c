@@ -3,6 +3,7 @@
 
 void stage_1_func(Fc *fc);
 void stage_1_class(Fc *fc, bool is_struct);
+void stage_1_trait(Fc *fc);
 void stage_1_enum(Fc *fc);
 void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
@@ -40,6 +41,10 @@ void stage_1(Fc *fc) {
         }
         if (strcmp(token, "struct") == 0) {
             stage_1_class(fc, true);
+            continue;
+        }
+        if (strcmp(token, "trait") == 0) {
+            stage_1_trait(fc);
             continue;
         }
         if (strcmp(token, "use") == 0) {
@@ -262,6 +267,22 @@ void stage_1_class(Fc *fc, bool is_struct) {
     class->chunk_body = chunk_clone(fc->alc, fc->chunk);
 
     skip_body(fc, '}');
+}
+
+void stage_1_trait(Fc *fc) {
+    //
+    char *token = fc->token;
+    tok(fc, token, true, true);
+
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid class name syntax '%s'", token);
+        fc_error(fc);
+    }
+    name_taken_check(fc, fc->nsc->scope, token);
+
+    char *name = dups(fc->alc, token);
+    char *gname = nsc_gname(fc->nsc, name);
+    char *dname = nsc_dname(fc->nsc, name);
 }
 
 void stage_1_enum(Fc *fc) {

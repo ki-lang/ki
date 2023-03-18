@@ -250,13 +250,6 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
     rtok(fc);
     tok(fc, token, false, true);
 
-    ////////////////
-
-    if (!skip_move)
-        v = usage_move_value(alc, fc->chunk, scope, v);
-
-    ////////////////
-
     if (prio == 0 || prio > 7) {
         while (strcmp(token, "->") == 0) {
             if (type_is_void(v->rett)) {
@@ -518,10 +511,11 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
                 tok_expect(fc, ":", false, true);
 
                 Value *value = read_value(fc, alc, scope, true, 0, false);
-
                 value = try_convert(fc, alc, value, prop->type);
-
                 type_check(fc, prop->type, value->rett);
+
+                value = usage_move_value(alc, fc->chunk, scope, value);
+
                 map_set(values, name, value);
                 //
                 tok(fc, token, false, true);
@@ -860,6 +854,9 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 fc_error(fc);
             }
 
+            if (upref)
+                first_val = usage_move_value(alc, fc->chunk, scope, first_val);
+
             array_push(values, first_val);
             index++;
         }
@@ -884,6 +881,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
                 Value *val = read_value(fc, alc, scope, false, 0, false);
                 val = try_convert(fc, alc, val, arg->type);
+                val = usage_move_value(alc, fc->chunk, scope, val);
 
                 type_check(fc, arg->type, val->rett);
                 array_push(values, val);

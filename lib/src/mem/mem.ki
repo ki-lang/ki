@@ -3,6 +3,14 @@ header "ki_os" as os;
 
 global allocators : ?ptr;
 
+#if 1
+func alloc(uxx size) ptr {
+	return os.ki_os__alloc(size);
+}
+func free(ptr adr) void {
+	os.ki_os__free(adr);
+}
+#else
 func alloc(uxx size) ptr {
 	let mut alcs = allocators;
 	if alcs == null {
@@ -42,6 +50,7 @@ func free(ptr mut adr) void {
 	alc.free(adr);
 	return;
 }
+#end
 
 func sys_alloc(uxx size) ptr {
 	return os.ki_os__alloc(size);

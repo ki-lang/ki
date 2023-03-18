@@ -152,14 +152,14 @@ void class_generate_deref_props(Class *class) {
             Value *pa = vgen_class_pa(alc, this, prop);
 
             Scope *scope = fscope;
-            if (prop->type->nullable) {
-                Value *is_null = vgen_compare(alc, class->fc->b, pa, vgen_null(alc, b), op_ne);
-                Scope *sub = scope_init(alc, sct_default, scope, true);
-                TIf *ift = tgen_tif(alc, is_null, sub, NULL);
-                Token *t = token_init(alc, tkn_if, ift);
-                array_push(scope->ast, t);
-                scope = sub;
-            }
+            // if (prop->type->nullable) {
+            //     Value *is_null = vgen_compare(alc, class->fc->b, pa, vgen_null(alc, b), op_ne);
+            //     Scope *sub = scope_init(alc, sct_default, scope, true);
+            //     TIf *ift = tgen_tif(alc, is_null, sub, NULL);
+            //     Token *t = token_init(alc, tkn_if, ift);
+            //     array_push(scope->ast, t);
+            //     scope = sub;
+            // }
 
             class_ref_change(b->alc, scope, pa, -1);
         }

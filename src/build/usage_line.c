@@ -105,6 +105,12 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
         }
     } else if (vt == v_global) {
         val = value_init(alc, v_upref_value, val, val->rett);
+    } else if (vt == v_cast) {
+        Value *on = val->item;
+        val->item = usage_move_value(alc, chunk, scope, on);
+    } else if (vt == v_or_break) {
+        VOrBreak *vob = val->item;
+        vob->value = usage_move_value(alc, chunk, scope, vob->value);
     }
 
     //
