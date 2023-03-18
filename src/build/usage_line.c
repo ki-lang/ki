@@ -111,6 +111,10 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
     } else if (vt == v_or_break) {
         VOrBreak *vob = val->item;
         vob->value = usage_move_value(alc, chunk, scope, vob->value);
+    } else if (vt == v_or_value) {
+        VOrValue *vov = val->item;
+        vov->left = usage_move_value(alc, chunk, scope, vov->left);
+        vov->right = usage_move_value(alc, chunk, vov->value_scope, vov->right);
     }
 
     //
@@ -157,6 +161,15 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
     Array *lkeys = left->usage_keys;
     Array *lvals = left->usage_values;
 
+    bool right_returned = false;
+    for (int o = 0; o < ancestors->length; o++) {
+        Scope *right = array_get_index(ancestors, o);
+        if (right->did_return) {
+            right_returned = true;
+            break;
+        }
+    }
+
     Array *used_decls = array_make(alc, lkeys->length);
 
     int i = 0;
@@ -185,7 +198,9 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
         Decl *decl = array_get_index(lkeys, i);
         UsageLine *l_ul = array_get_index(lvals, i);
 
-        if (!array_contains(used_decls, decl, arr_find_adr)) {
+        bool used = array_contains(used_decls, decl, arr_find_adr);
+
+        if (!right_returned && !used) {
             i++;
             continue;
         }
@@ -208,7 +223,7 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
             if (!right->did_return && right->type != sct_loop) {
                 Type *type = decl->type;
                 Class *class = type->class;
-                if (class && (class->must_deref || class->must_ref)) {
+                if (used && class && (class->must_deref || class->must_ref)) {
                     if (!l_ul->ancestors)
                         l_ul->ancestors = array_make(alc, 8);
                     array_push(l_ul->ancestors, r_ul);

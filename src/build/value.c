@@ -287,7 +287,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     rtok(fc);
 
                 read_ast(fc, usage_scope, single_line);
-                // usage_merge_ancestors(alc, scope, ancestors);
+                usage_merge_ancestors(alc, scope, ancestors);
 
                 if (!usage_scope->did_return) {
                     sprintf(fc->sbuf, "Scope did not use return, break, continue, exit or panic");
@@ -854,8 +854,9 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 fc_error(fc);
             }
 
-            if (upref)
+            if (upref) {
                 first_val = usage_move_value(alc, fc->chunk, scope, first_val);
+            }
 
             array_push(values, first_val);
             index++;
