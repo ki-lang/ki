@@ -37,13 +37,15 @@ void stage_7(Fc *fc) {
 
     char *ir = str_to_chars(b->alc, lb->ir_final);
 
-    char *ir_hash = al(alc, 64);
+    char *ir_hash = al(b->alc, 64);
     md5(ir, ir_hash);
 
     if (strcmp(fc->ir_hash, ir_hash) != 0) {
 
         fc->ir_hash = ir_hash;
         fc->ir_changed = true;
+
+        fc_update_cahce(fc);
 
         if (b->verbose > 1) {
             printf("🧪 Write IR : %s\n", fc->path_ir);

@@ -1,0 +1,16 @@
+
+class SocketTCP {
+	host: String;
+	port: u16;
+	readonly fd: i32;
+
+	static func init(host: String, port: u16) SocketTCP {
+		return SocketTCP{
+			host: host,
+			port: port,
+		};
+	}
+
+	func listen() void {
+	}
+}

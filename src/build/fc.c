@@ -8,8 +8,10 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     Allocator *alc = b->alc;
 
     char *path_ir = al(alc, KI_PATH_MAX);
+    char *path_cache = al(alc, KI_PATH_MAX);
     if (generated) {
         sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, path_ki, nsc->pkc->hash);
+        sprintf(path_cache, "%s/%s_%s_%s.json", b->cache_dir, nsc->name, path_ki, nsc->pkc->hash);
     } else {
         if (!file_exists(path_ki)) {
             sprintf(b->sbuf, "File not found: %s", path_ki);
@@ -19,12 +21,14 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
         char *fn = get_path_basename(alc, path_ki);
         fn = strip_ext(alc, fn);
         sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
+        sprintf(path_cache, "%s/%s_%s_%s.json", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
     }
 
     Fc *fc = al(alc, sizeof(Fc));
     fc->b = b;
     fc->path_ki = path_ki;
     fc->path_ir = path_ir;
+    fc->path_cache = path_cache;
     fc->ir = NULL;
     fc->ir_hash = "";
     fc->nsc = nsc;
@@ -42,12 +46,24 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     fc->id_buf = id_init(alc);
     fc->class_size_checks = array_make(alc, 4);
     fc->type_size_checks = array_make(alc, 20);
+    fc->cache = NULL;
     fc->is_header = is_header;
     fc->ir_changed = false;
     fc->generated = generated;
 
+    Str *buf = str_make(alc, 500);
+    if (file_exists(path_cache)) {
+        file_get_contents(buf, path_cache);
+        char *content = str_to_chars(alc, buf);
+        fc->cache = cJSON_ParseWithLength(content, buf->length);
+        cJSON *item = cJSON_GetObjectItemCaseSensitive(fc->cache, "ir_hash");
+        if (item) {
+            fc->ir_hash = item->valuestring;
+        }
+    }
+
     if (!generated) {
-        Str *buf = str_make(alc, 500);
+        str_clear(buf);
         file_get_contents(buf, fc->path_ki);
         char *content = str_to_chars(alc, buf);
         fc->chunk->content = content;
@@ -183,4 +199,36 @@ void fc_error(Fc *fc) {
 
     printf("\n");
     exit(1);
+}
+
+void fc_update_cahce(Fc *fc) {
+    //
+    bool save = false;
+    cJSON *cache = fc->cache;
+
+    if (!cache) {
+        cache = cJSON_CreateObject();
+        fc->cache = cache;
+    }
+
+    if (fc->ir_changed) {
+        save = true;
+
+        cJSON *item = cJSON_GetObjectItemCaseSensitive(cache, "ir_hash");
+        if (!item) {
+            item = cJSON_CreateString(fc->ir_hash);
+            cJSON_AddItemToObject(cache, "ir_hash", item);
+        } else {
+            cJSON_SetValuestring(item, fc->ir_hash);
+        }
+    }
+
+    if (save) {
+        char *content = cJSON_Print(cache);
+        printf("Save: %s\n", fc->path_cache);
+        if (content) {
+            write_file(fc->path_cache, content, false);
+            free(content);
+        }
+    }
 }

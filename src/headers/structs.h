@@ -101,6 +101,7 @@ struct Fc {
     Build *b;
     char *path_ki;
     char *path_ir;
+    char *path_cache;
     char *token;
     char *sbuf;
     char *ir;
@@ -120,6 +121,8 @@ struct Fc {
     Array *class_size_checks;
     Array *type_size_checks;
     Array *globals;
+    //
+    cJSON *cache;
     //
     bool is_header;
     bool ir_changed;

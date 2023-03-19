@@ -4,6 +4,7 @@
 Feature todo list in order:
 
 - Error handling
+- Check class property access types (public,private,readonly)
 - Calling functions with named arguments
 - Package manager
 - Testing features

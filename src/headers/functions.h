@@ -59,6 +59,7 @@ char *nsc_dname(Nsc *nsc, char *name);
 // Fc
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated);
 void fc_error(Fc *fc);
+void fc_update_cahce(Fc *fc);
 
 //
 void stage_1(Fc *);
