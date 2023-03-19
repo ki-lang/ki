@@ -8,6 +8,7 @@ Feature todo list in order:
 - Package manager
 - Testing features
 - Declare functions for classes/structs from other libraries
+- vscode extension
 - Strict ownership types
 - Shared ownership types
 - Async library
