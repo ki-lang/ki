@@ -56,7 +56,7 @@ void stage_8(Build *b) {
                 array_push(ir_files, fc->path_ir);
             }
 
-            if (compile) {
+            if (compile || !file_exists(nsc->path_o)) {
                 compiled_any = true;
                 if (b->verbose > 1) {
                     printf("⚙ Compile o file: %s\n", nsc->path_o);
