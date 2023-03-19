@@ -341,8 +341,8 @@ Class *class_get_generic_class(Class *class, Array *types) {
     Allocator *alc = b->alc;
 
     Str *hash_buf = b->str_buf;
+    hash_buf->length = 0;
     char *type_buf = b->sbuf;
-    str_append_chars(hash_buf, "[");
     for (int i = 0; i < types->length; i++) {
         if (i > 0)
             str_append_chars(hash_buf, ", ");
@@ -350,7 +350,6 @@ Class *class_get_generic_class(Class *class, Array *types) {
         type_to_str(type, type_buf);
         str_append_chars(hash_buf, type_buf);
     }
-    str_append_chars(hash_buf, "]");
     char *hash_content = str_to_chars(alc, hash_buf);
     md5(hash_content, hash);
 
@@ -401,7 +400,19 @@ Class *class_get_generic_class(Class *class, Array *types) {
         idf->item = gclass;
         map_set(gclass->scope->identifiers, "CLASS", idf);
 
-        stage_2(new_fc);
+        // stage_2(new_fc);
+        stage_2_class(new_fc, gclass);
+        stage_2_class_defaults(new_fc, gclass);
+        for (int i = 0; i < new_fc->funcs->length; i++) {
+            Func *func = array_get_index(new_fc->funcs, i);
+            if (!func->chunk_args)
+                continue;
+            if (b->verbose > 2) {
+                printf("> Scan generic class func types: %s\n", func->dname);
+            }
+            stage_2_func(new_fc, func);
+        }
+        stage_5(new_fc);
     }
 
     return gclass;

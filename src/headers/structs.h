@@ -24,6 +24,7 @@ typedef struct Var Var;
 typedef struct Arg Arg;
 typedef struct UsageLine UsageLine;
 typedef struct Global Global;
+typedef struct Trait Trait;
 
 #include "token.h"
 #include "value.h"
@@ -307,6 +308,14 @@ struct Global {
     Type *type;
     Chunk *type_chunk;
     bool shared;
+};
+
+struct Trait {
+    char *name;
+    char *gname;
+    char *dname;
+    Fc *fc;
+    Chunk *chunk;
 };
 
 #endif

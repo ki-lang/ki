@@ -508,6 +508,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
                 ClassProp *prop = map_get(class->props, token);
                 if (!prop) {
                     sprintf(fc->sbuf, "Unknown property: '%s'", token);
+                    fc_error(fc);
                 }
                 // TODO acct check
 

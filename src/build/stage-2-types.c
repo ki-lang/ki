@@ -2,7 +2,7 @@
 #include "../all.h"
 
 void stage_2_class(Fc *fc, Class *class);
-void stage_2_class_props(Fc *fc, Class *class);
+void stage_2_class_props(Fc *fc, Class *class, bool is_trait);
 void stage_2_func(Fc *fc, Func *func);
 void stage_2_class_defaults(Fc *fc, Class *class);
 
@@ -59,7 +59,7 @@ void stage_2_class(Fc *fc, Class *class) {
 
     //
     fc->chunk = class->chunk_body;
-    stage_2_class_props(fc, class);
+    stage_2_class_props(fc, class, false);
 
     // Generate __free / __deref / _RC
     if (class->type == ct_struct) {
@@ -85,7 +85,7 @@ void stage_2_class(Fc *fc, Class *class) {
     }
 }
 
-void stage_2_class_props(Fc *fc, Class *class) {
+void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
     //
     char *token = fc->token;
     Scope *scope = class->scope;
@@ -111,6 +111,35 @@ void stage_2_class_props(Fc *fc, Class *class) {
 
         if (strcmp(token, "#") == 0) {
             read_macro(fc, fc->alc, scope);
+            continue;
+        }
+
+        if (strcmp(token, "trait") == 0) {
+
+            if (is_trait) {
+                sprintf(fc->sbuf, "You cannot use traits inside traits");
+                fc_error(fc);
+            }
+
+            Id *id = read_id(fc, true, true, true);
+            Idf *idf = idf_by_id(fc, scope, id, true);
+
+            if (idf->type != idf_trait) {
+                sprintf(fc->sbuf, "This is not a trait");
+                fc_error(fc);
+            }
+
+            Trait *tr = idf->item;
+
+            Chunk *current = fc->chunk;
+            fc->chunk = chunk_clone(fc->alc, tr->chunk);
+
+            stage_2_class_props(fc, class, true);
+
+            fc->chunk = current;
+
+            tok_expect(fc, ";", false, true);
+
             continue;
         }
 

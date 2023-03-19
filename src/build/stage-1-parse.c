@@ -275,7 +275,7 @@ void stage_1_trait(Fc *fc) {
     tok(fc, token, true, true);
 
     if (!is_valid_varname(token)) {
-        sprintf(fc->sbuf, "Invalid class name syntax '%s'", token);
+        sprintf(fc->sbuf, "Invalid trait name syntax '%s'", token);
         fc_error(fc);
     }
     name_taken_check(fc, fc->nsc->scope, token);
@@ -283,6 +283,27 @@ void stage_1_trait(Fc *fc) {
     char *name = dups(fc->alc, token);
     char *gname = nsc_gname(fc->nsc, name);
     char *dname = nsc_dname(fc->nsc, name);
+
+    Trait *tr = al(fc->alc, sizeof(Trait));
+    tr->fc = fc;
+    tr->name = name;
+    tr->gname = gname;
+    tr->dname = dname;
+
+    tok_expect(fc, "{", false, true);
+
+    Idf *idf = idf_init(fc->alc, idf_trait);
+    idf->item = tr;
+
+    if (fc->is_header) {
+        map_set(fc->scope->identifiers, name, idf);
+    } else {
+        map_set(fc->nsc->scope->identifiers, name, idf);
+    }
+
+    tr->chunk = chunk_clone(fc->alc, fc->chunk);
+
+    skip_body(fc, '}');
 }
 
 void stage_1_enum(Fc *fc) {
@@ -411,7 +432,7 @@ void stage_1_global(Fc *fc) {
     tok(fc, token, true, true);
 
     if (!is_valid_varname(token)) {
-        sprintf(fc->sbuf, "Invalid class name syntax '%s'", token);
+        sprintf(fc->sbuf, "Invalid global name syntax '%s'", token);
         fc_error(fc);
     }
     name_taken_check(fc, fc->nsc->scope, token);
