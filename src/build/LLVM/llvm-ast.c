@@ -1,7 +1,7 @@
 
 #include "../../headers/LLVM.h"
 
-void llvm_if(LB *b, Scope *scope, TIf *ift, bool is_else, LLVMBlock *after);
+void llvm_if(LB *b, Scope *scope, TIf *ift);
 
 void llvm_write_ast(LB *b, Scope *scope) {
     //
@@ -80,7 +80,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
         }
         if (t->type == tkn_if) {
             TIf *ift = t->item;
-            llvm_if(b, scope, ift, false, NULL);
+            llvm_if(b, scope, ift);
             continue;
         }
         if (t->type == tkn_while) {
@@ -140,40 +140,25 @@ void llvm_write_ast(LB *b, Scope *scope) {
     }
 }
 
-void llvm_if(LB *b, Scope *scope, TIf *ift, bool is_else, LLVMBlock *after) {
+void llvm_if(LB *b, Scope *scope, TIf *ift) {
     //
     Value *cond = ift->cond;
     Scope *sub = ift->scope;
-    TIf *elif = ift->else_if;
-
-    if (!cond) {
-        llvm_write_ast(b, sub);
-        if (!sub->did_return) {
-            Str *ir = llvm_b_ir(b);
-            llvm_ir_jump(ir, after);
-        }
-        return;
-    }
+    Scope *else_scope = ift->else_scope;
+    Scope *deref_scope = ift->deref_scope;
 
     LLVMBlock *code_block = llvm_block_init_auto(b);
-    LLVMBlock *else_block = NULL;
-
-    if (elif) {
-        else_block = llvm_block_init_auto(b);
-    }
-    if (after == NULL) {
-        after = llvm_block_init_auto(b);
-    }
+    LLVMBlock *else_block = llvm_block_init_auto(b);
+    LLVMBlock *after = llvm_block_init_auto(b);
 
     char *lcond = llvm_value(b, scope, cond);
-    Str *ir = llvm_b_ir(b);
 
+    if (deref_scope)
+        llvm_write_ast(b, deref_scope);
+
+    Str *ir = llvm_b_ir(b);
     char *lcond_i1 = llvm_ir_bool_i1(b, ir, lcond);
-    if (else_block) {
-        llvm_ir_cond_jump(b, ir, lcond_i1, code_block, else_block);
-    } else {
-        llvm_ir_cond_jump(b, ir, lcond_i1, code_block, after);
-    }
+    llvm_ir_cond_jump(b, ir, lcond_i1, code_block, else_block);
 
     b->lfunc->block = code_block;
     llvm_write_ast(b, sub);
@@ -182,12 +167,13 @@ void llvm_if(LB *b, Scope *scope, TIf *ift, bool is_else, LLVMBlock *after) {
         llvm_ir_jump(ir, after);
     }
 
-    if (elif) {
-        b->lfunc->block = else_block;
-        llvm_if(b, scope, elif, true, after);
+    b->lfunc->block = else_block;
+    if (else_scope)
+        llvm_write_ast(b, else_scope);
+    if (!else_scope || !else_scope->did_return) {
+        Str *ir = llvm_b_ir(b);
+        llvm_ir_jump(ir, after);
     }
 
-    if (!is_else) {
-        b->lfunc->block = after;
-    }
+    b->lfunc->block = after;
 }

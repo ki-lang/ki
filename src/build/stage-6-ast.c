@@ -5,7 +5,7 @@ void stage_6_func(Fc *fc, Func *func);
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
-TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array *ancestors);
+void token_if(Allocator *alc, Fc *fc, Scope *scope);
 void token_while(Allocator *alc, Fc *fc, Scope *scope);
 
 void stage_6(Fc *fc) {
@@ -131,11 +131,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
 
         if (strcmp(token, "if") == 0) {
-            Array *ancestors = array_make(alc, 10);
-            TIf *tif = token_if(alc, fc, scope, true, ancestors);
-            array_push(scope->ast, token_init(alc, tkn_if, tif));
-            usage_merge_ancestors(alc, scope, ancestors);
-
+            token_if(alc, fc, scope);
             continue;
         }
 
@@ -146,6 +142,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         rtok(fc);
 
+        // printf("%s | %d\n", fc->path_ki, fc->chunk->line);
         Value *left = read_value(fc, alc, scope, false, 0, true);
 
         // Assign
@@ -352,18 +349,14 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
     scope->did_return = true;
 }
 
-TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array *ancestors) {
+void token_if(Allocator *alc, Fc *fc, Scope *scope) {
     //
     char *token = fc->token;
-    Value *cond = NULL;
 
-    if (has_cond) {
-        Value *val = read_value(fc, alc, scope, true, 0, false);
-        if (!type_is_bool(val->rett, fc->b)) {
-            sprintf(fc->sbuf, "Condition value must return a bool");
-            fc_error(fc);
-        }
-        cond = val;
+    Value *cond = read_value(fc, alc, scope, true, 0, false);
+    if (!type_is_bool(cond->rett, fc->b)) {
+        sprintf(fc->sbuf, "Condition value must return a bool");
+        fc_error(fc);
     }
 
     tok(fc, token, false, true);
@@ -373,32 +366,38 @@ TIf *token_if(Allocator *alc, Fc *fc, Scope *scope, bool has_cond, Array *ancest
     }
 
     Scope *sub = usage_scope_init(alc, scope, sct_default);
-    array_push(ancestors, sub);
+    Scope *else_scope = usage_scope_init(alc, scope, sct_default);
 
     read_ast(fc, sub, single);
 
     tok(fc, token, false, true);
-    TIf *else_if = NULL;
     if (strcmp(token, "else") == 0) {
-
         tok(fc, token, true, true);
         bool has_if = strcmp(token, "if") == 0;
-        if (!has_if) {
+        if (has_if) {
+            token_if(alc, fc, else_scope);
+        } else {
             rtok(fc);
+            tok(fc, token, false, true);
+            bool single = strcmp(token, "{") != 0;
+            if (single) {
+                rtok(fc);
+            }
+            read_ast(fc, else_scope, single);
         }
-        else_if = token_if(alc, fc, scope, has_if, ancestors);
-
     } else {
-        // Generate else for usage algorithm
-        if (has_cond) {
-            Scope *sub = usage_scope_init(alc, scope, sct_default);
-            array_push(ancestors, sub);
-            else_if = tgen_tif(alc, NULL, sub, NULL);
-        }
         rtok(fc);
     }
 
-    return tgen_tif(alc, cond, sub, else_if);
+    Scope *deref_scope = usage_create_deref_scope(alc, scope);
+
+    Array *ancestors = array_make(alc, 2);
+    array_push(ancestors, sub);
+    array_push(ancestors, else_scope);
+    usage_merge_ancestors(alc, scope, ancestors);
+
+    TIf *tif = tgen_tif(alc, cond, sub, else_scope, deref_scope);
+    array_push(scope->ast, token_init(alc, tkn_if, tif));
 }
 
 void token_while(Allocator *alc, Fc *fc, Scope *scope) {

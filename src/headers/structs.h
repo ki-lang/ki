@@ -270,6 +270,7 @@ struct Decl {
     bool is_mut;
     bool is_global;
     bool is_arg;
+    bool disable_rc;
 };
 struct Var {
     Decl *decl;
@@ -292,8 +293,10 @@ struct UsageLine {
     Array *ancestors;
     UsageLine *parent;
     UsageLine *clone_from;
+    Scope *deref_scope;
     int moves;
     int reads_after_move;
+    bool read_after_move;
 };
 
 struct Global {

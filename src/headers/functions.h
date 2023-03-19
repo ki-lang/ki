@@ -158,6 +158,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul);
 void deref_scope(Allocator *alc, Scope *scope, Scope *until);
 void deref_expired_decls(Allocator *alc, Scope *scope);
 void usage_clear_ancestors(Scope *scope);
+Scope *usage_create_deref_scope(Allocator *alc, Scope *scope);
 
 // Value
 Value *value_init(Allocator *alc, int type, void *item, Type *rett);
@@ -191,7 +192,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line);
 
 // Token
 Token *token_init(Allocator *alc, int type, void *item);
-TIf *tgen_tif(Allocator *alc, Value *cond, Scope *scope, TIf *else_if);
+TIf *tgen_tif(Allocator *alc, Value *cond, Scope *scope, Scope *else_scope, Scope *deref_scope);
 Token *tgen_declare(Allocator *alc, Decl *decl, Value *val);
 Token *tgen_assign(Allocator *alc, Value *left, Value *right);
 Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv);

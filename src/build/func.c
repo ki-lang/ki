@@ -67,12 +67,10 @@ void func_make_arg_decls(Func *func) {
 
         arg->decl = decl;
 
-        if (func->call_derefs) {
-            usage_line_init(alc, fscope, decl);
-        } else {
-            if (i > (func->is_static ? -1 : 0)) {
-                usage_line_init(alc, fscope, decl);
-            }
+        if (!func->call_derefs && !func->is_static && i == 0) {
+            decl->disable_rc = true;
         }
+
+        usage_line_init(alc, fscope, decl);
     }
 }

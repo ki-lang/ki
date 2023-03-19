@@ -292,12 +292,18 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char *isnull = llvm_ir_isnull_i1(b, ltype, lval);
 
         LLVMBlock *b_code = llvm_block_init_auto(b);
+        LLVMBlock *b_else = llvm_block_init_auto(b);
         LLVMBlock *b_after = llvm_block_init_auto(b);
 
-        llvm_ir_cond_jump(b, llvm_b_ir(b), isnull, b_code, b_after);
+        llvm_ir_cond_jump(b, llvm_b_ir(b), isnull, b_code, b_else);
 
         b->lfunc->block = b_code;
         llvm_write_ast(b, sub);
+        llvm_ir_jump(llvm_b_ir(b), b_after);
+
+        b->lfunc->block = b_else;
+        llvm_write_ast(b, vob->else_scope);
+        llvm_ir_jump(llvm_b_ir(b), b_after);
 
         b->lfunc->block = b_after;
         return lval;

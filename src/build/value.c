@@ -273,6 +273,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 fc_error(fc);
             }
 
+            // usage_set_deref_scope(alc, scope);
             Scope *else_scope = usage_scope_init(alc, scope, sct_default);
             Scope *usage_scope = usage_scope_init(alc, scope, sct_default);
             Array *ancestors = array_make(alc, 10);
@@ -452,6 +453,10 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_var) {
         Var *var = idf->item;
+        UsageLine *ul = usage_line_get(scope, var->decl);
+        // if (ul->moves > 0) {
+        ul->read_after_move = true;
+        // }
         return value_init(alc, v_var, idf->item, var->type);
     }
 

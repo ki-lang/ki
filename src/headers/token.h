@@ -18,7 +18,8 @@ struct Token {
 struct TIf {
     Value *cond;
     Scope *scope;
-    TIf *else_if;
+    Scope *else_scope;
+    Scope *deref_scope;
 };
 struct TWhile {
     Value *cond;

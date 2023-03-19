@@ -11,6 +11,7 @@ Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val
     v->is_mut = is_mut;
     v->is_arg = is_arg;
     v->is_global = is_global;
+    v->disable_rc = false;
     v->times_used = 0;
 
     return v;

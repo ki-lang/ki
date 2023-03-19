@@ -10,12 +10,13 @@ Token *token_init(Allocator *alc, int type, void *item) {
     return t;
 }
 
-TIf *tgen_tif(Allocator *alc, Value *cond, Scope *scope, TIf *else_if) {
+TIf *tgen_tif(Allocator *alc, Value *cond, Scope *scope, Scope *else_scope, Scope *deref_scope) {
     //
     TIf *tif = al(alc, sizeof(TIf));
     tif->cond = cond;
     tif->scope = scope;
-    tif->else_if = else_if;
+    tif->else_scope = else_scope;
+    tif->deref_scope = deref_scope;
     return tif;
 }
 

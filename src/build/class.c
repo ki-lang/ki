@@ -228,7 +228,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
     if (type->nullable) {
         Value *is_null = vgen_compare(alc, class->fc->b, on, vgen_null(alc, b), op_ne);
         Scope *sub = scope_init(alc, sct_default, scope, true);
-        TIf *ift = tgen_tif(alc, is_null, sub, NULL);
+        TIf *ift = tgen_tif(alc, is_null, sub, NULL, NULL);
         Token *t = token_init(alc, tkn_if, ift);
         array_push(scope->ast, t);
         scope = sub;
@@ -297,8 +297,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
             array_push(elif->ast, as);
 
             //
-            TIf *elift = tgen_tif(alc, NULL, elif, NULL);
-            TIf *ift = tgen_tif(alc, is_zero, code, elift);
+            TIf *ift = tgen_tif(alc, is_zero, code, elif, NULL);
             Token *t = token_init(alc, tkn_if, ift);
             array_push(scope->ast, t);
         }
@@ -314,7 +313,7 @@ void class_free_value(Allocator *alc, Scope *scope, Value *value) {
     if (type->nullable) {
         Value *is_null = vgen_compare(alc, class->fc->b, value, vgen_null(alc, b), op_ne);
         Scope *sub = scope_init(alc, sct_default, scope, true);
-        TIf *ift = tgen_tif(alc, is_null, sub, NULL);
+        TIf *ift = tgen_tif(alc, is_null, sub, NULL, NULL);
         Token *t = token_init(alc, tkn_if, ift);
         array_push(scope->ast, t);
         scope = sub;
