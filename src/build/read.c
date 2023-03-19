@@ -166,6 +166,26 @@ char get_char(Fc *fc, int index) {
     return chunk->content[chunk->i + index];
 }
 
+void read_hex(Fc *fc, char *token) {
+    //
+    Chunk *chunk = fc->chunk;
+    char *data = chunk->content;
+    int i = chunk->i;
+    int len = chunk->length;
+    int pos = 0;
+    while (i < len) {
+        char ch = *(data + i);
+        if (!is_hex_char(ch)) {
+            break;
+        }
+        token[pos] = ch;
+        i++;
+        pos++;
+    }
+    token[pos] = '\0';
+    chunk->i = i;
+}
+
 Str *read_string(Fc *fc) {
     //
     Str *buf = fc->b->str_buf;

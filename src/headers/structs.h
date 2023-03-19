@@ -260,6 +260,7 @@ struct Enum {
     char *gname;
     char *dname;
     Fc *fc;
+    Map *values;
 };
 
 struct Decl {

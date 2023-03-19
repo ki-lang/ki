@@ -115,7 +115,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
         if (strcmp(token, "0") == 0 && get_char(fc, 0) == 'x') {
             //
-            die("TODO: hex numbers");
+            chunk_move(fc->chunk, 1);
+            read_hex(fc, token);
+            iv = hex2int(token);
         } else if (is_number(token[0])) {
             char *num_str = dups(alc, token);
             char *float_str = NULL;
@@ -547,6 +549,16 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
         sprintf(fc->sbuf, "Unexpected token '%s'", token);
         fc_error(fc);
+    }
+
+    if (idf->type == idf_enum) {
+        Enum *enu = idf->item;
+        tok_expect(fc, ".", true, false);
+
+        tok(fc, token, true, false);
+        int value = (int)(intptr_t)map_get(enu->values, token);
+
+        return vgen_vint(alc, value, type_gen(fc->b, alc, "i32"), false);
     }
 
     if (idf->type == idf_fc) {

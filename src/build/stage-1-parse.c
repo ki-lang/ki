@@ -47,6 +47,10 @@ void stage_1(Fc *fc) {
             stage_1_trait(fc);
             continue;
         }
+        if (strcmp(token, "enum") == 0) {
+            stage_1_enum(fc);
+            continue;
+        }
         if (strcmp(token, "use") == 0) {
             stage_1_use(fc);
             continue;
@@ -312,8 +316,95 @@ void stage_1_enum(Fc *fc) {
     tok(fc, token, true, true);
 
     if (!is_valid_varname(token)) {
-        sprintf(fc->sbuf, "Invalid enum name syntax '%s'", token);
+        sprintf(fc->sbuf, "Invalid enum name '%s'", token);
         fc_error(fc);
+    }
+    name_taken_check(fc, fc->nsc->scope, token);
+
+    char *name = dups(fc->alc, token);
+    char *gname = nsc_gname(fc->nsc, name);
+    char *dname = nsc_dname(fc->nsc, name);
+
+    Enum *enu = al(fc->alc, sizeof(Enum));
+    enu->fc = fc;
+    enu->name = name;
+    enu->gname = gname;
+    enu->dname = dname;
+
+    int autov = 0;
+
+    tok_expect(fc, "{", false, true);
+
+    Map *values = map_make(fc->alc);
+
+    tok(fc, token, false, true);
+    while (strcmp(token, "}") != 0) {
+        if (!is_valid_varname(token)) {
+            sprintf(fc->sbuf, "Invalid enum property name '%s'", token);
+            fc_error(fc);
+        }
+        char *name = dups(fc->alc, token);
+        tok(fc, token, false, true);
+        if (strcmp(token, ":") == 0) {
+            tok(fc, token, false, true);
+            if (is_valid_number(token)) {
+                int value = 0;
+                if (strcmp(token, "0") == 0 && get_char(fc, 0) == 'x') {
+                    // Hex
+                    chunk_move(fc->chunk, 1);
+                    read_hex(fc, token);
+                    value = hex2int(token);
+                } else {
+                    // Number
+                    value = atoi(token);
+                }
+                if (array_contains(values->values, (void *)(intptr_t)value, arr_find_adr)) {
+                    sprintf(fc->sbuf, "Duplicate value: '%s'", token);
+                    fc_error(fc);
+                }
+
+                map_set(values, name, (void *)(intptr_t)value);
+
+                tok(fc, token, false, true);
+                if (strcmp(token, ",") == 0) {
+                    continue;
+                } else if (strcmp(token, "}") == 0) {
+                    break;
+                } else {
+                    sprintf(fc->sbuf, "Expected ',' or '}' here");
+                    fc_error(fc);
+                }
+
+            } else {
+                sprintf(fc->sbuf, "Invalid enum property name '%s'", token);
+                fc_error(fc);
+            }
+            continue;
+        } else if (strcmp(token, ",") == 0) {
+            int val = autov++;
+            while (array_contains(values->values, (void *)(intptr_t)val, arr_find_adr)) {
+                val = autov++;
+            }
+            map_set(values, name, (void *)(intptr_t)val);
+            tok(fc, token, false, true);
+            continue;
+        } else if (strcmp(token, "}") == 0) {
+            break;
+        }
+
+        sprintf(fc->sbuf, "Expected ':', ',' or '}' here");
+        fc_error(fc);
+    }
+
+    enu->values = values;
+
+    Idf *idf = idf_init(fc->alc, idf_enum);
+    idf->item = enu;
+
+    if (fc->is_header) {
+        map_set(fc->scope->identifiers, name, idf);
+    } else {
+        map_set(fc->nsc->scope->identifiers, name, idf);
     }
 }
 
@@ -412,11 +503,11 @@ void stage_1_use(Fc *fc) {
             sprintf(fc->sbuf, "Invalid variable name syntax '%s'", token);
             fc_error(fc);
         }
-        name_taken_check(fc, fc->nsc->scope, token);
         as = token;
     } else {
         rtok(fc);
     }
+    name_taken_check(fc, fc->scope, as);
 
     Idf *idf = idf_init(fc->alc, idf_nsc);
     idf->item = nsc;

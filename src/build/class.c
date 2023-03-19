@@ -240,7 +240,6 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
         Value *fptr = vgen_fptr(alc, class->func_deref, NULL);
         Array *values = array_make(alc, 2);
         array_push(values, on);
-        array_push(values, vgen_vint(alc, amount * -1, type_gen(class->fc->b, alc, "i32"), false));
         Value *fcall = vgen_fcall(alc, fptr, values, type_gen_void(alc));
         array_push(scope->ast, token_init(alc, tkn_statement, fcall));
 
@@ -250,7 +249,6 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
         Value *fptr = vgen_fptr(alc, class->func_ref, NULL);
         Array *values = array_make(alc, 2);
         array_push(values, on);
-        array_push(values, vgen_vint(alc, amount, type_gen(class->fc->b, alc, "i32"), false));
         Value *fcall = vgen_fcall(alc, fptr, values, type_gen_void(alc));
         array_push(scope->ast, token_init(alc, tkn_statement, fcall));
 

@@ -1,0 +1,29 @@
+
+header "ki_os" as kos;
+
+func signal(sig: i32, handler: fn(i32)(void)) void {
+	kos.ki_os__signal(sig, handler);
+}
+
+func signal_ignore(sig: i32) void {
+	kos.ki_os__signal(sig, null);
+}
+
+func raise(sig: i32) void {
+	kos.ki_os__raise(sig);
+}
+
+enum SIG {
+    hup,
+    int,
+    quit,
+    abort,
+    kill,
+    segv,
+    pipe,
+    term,
+    stop,
+    continue,
+    child,
+    io,
+}

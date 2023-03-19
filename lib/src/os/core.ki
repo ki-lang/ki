@@ -1,0 +1,33 @@
+
+header "ki_os" as kos;
+
+func sleep_ms(ms: uxx) void {
+	kos.ki_os__sleep_ms(ms);
+}
+
+func sleep_ns(ns: uxx) void {
+	kos.ki_os__sleep_ns(ns);
+}
+
+func panic(msg: String) void {
+	print("PANIC ERROR : ");
+	print(msg);
+	print("\n");
+	exit(1);
+}
+
+func exit(code: i32) void {
+	kos.ki_os__exit(code);
+}
+
+//func parse_args(i32 mut argc, ptr mut argv) Array<String> {
+//	let res = Array<String>.make(argc);
+//	while(argc > 0) {
+//		argc--;
+//		let cstr = ptrv argv as cstring;
+//		argv += sizeof(ptr);
+//		res.push(cstr.str());
+//	}
+//	return res;
+//}
+

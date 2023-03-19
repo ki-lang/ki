@@ -1,4 +1,8 @@
 
+header "ki_os" as kos;
+
+use ki:os;
+
 class Server {
 	host: String;
 	port: u32;
@@ -14,7 +18,39 @@ class Server {
 		};
 	}
 
-	func start() void {
+	func start(mut worker_count: i32 = 8) void {
+
+		// SIGINT
+        os:signal(os:SIG.hup, interrupt);
+        // SIGPIPE
+        os:signal_ignore(os:SIG.pipe);
+
+		if worker_count < 1 {
+			worker_count = 1;
+		}
+		if worker_count > 128 {
+			worker_count = 128;
+		}
+
+		worker_count--;
+		while worker_count > 0 {
+			worker_count--;
+			let thread = os:Thread.start(Server.worker, this -> ptr);
+		}
+		Server.worker(this -> ptr);
 	}
 
+	private static func worker(server_ptr: ptr) void {
+	}
+
+}
+
+global interrupted : bool;
+func interrupt(sig: i32) void {
+    if(interrupted){
+        os:exit(1);
+    }
+    interrupted = true;
+    println("Interrupt - Stopping http servers...");
+    os:exit(1);
 }
