@@ -3,6 +3,7 @@
 		"io": "src/io",
 		"http": "src/http",
 		"mem": "src/mem",
+		"net": "src/net",
 		"os": "src/os",
 		"type": "src/type"
 	},
