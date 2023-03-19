@@ -225,7 +225,6 @@ void fc_update_cahce(Fc *fc) {
 
     if (save) {
         char *content = cJSON_Print(cache);
-        printf("Save: %s\n", fc->path_cache);
         if (content) {
             write_file(fc->path_cache, content, false);
             free(content);
