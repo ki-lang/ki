@@ -37,6 +37,8 @@ void llvm_gen_func_ir(LB *b) {
             }
             str_append_chars(ir, llvm_type(b, arg->type));
             str_append_chars(ir, " noundef ");
+            if (arg->type->ptr_depth > 0 && !arg->type->nullable)
+                str_append_chars(ir, " nonnull");
 
             char *v = llvm_var(b);
             str_append_chars(ir, v);
@@ -176,6 +178,8 @@ void llvm_define_ext_func(LB *b, Func *func) {
         }
         str_append_chars(ir, llvm_type(b, arg->type));
         str_append_chars(ir, " noundef");
+        if (arg->type->ptr_depth > 0 && !arg->type->nullable)
+            str_append_chars(ir, " nonnull");
     }
     if (func->can_error) {
         if (argc > 0) {
