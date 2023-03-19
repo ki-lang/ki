@@ -1,4 +1,5 @@
 
 class u8 type:int:1:false {
 
+	trait Number;
 }

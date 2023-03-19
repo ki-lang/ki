@@ -33,8 +33,8 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     fc->deps = array_make(alc, 20);
     fc->token = b->token;
     fc->sbuf = b->sbuf;
-    fc->chunk = chunk_init(alc);
-    fc->chunk_prev = chunk_init(alc);
+    fc->chunk = chunk_init(alc, fc);
+    fc->chunk_prev = chunk_init(alc, fc);
     fc->scope = scope_init(alc, sct_fc, nsc->scope, false);
     fc->funcs = array_make(alc, 20);
     fc->classes = array_make(alc, 4);
@@ -130,6 +130,9 @@ void fc_error(Fc *fc) {
 
     printf("\n");
     printf("File: %s\n", fc->path_ki);
+    if (chunk->fc != fc) {
+        printf("Parsing: %s\n", chunk->fc->path_ki);
+    }
     printf("Line: %d\n", line);
     printf("Col: %d\n", col);
     printf("Error: %s\n", fc->sbuf);

@@ -152,6 +152,7 @@ struct Config {
 };
 
 struct Chunk {
+    Fc *fc;
     char *content;
     int length;
     int i;

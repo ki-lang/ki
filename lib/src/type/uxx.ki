@@ -1,4 +1,5 @@
 
 class uxx type:int:*:false {
 
+	trait Number;
 }

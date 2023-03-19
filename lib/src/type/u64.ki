@@ -1,4 +1,5 @@
 
 class u64 type:int:8:false {
 
+	trait Number;
 }

@@ -135,7 +135,7 @@ void stage_1_class(Fc *fc, bool is_struct) {
     tok(fc, token, true, true);
 
     if (!is_valid_varname(token)) {
-        sprintf(fc->sbuf, "Invalid class name syntax '%s'", token);
+        sprintf(fc->sbuf, "Invalid class name '%s'", token);
         fc_error(fc);
     }
     name_taken_check(fc, fc->nsc->scope, token);

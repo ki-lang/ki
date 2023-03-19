@@ -1,8 +1,9 @@
 
 #include "../all.h"
 
-Chunk *chunk_init(Allocator *alc) {
+Chunk *chunk_init(Allocator *alc, Fc *fc) {
     Chunk *ch = al(alc, sizeof(Chunk));
+    ch->fc = fc;
     ch->content = NULL;
     ch->i = 0;
     ch->line = 1;

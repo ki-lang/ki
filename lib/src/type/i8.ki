@@ -1,0 +1,5 @@
+
+class i8 type:int:1:true {
+
+	trait Number;
+}

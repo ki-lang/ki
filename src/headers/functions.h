@@ -74,7 +74,7 @@ void stage_7(Fc *);
 void stage_8(Build *b);
 
 // Read
-Chunk *chunk_init(Allocator *alc);
+Chunk *chunk_init(Allocator *alc, Fc *fc);
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk);
 void chunk_move(Chunk *chunk, int pos);
 void tok(Fc *fc, char *token, bool sameline, bool allow_space);

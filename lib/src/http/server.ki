@@ -32,6 +32,9 @@ class Server {
 			worker_count = 128;
 		}
 
+		println("[+] Running http server on port " + this.port.str());
+		println("[+] Worker count: " + worker_count.str());
+
 		worker_count--;
 		while worker_count > 0 {
 			worker_count--;
@@ -41,6 +44,7 @@ class Server {
 	}
 
 	private static func worker(server_ptr: ptr) void {
+		let server = server_ptr -> Server;
 	}
 
 }

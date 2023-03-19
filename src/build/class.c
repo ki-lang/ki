@@ -105,7 +105,7 @@ Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name_, Array
     func->name = name;
     func->gname = gname;
     func->dname = dname;
-    func->scope = scope_init(fc->alc, sct_func, fc->scope, true);
+    func->scope = scope_init(fc->alc, sct_func, class->scope, true);
     func->scope->func = func;
     func->is_static = is_static;
     if (args)

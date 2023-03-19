@@ -1,4 +1,5 @@
 
 class u16 type:int:2:false {
 
+	trait Number;
 }

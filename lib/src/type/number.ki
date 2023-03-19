@@ -1,0 +1,66 @@
+
+trait Number {
+
+	func str() String {
+        return this.str_base(10);
+    }
+
+    func __string() String {
+        return this.str_base(10);
+    }
+
+    func hex() String {
+        return this.str_base(16);
+    }
+
+	func str_base(base: u8) String {
+
+		let mut negative = false;
+        let mut num = this;
+
+        // Handle 0 explicitly, otherwise empty string is printed for 0
+        if (num == 0) {
+            return "0";
+        }
+
+		// In standard itoa(), negative numbers are handled only with
+        // base 10. Otherwise numbers are considered unsigned.
+        #if IS_SIGNED_NUMBER_TYPE CLASS
+        if (num < 0 && base == 10) {
+            negative = true;
+            num *= -1;
+        }
+        #end
+ 
+        let mut abs = num -> uxx;
+ 
+        // Process individual digits
+        let str = String.make_empty(32);
+        let mut buf_adr = str.data();
+        let mut len : u32 = 0;
+        let mut ch : u8 = 0;
+        while (abs != 0) {
+            let rem : u8 = (abs % base) -> u8;
+            if(rem > 9){
+                ch = (rem-10) + 'a';
+            } else {
+                ch = rem + '0';
+            }
+			ptrv buf_adr as u8 = ch;
+            buf_adr+=1;
+            len+=1;
+            abs = abs/base;
+        }
+ 
+        // Reverse the string
+        rep str = String.make_empty(len);
+        let mut str_adr = str.data();
+        while(len > 0){
+            len-=1;
+            buf_adr-=1;
+			ptrv str_adr as u8 = ptrv buf_adr as u8;
+            str_adr+=1;
+        }
+        return str;
+    }
+}

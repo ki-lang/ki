@@ -1,0 +1,5 @@
+
+class i16 type:int:2:true {
+
+	trait Number;
+}
