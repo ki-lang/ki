@@ -148,7 +148,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         type->func_args = args;
 
         // Check return type
+        tok_expect(fc, "(", true, false);
         type->func_rett = read_type(fc, alc, scope, true, true);
+        tok_expect(fc, ")", true, true);
 
         // i = tok(fc, token, true, true);
 
@@ -331,40 +333,45 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
         return false;
     }
     if (t1t == type_func_ptr) {
-        die("TODO: type check func ptr");
-        //     Array *t1_args = t1->func_args;
-        //     Array *t2_args = t2->func_args;
-        //     if (t1_args->length != t2_args->length) {
+        Array *t1_args = t1->func_args;
+        Array *t2_args = t2->func_args;
+        if (t1_args->length != t2_args->length) {
+            if (reason)
+                *reason = "Number of arguments is not the same";
+            return false;
+        }
+        for (int i = 0; i < t1_args->length; i++) {
+            Arg *t1d = array_get_index(t1_args, i);
+            Arg *t2d = array_get_index(t2_args, i);
+            if (!type_compat(t1d->type, t2d->type, NULL)) {
+                if (reason)
+                    *reason = "Argument types are not compatible";
+                return false;
+            }
+        }
+        if (!type_compat(t1->func_rett, t2->func_rett, NULL)) {
+            if (reason)
+                *reason = "Function return types are not compatible";
+            return false;
+        }
+        // Check error codes
+        // Array *t1errs = t1->func_error_codes;
+        // Array *t2errs = t2->func_error_codes;
+        // if ((t1errs == NULL || t2errs == NULL) && t1errs != t2errs) {
+        //     return false;
+        // }
+        // if (t1->func_error_codes) {
+        //     if (t1errs->length != t2errs->length) {
         //         return false;
         //     }
-        //     for (int i = 0; i < t1_args->length; i++) {
-        //         VarDecl *t1d = array_get_index(t1_args, i);
-        //         VarDecl *t2d = array_get_index(t2_args, i);
-        //         if (!type_compatible(t1d->type, t2d->type)) {
+        //     for (int i = 0; i < t1errs->length; i++) {
+        //         char *t1e = array_get_index(t1errs, i);
+        //         char *t2e = array_get_index(t2errs, i);
+        //         if (strcmp(t1e, t2e) != 0) {
         //             return false;
         //         }
         //     }
-        //     if (!type_compatible(t1->func_return_type, t2->func_return_type)) {
-        //         return false;
-        //     }
-        //     // Check error codes
-        //     Array *t1errs = t1->func_error_codes;
-        //     Array *t2errs = t2->func_error_codes;
-        //     if ((t1errs == NULL || t2errs == NULL) && t1errs != t2errs) {
-        //         return false;
-        //     }
-        //     if (t1->func_error_codes) {
-        //         if (t1errs->length != t2errs->length) {
-        //             return false;
-        //         }
-        //         for (int i = 0; i < t1errs->length; i++) {
-        //             char *t1e = array_get_index(t1errs, i);
-        //             char *t2e = array_get_index(t2errs, i);
-        //             if (strcmp(t1e, t2e) != 0) {
-        //                 return false;
-        //             }
-        //         }
-        //     }
+        // }
     }
     return true;
 }

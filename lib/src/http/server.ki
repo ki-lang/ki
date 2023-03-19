@@ -1,0 +1,15 @@
+
+class Server {
+	host: String;
+	port: u32;
+	handler: fn(Request)(Response);
+
+	static func init(String host, u32 port, fn(Request)(Response) handler) Server {
+
+		return Server{
+			host: host,
+			port: port,
+			handler: handler,
+		};
+	}
+}

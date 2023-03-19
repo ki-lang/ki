@@ -30,7 +30,7 @@ func ki_os__exe_path() cstring;
 func ki_os__cwd() cstring;
 func ki_os__user_dir() cstring;
 func ki_os__exit(i32 code) void;
-func ki_os__signal(i32 sig, ?fn(i32) void handler) void;
+func ki_os__signal(i32 sig, ?fn(i32)(void) handler) void;
 func ki_os__raise(i32 sig) void;
 func ki_os__sleep_ms(uxx ms) void;
 func ki_os__sleep_ns(uxx ns) void;
@@ -63,7 +63,7 @@ func ki_os__poll_set_fd(ptr instance, i32 fd, bool is_new, bool is_edge_triggere
 func ki_os__poll_remove_fd(ptr instance, i32 fd) void;
 //func ki_os__poll_wait(ptr instance, i32 timeout) io:ki_poll_result;
 //
-func ki_os__thread_create(fn(?ptr) void handler, ?ptr data) ptr;
+func ki_os__thread_create(fn(?ptr)(void) handler, ?ptr data) ptr;
 //
 func ki_os__mutex_create() ptr;
 func ki_os__mutex_free(ptr arg_0) void;
@@ -72,7 +72,7 @@ func ki_os__mutex_unlock(ptr arg_0) void;
 //
 func ki_os__signal_wait_create() ptr;
 func ki_os__signal_wait_free(ptr arg_0) void;
-func ki_os__signal_wait_wait(ptr arg_0, i32 timeout, ?fn(ptr)bool func, ?ptr func_arg) void;
+func ki_os__signal_wait_wait(ptr arg_0, i32 timeout, ?fn(ptr)(bool) func, ?ptr func_arg) void;
 func ki_os__signal_wait_continue(ptr arg_0) void;
 
 // Delete later

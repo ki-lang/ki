@@ -10,7 +10,7 @@ char *llvm_type(LB *b, Type *type) {
     if (type->type == type_null) {
         return "i8*";
     }
-    if (class->type == ct_struct) {
+    if (class && class->type == ct_struct) {
         char name[100];
         sprintf(name, "%%struct.%s", class->gname);
         if (!array_contains(b->defined_classes, class, arr_find_adr)) {
