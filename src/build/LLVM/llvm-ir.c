@@ -129,7 +129,7 @@ Array *llvm_ir_fcall_args(LB *b, Scope *scope, Array *values) {
         Value *val = array_get_index(values, i);
         char *lval = llvm_value(b, scope, val);
         char *buf = b->fc->sbuf;
-        sprintf(buf, "%s noundef %s %s", llvm_type(b, val->rett), val->rett->ptr_depth == 0 || val->rett->nullable ? "" : " nonnull", lval);
+        sprintf(buf, "%s noundef%s %s", llvm_type(b, val->rett), val->rett->ptr_depth == 0 || val->rett->nullable ? "" : " nonnull", lval);
         array_push(result, dups(b->alc, buf));
     }
     return result;
