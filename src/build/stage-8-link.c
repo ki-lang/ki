@@ -97,7 +97,7 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
             exit(1);
         }
 
-        stage_8_optimize(mod);
+        // stage_8_optimize(mod);
 
         LLVMLinkModules2(nsc_mod, mod);
     }
@@ -136,40 +136,105 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
 
 void stage_8_optimize(LLVMModuleRef mod) {
 
-    LLVMPassBuilderOptionsRef options = LLVMCreatePassBuilderOptions();
-    LLVMPassBuilderOptionsSetDebugLogging(options, false);
-    LLVMPassBuilderOptionsSetLoopVectorization(options, false);
-    LLVMPassBuilderOptionsSetLoopInterleaving(options, false);
-    LLVMPassBuilderOptionsSetSLPVectorization(options, false);
-    LLVMPassBuilderOptionsSetLoopUnrolling(options, false);
-    LLVMPassBuilderOptionsSetCallGraphProfile(options, false);
+    // LLVMPassManagerRef fpm = LLVMCreateFunctionPassManagerForModule(mod);
+    // LLVMPassManagerRef mpm = LLVMCreatePassManager();
 
-    const char *passes[] = {"default<O0>", "default<O1>", "default<O2>", "default<O3>"};
+    // LLVMInitializeFunctionPassManager(fpm);
 
-    LLVMRunPasses(mod, passes[3], g_target_machine, options);
+    // // LLVMAddLoopUnrollPass(fpm);
+    // // LLVMAddInstructionCombiningPass(fpm);
 
-    LLVMDisposePassBuilderOptions(options);
-    //
-    // LLVMPassManagerBuilderRef pass_builder = LLVMPassManagerBuilderCreate();
-    // LLVMPassManagerBuilderSetOptLevel(pass_builder, 3);
-    // LLVMPassManagerBuilderSetSizeLevel(pass_builder, 0);
-    // // LLVMPassManagerBuilderUseInlinerWithThreshold(pass_builder, 1000);
+    // for (LLVMValueRef fn = LLVMGetFirstFunction(mod); fn != NULL; fn = LLVMGetNextFunction(fn))
+    //     LLVMRunFunctionPassManager(fpm, fn);
 
-    // LLVMPassManagerRef function_passes = LLVMCreateFunctionPassManagerForModule(mod);
-    // LLVMPassManagerRef module_passes = LLVMCreatePassManager();
-    // LLVMPassManagerBuilderPopulateFunctionPassManager(pass_builder, function_passes);
-    // LLVMPassManagerBuilderPopulateModulePassManager(pass_builder, module_passes);
-    // LLVMInitializeFunctionPassManager(function_passes);
-    // for (LLVMValueRef value = LLVMGetFirstFunction(mod); value; value = LLVMGetNextFunction(value)) {
-    //     LLVMRunFunctionPassManager(function_passes, value);
+    // LLVMFinalizeFunctionPassManager(fpm);
+    // LLVMDisposePassManager(fpm);
+
+    // LLVMPassManagerBuilderRef builder = LLVMPassManagerBuilderCreate();
+    // LLVMPassManagerBuilderSetOptLevel(builder, 3);
+    // LLVMPassManagerBuilderSetSizeLevel(builder, 0);
+
+    // LLVMPassManagerBuilderUseInlinerWithThreshold(builder, 50);
+
+    // LLVMPassManagerBuilderPopulateModulePassManager(builder, mpm);
+    // LLVMPassManagerBuilderDispose(builder);
+
+    // LLVMRunPassManager(mpm, mod);
+    // LLVMDisposePassManager(mpm);
+
+    LLVMPassManagerBuilderRef passBuilder = LLVMPassManagerBuilderCreate();
+
+    LLVMPassManagerBuilderSetOptLevel(passBuilder, 3);
+    LLVMPassManagerBuilderSetSizeLevel(passBuilder, 0);
+    LLVMPassManagerBuilderUseInlinerWithThreshold(passBuilder, 50);
+
+    LLVMPassManagerRef func_passes = LLVMCreateFunctionPassManagerForModule(mod);
+    LLVMPassManagerRef mod_passes = LLVMCreatePassManager();
+
+    // if (optimize_level == 1) {
+    LLVMPassManagerBuilderPopulateFunctionPassManager(passBuilder, func_passes);
+    LLVMPassManagerBuilderPopulateModulePassManager(passBuilder, mod_passes);
+    // } else {
+    // LLVMAddInstructionCombiningPass(func_passes);
+
+    // LLVMAddBasicAliasAnalysisPass(func_passes);
+    // LLVMAddBasicAliasAnalysisPass(mod_passes);
+    // LLVMAddTypeBasedAliasAnalysisPass(func_passes);
+    // LLVMAddScopedNoAliasAAPass(func_passes);
+    // LLVMAddAggressiveDCEPass(func_passes);
+    // LLVMAddBitTrackingDCEPass(func_passes);
+
+    LLVMAddLoopDeletionPass(func_passes);
+    LLVMAddLoopIdiomPass(func_passes);
+    LLVMAddLoopRotatePass(func_passes);
+    LLVMAddLoopRerollPass(func_passes);
+    LLVMAddLoopUnrollPass(func_passes);
+    LLVMAddLoopUnrollAndJamPass(func_passes);
+    LLVMAddLoopUnswitchPass(func_passes);
+
+    // LLVMAddScalarReplAggregatesPass(func_passes);
+    // LLVMAddScalarReplAggregatesPassSSA(func_passes);
+    // LLVMAddScalarReplAggregatesPassWithThreshold(func_passes, 10);
+    // LLVMAddSimplifyLibCallsPass(func_passes);
+
+    LLVMAddDemoteMemoryToRegisterPass(func_passes);
+    // LLVMAddVerifierPass(func_passes);
+    // LLVMAddCorrelatedValuePropagationPass(func_passes);
+
+    // LLVMAddEarlyCSEPass(func_passes);
+    // LLVMAddEarlyCSEMemSSAPass(func_passes);
+    // LLVMAddLowerExpectIntrinsicPass(func_passes);
+
+    // LLVMAddGlobalDCEPass(mod_passes);
+    // LLVMAddGlobalOptimizerPass(mod_passes);
+    // LLVMAddPruneEHPass(mod_passes);
+    // LLVMAddIPSCCPPass(mod_passes);
+
+    // LLVMAddArgumentPromotionPass(mod_passes);
+    // LLVMAddConstantMergePass(mod_passes);
+    // // LLVMAddInternalizePass(mod_passes, 10);
+    // LLVMAddStripDeadPrototypesPass(mod_passes);
+    // LLVMAddStripSymbolsPass(mod_passes);
+
+    // LLVMAddCalledValuePropagationPass(mod_passes);
+    // LLVMAddDeadArgEliminationPass(mod_passes);
+    // // LLVMAddFunctionAttrsPass(mod_passes);
+    // LLVMAddFunctionInliningPass(mod_passes);
+    // LLVMAddAlwaysInlinerPass(mod_passes);
     // }
 
-    // LLVMFinalizeFunctionPassManager(function_passes);
-    // LLVMRunPassManager(module_passes, mod);
+    LLVMPassManagerBuilderDispose(passBuilder);
+    LLVMInitializeFunctionPassManager(func_passes);
 
-    // LLVMPassManagerBuilderDispose(pass_builder);
-    // LLVMDisposePassManager(function_passes);
-    // LLVMDisposePassManager(module_passes);
+    for (LLVMValueRef func = LLVMGetFirstFunction(mod); func; func = LLVMGetNextFunction(func)) {
+        LLVMRunFunctionPassManager(func_passes, func);
+    }
+
+    LLVMFinalizeFunctionPassManager(func_passes);
+    LLVMRunPassManager(mod_passes, mod);
+
+    LLVMDisposePassManager(func_passes);
+    LLVMDisposePassManager(mod_passes);
 }
 
 void llvm_init(Build *b) {
