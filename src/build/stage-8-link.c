@@ -68,7 +68,7 @@ void stage_8(Build *b) {
         }
     }
 
-    if (compiled_any) {
+    if (compiled_any || !file_exists(b->path_out)) {
         stage_8_link(b, o_files);
     }
 }
