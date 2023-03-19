@@ -273,7 +273,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 fc_error(fc);
             }
 
-            // usage_set_deref_scope(alc, scope);
+            Scope *deref_scope = usage_create_deref_scope(alc, scope);
+
             Scope *else_scope = usage_scope_init(alc, scope, sct_default);
             Scope *usage_scope = usage_scope_init(alc, scope, sct_default);
             Array *ancestors = array_make(alc, 10);
@@ -294,7 +295,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     sprintf(fc->sbuf, "Scope did not use return, break, continue, exit or panic");
                     fc_error(fc);
                 }
-                v = vgen_or_break(alc, v, usage_scope, else_scope);
+                v = vgen_or_break(alc, v, usage_scope, else_scope, deref_scope);
             } else {
                 // ??
                 Value *right = read_value(fc, alc, usage_scope, true, 0, false);
@@ -302,7 +303,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
                 type_check(fc, v->rett, right->rett);
 
-                v = vgen_or_value(alc, v, right, usage_scope, else_scope);
+                v = vgen_or_value(alc, v, right, usage_scope, else_scope, deref_scope);
             }
 
             tok(fc, token, false, true);

@@ -71,12 +71,14 @@ struct VOrBreak {
     Value *value;
     Scope *or_scope;
     Scope *else_scope;
+    Scope *deref_scope;
 };
 struct VOrValue {
     Value *left;
     Value *right;
     Scope *value_scope;
     Scope *else_scope;
+    Scope *deref_scope;
 };
 struct IRVal {
     Value *value;
