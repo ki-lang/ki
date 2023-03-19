@@ -1,0 +1,29 @@
+
+header "ki_os" as os;
+
+
+class ThreadEntry norc {
+	public data: ?ptr;
+	start_func: fn(?ptr)(void);
+}
+
+class Thread norc {
+
+	private os_thread: ptr;
+
+	private static func entry(data: ptr) void {
+		let entry = data -> ThreadEntry;
+		entry.start_func(entry.data);
+		entry.__free();
+	}
+
+	static func start(start_func: fn(?ptr)(void), data: ?ptr) Thread {
+
+		let entry = ThreadEntry{ start_func: start_func, data: data };
+		let os_thread = os.ki_os__thread_create(Thread.entry, entry -> ptr);
+		let t = Thread{ os_thread: os_thread };
+
+		return t;
+	}
+}
+

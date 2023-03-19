@@ -32,7 +32,7 @@ class String type:ptr {
 		return adr;
 	}
 
-	func __add(String str) String {
+	func __add(str: String) String {
 		//return "123\n";
 		let this_len = this.bytes();
 		let str_len = str.bytes();
@@ -45,7 +45,7 @@ class String type:ptr {
 		return new_str;
 	}
 
-	static func make_empty(uxx size) String {
+	static func make_empty(size: uxx) String {
 		let mut adr = mem:alloc(size + 16);
 		let adr_ = adr;
 		ptrv adr as uxx = size;

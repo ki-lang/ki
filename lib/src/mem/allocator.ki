@@ -9,7 +9,7 @@ class Allocator norc {
 	slot_size_real: uxx;
 	misalign_bytes: u8;
 
-	static func init(uxx slot_size, u8 misalign_bytes = 0) Allocator {
+	static func init(slot_size: uxx, misalign_bytes: u8 = 0) Allocator {
 
 		// Calculate size
 		let mut real_size = slot_size + 1;
@@ -80,7 +80,7 @@ class Allocator norc {
 		return this.get_slot();
 	}
 
-	func free(ptr mut adr) void {
+	func free(mut adr: ptr) void {
 		adr -= 1;
 		let slot_nr = ptrv adr as u8;
 		adr -= (slot_nr * this.slot_size_real);

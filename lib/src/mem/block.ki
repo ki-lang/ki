@@ -17,7 +17,7 @@ class Block norc {
 	misalign_bytes: u8;
 	has_free_slots: bool;
 
-	static func create(Allocator alc, uxx slot_size, u8 slot_count, u8 mut misalign_bytes) Block {
+	static func create(alc: Allocator, slot_size: uxx, slot_count: u8, mut misalign_bytes: u8) Block {
 
 		misalign_bytes += 1; // Slot byte
 		misalign_bytes = misalign_bytes % 8;
@@ -104,7 +104,7 @@ class Block norc {
 		return slot_adr + 1;
 	}
 
-	func free_slot(u8 slot_nr) void {
+	func free_slot(slot_nr: u8) void {
 
 		let slot_count = this.slot_count;
 

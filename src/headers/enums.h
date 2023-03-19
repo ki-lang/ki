@@ -35,6 +35,11 @@ enum CLASSTYPE {
     ct_float,
     ct_ptr,
 };
+enum ACCESSTYPE {
+    act_public,
+    act_private,
+    act_readonly,
+};
 
 enum TOKENTYPE {
     tkn_declare,

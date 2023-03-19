@@ -4,14 +4,14 @@ header "ki_os" as os;
 global allocators : ?ptr;
 
 #if 1
-func alloc(uxx size) ptr {
+func alloc(size: uxx) ptr {
 	return os.ki_os__alloc(size);
 }
-func free(ptr adr) void {
+func free(adr: ptr) void {
 	os.ki_os__free(adr);
 }
 #else
-func alloc(uxx size) ptr {
+func alloc(size: uxx) ptr {
 	let mut alcs = allocators;
 	if alcs == null {
 		let size : uxx = 64#uxx * sizeof(ptr);
@@ -41,7 +41,7 @@ func alloc(uxx size) ptr {
 
 	return res + 1;
 }
-func free(ptr mut adr) void {
+func free(mut adr: ptr) void {
 	let alcs = allocators -> ptr;
 	adr-=1;
 	let pow : u32 = ptrv adr as u8;
@@ -52,14 +52,14 @@ func free(ptr mut adr) void {
 }
 #end
 
-func sys_alloc(uxx size) ptr {
+func sys_alloc(size: uxx) ptr {
 	return os.ki_os__alloc(size);
 }
-func sys_free(ptr adr) void {
+func sys_free(adr: ptr) void {
 	os.ki_os__free(adr);
 }
 
-func clear(ptr mut adrc, uxx mut size) void {
+func clear(mut adrc: ptr, mut size: uxx) void {
 	while(size > sizeof(ptr)){
 		ptrv adrc as uxx = 0#uxx;
 		adrc += sizeof(ptr);
@@ -82,7 +82,7 @@ func clear(ptr mut adrc, uxx mut size) void {
 	}
 }
 
-func copy(ptr mut from, ptr mut to, uxx mut len) void {
+func copy(mut from: ptr, mut to: ptr, mut len: uxx) void {
 
   while(len > sizeof(ptr)){
 	  len -= sizeof(ptr);

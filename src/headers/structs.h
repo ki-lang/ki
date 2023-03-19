@@ -233,6 +233,7 @@ struct ClassProp {
     Value *value;
     Chunk *value_chunk;
     int index;
+    int act;
 };
 struct Func {
     char *name;

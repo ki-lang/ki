@@ -11,7 +11,7 @@ class ki_file_stats norc {
 	is_file: bool;
     // readonly uxx size;
     // readonly uxx mtime_s;
-    // readonly bool is_file;
+    // readonly is_file: bool;
 }
 
 // enum KI_SOCK_DOMAIN {
@@ -23,57 +23,57 @@ class ki_file_stats norc {
 //     sock_con_type_stream,
 // }
 
-func ki_os__alloc(uxx size) ptr;
-func ki_os__free(ptr adr) void;
+func ki_os__alloc(size: uxx) ptr;
+func ki_os__free(adr: ptr) void;
 //
 func ki_os__exe_path() cstring;
 func ki_os__cwd() cstring;
 func ki_os__user_dir() cstring;
-func ki_os__exit(i32 code) void;
-func ki_os__signal(i32 sig, ?fn(i32)(void) handler) void;
-func ki_os__raise(i32 sig) void;
-func ki_os__sleep_ms(uxx ms) void;
-func ki_os__sleep_ns(uxx ns) void;
+func ki_os__exit(code: i32) void;
+func ki_os__signal(sig: i32, handler: ?fn(i32)(void)) void;
+func ki_os__raise(sig: i32) void;
+func ki_os__sleep_ms(ms: uxx) void;
+func ki_os__sleep_ns(ns: uxx) void;
 //
-func ki_os__fd_read(i32 fd, ptr arg_1, uxx arg_2) ixx;
-func ki_os__fd_write(i32 fd, ptr arg_1, uxx arg_2) ixx;
+func ki_os__fd_read(fd: i32, arg_1: ptr, arg_2: uxx) ixx;
+func ki_os__fd_write(fd: i32, arg_1: ptr, arg_2: uxx) ixx;
 //func ki_os__fd_pipe(i32[2] fds) i32;
-func ki_os__fd_close(i32 fd) bool;
+func ki_os__fd_close(fd: i32) bool;
 //
-func ki_os__file_open(ptr path, i32 path_len, bool read, bool write) i32;
-func ki_os__file_create(ptr path, i32 path_len, i32 mode) bool;
-func ki_os__file_write(ptr path, i32 path_len, ptr content, uxx len, bool append) bool;
-func ki_os__file_delete(ptr path, i32 path_len) bool;
-func ki_os__file_mkdir(ptr path, i32 path_len) bool;
+func ki_os__file_open(path: ptr, path_len: i32, read: bool, write: bool) i32;
+func ki_os__file_create(path: ptr, path_len: i32, mode: i32) bool;
+func ki_os__file_write(path: ptr, path_len: i32, content: ptr, len: uxx, append: bool) bool;
+func ki_os__file_delete(path: ptr, path_len: i32) bool;
+func ki_os__file_mkdir(path: ptr, path_len: i32) bool;
 func ki_os__file_sync() void;
-func ki_os__file_stats(ptr path, i32 path_len, ki_file_stats buf) ?ki_file_stats;
-func ki_os__files_in_dir(ptr path, i32 path_len) ?ptr;
+func ki_os__file_stats(path: ptr, path_len: i32, buf: ki_file_stats) ?ki_file_stats;
+func ki_os__files_in_dir(path: ptr, path_len: i32) ?ptr;
 //
-func ki_os__domain_to_ip(ptr domain, i32 domain_len) ?cstring;
+func ki_os__domain_to_ip(domain: ptr, domain_len: i32) ?cstring;
 //
-func ki_os__socket_create(i32 arg_0, i32 arg_1) ?ptr;
-func ki_os__socket_free(ptr sock) void;
-func ki_os__socket_get_fd(ptr sock) i32;
-func ki_os__socket_set_ipv4(ptr arg_0, cstring ip, cstring port) bool;
-func ki_os__socket_accept(ptr sock, ?cstring ip_buffer) i32;
+func ki_os__socket_create(arg_0: i32, arg_1: i32) ?ptr;
+func ki_os__socket_free(sock: ptr) void;
+func ki_os__socket_get_fd(sock: ptr) i32;
+func ki_os__socket_set_ipv4(arg_0: ptr, ip: cstring, port: cstring) bool;
+func ki_os__socket_accept(sock: ptr, ip_buffer: ?cstring) i32;
 //
 func ki_os__poll_init() ptr;
-func ki_os__poll_free(ptr instance) void;
-func ki_os__poll_set_fd(ptr instance, i32 fd, bool is_new, bool is_edge_triggered, bool track_in, bool track_out, bool track_err, bool track_closed, bool track_stopped_reading) void;
-func ki_os__poll_remove_fd(ptr instance, i32 fd) void;
-//func ki_os__poll_wait(ptr instance, i32 timeout) io:ki_poll_result;
+func ki_os__poll_free(instance: ptr) void;
+func ki_os__poll_set_fd(instance: ptr, fd: i32, is_new: bool, is_edge_triggered: bool, track_in: bool, track_out: bool, track_err: bool, track_closed: bool, track_stopped_reading: bool) void;
+func ki_os__poll_remove_fd(instance: ptr, fd: i32) void;
+//func ki_os__poll_wait(instance: ptr, timeout: i32) io:ki_poll_result;
 //
-func ki_os__thread_create(fn(?ptr)(void) handler, ?ptr data) ptr;
+func ki_os__thread_create(handler: fn(?ptr)(void), data: ?ptr) ptr;
 //
 func ki_os__mutex_create() ptr;
-func ki_os__mutex_free(ptr arg_0) void;
-func ki_os__mutex_lock(ptr arg_0) void;
-func ki_os__mutex_unlock(ptr arg_0) void;
+func ki_os__mutex_free(arg_0: ptr) void;
+func ki_os__mutex_lock(arg_0: ptr) void;
+func ki_os__mutex_unlock(arg_0: ptr) void;
 //
 func ki_os__signal_wait_create() ptr;
-func ki_os__signal_wait_free(ptr arg_0) void;
-func ki_os__signal_wait_wait(ptr arg_0, i32 timeout, ?fn(ptr)(bool) func, ?ptr func_arg) void;
-func ki_os__signal_wait_continue(ptr arg_0) void;
+func ki_os__signal_wait_free(arg_0: ptr) void;
+func ki_os__signal_wait_wait(arg_0: ptr, timeout: i32, func: ?fn(ptr)(bool), func_arg: ?ptr) void;
+func ki_os__signal_wait_continue(arg_0: ptr) void;
 
 // Delete later
-func ki_os__http_date(ptr buf) void;
+func ki_os__http_date(buf: ptr) void;

@@ -145,6 +145,18 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
         bool is_static = false;
 
+        int act = act_public;
+
+        if (strcmp(token, "public") == 0) {
+            tok(fc, token, true, true);
+        } else if (strcmp(token, "private") == 0) {
+            act = act_private;
+            tok(fc, token, true, true);
+        } else if (strcmp(token, "readonly") == 0) {
+            act = act_readonly;
+            tok(fc, token, true, true);
+        }
+
         if (strcmp(token, "static") == 0) {
             is_static = true;
             tok(fc, token, true, true);
@@ -163,6 +175,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             }
 
             Func *func = class_define_func(fc, class, is_static, token, NULL, NULL);
+            func->act = act;
 
             if (strcmp(func->name, "__ref") == 0) {
                 class->func_ref = func;
@@ -202,6 +215,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             char *prop_name = dups(fc->alc, token);
 
             ClassProp *prop = class_prop_init(fc->alc, class, NULL);
+            prop->act = act;
 
             tok(fc, token, true, true);
             if (strcmp(token, ":") == 0) {
@@ -243,17 +257,9 @@ void stage_2_func(Fc *fc, Func *func) {
     tok(fc, token, true, true);
     while (strcmp(token, ")") != 0) {
 
-        rtok(fc);
-        Type *type = read_type(fc, alc, func->scope->parent, true, true);
-
         bool mutable = false;
 
-        tok(fc, token, true, true);
         if (strcmp(token, "mut") == 0) {
-            if (type->class && type->class->is_rc) {
-                sprintf(fc->sbuf, "Making an argument mutable where the type is reference counted, is not allowed for performance reasons");
-                fc_error(fc);
-            }
             mutable = true;
             tok(fc, token, true, true);
         }
@@ -270,6 +276,9 @@ void stage_2_func(Fc *fc, Func *func) {
         char *name = dups(alc, token);
 
         Chunk *val_chunk = NULL;
+
+        tok_expect(fc, ":", true, true);
+        Type *type = read_type(fc, alc, func->scope->parent, true, true);
 
         tok(fc, token, true, true);
         if (strcmp(token, "=") == 0) {

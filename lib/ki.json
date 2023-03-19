@@ -3,6 +3,7 @@
 		"io": "src/io",
 		"http": "src/http",
 		"mem": "src/mem",
+		"sys": "src/sys",
 		"type": "src/type"
 	},
 	"headers": {

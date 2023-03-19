@@ -3,8 +3,9 @@ class Server {
 	host: String;
 	port: u32;
 	handler: fn(Request)(Response);
+	max_connections: u32 = 10000;
 
-	static func init(String host, u32 port, fn(Request)(Response) handler) Server {
+	static func init(host: String, port: u32, handler: fn(Request)(Response)) Server {
 
 		return Server{
 			host: host,
@@ -12,4 +13,8 @@ class Server {
 			handler: handler,
 		};
 	}
+
+	func start() void {
+	}
+
 }
