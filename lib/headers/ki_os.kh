@@ -5,7 +5,7 @@ link "pthread";
 
 //use ki:io;
 
-class ki_file_stats norc {
+struct ki_file_stats {
 	size: uxx;
 	mtime_s: uxx;
 	is_file: bool;
