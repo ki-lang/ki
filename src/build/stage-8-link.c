@@ -136,32 +136,6 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
 
 void stage_8_optimize(LLVMModuleRef mod) {
 
-    // LLVMPassManagerRef fpm = LLVMCreateFunctionPassManagerForModule(mod);
-    // LLVMPassManagerRef mpm = LLVMCreatePassManager();
-
-    // LLVMInitializeFunctionPassManager(fpm);
-
-    // // LLVMAddLoopUnrollPass(fpm);
-    // // LLVMAddInstructionCombiningPass(fpm);
-
-    // for (LLVMValueRef fn = LLVMGetFirstFunction(mod); fn != NULL; fn = LLVMGetNextFunction(fn))
-    //     LLVMRunFunctionPassManager(fpm, fn);
-
-    // LLVMFinalizeFunctionPassManager(fpm);
-    // LLVMDisposePassManager(fpm);
-
-    // LLVMPassManagerBuilderRef builder = LLVMPassManagerBuilderCreate();
-    // LLVMPassManagerBuilderSetOptLevel(builder, 3);
-    // LLVMPassManagerBuilderSetSizeLevel(builder, 0);
-
-    // LLVMPassManagerBuilderUseInlinerWithThreshold(builder, 50);
-
-    // LLVMPassManagerBuilderPopulateModulePassManager(builder, mpm);
-    // LLVMPassManagerBuilderDispose(builder);
-
-    // LLVMRunPassManager(mpm, mod);
-    // LLVMDisposePassManager(mpm);
-
     LLVMPassManagerBuilderRef passBuilder = LLVMPassManagerBuilderCreate();
 
     LLVMPassManagerBuilderSetOptLevel(passBuilder, 3);
@@ -171,10 +145,11 @@ void stage_8_optimize(LLVMModuleRef mod) {
     LLVMPassManagerRef func_passes = LLVMCreateFunctionPassManagerForModule(mod);
     LLVMPassManagerRef mod_passes = LLVMCreatePassManager();
 
-    // if (optimize_level == 1) {
     LLVMPassManagerBuilderPopulateFunctionPassManager(passBuilder, func_passes);
     LLVMPassManagerBuilderPopulateModulePassManager(passBuilder, mod_passes);
-    // } else {
+
+    // Other optimizations
+
     // LLVMAddInstructionCombiningPass(func_passes);
 
     // LLVMAddBasicAliasAnalysisPass(func_passes);
@@ -221,7 +196,6 @@ void stage_8_optimize(LLVMModuleRef mod) {
     // // LLVMAddFunctionAttrsPass(mod_passes);
     // LLVMAddFunctionInliningPass(mod_passes);
     // LLVMAddAlwaysInlinerPass(mod_passes);
-    // }
 
     LLVMPassManagerBuilderDispose(passBuilder);
     LLVMInitializeFunctionPassManager(func_passes);
