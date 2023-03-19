@@ -190,7 +190,12 @@ void cmd_build(int argc, char *argv[]) {
 
     b->ir_ready = true;
 
-    printf("🔗 Link executable\n");
+    if (b->verbose > 0) {
+        printf("🔗 Link executable\n");
+        if (b->optimize) {
+            printf("✨ Optimize\n");
+        }
+    }
 
     stage_8(b);
 

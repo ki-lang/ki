@@ -12,11 +12,14 @@
 #include <llvm-c/Support.h>
 #include <llvm-c/Target.h>
 #include <llvm-c/TargetMachine.h>
+#include <llvm-c/Transforms/IPO.h>
+#include <llvm-c/Transforms/PassBuilder.h>
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 #include <llvm-c/Transforms/Scalar.h>
 
 void llvm_init(Build *b);
 void stage_8_compile_o(Build *b, Array *ir_files, char *path_o);
+void stage_8_optimize(LLVMModuleRef mod);
 void stage_8_link(Build *b, Array *o_files);
 
 LLVMTargetMachineRef g_target_machine;
@@ -94,6 +97,8 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
             exit(1);
         }
 
+        stage_8_optimize(mod);
+
         LLVMLinkModules2(nsc_mod, mod);
     }
 
@@ -113,28 +118,7 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
     LLVMSetDataLayout(nsc_mod, g_llvm_data_layout);
 
     if (b->optimize) {
-        // printf("Run LLVM optimization:\n");
-
-        LLVMPassManagerBuilderRef pass_builder = LLVMPassManagerBuilderCreate();
-        LLVMPassManagerBuilderSetOptLevel(pass_builder, 3);
-        LLVMPassManagerBuilderSetSizeLevel(pass_builder, 0);
-        // LLVMPassManagerBuilderUseInlinerWithThreshold(pass_builder, 1000000000);
-
-        LLVMPassManagerRef function_passes = LLVMCreateFunctionPassManagerForModule(nsc_mod);
-        LLVMPassManagerRef module_passes = LLVMCreatePassManager();
-        LLVMPassManagerBuilderPopulateFunctionPassManager(pass_builder, function_passes);
-        LLVMPassManagerBuilderPopulateModulePassManager(pass_builder, module_passes);
-        LLVMInitializeFunctionPassManager(function_passes);
-        for (LLVMValueRef value = LLVMGetFirstFunction(nsc_mod); value; value = LLVMGetNextFunction(value)) {
-            LLVMRunFunctionPassManager(function_passes, value);
-        }
-
-        LLVMFinalizeFunctionPassManager(function_passes);
-        LLVMRunPassManager(module_passes, nsc_mod);
-
-        LLVMPassManagerBuilderDispose(pass_builder);
-        LLVMDisposePassManager(function_passes);
-        LLVMDisposePassManager(module_passes);
+        stage_8_optimize(nsc_mod);
     }
 
     if (LLVMTargetMachineEmitToFile(g_target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
@@ -148,6 +132,44 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
 
     LLVMDisposeMessage(error);
     LLVMDisposeModule(nsc_mod);
+}
+
+void stage_8_optimize(LLVMModuleRef mod) {
+
+    LLVMPassBuilderOptionsRef options = LLVMCreatePassBuilderOptions();
+    LLVMPassBuilderOptionsSetDebugLogging(options, false);
+    LLVMPassBuilderOptionsSetLoopVectorization(options, false);
+    LLVMPassBuilderOptionsSetLoopInterleaving(options, false);
+    LLVMPassBuilderOptionsSetSLPVectorization(options, false);
+    LLVMPassBuilderOptionsSetLoopUnrolling(options, false);
+    LLVMPassBuilderOptionsSetCallGraphProfile(options, false);
+
+    const char *passes[] = {"default<O0>", "default<O1>", "default<O2>", "default<O3>"};
+
+    LLVMRunPasses(mod, passes[3], g_target_machine, options);
+
+    LLVMDisposePassBuilderOptions(options);
+    //
+    // LLVMPassManagerBuilderRef pass_builder = LLVMPassManagerBuilderCreate();
+    // LLVMPassManagerBuilderSetOptLevel(pass_builder, 3);
+    // LLVMPassManagerBuilderSetSizeLevel(pass_builder, 0);
+    // // LLVMPassManagerBuilderUseInlinerWithThreshold(pass_builder, 1000);
+
+    // LLVMPassManagerRef function_passes = LLVMCreateFunctionPassManagerForModule(mod);
+    // LLVMPassManagerRef module_passes = LLVMCreatePassManager();
+    // LLVMPassManagerBuilderPopulateFunctionPassManager(pass_builder, function_passes);
+    // LLVMPassManagerBuilderPopulateModulePassManager(pass_builder, module_passes);
+    // LLVMInitializeFunctionPassManager(function_passes);
+    // for (LLVMValueRef value = LLVMGetFirstFunction(mod); value; value = LLVMGetNextFunction(value)) {
+    //     LLVMRunFunctionPassManager(function_passes, value);
+    // }
+
+    // LLVMFinalizeFunctionPassManager(function_passes);
+    // LLVMRunPassManager(module_passes, mod);
+
+    // LLVMPassManagerBuilderDispose(pass_builder);
+    // LLVMDisposePassManager(function_passes);
+    // LLVMDisposePassManager(module_passes);
 }
 
 void llvm_init(Build *b) {
