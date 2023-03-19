@@ -90,6 +90,7 @@ struct Build {
     int events_done;
     int ptr_size;
     int verbose;
+    int LOC;
     //
     bool ir_ready;
     bool optimize;

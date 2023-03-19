@@ -287,7 +287,7 @@ void stage_8_link(Build *b, Array *o_files) {
 
     char *cmd_str = str_to_chars(b->alc, cmd);
 
-    if (b->verbose > 0) {
+    if (b->verbose > 1) {
         printf("Link cmd: %s\n", cmd_str);
     }
 

@@ -72,6 +72,8 @@ void stage_1(Fc *fc) {
         fc_error(fc);
     }
 
+    b->LOC += fc->chunk->line;
+
     //
     chain_add(b->stage_2, fc);
 }

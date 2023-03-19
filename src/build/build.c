@@ -158,6 +158,7 @@ void cmd_build(int argc, char *argv[]) {
     b->optimize = optimize;
     b->test = test;
     b->debug = debug;
+    b->LOC = 0;
 
     Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));
     Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
@@ -191,6 +192,7 @@ void cmd_build(int argc, char *argv[]) {
     b->ir_ready = true;
 
     if (b->verbose > 0) {
+        printf("📄 Lines of code: %d\n", b->LOC);
         printf("🔗 Link executable\n");
         if (b->optimize) {
             printf("✨ Optimize\n");
