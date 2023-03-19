@@ -31,6 +31,7 @@ void stage_8(Build *b) {
     //
     llvm_init(b);
 
+    bool compiled_any = false;
     Array *o_files = array_make(b->alc, 20);
 
     for (int i = 0; i < b->packages->length; i++) {
@@ -56,6 +57,7 @@ void stage_8(Build *b) {
             }
 
             if (compile) {
+                compiled_any = true;
                 if (b->verbose > 1) {
                     printf("⚙ Compile o file: %s\n", nsc->path_o);
                 }
@@ -66,7 +68,9 @@ void stage_8(Build *b) {
         }
     }
 
-    stage_8_link(b, o_files);
+    if (compiled_any) {
+        stage_8_link(b, o_files);
+    }
 }
 
 void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {

@@ -54,6 +54,7 @@ void cmd_build(int argc, char *argv[]) {
     bool optimize = array_contains(args, "--optimize", arr_find_str) || array_contains(args, "-O", arr_find_str);
     bool debug = array_contains(args, "--debug", arr_find_str) || array_contains(args, "-d", arr_find_str);
     bool test = array_contains(args, "--test", arr_find_str);
+    bool clear_cache = array_contains(args, "--clear", arr_find_str) || array_contains(args, "-c", arr_find_str);
 
     //
     Build *b = al(alc, sizeof(Build));
@@ -158,6 +159,7 @@ void cmd_build(int argc, char *argv[]) {
     b->optimize = optimize;
     b->test = test;
     b->debug = debug;
+    b->clear_cache = clear_cache;
     b->LOC = 0;
 
     Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));

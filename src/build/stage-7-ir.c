@@ -40,7 +40,7 @@ void stage_7(Fc *fc) {
     char *ir_hash = al(b->alc, 64);
     md5(ir, ir_hash);
 
-    if (strcmp(fc->ir_hash, ir_hash) != 0) {
+    if (strcmp(fc->ir_hash, ir_hash) != 0 || b->clear_cache) {
 
         fc->ir_hash = ir_hash;
         fc->ir_changed = true;

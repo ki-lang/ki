@@ -96,6 +96,7 @@ struct Build {
     bool optimize;
     bool test;
     bool debug;
+    bool clear_cache;
 };
 
 struct Fc {
