@@ -14,6 +14,19 @@ char *llvm_ir_isnull_i1(LB *b, char *ltype, char *val) {
     return var_i1;
 }
 
+char *llvm_ir_iszero_i1(LB *b, char *ltype, char *val) {
+    Str *ir = llvm_b_ir(b);
+    char *var_i1 = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, var_i1);
+    str_append_chars(ir, " = icmp eq ");
+    str_append_chars(ir, ltype);
+    str_append_chars(ir, " ");
+    str_append_chars(ir, val);
+    str_append_chars(ir, ", 0\n");
+    return var_i1;
+}
+
 char *llvm_ir_cmp(LB *b, char *ltype, char *val, char *cmd, char *with) {
     // cmd: eq,ne
     Str *ir = llvm_b_ir(b);
@@ -140,19 +153,19 @@ char *llvm_ir_fcall_arg(LB *b, char *lval, char *ltype) {
     return dups(b->alc, buf);
 }
 
-char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, bool can_error) {
+char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *ort) {
     Str *ir = llvm_b_ir(b);
-    if (can_error) {
-        die("TODO LLVM Func error");
-        // TODO dont reset err before each call, reset when err is caught instead
-        // llvm_ir_store(b, type_gen(b->fc->b, "i32"), b->func_buf_err, "0");
-    }
+    // if (can_error) {
+    // die("TODO LLVM Func error");
+    // TODO dont reset err before each call, reset when err is caught instead
+    // llvm_ir_store(b, type_gen(b->fc->b, "i32"), b->func_buf_err, "0");
+    // }
 
-    char *var = "";
+    char *var_result = "";
     str_append_chars(ir, "  ");
     if (strcmp(lrett, "void") != 0) {
-        var = llvm_var(b);
-        str_append_chars(ir, var);
+        var_result = llvm_var(b);
+        str_append_chars(ir, var_result);
         str_append_chars(ir, " = ");
     }
     str_append_chars(ir, "call ");
@@ -168,18 +181,94 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, bool can_er
         }
         str_append_chars(ir, lval);
     }
-    if (can_error) {
-        die("TODO LLVM Func error");
-        // if (argc > 0) {
-        //     str_append_chars(ir, ", ");
-        // }
-        // str_append_chars(ir, "i32* noundef ");
-        // str_append_chars(ir, b->func_buf_err);
-        // str_append_chars(ir, ", i8** noundef ");
-        // str_append_chars(ir, b->func_buf_msg);
+    char *err_var = NULL;
+    char *err_msg_var = NULL;
+    if (ort) {
+        err_var = llvm_var(b);
+        err_msg_var = llvm_var(b);
+        if (argc > 0) {
+            str_append_chars(ir, ", ");
+        }
+        str_append_chars(ir, "i32* noundef ");
+        str_append_chars(ir, err_var);
+        str_append_chars(ir, ", i8** noundef ");
+        str_append_chars(ir, err_msg_var);
     }
     str_append_chars(ir, ")\n");
-    return var;
+
+    if (ort && !ort->ignore) {
+
+        char *iszero = llvm_ir_iszero_i1(b, "i32", err_var);
+
+        if (ort->value) {
+            // !?
+            LLVMBlock *b_code = llvm_block_init_auto(b);
+            LLVMBlock *b_else = llvm_block_init_auto(b);
+            LLVMBlock *b_after = llvm_block_init_auto(b);
+
+            char *current_block_name = b->lfunc->block->name;
+
+            llvm_write_ast(b, ort->deref_scope);
+
+            llvm_ir_cond_jump(b, llvm_b_ir(b), iszero, b_else, b_code);
+
+            b->lfunc->block = b_code;
+            llvm_write_ast(b, ort->scope);
+            char *rlval = llvm_value(b, ort->scope, ort->value);
+            llvm_ir_jump(llvm_b_ir(b), b_after);
+
+            char *last_block_code = b->lfunc->block->name;
+
+            b->lfunc->block = b_else;
+            llvm_write_ast(b, ort->else_scope);
+            llvm_ir_jump(llvm_b_ir(b), b_after);
+
+            char *last_block_else = b->lfunc->block->name;
+
+            b->lfunc->block = b_after;
+            Str *ir = b_after->ir;
+
+            char *new_result = llvm_var(b);
+
+            str_append_chars(ir, "  ");
+            str_append_chars(ir, new_result);
+            str_append_chars(ir, " = phi ");
+            str_append_chars(ir, lrett);
+            str_append_chars(ir, " [ ");
+            str_append_chars(ir, var_result);
+            str_append_chars(ir, ", %");
+            str_append_chars(ir, last_block_else);
+            str_append_chars(ir, " ], [ ");
+            str_append_chars(ir, rlval);
+            str_append_chars(ir, ", %");
+            str_append_chars(ir, last_block_code);
+            str_append_chars(ir, " ]\n");
+
+            var_result = new_result;
+
+        } else {
+            // !!
+            LLVMBlock *b_code = llvm_block_init_auto(b);
+            LLVMBlock *b_else = llvm_block_init_auto(b);
+            LLVMBlock *b_after = llvm_block_init_auto(b);
+
+            llvm_write_ast(b, ort->deref_scope);
+
+            llvm_ir_cond_jump(b, llvm_b_ir(b), iszero, b_else, b_code);
+
+            b->lfunc->block = b_code;
+            llvm_write_ast(b, ort->scope);
+            llvm_ir_jump(llvm_b_ir(b), b_after);
+
+            b->lfunc->block = b_else;
+            llvm_write_ast(b, ort->else_scope);
+            llvm_ir_jump(llvm_b_ir(b), b_after);
+
+            b->lfunc->block = b_after;
+        }
+    }
+
+    return var_result;
 }
 
 char *llvm_ir_func_ptr(LB *b, Func *func) {

@@ -30,7 +30,8 @@ void llvm_gen_func_ir(LB *b) {
         str_append_chars(ir, func->gname);
         str_append_chars(ir, "(");
 
-        for (int o = 0; o < func->args->length; o++) {
+        int argc = func->args->length;
+        for (int o = 0; o < argc; o++) {
             Arg *arg = array_get_index(func->args, o);
             if (o > 0) {
                 str_append_chars(ir, ", ");
@@ -52,19 +53,20 @@ void llvm_gen_func_ir(LB *b) {
 
             map_set(fscope->lvars, arg->name, v);
         }
-        // if (func->can_error) {
-        //     if argc
-        //         > 0 { str_append_chars(ir, ", "); }
-        //     let var_err = b.gen_var();
-        //     let var_msg = b.gen_var();
-        //     str_append_chars(ir, "i32* noundef ");
-        //     str_append_chars(ir, var_err);
-        //     str_append_chars(ir, ", i8** noundef ");
-        //     str_append_chars(ir, var_msg);
+        if (func->can_error) {
+            if (argc > 0) {
+                str_append_chars(ir, ", ");
+            }
+            char *err_var = llvm_var(b);
+            char *err_msg_var = llvm_var(b);
+            str_append_chars(ir, "i32* noundef ");
+            str_append_chars(ir, err_var);
+            str_append_chars(ir, ", i8** noundef ");
+            str_append_chars(ir, err_msg_var);
 
-        //     b.func_arg_err = var_err;
-        //     b.func_arg_msg = var_msg;
-        // }
+            // b.func_arg_err = var_err;
+            // b.func_arg_msg = var_msg;
+        }
         str_append_chars(ir, ")");
 
         if (func->opt_hot) {

@@ -11,6 +11,7 @@ typedef struct VFloat VFloat;
 typedef struct VPair VPair;
 typedef struct VOp VOp;
 typedef struct VFcall VFcall;
+typedef struct FCallOr FCallOr;
 typedef struct VFuncPtr VFuncPtr;
 typedef struct VClassPA VClassPA;
 typedef struct VClassInit VClassInit;
@@ -53,9 +54,7 @@ struct VOp {
 struct VFcall {
     Value *on;
     Array *args;
-    Scope *else_scope;
-    Value *else_value;
-    bool else_ignore;
+    FCallOr * or ;
 };
 struct VFuncPtr {
     Func *func;
@@ -104,6 +103,14 @@ struct ValueAndExec {
 struct VIncrDecr {
     Value *value;
     bool is_incr;
+};
+
+struct FCallOr {
+    Scope *scope;
+    Scope *else_scope;
+    Scope *deref_scope;
+    Value *value;
+    bool ignore;
 };
 
 #endif

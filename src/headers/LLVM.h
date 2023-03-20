@@ -43,7 +43,7 @@ char *llvm_ir_load(LB *b, Type *type, char *var);
 char *llvm_ir_bool_i1(LB *b, Str *ir, char *val);
 char *llvm_ir_class_prop_access(LB *b, Class *class, char *on, ClassProp *prop);
 Array *llvm_ir_fcall_args(LB *b, Scope *scope, Array *values);
-char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, bool can_error);
+char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr * or);
 char *llvm_ir_func_ptr(LB *b, Func *func);
 char *llvm_ir_cast(LB *b, char *lval, Type *from_type, Type *to_type);
 char *llvm_ir_string(LB *b, char *body);

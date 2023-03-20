@@ -606,7 +606,7 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
                 array_push(values, right);
                 Value *on = vgen_fptr(alc, func, NULL);
                 fcall_type_check(fc, on, values);
-                return vgen_fcall(alc, on, values, func->rett);
+                return vgen_fcall(alc, on, values, func->rett, NULL);
             }
         }
     }
@@ -934,14 +934,66 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
+    FCallOr * or = NULL;
+
     if (can_error) {
+
         tok(fc, token, false, true);
+
+        Scope *deref_scope = usage_create_deref_scope(alc, scope);
+        Scope *else_scope = usage_scope_init(alc, scope, sct_default);
+        Scope *usage_scope = usage_scope_init(alc, scope, sct_default);
+        Array *ancestors = array_make(alc, 10);
+        array_push(ancestors, usage_scope);
+        array_push(ancestors, else_scope);
+
+        or = al(alc, sizeof(FCallOr));
+        or->scope = usage_scope;
+        or->else_scope = else_scope;
+        or->deref_scope = deref_scope;
+        or->value = NULL;
+        or->ignore = false;
+
         if (strcmp(token, "!!") == 0) {
+            // !!
+            tok(fc, token, false, true);
+            bool single_line = strcmp(token, "{") != 0;
+            if (single_line)
+                rtok(fc);
+
+            read_ast(fc, usage_scope, single_line);
+            usage_merge_ancestors(alc, scope, ancestors);
+
+            if (!usage_scope->did_return) {
+                sprintf(fc->sbuf, "Scope did not use return, break, continue, exit or panic");
+                fc_error(fc);
+            }
+
         } else if (strcmp(token, "!?") == 0) {
+            // !?
+            Value *right = read_value(fc, alc, usage_scope, true, 0, false);
+            usage_merge_ancestors(alc, scope, ancestors);
+
+            type_check(fc, rett, right->rett);
+
+            or->value = right;
+
+        } else if (strcmp(token, "!-") == 0) {
+            // !-
+            if (!type_is_void(rett)) {
+                sprintf(fc->sbuf, "You cannot use '!-' when the function returns a value. It needs an alternative value '!?' or exit the current scope '!!'");
+                fc_error(fc);
+            }
+
+            or->ignore = true;
+
+        } else {
+            sprintf(fc->sbuf, "The function can return errors, expected '!?', '!!' or '!-', but found '%s'", token);
+            fc_error(fc);
         }
     }
 
-    return vgen_fcall(alc, on, values, rett);
+    return vgen_fcall(alc, on, values, rett, or);
 }
 
 bool value_is_assignable(Value *v) {
