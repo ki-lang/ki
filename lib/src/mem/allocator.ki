@@ -1,6 +1,6 @@
 
 class Allocator norc {
-	first: Block = null;
+	first: Block;
 	current: Block;
 	block_count: uxx;
 	total_slots: uxx;

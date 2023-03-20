@@ -95,8 +95,8 @@ Type *type_gen_fptr(Allocator *alc, Func *func) {
 
     t->func_args = func->args;
     t->func_rett = func->rett;
-    // t->func_errors = func->errors;
-    // t->func_can_error = func->can_error;
+    t->func_errors = func->errors;
+    t->func_can_error = func->can_error;
 
     return t;
 }
@@ -294,9 +294,14 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
     if (t2t == type_null && t1->nullable) {
         return true;
     }
+    if (t2->nullable && !t1->nullable) {
+        if (reason)
+            *reason = "Trying to assign nullable type to a non nullable type";
+        return false;
+    }
     if (t1t != t2t) {
         if (reason)
-            *reason = "Types are not compatible";
+            *reason = "Different kind of types. E.g. number/pointer or integer/float";
         return false;
     }
     if (t1->bytes != t2->bytes) {
@@ -326,11 +331,6 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
                 *reason = "Classes are not the same";
             return false;
         }
-    }
-    if (t2->nullable && !t1->nullable) {
-        if (reason)
-            *reason = "Trying to assign nullable type to a non nullable type";
-        return false;
     }
     if (t1t == type_func_ptr) {
         Array *t1_args = t1->func_args;

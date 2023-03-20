@@ -49,8 +49,8 @@ void stage_5_class(Fc *fc, Class *class) {
         fc->chunk = chunk;
 
         Value *val = read_value(fc, alc, class->scope, false, 0, false);
-        // let tval = val.try_convert(fc, class.scope, prop.type);
-        // prop.type.compat_check(fc, tval.rett);
+        val = try_convert(fc, alc, val, prop->type);
+        type_check(fc, prop->type, val->rett);
 
         prop->value = val;
     }
@@ -77,8 +77,8 @@ void stage_5_func(Fc *fc, Func *func) {
         fc->chunk = chunk;
 
         Value *val = read_value(fc, alc, fc->scope, false, 0, false);
-        // let tval = val.try_convert(fc, class.scope, prop.type);
-        // prop.type.compat_check(fc, tval.rett);
+        val = try_convert(fc, alc, val, arg->type);
+        type_check(fc, arg->type, val->rett);
 
         arg->value = val;
     }

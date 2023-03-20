@@ -260,6 +260,9 @@ struct Func {
     bool is_generated;
     bool can_error;
     bool call_derefs;
+    // Optimizations
+    bool opt_hot;
+    bool opt_inline;
 };
 struct Enum {
     char *name;

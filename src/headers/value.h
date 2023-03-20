@@ -53,6 +53,9 @@ struct VOp {
 struct VFcall {
     Value *on;
     Array *args;
+    Scope *else_scope;
+    Value *else_value;
+    bool else_ignore;
 };
 struct VFuncPtr {
     Func *func;

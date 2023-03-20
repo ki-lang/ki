@@ -165,6 +165,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
         if (strcmp(token, "func") == 0) {
             // Function
             tok(fc, token, true, true);
+
             if (!is_valid_varname(token)) {
                 sprintf(fc->sbuf, "Invalid function name syntax: '%s'", token);
                 fc_error(fc);
@@ -297,6 +298,8 @@ void stage_2_func(Fc *fc, Func *func) {
         }
 
         Arg *arg = arg_init(alc, name, type, mutable);
+        arg->value_chunk = val_chunk;
+
         array_push(func->args, arg);
         map_set(func->args_by_name, name, arg);
     }
@@ -307,33 +310,47 @@ void stage_2_func(Fc *fc, Func *func) {
     // Return type
     func->rett = read_type(fc, alc, func->scope->parent, true, true);
 
-    // i = tok(fc, token, false, true);
-    // if (strcmp(token, "or") == 0) {
-    //     // Read error codes
-    //     func->can_error = true;
-    //     func->scope->can_error = true;
-    //     fc->i = i;
+    Array *errors = NULL;
 
-    //     func->error_codes = array_make(2);
-    //     while (true) {
-    //         fc->i = tok(fc, token, true, true);
-    //         if (!is_valid_varname(token)) {
-    //             fc_error(fc, "Invalid error code syntax: '%s'", token);
-    //         }
-    //         if (array_contains(func->error_codes, token, arr_find_str)) {
-    //             fc_error(fc, "Duplicate error code: '%s'", token);
-    //         }
+    tok(fc, token, false, true);
 
-    //         array_push(func->error_codes, strdup(token));
+    while (strcmp(token, "!") == 0) {
+        if (!errors) {
+            errors = array_make(alc, 4);
+            func->can_error = true;
+        }
 
-    //         i = tok(fc, token, true, true);
-    //         if (strcmp(token, ",") == 0) {
-    //             fc->i = i;
-    //             continue;
-    //         }
-    //         break;
-    //     }
-    // }
+        tok(fc, token, true, false);
+        if (!is_valid_varname(token)) {
+            sprintf(fc->sbuf, "Invalid error name '%s'", token);
+            fc_error(fc);
+        }
+        if (array_contains(errors, token, arr_find_str)) {
+            sprintf(fc->sbuf, "Duplicate error name '%s'", token);
+            fc_error(fc);
+        }
+        array_push(errors, dups(alc, token));
+
+        tok(fc, token, false, true);
+    }
+
+    func->errors = errors;
+
+    while (strcmp(token, "%") == 0) {
+        tok(fc, token, false, false);
+        if (strcmp(token, "hot") == 0) {
+            func->opt_hot = true;
+        } else if (strcmp(token, "inline") == 0) {
+            func->opt_inline = true;
+        } else {
+            sprintf(fc->sbuf, "Unknown tag '%s'", token);
+            fc_error(fc);
+        }
+
+        tok(fc, token, false, true);
+    }
+
+    rtok(fc);
 
     // if (func == g_main_func) {
     //     //

@@ -934,6 +934,13 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
+    if (can_error) {
+        tok(fc, token, false, true);
+        if (strcmp(token, "!!") == 0) {
+        } else if (strcmp(token, "!?") == 0) {
+        }
+    }
+
     return vgen_fcall(alc, on, values, rett);
 }
 

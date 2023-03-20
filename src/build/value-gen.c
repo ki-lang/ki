@@ -47,11 +47,14 @@ Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op)
     return value_init(alc, v_compare, item, type_gen(b, alc, "bool"));
 }
 
-Value *vgen_fcall(Allocator *alc, Value *on, Array *values, Type *rett) {
+Value *vgen_fcall(Allocator *alc, Value *on, Array *values, Type *rett, Scope *else_scope, Value *else_value, bool else_ignore) {
     //
     VFcall *item = al(alc, sizeof(VFcall));
     item->on = on;
     item->args = values;
+    item->else_scope = else_scope;
+    item->else_value = else_value;
+    item->else_ignore = else_ignore;
     return value_init(alc, v_fcall, item, rett);
 }
 

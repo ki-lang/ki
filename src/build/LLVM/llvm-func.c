@@ -65,7 +65,16 @@ void llvm_gen_func_ir(LB *b) {
         //     b.func_arg_err = var_err;
         //     b.func_arg_msg = var_msg;
         // }
-        str_append_chars(ir, ") {\n");
+        str_append_chars(ir, ")");
+
+        if (func->opt_hot) {
+            str_append_chars(ir, " hot");
+        }
+        if (func->opt_inline) {
+            str_append_chars(ir, " alwaysinline");
+        }
+
+        str_append_chars(ir, " {\n");
 
         // Error buffers
         // if (func->scope->create_error_buffers) {
