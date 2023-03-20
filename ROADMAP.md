@@ -3,8 +3,7 @@
 
 Feature todo list in order:
 
-- Error handling
-- Iterators
+- Custom iterators
 - Check class property access types (public,private,readonly)
 - Calling functions with named arguments
 - Package manager
