@@ -5,7 +5,7 @@ Feature todo list in order:
 
 - Custom iterators
 - Check class property access types (public,private,readonly)
-- Calling functions with named arguments
+- Calling functions using named arguments
 - Package manager
 - Testing features
 - Declare functions for classes/structs from other libraries
