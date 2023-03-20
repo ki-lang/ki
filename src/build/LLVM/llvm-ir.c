@@ -184,8 +184,8 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
     char *err_var = NULL;
     char *err_msg_var = NULL;
     if (ort) {
-        err_var = llvm_var(b);
-        err_msg_var = llvm_var(b);
+        err_var = llvm_alloca(b, type_gen(b->fc->b, b->alc, "i32"));
+        err_msg_var = llvm_alloca(b, type_gen(b->fc->b, b->alc, "ptr"));
         if (argc > 0) {
             str_append_chars(ir, ", ");
         }
@@ -196,9 +196,10 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
     }
     str_append_chars(ir, ")\n");
 
-    if (ort && !ort->ignore) {
+    if (ort) {
 
-        char *iszero = llvm_ir_iszero_i1(b, "i32", err_var);
+        char *load_err = llvm_ir_load(b, type_gen(b->fc->b, b->alc, "i32"), err_var);
+        char *iszero = llvm_ir_iszero_i1(b, "i32", load_err);
 
         if (ort->value) {
             // !?
@@ -208,7 +209,8 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
 
             char *current_block_name = b->lfunc->block->name;
 
-            llvm_write_ast(b, ort->deref_scope);
+            if (ort->deref_scope)
+                llvm_write_ast(b, ort->deref_scope);
 
             llvm_ir_cond_jump(b, llvm_b_ir(b), iszero, b_else, b_code);
 
@@ -252,7 +254,8 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
             LLVMBlock *b_else = llvm_block_init_auto(b);
             LLVMBlock *b_after = llvm_block_init_auto(b);
 
-            llvm_write_ast(b, ort->deref_scope);
+            if (ort->deref_scope)
+                llvm_write_ast(b, ort->deref_scope);
 
             llvm_ir_cond_jump(b, llvm_b_ir(b), iszero, b_else, b_code);
 

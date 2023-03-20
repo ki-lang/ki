@@ -110,7 +110,6 @@ struct FCallOr {
     Scope *else_scope;
     Scope *deref_scope;
     Value *value;
-    bool ignore;
 };
 
 #endif

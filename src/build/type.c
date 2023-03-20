@@ -287,6 +287,8 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
     bool t1void = type_is_void(t1);
     bool t2void = type_is_void(t2);
     if (t1void || t2void) {
+        if (reason)
+            *reason = "One type is void, the other is not";
         return t1void == t2void;
     }
     int t1t = t1->type;
@@ -411,6 +413,8 @@ char *type_to_str(Type *t, char *res) {
         }
     } else if (t->type == type_null) {
         strcat(res, "null");
+    } else if (t->type == type_void) {
+        strcat(res, "void");
     } else if (t->type == type_func_ptr) {
         strcat(res, "fn (");
         char sub_str[256];

@@ -68,6 +68,10 @@ void stage_8(Build *b) {
         }
     }
 
+    if (!b->main_func) {
+        die("❌ Missing 'main' function");
+    }
+
     if (compiled_any || !file_exists(b->path_out)) {
         stage_8_link(b, o_files);
     }
