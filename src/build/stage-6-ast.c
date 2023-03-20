@@ -5,6 +5,7 @@ void stage_6_func(Fc *fc, Func *func);
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
+void token_throw(Allocator *alc, Fc *fc, Scope *scope);
 void token_if(Allocator *alc, Fc *fc, Scope *scope);
 void token_while(Allocator *alc, Fc *fc, Scope *scope);
 
@@ -103,6 +104,10 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         if (strcmp(token, "return") == 0) {
             token_return(alc, fc, scope);
+            continue;
+        }
+        if (strcmp(token, "throw") == 0) {
+            token_throw(alc, fc, scope);
             continue;
         }
         if (strcmp(token, "break") == 0) {
@@ -344,6 +349,45 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
     deref_scope(alc, scope, fscope);
 
     array_push(scope->ast, tgen_return(alc, fscope, retval));
+    tok_expect(fc, ";", false, true);
+
+    scope->did_return = true;
+}
+
+void token_throw(Allocator *alc, Fc *fc, Scope *scope) {
+    //
+    Scope *fscope = scope_find(scope, sct_func);
+    if (!fscope) {
+        sprintf(fc->sbuf, "Using 'throw' outside function scope");
+        fc_error(fc);
+    }
+    Func *func = fscope->func;
+    deref_scope(alc, scope, fscope);
+    if (!func->can_error) {
+        sprintf(fc->sbuf, "You cannot use 'throw' in a function that has no errors defined");
+        fc_error(fc);
+    }
+
+    char *token = fc->token;
+    Array *errors = func->errors;
+
+    if (!func->errors) {
+        sprintf(fc->sbuf, "Missing list of errors (compiler bug)");
+        fc_error(fc);
+    }
+
+    tok(fc, token, true, true);
+    int index = array_find(errors, token, arr_find_str);
+    if (index < 0) {
+        sprintf(fc->sbuf, "The function has no error named '%s'", token);
+        fc_error(fc);
+    }
+
+    Throw *throw = al(fc->alc, sizeof(Throw));
+    throw->func = func;
+    throw->code = index + 1;
+
+    array_push(scope->ast, token_init(alc, tkn_throw, throw));
     tok_expect(fc, ";", false, true);
 
     scope->did_return = true;

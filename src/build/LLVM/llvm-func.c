@@ -53,20 +53,20 @@ void llvm_gen_func_ir(LB *b) {
 
             map_set(fscope->lvars, arg->name, v);
         }
-        if (func->can_error) {
-            if (argc > 0) {
-                str_append_chars(ir, ", ");
-            }
-            char *err_var = llvm_var(b);
-            char *err_msg_var = llvm_var(b);
-            str_append_chars(ir, "i32* noundef ");
-            str_append_chars(ir, err_var);
-            str_append_chars(ir, ", i8** noundef ");
-            str_append_chars(ir, err_msg_var);
+        // if (func->can_error) {
+        //     if (argc > 0) {
+        //         str_append_chars(ir, ", ");
+        //     }
+        //     char *err_var = llvm_var(b);
+        //     char *err_msg_var = llvm_var(b);
+        //     str_append_chars(ir, "i32* noundef ");
+        //     str_append_chars(ir, err_var);
+        //     str_append_chars(ir, ", i8** noundef ");
+        //     str_append_chars(ir, err_msg_var);
 
-            // b.func_arg_err = var_err;
-            // b.func_arg_msg = var_msg;
-        }
+        //     // b.func_arg_err = var_err;
+        //     // b.func_arg_msg = var_msg;
+        // }
         str_append_chars(ir, ")");
 
         if (func->opt_hot) {
@@ -192,11 +192,11 @@ void llvm_define_ext_func(LB *b, Func *func) {
         if (arg->type->ptr_depth > 0 && !arg->type->nullable)
             str_append_chars(ir, " nonnull");
     }
-    if (func->can_error) {
-        if (argc > 0) {
-            str_append_chars(ir, ", ");
-        }
-        str_append_chars(ir, "i32* noundef, i8** noundef");
-    }
+    // if (func->can_error) {
+    //     if (argc > 0) {
+    //         str_append_chars(ir, ", ");
+    //     }
+    //     str_append_chars(ir, "i32* noundef, i8** noundef");
+    // }
     str_append_chars(ir, ")\n");
 }

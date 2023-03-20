@@ -6,6 +6,7 @@ typedef struct Token Token;
 typedef struct TIf TIf;
 typedef struct TWhile TWhile;
 typedef struct TExec TExec;
+typedef struct Throw Throw;
 
 #include "structs.h"
 #include "value.h"
@@ -28,6 +29,10 @@ struct TWhile {
 struct TExec {
     Scope *scope;
     bool enable;
+};
+struct Throw {
+    Func *func;
+    int code;
 };
 
 #endif

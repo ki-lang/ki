@@ -54,6 +54,23 @@ void llvm_gen_global_ir(LB *b) {
         scope->lvars = map_make(b->alc);
     }
 
+    bool is_main_fc = fc->b->main_func->fc == fc;
+
+    char bytes[20];
+    sprintf(bytes, "%d", fc->b->ptr_size);
+
+    if (is_main_fc) {
+        str_append_chars(ir, "@ki_err_code_buffer = thread_local(initialexec) global i32 0, align 4\n");
+        str_append_chars(ir, "@ki_err_msg_buffer = thread_local(initialexec) global i8* null, align ");
+        str_append_chars(ir, bytes);
+        str_append_chars(ir, "\n");
+    } else {
+        str_append_chars(ir, "@ki_err_code_buffer = external global i32, align 4\n");
+        str_append_chars(ir, "@ki_err_msg_buffer = external global i8*, align ");
+        str_append_chars(ir, bytes);
+        str_append_chars(ir, "\n");
+    }
+
     for (int i = 0; i < fc->globals->length; i++) {
         Global *g = array_get_index(fc->globals, i);
 

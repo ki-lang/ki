@@ -181,24 +181,26 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
         }
         str_append_chars(ir, lval);
     }
-    char *err_var = NULL;
-    char *err_msg_var = NULL;
-    if (ort) {
-        err_var = llvm_alloca(b, type_gen(b->fc->b, b->alc, "i32"));
-        err_msg_var = llvm_alloca(b, type_gen(b->fc->b, b->alc, "ptr"));
-        if (argc > 0) {
-            str_append_chars(ir, ", ");
-        }
-        str_append_chars(ir, "i32* noundef ");
-        str_append_chars(ir, err_var);
-        str_append_chars(ir, ", i8** noundef ");
-        str_append_chars(ir, err_msg_var);
-    }
+    // char *err_var = NULL;
+    // char *err_msg_var = NULL;
+    // if (ort) {
+    //     err_var = llvm_alloca(b, type_gen(b->fc->b, b->alc, "i32"));
+    //     err_msg_var = llvm_alloca(b, type_gen(b->fc->b, b->alc, "ptr"));
+    //     if (argc > 0) {
+    //         str_append_chars(ir, ", ");
+    //     }
+    //     str_append_chars(ir, "i32* noundef ");
+    //     str_append_chars(ir, err_var);
+    //     str_append_chars(ir, ", i8** noundef ");
+    //     str_append_chars(ir, err_msg_var);
+    // }
     str_append_chars(ir, ")\n");
 
     if (ort) {
 
-        char *load_err = llvm_ir_load(b, type_gen(b->fc->b, b->alc, "i32"), err_var);
+        Type *err_code_type = type_gen(b->fc->b, b->alc, "i32");
+
+        char *load_err = llvm_ir_load(b, err_code_type, "@ki_err_code_buffer");
         char *iszero = llvm_ir_iszero_i1(b, "i32", load_err);
 
         if (ort->value) {
@@ -215,6 +217,7 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
             llvm_ir_cond_jump(b, llvm_b_ir(b), iszero, b_else, b_code);
 
             b->lfunc->block = b_code;
+            llvm_ir_store(b, err_code_type, "@ki_err_code_buffer", "0");
             llvm_write_ast(b, ort->scope);
             char *rlval = llvm_value(b, ort->scope, ort->value);
             llvm_ir_jump(llvm_b_ir(b), b_after);

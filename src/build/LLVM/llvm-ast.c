@@ -78,6 +78,26 @@ void llvm_write_ast(LB *b, Scope *scope) {
             str_append_chars(rir, "\n");
             continue;
         }
+        if (t->type == tkn_throw) {
+            Throw *item = t->item;
+            Type *err_code_type = type_gen(b->fc->b, b->alc, "i32");
+            char code[20];
+            sprintf(code, "%d", item->code);
+            llvm_ir_store(b, err_code_type, "@ki_err_code_buffer", code);
+
+            Type *rett = item->func->rett;
+            char *ltype = llvm_type(b, rett);
+
+            Str *ir = llvm_b_ir(b);
+            str_append_chars(ir, "  ret ");
+            str_append_chars(ir, ltype);
+            if (!type_is_void(item->func->rett)) {
+                str_append_chars(ir, " ");
+                str_append_chars(ir, item->func->rett->ptr_depth > 0 ? "null" : "0");
+            }
+            str_append_chars(ir, "\n");
+            continue;
+        }
         if (t->type == tkn_if) {
             TIf *ift = t->item;
             llvm_if(b, scope, ift);
