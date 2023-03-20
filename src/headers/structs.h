@@ -236,6 +236,8 @@ struct Class {
     Func *func_deref;
     Func *func_deref_props;
     Func *func_free;
+    Func *func_iter_init;
+    Func *func_iter_get;
     Array *generic_names;
     Array *generic_types;
     Map *generics;
@@ -249,6 +251,7 @@ struct Class {
     bool must_ref;
     bool must_deref;
     bool is_struct;
+    bool can_iter;
 };
 struct ClassProp {
     Type *type;
@@ -310,6 +313,7 @@ struct Arg {
     bool is_mut;
     Value *value;
     Chunk *value_chunk;
+    Chunk *type_chunk;
     Decl *decl;
 };
 struct UsageLine {

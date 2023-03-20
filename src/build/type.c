@@ -222,6 +222,13 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         }
     }
 
+    tok(fc, token, true, false);
+    while (strcmp(token, "*") == 0) {
+        type->ptr_depth++;
+        tok(fc, token, true, false);
+    }
+    rtok(fc);
+
     //
     if (nullable) {
         if (type->ptr_depth == 0) {
@@ -240,8 +247,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
 Type *type_clone(Allocator *alc, Type *type) {
     //
-    die("TODO : type clone");
-    return type;
+    Type *t = type_init(alc);
+    *t = *type;
+    return t;
 }
 
 Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed) {
@@ -385,22 +393,25 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
 
 char *type_to_str(Type *t, char *res) {
     //
+    int depth = t->ptr_depth;
+
     strcpy(res, "");
-    if (t->type == type_ptr && t->class == NULL) {
-        strcat(res, "ptr");
-        return res;
-    }
+    // if (t->type == type_ptr && t->class == NULL) {
+    //     strcat(res, "ptr");
+    //     return res;
+    // }
     if (t->nullable) {
         strcat(res, "?");
-    }
-    if (t->ptr_depth - 1 > 0) {
-        strcat(res, "*=>");
     }
     if (t->is_strict) {
         strcat(res, "*");
     }
     if (t->class) {
         Class *class = t->class;
+
+        if (class->type == ct_struct)
+            depth--;
+
         strcat(res, class->dname);
         if (class->generic_types) {
             strcat(res, "[");
@@ -421,7 +432,8 @@ char *type_to_str(Type *t, char *res) {
     } else if (t->type == type_void) {
         strcat(res, "void");
     } else if (t->type == type_func_ptr) {
-        strcat(res, "fn (");
+        depth--;
+        strcat(res, "fn(");
         char sub_str[256];
         for (int i = 0; i < t->func_args->length; i++) {
             if (i > 0) {
@@ -430,7 +442,7 @@ char *type_to_str(Type *t, char *res) {
             Arg *arg = array_get_index(t->func_args, i);
             strcat(res, type_to_str(arg->type, sub_str));
         }
-        strcat(res, ") ");
+        strcat(res, ")(");
         strcat(res, type_to_str(t->func_rett, sub_str));
         if (t->func_errors) {
             strcat(res, " or ");
@@ -441,8 +453,13 @@ char *type_to_str(Type *t, char *res) {
                 strcat(res, array_get_index(t->func_errors, i));
             }
         }
+        strcat(res, ")");
     } else {
         strcat(res, "(Unknown type)");
+    }
+    while (depth > 0) {
+        depth--;
+        strcat(res, "*");
     }
     return res;
 }

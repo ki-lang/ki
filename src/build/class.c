@@ -20,11 +20,14 @@ Class *class_init(Allocator *alc) {
     class->funcs = map_make(alc);
     class->allow_math = false;
     class->is_struct = false;
+    class->can_iter = false;
 
     class->func_ref = NULL;
     class->func_deref = NULL;
     class->func_deref_props = NULL;
     class->func_free = NULL;
+    class->func_iter_init = NULL;
+    class->func_iter_get = NULL;
 
     return class;
 }

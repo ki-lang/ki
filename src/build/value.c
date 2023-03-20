@@ -71,9 +71,19 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
     } else if (strcmp(token, "null") == 0) {
         v = vgen_null(alc, b);
     } else if (strcmp(token, "ptrv") == 0) {
-        Value *on = read_value(fc, alc, scope, false, 0, false);
-        tok_expect(fc, "as", true, true);
-        Type *type = read_type(fc, alc, scope, true, true);
+        Value *on = read_value(fc, alc, scope, false, 1, false);
+        Type *type = on->rett;
+        if (type->ptr_depth < 1) {
+            sprintf(fc->sbuf, "You can only use 'ptrv' on pointer type values");
+            fc_error(fc);
+        }
+        if (type->type == type_ptr) {
+            tok_expect(fc, "as", true, true);
+            type = read_type(fc, alc, scope, true, true);
+        } else {
+            type = type_clone(alc, type);
+            type->ptr_depth--;
+        }
         v = vgen_ptrv(alc, on, type);
         //
     } else if (strcmp(token, "getptr") == 0) {
