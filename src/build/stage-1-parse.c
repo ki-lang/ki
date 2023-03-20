@@ -133,6 +133,7 @@ void stage_1_func(Fc *fc) {
 
 void stage_1_class(Fc *fc, bool is_struct) {
     //
+    Build *b = fc->b;
     char *token = fc->token;
     tok(fc, token, true, true);
 
@@ -169,6 +170,36 @@ void stage_1_class(Fc *fc, bool is_struct) {
     }
 
     map_set(class->scope->identifiers, "CLASS", idf);
+
+    if (!b->core_types_scanned) {
+        if (fc->nsc == b->nsc_type) {
+            if (strcmp(name, "u8") == 0) {
+                b->class_u8 = class;
+            } else if (strcmp(name, "u16") == 0) {
+                b->class_u16 = class;
+            } else if (strcmp(name, "u32") == 0) {
+                b->class_u32 = class;
+            } else if (strcmp(name, "u64") == 0) {
+                b->class_u64 = class;
+            } else if (strcmp(name, "i8") == 0) {
+                b->class_i8 = class;
+            } else if (strcmp(name, "i16") == 0) {
+                b->class_i16 = class;
+            } else if (strcmp(name, "i32") == 0) {
+                b->class_i32 = class;
+            } else if (strcmp(name, "i64") == 0) {
+                b->class_i64 = class;
+            } else if (strcmp(name, "ptr") == 0) {
+                b->class_ptr = class;
+            } else if (strcmp(name, "String") == 0) {
+                b->class_string = class;
+            } else if (strcmp(name, "Array") == 0) {
+                b->class_array = class;
+            } else if (strcmp(name, "Map") == 0) {
+                b->class_map = class;
+            }
+        }
+    }
 
     if (get_char(fc, 0) == '[') {
         chunk_move(fc->chunk, 1);

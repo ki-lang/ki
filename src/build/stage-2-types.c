@@ -13,6 +13,8 @@ void stage_2(Fc *fc) {
         printf("# Stage 2 : Read types : %s\n", fc->path_ki);
     }
 
+    b->core_types_scanned = true;
+
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
@@ -351,6 +353,18 @@ void stage_2_func(Fc *fc, Func *func) {
     }
 
     rtok(fc);
+
+    Build *b = fc->b;
+    if (func == fc->b->main_func) {
+        // Type check arguments / return type
+
+        Type *rett = func->rett;
+        Class *class = rett->class;
+        if ((!type_is_void(rett) && class != b->class_i32) || rett->ptr_depth > 0) {
+            sprintf(fc->sbuf, "func 'main' should return 'void' or 'i32'");
+            fc_error(fc);
+        }
+    }
 
     // if (func == g_main_func) {
     //     //

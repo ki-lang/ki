@@ -69,6 +69,8 @@ struct Build {
     Nsc *nsc_main;
     Pkc *pkc_ki;
     Func *main_func;
+    Nsc *nsc_type;
+    Nsc *nsc_io;
     //
     Array *packages;
     Array *all_ki_files;
@@ -86,6 +88,19 @@ struct Build {
     Chain *stage_5;
     Chain *stage_6;
     //
+    Class *class_u8;
+    Class *class_u16;
+    Class *class_u32;
+    Class *class_u64;
+    Class *class_i8;
+    Class *class_i16;
+    Class *class_i32;
+    Class *class_i64;
+    Class *class_ptr;
+    Class *class_string;
+    Class *class_array;
+    Class *class_map;
+    //
     int event_count;
     int events_done;
     int ptr_size;
@@ -97,6 +112,7 @@ struct Build {
     bool test;
     bool debug;
     bool clear_cache;
+    bool core_types_scanned;
 };
 
 struct Fc {

@@ -53,6 +53,11 @@ bool type_is_bool(Type *type, Build *b) {
 
 Type *type_gen_class(Allocator *alc, Class *class) {
     //
+    if (!class) {
+        printf("Generating type for class that doesnt exist yet (compiler bug)");
+        raise(11);
+    }
+
     int type = type_ptr;
     int bytes = class->fc->b->ptr_size;
     bool is_float = false;
@@ -183,8 +188,8 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
         rtok(fc);
 
-        Id *id = read_id(fc, sameline, allow_space, true);
-        Idf *idf = idf_by_id(fc, scope, id, true);
+        Id *id = read_id(fc, sameline, allow_space, false);
+        Idf *idf = id ? idf_by_id(fc, scope, id, false) : NULL;
 
         if (!idf) {
             sprintf(fc->sbuf, "Unknown type: '%s'", token);

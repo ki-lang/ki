@@ -155,12 +155,26 @@ void cmd_build(int argc, char *argv[]) {
     b->stage_5 = chain_make(alc);
     b->stage_6 = chain_make(alc);
     //
+    b->class_u8 = NULL;
+    b->class_u16 = NULL;
+    b->class_u32 = NULL;
+    b->class_u64 = NULL;
+    b->class_i8 = NULL;
+    b->class_i16 = NULL;
+    b->class_i32 = NULL;
+    b->class_i64 = NULL;
+    b->class_string = NULL;
+    b->class_array = NULL;
+    b->class_ptr = NULL;
+    //
+    b->core_types_scanned = false;
     b->ir_ready = false;
     b->optimize = optimize;
     b->test = test;
     b->debug = debug;
     b->clear_cache = clear_cache;
     b->LOC = 0;
+    //
 
     Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));
     Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
@@ -176,9 +190,9 @@ void cmd_build(int argc, char *argv[]) {
     array_push(b->packages, pkc_ki);
     array_push(b->packages, pkc_main);
 
-    pkc_load_nsc(pkc_ki, "type", NULL);
+    b->nsc_type = pkc_load_nsc(pkc_ki, "type", NULL);
+    b->nsc_io = pkc_load_nsc(pkc_ki, "io", NULL);
     pkc_load_nsc(pkc_ki, "mem", NULL);
-    pkc_load_nsc(pkc_ki, "io", NULL);
 
     //
     pthread_t thr;
