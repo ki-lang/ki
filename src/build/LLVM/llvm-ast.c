@@ -136,6 +136,40 @@ void llvm_write_ast(LB *b, Scope *scope) {
             b->while_after = prev_after;
             continue;
         }
+        if (t->type == tkn_each) {
+            TEach *item = t->item;
+
+            Value *on = item->value;
+            char *lon = llvm_value(b, scope, on);
+
+            Scope *sub = item->scope;
+            char *key_name = item->key_name;
+            char *value_name = item->value_name;
+
+            LLVMBlock *b_cond = llvm_block_init_auto(b);
+            LLVMBlock *b_code = llvm_block_init_auto(b);
+            LLVMBlock *b_after = llvm_block_init_auto(b);
+            LLVMBlock *prev_cond = b->while_cond;
+            LLVMBlock *prev_after = b->while_after;
+            b->while_cond = b_cond;
+            b->while_after = b_after;
+
+            b->lfunc->block = b_cond;
+            Str *ir_c = llvm_b_ir(b);
+            char *lcond_i1 = llvm_ir_bool_i1(b, ir_c, lcond);
+            llvm_ir_cond_jump(b, ir_c, lcond_i1, b_code, b_after);
+
+            b->lfunc->block = b_code;
+            llvm_write_ast(b, sub);
+            if (!sub->did_return) {
+                llvm_ir_jump(llvm_b_ir(b), b_cond);
+            }
+
+            b->lfunc->block = b_after;
+            b->while_cond = prev_cond;
+            b->while_after = prev_after;
+            continue;
+        }
         if (t->type == tkn_break) {
             LLVMBlock *after_block = b->while_after;
             llvm_ir_jump(llvm_b_ir(b), after_block);
