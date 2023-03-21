@@ -20,6 +20,7 @@ void alc_wipe(Allocator *alc) {
             free_block(block);
         } else {
             block->current_adr = block->start_adr;
+            block->space_left = block->size;
         }
         block = next;
     }
