@@ -444,16 +444,10 @@ char *type_to_str(Type *t, char *res) {
         }
         strcat(res, ")(");
         strcat(res, type_to_str(t->func_rett, sub_str));
-        if (t->func_errors) {
-            strcat(res, " or ");
-            for (int i = 0; i < t->func_errors->length; i++) {
-                if (i > 0) {
-                    strcat(res, ", ");
-                }
-                strcat(res, array_get_index(t->func_errors, i));
-            }
-        }
         strcat(res, ")");
+        if (t->func_errors) {
+            strcat(res, "!");
+        }
     } else {
         strcat(res, "(Unknown type)");
     }

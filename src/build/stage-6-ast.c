@@ -8,6 +8,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope);
 void token_throw(Allocator *alc, Fc *fc, Scope *scope);
 void token_if(Allocator *alc, Fc *fc, Scope *scope);
 void token_while(Allocator *alc, Fc *fc, Scope *scope);
+void token_each(Allocator *alc, Fc *fc, Scope *scope);
 
 void stage_6(Fc *fc) {
     //
@@ -108,6 +109,10 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
         if (strcmp(token, "throw") == 0) {
             token_throw(alc, fc, scope);
+            continue;
+        }
+        if (strcmp(token, "each") == 0) {
+            token_each(alc, fc, scope);
             continue;
         }
         if (strcmp(token, "break") == 0) {
@@ -466,4 +471,83 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
     usage_merge_ancestors(alc, scope, ancestors);
 
     array_push(scope->ast, tgen_while(alc, cond, sub));
+}
+
+void token_each(Allocator *alc, Fc *fc, Scope *scope) {
+    //
+    char *token = fc->token;
+    Value *value = read_value(fc, alc, scope, true, 0, false);
+    Scope *sub = usage_scope_init(alc, scope, sct_loop);
+
+    Type *type = value->rett;
+    Class *class = type->class;
+    bool valid = class ? true : false;
+    Func *f_init = NULL;
+    Func *f_get = NULL;
+    if (valid) {
+        f_init = map_get(class->funcs, "__iter_init");
+        f_get = map_get(class->funcs, "__iter_get");
+        valid = f_init && f_get;
+    }
+    if (!valid) {
+        sprintf(fc->sbuf, "Cannot use 'each' on this value. The type has no iteration functions.");
+        fc_error(fc);
+    }
+
+    tok_expect(fc, "as", false, true);
+    tok(fc, token, false, true);
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid variable name '%s'", token);
+        fc_error(fc);
+    }
+    name_taken_check(fc, scope, token);
+
+    char *key_name = NULL;
+    char *value_name = dups(alc, token);
+
+    tok(fc, token, false, true);
+    if (strcmp(token, ",") == 0) {
+        key_name = value_name;
+
+        tok(fc, token, false, true);
+        if (!is_valid_varname(token)) {
+            sprintf(fc->sbuf, "Invalid variable name '%s'", token);
+            fc_error(fc);
+        }
+        if (strcmp(token, value_name) == 0) {
+            sprintf(fc->sbuf, "Variable name already used '%s'", token);
+            fc_error(fc);
+        }
+        name_taken_check(fc, scope, token);
+        value_name = dups(alc, token);
+
+        tok(fc, token, false, true);
+    }
+
+    if (key_name) {
+        Decl *decl = decl_init(alc, sub, key_name, f_init->rett, NULL, false, false, false);
+        Var *var = var_init(alc, decl, decl->type);
+        Idf *idf = idf_init(alc, idf_var);
+        idf->item = var;
+        map_set(sub->identifiers, key_name, idf);
+        usage_line_init(alc, sub, decl);
+    }
+    if (value_name) {
+        Decl *decl = decl_init(alc, sub, value_name, f_get->rett, NULL, false, false, false);
+        Var *var = var_init(alc, decl, decl->type);
+        Idf *idf = idf_init(alc, idf_var);
+        idf->item = var;
+        map_set(sub->identifiers, value_name, idf);
+        usage_line_init(alc, sub, decl);
+    }
+
+    bool single_line = strcmp(token, ":") == 0;
+    if (!single_line && strcmp(token, "{") != 0) {
+        sprintf(fc->sbuf, "Expected '{' or ':' here, found '%s'", token);
+        fc_error(fc);
+    }
+
+    read_ast(fc, sub, single_line);
+
+    array_push(scope->ast, tgen_each(alc, value, sub, key_name, value_name));
 }

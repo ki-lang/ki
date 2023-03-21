@@ -493,7 +493,8 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
         stage_2_class_type_check(fc, func_iter, args, 1, NULL, false);
         Type *key_type = type_clone(alc, func_iter->rett);
         key_type->ptr_depth++;
-        args[1] = key_type;
+        args[1] = func_iter->rett;
+        args[2] = key_type;
         func = map_get(class->funcs, "__iter_get");
         if (func) {
             if (type_is_void(func->rett)) {
@@ -501,7 +502,7 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
                 sprintf(fc->sbuf, "__iter_get can have any return type except 'void'");
                 fc_error(fc);
             }
-            stage_2_class_type_check(fc, func, args, 2, NULL, true);
+            stage_2_class_type_check(fc, func, args, 3, NULL, true);
             class->can_iter = true;
         }
     }

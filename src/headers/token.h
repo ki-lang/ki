@@ -7,6 +7,7 @@ typedef struct TIf TIf;
 typedef struct TWhile TWhile;
 typedef struct TExec TExec;
 typedef struct Throw Throw;
+typedef struct TEach TEach;
 
 #include "structs.h"
 #include "value.h"
@@ -33,6 +34,12 @@ struct TExec {
 struct Throw {
     Func *func;
     int code;
+};
+struct TEach {
+    Value *value;
+    Scope *scope;
+    char *key_name;
+    char *value_name;
 };
 
 #endif

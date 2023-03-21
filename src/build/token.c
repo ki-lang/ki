@@ -48,3 +48,13 @@ Token *tgen_exec(Allocator *alc, Scope *scope, bool enable) {
     item->enable = enable;
     return token_init(alc, tkn_exec, item);
 }
+
+Token *tgen_each(Allocator *alc, Value *value, Scope *scope, char *key_name, char *value_name) {
+    //
+    TEach *item = al(alc, sizeof(TEach));
+    item->value = value;
+    item->scope = scope;
+    item->key_name = key_name;
+    item->value_name = value_name;
+    return token_init(alc, tkn_each, item);
+}
