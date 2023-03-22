@@ -35,6 +35,7 @@ void llvm_write_ast(LB *b, Scope *scope);
 
 // IR
 char *llvm_ir_isnull_i1(LB *b, char *ltype, char *val);
+char *llvm_ir_iszero_i1(LB *b, char *ltype, char *val);
 char *llvm_ir_cmp(LB *b, char *ltype, char *val, char *cmd, char *with);
 void llvm_ir_jump(Str *ir, LLVMBlock *block);
 void llvm_ir_cond_jump(LB *b, Str *ir, char *var_i1, LLVMBlock *a_block, LLVMBlock *b_block);
@@ -43,6 +44,7 @@ char *llvm_ir_load(LB *b, Type *type, char *var);
 char *llvm_ir_bool_i1(LB *b, Str *ir, char *val);
 char *llvm_ir_class_prop_access(LB *b, Class *class, char *on, ClassProp *prop);
 Array *llvm_ir_fcall_args(LB *b, Scope *scope, Array *values);
+char *llvm_ir_fcall_arg(LB *b, char *lval, char *ltype);
 char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr * or);
 char *llvm_ir_func_ptr(LB *b, Func *func);
 char *llvm_ir_cast(LB *b, char *lval, Type *from_type, Type *to_type);

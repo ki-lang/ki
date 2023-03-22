@@ -553,13 +553,16 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
         Type *as_type = v->rett;
 
         char *lval = llvm_value(b, scope, val);
+        char *lval_type = llvm_type(b, val->rett);
         char *ltype = llvm_type(b, as_type);
         char *var_result = llvm_var(b);
 
         Str *ir = llvm_b_ir(b);
         str_append_chars(ir, "  ");
         str_append_chars(ir, var_result);
-        str_append_chars(ir, " = bitcast i8* ");
+        str_append_chars(ir, " = bitcast ");
+        str_append_chars(ir, lval_type);
+        str_append_chars(ir, " ");
         str_append_chars(ir, lval);
         str_append_chars(ir, " to ");
         str_append_chars(ir, ltype);

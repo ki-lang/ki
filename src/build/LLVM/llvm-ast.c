@@ -141,10 +141,26 @@ void llvm_write_ast(LB *b, Scope *scope) {
 
             Value *on = item->value;
             char *lon = llvm_value(b, scope, on);
+            char *lon_type = llvm_type(b, on->rett);
 
             Scope *sub = item->scope;
             char *key_name = item->key_name;
             char *value_name = item->value_name;
+
+            Type *type = on->rett;
+            Class *class = type->class;
+            Func *f_init = map_get(class->funcs, "__iter_init");
+            Func *f_get = map_get(class->funcs, "__iter_get");
+            char *lf_init = llvm_ir_func_ptr(b, f_init);
+            char *lf_get = llvm_ir_func_ptr(b, f_get);
+            Type *key_type = f_init->rett;
+            char *key_ltype = llvm_type(b, key_type);
+            Type *value_type = f_get->rett;
+            char *value_ltype = llvm_type(b, value_type);
+
+            char key_ltype_pointer[200];
+            strcpy(key_ltype_pointer, key_ltype);
+            strcat(key_ltype_pointer, "*");
 
             LLVMBlock *b_cond = llvm_block_init_auto(b);
             LLVMBlock *b_code = llvm_block_init_auto(b);
@@ -154,11 +170,35 @@ void llvm_write_ast(LB *b, Scope *scope) {
             b->while_cond = b_cond;
             b->while_after = b_after;
 
-            b->lfunc->block = b_cond;
-            Str *ir_c = llvm_b_ir(b);
-            char *lcond_i1 = llvm_ir_bool_i1(b, ir_c, lcond);
-            llvm_ir_cond_jump(b, ir_c, lcond_i1, b_code, b_after);
+            // Init key
+            char *next_key_var = llvm_alloca(b, key_type);
+            Array *key_init_args = array_make(alc, 2);
+            array_push(key_init_args, llvm_ir_fcall_arg(b, lon, lon_type));
+            char *next_key_val = llvm_ir_func_call(b, lf_init, key_init_args, key_ltype, NULL);
+            llvm_ir_store(b, f_init->rett, next_key_var, next_key_val);
+            //
+            llvm_ir_jump(llvm_b_ir(b), b_cond);
 
+            // Start loop (get value & next key)
+            b->lfunc->block = b_cond;
+            // Call __iter_get
+            char *key_val = llvm_ir_load(b, f_init->rett, next_key_var);
+            Array *get_args = array_make(alc, 2);
+            array_push(get_args, llvm_ir_fcall_arg(b, lon, lon_type));
+            array_push(get_args, llvm_ir_fcall_arg(b, key_val, key_ltype));
+            array_push(get_args, llvm_ir_fcall_arg(b, next_key_var, key_ltype_pointer));
+            char *lval = llvm_ir_func_call(b, lf_get, get_args, value_ltype, NULL);
+            // Check error
+            Type *err_code_type = type_gen(b->fc->b, b->alc, "i32");
+            char *load_err = llvm_ir_load(b, err_code_type, "@ki_err_code_buffer");
+            char *iszero = llvm_ir_iszero_i1(b, "i32", load_err);
+            llvm_ir_cond_jump(b, llvm_b_ir(b), iszero, b_code, b_after);
+            // Set variable values
+            if (item->key_name)
+                map_set(scope->lvars, item->key_name, key_val);
+            map_set(scope->lvars, item->value_name, lval);
+
+            // Loop code
             b->lfunc->block = b_code;
             llvm_write_ast(b, sub);
             if (!sub->did_return) {

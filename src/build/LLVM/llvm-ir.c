@@ -181,19 +181,6 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
         }
         str_append_chars(ir, lval);
     }
-    // char *err_var = NULL;
-    // char *err_msg_var = NULL;
-    // if (ort) {
-    //     err_var = llvm_alloca(b, type_gen(b->fc->b, b->alc, "i32"));
-    //     err_msg_var = llvm_alloca(b, type_gen(b->fc->b, b->alc, "ptr"));
-    //     if (argc > 0) {
-    //         str_append_chars(ir, ", ");
-    //     }
-    //     str_append_chars(ir, "i32* noundef ");
-    //     str_append_chars(ir, err_var);
-    //     str_append_chars(ir, ", i8** noundef ");
-    //     str_append_chars(ir, err_msg_var);
-    // }
     str_append_chars(ir, ")\n");
 
     if (ort) {
@@ -429,55 +416,3 @@ char *llvm_ir_string(LB *b, char *body) {
     sprintf(fc->sbuf, "getelementptr inbounds ([%d x i8], [%d x i8]* %s, i64 0, i64 0)", blen, blen, var);
     return dups(b->alc, fc->sbuf);
 }
-
-// void llvm_ir_RC(LB *b, char *on, Type *type, int amount, bool free_check) {
-//     //
-//     char num[20];
-//     sprintf(num, "%d", amount);
-
-//     Class *class = type->class;
-//     if (amount > 0 && class->func_ref) {
-
-//         Func *func = class->func_ref;
-//         Array *values = array_make(b->alc, 2);
-//         array_push(values, llvm_ir_fcall_arg(b, on, llvm_type(b, type)));
-//         array_push(values, llvm_ir_fcall_arg(b, num, "i32"));
-//         char *lrett = llvm_type(b, func->rett);
-//         llvm_ir_func_call(b, llvm_ir_func_ptr(b, func), values, lrett, false);
-
-//     } else if (amount < 0 && class->func_deref) {
-
-//         char num_pos[20];
-//         sprintf(num_pos, "%d", amount * -1);
-
-//         Func *func = class->func_deref;
-//         Array *values = array_make(b->alc, 2);
-//         array_push(values, llvm_ir_fcall_arg(b, on, llvm_type(b, type)));
-//         array_push(values, llvm_ir_fcall_arg(b, num_pos, "i32"));
-//         char *lrett = llvm_type(b, func->rett);
-//         llvm_ir_func_call(b, llvm_ir_func_ptr(b, func), values, lrett, false);
-
-//     } else {
-
-//         ClassProp *prop = map_get(class->props, "_RC");
-
-//         char *rc = llvm_ir_class_prop_access(b, class, on, prop);
-//         char *rcv = llvm_ir_load(b, prop->type, rc);
-
-//         Str *ir = llvm_b_ir(b);
-//         char *buf = llvm_var(b);
-//         str_append_chars(ir, "  ");
-//         str_append_chars(ir, buf);
-//         str_append_chars(ir, " = add nsw i32 ");
-//         str_append_chars(ir, rcv);
-//         str_append_chars(ir, ", ");
-//         str_append_chars(ir, num);
-//         str_append_chars(ir, "\n");
-
-//         llvm_ir_store(b, prop->type, rc, buf);
-
-//         if (free_check) {
-//             // TODO
-//         }
-//     }
-// }
