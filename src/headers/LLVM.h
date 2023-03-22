@@ -13,7 +13,6 @@ LLVMFunc *llvm_func_init(LB *b, Func *func, LLVMBlock *entry, LLVMBlock *code);
 void llvm_gen_global_ir(LB *b);
 char *llvm_var(LB *b);
 char *llvm_alloca(LB *b, Type *type);
-char *llvm_get_var(LB *b, Scope *start_scope, Decl *decl);
 char *llvm_get_global(LB *b, char *name, Type *type);
 
 // Func
@@ -58,6 +57,7 @@ struct LB {
     Array *lfuncs;
     Array *defined_classes;
     Array *declared_funcs;
+    Map *globals;
     Str *ir_final;
     Str *ir_struct;
     Str *ir_global;

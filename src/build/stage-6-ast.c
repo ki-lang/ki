@@ -162,9 +162,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             if (strstr(".=.+=.-=.*=./=.", fc->sbuf)) {
                 char *sign = dups(alc, token);
 
-                if (left->type == v_var) {
-                    Var *var = left->item;
-                    Decl *decl = var->decl;
+                if (left->type == v_decl) {
+                    Decl *decl = left->item;
                     if (!decl->is_mut) {
                         sprintf(fc->sbuf, "Cannot assign value to an immutable variable");
                         fc_error(fc);
@@ -205,9 +204,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 Value *ir_right = vgen_ir_val(alc, right, right->rett);
                 array_push(scope->ast, token_init(alc, tkn_ir_val, ir_right->item));
 
-                if (left->type == v_var) {
-                    Var *var = left->item;
-                    Decl *decl = var->decl;
+                if (left->type == v_decl) {
+                    Decl *decl = left->item;
                     UsageLine *ul = usage_line_get(scope, decl);
                     end_usage_line(alc, ul);
                 }
@@ -215,9 +213,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 array_push(scope->ast, tgen_assign(alc, left, ir_right));
                 tok_expect(fc, ";", false, true);
 
-                if (left->type == v_var) {
-                    Var *var = left->item;
-                    Decl *decl = var->decl;
+                if (left->type == v_decl) {
+                    Decl *decl = left->item;
                     usage_line_init(alc, scope, decl);
                 }
 
@@ -312,10 +309,8 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
     Decl *decl = decl_init(alc, scope, name, type, val, mutable, false, false);
     array_push(scope->ast, token_init(alc, tkn_declare, decl));
 
-    Var *var = var_init(alc, decl, type);
-
-    Idf *idf = idf_init(alc, idf_var);
-    idf->item = var;
+    Idf *idf = idf_init(alc, idf_decl);
+    idf->item = decl;
 
     map_set(scope->identifiers, name, idf);
 
@@ -477,8 +472,10 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     //
     char *token = fc->token;
     Value *value = read_value(fc, alc, scope, true, 0, false);
-    Scope *sub = usage_scope_init(alc, scope, sct_loop);
+    Value *on = vgen_ir_val(alc, value, value->rett);
+    array_push(scope->ast, token_init(alc, tkn_ir_val, on->item));
 
+    //
     Type *type = value->rett;
     Class *class = type->class;
     bool valid = class ? true : false;
@@ -524,23 +521,35 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
         tok(fc, token, false, true);
     }
 
+    // Declare next_key
+    Decl *decl_nk = decl_init(alc, scope, "each_next_key", f_init->rett, NULL, false, false, false);
+    UsageLine *ul_nk = usage_line_init(alc, scope, decl_nk);
+
+    // New sub scope
+    Scope *sub = usage_scope_init(alc, scope, sct_loop);
+
+    // Declare scope variables
+    Decl *decl_k = decl_init(alc, sub, key_name, f_init->rett, NULL, false, false, false);
+    UsageLine *ul_k = usage_line_init(alc, sub, decl_k);
+    Decl *decl_v = decl_init(alc, sub, value_name, f_get->rett, NULL, false, false, false);
+    UsageLine *ul_v = usage_line_init(alc, sub, decl_v);
+
+    //
+    // usage_move_value(alc, fc, sub, on);
+    // usage_move_value(alc, fc, sub, );
+
+    //
     if (key_name) {
-        Decl *decl = decl_init(alc, sub, key_name, f_init->rett, NULL, false, false, false);
-        Var *var = var_init(alc, decl, decl->type);
-        Idf *idf = idf_init(alc, idf_var);
-        idf->item = var;
+        Idf *idf = idf_init(alc, idf_decl);
+        idf->item = decl_k;
         map_set(sub->identifiers, key_name, idf);
-        usage_line_init(alc, sub, decl);
-    }
-    if (value_name) {
-        Decl *decl = decl_init(alc, sub, value_name, f_get->rett, NULL, false, false, false);
-        Var *var = var_init(alc, decl, decl->type);
-        Idf *idf = idf_init(alc, idf_var);
-        idf->item = var;
-        map_set(sub->identifiers, value_name, idf);
-        usage_line_init(alc, sub, decl);
     }
 
+    Idf *idf = idf_init(alc, idf_decl);
+    idf->item = decl_v;
+    map_set(sub->identifiers, value_name, idf);
+
+    //
     bool single_line = strcmp(token, ":") == 0;
     if (!single_line && strcmp(token, "{") != 0) {
         sprintf(fc->sbuf, "Expected '{' or ':' here, found '%s'", token);
@@ -549,5 +558,5 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
 
     read_ast(fc, sub, single_line);
 
-    array_push(scope->ast, tgen_each(alc, value, sub, key_name, value_name));
+    array_push(scope->ast, tgen_each(alc, on, sub, decl_k, decl_v));
 }

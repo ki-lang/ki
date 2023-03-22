@@ -188,7 +188,6 @@ struct Scope {
     Array *ast;
     Array *usage_keys;
     Array *usage_values;
-    Map *lvars; // LLVM vars
     bool did_return;
     bool in_loop;
 };
@@ -299,7 +298,6 @@ struct Decl {
     char *llvm_val;
     bool is_mut;
     bool is_arg;
-    bool disable_rc;
     bool keep;
 };
 struct Var {

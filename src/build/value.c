@@ -88,13 +88,13 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         //
     } else if (strcmp(token, "getptr") == 0) {
         Value *on = read_value(fc, alc, scope, false, 0, false);
-        if (on->type != v_class_pa && on->type != v_ptrv && on->type != v_var) {
+        if (on->type != v_class_pa && on->type != v_ptrv && on->type != v_decl) {
             sprintf(fc->sbuf, "Value must be assignable, such as a mutable variable");
             fc_error(fc);
         }
-        if (on->type == v_var) {
-            Var *var = v->item;
-            if (!var->decl->is_mut) {
+        if (on->type == v_decl) {
+            Decl *decl = v->item;
+            if (!decl->is_mut) {
                 sprintf(fc->sbuf, "Variable must be mutable, otherwise it has no address in memory");
                 fc_error(fc);
             }
@@ -239,9 +239,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 sprintf(fc->sbuf, "Cannot use ++ or -- on this value (not assignable)");
                 fc_error(fc);
             }
-            if (v->type == v_var) {
-                Var *var = v->item;
-                if (!var->decl->is_mut) {
+            if (v->type == v_decl) {
+                Decl *decl = v->item;
+                if (!decl->is_mut) {
                     sprintf(fc->sbuf, "Variable must be mutable");
                     fc_error(fc);
                 }
@@ -464,13 +464,13 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
     //
     char *token = fc->token;
 
-    if (idf->type == idf_var) {
-        Var *var = idf->item;
-        UsageLine *ul = usage_line_get(scope, var->decl);
+    if (idf->type == idf_decl) {
+        Decl *decl = idf->item;
+        UsageLine *ul = usage_line_get(scope, decl);
         // if (ul->moves > 0) {
         ul->read_after_move = true;
         // }
-        return value_init(alc, v_var, idf->item, var->type);
+        return value_init(alc, v_decl, idf->item, decl->type);
     }
 
     if (idf->type == idf_global) {
@@ -1011,5 +1011,5 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
 bool value_is_assignable(Value *v) {
     //
-    return (v->type == v_var || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global);
+    return (v->type == v_decl || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global);
 }

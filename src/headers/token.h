@@ -38,8 +38,8 @@ struct Throw {
 struct TEach {
     Value *value;
     Scope *scope;
-    char *key_name;
-    char *value_name;
+    Decl *decl_key;
+    Decl *decl_value;
 };
 
 #endif

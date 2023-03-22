@@ -12,7 +12,7 @@ enum TYPES {
 enum IDFOR {
     idf_func,
     idf_class,
-    idf_var,
+    idf_decl,
     idf_nsc,
     idf_trait,
     idf_enum,
@@ -62,7 +62,6 @@ enum TOKENTYPE {
 
 enum VALUETYPE {
     v_string,
-    v_var,
     v_vint,
     v_float,
     v_ptrv,

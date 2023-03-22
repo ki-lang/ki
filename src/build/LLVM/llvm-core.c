@@ -50,10 +50,6 @@ void llvm_gen_global_ir(LB *b) {
     Scope *scope = fc->scope;
     Str *ir = b->ir_global;
 
-    if (!scope->lvars) {
-        scope->lvars = map_make(b->alc);
-    }
-
     bool is_main_fc = fc->b->main_func->fc == fc;
 
     char bytes[20];
@@ -99,7 +95,8 @@ void llvm_gen_global_ir(LB *b) {
         char *val = al(b->alc, strlen(name) + 2);
         strcpy(val, "@");
         strcat(val, name);
-        map_set(scope->lvars, name, val);
+
+        map_set(b->globals, name, val);
     }
 }
 
@@ -134,29 +131,11 @@ char *llvm_alloca(LB *b, Type *type) {
     return var;
 }
 
-char *llvm_get_var(LB *b, Scope *start_scope, Decl *decl) {
-    //
-    char *name = decl->name;
-    Scope *scope = start_scope;
-    while (scope) {
-        if (scope->lvars) {
-            char *val = map_get(scope->lvars, name);
-            if (val) {
-                return val;
-            }
-        }
-        scope = scope->parent;
-    }
-
-    sprintf(b->fc->sbuf, "Missing llvm variable: '%s'\n", name);
-    die(b->fc->sbuf);
-}
-
 char *llvm_get_global(LB *b, char *name, Type *type) {
     //
     Scope *scope = b->fc->scope;
 
-    char *val = map_get(scope->lvars, name);
+    char *val = map_get(b->globals, name);
     if (val) {
         return val;
     }
@@ -181,7 +160,7 @@ char *llvm_get_global(LB *b, char *name, Type *type) {
 
     char *result = dups(b->alc, tmp);
 
-    map_set(scope->lvars, name, result);
+    map_set(b->globals, name, result);
 
     return result;
 }

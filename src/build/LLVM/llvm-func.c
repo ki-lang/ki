@@ -11,9 +11,6 @@ void llvm_gen_func_ir(LB *b) {
 
         Scope *fscope = func->scope;
 
-        if (!fscope->lvars)
-            fscope->lvars = map_make(b->alc);
-
         LLVMBlock *block_entry = llvm_block_init(b, 0);
         LLVMBlock *block_code = llvm_block_init(b, 1);
 
@@ -51,7 +48,7 @@ void llvm_gen_func_ir(LB *b) {
             //	b.func_arg_msg = v;
             // }
 
-            map_set(fscope->lvars, arg->name, v);
+            arg->decl->llvm_val = v;
         }
         // if (func->can_error) {
         //     if (argc > 0) {
@@ -89,12 +86,12 @@ void llvm_gen_func_ir(LB *b) {
         for (int o = 0; o < func->args->length; o++) {
 
             Arg *arg = array_get_index(func->args, o);
-            char *lval = map_get(fscope->lvars, arg->name);
 
             if (!arg->is_mut) {
-                arg->decl->llvm_val = lval;
                 continue;
             }
+
+            char *lval = arg->decl->llvm_val;
 
             Type *type = arg->type;
             char *ltype = llvm_type(b, type);
@@ -116,8 +113,6 @@ void llvm_gen_func_ir(LB *b) {
             str_append_chars(cir, ", align ");
             str_append_chars(cir, bytes);
             str_append_chars(cir, "\n");
-
-            map_set(fscope->lvars, arg->name, var);
         }
 
         // AST

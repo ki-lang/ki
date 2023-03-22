@@ -143,8 +143,7 @@ void class_generate_deref_props(Class *class) {
 
     Arg *this_arg = array_get_index(func->args, 0);
     Decl *this_decl = this_arg->decl;
-    Var *this_var = var_init(alc, this_decl, type_class);
-    Value *this = value_init(alc, v_var, this_var, type_class);
+    Value *this = value_init(alc, v_decl, this_decl, type_class);
 
     Array *props = class->props->values;
     for (int i = 0; i < props->length; i++) {
@@ -185,8 +184,7 @@ void class_generate_free(Class *class) {
 
     Arg *this_arg = array_get_index(func->args, 0);
     Decl *this_decl = this_arg->decl;
-    Var *this_var = var_init(alc, this_decl, type_class);
-    Value *this = value_init(alc, v_var, this_var, type_class);
+    Value *this = value_init(alc, v_decl, this_decl, type_class);
 
     // Call __before_free
     // let bff = this.funcs.get("__before_free") or value null;
@@ -227,6 +225,10 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
     Type *type = on->rett;
     Class *class = type->class;
     Build *b = class->fc->b;
+
+    if (!class->func_deref && !class->func_ref) {
+        return;
+    }
 
     if (type->nullable) {
         Value *is_null = vgen_compare(alc, class->fc->b, on, vgen_null(alc, b), op_ne);

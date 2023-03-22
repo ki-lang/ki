@@ -10,7 +10,6 @@ Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast) {
     scope->upref_slots = map_make(alc);
     scope->func = NULL;
     scope->ast = has_ast ? array_make(alc, 10) : NULL;
-    scope->lvars = NULL;
     scope->did_return = false;
     scope->usage_keys = NULL;
     scope->usage_values = NULL;

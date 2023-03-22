@@ -66,10 +66,9 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
     Chunk *chunk = fc->chunk;
     //
     int vt = val->type;
-    if (vt == v_var) {
-        Var *var = val->item;
-        Decl *decl = var->decl;
+    if (vt == v_decl) {
 
+        Decl *decl = val->item;
         UsageLine *ul = usage_line_get(scope, decl);
 
         // Check if in loop
@@ -95,7 +94,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
 
         Type *type = val->rett;
         Class *class = type->class;
-        if (class && class->must_ref && !decl->disable_rc) {
+        if (class && class->must_ref) {
 
             Value *v = vgen_value_then_ir_value(alc, val);
 
@@ -109,6 +108,9 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
             ul->read_after_move = false;
         }
 
+    } else if (vt == v_ir_val) {
+        IRVal *irv = val->item;
+        irv->value = usage_move_value(alc, fc, scope, irv->value);
     } else if (vt == v_class_pa) {
         Class *class = val->rett->class;
         if (class && class->must_ref) {
@@ -275,7 +277,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
 
     Type *type = decl->type;
     Class *class = type->class;
-    if (class && (class->must_deref || class->must_ref) && !decl->disable_rc) {
+    if (class && (class->must_deref || class->must_ref)) {
 
         if (ul->upref_token && !ul->read_after_move) {
             // Disable upref

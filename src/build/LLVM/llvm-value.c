@@ -7,29 +7,6 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     Fc *fc = b->fc;
     Build *build = fc->b;
 
-    if (v->type == v_var) {
-        Var *var = v->item;
-        Decl *decl = var->decl;
-        char *var_val = llvm_get_var(b, scope, decl);
-        if (!decl->is_mut) {
-            // char *var = llvm_var(b);
-            // Str *ir = llvm_b_ir(b);
-            // str_append_chars(ir, "  ");
-            // str_append_chars(ir, var);
-            // str_append_chars(ir, " = alias ");
-            // str_append_chars(ir, var_val);
-            // str_append_chars(ir, "\n");
-            return var_val;
-        }
-        return llvm_ir_load(b, var->type, var_val);
-    }
-    if (v->type == v_global) {
-        Global *g = v->item;
-        return llvm_ir_load(b, g->type, llvm_get_global(b, g->gname, g->type));
-    }
-    if (v->type == v_ir_value) {
-        return v->item;
-    }
     if (v->type == v_decl) {
         Decl *decl = v->item;
         char *var_val = decl->llvm_val;
@@ -42,6 +19,13 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
             return var_val;
         }
         return llvm_ir_load(b, decl->type, var_val);
+    }
+    if (v->type == v_global) {
+        Global *g = v->item;
+        return llvm_ir_load(b, g->type, llvm_get_global(b, g->gname, g->type));
+    }
+    if (v->type == v_ir_value) {
+        return v->item;
     }
     if (v->type == v_vint) {
         VInt *vint = v->item;
@@ -540,9 +524,9 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
 char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
     //
-    if (v->type == v_var) {
-        Var *var = v->item;
-        return llvm_get_var(b, scope, var->decl);
+    if (v->type == v_decl) {
+        Decl *decl = v->item;
+        return decl->llvm_val;
     }
     if (v->type == v_global) {
         Global *g = v->item;

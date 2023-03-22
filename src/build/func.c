@@ -57,11 +57,8 @@ void func_make_arg_decls(Func *func) {
         Arg *arg = array_get_index(func->args, i);
 
         Decl *decl = decl_init(alc, fscope, arg->name, arg->type, NULL, arg->is_mut, true, arg->keep);
-
-        Var *var = var_init(alc, decl, arg->type);
-
-        Idf *idf = idf_init(alc, idf_var);
-        idf->item = var;
+        Idf *idf = idf_init(alc, idf_decl);
+        idf->item = decl;
 
         map_set(func->scope->identifiers, arg->name, idf);
 

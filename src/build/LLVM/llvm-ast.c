@@ -5,8 +5,6 @@ void llvm_if(LB *b, Scope *scope, TIf *ift);
 
 void llvm_write_ast(LB *b, Scope *scope) {
     //
-    if (!scope->lvars)
-        scope->lvars = map_make(b->alc);
 
     Allocator *alc = b->alc;
 
@@ -22,14 +20,12 @@ void llvm_write_ast(LB *b, Scope *scope) {
 
             if (!decl->is_mut) {
                 decl->llvm_val = lval;
-                map_set(scope->lvars, decl->name, lval);
                 continue;
             }
 
             char *lvar = llvm_alloca(b, decl->type);
             decl->llvm_val = lvar;
             llvm_ir_store(b, decl->type, lvar, lval);
-            map_set(scope->lvars, decl->name, lvar);
             continue;
         }
         if (t->type == tkn_assign) {
@@ -144,8 +140,8 @@ void llvm_write_ast(LB *b, Scope *scope) {
             char *lon_type = llvm_type(b, on->rett);
 
             Scope *sub = item->scope;
-            char *key_name = item->key_name;
-            char *value_name = item->value_name;
+            Decl *decl_key = item->decl_key;
+            Decl *decl_value = item->decl_value;
 
             Type *type = on->rett;
             Class *class = type->class;
@@ -203,6 +199,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
                 class_ref_change(alc, upref_get, value_init(alc, v_ir_value, key_val, f_get_1->type), 1);
             }
             llvm_write_ast(b, upref_get);
+
             //
             Array *get_args = array_make(alc, 2);
             array_push(get_args, llvm_ir_fcall_arg(b, lon, lon_type));
@@ -215,9 +212,9 @@ void llvm_write_ast(LB *b, Scope *scope) {
             char *iszero = llvm_ir_iszero_i1(b, "i32", load_err);
             llvm_ir_cond_jump(b, llvm_b_ir(b), iszero, b_code, b_after);
             // Set variable values
-            if (item->key_name)
-                map_set(scope->lvars, item->key_name, key_val);
-            map_set(scope->lvars, item->value_name, lval);
+
+            decl_key->llvm_val = key_val;
+            decl_value->llvm_val = lval;
 
             // Loop code
             b->lfunc->block = b_code;
