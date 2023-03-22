@@ -48,6 +48,18 @@ class String type:ptr {
 		return new_str;
 	}
 
+	func __iter_init() uxx %keep {
+		return 0;
+	}
+	func __iter_get(key: uxx, next_key: uxx*) u8 !end %keep {
+		if key == this.bytes() {
+			throw end;
+		}
+		ptrv next_key = key + 1;
+		let data = this.data();
+		return ptrv (data + key) as u8;
+	}
+
 	static func make_empty(size: uxx) String {
 		let mut adr = mem:alloc(size + 16);
 		let adr_ = adr;

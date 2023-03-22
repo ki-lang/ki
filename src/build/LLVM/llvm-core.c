@@ -65,8 +65,8 @@ void llvm_gen_global_ir(LB *b) {
         str_append_chars(ir, bytes);
         str_append_chars(ir, "\n");
     } else {
-        str_append_chars(ir, "@ki_err_code_buffer = external global i32, align 4\n");
-        str_append_chars(ir, "@ki_err_msg_buffer = external global i8*, align ");
+        str_append_chars(ir, "@ki_err_code_buffer = external thread_local(initialexec) global i32, align 4\n");
+        str_append_chars(ir, "@ki_err_msg_buffer = external thread_local(initialexec) global i8*, align ");
         str_append_chars(ir, bytes);
         str_append_chars(ir, "\n");
     }
