@@ -3,8 +3,7 @@
 
 Feature todo list in order:
 
-- Custom iterators
-- %keep tags in function arguments, to keep ownership and not share it
+- use %keep tags in internal functions
 - Check class property access types (public,private,readonly)
 - Calling functions using named arguments
 - Package manager
@@ -20,3 +19,13 @@ Feature todo list in order:
 ## Maybe
 
 - Interfaces | they are kind of pointless because we dont use virtual functions and therefore cant use them as types
+
+## Done
+
+- ?? | ?!
+- Error handling
+- Ownership algorithm
+- Generics
+- Traits
+- Custom iterators
+- %keep tags in function arguments, to keep ownership and not share it
