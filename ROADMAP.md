@@ -4,6 +4,7 @@
 Feature todo list in order:
 
 - Custom iterators
+- %keep tags in function arguments, to keep ownership and not share it
 - Check class property access types (public,private,readonly)
 - Calling functions using named arguments
 - Package manager
