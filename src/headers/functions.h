@@ -156,7 +156,7 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl);
 UsageLine *usage_line_get(Scope *scope, Decl *decl);
 bool is_moved_once(UsageLine *ul);
 void usage_read_value(Allocator *alc, Scope *scope, Value *val);
-Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val);
+Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val);
 Scope *usage_scope_init(Allocator *alc, Scope *parent, int type);
 void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors);
 void usage_collect_used_decls(Allocator *alc, Scope *left, Scope *right, Array **list);

@@ -62,12 +62,14 @@ void usage_line_incr_moves(UsageLine *ul, int amount) {
     ul->moves += amount;
 }
 
-Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) {
+Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
+    Chunk *chunk = fc->chunk;
     //
     int vt = val->type;
     if (vt == v_var) {
         Var *var = val->item;
         Decl *decl = var->decl;
+
         UsageLine *ul = usage_line_get(scope, decl);
 
         // Check if in loop
@@ -116,14 +118,14 @@ Value *usage_move_value(Allocator *alc, Chunk *chunk, Scope *scope, Value *val) 
         val = value_init(alc, v_upref_value, val, val->rett);
     } else if (vt == v_cast) {
         Value *on = val->item;
-        val->item = usage_move_value(alc, chunk, scope, on);
+        val->item = usage_move_value(alc, fc, scope, on);
     } else if (vt == v_or_break) {
         VOrBreak *vob = val->item;
-        vob->value = usage_move_value(alc, chunk, scope, vob->value);
+        vob->value = usage_move_value(alc, fc, scope, vob->value);
     } else if (vt == v_or_value) {
         VOrValue *vov = val->item;
-        vov->left = usage_move_value(alc, chunk, scope, vov->left);
-        vov->right = usage_move_value(alc, chunk, vov->value_scope, vov->right);
+        vov->left = usage_move_value(alc, fc, scope, vov->left);
+        vov->right = usage_move_value(alc, fc, vov->value_scope, vov->right);
     }
 
     //
