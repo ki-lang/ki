@@ -266,6 +266,11 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
 void end_usage_line(Allocator *alc, UsageLine *ul) {
     //
     Decl *decl = ul->decl;
+    if (decl->keep) {
+        // printf("Keep:%s in %s\n", decl->name, decl->scope->func->dname);
+        return;
+    }
+
     Type *type = decl->type;
     Class *class = type->class;
     if (class && (class->must_deref || class->must_ref) && !decl->disable_rc) {

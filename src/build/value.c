@@ -873,6 +873,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         Func *func = fp->func;
         Value *first_val = fp->first_arg;
 
+        // TODO, remove 'call_derefs', use 'keep' instead
         if (!func->call_derefs) {
             upref = false;
         }
@@ -883,7 +884,9 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 fc_error(fc);
             }
 
-            if (upref) {
+            Arg *arg = array_get_index(func->args, 0);
+
+            if (upref && !arg->keep) {
                 first_val = usage_move_value(alc, fc->chunk, scope, first_val);
             }
 
@@ -911,7 +914,9 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
                 Value *val = read_value(fc, alc, scope, false, 0, false);
                 val = try_convert(fc, alc, val, arg->type);
-                val = usage_move_value(alc, fc->chunk, scope, val);
+                if (!arg->keep) {
+                    val = usage_move_value(alc, fc->chunk, scope, val);
+                }
 
                 type_check(fc, arg->type, val->rett);
                 array_push(values, val);

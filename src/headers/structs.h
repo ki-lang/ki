@@ -297,11 +297,10 @@ struct Decl {
     Value *value;
     Scope *scope;
     char *llvm_val;
-    int times_used;
     bool is_mut;
-    bool is_global;
     bool is_arg;
     bool disable_rc;
+    bool keep;
 };
 struct Var {
     Decl *decl;
@@ -310,11 +309,12 @@ struct Var {
 struct Arg {
     char *name;
     Type *type;
-    bool is_mut;
     Value *value;
     Chunk *value_chunk;
     Chunk *type_chunk;
     Decl *decl;
+    bool is_mut;
+    bool keep;
 };
 struct UsageLine {
     Decl *decl;

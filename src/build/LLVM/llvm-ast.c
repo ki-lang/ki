@@ -178,9 +178,11 @@ void llvm_write_ast(LB *b, Scope *scope) {
             char *next_key_var = llvm_alloca(b, key_type);
             Array *key_init_args = array_make(alc, 2);
             array_push(key_init_args, llvm_ir_fcall_arg(b, lon, lon_type));
-            // TODO keep check on f_init_0
+            // Referencing
             Scope *upref_init_0 = scope_init(alc, sct_default, scope, true);
-            class_ref_change(alc, upref_init_0, value_init(alc, v_ir_value, lon, on->rett), 1);
+            if (!f_init_0->keep) {
+                class_ref_change(alc, upref_init_0, value_init(alc, v_ir_value, lon, on->rett), 1);
+            }
             llvm_write_ast(b, upref_init_0);
             // Call func
             char *next_key_val = llvm_ir_func_call(b, lf_init, key_init_args, key_ltype, NULL);
@@ -192,10 +194,14 @@ void llvm_write_ast(LB *b, Scope *scope) {
             b->lfunc->block = b_cond;
             // Call __iter_get
             char *key_val = llvm_ir_load(b, f_init->rett, next_key_var);
-            // TODO keep check on f_get_0 && f_get_1
+            // Referencing
             Scope *upref_get = scope_init(alc, sct_default, scope, true);
-            class_ref_change(alc, upref_get, value_init(alc, v_ir_value, lon, on->rett), 1);
-            class_ref_change(alc, upref_get, value_init(alc, v_ir_value, key_val, f_get_1->type), 1);
+            if (!f_get_0->keep) {
+                class_ref_change(alc, upref_get, value_init(alc, v_ir_value, lon, on->rett), 1);
+            }
+            if (!f_get_1->keep) {
+                class_ref_change(alc, upref_get, value_init(alc, v_ir_value, key_val, f_get_1->type), 1);
+            }
             llvm_write_ast(b, upref_get);
             //
             Array *get_args = array_make(alc, 2);

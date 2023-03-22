@@ -56,7 +56,7 @@ void func_make_arg_decls(Func *func) {
     for (int i = 0; i < func->args->length; i++) {
         Arg *arg = array_get_index(func->args, i);
 
-        Decl *decl = decl_init(alc, fscope, arg->name, arg->type, NULL, arg->is_mut, true, false);
+        Decl *decl = decl_init(alc, fscope, arg->name, arg->type, NULL, arg->is_mut, true, arg->keep);
 
         Var *var = var_init(alc, decl, arg->type);
 

@@ -272,10 +272,28 @@ void stage_2_func(Fc *fc, Func *func) {
     while (strcmp(token, ")") != 0) {
 
         bool mutable = false;
+        bool keep = false;
+
+        while (strcmp(token, "%") == 0) {
+            tok(fc, token, true, false);
+            if (strcmp(token, "keep") == 0) {
+                keep = true;
+            } else {
+                sprintf(fc->sbuf, "Unknown tag: '%s'", token);
+                fc_error(fc);
+            }
+
+            tok(fc, token, true, true);
+        }
 
         if (strcmp(token, "mut") == 0) {
             mutable = true;
             tok(fc, token, true, true);
+        }
+
+        if (keep && mutable) {
+            sprintf(fc->sbuf, "You cannot use both 'keep' and 'mut'");
+            fc_error(fc);
         }
 
         if (!is_valid_varname(token)) {
@@ -313,15 +331,13 @@ void stage_2_func(Fc *fc, Func *func) {
         }
 
         Arg *arg = arg_init(alc, name, type, mutable);
+        arg->keep = keep;
         arg->value_chunk = val_chunk;
         arg->type_chunk = type_chunk;
 
         array_push(func->args, arg);
         map_set(func->args_by_name, name, arg);
     }
-
-    // Define arguments in AST
-    func_make_arg_decls(func);
 
     // Return type
     func->rett = read_type(fc, alc, func->scope->parent, true, true);
@@ -358,6 +374,11 @@ void stage_2_func(Fc *fc, Func *func) {
             func->opt_hot = true;
         } else if (strcmp(token, "inline") == 0) {
             func->opt_inline = true;
+        } else if (strcmp(token, "keep") == 0) {
+            Arg *arg = array_get_index(func->args, 0);
+            if (arg) {
+                arg->keep = true;
+            }
         } else {
             sprintf(fc->sbuf, "Unknown tag '%s'", token);
             fc_error(fc);
@@ -365,6 +386,9 @@ void stage_2_func(Fc *fc, Func *func) {
 
         tok(fc, token, false, true);
     }
+
+    // Define arguments in AST
+    func_make_arg_decls(func);
 
     rtok(fc);
 
