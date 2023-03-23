@@ -46,6 +46,22 @@ else add deref
 - type check internal funcs : __ref __deref ...
 - exit & panic
 
+# Ownership types
+
+- Ownership applies to all ct_struct types
+
+&Product -> borrow
+*Product -> Weak ownership
+**Product -> Strict ownership
+
+let mutex = Mutex<Server>.init(server);
+Thread<Server>.init(worker, mutex);
+
+class Thread<F, **T> {
+  static func init(F, ?Mutex<T>) void {
+  }
+}
+
 
 # Future readme
 
