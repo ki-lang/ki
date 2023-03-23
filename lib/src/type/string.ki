@@ -32,8 +32,8 @@ class String type:ptr {
 		return adr;
 	}
 
-	func __ref() void {
-	}
+	//func __ref() void {
+	//}
 
 	func __add(str: String) String {
 		//return "123\n";

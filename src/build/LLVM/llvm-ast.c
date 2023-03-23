@@ -224,6 +224,8 @@ void llvm_write_ast(LB *b, Scope *scope) {
             }
 
             b->lfunc->block = b_after;
+            llvm_ir_store(b, err_code_type, "@ki_err_code_buffer", "0");
+
             b->while_cond = prev_cond;
             b->while_after = prev_after;
             continue;

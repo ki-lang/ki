@@ -132,13 +132,9 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
     } else if (vt == v_global) {
         val = value_init(alc, v_upref_value, val, val->rett);
     } else if (vt == v_cast) {
+        Value *on = val->item;
         if (type_tracks_ownership(val->rett)) {
-            Value *on = val->item;
-            if (type_tracks_ownership(on->rett)) {
-                val->item = usage_move_value(alc, fc, scope, on);
-            } else {
-                val = value_init(alc, v_upref_value, val, val->rett);
-            }
+            val = value_init(alc, v_upref_value, val, val->rett);
         }
     } else if (vt == v_or_break) {
         VOrBreak *vob = val->item;

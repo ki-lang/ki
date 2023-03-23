@@ -45,6 +45,7 @@ class Server {
 
 	private static func worker(server_ptr: ptr) void {
 		let server = server_ptr -> Server;
+		println("hello");
 	}
 
 }

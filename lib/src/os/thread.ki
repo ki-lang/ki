@@ -1,7 +1,9 @@
 
 header "ki_os" as os;
 
-class ThreadEntry {
+use ki:mem;
+
+struct ThreadEntry {
 	public data: ?ptr;
 	start_func: fn(?ptr)(void);
 }
@@ -13,6 +15,7 @@ struct Thread {
 	private static func entry(data: ptr) void {
 		let entry = data -> ThreadEntry;
 		entry.start_func(entry.data);
+		mem:free(entry -> ptr);
 	}
 
 	static func start(start_func: fn(?ptr)(void), data: ?ptr) Thread {
