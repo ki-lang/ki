@@ -3,7 +3,8 @@
 
 Feature todo list in order:
 
-- use %keep tags in internal functions
+- Type check internal functions keep value
+- Upref variables instead of direct value on assign/declare
 - Check class property access types (public,private,readonly)
 - Calling functions using named arguments
 - Package manager

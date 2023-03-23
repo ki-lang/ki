@@ -445,8 +445,8 @@ char *type_to_str(Type *t, char *res) {
                 strcat(res, ", ");
             }
             Arg *arg = array_get_index(t->func_args, i);
-            if (arg->keep) {
-                strcat(res, "%keep ");
+            if (!arg->keep) {
+                strcat(res, "+");
             }
             strcat(res, type_to_str(arg->type, sub_str));
         }
