@@ -145,6 +145,7 @@ bool type_compat(Type *t1, Type *t2, char **reason);
 char *type_to_str(Type *t, char *res);
 void type_check(Fc *fc, Type *t1, Type *t2);
 Type *type_clone(Allocator *alc, Type *type);
+bool type_tracks_ownership(Type *type);
 
 // Var
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg, bool keep);
@@ -204,4 +205,4 @@ Token *tgen_assign(Allocator *alc, Value *left, Value *right);
 Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv);
 Token *tgen_while(Allocator *alc, Value *cond, Scope *scope);
 Token *tgen_exec(Allocator *alc, Scope *scope, bool enable);
-Token *tgen_each(Allocator *alc, Value *value, Scope *scope, Decl *decl_key, Decl *decl_value) ;
+Token *tgen_each(Allocator *alc, Value *value, Scope *scope, Decl *decl_key, Decl *decl_value);

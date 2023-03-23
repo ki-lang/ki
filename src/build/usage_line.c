@@ -3,6 +3,10 @@
 
 UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
     //
+    if (!type_tracks_ownership(decl->type)) {
+        return NULL;
+    }
+
     UsageLine *v = al(alc, sizeof(UsageLine));
     v->decl = decl;
     v->scope = scope;
@@ -49,8 +53,9 @@ UsageLine *usage_line_get(Scope *scope, Decl *decl) {
         scope = scope->parent;
     }
 
-    printf("Usage line for '%s' not found (compiler bug)\n", decl->name);
-    raise(11);
+    return NULL;
+    // printf("Usage line for '%s' not found (compiler bug)\n", decl->name);
+    // raise(11);
 }
 
 void usage_read_value(Allocator *alc, Scope *scope, Value *val) {
@@ -71,41 +76,49 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         Decl *decl = val->item;
         UsageLine *ul = usage_line_get(scope, decl);
 
-        // Check if in loop
-        bool in_loop = false;
-        Scope *s = scope;
-        while (true) {
-            if (s == decl->scope) {
-                break;
+        if (ul) {
+
+            if (decl->keep) {
+                sprintf(fc->sbuf, "You cannot give away ownership for '%s' without having it. Type '*' before the argument name to take ownership.", decl->name);
+                fc_error(fc);
             }
-            if (s->type == sct_loop) {
-                in_loop = true;
-                break;
+
+            // Check if in loop
+            bool in_loop = false;
+            Scope *s = scope;
+            while (true) {
+                if (s == decl->scope) {
+                    break;
+                }
+                if (s->type == sct_loop) {
+                    in_loop = true;
+                    break;
+                }
+                s = s->parent;
             }
-            s = s->parent;
-        }
 
-        int incr = in_loop ? 2 : 1;
-        usage_line_incr_moves(ul, incr);
+            int incr = in_loop ? 2 : 1;
+            usage_line_incr_moves(ul, incr);
 
-        if (!ul->first_move) {
-            ul->first_move = chunk_clone(alc, chunk);
-        }
+            if (!ul->first_move) {
+                ul->first_move = chunk_clone(alc, chunk);
+            }
 
-        Type *type = val->rett;
-        Class *class = type->class;
-        if (class && class->must_ref) {
+            Type *type = val->rett;
+            Class *class = type->class;
+            if (class && class->must_ref) {
 
-            Value *v = vgen_value_then_ir_value(alc, val);
+                Value *v = vgen_value_then_ir_value(alc, val);
 
-            Scope *sub = scope_init(alc, sct_default, scope, true);
-            class_ref_change(alc, sub, v, 1);
+                Scope *sub = scope_init(alc, sct_default, scope, true);
+                class_ref_change(alc, sub, v, 1);
 
-            val = vgen_value_and_exec(alc, v, sub, true, true);
+                val = vgen_value_and_exec(alc, v, sub, true, true);
 
-            ul->ancestors = NULL;
-            ul->upref_token = val->item;
-            ul->read_after_move = false;
+                ul->ancestors = NULL;
+                ul->upref_token = val->item;
+                ul->read_after_move = false;
+            }
         }
 
     } else if (vt == v_ir_val) {
@@ -119,8 +132,10 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
     } else if (vt == v_global) {
         val = value_init(alc, v_upref_value, val, val->rett);
     } else if (vt == v_cast) {
-        Value *on = val->item;
-        val->item = usage_move_value(alc, fc, scope, on);
+        if (type_tracks_ownership(val->rett)) {
+            Value *on = val->item;
+            val->item = usage_move_value(alc, fc, scope, on);
+        }
     } else if (vt == v_or_break) {
         VOrBreak *vob = val->item;
         vob->value = usage_move_value(alc, fc, scope, vob->value);

@@ -478,3 +478,18 @@ void type_check(Fc *fc, Type *t1, Type *t2) {
         fc_error(fc);
     }
 }
+
+bool type_tracks_ownership(Type *type) {
+    //
+    Class *class = type->class;
+    if (type->is_strict) {
+        return true;
+    }
+    if (!class) {
+        return false;
+    }
+    if (class->is_rc || class->must_ref || class->must_deref) {
+        return true;
+    }
+    return false;
+}

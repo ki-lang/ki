@@ -468,7 +468,8 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         Decl *decl = idf->item;
         UsageLine *ul = usage_line_get(scope, decl);
         // if (ul->moves > 0) {
-        ul->read_after_move = true;
+        if (ul)
+            ul->read_after_move = true;
         // }
         return value_init(alc, v_decl, idf->item, decl->type);
     }

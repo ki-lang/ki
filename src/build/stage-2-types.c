@@ -179,6 +179,12 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             // Function
             tok(fc, token, true, true);
 
+            bool take_ownership = false;
+            if (strcmp(token, "+") == 0) {
+                take_ownership = true;
+                tok(fc, token, true, true);
+            }
+
             if (!is_valid_varname(token)) {
                 sprintf(fc->sbuf, "Invalid function name syntax: '%s'", token);
                 fc_error(fc);
@@ -190,6 +196,11 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
             Func *func = class_define_func(fc, class, is_static, token, NULL, NULL);
             func->act = act;
+
+            if (!is_static && take_ownership) {
+                Arg *arg = array_get_index(func->args, 0);
+                arg->keep = false;
+            }
 
             if (strcmp(func->name, "__ref") == 0) {
                 class->func_ref = func;
@@ -272,28 +283,16 @@ void stage_2_func(Fc *fc, Func *func) {
     while (strcmp(token, ")") != 0) {
 
         bool mutable = false;
-        bool keep = false;
-
-        while (strcmp(token, "%") == 0) {
-            tok(fc, token, true, false);
-            if (strcmp(token, "keep") == 0) {
-                keep = true;
-            } else {
-                sprintf(fc->sbuf, "Unknown tag: '%s'", token);
-                fc_error(fc);
-            }
-
-            tok(fc, token, true, true);
-        }
+        bool keep = true;
 
         if (strcmp(token, "mut") == 0) {
             mutable = true;
             tok(fc, token, true, true);
         }
 
-        if (keep && mutable) {
-            sprintf(fc->sbuf, "You cannot use both 'keep' and 'mut'");
-            fc_error(fc);
+        if (strcmp(token, "+") == 0) {
+            keep = false;
+            tok(fc, token, true, true);
         }
 
         if (!is_valid_varname(token)) {
@@ -313,6 +312,11 @@ void stage_2_func(Fc *fc, Func *func) {
         Chunk *type_chunk = chunk_clone(alc, fc->chunk);
 
         Type *type = read_type(fc, alc, func->scope->parent, true, true);
+
+        if (mutable && keep && type_tracks_ownership(type)) {
+            sprintf(fc->sbuf, "If you use 'mut' you must also take ownership by typing '*' after it (for types that track ownership)");
+            fc_error(fc);
+        }
 
         tok(fc, token, true, true);
         if (strcmp(token, "=") == 0) {
@@ -374,11 +378,6 @@ void stage_2_func(Fc *fc, Func *func) {
             func->opt_hot = true;
         } else if (strcmp(token, "inline") == 0) {
             func->opt_inline = true;
-        } else if (strcmp(token, "keep") == 0) {
-            Arg *arg = array_get_index(func->args, 0);
-            if (arg) {
-                arg->keep = true;
-            }
         } else {
             sprintf(fc->sbuf, "Unknown tag '%s'", token);
             fc_error(fc);

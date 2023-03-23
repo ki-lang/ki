@@ -33,7 +33,7 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut) {
     v->value_chunk = NULL;
     v->decl = NULL;
     v->type_chunk = NULL;
-    v->keep = false;
+    v->keep = true;
 
     return v;
 }

@@ -279,7 +279,8 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         LLVMBlock *b_else = llvm_block_init_auto(b);
         LLVMBlock *b_after = llvm_block_init_auto(b);
 
-        llvm_write_ast(b, vob->deref_scope);
+        if (vob->deref_scope)
+            llvm_write_ast(b, vob->deref_scope);
 
         llvm_ir_cond_jump(b, llvm_b_ir(b), isnull, b_code, b_else);
 
@@ -309,7 +310,8 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
         char *current_block_name = b->lfunc->block->name;
 
-        llvm_write_ast(b, orv->deref_scope);
+        if (orv->deref_scope)
+            llvm_write_ast(b, orv->deref_scope);
 
         llvm_ir_cond_jump(b, llvm_b_ir(b), isnull, b_code, b_else);
 

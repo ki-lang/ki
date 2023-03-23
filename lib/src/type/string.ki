@@ -48,10 +48,10 @@ class String type:ptr {
 		return new_str;
 	}
 
-	func __iter_init() uxx %keep {
+	func __iter_init() uxx {
 		return 0;
 	}
-	func __iter_get(key: uxx, next_key: uxx*) u8 !end %keep {
+	func __iter_get(key: uxx, next_key: uxx*) u8 !end {
 		if key == this.bytes() {
 			throw end;
 		}

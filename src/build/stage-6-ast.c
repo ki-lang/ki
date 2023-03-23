@@ -207,7 +207,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 if (left->type == v_decl) {
                     Decl *decl = left->item;
                     UsageLine *ul = usage_line_get(scope, decl);
-                    end_usage_line(alc, ul);
+                    if (ul)
+                        end_usage_line(alc, ul);
                 }
 
                 array_push(scope->ast, tgen_assign(alc, left, ir_right));
