@@ -149,6 +149,7 @@ void class_generate_deref_props(Class *class) {
 
     Array *props = class->props->values;
     for (int i = 0; i < props->length; i++) {
+        char *name = array_get_index(class->props->keys, i);
         ClassProp *prop = array_get_index(props, i);
         Class *pclass = prop->type->class;
         if (pclass && pclass->must_deref) {
@@ -228,7 +229,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
     Class *class = type->class;
     Build *b = class->fc->b;
 
-    if (!class->func_deref && !class->func_ref) {
+    if (!class->func_deref && !class->func_ref && !class->is_rc) {
         return;
     }
 

@@ -79,7 +79,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         if (ul) {
 
             if (decl->keep) {
-                sprintf(fc->sbuf, "You cannot give away ownership for '%s' without having it. Type '*' before the argument name to take ownership.", decl->name);
+                sprintf(fc->sbuf, "You cannot give away ownership for '%s' without having it. Type '+' before the argument name to pass on ownership.", decl->name);
                 fc_error(fc);
             }
 
@@ -134,7 +134,11 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
     } else if (vt == v_cast) {
         if (type_tracks_ownership(val->rett)) {
             Value *on = val->item;
-            val->item = usage_move_value(alc, fc, scope, on);
+            if (type_tracks_ownership(on->rett)) {
+                val->item = usage_move_value(alc, fc, scope, on);
+            } else {
+                val = value_init(alc, v_upref_value, val, val->rett);
+            }
         }
     } else if (vt == v_or_break) {
         VOrBreak *vob = val->item;
