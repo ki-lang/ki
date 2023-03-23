@@ -314,7 +314,7 @@ void stage_2_func(Fc *fc, Func *func) {
         Type *type = read_type(fc, alc, func->scope->parent, true, true);
 
         if (mutable && keep && type_tracks_ownership(type)) {
-            sprintf(fc->sbuf, "If you use 'mut' you must also take ownership by typing '*' after it (for types that track ownership)");
+            sprintf(fc->sbuf, "If you use 'mut' you must also take ownership by typing '+' after it (for types that track ownership)");
             fc_error(fc);
         }
 

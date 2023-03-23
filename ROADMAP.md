@@ -29,4 +29,4 @@ Feature todo list in order:
 - Generics
 - Traits
 - Custom iterators
-- %keep tags in function arguments, to keep ownership and not share it
+- Define which arguments need to take ownership
