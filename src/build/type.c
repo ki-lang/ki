@@ -89,7 +89,6 @@ Type *type_gen_class(Allocator *alc, Class *class) {
     t->ptr_depth = depth;
     t->is_signed = sign;
     t->class = class;
-    t->async = class->async;
     return t;
 }
 
@@ -260,8 +259,8 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     type->take_ownership = take_ownership;
     type->strict_ownership = strict_ownership;
     if (async) {
-        if (type->class && !type->class->async) {
-            sprintf(fc->sbuf, "Expected a async type: But the '%s' class is not an async class", type->class->dname);
+        if (async && type->class && !type->class->async && !type->strict_ownership && type->class->type != ct_int && type->class->type != ct_float) {
+            sprintf(fc->sbuf, "Expected an async type. The '%s' class does not support being used asynchronously. Async types are types with either: strict ownership, a class with an 'async' tag, number types and function pointers.", type->class->dname);
             fc_error(fc);
         }
         type->async = true;
@@ -393,9 +392,9 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
             return false;
         }
     }
-    if (t1->async && (!t2->async && !t2->strict_ownership)) {
+    if (t1->async && t2->class && !t2->class->async && !t2->strict_ownership && t2->class->type != ct_int && t2->class->type != ct_float) {
         if (reason)
-            *reason = "Left type expects an async compatible type. So the right side must have async type or a strict ownership type. Because strict ownership is always async compatible.";
+            *reason = "Left type expects an async compatible type. So the right side type must either be: a class tagged with 'async', a type with strict ownership, a number type or a function pointer. Note: classes with an 'async' tag must be certain their functions are thread safe or the program will crash. Tip: use the Mutex class to share data.";
         return false;
     }
     if (t1t == type_int) {
@@ -456,11 +455,11 @@ char *type_to_str(Type *t, char *res) {
     //     strcat(res, "ptr");
     //     return res;
     // }
+    if (t->async) {
+        strcat(res, "async ");
+    }
     if (t->nullable) {
         strcat(res, "?");
-    }
-    if (t->async) {
-        strcat(res, "~");
     }
     if (type_tracks_ownership(t)) {
         if (!t->take_ownership) {

@@ -8,19 +8,19 @@ struct ThreadEntry[F, T] {
 	start_func: F;
 }
 
-class Thread[F, T] {
+class Thread[T] {
 
 	private os_thread: ptr;
 
 	private static func entry(data: ptr) void {
-		let entry = data -> ThreadEntry[F, T];
+		let entry = data -> ThreadEntry[fn(T)(void), T];
 		entry.start_func(entry.data);
 		mem:free(entry -> ptr);
 	}
 
-	static func start(start_func: F, data: async *T) CLASS {
+	static func start(start_func: fn(T)(void), data: async *T) CLASS {
 
-		let entry = ThreadEntry[F, T]{ start_func: start_func, data: data };
+		let entry = ThreadEntry[fn(T)(void), T]{ start_func: start_func, data: data };
 		let os_thread = kos.ki_os__thread_create(CLASS.entry, entry -> ptr);
 		let t = CLASS{ os_thread: os_thread };
 
