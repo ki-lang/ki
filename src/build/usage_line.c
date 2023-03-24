@@ -78,7 +78,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
 
         if (ul) {
 
-            if (decl->keep) {
+            if (!decl->type->take_ownership) {
                 sprintf(fc->sbuf, "You cannot give away ownership for '%s' without having it. Type '+' before the argument name to pass on ownership.", decl->name);
                 fc_error(fc);
             }
@@ -285,7 +285,7 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
 void end_usage_line(Allocator *alc, UsageLine *ul) {
     //
     Decl *decl = ul->decl;
-    if (decl->keep) {
+    if (!decl->type->take_ownership) {
         // printf("Keep:%s in %s\n", decl->name, decl->scope->func->dname);
         return;
     }

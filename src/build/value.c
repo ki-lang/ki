@@ -874,11 +874,6 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         Func *func = fp->func;
         Value *first_val = fp->first_arg;
 
-        // TODO, remove 'call_derefs', use 'keep' instead
-        if (!func->call_derefs) {
-            upref = false;
-        }
-
         if (first_val) {
             if (index == argc) {
                 sprintf(fc->sbuf, "Too many arguments");
@@ -887,7 +882,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
             Arg *arg = array_get_index(func->args, 0);
 
-            if (upref && !arg->keep) {
+            if (arg->type->take_ownership) {
                 first_val = usage_move_value(alc, fc, scope, first_val);
             }
 
@@ -915,7 +910,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
                 Value *val = read_value(fc, alc, scope, false, 0, false);
                 val = try_convert(fc, alc, val, arg->type);
-                if (!arg->keep) {
+                if (arg->type->take_ownership) {
                     val = usage_move_value(alc, fc, scope, val);
                 }
 

@@ -300,7 +300,6 @@ struct Decl {
     char *llvm_val;
     bool is_mut;
     bool is_arg;
-    bool keep;
 };
 struct Var {
     Decl *decl;
@@ -314,7 +313,6 @@ struct Arg {
     Chunk *type_chunk;
     Decl *decl;
     bool is_mut;
-    bool keep;
 };
 struct UsageLine {
     Decl *decl;

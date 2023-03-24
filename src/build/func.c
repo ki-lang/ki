@@ -56,17 +56,13 @@ void func_make_arg_decls(Func *func) {
     for (int i = 0; i < func->args->length; i++) {
         Arg *arg = array_get_index(func->args, i);
 
-        Decl *decl = decl_init(alc, fscope, arg->name, arg->type, NULL, arg->is_mut, true, arg->keep);
+        Decl *decl = decl_init(alc, fscope, arg->name, arg->type, NULL, arg->is_mut, true);
         Idf *idf = idf_init(alc, idf_decl);
         idf->item = decl;
 
         map_set(func->scope->identifiers, arg->name, idf);
 
         arg->decl = decl;
-
-        // if (!func->call_derefs && !func->is_static && i == 0) {
-        //     decl->keep = true;
-        // }
 
         usage_line_init(alc, fscope, decl);
     }

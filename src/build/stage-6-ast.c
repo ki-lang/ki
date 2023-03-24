@@ -307,7 +307,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
 
     tok_expect(fc, ";", false, true);
 
-    Decl *decl = decl_init(alc, scope, name, type, val, mutable, false, false);
+    Decl *decl = decl_init(alc, scope, name, type, val, mutable, false);
     array_push(scope->ast, token_init(alc, tkn_declare, decl));
 
     Idf *idf = idf_init(alc, idf_decl);
@@ -523,16 +523,16 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     }
 
     // Declare next_key
-    Decl *decl_nk = decl_init(alc, scope, "each_next_key", f_init->rett, NULL, false, false, false);
+    Decl *decl_nk = decl_init(alc, scope, "each_next_key", f_init->rett, NULL, false, false);
     UsageLine *ul_nk = usage_line_init(alc, scope, decl_nk);
 
     // New sub scope
     Scope *sub = usage_scope_init(alc, scope, sct_loop);
 
     // Declare scope variables
-    Decl *decl_k = decl_init(alc, sub, key_name, f_init->rett, NULL, false, false, false);
+    Decl *decl_k = decl_init(alc, sub, key_name, f_init->rett, NULL, false, false);
     UsageLine *ul_k = usage_line_init(alc, sub, decl_k);
-    Decl *decl_v = decl_init(alc, sub, value_name, f_get->rett, NULL, false, false, false);
+    Decl *decl_v = decl_init(alc, sub, value_name, f_get->rett, NULL, false, false);
     UsageLine *ul_v = usage_line_init(alc, sub, decl_v);
 
     //

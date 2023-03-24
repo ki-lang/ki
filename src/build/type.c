@@ -396,11 +396,6 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
         for (int i = 0; i < t1_args->length; i++) {
             Arg *t1d = array_get_index(t1_args, i);
             Arg *t2d = array_get_index(t2_args, i);
-            if (t1d->keep != t2d->keep) {
-                if (reason)
-                    *reason = "One argument keeps the ownership, the other does not";
-                return false;
-            }
             if (!type_compat(t1d->type, t2d->type, NULL)) {
                 if (reason)
                     *reason = "Argument types are not compatible";
@@ -412,24 +407,11 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
                 *reason = "Function return types are not compatible";
             return false;
         }
-        // Check error codes
-        // Array *t1errs = t1->func_error_codes;
-        // Array *t2errs = t2->func_error_codes;
-        // if ((t1errs == NULL || t2errs == NULL) && t1errs != t2errs) {
-        //     return false;
-        // }
-        // if (t1->func_error_codes) {
-        //     if (t1errs->length != t2errs->length) {
-        //         return false;
-        //     }
-        //     for (int i = 0; i < t1errs->length; i++) {
-        //         char *t1e = array_get_index(t1errs, i);
-        //         char *t2e = array_get_index(t2errs, i);
-        //         if (strcmp(t1e, t2e) != 0) {
-        //             return false;
-        //         }
-        //     }
-        // }
+        if (t1->func_can_error != t2->func_can_error) {
+            if (reason)
+                *reason = "One type can return errors, the other cannot";
+            return false;
+        }
     }
     return true;
 }
@@ -488,9 +470,6 @@ char *type_to_str(Type *t, char *res) {
                 strcat(res, ", ");
             }
             Arg *arg = array_get_index(t->func_args, i);
-            if (!arg->keep) {
-                strcat(res, "+");
-            }
             strcat(res, type_to_str(arg->type, sub_str));
         }
         strcat(res, ")(");

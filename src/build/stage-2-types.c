@@ -204,9 +204,8 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             Func *func = class_define_func(fc, class, is_static, token, NULL, NULL);
             func->act = act;
 
-            if (!is_static && take_ownership) {
+            if (!is_static) {
                 Arg *arg = array_get_index(func->args, 0);
-                arg->keep = false;
                 arg->type->take_ownership = take_ownership;
                 arg->type->strict_ownership = strict_ownership;
             }
@@ -352,7 +351,6 @@ void stage_2_func(Fc *fc, Func *func) {
         }
 
         Arg *arg = arg_init(alc, name, type, mutable);
-        arg->keep = !take_ownership;
         arg->value_chunk = val_chunk;
         arg->type_chunk = type_chunk;
 
@@ -508,6 +506,7 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
     Type *args[10];
 
     args[0] = type_gen_class(alc, class);
+    args[0]->take_ownership = false;
 
     func = map_get(class->funcs, "__ref");
     if (func)
@@ -533,6 +532,8 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
         stage_2_class_type_check(fc, func_iter, args, 1, NULL, false);
         Type *key_type = type_clone(alc, func_iter->rett);
         key_type->ptr_depth++;
+        key_type->take_ownership = false;
+        key_type->strict_ownership = false;
         args[1] = func_iter->rett;
         args[2] = key_type;
         func = map_get(class->funcs, "__iter_get");

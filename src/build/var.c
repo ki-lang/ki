@@ -1,7 +1,7 @@
 
 #include "../all.h"
 
-Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg, bool keep) {
+Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg) {
     //
     Decl *v = al(alc, sizeof(Decl));
     v->name = name;
@@ -10,7 +10,6 @@ Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val
     v->scope = scope;
     v->is_mut = is_mut;
     v->is_arg = is_arg;
-    v->keep = keep;
 
     return v;
 }
@@ -33,7 +32,6 @@ Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut) {
     v->value_chunk = NULL;
     v->decl = NULL;
     v->type_chunk = NULL;
-    v->keep = true;
 
     return v;
 }

@@ -120,7 +120,6 @@ Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name_, Array
 
     if (!args && !is_static) {
         Arg *arg = arg_init(fc->alc, "this", type_gen_class(fc->alc, class), false);
-        arg->keep = true;
         array_push(func->args, arg);
     }
 

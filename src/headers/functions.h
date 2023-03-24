@@ -148,7 +148,7 @@ Type *type_clone(Allocator *alc, Type *type);
 bool type_tracks_ownership(Type *type);
 
 // Var
-Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg, bool keep);
+Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg);
 Var *var_init(Allocator *alc, Decl *decl, Type *type);
 Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
 
