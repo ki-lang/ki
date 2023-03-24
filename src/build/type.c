@@ -144,8 +144,25 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok_expect(fc, "(", true, true);
         tok(fc, token, true, true);
         while (strcmp(token, ")") != 0) {
-            rtok(fc);
-            Arg *arg = arg_init(alc, "", read_type(fc, alc, scope, true, true), false);
+
+            bool take_ownership = false;
+            bool strict_ownership = false;
+            if (strcmp(token, "*") == 0) {
+                take_ownership = true;
+                tok(fc, token, true, true);
+            } else if (strcmp(token, "**") == 0) {
+                take_ownership = true;
+                strict_ownership = true;
+                tok(fc, token, true, true);
+            } else {
+                rtok(fc);
+            }
+
+            Type *type = read_type(fc, alc, scope, true, true);
+            type->take_ownership = take_ownership;
+            type->strict_ownership = strict_ownership;
+
+            Arg *arg = arg_init(alc, "", type, false);
             array_push(args, arg);
             tok(fc, token, true, true);
             if (strcmp(token, ",") == 0) {
@@ -330,6 +347,25 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
         if (reason)
             *reason = "Pointer depth difference";
         return false;
+    }
+    bool t1o = type_tracks_ownership(t1);
+    bool t2o = type_tracks_ownership(t2);
+    if (t1o != t2o) {
+        if (reason)
+            *reason = "One type tracks ownership, the other does not";
+        return false;
+    }
+    if (t1o) {
+        if (t1->take_ownership && !t2->take_ownership) {
+            if (reason)
+                *reason = "Trying to pass a type with borrowed ownership to a type that takes ownership";
+            return false;
+        }
+        if (t1->strict_ownership != t2->strict_ownership) {
+            if (reason)
+                *reason = "One type has strict ownership, the other does not";
+            return false;
+        }
     }
     if (t1t == type_int) {
         if (t1->enu != NULL && t1->enu != t2->enu) {
