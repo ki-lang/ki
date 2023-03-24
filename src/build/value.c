@@ -79,7 +79,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         if (type->type == type_ptr) {
             tok_expect(fc, "as", true, true);
-            type = read_type(fc, alc, scope, true, true);
+            type = read_type(fc, alc, scope, true, true, false);
         } else {
             type = type_clone(alc, type);
             type->ptr_depth--;
@@ -103,7 +103,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         //
     } else if (strcmp(token, "sizeof") == 0) {
         tok_expect(fc, "(", true, false);
-        Type *type = read_type(fc, alc, scope, false, true);
+        Type *type = read_type(fc, alc, scope, false, true, false);
         tok_expect(fc, ")", false, true);
         int size = type->bytes;
         if (type->type == type_struct) {
@@ -166,7 +166,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             }
             if (get_char(fc, 0) == '#') {
                 chunk_move(fc->chunk, 1);
-                Type *type = read_type(fc, alc, scope, true, false);
+                Type *type = read_type(fc, alc, scope, true, false, false);
                 if (type->type != type_int) {
                     sprintf(fc->sbuf, "Invalid integer type");
                     fc_error(fc);
@@ -269,7 +269,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 fc_error(fc);
             }
 
-            Type *type = read_type(fc, alc, scope, false, true);
+            Type *type = read_type(fc, alc, scope, false, true, false);
             v = vgen_cast(alc, v, type);
 
             tok(fc, token, false, true);

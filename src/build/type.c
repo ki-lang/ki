@@ -114,14 +114,14 @@ Type *type_gen_void(Allocator *alc) {
     return t;
 }
 
-Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space) {
+Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space, bool is_arg) {
     //
     char *token = fc->token;
     bool nullable = false;
     bool t_inline = false;
     bool is_async = false;
 
-    bool take_ownership = true;
+    bool take_ownership = is_arg ? false : true;
     bool strict_ownership = false;
 
     tok(fc, token, sameline, allow_space);
@@ -130,7 +130,11 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         nullable = true;
         tok(fc, token, true, false);
     }
-    if (strcmp(token, "*") == 0) {
+    if (is_arg && strcmp(token, "*") == 0) {
+        take_ownership = true;
+        tok(fc, token, true, false);
+    } else if (strcmp(token, is_arg ? "**" : "*") == 0) {
+        take_ownership = true;
         strict_ownership = true;
         tok(fc, token, true, false);
     }
@@ -152,22 +156,22 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, true);
         while (strcmp(token, ")") != 0) {
 
-            bool take_ownership = false;
-            bool strict_ownership = false;
-            if (strcmp(token, "*") == 0) {
-                take_ownership = true;
-                tok(fc, token, true, true);
-            } else if (strcmp(token, "**") == 0) {
-                take_ownership = true;
-                strict_ownership = true;
-                tok(fc, token, true, true);
-            } else {
-                rtok(fc);
-            }
+            // bool take_ownership = false;
+            // bool strict_ownership = false;
+            // if (strcmp(token, "*") == 0) {
+            //     take_ownership = true;
+            //     tok(fc, token, true, true);
+            // } else if (strcmp(token, "**") == 0) {
+            //     take_ownership = true;
+            //     strict_ownership = true;
+            //     tok(fc, token, true, true);
+            // } else {
+            rtok(fc);
+            // }
 
-            Type *type = read_type(fc, alc, scope, true, true);
-            type->take_ownership = take_ownership;
-            type->strict_ownership = strict_ownership;
+            Type *type = read_type(fc, alc, scope, true, true, true);
+            // type->take_ownership = take_ownership;
+            // type->strict_ownership = strict_ownership;
 
             Arg *arg = arg_init(alc, "", type, false);
             array_push(args, arg);
@@ -180,7 +184,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
         // Check return type
         tok_expect(fc, "(", true, false);
-        type->func_rett = read_type(fc, alc, scope, true, true);
+        type->func_rett = read_type(fc, alc, scope, true, true, false);
         tok_expect(fc, ")", true, true);
 
         // i = tok(fc, token, true, true);
@@ -240,7 +244,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
             } else if (idf->type == idf_fc) {
                 Fc *fc_ = idf->item;
                 tok_expect(fc, ".", true, false);
-                type = read_type(fc, alc, fc_->scope, true, false);
+                type = read_type(fc, alc, fc_->scope, true, false, false);
             } else {
                 sprintf(fc->sbuf, "Not a type");
                 fc_error(fc);

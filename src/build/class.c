@@ -431,7 +431,7 @@ Array *read_generic_types(Fc *fc, Scope *scope, Class *class) {
     tok_expect(fc, "[", true, true);
     Array *types = array_make(fc->alc, class->generic_names->length + 1);
     while (true) {
-        Type *type = read_type(fc, fc->alc, scope, true, true);
+        Type *type = read_type(fc, fc->alc, scope, true, true, false);
         array_push(types, type);
 
         tok(fc, token, true, true);

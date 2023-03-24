@@ -47,7 +47,7 @@ void stage_2(Fc *fc) {
     for (int i = 0; i < fc->globals->length; i++) {
         Global *g = array_get_index(fc->globals, i);
         fc->chunk = g->type_chunk;
-        Type *type = read_type(fc, fc->alc, fc->scope, true, true);
+        Type *type = read_type(fc, fc->alc, fc->scope, true, true, false);
         if (type->ptr_depth > 0 && !type->nullable) {
             sprintf(fc->sbuf, "Global types must be prefixed with '?' because the default value of a global is 'null' for pointer types");
             fc_error(fc);
@@ -252,7 +252,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
             tok(fc, token, true, true);
             if (strcmp(token, ":") == 0) {
-                Type *type = read_type(fc, fc->alc, scope, true, true);
+                Type *type = read_type(fc, fc->alc, scope, true, true, false);
                 if (type_is_void(type)) {
                     sprintf(fc->sbuf, "Cannot use 'void' as a type for a class property");
                     fc_error(fc);
@@ -300,14 +300,14 @@ void stage_2_func(Fc *fc, Func *func) {
             tok(fc, token, true, true);
         }
 
-        if (strcmp(token, "*") == 0) {
-            take_ownership = true;
-            tok(fc, token, true, true);
-        } else if (strcmp(token, "**") == 0) {
-            take_ownership = true;
-            strict_ownership = true;
-            tok(fc, token, true, true);
-        }
+        // if (strcmp(token, "*") == 0) {
+        //     take_ownership = true;
+        //     tok(fc, token, true, true);
+        // } else if (strcmp(token, "**") == 0) {
+        //     take_ownership = true;
+        //     strict_ownership = true;
+        //     tok(fc, token, true, true);
+        // }
 
         if (!is_valid_varname(token)) {
             sprintf(fc->sbuf, "Invalid argument name: '%s'", token);
@@ -332,7 +332,7 @@ void stage_2_func(Fc *fc, Func *func) {
         Chunk *val_chunk = NULL;
         Chunk *type_chunk = chunk_clone(alc, fc->chunk);
 
-        Type *type = read_type(fc, alc, func->scope->parent, true, true);
+        Type *type = read_type(fc, alc, func->scope->parent, true, true, true);
 
         if (mutable && !take_ownership && type_tracks_ownership(type)) {
             sprintf(fc->sbuf, "If your argument is mutable, you must type '*' before the argument name in order to pass ownership. Without ownership we dont allow mutations.");
@@ -343,8 +343,8 @@ void stage_2_func(Fc *fc, Func *func) {
             fc_error(fc);
         }
 
-        type->take_ownership = take_ownership;
-        type->strict_ownership = strict_ownership;
+        // type->take_ownership = take_ownership;
+        // type->strict_ownership = strict_ownership;
 
         tok(fc, token, true, true);
         if (strcmp(token, "=") == 0) {
@@ -371,7 +371,7 @@ void stage_2_func(Fc *fc, Func *func) {
     }
 
     // Return type
-    func->rett = read_type(fc, alc, func->scope->parent, true, true);
+    func->rett = read_type(fc, alc, func->scope->parent, true, true, false);
 
     Array *errors = NULL;
 

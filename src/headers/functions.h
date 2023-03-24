@@ -140,7 +140,7 @@ Type *type_gen_fptr(Allocator *alc, Func *func);
 Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed);
 Type *type_gen_void(Allocator *alc);
 Type *type_gen(Build *b, Allocator *alc, char *name);
-Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space);
+Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space, bool is_arg);
 bool type_compat(Type *t1, Type *t2, char **reason);
 char *type_to_str(Type *t, char *res);
 void type_check(Fc *fc, Type *t1, Type *t2);
