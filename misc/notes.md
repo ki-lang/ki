@@ -48,17 +48,17 @@ else add deref
 
 # Ownership types
 
-- Ownership applies to all ct_struct types
+- Ownership applies to all ct_struct types && ct_ptr with ref/deref funcs
 
-&Product -> borrow
+&Product -> borrowed ownership
 *Product -> Weak ownership
 **Product -> Strict ownership
 
 let mutex = Mutex<Server>.init(server);
-Thread<Server>.init(worker, mutex);
+Thread<Mutex<Server>>.init(worker, mutex);
 
 class Thread<F, **T> {
-  static func init(F, ?Mutex<T>) void {
+  static func init(F, T) void {
   }
 }
 

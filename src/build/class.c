@@ -378,6 +378,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
 
         Fc *new_fc = fc_init(b, gname, fc->nsc, true);
         new_fc->chunk = chunk_clone(alc, fc->chunk);
+        new_fc->scope->identifiers = fc->scope->identifiers;
 
         gclass->fc = new_fc;
         gclass->chunk_body = chunk_clone(alc, class->chunk_body);

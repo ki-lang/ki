@@ -18,7 +18,7 @@ class Server {
 		};
 	}
 
-	func start(mut worker_count: i32 = 8) void {
+	func +start(mut worker_count: i32 = 8) void {
 
 		// SIGINT
         os:signal(os:SIG.hup, interrupt);
@@ -38,13 +38,12 @@ class Server {
 		worker_count--;
 		while worker_count > 0 {
 			worker_count--;
-			let thread = os:Thread.start(Server.worker, this -> ptr);
+			let thread = os:Thread[fn(Server)(void), Server].start(Server.worker, this);
 		}
-		Server.worker(this -> ptr);
+		Server.worker(this);
 	}
 
-	private static func worker(server_ptr: ptr) void {
-		let server = server_ptr -> Server;
+	private static func worker(server: Server) void {
 		println("hello");
 	}
 

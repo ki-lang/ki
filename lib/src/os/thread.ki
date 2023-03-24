@@ -1,28 +1,28 @@
 
-header "ki_os" as os;
+header "ki_os" as kos;
 
 use ki:mem;
 
-struct ThreadEntry {
-	public data: ?ptr;
-	start_func: fn(?ptr)(void);
+struct ThreadEntry[F, T] {
+	public data: T;
+	start_func: F;
 }
 
-struct Thread {
+class Thread[F, T] {
 
 	private os_thread: ptr;
 
 	private static func entry(data: ptr) void {
-		let entry = data -> ThreadEntry;
+		let entry = data -> ThreadEntry[F, T];
 		entry.start_func(entry.data);
 		mem:free(entry -> ptr);
 	}
 
-	static func start(start_func: fn(?ptr)(void), data: ?ptr) Thread {
+	static func start(start_func: F, +data: T) CLASS {
 
-		let entry = ThreadEntry{ start_func: start_func, data: data };
-		let os_thread = os.ki_os__thread_create(Thread.entry, entry -> ptr);
-		let t = Thread{ os_thread: os_thread };
+		let entry = ThreadEntry[F, T]{ start_func: start_func, data: data };
+		let os_thread = kos.ki_os__thread_create(CLASS.entry, entry -> ptr);
+		let t = CLASS{ os_thread: os_thread };
 
 		return t;
 	}

@@ -3,6 +3,7 @@
 
 Feature todo list in order:
 
+- __before_free
 - Type check internal functions keep value
 - Upref variables instead of direct value on assign/declare
 - Check class property access types (public,private,readonly)
