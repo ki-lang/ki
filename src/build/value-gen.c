@@ -78,7 +78,7 @@ Value *vgen_class_init(Allocator *alc, Class *class, Map *values) {
     item->class = class;
     item->values = values;
     Type *rett = type_gen_class(alc, class);
-    rett->owned = true;
+    rett->strict_ownership = true;
     return value_init(alc, v_class_init, item, rett);
 }
 

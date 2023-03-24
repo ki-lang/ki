@@ -375,7 +375,7 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
                 *reason = "Trying to pass a type with borrowed ownership to a type that takes ownership";
             return false;
         }
-        if (t1->strict_ownership != t2->strict_ownership) {
+        if (t1->strict_ownership && !t2->strict_ownership) {
             if (reason)
                 *reason = "One type has strict ownership, the other does not";
             return false;
