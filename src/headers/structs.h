@@ -112,6 +112,7 @@ struct Build {
     bool test;
     bool debug;
     bool clear_cache;
+    bool run_code;
     bool core_types_scanned;
 };
 

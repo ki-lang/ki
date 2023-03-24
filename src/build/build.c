@@ -19,11 +19,13 @@ void cmd_build(int argc, char *argv[]) {
     array_push(has_value, "--arch");
     array_push(has_value, "--os");
 
+    bool run_code = strcmp(argv[1], "run") == 0;
+
     parse_argv(argv, argc, has_value, args, options);
 
     // Check options
     char *path_out = map_get(options, "-o");
-    if (array_contains(args, "-h", arr_find_str) || !path_out || strlen(path_out) == 0) {
+    if (array_contains(args, "-h", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0)) {
         cmd_build_help();
     }
 
@@ -124,6 +126,13 @@ void cmd_build(int argc, char *argv[]) {
         printf("💿 Target : %s-%s\n", os, arch);
     }
 
+    if (!path_out) {
+        path_out = al(alc, KI_PATH_MAX);
+        strcpy(path_out, cache_dir);
+        strcat(path_out, "/out");
+        printf("💾 Temporary out : %s\n", path_out);
+    }
+
     //
     b->os = os;
     b->arch = arch;
@@ -173,6 +182,7 @@ void cmd_build(int argc, char *argv[]) {
     b->test = test;
     b->debug = debug;
     b->clear_cache = clear_cache;
+    b->run_code = run_code;
     b->LOC = 0;
     //
 
@@ -218,6 +228,10 @@ void cmd_build(int argc, char *argv[]) {
     stage_8(b);
 
     printf("✅ Done\n");
+
+    if (run_code) {
+        system(b->path_out);
+    }
 }
 
 void build_add_files(Build *b, Array *files) {
