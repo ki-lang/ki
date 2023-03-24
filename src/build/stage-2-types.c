@@ -293,6 +293,7 @@ void stage_2_func(Fc *fc, Func *func) {
         bool mutable = false;
         bool take_ownership = false;
         bool strict_ownership = false;
+        bool async = false;
 
         if (strcmp(token, "mut") == 0) {
             mutable = true;
@@ -321,6 +322,13 @@ void stage_2_func(Fc *fc, Func *func) {
 
         tok_expect(fc, ":", true, true);
 
+        tok(fc, token, true, true);
+        if (strcmp(token, "async") == 0) {
+            async = true;
+        } else {
+            rtok(fc);
+        }
+
         Chunk *val_chunk = NULL;
         Chunk *type_chunk = chunk_clone(alc, fc->chunk);
 
@@ -328,6 +336,10 @@ void stage_2_func(Fc *fc, Func *func) {
 
         if (mutable && !take_ownership && type_tracks_ownership(type)) {
             sprintf(fc->sbuf, "If your argument is mutable, you must type '*' before the argument name in order to pass ownership. Without ownership we dont allow mutations.");
+            fc_error(fc);
+        }
+        if (async && type->class && !type->class->async) {
+            sprintf(fc->sbuf, "Expected an async compatible type. '%s' is not one of them. Suggestion, put your type inside a 'Mutex[T]' generic.", type->class->dname);
             fc_error(fc);
         }
 

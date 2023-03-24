@@ -3,6 +3,8 @@
 
 Feature todo list in order:
 
+- dont allow class_pa of strict type values, swap token
+- __leave_scope
 - __before_free
 - Type check internal functions keep value
 - Upref variables instead of direct value on assign/declare

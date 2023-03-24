@@ -18,7 +18,7 @@ class Server {
 		};
 	}
 
-	func *start(mut worker_count: i32 = 8) void {
+	func **start(mut worker_count: i32 = 8) void {
 
 		// SIGINT
         os:signal(os:SIG.hup, interrupt);
@@ -35,16 +35,21 @@ class Server {
 		println("[+] Running http server on port " + this.port.str());
 		println("[+] Worker count: " + worker_count.str());
 
+		let mutex = os:Mutex[Server].make(this);
+
 		worker_count--;
 		while worker_count > 0 {
 			worker_count--;
-			let thread = os:Thread[fn(Server)(void), Server].start(Server.worker, this);
+			let thread = os:Thread[fn(os:Mutex[Server])(void), os:Mutex[Server]].start(Server.worker, mutex);
 		}
-		Server.worker(this);
+		Server.worker(mutex);
+		os:sleep_ms(1000);
 	}
 
-	private static func worker(server: Server) void {
+	private static func worker(mutex: os:Mutex[Server]) void {
+		let server = mutex.lock();
 		println("hello");
+		mutex.unlock(server);
 	}
 
 }

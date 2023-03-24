@@ -121,10 +121,17 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     bool t_inline = false;
     bool is_async = false;
 
+    bool take_ownership = true;
+    bool strict_ownership = false;
+
     tok(fc, token, sameline, allow_space);
 
     if (strcmp(token, "?") == 0) {
         nullable = true;
+        tok(fc, token, true, false);
+    }
+    if (strcmp(token, "*") == 0) {
+        strict_ownership = true;
         tok(fc, token, true, false);
     }
 
@@ -240,6 +247,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
             }
         }
     }
+
+    type->take_ownership = take_ownership;
+    type->strict_ownership = strict_ownership;
 
     tok(fc, token, true, false);
     while (strcmp(token, "*") == 0) {

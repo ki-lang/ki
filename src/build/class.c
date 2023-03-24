@@ -21,6 +21,7 @@ Class *class_init(Allocator *alc) {
     class->allow_math = false;
     class->is_struct = false;
     class->can_iter = false;
+    class->async = false;
 
     class->func_ref = NULL;
     class->func_deref = NULL;

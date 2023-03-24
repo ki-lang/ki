@@ -254,6 +254,7 @@ struct Class {
     bool must_deref;
     bool is_struct;
     bool can_iter;
+    bool async;
 };
 struct ClassProp {
     Type *type;
