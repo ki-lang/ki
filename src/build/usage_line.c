@@ -339,7 +339,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
         } else {
             // Add deref token
             if (class->must_deref) {
-                if (decl->type->is_strict) {
+                if (decl->type->strict_ownership) {
                     Scope *sub = scope_init(alc, sct_default, ul->scope, true);
                     Value *val = value_init(alc, v_decl, decl, type);
                     class_free_value(alc, sub, val);

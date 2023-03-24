@@ -8,12 +8,14 @@ Type *type_init(Allocator *alc) {
     type->bytes = 0;
     type->ptr_depth = 0;
     type->is_signed = false;
-    type->is_strict = false;
     type->nullable = false;
     type->owned = false;
     type->shared = false;
     type->class = NULL;
     type->enu = NULL;
+    //
+    type->take_ownership = true;
+    type->strict_ownership = false;
     //
     type->func_args = NULL;
     type->func_rett = NULL;
@@ -408,9 +410,14 @@ char *type_to_str(Type *t, char *res) {
     if (t->nullable) {
         strcat(res, "?");
     }
-    if (t->is_strict) {
-        strcat(res, "*");
+    if (type_tracks_ownership(t)) {
+        if (!t->take_ownership) {
+            strcat(res, "&");
+        } else if (t->strict_ownership) {
+            strcat(res, "*");
+        }
     }
+
     if (t->class) {
         Class *class = t->class;
 
@@ -481,10 +488,10 @@ void type_check(Fc *fc, Type *t1, Type *t2) {
 
 bool type_tracks_ownership(Type *type) {
     //
-    Class *class = type->class;
-    if (type->is_strict) {
+    if (type->strict_ownership) {
         return true;
     }
+    Class *class = type->class;
     if (!class) {
         return false;
     }

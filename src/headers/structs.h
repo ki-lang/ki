@@ -219,7 +219,9 @@ struct Type {
     bool func_can_error;
     bool owned;
     bool shared;
-    bool is_strict;
+    bool borrow_ownership;
+    bool take_ownership;
+    bool strict_ownership;
 };
 
 struct Class {
