@@ -79,7 +79,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         if (ul) {
 
             if (!decl->type->take_ownership) {
-                sprintf(fc->sbuf, "You cannot give away ownership for '%s' without having it. Type '+' before the argument name to pass on ownership.", decl->name);
+                sprintf(fc->sbuf, "You cannot give away ownership for '%s' without having it. Type '*' before the argument name to pass on ownership.", decl->name);
                 fc_error(fc);
             }
 
