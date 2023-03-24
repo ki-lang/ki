@@ -218,11 +218,10 @@ struct Type {
     bool is_signed;
     bool nullable;
     bool func_can_error;
-    bool owned;
-    bool shared;
     bool borrow_ownership;
     bool take_ownership;
     bool strict_ownership;
+    bool async;
 };
 
 struct Class {

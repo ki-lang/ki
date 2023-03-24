@@ -9,13 +9,12 @@ Type *type_init(Allocator *alc) {
     type->ptr_depth = 0;
     type->is_signed = false;
     type->nullable = false;
-    type->owned = false;
-    type->shared = false;
     type->class = NULL;
     type->enu = NULL;
     //
     type->take_ownership = true;
     type->strict_ownership = false;
+    type->async = false;
     //
     type->func_args = NULL;
     type->func_rett = NULL;
@@ -90,6 +89,7 @@ Type *type_gen_class(Allocator *alc, Class *class) {
     t->ptr_depth = depth;
     t->is_signed = sign;
     t->class = class;
+    t->async = class->async;
     return t;
 }
 
@@ -119,7 +119,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     char *token = fc->token;
     bool nullable = false;
     bool t_inline = false;
-    bool is_async = false;
+    bool async = false;
 
     bool take_ownership = is_arg ? false : true;
     bool strict_ownership = false;
@@ -128,6 +128,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     if (strcmp(token, "?") == 0) {
         nullable = true;
+        tok(fc, token, true, false);
+    }
+    if (strcmp(token, "~") == 0) {
+        async = true;
         tok(fc, token, true, false);
     }
     if (strcmp(token, "*") == 0) {
@@ -254,6 +258,8 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     type->take_ownership = take_ownership;
     type->strict_ownership = strict_ownership;
+    if (async)
+        type->async = true;
 
     tok(fc, token, true, false);
     while (strcmp(token, "*") == 0) {
@@ -381,6 +387,11 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
             return false;
         }
     }
+    if (t1->async && (!t2->async && !t2->strict_ownership)) {
+        if (reason)
+            *reason = "Left type expects an async compatible type. So the right side must have async type or a strict ownership type. Because strict ownership is always async compatible.";
+        return false;
+    }
     if (t1t == type_int) {
         if (t1->enu != NULL && t1->enu != t2->enu) {
             if (reason)
@@ -442,10 +453,15 @@ char *type_to_str(Type *t, char *res) {
     if (t->nullable) {
         strcat(res, "?");
     }
+    if (t->async) {
+        strcat(res, "~");
+    }
     if (type_tracks_ownership(t)) {
         if (!t->take_ownership) {
             strcat(res, "&");
         } else if (t->strict_ownership) {
+            strcat(res, "**");
+        } else {
             strcat(res, "*");
         }
     }

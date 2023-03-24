@@ -322,20 +322,13 @@ void stage_2_func(Fc *fc, Func *func) {
 
         tok_expect(fc, ":", true, true);
 
-        tok(fc, token, true, true);
-        if (strcmp(token, "async") == 0) {
-            async = true;
-        } else {
-            rtok(fc);
-        }
-
         Chunk *val_chunk = NULL;
         Chunk *type_chunk = chunk_clone(alc, fc->chunk);
 
         Type *type = read_type(fc, alc, func->scope->parent, true, true, true);
 
-        if (mutable && !take_ownership && type_tracks_ownership(type)) {
-            sprintf(fc->sbuf, "If your argument is mutable, you must type '*' before the argument name in order to pass ownership. Without ownership we dont allow mutations.");
+        if (mutable && !type->take_ownership && type_tracks_ownership(type)) {
+            sprintf(fc->sbuf, "If your argument is mutable, your type must have ownership. '*T' or '**T'");
             fc_error(fc);
         }
         if (async && type->class && !type->class->async) {
