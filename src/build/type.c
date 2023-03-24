@@ -126,12 +126,13 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     tok(fc, token, sameline, allow_space);
 
+    if (strcmp(token, "async") == 0) {
+        async = true;
+        tok(fc, token, true, true);
+    }
+
     if (strcmp(token, "?") == 0) {
         nullable = true;
-        tok(fc, token, true, false);
-    }
-    if (strcmp(token, "~") == 0) {
-        async = true;
         tok(fc, token, true, false);
     }
     if (strcmp(token, "*") == 0) {
@@ -258,8 +259,13 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     type->take_ownership = take_ownership;
     type->strict_ownership = strict_ownership;
-    if (async)
+    if (async) {
+        if (type->class && !type->class->async) {
+            sprintf(fc->sbuf, "Expected a async type: But the '%s' class is not an async class", type->class->dname);
+            fc_error(fc);
+        }
         type->async = true;
+    }
 
     tok(fc, token, true, false);
     while (strcmp(token, "*") == 0) {
