@@ -3,7 +3,7 @@
 
 char *default_os();
 char *default_arch();
-void cmd_build_help();
+void cmd_build_help(bool run_code);
 void build_add_files(Build *b, Array *files);
 char *find_config_dir(Allocator *alc, char *ki_path);
 
@@ -19,14 +19,14 @@ void cmd_build(int argc, char *argv[]) {
     array_push(has_value, "--arch");
     array_push(has_value, "--os");
 
-    bool run_code = strcmp(argv[1], "run") == 0;
-
     parse_argv(argv, argc, has_value, args, options);
+
+    bool run_code = strcmp(argv[1], "run") == 0 || array_contains(args, "--run", arr_find_str) || array_contains(args, "-r", arr_find_str);
 
     // Check options
     char *path_out = map_get(options, "-o");
     if (array_contains(args, "-h", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0)) {
-        cmd_build_help();
+        cmd_build_help(run_code);
     }
 
     char *os = map_get(options, "--os");
@@ -130,7 +130,9 @@ void cmd_build(int argc, char *argv[]) {
         path_out = al(alc, KI_PATH_MAX);
         strcpy(path_out, cache_dir);
         strcat(path_out, "/out");
-        printf("💾 Temporary out : %s\n", path_out);
+        if (verbose > 0) {
+            printf("💾 Temporary out : %s\n", path_out);
+        }
     }
 
     //
@@ -227,7 +229,9 @@ void cmd_build(int argc, char *argv[]) {
 
     stage_8(b);
 
-    printf("✅ Done\n");
+    if (!run_code || b->verbose > 0) {
+        printf("✅ Done\n");
+    }
 
     if (run_code) {
         system(b->path_out);
@@ -273,12 +277,28 @@ char *default_arch() {
     die("Cannot determine default target 'arch', use --arch to specify manually");
 }
 
-void cmd_build_help() {
+void cmd_build_help(bool run_code) {
     //
-    printf("\n# ki build {ki-files} -o {outpath}\n\n");
-    printf(" --os            compile for target OS: linux, win, macos\n");
-    printf(" --arch          compile for target arch: x86, x64, arm64\n");
+    if (run_code)
+        printf("\n# ki run {ki-files}\n");
+    else
+        printf("\n# ki build {ki-files} -o {outpath}\n");
     printf("\n");
+
+    printf(" --optimize -O       apply code optimizations\n");
+    printf(" --clear -c          clear cache\n");
+    printf(" --debug -d          generate debug info\n");
+    printf(" --test              run _test_{...} functions\n");
+    printf(" --run -r            run code after compiling\n");
+    printf("\n");
+
+    printf(" -v -vv -vvv         show compile info\n");
+    printf("\n");
+
+    printf(" --os                compile for target OS: linux, macos\n");
+    printf(" --arch              compile for target arch: x64\n");
+    printf("\n");
+
     exit(1);
 }
 

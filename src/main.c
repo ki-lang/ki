@@ -22,12 +22,13 @@ int main(int argc, char *argv[]) {
 
 void help() {
     //
-    printf("######################\n");
-    printf("ki lang compiler v0.1\n");
-    printf("######################\n");
+    printf("-------------------------\n");
+    printf(" ki lang compiler v0.1\n");
+    printf("-------------------------\n\n");
 
-    printf("# ki build -h       Build ki code to an executable\n");
-    printf("# ki run -h         Build and run ki code\n");
-    printf("######################\n");
+    printf(" ki build -h       Build ki code to an executable\n");
+    printf(" ki run -h         Build and run ki code\n");
+
+    printf("\n");
     exit(1);
 }
