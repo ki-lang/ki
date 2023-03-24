@@ -5,8 +5,10 @@ use ki:os;
 
 class Server {
 	host: String;
-	port: u32;
 	handler: fn(Request)(Response);
+	connections: Array[Connection];
+	//
+	port: u32;
 	max_connections: u32 = 10000;
 
 	static func init(host: *String, port: u32, handler: fn(Request)(Response)) Server {
@@ -15,6 +17,7 @@ class Server {
 			host: host,
 			port: port,
 			handler: handler,
+			connections: Array[Connection].init(10000)
 		};
 	}
 
@@ -43,13 +46,15 @@ class Server {
 			let thread = os:Thread[fn(os:Mutex[Server])(void), os:Mutex[Server]].start(Server.worker, mutex);
 		}
 		Server.worker(mutex);
-		os:sleep_ms(1000);
+		os:sleep_ms(200);
 	}
 
 	private static func worker(mutex: os:Mutex[Server]) void {
 		let server = mutex.lock();
-		println("hello");
+		let cons = server.connections;
 		mutex.unlock(server);
+
+		println("hello");
 	}
 
 }

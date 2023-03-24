@@ -10,7 +10,7 @@ Class *class_init(Allocator *alc) {
     class->must_deref = true;
     class->must_ref = true;
     class->is_signed = false;
-    class->packed = true;
+    class->packed = false;
     class->is_generic_base = false;
     class->generic_names = NULL;
     class->generic_types = NULL;
