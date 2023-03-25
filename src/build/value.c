@@ -216,6 +216,15 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             ClassProp *prop = map_get(class->props, token);
             if (prop) {
                 // Class prop
+                if (prop->act != act_public && !scope_contains(class->scope, scope)) {
+                    sprintf(fc->sbuf, "Trying access non-public property outside the class");
+                    fc_error(fc);
+                }
+                if (prop->type->strict_ownership) {
+                    sprintf(fc->sbuf, "You must use 'swap' to read properties with strict ownership");
+                    fc_error(fc);
+                }
+
                 v = vgen_class_pa(alc, v, prop);
             } else {
                 // Class func

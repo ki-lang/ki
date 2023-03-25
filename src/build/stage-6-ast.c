@@ -169,15 +169,6 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                         fc_error(fc);
                     }
                 }
-                if (left->type == v_class_pa) {
-                    VClassPA *pa = left->item;
-                    ClassProp *prop = pa->prop;
-                    // if prop.act != AccessType.public {
-                    // 	if !scope.is_sub_scope_of(prop.class.scope) {
-                    // 		fc.error("Trying to assign to a non-public property outside the class");
-                    // 	}
-                    // }
-                }
 
                 Value *right = read_value(fc, alc, scope, false, 0, false);
                 if (type_is_void(right->rett)) {
@@ -209,6 +200,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     UsageLine *ul = usage_line_get(scope, decl);
                     if (ul)
                         end_usage_line(alc, ul);
+                } else if (left->type == v_class_pa || left->type == v_global) {
+                    // Deref
+                    class_ref_change(alc, scope, left, -1);
                 }
 
                 array_push(scope->ast, tgen_assign(alc, left, ir_right));

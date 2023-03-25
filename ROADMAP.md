@@ -8,7 +8,6 @@ Feature todo list in order:
 - __before_free
 - Type check internal functions keep value
 - Upref variables instead of direct value on assign/declare
-- Check class property access types (public,private,readonly)
 - Calling functions using named arguments
 - Package manager
 - Testing features
@@ -26,10 +25,11 @@ Feature todo list in order:
 
 ## Done
 
-- ?? | ?!
+- Check class property access types (public,private,readonly)
+- Custom iterators
+- Define which arguments need to take ownership
 - Error handling
 - Ownership algorithm
 - Generics
 - Traits
-- Custom iterators
-- Define which arguments need to take ownership
+- ?? | ?!

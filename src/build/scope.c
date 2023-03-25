@@ -38,3 +38,13 @@ Scope *scope_find(Scope *scope, int type) {
     }
     return scope;
 }
+
+bool scope_contains(Scope *parent_scope, Scope *scope) {
+    while (scope) {
+        if (scope == parent_scope) {
+            return true;
+        }
+        scope = scope->parent;
+    }
+    return false;
+}

@@ -260,7 +260,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     type->strict_ownership = strict_ownership;
     if (async) {
         if (async && type->class && !type->class->async && !type->strict_ownership && type->class->type != ct_int && type->class->type != ct_float) {
-            sprintf(fc->sbuf, "Expected an async type. The '%s' class does not support being used asynchronously. Async types are types with either: strict ownership, a class with an 'async' tag, number types and function pointers.", type->class->dname);
+            sprintf(fc->sbuf, "Expected an async type. The '%s' struct/class does not support being used asynchronously. Async types are types with either: strict ownership, a struct/class with an 'async' tag, number types and function pointers.", type->class->dname);
             fc_error(fc);
         }
         type->async = true;
@@ -392,7 +392,7 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
             return false;
         }
     }
-    if (t1->async && t2->class && !t2->class->async && !t2->strict_ownership && t2->class->type != ct_int && t2->class->type != ct_float) {
+    if (t1->async && !type_allowed_async(t2)) {
         if (reason)
             *reason = "Left type expects an async compatible type. So the right side type must either be: a class tagged with 'async', a type with strict ownership, a number type or a function pointer. Note: classes with an 'async' tag must be certain their functions are thread safe or the program will crash. Tip: use the Mutex class to share data.";
         return false;
@@ -546,6 +546,25 @@ bool type_tracks_ownership(Type *type) {
         return false;
     }
     if (class->is_rc || class->must_ref || class->must_deref) {
+        return true;
+    }
+    return false;
+}
+
+bool type_allowed_async(Type *type) {
+    Class *class = type->class;
+    if (!class || class->async || class->type == ct_int || class->type == ct_float) {
+        return true;
+    }
+    if (type->strict_ownership && class->type == ct_struct) {
+        Array *props = class->props->values;
+        int argc = props->length;
+        for (int i = 0; i < argc; i++) {
+            ClassProp *prop = array_get_index(props, i);
+            if (!type_allowed_async(prop->type)) {
+                return false;
+            }
+        }
         return true;
     }
     return false;

@@ -112,6 +112,7 @@ Idf *ki_lib_get(Build *b, char *ns, char *name);
 Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast);
 void name_taken_check(Fc *fc, Scope *scope, char *name);
 Scope *scope_find(Scope *scope, int type);
+bool scope_contains(Scope *parent_scope, Scope *scope);
 
 // Func
 Func *func_init(Allocator *alc);
@@ -146,6 +147,7 @@ char *type_to_str(Type *t, char *res);
 void type_check(Fc *fc, Type *t1, Type *t2);
 Type *type_clone(Allocator *alc, Type *type);
 bool type_tracks_ownership(Type *type);
+bool type_allowed_async(Type *type);
 
 // Var
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg);

@@ -26,7 +26,7 @@ class Mutex[T] async {
 
 	// NONE VOID
 
-	value: **T;
+	private value: *T;
 
 	public static func make(value: **T) CLASS { 
 		let m = CLASS { mutex: kos.ki_os__mutex_create(), value: value };
@@ -35,7 +35,7 @@ class Mutex[T] async {
 
 	public func lock() **T {
 		kos.ki_os__mutex_lock(this.mutex);
-		return this.value;
+		return this.value -> **T;
 	}
 
 	public func unlock(value: **T) void {
