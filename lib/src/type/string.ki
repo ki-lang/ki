@@ -4,7 +4,7 @@
 
 use mem;
 
-class String type:ptr {
+class String type:ptr async {
 
 	func is_const() bool {
 		let adr = this -> ptr;

@@ -147,7 +147,7 @@ char *type_to_str(Type *t, char *res);
 void type_check(Fc *fc, Type *t1, Type *t2);
 Type *type_clone(Allocator *alc, Type *type);
 bool type_tracks_ownership(Type *type);
-bool type_allowed_async(Type *type);
+bool type_allowed_async(Type *type, bool recursive);
 
 // Var
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg);

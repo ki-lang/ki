@@ -1,6 +1,8 @@
 
 #include "../all.h"
 
+void type_allowed_async_error(Fc *fc, Type *type, Str *chain);
+
 Type *type_init(Allocator *alc) {
     //
     Type *type = al(alc, sizeof(Type));
@@ -260,9 +262,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     type->take_ownership = take_ownership;
     type->strict_ownership = strict_ownership;
     if (async) {
-        if (!type_allowed_async(type)) {
-            sprintf(fc->sbuf, "Expected an async type. The '%s' struct/class does not support being used asynchronously. Async types are types with either: strict ownership, a struct/class with an 'async' tag, number types and function pointers.", type->class->dname);
-            fc_error(fc);
+        if (!type_allowed_async(type, true)) {
+            Str *chain = str_make(alc, 500);
+            type_allowed_async_error(fc, type, chain);
         }
     }
 
@@ -374,16 +376,16 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
         return false;
     }
     bool t1o = type_tracks_ownership(t1);
-    bool t2o = type_tracks_ownership(t2);
-    if (t1o != t2o) {
-        if (reason)
-            *reason = "One type tracks ownership, the other does not";
-        return false;
-    }
+    // bool t2o = type_tracks_ownership(t2);
+    // if (t1o != t2o) {
+    //     if (reason)
+    //         *reason = "One type tracks ownership, the other does not";
+    //     return false;
+    // }
     if (t1o) {
         if (t1->take_ownership && !t2->take_ownership) {
             if (reason)
-                *reason = "Trying to pass a type with borrowed ownership to a type that takes ownership";
+                *reason = "Trying to pass a type with borrowed ownership to a type that requires normal ownership";
             return false;
         }
         if (t1->strict_ownership && !t2->strict_ownership) {
@@ -464,7 +466,7 @@ char *type_to_str(Type *t, char *res) {
     if (t->class) {
         Class *class = t->class;
 
-        if (class->type == ct_struct)
+        if (class->type == ct_struct || class->type == ct_ptr)
             depth--;
 
         strcat(res, class->dname);
@@ -541,17 +543,20 @@ bool type_tracks_ownership(Type *type) {
     return false;
 }
 
-bool type_allowed_async(Type *type) {
+bool type_allowed_async(Type *type, bool recursive) {
     Class *class = type->class;
     if (!class || class->type == ct_int || class->type == ct_float) {
         return true;
     }
     if (class->type == ct_struct) {
+        if (!recursive) {
+            return true;
+        }
         Array *props = class->props->values;
         int argc = props->length;
         for (int i = 0; i < argc; i++) {
             ClassProp *prop = array_get_index(props, i);
-            if (!type_allowed_async(prop->type)) {
+            if (!type_allowed_async(prop->type, recursive)) {
                 return false;
             }
         }
@@ -561,4 +566,36 @@ bool type_allowed_async(Type *type) {
         return true;
     }
     return false;
+}
+
+void type_allowed_async_error(Fc *fc, Type *type, Str *chain) {
+    //
+    bool first_type = chain->length == 0;
+
+    char buf[256];
+    type_to_str(type, buf);
+    str_append_chars(chain, buf);
+
+    if (!type_allowed_async(type, false)) {
+        char *chain_str = str_to_chars(fc->alc, chain);
+        sprintf(fc->sbuf, "Expected an async type. The '%s' struct/class does not support being used asynchronously. Async types are types with either: strict ownership, a struct/class with an 'async' tag, number types and function pointers.", chain_str);
+        fc_error(fc);
+    }
+
+    Class *class = type->class;
+    if (class->type == ct_struct) {
+        Array *props = class->props->values;
+        Array *names = class->props->keys;
+        int argc = props->length;
+        str_append_chars(chain, ".");
+        int chain_reset = chain->length;
+        for (int i = 0; i < argc; i++) {
+            chain->length = chain_reset;
+            ClassProp *prop = array_get_index(props, i);
+            char *name = array_get_index(names, i);
+            str_append_chars(chain, name);
+            str_append_chars(chain, " -> ");
+            type_allowed_async_error(fc, prop->type, chain);
+        }
+    }
 }
