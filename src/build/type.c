@@ -470,20 +470,6 @@ char *type_to_str(Type *t, char *res) {
             depth--;
 
         strcat(res, class->dname);
-        if (class->generic_types) {
-            strcat(res, "[");
-            Array *types = class->generic_types;
-            char sub_str[256];
-            for (int i = 0; i < types->length; i++) {
-                Type *type = array_get_index(types, i);
-                if (i > 0) {
-                    strcat(res, ", ");
-                }
-                type_to_str(type, sub_str);
-                strcat(res, sub_str);
-            }
-            strcat(res, "]");
-        }
     } else if (t->type == type_null) {
         strcat(res, "null");
     } else if (t->type == type_void) {
@@ -548,6 +534,9 @@ bool type_allowed_async(Type *type, bool recursive) {
     if (!class || class->type == ct_int || class->type == ct_float) {
         return true;
     }
+    if (!class->async || !type->strict_ownership) {
+        return false;
+    }
     if (class->type == ct_struct) {
         if (!recursive) {
             return true;
@@ -560,9 +549,6 @@ bool type_allowed_async(Type *type, bool recursive) {
                 return false;
             }
         }
-        return true;
-    }
-    if (class->async || type->strict_ownership) {
         return true;
     }
     return false;
