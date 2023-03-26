@@ -127,6 +127,12 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
     } else if (vt == v_class_pa) {
         Class *class = val->rett->class;
         if (class && class->must_ref) {
+            VClassPA *pa = val->item;
+            ClassProp *prop = pa->prop;
+            if (prop->type->strict_ownership) {
+                sprintf(fc->sbuf, "You cannot move a property with strict ownership. You must use 'swap' to replace existing value with something else.");
+                fc_error(fc);
+            }
             val = value_init(alc, v_upref_value, val, val->rett);
         }
     } else if (vt == v_global) {

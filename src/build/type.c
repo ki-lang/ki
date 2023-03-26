@@ -14,7 +14,6 @@ Type *type_init(Allocator *alc) {
     //
     type->take_ownership = true;
     type->strict_ownership = false;
-    type->async = false;
     //
     type->func_args = NULL;
     type->func_rett = NULL;
@@ -134,22 +133,23 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         nullable = true;
         tok(fc, token, true, false);
     }
-    if (strcmp(token, "*") == 0) {
-        take_ownership = true;
+    if (strcmp(token, "&") == 0) {
+        take_ownership = false;
         tok(fc, token, true, false);
-    } else if (strcmp(token, "**") == 0) {
+    } else if (strcmp(token, "*") == 0) {
         take_ownership = true;
         strict_ownership = true;
         tok(fc, token, true, false);
     }
 
-    Type *type = type_init(alc);
-
+    Type *type = NULL;
     if (strcmp(token, "void") == 0) {
+        type = type_init(alc);
         type->type = type_void;
         return type;
     } else if (strcmp(token, "fn") == 0) {
         // Func Ref Type
+        type = type_init(alc);
         type->type = type_func_ptr;
         type->bytes = fc->b->ptr_size;
         type->ptr_depth = 1;
@@ -241,6 +241,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
                 //
             } else if (idf->type == idf_type) {
                 Type *t = idf->item;
+                type = type_init(alc);
                 *type = *t;
             } else if (idf->type == idf_enum) {
                 type = type_gen(fc->b, alc, "i32");
@@ -259,11 +260,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     type->take_ownership = take_ownership;
     type->strict_ownership = strict_ownership;
     if (async) {
-        if (async && type->class && !type->class->async && !type->strict_ownership && type->class->type != ct_int && type->class->type != ct_float) {
+        if (!type_allowed_async(type)) {
             sprintf(fc->sbuf, "Expected an async type. The '%s' struct/class does not support being used asynchronously. Async types are types with either: strict ownership, a struct/class with an 'async' tag, number types and function pointers.", type->class->dname);
             fc_error(fc);
         }
-        type->async = true;
     }
 
     tok(fc, token, true, false);
@@ -392,11 +392,6 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
             return false;
         }
     }
-    if (t1->async && !type_allowed_async(t2)) {
-        if (reason)
-            *reason = "Left type expects an async compatible type. So the right side type must either be: a class tagged with 'async', a type with strict ownership, a number type or a function pointer. Note: classes with an 'async' tag must be certain their functions are thread safe or the program will crash. Tip: use the Mutex class to share data.";
-        return false;
-    }
     if (t1t == type_int) {
         if (t1->enu != NULL && t1->enu != t2->enu) {
             if (reason)
@@ -455,9 +450,6 @@ char *type_to_str(Type *t, char *res) {
     //     strcat(res, "ptr");
     //     return res;
     // }
-    if (t->async) {
-        strcat(res, "async ");
-    }
     if (t->nullable) {
         strcat(res, "?");
     }
@@ -465,8 +457,6 @@ char *type_to_str(Type *t, char *res) {
         if (!t->take_ownership) {
             strcat(res, "&");
         } else if (t->strict_ownership) {
-            strcat(res, "**");
-        } else {
             strcat(res, "*");
         }
     }
@@ -553,10 +543,10 @@ bool type_tracks_ownership(Type *type) {
 
 bool type_allowed_async(Type *type) {
     Class *class = type->class;
-    if (!class || class->async || class->type == ct_int || class->type == ct_float) {
+    if (!class || class->type == ct_int || class->type == ct_float) {
         return true;
     }
-    if (type->strict_ownership && class->type == ct_struct) {
+    if (class->type == ct_struct) {
         Array *props = class->props->values;
         int argc = props->length;
         for (int i = 0; i < argc; i++) {
@@ -565,6 +555,9 @@ bool type_allowed_async(Type *type) {
                 return false;
             }
         }
+        return true;
+    }
+    if (class->async || type->strict_ownership) {
         return true;
     }
     return false;

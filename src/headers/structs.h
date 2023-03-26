@@ -221,7 +221,6 @@ struct Type {
     bool borrow_ownership;
     bool take_ownership;
     bool strict_ownership;
-    bool async;
 };
 
 struct Class {

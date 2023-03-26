@@ -293,21 +293,15 @@ void stage_2_func(Fc *fc, Func *func) {
         bool mutable = false;
         bool take_ownership = false;
         bool strict_ownership = false;
-        bool async = false;
 
         if (strcmp(token, "mut") == 0) {
             mutable = true;
             tok(fc, token, true, true);
         }
-
-        // if (strcmp(token, "*") == 0) {
-        //     take_ownership = true;
-        //     tok(fc, token, true, true);
-        // } else if (strcmp(token, "**") == 0) {
-        //     take_ownership = true;
-        //     strict_ownership = true;
-        //     tok(fc, token, true, true);
-        // }
+        if (strcmp(token, "*") == 0) {
+            take_ownership = true;
+            tok(fc, token, true, false);
+        }
 
         if (!is_valid_varname(token)) {
             sprintf(fc->sbuf, "Invalid argument name: '%s'", token);
@@ -325,19 +319,12 @@ void stage_2_func(Fc *fc, Func *func) {
         Chunk *val_chunk = NULL;
         Chunk *type_chunk = chunk_clone(alc, fc->chunk);
 
-        Type *type = read_type(fc, alc, func->scope->parent, true, true, true);
+        Type *type = read_type(fc, alc, func->scope->parent, true, true, take_ownership ? false : true);
 
         if (mutable && !type->take_ownership && type_tracks_ownership(type)) {
-            sprintf(fc->sbuf, "If your argument is mutable, your type must have ownership. '*T' or '**T'");
+            sprintf(fc->sbuf, "If your argument is mutable, your argument must state it needs to pass on ownership. Type '*' before the argument name");
             fc_error(fc);
         }
-        if (async && type->class && !type->class->async) {
-            sprintf(fc->sbuf, "Expected an async compatible type. '%s' is not one of them. Suggestion, put your type inside a 'Mutex[T]' generic.", type->class->dname);
-            fc_error(fc);
-        }
-
-        // type->take_ownership = take_ownership;
-        // type->strict_ownership = strict_ownership;
 
         tok(fc, token, true, true);
         if (strcmp(token, "=") == 0) {
