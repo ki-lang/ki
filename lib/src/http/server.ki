@@ -3,13 +3,14 @@ header "ki_os" as kos;
 
 use ki:os;
 
-class Server {
+class Server async {
 	host: String;
 	handler: fn(Request)(Response);
-	connections: Array[Connection];
+	connections: AsyncArray[Connection];
 	max_connections: uxx;
 	//
 	port: u32;
+
 
 	static func init(>host: String, port: u32, handler: fn(Request)(Response)) Server {
 
@@ -19,7 +20,7 @@ class Server {
 			host: host,
 			port: port,
 			handler: handler,
-			connections: Array[Connection].init(max_connections),
+			connections: AsyncArray[Connection].init(max_connections),
 			max_connections: max_connections,
 		};
 	}
@@ -41,7 +42,7 @@ class Server {
 		println("[+] Running http server on port " + this.port.str());
 		println("[+] Worker count: " + worker_count.str());
 
-		let mutex = os:Mutex[Server].make(this);
+		let mutex = os:Mutex[Server].init(this);
 
 		worker_count--;
 		while worker_count > 0 {

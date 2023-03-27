@@ -46,8 +46,6 @@ void stage_7(Fc *fc) {
         fc->ir_hash = ir_hash;
         fc->ir_changed = true;
 
-        fc_update_cahce(fc);
-
         if (b->verbose > 1) {
             printf("🧪 Write IR : %s\n", fc->path_ir);
         }

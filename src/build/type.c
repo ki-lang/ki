@@ -534,7 +534,7 @@ bool type_allowed_async(Type *type, bool recursive) {
     if (!class || class->type == ct_int || class->type == ct_float) {
         return true;
     }
-    if (!class->async || !type->strict_ownership) {
+    if (!class->async && !type->strict_ownership) {
         return false;
     }
     if (class->type == ct_struct) {
@@ -551,7 +551,7 @@ bool type_allowed_async(Type *type, bool recursive) {
         }
         return true;
     }
-    return false;
+    return true;
 }
 
 void type_allowed_async_error(Fc *fc, Type *type, Str *chain) {

@@ -88,7 +88,7 @@ Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail) {
 
                 if (!id->has_nsc) {
                     sprintf(fc->sbuf, ".%s.", name);
-                    if (strstr(".bool.ptr.i8.u8.i16.u16.i32.u32.i64.u64.ixx.uxx.fxx.String.cstring.Array.Map.", fc->sbuf)) {
+                    if (strstr(".bool.ptr.i8.u8.i16.u16.i32.u32.i64.u64.ixx.uxx.fxx.String.cstring.Array.Map.AsyncArray.AsyncMap.", fc->sbuf)) {
                         return ki_lib_get(fc->b, "type", name);
                     }
                     if (strstr(".print.println.", fc->sbuf)) {
