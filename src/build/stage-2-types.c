@@ -479,16 +479,6 @@ void stage_2_class_defaults(Fc *fc, Class *class) {
         if (!class->func_free)
             class->func_free = class_define_func(fc, class, false, "__free", NULL, type_gen_void(b->alc));
     }
-
-    //
-    if (class->func_ref)
-        class->func_ref->call_derefs = false;
-    if (class->func_deref)
-        class->func_deref->call_derefs = false;
-    if (class->func_deref_props)
-        class->func_deref_props->call_derefs = false;
-    if (class->func_free)
-        class->func_free->call_derefs = false;
 }
 
 void stage_2_class_type_checks(Fc *fc, Class *class) {

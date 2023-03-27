@@ -453,15 +453,6 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
     rtok(fc);
 
-    if (v->type == v_fptr) {
-        VFuncPtr *fptr = v->item;
-        Func *func = fptr->func;
-        if (!func->call_derefs) {
-            sprintf(fc->sbuf, "You cannot reference internal refcount functions (limitation)");
-            fc_error(fc);
-        }
-    }
-
     return v;
 }
 

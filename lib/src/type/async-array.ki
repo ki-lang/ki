@@ -3,7 +3,7 @@ class AsyncArray[T] async {
 	readonly size: uxx;
 	readonly length: uxx;
 
-	static func init(mut start_size: uxx = 2) CLASS {
+	static func init(mut start_size: uxx = 2) $CLASS {
 		if start_size < 2 {
 			start_size = 2;
 		}

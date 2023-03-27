@@ -279,7 +279,7 @@ struct Func {
     bool is_static;
     bool is_generated;
     bool can_error;
-    bool call_derefs;
+    bool only_returns_strict;
     // Optimizations
     bool opt_hot;
     bool opt_inline;

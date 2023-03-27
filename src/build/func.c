@@ -13,7 +13,7 @@ Func *func_init(Allocator *alc) {
 
     func->is_static = false;
     func->is_generated = false;
-    func->call_derefs = true;
+    func->only_returns_strict = true;
 
     func->errors = NULL;
     func->can_error = false;

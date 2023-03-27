@@ -147,7 +147,8 @@ void stage_8_optimize(LLVMModuleRef mod) {
 
     LLVMPassManagerBuilderRef passBuilder = LLVMPassManagerBuilderCreate();
 
-    LLVMPassManagerBuilderSetOptLevel(passBuilder, 3);
+    // O2 is much better than O3. O3 often produces slower code.
+    LLVMPassManagerBuilderSetOptLevel(passBuilder, 2);
     LLVMPassManagerBuilderSetSizeLevel(passBuilder, 0);
     LLVMPassManagerBuilderUseInlinerWithThreshold(passBuilder, 50);
 

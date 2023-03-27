@@ -12,7 +12,7 @@ class Server async {
 	port: u32;
 
 
-	static func init(>host: String, port: u32, handler: fn(Request)(Response)) Server {
+	static func init(>host: String, port: u32, handler: fn(Request)(Response)) $Server {
 
 		let max_connections : uxx = 10000;
 

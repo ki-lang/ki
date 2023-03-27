@@ -327,6 +327,18 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
     if (!type_is_void(frett)) {
         Value *val = read_value(fc, alc, scope, true, 0, false);
         val = try_convert(fc, alc, val, frett);
+
+        if (scope == fscope) {
+            if (val->rett->strict_ownership && !frett->strict_ownership && func->only_returns_strict) {
+                sprintf(fc->sbuf, "If you only return strict ownership values. Change your function return type to a strict type.");
+                fc_error(fc);
+            }
+        } else {
+            if (!val->rett->strict_ownership) {
+                func->only_returns_strict = false;
+            }
+        }
+
         type_check(fc, frett, val->rett);
 
         val = usage_move_value(alc, fc, scope, val);
