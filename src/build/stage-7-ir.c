@@ -39,7 +39,7 @@ void stage_7(Fc *fc) {
     char *ir = str_to_chars(b->alc, lb->ir_final);
 
     char *ir_hash = al(b->alc, 64);
-    md5(ir, ir_hash);
+    simple_hash(ir, ir_hash);
 
     if (strcmp(fc->ir_hash, ir_hash) != 0 || b->clear_cache) {
 

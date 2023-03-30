@@ -20,7 +20,7 @@ Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
     pkc->config = NULL;
     pkc->header_dirs = array_make(alc, 10);
 
-    md5(dir, pkc->hash);
+    simple_hash(dir, pkc->hash);
 
     pkc_load_config(pkc);
 

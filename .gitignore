@@ -2,6 +2,7 @@
 ki
 debug
 .vscode
+callgrind.*
 
 # Prerequisites
 *.d

@@ -6,6 +6,7 @@ char *rand_string(char *str, int size);
 int atoi(const char *str);
 int hex2int(char *hex);
 void sleep_ns(unsigned int ns);
+void simple_hash(char *content, char *buf);
 
 // Syntax
 bool is_alpha_char(char c);

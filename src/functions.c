@@ -84,3 +84,69 @@ void sleep_ns(unsigned int ns) {
         res = nanosleep(&ts, &ts);
     } while (res && errno == EINTR);
 }
+
+void simple_hash(char *content, char *buf) {
+
+    // md5(content, buf);
+    // return;
+    if (content[0] == '\0') {
+        content = "DEFAULT";
+    }
+
+    memset(buf, '\0', 33);
+
+    int res_pos = 0;
+    int str_pos = 0;
+    char prev = '\0';
+    bool reached_end_of_str = false;
+    bool reached_end_of_res = false;
+    while (true) {
+
+        const char res_ch = buf[res_pos];
+        char str_ch = content[str_pos];
+
+        if (str_ch == '\0') {
+            reached_end_of_str = true;
+            if (reached_end_of_res) {
+                break;
+            }
+            str_pos = 0;
+            str_ch = content[str_pos];
+        }
+
+        char ch = str_ch + res_ch + 1 + prev;
+        buf[res_pos] = ch;
+        str_pos++;
+        res_pos++;
+
+        prev = ch;
+
+        if (res_pos == 33) {
+            reached_end_of_res = true;
+            if (reached_end_of_str) {
+                break;
+            }
+            res_pos = 0;
+        }
+    }
+
+    int i = 0;
+    while (i < 33) {
+        char ch = buf[i];
+
+        while (ch > 122) {
+            ch -= 122;
+        }
+        while (ch < 48) {
+            ch += 48;
+        }
+        if ((ch > 57 && ch < 65) || (ch > 90 && ch < 97)) {
+            ch += 9;
+        }
+
+        buf[i] = ch;
+        i++;
+    }
+
+    buf[33] = '\0';
+}

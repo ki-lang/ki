@@ -105,7 +105,7 @@ void cmd_build(int argc, char *argv[]) {
     strcat(cache_buf, optimize ? "1" : "0");
     strcat(cache_buf, debug ? "1" : "0");
     strcat(cache_buf, test ? "1" : "0");
-    md5(cache_buf, cache_hash);
+    simple_hash(cache_buf, cache_hash);
     free(cache_buf);
     strcpy(cache_dir, get_storage_path());
     strcat(cache_dir, "/cache/");
