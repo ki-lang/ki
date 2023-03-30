@@ -138,7 +138,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     if (strcmp(token, "&") == 0) {
         take_ownership = false;
         tok(fc, token, true, false);
-    } else if (strcmp(token, "$") == 0) {
+    } else if (strcmp(token, "+") == 0) {
+        take_ownership = true;
+        tok(fc, token, true, false);
+    } else if (strcmp(token, "=") == 0) {
         take_ownership = true;
         strict_ownership = true;
         tok(fc, token, true, false);
@@ -459,7 +462,9 @@ char *type_to_str(Type *t, char *res) {
         if (!t->take_ownership) {
             strcat(res, "&");
         } else if (t->strict_ownership) {
-            strcat(res, "$");
+            strcat(res, "=");
+        } else {
+            strcat(res, "+");
         }
     }
 

@@ -182,11 +182,10 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             bool take_ownership = false;
             bool strict_ownership = false;
             if (!is_static) {
-                if (strcmp(token, ">") == 0) {
+                if (strcmp(token, "+") == 0) {
                     take_ownership = true;
                     tok(fc, token, true, false);
-                }
-                if (strcmp(token, "$") == 0) {
+                } else if (strcmp(token, "=") == 0) {
                     take_ownership = true;
                     strict_ownership = true;
                     tok(fc, token, true, true);
