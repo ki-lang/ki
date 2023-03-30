@@ -195,6 +195,7 @@ Value *vgen_ir_assign_val(Allocator *alc, Value *value, Type *rett);
 Value *vgen_value_and_exec(Allocator *alc, Value *value, Scope *exec_scope, bool before_value, bool enable_exec);
 Value *vgen_value_then_ir_value(Allocator *alc, Value *value);
 Value *vgen_incr_decr(Allocator *alc, Value *on, bool is_incr);
+Value *vgen_atomicop(Allocator *alc, Value *left, Value *right, int op);
 
 // Ast
 void read_ast(Fc *fc, Scope *scope, bool single_line);

@@ -101,6 +101,48 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = value_init(alc, v_getptr, on, type_gen(b, alc, "ptr"));
         //
+    } else if (strcmp(token, "atomicop") == 0) {
+
+        Value *on = read_value(fc, alc, scope, true, 0, true);
+        if (!value_is_assignable(on)) {
+            sprintf(fc->sbuf, "Value must be assignable, such as a mutable variable");
+            fc_error(fc);
+        }
+        if (on->type == v_decl) {
+            Decl *decl = v->item;
+            if (!decl->is_mut) {
+                sprintf(fc->sbuf, "Variable must be mutable, otherwise it has no address in memory");
+                fc_error(fc);
+            }
+        }
+        if (on->rett->type != type_int) {
+            sprintf(fc->sbuf, "You can only use atomic operations on integers");
+            fc_error(fc);
+        }
+
+        tok(fc, token, true, true);
+
+        int op = op_add;
+        if (strcmp(token, "ADD") == 0) {
+        } else if (strcmp(token, "SUB") == 0) {
+            op = op_sub;
+        } else if (strcmp(token, "AND") == 0) {
+            op = op_bit_and;
+        } else if (strcmp(token, "OR") == 0) {
+            op = op_bit_or;
+        } else if (strcmp(token, "XOR") == 0) {
+            op = op_bit_xor;
+        } else {
+            sprintf(fc->sbuf, "Unknown atomic operation '%s'. Expected: ADD,SUB,AND,OR,XOR", token);
+            fc_error(fc);
+        }
+
+        Value *right = read_value(fc, alc, scope, true, 0, true);
+        right = try_convert(fc, alc, right, on->rett);
+        type_check(fc, on->rett, right->rett);
+
+        v = vgen_atomicop(alc, on, right, op);
+
     } else if (strcmp(token, "sizeof") == 0) {
         tok_expect(fc, "(", true, false);
         Type *type = read_type(fc, alc, scope, false, true, false);

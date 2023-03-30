@@ -167,3 +167,12 @@ Value *vgen_incr_decr(Allocator *alc, Value *on, bool is_incr) {
     item->is_incr = is_incr;
     return value_init(alc, v_incr_decr, item, on->rett);
 }
+
+Value *vgen_atomicop(Allocator *alc, Value *left, Value *right, int op) {
+    //
+    VOp *item = al(alc, sizeof(VOp));
+    item->left = left;
+    item->right = right;
+    item->op = op;
+    return value_init(alc, v_atomicop, item, left->rett);
+}

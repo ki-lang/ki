@@ -87,6 +87,7 @@ enum VALUETYPE {
     v_value_and_exec,
     v_value_then_ir_value,
     v_incr_decr,
+    v_atomicop,
 };
 
 enum OPTYPE {
