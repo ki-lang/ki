@@ -2,7 +2,7 @@
 CC=gcc
 LCC=gcc
 
-CFLAGS=-g -pthread
+CFLAGS=-g -pthread -O2
 LLVMCF=`llvm-config --cflags`
 LDFLAGS=-lcurl -lm `llvm-config --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf` -lm -lz -lstdc++
 
