@@ -121,7 +121,7 @@ void simple_hash(char *content, char *buf) {
 
         prev = ch;
 
-        if (res_pos == 33) {
+        if (res_pos == 32) {
             reached_end_of_res = true;
             if (reached_end_of_str) {
                 break;
@@ -131,7 +131,7 @@ void simple_hash(char *content, char *buf) {
     }
 
     int i = 0;
-    while (i < 33) {
+    while (i < 32) {
         char ch = buf[i];
 
         while (ch > 122) {
@@ -148,5 +148,5 @@ void simple_hash(char *content, char *buf) {
         i++;
     }
 
-    buf[33] = '\0';
+    buf[32] = '\0';
 }
