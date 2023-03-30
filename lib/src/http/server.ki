@@ -12,7 +12,7 @@ class Server async {
 	port: u32;
 
 
-	static func init(host: +String, port: u32, handler: fn(Request)(Response)) @Server {
+	static func init(host: +String, port: u32, handler: fn(Request)(Response)) .Server {
 
 		let max_connections : uxx = 10000;
 
@@ -25,7 +25,7 @@ class Server async {
 		};
 	}
 
-	func @start(mut worker_count: i32 = 8) void {
+	func .start(mut worker_count: i32 = 8) void {
 
 		// SIGINT
         os:signal(os:SIG.hup, interrupt);

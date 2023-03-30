@@ -185,7 +185,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
                 if (strcmp(token, "+") == 0) {
                     take_ownership = true;
                     tok(fc, token, true, false);
-                } else if (strcmp(token, "@") == 0) {
+                } else if (strcmp(token, ".") == 0) {
                     take_ownership = true;
                     strict_ownership = true;
                     tok(fc, token, true, true);
