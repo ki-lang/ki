@@ -87,66 +87,52 @@ void sleep_ns(unsigned int ns) {
 
 void simple_hash(char *content, char *buf) {
 
-    // md5(content, buf);
-    // return;
     if (content[0] == '\0') {
-        content = "DEFAULT";
+        strcpy(buf, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        return;
     }
 
-    memset(buf, '\0', 33);
+    const int hash_len = 32;
+
+    memcpy(buf, "HkvdPElThIVtuCSKU4GLp6gM7jxwR8ciBqO3DyW15b0aznYeZr9fJmXsN2oFQA", hash_len);
 
     int res_pos = 0;
     int str_pos = 0;
-    char prev = '\0';
-    bool reached_end_of_str = false;
-    bool reached_end_of_res = false;
+    unsigned char prev = content[0];
     while (true) {
 
-        const char res_ch = buf[res_pos];
-        char str_ch = content[str_pos];
+        const unsigned char res_ch = buf[res_pos];
+        unsigned char str_ch = content[str_pos];
 
         if (str_ch == '\0') {
-            reached_end_of_str = true;
-            if (reached_end_of_res) {
-                break;
+            if (str_pos < hash_len) {
+                content = "6okaGSw2dhgZJHIlimFPjqetypM9VW5bxUcYuAsfER1X3N7Lrz4OQTBDv8nC0K" + 62 - (62 - hash_len);
+                continue;
             }
-            str_pos = 0;
-            str_ch = content[str_pos];
+            break;
         }
 
-        char ch = str_ch + res_ch + 1 + prev;
+        unsigned char ch = str_ch + res_ch + res_pos * 8 + prev * 66;
         buf[res_pos] = ch;
         str_pos++;
         res_pos++;
 
         prev = ch;
 
-        if (res_pos == 32) {
-            reached_end_of_res = true;
-            if (reached_end_of_str) {
-                break;
-            }
+        if (res_pos == hash_len) {
             res_pos = 0;
         }
     }
 
-    int i = 0;
-    while (i < 32) {
-        char ch = buf[i];
+    const char *chars = "TMpUivZnQsHw1klS3Ah5d6qr7tjKxJOIEmYP8VgGzcDR0f2uBe4aobWLNCFy9X";
 
-        while (ch > 122) {
-            ch -= 122;
-        }
-        while (ch < 48) {
-            ch += 48;
-        }
-        if ((ch > 57 && ch < 65) || (ch > 90 && ch < 97)) {
-            ch += 9;
-        }
-
-        buf[i] = ch;
-        i++;
+    int i = hash_len;
+    while (i > 0) {
+        i--;
+        unsigned char ch = buf[i] + i * 8 + prev * 67;
+        buf[i] = chars[ch % 62];
+        prev = ch;
     }
 
-    buf[32] = '\0';
+    buf[hash_len] = '\0';
 }

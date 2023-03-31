@@ -27,7 +27,6 @@
 #include <unistd.h>
 
 #include "libs/cJSON.h"
-#include "libs/md5.h"
 
 #define KI_PATH_MAX 4096
 #define KI_TOKEN_MAX 256
