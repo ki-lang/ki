@@ -85,41 +85,36 @@ void sleep_ns(unsigned int ns) {
     } while (res && errno == EINTR);
 }
 
-void simple_hash(char *content, char *buf) {
+void simple_hash(char *content_, char *buf_) {
 
-    if (content[0] == '\0') {
-        strcpy(buf, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        return;
-    }
+    unsigned char *content = (unsigned char *)content_;
+    unsigned char *buf = (unsigned char *)buf_;
 
     const int hash_len = 32;
 
-    memcpy(buf, "HkvdPElThIVtuCSKU4GLp6gM7jxwR8ciBqO3DyW15b0aznYeZr9fJmXsN2oFQA", hash_len);
+    memset(buf, '\0', hash_len);
 
     int res_pos = 0;
     int str_pos = 0;
-    unsigned char prev = content[0];
+    unsigned char diff = 0;
+
+    bool end = false;
+
     while (true) {
-
-        const unsigned char res_ch = buf[res_pos];
-        unsigned char str_ch = content[str_pos];
-
+        unsigned char str_ch = content[str_pos++];
         if (str_ch == '\0') {
-            if (str_pos < hash_len) {
-                content = "6okaGSw2dhgZJHIlimFPjqetypM9VW5bxUcYuAsfER1X3N7Lrz4OQTBDv8nC0K" + 62 - (62 - hash_len);
-                continue;
-            }
-            break;
+            end = true;
+            str_pos = 0;
+            continue;
         }
 
-        unsigned char ch = str_ch + res_ch + res_pos * 8 + prev * 66;
-        buf[res_pos] = ch;
-        str_pos++;
-        res_pos++;
-
-        prev = ch;
+        diff += (str_ch + str_pos) * 11;
+        buf[res_pos++] = str_ch + diff;
 
         if (res_pos == hash_len) {
+            if (end) {
+                break;
+            }
             res_pos = 0;
         }
     }
@@ -129,10 +124,10 @@ void simple_hash(char *content, char *buf) {
     int i = hash_len;
     while (i > 0) {
         i--;
-        unsigned char ch = buf[i] + i * 8 + prev * 67;
-        buf[i] = chars[ch % 62];
-        prev = ch;
-    }
 
+        const unsigned char str_ch = buf[i];
+        diff += (str_ch + i) * 11;
+        buf[i] = chars[(str_ch + diff) % 62];
+    }
     buf[hash_len] = '\0';
 }
