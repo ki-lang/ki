@@ -108,7 +108,7 @@ void simple_hash(char *content_, char *buf_) {
             continue;
         }
 
-        diff += (str_ch + str_pos) * 11;
+        diff += (str_ch + str_pos) * 0b00010101 + res_pos;
         buf[res_pos++] = str_ch + diff;
 
         if (res_pos == hash_len) {
@@ -126,7 +126,7 @@ void simple_hash(char *content_, char *buf_) {
         i--;
 
         const unsigned char str_ch = buf[i];
-        diff += (str_ch + i) * 11;
+        diff += (str_ch + i) * 0b0001011 + i;
         buf[i] = chars[(str_ch + diff) % 62];
     }
     buf[hash_len] = '\0';
