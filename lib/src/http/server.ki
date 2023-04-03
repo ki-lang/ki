@@ -42,21 +42,17 @@ class Server async {
 		println("[+] Running http server on port " + this.port.str());
 		println("[+] Worker count: " + worker_count.str());
 
-		let mutex = os:Mutex[Server].init(this);
-
 		worker_count--;
 		while worker_count > 0 {
 			worker_count--;
-			let thread = os:Thread[os:Mutex[Server]].start(Server.worker, mutex);
+			let thread = os:Thread[Server].start(Server.worker, this);
 		}
-		Server.worker(mutex);
+		Server.worker(this);
 		os:sleep_ms(200);
 	}
 
-	private static func worker(mutex: os:Mutex[Server]) void {
-		let server = mutex.lock();
+	private static func worker(server: Server) void {
 		let cons = server.connections;
-		mutex.unlock(server);
 
 		println("hello");
 	}
