@@ -3,14 +3,19 @@ header "ki_os" as kos;
 
 use ki:os;
 use ki:net;
+use ki:io;
 
-class Server async {
+class ServerData async {
+	connections: AsyncArray[Connection];
+	socket_fd: i32;
+}
+
+class Server {
 	host: String;
 	handler: fn(Request)(Response);
-	connections: AsyncArray[Connection];
 	max_connections: uxx;
-	socket: .net:SocketTCP;
-	//
+	socket: net:SocketTCP;
+	data: ServerData;
 	port: u16;
 
 
@@ -23,9 +28,12 @@ class Server async {
 			host: host,
 			port: port,
 			handler: handler,
-			connections: AsyncArray[Connection].init(max_connections),
 			max_connections: max_connections,
 			socket: socket,
+			data: ServerData {
+				socket_fd: socket.fd,
+				connections: AsyncArray[Connection].init(max_connections),
+			}
 		};
 	}
 
@@ -49,16 +57,20 @@ class Server async {
 		worker_count--;
 		while worker_count > 0 {
 			worker_count--;
-			let thread = os:Thread[Server].start(Server.worker, this);
+			let thread = os:Thread[ServerData].start(Server.worker, this.data);
 		}
-		Server.worker(this);
+		Server.worker(this.data);
 		os:sleep_ms(200);
 	}
 
-	private static func worker(server: Server) void {
-		let cons = server.connections;
+	private static func worker(data: ServerData) void {
+		let cons = data.connections;
 
-		println("hello");
+		let sock_fd = data.socket_fd;
+
+		let poll = io:Poll.init();
+
+		println("Socket: " + sock_fd.str());
 	}
 
 }
