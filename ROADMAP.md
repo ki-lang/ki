@@ -9,6 +9,7 @@ Feature todo list in order:
 - Calling functions using named arguments
 - Package manager
 - Testing features
+- access type 'namespace'
 - Declare functions for classes/structs from other libraries
 - Custom allocators | MyClass{...} @my_alloc
 - vscode extension
