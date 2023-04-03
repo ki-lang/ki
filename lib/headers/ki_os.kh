@@ -14,14 +14,14 @@ struct ki_file_stats {
     // readonly is_file: bool;
 }
 
-// enum KI_SOCK_DOMAIN {
-//     sock_dom_ipv4,
-//     sock_dom_ipv6,
-//     sock_dom_file,
-// }
-// enum KI_SOCK_CON_TYPE {
-//     sock_con_type_stream,
-// }
+enum KI_SOCK_DOMAIN {
+    sock_dom_ipv4,
+    sock_dom_ipv6,
+    sock_dom_file,
+}
+enum KI_SOCK_CON_TYPE {
+    sock_con_type_stream,
+}
 
 func ki_os__alloc(size: uxx) ptr;
 func ki_os__free(adr: ptr) void;

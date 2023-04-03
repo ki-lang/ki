@@ -2,19 +2,22 @@
 header "ki_os" as kos;
 
 use ki:os;
+use ki:net;
 
 class Server async {
 	host: String;
 	handler: fn(Request)(Response);
 	connections: AsyncArray[Connection];
 	max_connections: uxx;
+	socket: net:SocketTCP;
 	//
-	port: u32;
+	port: u16;
 
 
-	static func init(host: +String, port: u32, handler: fn(Request)(Response)) .Server {
+	static func init(host: +String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
 
 		let max_connections : uxx = 10000;
+		let socket = net:Socket.init_tcp(host, port) !! throw socket_init_error;;
 
 		return Server{
 			host: host,
@@ -22,6 +25,7 @@ class Server async {
 			handler: handler,
 			connections: AsyncArray[Connection].init(max_connections),
 			max_connections: max_connections,
+			socket: socket,
 		};
 	}
 

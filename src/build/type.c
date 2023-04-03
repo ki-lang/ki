@@ -569,7 +569,7 @@ void type_allowed_async_error(Fc *fc, Type *type, Str *chain) {
 
     if (!type_allowed_async(type, false)) {
         char *chain_str = str_to_chars(fc->alc, chain);
-        sprintf(fc->sbuf, "Expected an async type. The '%s' struct/class does not support being used asynchronously. In order for a type to be used asynchronously, it must obey the following rule: The type must either have strict ownership or the class of the type must be marked with 'async'. This rule also applies to all of it's properties in both cases.", chain_str);
+        sprintf(fc->sbuf, "Expected an async type. The '%s' struct/class does not support being used asynchronously. In order for a type to be used asynchronously, it must obey the following rule: The type must either have strict ownership or the class of the type must be marked with 'async'. This rule also applies to all of its properties.", chain_str);
         fc_error(fc);
     }
 
