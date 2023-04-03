@@ -1,7 +1,10 @@
 
+use mem;
+
 class Array[T] {
 	readonly size: uxx;
 	readonly length: uxx;
+	readonly data: ptr;
 
 	static func init(mut start_size: uxx = 2) .CLASS {
 		if start_size < 2 {
@@ -10,9 +13,26 @@ class Array[T] {
 		return CLASS {
 			size: start_size,
 			length: 0,
+			data: mem:alloc(start_size * sizeof(T)),
 		};
 	}
 
 	func push(item: T) void {
+	}
+
+	func get(index: uxx) T !not_found {
+		let data = this.data;
+		return ptrv data as T;
+	}
+
+	func __iter_init() uxx {
+		return 0;
+	}
+	func __iter_get(key: uxx, next_key: uxx*) T !end {
+		if key == this.length {
+			throw end;
+		}
+		ptrv next_key = key + 1;
+		return this.get(key) !! throw end;;
 	}
 }

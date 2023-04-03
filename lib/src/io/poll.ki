@@ -1,6 +1,7 @@
 
 header "ki_os" as kos;
 
+use mem;
 
 class Poll {
 	readonly os_poll: ptr;
@@ -32,6 +33,11 @@ class Poll {
 	}
 
 	public func __before_free() void {
+
+		each this.listeners as li {
+			mem:free(li -> ptr);
+		}
+
 		kos.ki_os__poll_free(this.os_poll);
 	}
 }
