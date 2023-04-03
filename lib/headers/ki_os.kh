@@ -3,7 +3,7 @@
 link "ki_os";
 link "pthread";
 
-//use ki:io;
+use ki:io;
 
 struct ki_file_stats {
 	size: uxx;
@@ -59,9 +59,10 @@ func ki_os__socket_accept(sock: ptr, ip_buffer: ?cstring) i32;
 //
 func ki_os__poll_init() ptr;
 func ki_os__poll_free(instance: ptr) void;
-func ki_os__poll_set_fd(instance: ptr, fd: i32, is_new: bool, is_edge_triggered: bool, track_in: bool, track_out: bool, track_err: bool, track_closed: bool, track_stopped_reading: bool) void;
-func ki_os__poll_remove_fd(instance: ptr, fd: i32) void;
-//func ki_os__poll_wait(instance: ptr, timeout: i32) io:ki_poll_result;
+func ki_os__poll_new_fd(instance: ptr, index: u32, fd: i32) void;
+func ki_os__poll_update_fd(instance: ptr, index: u32, fd: i32, state: u32) void;
+func ki_os__poll_remove_fd(instance: ptr, index: u32, fd: i32) void;
+func ki_os__poll_wait(instance: ptr, timeout: i32) io:PollResult;
 //
 func ki_os__thread_create(handler: fn(?ptr)(void), data: ?ptr) ptr;
 //

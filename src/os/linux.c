@@ -441,44 +441,39 @@ void ki_os__poll_free(void *poller_) {
     free(p->events);
     free(p);
 }
-void ki_os__poll_set_fd(void *poller_, int fd, bool is_new, bool edge_triggered, bool track_in, bool track_out, bool track_err, bool track_closed, bool track_stopped_reading) {
+void ki_os__poll_new_fd(void *poller_, unsigned int index, int fd) {
     //
     ki_poller *p = (ki_poller *)poller_;
-
+    struct epoll_event ev;
+    ev.events = 0;
+    ev.data.fd = fd;
+    int res = epoll_ctl(p->poll_fd, EPOLL_CTL_ADD, fd, &ev);
+}
+void ki_os__poll_update_fd(void *poller_, unsigned int index, int fd, unsigned int state) {
+    //
+    ki_poller *p = (ki_poller *)poller_;
     unsigned int track = 0;
-    if (edge_triggered) {
-        // track |= EPOLLET;
+    if (state & 0x1) {
+        track = EPOLLIN; // | EPOLLET;
     }
-    if (track_in) {
-        track |= EPOLLIN; // | EPOLLET;
-    }
-    if (track_out) {
+    if (state & 0x2) {
         track |= EPOLLOUT;
     }
-    if (track_err) {
+    if (state & 0x4) {
         track |= EPOLLERR;
     }
-    if (track_closed) {
+    if (state & 0x8) {
         track |= EPOLLHUP;
     }
-    if (track_stopped_reading) {
+    if (state & 0x10) {
         track |= EPOLLRDHUP;
     }
-
     struct epoll_event ev;
     ev.events = track;
     ev.data.fd = fd;
-    if (is_new) {
-        int res = epoll_ctl(p->poll_fd, EPOLL_CTL_ADD, fd, &ev);
-    } else {
-        int res = epoll_ctl(p->poll_fd, EPOLL_CTL_MOD, fd, &ev);
-        if (errno == ENOENT) {
-            // If not found, add it
-            int res = epoll_ctl(p->poll_fd, EPOLL_CTL_ADD, fd, &ev);
-        }
-    }
+    int res = epoll_ctl(p->poll_fd, EPOLL_CTL_MOD, fd, &ev);
 }
-void ki_os__poll_remove_fd(void *poller_, int fd) {
+void ki_os__poll_remove_fd(void *poller_, unsigned int index, int fd) {
     //
     ki_poller *p = (ki_poller *)poller_;
     struct epoll_event ev;
@@ -486,6 +481,52 @@ void ki_os__poll_remove_fd(void *poller_, int fd) {
     ev.data.fd = fd;
     int res = epoll_ctl(p->poll_fd, EPOLL_CTL_DEL, fd, &ev);
 }
+
+// void ki_os__poll_set_fd(void *poller_, int fd, bool is_new, bool edge_triggered, bool track_in, bool track_out, bool track_err, bool track_closed, bool track_stopped_reading) {
+//     //
+//     ki_poller *p = (ki_poller *)poller_;
+
+//     unsigned int track = 0;
+//     if (edge_triggered) {
+//         // track |= EPOLLET;
+//     }
+//     if (track_in) {
+//         track |= EPOLLIN; // | EPOLLET;
+//     }
+//     if (track_out) {
+//         track |= EPOLLOUT;
+//     }
+//     if (track_err) {
+//         track |= EPOLLERR;
+//     }
+//     if (track_closed) {
+//         track |= EPOLLHUP;
+//     }
+//     if (track_stopped_reading) {
+//         track |= EPOLLRDHUP;
+//     }
+
+//     struct epoll_event ev;
+//     ev.events = track;
+//     ev.data.fd = fd;
+//     if (is_new) {
+//         int res = epoll_ctl(p->poll_fd, EPOLL_CTL_ADD, fd, &ev);
+//     } else {
+//         int res = epoll_ctl(p->poll_fd, EPOLL_CTL_MOD, fd, &ev);
+//         if (errno == ENOENT) {
+//             // If not found, add it
+//             int res = epoll_ctl(p->poll_fd, EPOLL_CTL_ADD, fd, &ev);
+//         }
+//     }
+// }
+// void ki_os__poll_remove_fd(void *poller_, int fd) {
+//     //
+//     ki_poller *p = (ki_poller *)poller_;
+//     struct epoll_event ev;
+//     ev.events = 0;
+//     ev.data.fd = fd;
+//     int res = epoll_ctl(p->poll_fd, EPOLL_CTL_DEL, fd, &ev);
+// }
 ki_poll_result *ki_os__poll_wait(void *poller_, int timeout) {
     // Wait for changes and return event list
     // timeout == -1  --->   wait forever
@@ -517,7 +558,6 @@ ki_poll_result *ki_os__poll_wait(void *poller_, int timeout) {
             state = state | 0x10;
         }
         ke->state = state;
-        ke->os_state = states;
     }
 
     return result;

@@ -298,10 +298,6 @@ void stage_2_func(Fc *fc, Func *func) {
             mutable = true;
             tok(fc, token, true, true);
         }
-        if (strcmp(token, ">") == 0) {
-            take_ownership = true;
-            tok(fc, token, true, false);
-        }
 
         if (!is_valid_varname(token)) {
             sprintf(fc->sbuf, "Invalid argument name: '%s'", token);

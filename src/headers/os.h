@@ -19,9 +19,8 @@ struct ki_poll_result {
 };
 
 struct ki_poll_event {
-    int os_state;
-    unsigned short state;
     int fd;
+    unsigned int state;
     /* event state
     0x1  : in
     0x2  : out
@@ -103,8 +102,11 @@ int ki_os__socket_accept(void *sock, char *ip_buffer);
 // poll
 void *ki_os__poll_init();
 void ki_os__poll_free(void *poller);
-void ki_os__poll_set_fd(void *poller_, int fd, bool is_new, bool edge_triggered, bool track_in, bool track_out, bool track_err, bool track_closed, bool track_stopped_reading);
-void ki_os__poll_remove_fd(void *poller_, int fd);
+void ki_os__poll_new_fd(void *poller_, unsigned int index, int fd);
+void ki_os__poll_update_fd(void *poller_, unsigned int index, int fd, unsigned int state);
+void ki_os__poll_remove_fd(void *poller_, unsigned int index, int fd);
+// void ki_os__poll_set_fd(void *poller_, int fd, bool is_new, bool edge_triggered, bool track_in, bool track_out, bool track_err, bool track_closed, bool track_stopped_reading);
+// void ki_os__poll_remove_fd(void *poller_, int fd);
 ki_poll_result *ki_os__poll_wait(void *poller_, int timeout);
 // thread
 void *ki_os__thread_create(void *(*handler)(void *), void *data);

@@ -258,8 +258,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             ClassProp *prop = map_get(class->props, token);
             if (prop) {
                 // Class prop
-                if (prop->act != act_public && !scope_contains(class->scope, scope)) {
-                    sprintf(fc->sbuf, "Trying access non-public property outside the class");
+                if (prop->act == act_private && !scope_contains(class->scope, scope)) {
+                    sprintf(fc->sbuf, "Trying to access private property outside the class");
                     fc_error(fc);
                 }
 
@@ -378,7 +378,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 op = op_mod;
             }
 
-            Value *right = read_value(fc, alc, scope, false, 20, false);
+            Value *right = read_value(fc, alc, scope, false, 10, false);
             v = value_op(fc, alc, scope, v, right, op);
 
             tok(fc, token, false, true);
@@ -463,6 +463,22 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
             tok(fc, token, false, true);
             sprintf(fc->sbuf, ".%s.", token);
+        }
+    }
+
+    if (prio == 0 || prio > 35) {
+        while (strcmp(token, "&") == 0 || strcmp(token, "|") == 0 || strcmp(token, "^") == 0) {
+            int op = op_bit_and;
+            if (strcmp(token, "|") == 0) {
+                op = op_bit_or;
+            } else if (strcmp(token, "^") == 0) {
+                op = op_bit_xor;
+            }
+
+            Value *right = read_value(fc, alc, scope, false, 35, false);
+            v = value_op(fc, alc, scope, v, right, op);
+
+            tok(fc, token, false, true);
         }
     }
 

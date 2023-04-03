@@ -1,0 +1,134 @@
+
+header "ki_os" as kos;
+
+
+class Poll {
+	readonly os_poll: ptr;
+	private listeners: Array[PollListener] = Array[PollListener].init();
+	public compress: bool = false;
+
+	public static func init() .Poll {
+		let p = kos.ki_os__poll_init();
+		let x = Poll {
+			os_poll: p
+		};
+		return x;
+	}
+
+	public func +listener(fd: i32) .PollListener {
+		let item = PollListener {
+			fd: fd,
+			poll: this,
+		};
+
+		kos.ki_os__poll_new_fd(this.os_poll, this.listeners.length -> u32, fd);
+
+		this.listeners.push(item);
+		return item;
+	}
+
+	public func wait(timeout: i32 = 0) PollResult {
+		return kos.ki_os__poll_wait(this.os_poll, timeout);
+	}
+
+	public func __before_free() void {
+		kos.ki_os__poll_free(this.os_poll);
+	}
+}
+
+struct PollListener {
+	readonly fd : i32;
+	poll: Poll;
+    private index: u32 = 0;
+    private state: u32 = 0;
+    private used: bool = true;
+
+	public func remove() void {
+		this.used = false;
+		this.poll.compress = true;
+		kos.ki_os__poll_remove_fd(this.poll.os_poll, this.index, this.fd);
+	}
+
+	public func read(v: bool) void {
+		if(v) {
+			this.state = this.state | 0x1;
+		} else if (this.state & 0x1) > 0 {
+			this.state = this.state ^ 0x1;
+		}
+		kos.ki_os__poll_update_fd(this.poll.os_poll, this.index, this.fd, this.state);
+	}
+	public func write(v: bool) void {
+		if(v) {
+			this.state = this.state | 0x2;
+		} else if (this.state & 0x2) > 0 {
+			this.state = this.state ^ 0x2;
+		}
+		kos.ki_os__poll_update_fd(this.poll.os_poll, this.index, this.fd, this.state);
+	}
+	public func error(v: bool) void {
+		if(v) {
+			this.state = this.state | 0x4;
+		} else if (this.state & 0x4) > 0 {
+			this.state = this.state ^ 0x4;
+		}
+		kos.ki_os__poll_update_fd(this.poll.os_poll, this.index, this.fd, this.state);
+	}
+	public func close(v: bool) void {
+		if(v) {
+			this.state = this.state | 0x8;
+		} else if (this.state & 0x8) > 0 {
+			this.state = this.state ^ 0x8;
+		}
+		kos.ki_os__poll_update_fd(this.poll.os_poll, this.index, this.fd, this.state);
+	}
+	public func is_stopped_reading(v: bool) void {
+		if(v) {
+			this.state = this.state | 0x10;
+		} else if (this.state & 0x10) > 0 {
+			this.state = this.state ^ 0x10;
+		}
+		kos.ki_os__poll_update_fd(this.poll.os_poll, this.index, this.fd, this.state);
+	}
+}
+
+struct PollResult {
+	private events: ptr;
+	readonly count: u32;
+
+	public func get(index: u32) ?PollEvent {
+		if(index >= this.count) {
+			return null;
+		}
+		let adr : ptr = this.events + (index * sizeof(PollEvent));
+		return adr -> PollEvent;
+	}
+}
+
+struct PollEvent {
+    readonly fd: i32;
+    readonly state: u32;
+	// States
+    // 0x1  : in
+    // 0x2  : out
+    // 0x4  : err
+    // 0x8  : closed
+    // 0x10 : stopped_reading
+
+	public func is_in() bool {
+		return (this.state & 0x1) > 0;
+	}
+	public func is_out() bool {
+		return (this.state & 0x2) > 0;
+	}
+	public func is_error() bool {
+		return (this.state & 0x4) > 0;
+	}
+	public func is_closed() bool {
+		return (this.state & 0x8) > 0;
+	}
+	public func is_stopped_reading() bool {
+		return (this.state & 0x10) > 0;
+	}
+}
+
+
