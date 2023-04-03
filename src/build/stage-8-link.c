@@ -106,8 +106,6 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
             exit(1);
         }
 
-        // stage_8_optimize(mod);
-
         LLVMLinkModules2(nsc_mod, mod);
     }
 

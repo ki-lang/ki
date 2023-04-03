@@ -9,7 +9,7 @@ class Server async {
 	handler: fn(Request)(Response);
 	connections: AsyncArray[Connection];
 	max_connections: uxx;
-	socket: net:SocketTCP;
+	socket: .net:SocketTCP;
 	//
 	port: u16;
 
