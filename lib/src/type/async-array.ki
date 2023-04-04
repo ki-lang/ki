@@ -1,7 +1,10 @@
 
+use mem;
+
 class AsyncArray[T] async {
 	readonly size: uxx;
 	readonly length: uxx;
+	readonly data: ptr;
 
 	static func init(mut start_size: uxx = 2) .CLASS {
 		if start_size < 2 {
@@ -10,6 +13,55 @@ class AsyncArray[T] async {
 		return CLASS {
 			size: start_size,
 			length: 0,
+			data: mem:alloc(start_size * sizeof(T)),
 		};
+	}
+
+	func push(value: +T) uxx {
+		let size = this.size;
+		let length = this.length;
+		let mut data = this.data;
+
+		if length == size {
+			// Increase mem
+			let new_size = size * 2;
+			let new_data = mem:alloc(new_size * sizeof(T));
+			mem:copy(data, new_data, size * sizeof(T));
+			data = new_data;
+			this.data = data;
+			this.size = new_size;
+		}
+
+		ptrv (data + (length * sizeof(T))) as T = value;
+		this.length = length + 1;
+
+		return length;
+	}
+
+	func get(index: uxx) T !not_found {
+		if index >= this.length {
+			throw not_found;
+		}
+		let data = this.data + (index * sizeof(T));
+		return ptrv data as T;
+	}
+
+	func set(index: uxx, value: +T) void !out_of_range {
+		if index >= this.length {
+			throw out_of_range;
+		}
+		let data = this.data + (index * sizeof(T));
+		ptrv data as T = value;
+	}
+
+	func __iter_init() uxx {
+		return 0;
+	}
+	func __iter_get(key: uxx, next_key: uxx*) T !end {
+		if key == this.length {
+			throw end;
+		}
+		ptrv next_key = key + 1;
+		return this.get(key) !! throw end;;
 	}
 }

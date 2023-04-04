@@ -1057,7 +1057,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 or->value = right;
 
             } else {
-                sprintf(fc->sbuf, "The function can return errors, expected '!?', '!!' or '!-', but found '%s'", token);
+                sprintf(fc->sbuf, "The function can return errors, expected '!?', '!!' or '!', but found '%s'", token);
                 fc_error(fc);
             }
         }

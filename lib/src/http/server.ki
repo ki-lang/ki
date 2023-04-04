@@ -6,7 +6,7 @@ use ki:net;
 use ki:io;
 
 class ServerData async {
-	connections: AsyncArray[Connection];
+	connections: AsyncArray[?Connection];
 	socket: net:SocketTCP;
 	thread_nr: uxx = 0;
 }
@@ -31,7 +31,7 @@ class Server {
 			max_connections: max_connections,
 			data: ServerData {
 				socket: socket,
-				connections: AsyncArray[Connection].init(max_connections),
+				connections: AsyncArray[?Connection].init(max_connections),
 			}
 		};
 	}
@@ -55,6 +55,7 @@ class Server {
 
 		worker_count--;
 		while worker_count > 0 {
+			//break;
 			worker_count--;
 			let thread = os:Thread[ServerData].start(Server.worker, this.data);
 		}
@@ -81,37 +82,60 @@ class Server {
 			let result_count = result.count;
 			let mut i : u32 = 0;
 
-			println("event: " + nr.str());
+			println("👋 Event: " + nr.str());
 
 			while i < result_count {
 				let event = result.get(i) ?! break;;
 				i++;
 
-				if event.fd == sock_fd {
-					// New connection
-					println("accept: " + nr.str());
-					let netcon = sock.accept();
+				let lsn = event.listener;
+				let fd = lsn.fd;
 
-					let lsn = poll.listener(netcon.fd);
+				if fd == sock_fd {
+					// New connection
+					let netcon = sock.accept() !! continue;;
+
+					println("🤝 Accept: " + nr.str());
+
+					let index = cons.push(null);
+
+					println("Netcon fd: " + netcon.fd.str());
+					println("Netcon key: " + index.str());
+					let lsn = poll.listener(netcon.fd, index -> u32);
 					lsn.read(true);
 
-					let httpcon = Connection {
+					let http_con = Connection {
 						netcon: netcon,
 						fd: netcon.fd,
 					};
 
+					cons.set(index, http_con)!;
+
 					continue;
 				}
 
+				// Get connection
+				let http_con = cons.get(lsn.key) !! {
+					println("Event fd: " + fd.str());
+					println("Event key: " + lsn.key.str());
+					println("❓ Missing http connection : " + nr.str());
+					io:close(fd);
+					poll.remove(lsn);
+					continue;
+				};
+				rep http_con = http_con ?! {
+					println("❔ Http connection is 'null' : " + nr.str());
+					io:close(fd);
+					poll.remove(lsn);
+					continue;
+				};
+
 				// Existing connection
 				if event.is_readable() {
+
 					println("respond: " + nr.str());
-					let resp = "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nContent-Length: 14\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\nHello, World!";
-
-					io:write(event.fd, resp);
-					io:close(event.fd);
-
-					println("Close");
+					Server.respond(http_con);
+					poll.remove(lsn);
 
 				} else if event.is_writable() {
 					println("send more: " + nr.str());
@@ -122,6 +146,15 @@ class Server {
 		println("Socket: " + sock_fd.str());
 	}
 
+	static func respond(http_con: Connection) void {
+
+		let resp = "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nContent-Length: 14\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\nHello, World!";
+
+		io:write(http_con.fd, resp);
+		io:close(http_con.fd);
+
+		println("❌ Close");
+	}
 }
 
 global interrupted : bool;

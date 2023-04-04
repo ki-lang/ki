@@ -3,6 +3,7 @@
 #include <sys/types.h>
 
 typedef struct ki_file_stats ki_file_stats;
+typedef struct ki_poll_listener ki_poll_listener;
 typedef struct ki_poll_result ki_poll_result;
 typedef struct ki_poll_event ki_poll_event;
 
@@ -13,13 +14,20 @@ struct ki_file_stats {
     bool is_file;
 };
 
+struct ki_poll_listener {
+    void *poller_;
+    size_t key;
+    int fd;
+    unsigned int state;
+};
+
 struct ki_poll_result {
     ki_poll_event *events;
     int count;
 };
 
 struct ki_poll_event {
-    int fd;
+    ki_poll_event *listener;
     unsigned int state;
     /* event state
     0x1  : in
@@ -102,9 +110,9 @@ int ki_os__socket_accept(void *sock, char *ip_buffer);
 // poll
 void *ki_os__poll_init();
 void ki_os__poll_free(void *poller);
-void ki_os__poll_new_fd(void *poller_, unsigned int index, int fd);
-void ki_os__poll_update_fd(void *poller_, unsigned int index, int fd, unsigned int state);
-void ki_os__poll_remove_fd(void *poller_, unsigned int index, int fd);
+void ki_os__poll_new_fd(void *poller_, ki_poll_listener *listener);
+void ki_os__poll_update_fd(void *poller_, ki_poll_listener *listener, unsigned int state);
+void ki_os__poll_remove_fd(void *poller_, ki_poll_listener *listener);
 // void ki_os__poll_set_fd(void *poller_, int fd, bool is_new, bool edge_triggered, bool track_in, bool track_out, bool track_err, bool track_closed, bool track_stopped_reading);
 // void ki_os__poll_remove_fd(void *poller_, int fd);
 ki_poll_result *ki_os__poll_wait(void *poller_, int timeout);

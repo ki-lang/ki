@@ -441,15 +441,16 @@ void ki_os__poll_free(void *poller_) {
     free(p->events);
     free(p);
 }
-void ki_os__poll_new_fd(void *poller_, unsigned int index, int fd) {
+void ki_os__poll_new_fd(void *poller_, ki_poll_listener *listener) {
     //
     ki_poller *p = (ki_poller *)poller_;
     struct epoll_event ev;
     ev.events = 0;
-    ev.data.fd = fd;
-    int res = epoll_ctl(p->poll_fd, EPOLL_CTL_ADD, fd, &ev);
+    ev.data.ptr = listener;
+    ((unsigned int *)&ev.data)[1] = index;
+    int res = epoll_ctl(p->poll_fd, EPOLL_CTL_ADD, listener->fd, &ev);
 }
-void ki_os__poll_update_fd(void *poller_, unsigned int index, int fd, unsigned int state) {
+void ki_os__poll_update_fd(void *poller_, ki_poll_listener *listener, unsigned int state) {
     //
     ki_poller *p = (ki_poller *)poller_;
     unsigned int track = 0;
@@ -470,16 +471,15 @@ void ki_os__poll_update_fd(void *poller_, unsigned int index, int fd, unsigned i
     }
     struct epoll_event ev;
     ev.events = track;
-    ev.data.fd = fd;
-    int res = epoll_ctl(p->poll_fd, EPOLL_CTL_MOD, fd, &ev);
+    ev.data.ptr = listener;
+    int res = epoll_ctl(p->poll_fd, EPOLL_CTL_MOD, listener->fd, &ev);
 }
-void ki_os__poll_remove_fd(void *poller_, unsigned int index, int fd) {
+void ki_os__poll_remove_fd(void *poller_, ki_poll_listener *listener) {
     //
     ki_poller *p = (ki_poller *)poller_;
     struct epoll_event ev;
     ev.events = 0;
-    ev.data.fd = fd;
-    int res = epoll_ctl(p->poll_fd, EPOLL_CTL_DEL, fd, &ev);
+    int res = epoll_ctl(p->poll_fd, EPOLL_CTL_DEL, listener->fd, &ev);
 }
 
 // void ki_os__poll_set_fd(void *poller_, int fd, bool is_new, bool edge_triggered, bool track_in, bool track_out, bool track_err, bool track_closed, bool track_stopped_reading) {
@@ -539,7 +539,7 @@ ki_poll_result *ki_os__poll_wait(void *poller_, int timeout) {
     for (int i = 0; i < event_count; i++) {
         struct epoll_event *e = p->events + i;
         ki_poll_event *ke = result->events + i;
-        ke->fd = e->data.fd;
+        ke->listener = e->data.ptr;
         unsigned short state = 0;
         int states = e->events;
         if (states & EPOLLIN) {

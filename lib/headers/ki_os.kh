@@ -59,9 +59,9 @@ func ki_os__socket_accept(sock: ptr, ip_buffer: ?cstring) i32;
 //
 func ki_os__poll_init() ptr;
 func ki_os__poll_free(instance: ptr) void;
-func ki_os__poll_new_fd(instance: ptr, index: u32, fd: i32) void;
-func ki_os__poll_update_fd(instance: ptr, index: u32, fd: i32, state: u32) void;
-func ki_os__poll_remove_fd(instance: ptr, index: u32, fd: i32) void;
+func ki_os__poll_new_fd(instance: ptr, lsn: io:PollListener) void;
+func ki_os__poll_update_fd(instance: ptr, lsn: io:PollListener, state: u32) void;
+func ki_os__poll_remove_fd(instance: ptr, lsn: io:PollListener) void;
 func ki_os__poll_wait(instance: ptr, timeout: i32) io:PollResult;
 //
 func ki_os__thread_create(handler: fn(?ptr)(void), data: ?ptr) ptr;

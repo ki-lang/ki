@@ -1,6 +1,6 @@
 
 class Socket {
-	static func init_tcp(host: String, port: u16) .SocketTCP !init_error {
+	static func init_tcp(host: +String, port: u16) .SocketTCP !init_error {
 		return SocketTCP.init(host, port) !! throw init_error;;
 	}
 }

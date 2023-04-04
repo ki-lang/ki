@@ -396,7 +396,7 @@ char *llvm_ir_string(LB *b, char *body) {
     // String bytes
     int index = 0;
     while (index < len) {
-        char ch = body[index];
+        unsigned char ch = body[index];
         index++;
         if (ch > 32 && ch < 127) {
             str_append_char(ir, ch);

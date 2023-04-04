@@ -16,26 +16,54 @@ class Poll {
 		return x;
 	}
 
-	public func +listener(fd: i32) .PollListener {
-		let item = PollListener {
+	public func listener(fd: i32, key: uxx = 0) .PollListener {
+		let lsn = PollListener {
+			os_poll: this.os_poll,
 			fd: fd,
-			poll: this,
+			key: key,
 		};
 
-		kos.ki_os__poll_new_fd(this.os_poll, this.listeners.length -> u32, fd);
+		kos.ki_os__poll_new_fd(this.os_poll, lsn);
 
-		this.listeners.push(item);
-		return item;
+		this.listeners.push(lsn);
+		return lsn;
+	}
+
+	public func remove(listener: PollListener) void {
+		kos.ki_os__poll_remove_fd(this.os_poll, listener);
+		listener.fd = -1;
+		this.compress = true;
 	}
 
 	public func wait(timeout: i32 = -1) PollResult {
+		if this.compress {
+			let list = this.listeners;
+			let count = list.length;
+			let mut i = 0#uxx;
+			let mut tail = 0#uxx;
+			while i < count {
+				let lsn = list.get(i) !! break;;
+				if lsn.fd > -1 {
+					if tail < i {
+						list.set(tail, lsn)!;
+					}
+					tail++;
+				}
+				i++;
+			}
+			while tail < i {
+				list.remove(tail);
+				tail++;
+			}
+		}
 		return kos.ki_os__poll_wait(this.os_poll, timeout);
 	}
 
 	public func __before_free() void {
 
 		each this.listeners as li {
-			mem:free(li -> ptr);
+			//mem:free(li -> ptr);
+			li.__free();
 		}
 
 		kos.ki_os__poll_free(this.os_poll);
@@ -43,17 +71,10 @@ class Poll {
 }
 
 struct PollListener {
-	readonly fd : i32;
-	poll: Poll;
-    private index: u32 = 0;
+	private os_poll: ptr;
+    readonly key: uxx = 0;
+	readonly fd : i32 = -1;
     private state: u32 = 0;
-    private used: bool = true;
-
-	public func remove() void {
-		this.used = false;
-		this.poll.compress = true;
-		kos.ki_os__poll_remove_fd(this.poll.os_poll, this.index, this.fd);
-	}
 
 	public func read(v: bool) void {
 		if(v) {
@@ -61,7 +82,7 @@ struct PollListener {
 		} else if (this.state & 0x1) > 0 {
 			this.state = this.state ^ 0x1;
 		}
-		kos.ki_os__poll_update_fd(this.poll.os_poll, this.index, this.fd, this.state);
+		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
 	}
 	public func write(v: bool) void {
 		if(v) {
@@ -69,7 +90,7 @@ struct PollListener {
 		} else if (this.state & 0x2) > 0 {
 			this.state = this.state ^ 0x2;
 		}
-		kos.ki_os__poll_update_fd(this.poll.os_poll, this.index, this.fd, this.state);
+		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
 	}
 	public func error(v: bool) void {
 		if(v) {
@@ -77,7 +98,7 @@ struct PollListener {
 		} else if (this.state & 0x4) > 0 {
 			this.state = this.state ^ 0x4;
 		}
-		kos.ki_os__poll_update_fd(this.poll.os_poll, this.index, this.fd, this.state);
+		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
 	}
 	public func close(v: bool) void {
 		if(v) {
@@ -85,7 +106,7 @@ struct PollListener {
 		} else if (this.state & 0x8) > 0 {
 			this.state = this.state ^ 0x8;
 		}
-		kos.ki_os__poll_update_fd(this.poll.os_poll, this.index, this.fd, this.state);
+		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
 	}
 	public func is_stopped_reading(v: bool) void {
 		if(v) {
@@ -93,7 +114,7 @@ struct PollListener {
 		} else if (this.state & 0x10) > 0 {
 			this.state = this.state ^ 0x10;
 		}
-		kos.ki_os__poll_update_fd(this.poll.os_poll, this.index, this.fd, this.state);
+		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
 	}
 }
 
@@ -111,7 +132,7 @@ struct PollResult {
 }
 
 struct PollEvent {
-    readonly fd: i32;
+    readonly listener: PollListener;
     readonly state: u32;
 	// States
     // 0x1  : in

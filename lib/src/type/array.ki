@@ -17,12 +17,49 @@ class Array[T] {
 		};
 	}
 
-	func push(item: T) void {
+	func push(value: +T) uxx {
+		let size = this.size;
+		let length = this.length;
+		let mut data = this.data;
+
+		if length == size {
+			// Increase mem
+			let new_size = size * 2;
+			let new_data = mem:alloc(new_size * sizeof(T));
+			mem:copy(data, new_data, size * sizeof(T));
+			data = new_data;
+			this.data = data;
+			this.size = new_size;
+		}
+
+		ptrv (data + (length * sizeof(T))) as T = value;
+		this.length = length + 1;
+
+		return length;
 	}
 
 	func get(index: uxx) T !not_found {
-		let data = this.data;
+		if index >= this.length {
+			throw not_found;
+		}
+		let data = this.data + (index * sizeof(T));
 		return ptrv data as T;
+	}
+
+	func set(index: uxx, value: +T) void !out_of_range {
+		if index >= this.length {
+			throw out_of_range;
+		}
+		let data = this.data + (index * sizeof(T));
+		ptrv data as T = value;
+	}
+
+	func remove(index: uxx) void {
+		println(index.str());
+		if index == this.length - 1 {
+			this.length--;
+		}
+		println("remove: " + (this.length).str());
 	}
 
 	func __iter_init() uxx {
