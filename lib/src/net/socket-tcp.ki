@@ -1,16 +1,23 @@
 
 header "ki_os" as kos;
 
-class SocketTCP {
+class SocketTCP async {
 	host: String;
-	port: u16;
 	readonly os_socket: ptr;
 	readonly fd: i32;
+	port: u16;
 
 	static func init(host: String, port: u16) .SocketTCP !os_socket_create_error {
 
 		let os_sock = kos.ki_os__socket_create(kos.KI_SOCK_DOMAIN.sock_dom_ipv4, kos.KI_SOCK_CON_TYPE.sock_con_type_stream) ?! throw os_socket_create_error;;
 		let fd = kos.ki_os__socket_get_fd(os_sock);
+
+		let chost = host.cstring();
+		let cport = port.str().cstring();
+		let check = kos.ki_os__socket_set_ipv4(os_sock, chost, cport);
+		if !check {
+			throw os_socket_create_error;
+		}
 
 		return SocketTCP{
 			host: host,
@@ -20,6 +27,10 @@ class SocketTCP {
 		};
 	}
 
-	func listen() void {
+	func accept() .Connection {
+		let fd = kos.ki_os__socket_accept(this.os_socket, null);
+		return Connection {
+			fd: fd,
+		};
 	}
 }

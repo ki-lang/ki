@@ -7,14 +7,13 @@ use ki:io;
 
 class ServerData async {
 	connections: AsyncArray[Connection];
-	socket_fd: i32;
+	socket: net:SocketTCP;
 }
 
 class Server {
 	host: String;
 	handler: fn(Request)(Response);
 	max_connections: uxx;
-	socket: net:SocketTCP;
 	data: ServerData;
 	port: u16;
 
@@ -29,9 +28,8 @@ class Server {
 			port: port,
 			handler: handler,
 			max_connections: max_connections,
-			socket: socket,
 			data: ServerData {
-				socket_fd: socket.fd,
+				socket: socket,
 				connections: AsyncArray[Connection].init(max_connections),
 			}
 		};
@@ -66,9 +64,40 @@ class Server {
 	private static func worker(data: ServerData) void {
 		let cons = data.connections;
 
-		let sock_fd = data.socket_fd;
+		let sock = data.socket;
+		let sock_fd = sock.fd;
 
 		let poll = io:Poll.init();
+		let sock_lsn = poll.listener(sock_fd);
+		sock_lsn.read(true);
+
+		while true {
+			let result = poll.wait();
+			let result_count = result.count;
+			let mut i : u32 = 0;
+
+			println("event");
+
+			while i < result_count {
+				let event = result.get(i) ?! break;;
+				i++;
+
+				if event.fd == sock_fd {
+					// New connection
+					println("accept");
+					let netcon = sock.accept();
+
+					let httpcon = Connection {
+						netcon: netcon,
+					};
+
+					continue;
+				}
+
+				// Existing connection
+
+			}
+		}
 
 		println("Socket: " + sock_fd.str());
 	}

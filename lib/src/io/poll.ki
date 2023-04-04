@@ -28,7 +28,7 @@ class Poll {
 		return item;
 	}
 
-	public func wait(timeout: i32 = 0) PollResult {
+	public func wait(timeout: i32 = -1) PollResult {
 		return kos.ki_os__poll_wait(this.os_poll, timeout);
 	}
 

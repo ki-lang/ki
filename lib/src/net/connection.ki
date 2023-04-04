@@ -1,0 +1,4 @@
+
+class Connection {
+	readonly fd: i32;
+}

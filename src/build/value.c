@@ -64,6 +64,13 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
         v = vgen_vint(alc, ch, type_gen(b, alc, "u8"), true);
         //
+    } else if (strcmp(token, "!") == 0) {
+        Value *on = read_value(fc, alc, scope, false, 8, false);
+        if (!type_is_bool(on->rett, b)) {
+            sprintf(fc->sbuf, "Value after '!' must be a bool");
+            fc_error(fc);
+        }
+        v = vgen_compare(alc, b, on, vgen_vint(alc, 0, type_gen(b, alc, "bool"), true), op_eq);
     } else if (strcmp(token, "true") == 0) {
         v = vgen_vint(alc, 1, type_gen(b, alc, "bool"), true);
     } else if (strcmp(token, "false") == 0) {
@@ -323,7 +330,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
     }
 
-    if (prio == 0 || prio > 8) {
+    if (prio == 0 || prio > 9) {
         while (strcmp(token, "?!") == 0 || strcmp(token, "??") == 0) {
 
             Type *ltype = v->rett;
@@ -357,7 +364,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 v = vgen_or_break(alc, v, usage_scope, else_scope, deref_scope);
             } else {
                 // ??
-                Value *right = read_value(fc, alc, usage_scope, true, 0, false);
+                Value *right = read_value(fc, alc, usage_scope, true, 9, false);
                 usage_merge_ancestors(alc, scope, ancestors);
 
                 type_check(fc, v->rett, right->rett);

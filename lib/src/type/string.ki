@@ -32,6 +32,21 @@ class String type:ptr async {
 		return adr;
 	}
 
+	/////////////////////
+	/////////////////////
+
+	func cstring() cstring {
+		let len = this.bytes();
+		let bytes = len + 1;
+		let adr = mem:alloc(bytes);
+		mem:copy(this.data(), adr, len);
+		ptrv (adr + len) as u8 = 0;
+		return adr -> cstring;
+	}
+
+	/////////////////////
+	/////////////////////
+
 	//func __ref() void {
 	//}
 
