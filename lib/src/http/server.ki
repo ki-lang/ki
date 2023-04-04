@@ -82,7 +82,7 @@ class Server {
 			let result_count = result.count;
 			let mut i : u32 = 0;
 
-			println("👋 Event: " + nr.str());
+			//println("👋 Event: " + nr.str());
 
 			while i < result_count {
 				let event = result.get(i) ?! break;;
@@ -108,6 +108,7 @@ class Server {
 						netcon: netcon,
 						fd: netcon.fd,
 					};
+					http_con._RC++;
 
 					cons.set(index, http_con)!;
 
@@ -133,7 +134,7 @@ class Server {
 				// Existing connection
 				if event.is_readable() {
 
-					println("respond: " + nr.str());
+					println("🖊️ Respond: " + nr.str());
 					Server.respond(http_con);
 					poll.remove(lsn);
 

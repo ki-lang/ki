@@ -37,24 +37,24 @@ class Poll {
 
 	public func wait(timeout: i32 = -1) PollResult {
 		if this.compress {
-			let list = this.listeners;
-			let count = list.length;
-			let mut i = 0#uxx;
-			let mut tail = 0#uxx;
-			while i < count {
-				let lsn = list.get(i) !! break;;
-				if lsn.fd > -1 {
-					if tail < i {
-						list.set(tail, lsn)!;
-					}
-					tail++;
-				}
-				i++;
-			}
-			while tail < i {
-				list.remove(tail);
-				tail++;
-			}
+			//let list = this.listeners;
+			//let count = list.length;
+			//let mut i = 0#uxx;
+			//let mut tail = 0#uxx;
+			//while i < count {
+			//	let lsn = list.get(i) !! break;;
+			//	if lsn.fd > -1 {
+			//		if tail < i {
+			//			list.set(tail, lsn)!;
+			//		}
+			//		tail++;
+			//	}
+			//	i++;
+			//}
+			//while tail < i {
+			//	//list.remove(tail);
+			//	tail++;
+			//}
 		}
 		return kos.ki_os__poll_wait(this.os_poll, timeout);
 	}
