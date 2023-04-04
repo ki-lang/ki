@@ -8,6 +8,7 @@ use ki:io;
 class ServerData async {
 	connections: AsyncArray[Connection];
 	socket: net:SocketTCP;
+	thread_nr: uxx = 0;
 }
 
 class Server {
@@ -63,6 +64,10 @@ class Server {
 
 	private static func worker(data: ServerData) void {
 		let cons = data.connections;
+		let nr = atomicop data.thread_nr ADD 1;
+
+		let nr_str = nr.str();
+		println("Thread: " + nr.str());
 
 		let sock = data.socket;
 		let sock_fd = sock.fd;
@@ -76,7 +81,7 @@ class Server {
 			let result_count = result.count;
 			let mut i : u32 = 0;
 
-			println("event");
+			println("event: " + nr.str());
 
 			while i < result_count {
 				let event = result.get(i) ?! break;;
@@ -84,18 +89,33 @@ class Server {
 
 				if event.fd == sock_fd {
 					// New connection
-					println("accept");
+					println("accept: " + nr.str());
 					let netcon = sock.accept();
+
+					let lsn = poll.listener(netcon.fd);
+					lsn.read(true);
 
 					let httpcon = Connection {
 						netcon: netcon,
+						fd: netcon.fd,
 					};
 
 					continue;
 				}
 
 				// Existing connection
+				if event.is_readable() {
+					println("respond: " + nr.str());
+					let resp = "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nContent-Length: 14\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\nHello, World!";
 
+					io:write(event.fd, resp);
+					io:close(event.fd);
+
+					println("Close");
+
+				} else if event.is_writable() {
+					println("send more: " + nr.str());
+				}
 			}
 		}
 

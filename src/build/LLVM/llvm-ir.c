@@ -366,20 +366,20 @@ char *llvm_ir_string(LB *b, char *body) {
     sprintf(fc->sbuf, "@.str.%d", b->strc);
     char *var = dups(b->alc, fc->sbuf);
 
+    int ptr_size = b->fc->b->ptr_size;
     int len = strlen(body);
-    int blen = len + 9;
+    int blen = len + ptr_size + 1;
 
     sprintf(fc->sbuf, "%s = private unnamed_addr constant [%d x i8] c\"", var, blen);
     str_append_chars(ir, fc->sbuf);
 
     // Bytes
-    int ptr_size = b->fc->b->ptr_size;
     // Len bytes
     size_t len_buf = len;
-    char *len_ptr = (char *)&len_buf;
+    char *len_ptr = (unsigned char *)&len_buf;
     int c = 0;
     while (c < ptr_size) {
-        char ch = *(len_ptr + c);
+        unsigned char ch = *(len_ptr + c);
         c++;
         str_append_char(ir, '\\');
         char hex[20];

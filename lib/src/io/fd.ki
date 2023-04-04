@@ -1,0 +1,11 @@
+
+header "ki_os" as kos;
+
+func write(fd: i32, str: String) void {
+	let c = kos.ki_os__fd_write(fd, str.data(), str.bytes());
+}
+
+func close(fd: i32) void {
+	let c = kos.ki_os__fd_close(fd);
+}
+

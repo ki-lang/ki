@@ -120,10 +120,10 @@ struct PollEvent {
     // 0x8  : closed
     // 0x10 : stopped_reading
 
-	public func is_in() bool {
+	public func is_readable() bool {
 		return (this.state & 0x1) > 0;
 	}
-	public func is_out() bool {
+	public func is_writable() bool {
 		return (this.state & 0x2) > 0;
 	}
 	public func is_error() bool {

@@ -219,8 +219,6 @@ Str *read_string(Fc *fc) {
             }
             i++;
 
-            if (is_newline(add))
-                line++;
             str_append_char(buf, add);
             continue;
         }

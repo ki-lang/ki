@@ -47,8 +47,19 @@ class String type:ptr async {
 	/////////////////////
 	/////////////////////
 
-	//func __ref() void {
-	//}
+	func __ref() void {
+		if this.is_const() { return; }
+		let adr = (this -> ptr) + sizeof(uxx) + 4;
+		let rc = atomicop ptrv adr as u32 ADD 1;
+	}
+	func __deref() void {
+		if this.is_const() { return; }
+		let adr = (this -> ptr) + sizeof(uxx) + 4;
+		let rc = atomicop ptrv adr as u32 SUB 1;
+		if rc == 1 {
+			// TODO: Free
+		}
+	}
 
 	func __add(str: String) String {
 		let this_len = this.bytes();

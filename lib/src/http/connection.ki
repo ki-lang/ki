@@ -3,5 +3,6 @@ use net;
 
 class Connection {
 	netcon: net:Connection;
+	fd: i32;
 }
 
