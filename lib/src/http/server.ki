@@ -82,8 +82,6 @@ class Server {
 			let result_count = result.count;
 			let mut i : u32 = 0;
 
-			//println("👋 Event: " + nr.str());
-
 			while i < result_count {
 				let event = result.get(i) ?! break;;
 				i++;
@@ -91,9 +89,14 @@ class Server {
 				let lsn = event.listener;
 				let fd = lsn.fd;
 
+				println("👋 Event: " + nr.str() + " | FD: " + fd.str());
+
 				if fd == sock_fd {
 					// New connection
-					let netcon = sock.accept() !! continue;;
+					let netcon = sock.accept() !! {
+						println("👀 Failed to accept: " + nr.str());
+						continue;
+					};
 
 					println("🤝 Accept: " + nr.str());
 
@@ -134,7 +137,7 @@ class Server {
 				// Existing connection
 				if event.is_readable() {
 
-					println("🖊️ Respond: " + nr.str());
+					println("Respond: " + nr.str());
 					Server.respond(http_con);
 					poll.remove(lsn);
 
@@ -149,7 +152,7 @@ class Server {
 
 	static func respond(http_con: Connection) void {
 
-		let resp = "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nContent-Length: 14\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\nHello, World!";
+		let resp = "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nContent-Length: 13\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\nHello, World!";
 
 		io:write(http_con.fd, resp);
 		io:close(http_con.fd);
