@@ -108,6 +108,19 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = value_init(alc, v_getptr, on, type_gen(b, alc, "ptr"));
         //
+    } else if (strcmp(token, "stack_alloc") == 0) {
+
+        tok_expect(fc, "(", true, false);
+        Value *val = read_value(fc, alc, scope, false, 0, false);
+
+        if (val->rett->type != type_int) {
+            sprintf(fc->sbuf, "Stack alloc value must return an integer");
+            fc_error(fc);
+        }
+
+        tok_expect(fc, ")", false, true);
+        v = value_init(alc, v_stack_alloc, val, type_gen(b, alc, "ptr"));
+
     } else if (strcmp(token, "atomicop") == 0) {
 
         Value *on = read_value(fc, alc, scope, true, 0, true);

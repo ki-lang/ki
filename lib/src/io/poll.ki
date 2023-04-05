@@ -92,23 +92,7 @@ struct PollListener {
 		}
 		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
 	}
-	public func error(v: bool) void {
-		if(v) {
-			this.state = this.state | 0x4;
-		} else if (this.state & 0x4) > 0 {
-			this.state = this.state ^ 0x4;
-		}
-		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
-	}
-	public func close(v: bool) void {
-		if(v) {
-			this.state = this.state | 0x8;
-		} else if (this.state & 0x8) > 0 {
-			this.state = this.state ^ 0x8;
-		}
-		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
-	}
-	public func is_stopped_reading(v: bool) void {
+	public func stopped_reading(v: bool) void {
 		if(v) {
 			this.state = this.state | 0x10;
 		} else if (this.state & 0x10) > 0 {
@@ -141,20 +125,25 @@ struct PollEvent {
     // 0x8  : closed
     // 0x10 : stopped_reading
 
-	public func is_readable() bool {
+	public func is_readable() bool %inline {
 		return (this.state & 0x1) > 0;
 	}
-	public func is_writable() bool {
+	public func is_writable() bool %inline {
 		return (this.state & 0x2) > 0;
 	}
-	public func is_error() bool {
+
+	public func is_error() bool %inline {
 		return (this.state & 0x4) > 0;
 	}
-	public func is_closed() bool {
+	public func is_closed() bool %inline {
 		return (this.state & 0x8) > 0;
 	}
-	public func is_stopped_reading() bool {
+	public func is_stopped_reading() bool %inline {
 		return (this.state & 0x10) > 0;
+	}
+
+	public func wants_to_close() bool %inline {
+		return (this.state & 0x4) > 0 || (this.state & 0x8) > 0 || (this.state & 0x10) > 0;
 	}
 }
 

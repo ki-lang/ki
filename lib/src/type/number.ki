@@ -47,9 +47,15 @@ trait Number {
                 ch = rem + '0';
             }
 			ptrv buf_adr as u8 = ch;
-            buf_adr+=1;
-            len+=1;
+            buf_adr++;
+            len++;
             abs = abs/base;
+        }
+
+        if (negative) {
+            ptrv buf_adr as u8 = '-';
+            buf_adr++;
+            len++;
         }
  
         // Reverse the string

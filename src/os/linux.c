@@ -391,6 +391,10 @@ int ki_os__socket_accept(void *sock, char *ip_buffer) {
         // int len = sizeof(ip_buf);
         // con_fd = accept(s->fd, (struct sockaddr *)&ip_buf, &len);
         con_fd = accept4(s->fd, NULL, NULL, SOCK_NONBLOCK);
+        // if (con_fd == -1) {
+        //     printf("Error:%d | %d\n", errno, EAGAIN);
+        // }
+
         // if (ip_buffer) {
         //     strcpy(ip_buffer, inet_ntoa(ip_buf.sin_addr));
         // }
@@ -459,12 +463,6 @@ void ki_os__poll_update_fd(void *poller_, ki_poll_listener *listener, unsigned i
     }
     if (state & 0x2) {
         track |= EPOLLOUT;
-    }
-    if (state & 0x4) {
-        track |= EPOLLERR;
-    }
-    if (state & 0x8) {
-        track |= EPOLLHUP;
     }
     if (state & 0x10) {
         track |= EPOLLRDHUP;

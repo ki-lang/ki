@@ -88,6 +88,7 @@ enum VALUETYPE {
     v_value_then_ir_value,
     v_incr_decr,
     v_atomicop,
+    v_stack_alloc,
 };
 
 enum OPTYPE {

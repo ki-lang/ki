@@ -56,8 +56,8 @@ void llvm_gen_global_ir(LB *b) {
     sprintf(bytes, "%d", fc->b->ptr_size);
 
     if (is_main_fc) {
-        str_append_chars(ir, "@ki_err_code_buffer = thread_local(initialexec) global i32 0, align 4\n");
-        str_append_chars(ir, "@ki_err_msg_buffer = thread_local(initialexec) global i8* null, align ");
+        str_append_chars(ir, "@ki_err_code_buffer = dso_local thread_local(initialexec) global i32 0, align 4\n");
+        str_append_chars(ir, "@ki_err_msg_buffer = dso_local thread_local(initialexec) global i8* null, align ");
         str_append_chars(ir, bytes);
         str_append_chars(ir, "\n");
     } else {

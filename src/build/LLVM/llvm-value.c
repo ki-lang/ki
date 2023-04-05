@@ -510,6 +510,35 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
         return var_result;
     }
+    if (v->type == v_stack_alloc) {
+        Value *item = v->item;
+        char *val = llvm_value(b, scope, item);
+        Type *type = item->rett;
+        char *ltype = llvm_type(b, type);
+
+        Str *ir = llvm_b_ir(b);
+        LLVMFunc *lfunc = b->lfunc;
+
+        if (lfunc->stack_save_vn == NULL) {
+            b->use_stack_save = true;
+            char *save_vn = llvm_var(b);
+            str_append_chars(ir, "  ");
+            str_append_chars(ir, save_vn);
+            str_append_chars(ir, " = call i8* @llvm.stacksave()\n");
+            lfunc->stack_save_vn = save_vn;
+        }
+
+        char *var = llvm_var(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, var);
+        str_append_chars(ir, " = alloca i8, ");
+        str_append_chars(ir, ltype);
+        str_append_chars(ir, " ");
+        str_append_chars(ir, val);
+        str_append_chars(ir, ", align 8\n");
+
+        return var;
+    }
     if (v->type == v_atomicop) {
         VOp *vop = v->item;
 

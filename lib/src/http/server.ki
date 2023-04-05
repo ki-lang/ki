@@ -68,7 +68,7 @@ class Server {
 		let nr = atomicop data.thread_nr ADD 1;
 
 		let nr_str = nr.str();
-		println("Thread: " + nr.str());
+		println("[-] Start thread: " + nr.str());
 
 		let sock = data.socket;
 		let sock_fd = sock.fd;
@@ -89,29 +89,28 @@ class Server {
 				let lsn = event.listener;
 				let fd = lsn.fd;
 
-				println("👋 Event: " + nr.str() + " | FD: " + fd.str());
+				//println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
 
 				if fd == sock_fd {
 					// New connection
 					let netcon = sock.accept() !! {
-						println("👀 Failed to accept: " + nr.str());
 						continue;
 					};
 
-					println("🤝 Accept: " + nr.str());
+					let fd = netcon.fd;
+					println("[+] New connection: " + fd.str());
 
 					let index = cons.push(null);
 
-					println("Netcon fd: " + netcon.fd.str());
-					println("Netcon key: " + index.str());
-					let lsn = poll.listener(netcon.fd, index -> u32);
+					let lsn = poll.listener(fd, index);
 					lsn.read(true);
+					lsn.stopped_reading(true);
 
 					let http_con = Connection {
 						netcon: netcon,
-						fd: netcon.fd,
+						fd: fd,
 					};
-					http_con._RC++;
+					http_con._RC+=1;
 
 					cons.set(index, http_con)!;
 
@@ -120,29 +119,63 @@ class Server {
 
 				// Get connection
 				let http_con = cons.get(lsn.key) !! {
-					println("Event fd: " + fd.str());
-					println("Event key: " + lsn.key.str());
 					println("❓ Missing http connection : " + nr.str());
 					io:close(fd);
 					poll.remove(lsn);
 					continue;
-				};
-				rep http_con = http_con ?! {
+				} ?! {
 					println("❔ Http connection is 'null' : " + nr.str());
 					io:close(fd);
 					poll.remove(lsn);
 					continue;
 				};
 
-				// Existing connection
-				if event.is_readable() {
+				http_con._RC+=1;
+				if http_con.fd != fd {
+					println("❗ fd changed : " + nr.str() + " | " + http_con.fd.str() + " -> " + fd.str() + " | key: " + lsn.key.str());
+					io:close(fd);
+					poll.remove(lsn);
+					continue;
+				}
 
+<<<<<<< HEAD
 					println("Respond: " + nr.str());
 					Server.respond(http_con);
+=======
+				// Existing connection
+				if event.wants_to_close() {
+					println("[+] Close connection: " + fd.str());
+					io:close(fd);
+>>>>>>> b14b494ea918d93f59593d9b5af00926ac44a7df
 					poll.remove(lsn);
+					continue;
+				}
 
-				} else if event.is_writable() {
+				//if event.is_error() {
+				//	println("error: " + nr.str());
+				//	io:close(fd);
+				//	poll.remove(lsn);
+				//	continue;
+				//}
+				//if event.is_closed() {
+				//	println("closed: " + nr.str());
+				//	io:close(fd);
+				//	poll.remove(lsn);
+				//	continue;
+				//}
+				//if event.is_stopped_reading() {
+				//	println("stopped: " + nr.str() + " | fd: " + fd.str());
+				//	io:close(fd);
+				//	poll.remove(lsn);
+				//	continue;
+				//}
+				if event.is_writable() {
 					println("send more: " + nr.str());
+					continue;
+				}
+				if event.is_readable() {
+					Server.respond(http_con);
+					continue;
 				}
 			}
 		}
@@ -152,12 +185,28 @@ class Server {
 
 	static func respond(http_con: Connection) void {
 
-		let resp = "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nContent-Length: 13\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\nHello, World!";
+		let buf_size : i32 = 65535;
+		let sbuf : ptr = stack_alloc(buf_size);
+		while true {
+			let rcvd = kos.ki_os__fd_read(http_con.fd, sbuf, buf_size);
+			if (rcvd == -2){
+				// EAGAIN
+				break;
+			} else if (rcvd < 0){
+				break;
+			} else if (rcvd == 0){
+				break;
+			}
+			if(rcvd < buf_size) {
+				break;
+			}
+		}
+
+		let resp = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\nConnection: keep-alive\r\nContent-Type: text/html\r\n\r\nHello, World!";
 
 		io:write(http_con.fd, resp);
-		io:close(http_con.fd);
-
-		println("❌ Close");
+		//io:close(http_con.fd);
+		//println("❌ Close");
 	}
 }
 
