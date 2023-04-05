@@ -138,15 +138,10 @@ class Server {
 					continue;
 				}
 
-<<<<<<< HEAD
-					println("Respond: " + nr.str());
-					Server.respond(http_con);
-=======
 				// Existing connection
 				if event.wants_to_close() {
 					println("[+] Close connection: " + fd.str());
 					io:close(fd);
->>>>>>> b14b494ea918d93f59593d9b5af00926ac44a7df
 					poll.remove(lsn);
 					continue;
 				}
