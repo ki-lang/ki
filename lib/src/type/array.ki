@@ -3,7 +3,7 @@ use mem;
 
 class Array[T] {
 	readonly size: uxx;
-	readonly length: uxx;
+	readonly length: uxx = 0;
 	readonly data: ptr;
 
 	static func init(mut start_size: uxx = 2) .CLASS {
@@ -12,7 +12,6 @@ class Array[T] {
 		}
 		return CLASS {
 			size: start_size,
-			length: 0,
 			data: mem:alloc(start_size * sizeof(T)),
 		};
 	}

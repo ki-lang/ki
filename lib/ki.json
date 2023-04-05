@@ -5,7 +5,8 @@
 		"mem": "src/mem",
 		"net": "src/net",
 		"os": "src/os",
-		"type": "src/type"
+		"type": "src/type",
+		"utils": "src/utils"
 	},
 	"headers": {
 		"dirs": ["headers"]

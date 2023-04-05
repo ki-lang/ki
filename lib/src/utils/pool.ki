@@ -1,0 +1,52 @@
+
+use mem;
+
+class Pool[T] {
+	data: ptr;
+	size: uxx;
+	head: uxx = 0;
+	tail: uxx = 0;
+
+	static func init(mut max_items: uxx) .CLASS {
+		if max_items < 2{
+			max_items = 2;
+		}
+		return CLASS {
+			size: max_items,
+			data: mem:alloc(max_items * sizeof(T)),
+		};
+	}
+
+	func pop() T !empty {
+		let head = this.head;
+		let tail = this.tail;
+		if tail == head {
+			throw empty;
+		}
+		let data = this.data;
+		let result = ptrv (data + (tail * sizeof(T))) as T;
+		this.tail = tail + 1;
+		return result;
+	}
+
+	func add(item: T) void !full {
+		let size = this.size;
+		let head = this.head;
+		let mut next_head = head + 1;
+		let tail = this.tail;
+
+		if next_head == size {
+			next_head = 0;
+		}
+
+		rep next_head = next_head;
+
+		if next_head == tail {
+			throw full;
+		}
+
+		let data = this.data;
+		ptrv (data + (head * sizeof(T))) as T = item;
+		this.head = next_head;
+	}
+}

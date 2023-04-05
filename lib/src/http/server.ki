@@ -4,9 +4,10 @@ header "ki_os" as kos;
 use ki:os;
 use ki:net;
 use ki:io;
+use ki:utils;
 
 class ServerData async {
-	connections: AsyncArray[?Connection];
+	max_connections: uxx;
 	socket: net:SocketTCP;
 	thread_nr: uxx = 0;
 }
@@ -14,7 +15,6 @@ class ServerData async {
 class Server {
 	host: String;
 	handler: fn(Request)(Response);
-	max_connections: uxx;
 	data: ServerData;
 	port: u16;
 
@@ -28,10 +28,9 @@ class Server {
 			host: host,
 			port: port,
 			handler: handler,
-			max_connections: max_connections,
 			data: ServerData {
 				socket: socket,
-				connections: AsyncArray[?Connection].init(max_connections),
+				max_connections: max_connections,
 			}
 		};
 	}
@@ -64,7 +63,9 @@ class Server {
 	}
 
 	private static func worker(data: ServerData) void {
-		let cons = data.connections;
+		let max_connections = data.max_connections;
+		let cons = Array[Connection].init(50);
+		let index_pool = utils:Pool[uxx].init(max_connections);
 		let nr = atomicop data.thread_nr ADD 1;
 
 		let nr_str = nr.str();
@@ -100,33 +101,40 @@ class Server {
 					let fd = netcon.fd;
 					println("[+] New connection: " + fd.str());
 
-					let index = cons.push(null);
+					let mut index = index_pool.pop() !? max_connections;
+					if index == max_connections {
+						let http_con = Connection {
+							netcon: netcon,
+							fd: fd,
+						};
+						http_con._RC+=10;
+
+						index = cons.push(http_con);
+					} else {
+						// Clear existing connection io buffers
+						let http_con = cons.get(index) !! {
+							io:close(fd);
+							continue;
+						};
+						http_con._RC+=1;
+						http_con.fd = fd;
+						http_con.netcon = netcon;
+					}
 
 					let lsn = poll.listener(fd, index);
 					lsn.read(true);
 					lsn.stopped_reading(true);
 
-					let http_con = Connection {
-						netcon: netcon,
-						fd: fd,
-					};
-					http_con._RC+=1;
-
-					cons.set(index, http_con)!;
-
 					continue;
 				}
 
 				// Get connection
-				let http_con = cons.get(lsn.key) !! {
+				let index = lsn.key;
+				let http_con = cons.get(index) !! {
 					println("❓ Missing http connection : " + nr.str());
 					io:close(fd);
 					poll.remove(lsn);
-					continue;
-				} ?! {
-					println("❔ Http connection is 'null' : " + nr.str());
-					io:close(fd);
-					poll.remove(lsn);
+					index_pool.add(index)!;
 					continue;
 				};
 
@@ -135,6 +143,7 @@ class Server {
 					println("❗ fd changed : " + nr.str() + " | " + http_con.fd.str() + " -> " + fd.str() + " | key: " + lsn.key.str());
 					io:close(fd);
 					poll.remove(lsn);
+					index_pool.add(index)!;
 					continue;
 				}
 
@@ -143,27 +152,10 @@ class Server {
 					println("[+] Close connection: " + fd.str());
 					io:close(fd);
 					poll.remove(lsn);
+					index_pool.add(index)!;
 					continue;
 				}
 
-				//if event.is_error() {
-				//	println("error: " + nr.str());
-				//	io:close(fd);
-				//	poll.remove(lsn);
-				//	continue;
-				//}
-				//if event.is_closed() {
-				//	println("closed: " + nr.str());
-				//	io:close(fd);
-				//	poll.remove(lsn);
-				//	continue;
-				//}
-				//if event.is_stopped_reading() {
-				//	println("stopped: " + nr.str() + " | fd: " + fd.str());
-				//	io:close(fd);
-				//	poll.remove(lsn);
-				//	continue;
-				//}
 				if event.is_writable() {
 					println("send more: " + nr.str());
 					continue;
