@@ -68,7 +68,7 @@ class Server {
 		let nr = atomicop data.thread_nr ADD 1;
 
 		let nr_str = nr.str();
-		println("Thread: " + nr.str());
+		println("[-] Start thread: " + nr.str());
 
 		let sock = data.socket;
 		let sock_fd = sock.fd;
@@ -97,17 +97,18 @@ class Server {
 						continue;
 					};
 
-					println("[+] New connection: " + nr.str());
+					let fd = netcon.fd;
+					println("[+] New connection: " + fd.str());
 
 					let index = cons.push(null);
 
-					let lsn = poll.listener(netcon.fd, index -> u32);
+					let lsn = poll.listener(fd, index);
 					lsn.read(true);
 					lsn.stopped_reading(true);
 
 					let http_con = Connection {
 						netcon: netcon,
-						fd: netcon.fd,
+						fd: fd,
 					};
 					http_con._RC+=1;
 
@@ -128,6 +129,7 @@ class Server {
 					poll.remove(lsn);
 					continue;
 				};
+
 				http_con._RC+=1;
 				if http_con.fd != fd {
 					println("❗ fd changed : " + nr.str() + " | " + http_con.fd.str() + " -> " + fd.str() + " | key: " + lsn.key.str());
@@ -182,7 +184,6 @@ class Server {
 		let sbuf : ptr = stack_alloc(buf_size);
 		while true {
 			let rcvd = kos.ki_os__fd_read(http_con.fd, sbuf, buf_size);
-			//println("Recv: " + rcvd.str() + " | fd: " + http_con.fd.str());
 			if (rcvd == -2){
 				// EAGAIN
 				break;
