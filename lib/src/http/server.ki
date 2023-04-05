@@ -102,15 +102,18 @@ class Server {
 					let index = cons.push(null);
 
 					//println("Netcon fd: " + netcon.fd.str());
-					//println("Netcon key: " + index.str());
+					//println("Http cons index: " + index.str());
 					let lsn = poll.listener(netcon.fd, index -> u32);
 					lsn.read(true);
+					lsn.error(true);
+					lsn.close(true);
+					lsn.stopped_reading(true);
 
 					let http_con = Connection {
 						netcon: netcon,
 						fd: netcon.fd,
 					};
-					http_con._RC++;
+					http_con._RC+=1;
 
 					cons.set(index, http_con)!;
 
@@ -130,22 +133,43 @@ class Server {
 					poll.remove(lsn);
 					continue;
 				};
+				http_con._RC+=1;
+				if http_con.fd != fd {
+					println("❗ fd changed : " + nr.str() + " | " + http_con.fd.str() + " -> " + fd.str() + " | key: " + lsn.key.str());
+					io:close(fd);
+					poll.remove(lsn);
+					continue;
+				}
 
 				// Existing connection
+				if event.is_error() {
+					println("error: " + nr.str());
+					io:close(fd);
+					poll.remove(lsn);
+					continue;
+				}
+				if event.is_closed() {
+					println("closed: " + nr.str());
+					io:close(fd);
+					poll.remove(lsn);
+					continue;
+				}
+				if event.is_stopped_reading() {
+					println("stopped: " + nr.str());
+					io:close(fd);
+					poll.remove(lsn);
+					continue;
+				}
+				if event.is_writable() {
+					println("send more: " + nr.str());
+					continue;
+				}
 				if event.is_readable() {
-
 					//println("🖊️ Respond: " + nr.str());
 					Server.respond(http_con);
-					poll.remove(lsn);
-
-				} else if event.is_writable() {
-					println("send more: " + nr.str());
-				} else if event.is_error() {
-					println("error: " + nr.str());
-				} else if event.is_closed() {
-					println("closed: " + nr.str());
-				} else if event.is_stopped_reading() {
-					println("stopped: " + nr.str());
+					//println("✔️ Sent");
+					//poll.remove(lsn);
+					continue;
 				}
 			}
 		}
@@ -155,11 +179,28 @@ class Server {
 
 	static func respond(http_con: Connection) void {
 
-		let resp = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\nContent-Type: text/html\r\n\r\nHello, World!";
+		let buf_size : i32 = 65535;
+		let sbuf : ptr = stack_alloc(buf_size);
+		while true {
+			let rcvd = kos.ki_os__fd_read(http_con.fd, sbuf, buf_size);
+			//println("Recv: " + rcvd.str() + " | fd: " + http_con.fd.str());
+			if (rcvd == -2){
+				// EAGAIN
+				break;
+			} else if (rcvd < 0){
+				break;
+			} else if (rcvd == 0){
+				break;
+			}
+			if(rcvd < buf_size) {
+				break;
+			}
+		}
+
+		let resp = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\nConnection: close\r\nContent-Type: text/html\r\n\r\nHello, World!";
 
 		io:write(http_con.fd, resp);
 		//io:close(http_con.fd);
-
 		//println("❌ Close");
 	}
 }

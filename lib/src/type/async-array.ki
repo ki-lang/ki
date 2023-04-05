@@ -28,7 +28,7 @@ class AsyncArray[T] async {
 			let new_data = mem:alloc(new_size * sizeof(T));
 			mem:copy(data, new_data, size * sizeof(T));
 			data = new_data;
-			this.data = data;
+			this.data = new_data;
 			this.size = new_size;
 		}
 
