@@ -250,6 +250,7 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
             llvm_ir_cond_jump(b, llvm_b_ir(b), iszero, b_else, b_code);
 
             b->lfunc->block = b_code;
+            llvm_ir_store(b, err_code_type, "@ki_err_code_buffer", "0");
             llvm_write_ast(b, ort->scope);
             llvm_ir_jump(llvm_b_ir(b), b_after);
 

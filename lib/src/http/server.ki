@@ -36,7 +36,7 @@ class Server {
 		};
 	}
 
-	func .start(mut worker_count: i32 = 8) void {
+	func .start(mut worker_count: i32 = 2) void {
 
 		// SIGINT
         os:signal(os:SIG.hup, interrupt);
@@ -82,8 +82,6 @@ class Server {
 			let result_count = result.count;
 			let mut i : u32 = 0;
 
-			//println("👋 Event: " + nr.str());
-
 			while i < result_count {
 				let event = result.get(i) ?! break;;
 				i++;
@@ -91,16 +89,20 @@ class Server {
 				let lsn = event.listener;
 				let fd = lsn.fd;
 
+				//println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
+
 				if fd == sock_fd {
 					// New connection
-					let netcon = sock.accept() !! continue;;
+					let netcon = sock.accept() !! {
+						continue;
+					};
 
 					println("🤝 Accept: " + nr.str());
 
 					let index = cons.push(null);
 
-					println("Netcon fd: " + netcon.fd.str());
-					println("Netcon key: " + index.str());
+					//println("Netcon fd: " + netcon.fd.str());
+					//println("Netcon key: " + index.str());
 					let lsn = poll.listener(netcon.fd, index -> u32);
 					lsn.read(true);
 
@@ -117,8 +119,6 @@ class Server {
 
 				// Get connection
 				let http_con = cons.get(lsn.key) !! {
-					println("Event fd: " + fd.str());
-					println("Event key: " + lsn.key.str());
 					println("❓ Missing http connection : " + nr.str());
 					io:close(fd);
 					poll.remove(lsn);
@@ -134,12 +134,18 @@ class Server {
 				// Existing connection
 				if event.is_readable() {
 
-					println("🖊️ Respond: " + nr.str());
+					//println("🖊️ Respond: " + nr.str());
 					Server.respond(http_con);
 					poll.remove(lsn);
 
 				} else if event.is_writable() {
 					println("send more: " + nr.str());
+				} else if event.is_error() {
+					println("error: " + nr.str());
+				} else if event.is_closed() {
+					println("closed: " + nr.str());
+				} else if event.is_stopped_reading() {
+					println("stopped: " + nr.str());
 				}
 			}
 		}
@@ -149,12 +155,12 @@ class Server {
 
 	static func respond(http_con: Connection) void {
 
-		let resp = "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nContent-Length: 14\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\nHello, World!";
+		let resp = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\nContent-Type: text/html\r\n\r\nHello, World!";
 
 		io:write(http_con.fd, resp);
-		io:close(http_con.fd);
+		//io:close(http_con.fd);
 
-		println("❌ Close");
+		//println("❌ Close");
 	}
 }
 
