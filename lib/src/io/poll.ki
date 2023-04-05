@@ -127,12 +127,11 @@ struct PollEvent {
 
 	public func is_readable() bool %inline {
 		return (this.state & 0x1) > 0;
-		//return (this.state & 0x10) == 0 && (this.state & 0x8) == 0 &&  (this.state & 0x4) == 0 && (this.state & 0x1) > 0;
 	}
 	public func is_writable() bool %inline {
 		return (this.state & 0x2) > 0;
-		//return (this.state & 0x8) == 0 &&  (this.state & 0x4) == 0 && (this.state & 0x2) > 0;
 	}
+
 	public func is_error() bool %inline {
 		return (this.state & 0x4) > 0;
 	}
@@ -141,6 +140,10 @@ struct PollEvent {
 	}
 	public func is_stopped_reading() bool %inline {
 		return (this.state & 0x10) > 0;
+	}
+
+	public func wants_to_close() bool %inline {
+		return (this.state & 0x4) > 0 || (this.state & 0x8) > 0 || (this.state & 0x10) > 0;
 	}
 }
 

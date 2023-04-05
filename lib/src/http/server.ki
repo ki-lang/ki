@@ -97,12 +97,10 @@ class Server {
 						continue;
 					};
 
-					println("🤝 Accept: " + nr.str());
+					println("[+] New connection: " + nr.str());
 
 					let index = cons.push(null);
 
-					//println("Netcon fd: " + netcon.fd.str());
-					//println("Http cons index: " + index.str());
 					let lsn = poll.listener(netcon.fd, index -> u32);
 					lsn.read(true);
 					lsn.stopped_reading(true);
@@ -124,8 +122,7 @@ class Server {
 					io:close(fd);
 					poll.remove(lsn);
 					continue;
-				};
-				rep http_con = http_con ?! {
+				} ?! {
 					println("❔ Http connection is 'null' : " + nr.str());
 					io:close(fd);
 					poll.remove(lsn);
@@ -140,33 +137,37 @@ class Server {
 				}
 
 				// Existing connection
-				if event.is_error() {
-					println("error: " + nr.str());
+				if event.wants_to_close() {
+					println("[+] Close connection: " + fd.str());
 					io:close(fd);
 					poll.remove(lsn);
 					continue;
 				}
-				if event.is_closed() {
-					println("closed: " + nr.str());
-					io:close(fd);
-					poll.remove(lsn);
-					continue;
-				}
-				if event.is_stopped_reading() {
-					println("stopped: " + nr.str() + " | fd: " + fd.str());
-					io:close(fd);
-					poll.remove(lsn);
-					continue;
-				}
+
+				//if event.is_error() {
+				//	println("error: " + nr.str());
+				//	io:close(fd);
+				//	poll.remove(lsn);
+				//	continue;
+				//}
+				//if event.is_closed() {
+				//	println("closed: " + nr.str());
+				//	io:close(fd);
+				//	poll.remove(lsn);
+				//	continue;
+				//}
+				//if event.is_stopped_reading() {
+				//	println("stopped: " + nr.str() + " | fd: " + fd.str());
+				//	io:close(fd);
+				//	poll.remove(lsn);
+				//	continue;
+				//}
 				if event.is_writable() {
 					println("send more: " + nr.str());
 					continue;
 				}
 				if event.is_readable() {
-					//println("🖊️ Respond: " + nr.str());
 					Server.respond(http_con);
-					//println("✔️ Sent");
-					//poll.remove(lsn);
 					continue;
 				}
 			}
