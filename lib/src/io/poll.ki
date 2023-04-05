@@ -92,22 +92,6 @@ struct PollListener {
 		}
 		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
 	}
-	public func error(v: bool) void {
-		if(v) {
-			this.state = this.state | 0x4;
-		} else if (this.state & 0x4) > 0 {
-			this.state = this.state ^ 0x4;
-		}
-		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
-	}
-	public func close(v: bool) void {
-		if(v) {
-			this.state = this.state | 0x8;
-		} else if (this.state & 0x8) > 0 {
-			this.state = this.state ^ 0x8;
-		}
-		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
-	}
 	public func stopped_reading(v: bool) void {
 		if(v) {
 			this.state = this.state | 0x10;

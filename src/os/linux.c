@@ -464,12 +464,6 @@ void ki_os__poll_update_fd(void *poller_, ki_poll_listener *listener, unsigned i
     if (state & 0x2) {
         track |= EPOLLOUT;
     }
-    if (state & 0x4) {
-        track |= EPOLLERR;
-    }
-    if (state & 0x8) {
-        track |= EPOLLHUP;
-    }
     if (state & 0x10) {
         track |= EPOLLRDHUP;
     }
