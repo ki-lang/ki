@@ -238,6 +238,8 @@ struct Class {
     Func *func_free;
     Func *func_iter_init;
     Func *func_iter_get;
+    Func *func_before_free;
+    Func *func_leave_scope;
     Array *generic_names;
     Array *generic_types;
     Map *generics;

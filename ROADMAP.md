@@ -15,6 +15,7 @@ Feature todo list in order:
 - access type 'namespace'
 - Declare functions for classes/structs from other libraries
 - Custom allocators | MyClass{...} @my_alloc
+- --watch param to watch for file changes
 - vscode extension
 - Async library
 - Cross compiling

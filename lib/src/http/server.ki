@@ -107,8 +107,6 @@ class Server {
 							netcon: netcon,
 							fd: fd,
 						};
-						http_con._RC+=10;
-
 						index = cons.push(http_con);
 					} else {
 						// Clear existing connection io buffers
@@ -116,7 +114,6 @@ class Server {
 							io:close(fd);
 							continue;
 						};
-						http_con._RC+=1;
 						http_con.fd = fd;
 						http_con.netcon = netcon;
 					}
@@ -138,7 +135,6 @@ class Server {
 					continue;
 				};
 
-				http_con._RC+=1;
 				if http_con.fd != fd {
 					println("❗ fd changed : " + nr.str() + " | " + http_con.fd.str() + " -> " + fd.str() + " | key: " + lsn.key.str());
 					io:close(fd);

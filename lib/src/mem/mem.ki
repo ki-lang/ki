@@ -109,3 +109,39 @@ func copy(mut from: ptr, mut to: ptr, mut len: uxx) void {
 	  to+=1;
   }
 }
+
+func equal(mut a: ptr, mut b: ptr, mut length: uxx) bool {
+	a += length;
+	b += length;
+	while(length > sizeof(uxx)){
+		a -= sizeof(uxx);
+		b -= sizeof(uxx);
+		let av = ptrv a as uxx;
+		let bv = ptrv b as uxx;
+		if(av != bv) {
+			return false;
+		}
+		length -= sizeof(uxx);
+	}
+	while(length > 3){
+		a -= 4;
+		b -= 4;
+		let av = ptrv a as u32;
+		let bv = ptrv b as u32;
+		if(av != bv) {
+			return false;
+		}
+		length -= 4;
+	}
+	while(length > 0){
+		a--;
+		b--;
+		let av = ptrv a as u8;
+		let bv = ptrv b as u8;
+		if(av != bv) {
+			return false;
+		}
+		length--;
+	}
+	return true;
+}

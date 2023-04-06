@@ -173,6 +173,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = vgen_vint(alc, size, type_gen(b, alc, "i32"), false);
         //
+
     } else if (is_number(token[0]) || strcmp(token, "-") == 0) {
 
         bool is_negative = strcmp(token, "-") == 0;

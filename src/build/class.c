@@ -29,6 +29,8 @@ Class *class_init(Allocator *alc) {
     class->func_free = NULL;
     class->func_iter_init = NULL;
     class->func_iter_get = NULL;
+    class->func_before_free = NULL;
+    class->func_leave_scope = NULL;
 
     return class;
 }
@@ -190,17 +192,15 @@ void class_generate_free(Class *class) {
     Value *this = value_init(alc, v_decl, this_decl, type_class);
 
     // Call __before_free
-    // let bff = this.funcs.get("__before_free") or value null;
-    // verify bff {
-    //     let ff = bff.func;
-    //     let on = value_gen_func_ptr(ff, null);
-    //     let values = Array<Value>.make();
-    //     values.push(var_this);
-    //     let fcall = value_gen_fcall(fc.b, fscope, on, values, type_gen_void());
-    //     fscope.ast.push(Token{statement : fcall});
-    // }
+    if (class->func_before_free) {
+        Value *on = vgen_fptr(alc, class->func_before_free, NULL);
+        Array *values = array_make(alc, 2);
+        array_push(values, this);
+        Value *fcall = vgen_fcall(alc, on, values, type_gen_void(alc), NULL);
+        array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
+    }
 
-    // Call __deref_props (TODO)
+    // Call __deref_props
     if (class->func_deref_props) {
         Value *on = vgen_fptr(alc, class->func_deref_props, NULL);
         Array *values = array_make(alc, 2);
@@ -227,6 +227,10 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
 
     Type *type = on->rett;
     Class *class = type->class;
+
+    if (!class)
+        return;
+
     Build *b = class->fc->b;
 
     if (!class->func_deref && !class->func_ref && !class->is_rc) {

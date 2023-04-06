@@ -4,5 +4,10 @@ use net;
 class Connection {
 	netcon: net:Connection;
 	fd: i32;
+
+	func __before_free() void {
+		print("free con\n");
+	}
 }
+
 

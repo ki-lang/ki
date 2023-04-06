@@ -34,6 +34,8 @@ class Array[T] {
 		ptrv (data + (length * sizeof(T))) as T = value;
 		this.length = length + 1;
 
+		@ref value;
+
 		return length;
 	}
 
@@ -41,8 +43,12 @@ class Array[T] {
 		if index >= this.length {
 			throw not_found;
 		}
+
 		let data = this.data + (index * sizeof(T));
-		return ptrv data as T;
+		let value = ptrv data as T;
+		@ref value;
+
+		return value;
 	}
 
 	func set(index: uxx, value: +T) void !out_of_range {
@@ -50,6 +56,11 @@ class Array[T] {
 			throw out_of_range;
 		}
 		let data = this.data + (index * sizeof(T));
+		let current = ptrv data as T;
+
+		@ref value;
+		@deref current;
+
 		ptrv data as T = value;
 	}
 

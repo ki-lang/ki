@@ -218,6 +218,8 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
                 class->must_deref = true;
             } else if (strcmp(func->name, "__free") == 0) {
                 class->func_free = func;
+            } else if (strcmp(func->name, "__before_free") == 0) {
+                class->func_before_free = func;
             }
 
             tok_expect(fc, "(", true, true);
