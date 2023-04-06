@@ -35,7 +35,7 @@ class Server {
 		};
 	}
 
-	func .start(mut worker_count: i32 = 8) void {
+	func .start(mut worker_count: i32 = 16) void {
 
 		// SIGINT
         os:signal(os:SIG.hup, interrupt);

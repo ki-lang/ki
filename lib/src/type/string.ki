@@ -6,23 +6,22 @@ use mem;
 
 class String type:ptr async {
 
-	func is_const() bool {
-		let adr = this -> ptr;
-		return (ptrv (adr + sizeof(uxx)) as u8) == 1#u8;
+	func is_const() bool %inline {
+		return (ptrv (this -> ptr + sizeof(uxx)) as u8) == 1#u8;
 	}
 
-	func bytes() uxx {
+	func bytes() uxx %inline {
 		return ptrv (this -> ptr) as uxx;
 	}
 
-	func rc() u32 {
+	func rc() u32 %inline {
 		if(this.is_const()) { return 666; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 666.
 		let mut adr = this -> ptr;
 		adr += sizeof(uxx) + 1;
 		return ptrv adr as u32;
 	}
 
-	func data() ptr {
+	func data() ptr %inline {
 		let mut adr = this -> ptr;
 		if(this.is_const()){
 			adr += sizeof(uxx) + 1;
