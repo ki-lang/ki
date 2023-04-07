@@ -34,8 +34,6 @@ class Array[T] {
 		ptrv (data + (length * sizeof(T))) as T = value;
 		this.length = length + 1;
 
-		@ref value;
-
 		return length;
 	}
 
@@ -86,12 +84,13 @@ class Array[T] {
 	}
 
 	func __before_free() void {
-		// TODO deref items
+		println("-000000000000");
+		// Deref items
 		let mut index = 0#uxx;
 		let length = this.length;
 		while index < length {
-			let item = this.get(index) !! break;;
-			@deref item;
+			let data = this.data + (index * sizeof(T));
+			let value = ptrv data as T;
 			index++;
 		}
 

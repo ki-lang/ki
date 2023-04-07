@@ -35,7 +35,7 @@ class Pool[T] {
 		return result;
 	}
 
-	func add(item: T) void !full {
+	func add(item: +T) void !full {
 		let size = this.size;
 		let head = this.head;
 		let mut next_head = head + 1;
@@ -54,8 +54,6 @@ class Pool[T] {
 		let data = this.data;
 		ptrv (data + (head * sizeof(T))) as T = item;
 		this.head = next_head;
-
-		@ref item;
 	}
 
 	func __before_free() void {
