@@ -151,7 +151,12 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
         if (strcmp(token, "@") == 0) {
             tok(fc, token, true, false);
-            if (strcmp(token, "ref") == 0 || strcmp(token, "deref") == 0) {
+            if (strcmp(token, "move") == 0) {
+                Value *on = read_value(fc, alc, scope, true, 0, false);
+                on = usage_move_value(alc, fc, scope, on);
+                array_push(scope->ast, token_init(alc, tkn_statement, on));
+                tok_expect(fc, ";", false, true);
+            } else if (strcmp(token, "ref") == 0 || strcmp(token, "deref") == 0) {
                 bool deref = strcmp(token, "deref") == 0;
                 Value *on = read_value(fc, alc, scope, true, 0, false);
                 Type *rett = on->rett;
@@ -204,7 +209,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, left->rett);
                 type_check(fc, left->rett, right->rett);
 
-                right = usage_move_value(alc, fc, scope, right);
+                if (left->type != v_ptrv) {
+                    right = usage_move_value(alc, fc, scope, right);
+                }
 
                 Value *ir_right = vgen_ir_val(alc, right, right->rett);
                 array_push(scope->ast, token_init(alc, tkn_ir_val, ir_right->item));

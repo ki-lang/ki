@@ -53,6 +53,7 @@ class Pool[T] {
 
 		let data = this.data;
 		ptrv (data + (head * sizeof(T))) as T = item;
+		@move item;
 		this.head = next_head;
 	}
 
