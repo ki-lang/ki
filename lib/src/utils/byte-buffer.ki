@@ -60,7 +60,7 @@ class ByteBuffer {
 
 	// Converts
 
-	public func to_str() String {
+	func to_str() String {
 		if(this.length == 0){
 			return "";
 		}
@@ -71,7 +71,7 @@ class ByteBuffer {
 
 	// 
 
-	public func increase_size(minimum_size: uxx) void {
+	func increase_size(minimum_size: uxx) void {
 		let size : uxx = this.size;
 		let mut new_size : uxx = size;
 		while new_size < minimum_size {
@@ -86,4 +86,9 @@ class ByteBuffer {
 		}
 	}
 
+	// Internals
+
+	func __before_free() void {
+		mem:free(this.data);
+	}
 }

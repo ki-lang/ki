@@ -6,6 +6,10 @@ use mem;
 
 class String type:ptr async {
 
+	/////////////////////
+	// Core
+	/////////////////////
+
 	func is_const() bool %inline {
 		return (ptrv (this -> ptr + sizeof(uxx)) as u8) == 1#u8;
 	}
@@ -32,6 +36,7 @@ class String type:ptr async {
 	}
 
 	/////////////////////
+	// Converts
 	/////////////////////
 
 	func cstring() cstring {
@@ -44,6 +49,7 @@ class String type:ptr async {
 	}
 
 	/////////////////////
+	// Internals
 	/////////////////////
 
 	func __ref() void {
@@ -56,8 +62,11 @@ class String type:ptr async {
 		let adr = (this -> ptr) + sizeof(uxx) + 4;
 		let rc = atomicop ptrv adr as u32 SUB 1;
 		if rc == 1 {
-			// TODO: Free
+			this.__free();
 		}
+	}
+	func __free() void {
+		mem:free(this -> ptr);
 	}
 
 	func __add(str: String) String {
@@ -86,6 +95,10 @@ class String type:ptr async {
 		let data = this.data();
 		return ptrv (data + key) as u8;
 	}
+
+	/////////////////////
+	// Other
+	/////////////////////
 
 	static func make_empty(size: uxx) String {
 		let mut adr = mem:alloc(size + 16);

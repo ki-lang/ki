@@ -62,7 +62,6 @@ class Poll {
 	public func __before_free() void {
 
 		each this.listeners as li {
-			//mem:free(li -> ptr);
 			li.__free();
 		}
 

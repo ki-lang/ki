@@ -54,7 +54,6 @@ class Server {
 
 		worker_count--;
 		while worker_count > 0 {
-			//break;
 			worker_count--;
 			let thread = os:Thread[ServerData].start(Server.worker, this.data);
 		}

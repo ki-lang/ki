@@ -25,7 +25,13 @@ class Pool[T] {
 		}
 		let data = this.data;
 		let result = ptrv (data + (tail * sizeof(T))) as T;
-		this.tail = tail + 1;
+		let new_tail = tail + 1;
+		if new_tail == this.size {
+			this.tail = 0;
+		} else {
+			this.tail = new_tail;
+		}
+
 		return result;
 	}
 
@@ -48,5 +54,15 @@ class Pool[T] {
 		let data = this.data;
 		ptrv (data + (head * sizeof(T))) as T = item;
 		this.head = next_head;
+
+		@ref item;
+	}
+
+	func __before_free() void {
+		// Deref items 
+		while true {
+			let item = this.pop() !! break;;
+		}
+		mem:free(this.data);
 	}
 }
