@@ -261,6 +261,10 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
             str_append_chars(ir, "\n");
         }
 
+        if (ci->ul) {
+            ci->ul->decl->llvm_val = var_ob;
+        }
+
         return var_ob;
     }
     if (v->type == v_cast) {

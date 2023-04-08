@@ -78,13 +78,21 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
     return value_init(alc, v_class_pa, item, prop->type);
 }
 
-Value *vgen_class_init(Allocator *alc, Class *class, Map *values) {
+Value *vgen_class_init(Allocator *alc, Scope *scope, Class *class, Map *values) {
     //
     VClassInit *item = al(alc, sizeof(VClassInit));
     item->class = class;
     item->values = values;
+    item->ul = NULL;
+
     Type *rett = type_gen_class(alc, class);
     rett->strict_ownership = true;
+
+    if (scope) {
+        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false, false);
+        item->ul = usage_line_init(alc, scope, decl);
+    }
+
     return value_init(alc, v_class_init, item, rett);
 }
 

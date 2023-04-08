@@ -658,7 +658,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
                 }
                 map_set(values, key, prop->value);
             }
-            return vgen_class_init(alc, class, values);
+            return vgen_class_init(alc, scope, class, values);
         }
 
         sprintf(fc->sbuf, "Unexpected token '%s'", token);

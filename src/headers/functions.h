@@ -186,7 +186,7 @@ Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op)
 Value *vgen_fcall(Allocator *alc, Scope *scope, Value *on, Array *values, Type *rett, FCallOr * or);
 Value *vgen_fptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
-Value *vgen_class_init(Allocator *alc, Class *class, Map *values);
+Value *vgen_class_init(Allocator *alc, Scope *scope, Class *class, Map *values);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
 Value *vgen_null(Allocator *alc, Build *b);
 Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope, Scope *else_scope, Scope *deref_scope);

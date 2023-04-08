@@ -69,6 +69,7 @@ struct VClassPA {
 struct VClassInit {
     Class *class;
     Map *values;
+    UsageLine *ul;
 };
 struct VOrBreak {
     Value *value;

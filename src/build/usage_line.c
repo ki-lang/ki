@@ -156,6 +156,12 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         if (ul) {
             ul->enable = false;
         }
+    } else if (vt == v_class_init) {
+        VClassInit *item = val->item;
+        UsageLine *ul = item->ul;
+        if (ul) {
+            ul->enable = false;
+        }
     }
 
     //
