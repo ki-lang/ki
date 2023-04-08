@@ -55,6 +55,7 @@ struct VFcall {
     Value *on;
     Array *args;
     FCallOr * or ;
+    UsageLine *ul;
 };
 struct VFuncPtr {
     Func *func;

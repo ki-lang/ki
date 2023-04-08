@@ -14,6 +14,8 @@ Feature todo list in order:
 - Testing features
 - access type 'namespace'
 - Declare functions for classes/structs from other libraries
+- Multi-threaded AST parsing + IR gen
+- inline if ... ? ... : ...
 - Custom allocators | MyClass{...} @my_alloc
 - --watch param to watch for file changes
 - vscode extension

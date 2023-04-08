@@ -10,6 +10,7 @@ Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val
     v->scope = scope;
     v->is_mut = is_mut;
     v->is_arg = is_arg;
+    v->llvm_val = NULL;
 
     return v;
 }

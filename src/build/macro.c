@@ -63,6 +63,26 @@ void read_macro(Fc *fc, Allocator *alc, Scope *scope) {
         }
         fc->current_macro_scope = mc->parent;
         mc = fc->current_macro_scope;
+    } else if (strcmp(token, "print_type") == 0) {
+        Id *id = read_id(fc, true, true, true);
+        Idf *idf = idf_by_id(fc, scope, id, true);
+
+        Type *type = NULL;
+
+        if (idf && idf->type == idf_decl) {
+            Decl *decl = idf->item;
+            type = decl->type;
+        } else if (idf && idf->type == idf_type) {
+            type = idf->item;
+        } else {
+            sprintf(fc->sbuf, "Cannot extract the type from this identifier");
+            fc_error(fc);
+        }
+
+        char str[256];
+        type_to_str(type, str);
+        printf("PRINT TYPE: '%s'\n", str);
+
     } else {
         sprintf(fc->sbuf, "Unknown macro token: '%s'", token);
         fc_error(fc);

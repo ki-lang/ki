@@ -336,6 +336,7 @@ struct UsageLine {
     int moves;
     int reads_after_move;
     bool read_after_move;
+    bool enable;
 };
 
 struct Global {

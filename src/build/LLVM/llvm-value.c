@@ -192,7 +192,11 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         VFcall *fcall = v->item;
         char *on = llvm_value(b, scope, fcall->on);
         Array *values = llvm_ir_fcall_args(b, scope, fcall->args);
-        return llvm_ir_func_call(b, on, values, llvm_type(b, v->rett), fcall->or);
+        char *res = llvm_ir_func_call(b, on, values, llvm_type(b, v->rett), fcall->or);
+        if (fcall->ul) {
+            fcall->ul->decl->llvm_val = res;
+        }
+        return res;
     }
     if (v->type == v_fptr) {
         VFuncPtr *fptr = v->item;
@@ -213,7 +217,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Array *alloc_values = array_make(alc, func->args->length + 1);
         Value *vint = vgen_vint(alc, class->size, type_gen(build, alc, "uxx"), false);
         array_push(alloc_values, vint);
-        Value *fcall = vgen_fcall(alc, fptr, alloc_values, func->rett, NULL);
+        Value *fcall = vgen_fcall(alc, NULL, fptr, alloc_values, func->rett, NULL);
         Value *cast = vgen_cast(alc, fcall, v->rett);
 
         char *var_ob = llvm_value(b, scope, cast);

@@ -1,4 +1,6 @@
 
+use io;
+
 trait Number {
 
 	func str() String {
@@ -68,5 +70,63 @@ trait Number {
             str_adr+=1;
         }
         return str;
+    }
+
+	func debug_base(base: u8) void {
+
+		let mut negative = false;
+        let mut num = this;
+
+        // Handle 0 explicitly, otherwise empty string is printed for 0
+        if (num == 0) {
+	        io:write(1, "0");
+        }
+
+		// In standard itoa(), negative numbers are handled only with
+        // base 10. Otherwise numbers are considered unsigned.
+        #if IS_SIGNED_NUMBER_TYPE CLASS
+        if (num < 0 && base == 10) {
+            negative = true;
+            num *= -1;
+        }
+        #end
+ 
+        let mut abs = num -> uxx;
+ 
+        // Process individual digits
+        let mut buf_adr = stack_alloc(32);
+        let mut len : u32 = 0;
+        let mut ch : u8 = 0;
+        while (abs != 0) {
+            let rem : u8 = (abs % base) -> u8;
+            if(rem > 9){
+                ch = (rem-10) + 'a';
+            } else {
+                ch = rem + '0';
+            }
+			ptrv buf_adr as u8 = ch;
+            buf_adr++;
+            len++;
+            abs = abs/base;
+        }
+
+        if (negative) {
+            ptrv buf_adr as u8 = '-';
+            buf_adr++;
+            len++;
+        }
+ 
+        // Reverse the string
+        let res = stack_alloc(32);
+        let mut str_adr = res;
+        let bytes = len;
+        while(len > 0){
+            len-=1;
+            buf_adr-=1;
+			ptrv str_adr as u8 = ptrv buf_adr as u8;
+            str_adr+=1;
+        }
+	    io:write_from_ptr(1, res, bytes);
+        print("\n");
     }
 }

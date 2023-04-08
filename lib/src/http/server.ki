@@ -111,6 +111,7 @@ class Server {
 						// Clear existing connection io buffers
 						let http_con = cons.get(index) !! {
 							io:close(fd);
+							println("[+] Max connections reached, closing connection");
 							continue;
 						};
 						http_con.fd = fd;

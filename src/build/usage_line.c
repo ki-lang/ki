@@ -20,13 +20,14 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
     v->moves = 0;
     v->reads_after_move = 0;
     v->read_after_move = false;
+    v->enable = true;
 
     if (scope->usage_keys == NULL) {
         scope->usage_keys = array_make(alc, 8);
         scope->usage_values = array_make(alc, 8);
     }
 
-    int index = array_find(scope->usage_keys, decl, arr_find_adr);
+    int index = decl ? array_find(scope->usage_keys, decl, arr_find_adr) : -1;
     if (index > -1) {
         UsageLine *prev = array_get_index(scope->usage_values, index);
         v->parent = prev;
@@ -139,7 +140,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         val = value_init(alc, v_upref_value, val, val->rett);
     } else if (vt == v_cast) {
         Value *on = val->item;
-        if (type_tracks_ownership(val->rett)) {
+        if (type_tracks_ownership(on->rett) && type_tracks_ownership(val->rett)) {
             val = value_init(alc, v_upref_value, val, val->rett);
         }
     } else if (vt == v_or_break) {
@@ -149,6 +150,12 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         VOrValue *vov = val->item;
         vov->left = usage_move_value(alc, fc, scope, vov->left);
         vov->right = usage_move_value(alc, fc, vov->value_scope, vov->right);
+    } else if (vt == v_fcall) {
+        VFcall *fcall = val->item;
+        UsageLine *ul = fcall->ul;
+        if (ul) {
+            ul->enable = false;
+        }
     }
 
     //
@@ -290,6 +297,9 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
 
 void end_usage_line(Allocator *alc, UsageLine *ul) {
     //
+    if (!ul->enable)
+        return;
+
     Decl *decl = ul->decl;
     if (!decl->type->take_ownership) {
         // printf("Keep:%s in %s\n", decl->name, decl->scope->func->dname);

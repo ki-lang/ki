@@ -3,6 +3,7 @@
 // dynamic: {string_length:uxx}-0-{pad 3}-{ref_count:u32}-{...string bytes...}
 
 use mem;
+use os;
 
 class String type:ptr async {
 
@@ -21,7 +22,7 @@ class String type:ptr async {
 	func rc() u32 %inline {
 		if(this.is_const()) { return 666; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 666.
 		let mut adr = this -> ptr;
-		adr += sizeof(uxx) + 1;
+		adr += sizeof(uxx) + 4;
 		return ptrv adr as u32;
 	}
 
@@ -30,7 +31,7 @@ class String type:ptr async {
 		if(this.is_const()){
 			adr += sizeof(uxx) + 1;
 		} else {
-			adr += sizeof(uxx) + 5;
+			adr += sizeof(uxx) + 8;
 		}
 		return adr;
 	}
@@ -66,6 +67,7 @@ class String type:ptr async {
 		}
 	}
 	func __free() void {
+		if this.is_const() { return; }
 		mem:free(this -> ptr);
 	}
 
@@ -100,15 +102,16 @@ class String type:ptr async {
 	// Other
 	/////////////////////
 
-	static func make_empty(size: uxx) String {
-		let mut adr = mem:alloc(size + 16);
+	static func make_empty(size: uxx) .String {
+		let mut adr = mem:alloc(size + 8 + sizeof(uxx));
 		let adr_ = adr;
 		ptrv adr as uxx = size;
 		adr += sizeof(uxx);
 		ptrv adr as u8 = 0#u8;
 		adr += 4;
 		ptrv adr as u32 = 1#u32;
-		return adr_ -> String;
+		let res = adr_ -> .String;
+		return res;
 	}
 
 }

@@ -146,9 +146,13 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
             Chunk *current = fc->chunk;
             fc->chunk = chunk_clone(fc->alc, tr->chunk);
+            Scope *trait_scope = scope_init(fc->alc, sct_default, tr->fc->scope, false);
+            map_set(trait_scope->identifiers, "CLASS", map_get(scope->identifiers, "CLASS"));
+            class->scope = trait_scope;
 
             stage_2_class_props(fc, class, true);
 
+            class->scope = scope;
             fc->chunk = current;
 
             tok_expect(fc, ";", false, true);

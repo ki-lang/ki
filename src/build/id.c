@@ -64,7 +64,8 @@ Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail) {
     //
 
     if (id->has_nsc) {
-        Idf *idf = map_get(fc->scope->identifiers, id->nsc_name);
+        Scope *fc_scope = scope_find(scope, sct_fc);
+        Idf *idf = map_get(fc_scope->identifiers, id->nsc_name);
         if (!idf || idf->type != idf_nsc) {
             if (!fail) {
                 return NULL;
