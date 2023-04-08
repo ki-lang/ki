@@ -83,7 +83,6 @@ class Array[T] {
 	}
 
 	func __before_free() void {
-		println("-000000000000");
 		// Deref items
 		let mut index = 0#uxx;
 		let length = this.length;
