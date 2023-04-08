@@ -4,11 +4,7 @@
 Feature todo list in order:
 
 - format string
-- @vs { ... } (value-scopes)
-- deref func call return value or class init instantly when using class_pa on it
-- dont allow class_init / fcall as an argument, when that argument expects a borrow (memleak)
 - dont allow class_pa of strict type values, swap token
-- __before_free
 - Calling functions using named arguments
 - Package manager
 - Testing features
@@ -30,6 +26,8 @@ Feature todo list in order:
 
 ## Done
 
+- @vs { ... } (value-scopes)
+- __before_free
 - Strict ownership types
 - Shared ownership types
 - Threading
