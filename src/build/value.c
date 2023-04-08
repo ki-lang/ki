@@ -365,7 +365,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 fc_error(fc);
             }
 
-            Type *type = read_type(fc, alc, scope, false, true, false);
+            Type *type = read_type(fc, alc, scope, false, true, true);
             v = vgen_cast(alc, v, type);
 
             tok(fc, token, false, true);

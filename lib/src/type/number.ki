@@ -37,8 +37,7 @@ trait Number {
         let mut abs = num -> uxx;
  
         // Process individual digits
-        let str = String.make_empty(32);
-        let mut buf_adr = str.data();
+        let mut buf_adr = stack_alloc(32);
         let mut len : u32 = 0;
         let mut ch : u8 = 0;
         while (abs != 0) {
@@ -61,7 +60,7 @@ trait Number {
         }
  
         // Reverse the string
-        rep str = String.make_empty(len);
+        let str = String.make_empty(len);
         let mut str_adr = str.data();
         while(len > 0){
             len-=1;
