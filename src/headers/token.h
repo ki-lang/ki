@@ -8,6 +8,7 @@ typedef struct TWhile TWhile;
 typedef struct TExec TExec;
 typedef struct Throw Throw;
 typedef struct TEach TEach;
+typedef struct TReturnVscope TReturnVscope;
 
 #include "structs.h"
 #include "value.h"
@@ -40,6 +41,10 @@ struct TEach {
     Scope *scope;
     Decl *decl_key;
     Decl *decl_value;
+};
+struct TReturnVscope {
+    Value *value;
+    Scope *scope;
 };
 
 #endif

@@ -32,6 +32,13 @@ Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv) {
     //
     return token_init(alc, tkn_return, retv);
 }
+Token *tgen_vscope_return(Allocator *alc, Scope *vscope, Value *retv) {
+    //
+    TReturnVscope *ret = al(alc, sizeof(TReturnVscope));
+    ret->scope = vscope;
+    ret->value = retv;
+    return token_init(alc, tkn_vscope_return, ret);
+}
 
 Token *tgen_while(Allocator *alc, Value *cond, Scope *scope) {
     //

@@ -251,6 +251,18 @@ void llvm_write_ast(LB *b, Scope *scope) {
                 llvm_write_ast(b, exec->scope);
             continue;
         }
+        if (t->type == tkn_vscope_return) {
+            TReturnVscope *ret = t->item;
+            Scope *vscope = ret->scope;
+            Value *retv = ret->value;
+            Type *rett = vscope->vscope->rett;
+            char *lvar = vscope->vscope->lvar;
+            char *lval = llvm_value(b, scope, retv);
+            llvm_ir_store(b, rett, lvar, lval);
+            Str *ir = llvm_b_ir(b);
+            llvm_ir_jump(ir, vscope->vscope->llvm_after_block);
+            continue;
+        }
     }
 }
 

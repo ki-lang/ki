@@ -113,6 +113,7 @@ Idf *ki_lib_get(Build *b, char *ns, char *name);
 Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast);
 void name_taken_check(Fc *fc, Scope *scope, char *name);
 Scope *scope_find(Scope *scope, int type);
+Scope *scope_find_return_scope(Scope *scope);
 bool scope_contains(Scope *parent_scope, Scope *scope);
 
 // Func
@@ -207,6 +208,7 @@ TIf *tgen_tif(Allocator *alc, Value *cond, Scope *scope, Scope *else_scope, Scop
 Token *tgen_declare(Allocator *alc, Decl *decl, Value *val);
 Token *tgen_assign(Allocator *alc, Value *left, Value *right);
 Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv);
+Token *tgen_vscope_return(Allocator *alc, Scope *vscope, Value *retv);
 Token *tgen_while(Allocator *alc, Value *cond, Scope *scope);
 Token *tgen_exec(Allocator *alc, Scope *scope, bool enable);
 Token *tgen_each(Allocator *alc, Value *value, Scope *scope, Decl *decl_key, Decl *decl_value);

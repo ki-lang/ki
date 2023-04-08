@@ -173,6 +173,34 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = vgen_vint(alc, size, type_gen(b, alc, "i32"), false);
         //
+    } else if (strcmp(token, "@") == 0) {
+        tok(fc, token, true, false);
+        if (strcmp(token, "v") == 0) {
+            // value scope
+            tok_expect(fc, ":", false, true);
+            Type *rett = read_type(fc, alc, scope, false, true, false);
+            if (type_is_void(rett)) {
+                sprintf(fc->sbuf, "Value scope return type cannot be void");
+                fc_error(fc);
+            }
+
+            tok_expect(fc, "{", false, true);
+            Scope *sub = scope_init(alc, sct_vscope, scope, true);
+            sub->vscope = al(alc, sizeof(VScope));
+            sub->vscope->rett = rett;
+            sub->vscope->lvar = NULL;
+            read_ast(fc, sub, false);
+
+            if (!sub->did_return) {
+                sprintf(fc->sbuf, "Value scope did not return a value");
+                fc_error(fc);
+            }
+
+            return value_init(alc, v_scope, sub, rett);
+        } else {
+            sprintf(fc->sbuf, "Unexpected token: '%s' after '@' | expected: v", token);
+            fc_error(fc);
+        }
 
     } else if (is_number(token[0]) || strcmp(token, "-") == 0) {
 

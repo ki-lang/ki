@@ -582,6 +582,22 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
         return var;
     }
+    if (v->type == v_scope) {
+        // Value scope
+        Scope *sub = v->item;
+        Type *rett = v->rett;
+
+        LLVMBlock *b_after = llvm_block_init_auto(b);
+
+        sub->vscope->llvm_after_block = b_after;
+        sub->vscope->lvar = llvm_alloca(b, rett);
+
+        llvm_write_ast(b, sub);
+
+        b->lfunc->block = b_after;
+
+        return llvm_ir_load(b, rett, sub->vscope->lvar);
+    }
 
     return "???";
 }

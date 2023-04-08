@@ -11,6 +11,7 @@ typedef struct Pkc Pkc;
 typedef struct Config Config;
 typedef struct Chunk Chunk;
 typedef struct Scope Scope;
+typedef struct VScope VScope;
 typedef struct MacroScope MacroScope;
 typedef struct Id Id;
 typedef struct Idf Idf;
@@ -189,8 +190,14 @@ struct Scope {
     Array *ast;
     Array *usage_keys;
     Array *usage_values;
+    VScope *vscope;
     bool did_return;
     bool in_loop;
+};
+struct VScope {
+    Type *rett;
+    char *lvar;
+    void *llvm_after_block;
 };
 struct MacroScope {
     Map *identifiers;

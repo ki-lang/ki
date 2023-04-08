@@ -73,7 +73,7 @@ class Server {
 		let sock = data.socket;
 		let sock_fd = sock.fd;
 
-		let poll = io:Poll.init();
+		let poll = io:Poll.init(max_connections);
 		let sock_lsn = poll.listener(sock_fd);
 		sock_lsn.read(true);
 

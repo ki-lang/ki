@@ -27,6 +27,7 @@ enum SCOPETYPE {
     sct_class,
     sct_loop,
     sct_fc,
+    sct_vscope,
 };
 
 enum CLASSTYPE {
@@ -58,6 +59,7 @@ enum TOKENTYPE {
     tkn_ir_val,
     tkn_ir_assign_val,
     tkn_exec,
+    tkn_vscope_return,
 };
 
 enum VALUETYPE {
@@ -89,6 +91,7 @@ enum VALUETYPE {
     v_incr_decr,
     v_atomicop,
     v_stack_alloc,
+    v_scope,
 };
 
 enum OPTYPE {

@@ -163,7 +163,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 class_ref_change(alc, scope, on, deref ? -1 : 1);
                 tok_expect(fc, ";", false, true);
             } else {
-                sprintf(fc->sbuf, "Unexpected token: '%s' after '@' | expected: ref or deref", token);
+                sprintf(fc->sbuf, "Unexpected token: '%s' after '@' | expected: move, ref, deref", token);
                 fc_error(fc);
             }
             continue;
@@ -335,7 +335,36 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
 
 void token_return(Allocator *alc, Fc *fc, Scope *scope) {
     //
-    Scope *fscope = scope_find(scope, sct_func);
+    Scope *vscope = scope_find_return_scope(scope);
+
+    if (vscope->type == sct_vscope) {
+        // Value scope
+        Type *rett = vscope->vscope->rett;
+        Value *val = read_value(fc, alc, scope, true, 0, false);
+        val = try_convert(fc, alc, val, rett);
+
+        type_check(fc, rett, val->rett);
+
+        val = usage_move_value(alc, fc, scope, val);
+
+        IRVal *tvar = al(alc, sizeof(IRVal));
+        tvar->value = val;
+        tvar->ir_value = NULL;
+        Token *t = token_init(alc, tkn_ir_val, tvar);
+        array_push(scope->ast, t);
+
+        Value *ret_val = value_init(alc, v_ir_val, tvar, val->rett);
+
+        deref_scope(alc, scope, vscope);
+
+        array_push(scope->ast, tgen_vscope_return(alc, vscope, ret_val));
+        tok_expect(fc, ";", false, true);
+
+        scope->did_return = true;
+        return;
+    }
+
+    Scope *fscope = vscope;
     if (!fscope) {
         sprintf(fc->sbuf, "Using 'return' outside function scope");
         fc_error(fc);
