@@ -86,6 +86,19 @@ class String type:ptr async {
 		return new_str;
 	}
 
+	public func __eq(b: String) bool {
+		let a_ptr = this -> ptr;
+		let b_ptr = b -> ptr;
+		if(a_ptr == b_ptr) {
+			return true;
+		}
+		let bytes = this.bytes();
+		if(bytes != b.bytes()){
+			return false;
+		}
+		return mem:equal(this.data(), b.data(), bytes);
+	}
+
 	func __iter_init() uxx {
 		return 0;
 	}

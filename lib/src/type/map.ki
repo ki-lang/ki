@@ -1,35 +1,15 @@
 
+// TODO : Use hash maps
 class Map[T] {
-	private _arrays : Array[?Array[T]] = Array[?Array[T]].init(128);
-	private _keys : Array[String] = Array[String].init(4);
+	private _keys : Array[String] = Array[String].init();
+	private _values : Array[String] = Array[String].init();
 
 	static func init() .CLASS {
 		return CLASS{};
 	}
 
 	func set(key: String, value: +T) void {
-		let index = CLASS.key_index(key);
-	}
-
-	static func key_index(key: String) u32 {
-		let mut len : uxx = key.bytes();
-		let mut adr = key.data();
-		let mut total : u32 = 0;
-		while(len > 3) {
-			let val = ptrv (adr) as u32;
-			total += val;
-			len -= 4;
-			adr += 4;
-		}
-		while(len > 0) {
-			let val = ptrv (adr) as u8;
-			total += val;
-			len -= 1;
-			adr += 1;
-		}
-		let rest : u8 = (total % 128) -> u8;
-
-		return rest;
+		//let index = 
 	}
 
 	//func get(key: String) T !not_found {

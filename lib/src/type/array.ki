@@ -69,6 +69,21 @@ class Array[T] {
 		println("remove: " + (this.length).str());
 	}
 
+	func index_of(item: T) uxx !not_found {
+		let mut index : uxx = 0;
+		let mut adr = this.data;
+		while(index < this.length){
+
+			let x = ptrv adr as T;
+			if x == item {
+				return index;
+			}
+			index++;
+			adr += sizeof(T);
+		}
+		throw not_found;
+	}
+
 	// Internals
 
 	func __iter_init() uxx {
