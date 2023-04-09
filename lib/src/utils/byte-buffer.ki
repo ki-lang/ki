@@ -2,9 +2,9 @@
 use mem;
 
 class ByteBuffer {
-	readonly data: ptr;
-	readonly size: uxx;
-	readonly length: uxx = 0;
+	data: ptr;
+	size: uxx;
+	length: uxx = 0;
 
 	static func init(mut start_size: uxx) .ByteBuffer {
 		if start_size < 10 {
@@ -16,6 +16,10 @@ class ByteBuffer {
 		};
 	}
 
+	func clear() void %inline {
+		this.length = 0;
+	}
+
 	// Appending
 
 	func append(data: ptr, length: uxx) void {
@@ -25,7 +29,7 @@ class ByteBuffer {
 		let bytes : uxx = this.length;
 		let new_bytes : uxx = bytes + length;
 		if(new_bytes > this.size){
-			this.increase_size(new_bytes);
+			this.minimum_size(new_bytes);
 		}
 		let to : ptr = this.data + bytes;
 		mem:copy(data, to, length);
@@ -36,7 +40,7 @@ class ByteBuffer {
 		let bytes : uxx = this.length;
 		let new_bytes : uxx = bytes + 1;
 		if(new_bytes > this.size){
-			this.increase_size(new_bytes);
+			this.minimum_size(new_bytes);
 		}
 		let to : ptr = this.data + bytes;
 		ptrv to as u8 = byte;
@@ -70,8 +74,10 @@ class ByteBuffer {
 	}
 
 	// 
-
-	func increase_size(minimum_size: uxx) void {
+	func minimum_free_space(length: uxx) void {
+		this.minimum_size(this.length + length);
+	}
+	func minimum_size(minimum_size: uxx) void {
 		let size : uxx = this.size;
 		let mut new_size : uxx = size;
 		while new_size < minimum_size {

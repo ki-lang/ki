@@ -41,21 +41,21 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         if (ch == '\\') {
             char nch = get_char(fc, 0);
             chunk_move(fc->chunk, 1);
-            if (ch == '0') {
+            if (nch == '0') {
                 ch = '\0';
-            } else if (ch == 'n') {
+            } else if (nch == 'n') {
                 ch = '\n';
-            } else if (ch == 'r') {
+            } else if (nch == 'r') {
                 ch = '\r';
-            } else if (ch == 't') {
+            } else if (nch == 't') {
                 ch = '\t';
-            } else if (ch == 'v') {
+            } else if (nch == 'v') {
                 ch = '\v';
-            } else if (ch == 'f') {
+            } else if (nch == 'f') {
                 ch = '\f';
-            } else if (ch == 'b') {
+            } else if (nch == 'b') {
                 ch = '\b';
-            } else if (ch == 'a') {
+            } else if (nch == 'a') {
                 ch = '\a';
             }
         }

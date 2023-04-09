@@ -1,9 +1,68 @@
 
 use net;
+use utils;
 
 class Connection {
 	netcon: net:Connection;
 	fd: i32;
+	uploads: ?Array[String] = null;
+	read_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
+	out_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
+
+	// Parsing
+	phase: uxx = 0;
+	parse_pos: uxx = 0;
+	line: utils:ByteBuffer = utils:ByteBuffer.init(200);
+	headers_parsed: bool = false;
+	//headers: Map[String] = Map[String].init();
+
+	func parse_headers() void !sent_error {
+		if this.headers_parsed {
+			return;
+		}
+
+		let mut phase = this.phase;
+		let mut pos = this.parse_pos;
+		let read_buf = this.read_buf;
+		let line = this.line;
+		let length = read_buf.length;
+		let data = read_buf.data;
+		let mut prev_ch = '\0';
+		if line.length > 0 {
+			prev_ch = ptrv (line.data + line.length - 1) as u8;
+		}
+		while pos < length {
+			let ch = ptrv (data + pos) as u8;
+			pos++;
+
+			if prev_ch == '\r' && ch == '\n' {
+
+				line.length--; // Remove \r
+
+				if line.length == 0 {
+					this.headers_parsed = true;
+					break;
+				}
+
+				if phase == 1 {
+					// Header
+					//println(line.to_str());
+				} else if phase == 0 {
+					// HTTP line
+					//println(line.to_str());
+					phase = 1;
+				}
+
+				line.clear();
+				prev_ch = '\n';
+				continue;
+			}
+			line.append_byte(ch);
+			prev_ch = ch;
+		}
+
+		this.parse_pos = pos;
+	}
 }
 
 
