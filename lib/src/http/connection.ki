@@ -16,7 +16,7 @@ class Connection {
 	parse_pos: uxx = 0;
 	line: utils:ByteBuffer = utils:ByteBuffer.init(200);
 	headers_parsed: bool = false;
-	//headers: Map[String] = Map[String].init();
+	headers: Map[String] = Map[String].init();
 
 	func parse_headers() void !sent_error {
 		if this.headers_parsed {
@@ -52,6 +52,7 @@ class Connection {
 				} else if phase == 0 {
 					// HTTP line
 					//println(line.to_str());
+					//http_con.respond(Response.error(415)); // Unsupported protocol
 					phase = 1;
 				}
 
