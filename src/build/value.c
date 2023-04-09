@@ -1092,6 +1092,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
             } else if (strcmp(token, "!?") == 0) {
                 // !?
                 Value *right = read_value(fc, alc, usage_scope, true, 0, false);
+                right = try_convert(fc, alc, right, rett);
                 usage_merge_ancestors(alc, scope, ancestors);
 
                 type_check(fc, rett, right->rett);

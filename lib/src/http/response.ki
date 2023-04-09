@@ -1,4 +1,67 @@
 
-class Response {
+use utils;
 
+class Response {
+	public status: u32 = 200;
+	public body: String = "";
+	public filepath: ?String = null;
+	public content_type: String = "text/plain";
+	public headers: ?Map[String] = null;
+
+	//public static func file(String path) Response or file_not_found {
+	//	if(fs:exists(path) == false){
+	//		throw file_not_found;
+	//	}
+	//	let r = Response{ filepath: path };
+	//	return r;
+	//}
+	public static func html(body: +String, code: u32 = 200, headers: ?+Map[String] = null) .Response {
+		return Response{ body: body, status: code, content_type: "text/html", headers: headers };
+	}
+	public static func json(body: +String, code: u32 = 200, headers: ?+Map[String] = null) .Response {
+		return Response{ body: body, status: code, content_type: "application/json", headers: headers };
+	}
+	public static func text(body: +String, code: u32 = 200, content_type: +String = "text/plain", headers: ?+Map[String] = null) .Response {
+		return Response{ body: body, status: code, content_type: content_type, headers: headers };
+	}
+	//public static func redirect(String location, u32 code = 301, ?Map[String] headers_ = null) Response {
+	//	let mut headers = headers_;
+	//	ifnull headers set Map[String]{};
+	//	headers.set("Location", location);
+	//	let r = Response{ status: code, headers: headers };
+	//	return r;
+	//}
+	public static func error(code: u32) .Response {
+		return Response{ status: code };
+	}
+
+	public func compile(buf: utils:ByteBuffer) void {
+
+		let len = this.body.bytes();
+
+		buf.append_str("HTTP/1.1 ");
+		buf.append_str(this.status.str());
+		buf.append_str(" OK\r\n");
+
+		buf.append_str("Content-Type: ");
+		buf.append_str(this.content_type);
+		buf.append_str("\r\n");
+
+		buf.append_str("Content-Length: ");
+		buf.append_str(this.body.bytes().str());
+		buf.append_str("\r\n");
+
+		//let headers = this.headers;
+		//verify headers {
+		//	each headers as k,v {
+		//		buf.append(k);
+		//		buf.append(": ");
+		//		buf.append(v);
+		//		buf.append("\r\n");
+		//	}
+		//}
+
+		buf.append_str("\r\n");
+		buf.append_str(this.body);
+	}
 }

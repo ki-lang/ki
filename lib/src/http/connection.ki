@@ -1,4 +1,5 @@
 
+use io;
 use net;
 use utils;
 
@@ -8,6 +9,7 @@ class Connection {
 	uploads: ?Array[String] = null;
 	read_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
 	out_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
+	out_pos: uxx = 0;
 
 	// Parsing
 	phase: uxx = 0;
@@ -62,6 +64,27 @@ class Connection {
 		}
 
 		this.parse_pos = pos;
+	}
+
+	func respond(resp: Response) void {
+		resp.compile(this.out_buf);
+		this.send_response_bytes();
+	}
+
+	func has_data_to_send() bool {
+		return this.out_pos < this.out_buf.length;
+	}
+
+	// Returns 'true' if all bytes were sent
+	func send_response_bytes() bool {
+		let out = this.out_buf;
+		let pos = this.out_pos;
+		let mut bytes = out.length - pos;
+		if bytes > 0 {
+			let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) !? 0;
+			this.out_pos += wbytes;
+		}
+		return this.out_pos == out.length;
 	}
 }
 

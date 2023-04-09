@@ -1,12 +1,26 @@
 
 header "ki_os" as kos;
 
-func write(fd: i32, str: String) void {
+func write(fd: i32, str: String) uxx !failed !again {
 	let c = kos.ki_os__fd_write(fd, str.data(), str.bytes());
+	if c == -2 {
+		throw again;
+	}
+	if c < 0 {
+		throw failed;
+	}
+	return c -> uxx;
 }
 
-func write_from_ptr(fd: i32, data: ptr, length: uxx) void {
+func write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
 	let c = kos.ki_os__fd_write(fd, data, length);
+	if c == -2 {
+		throw again;
+	}
+	if c < 0 {
+		throw failed;
+	}
+	return c -> uxx;
 }
 
 func close(fd: i32) void {

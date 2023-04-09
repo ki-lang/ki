@@ -117,8 +117,15 @@ class Server {
 						};
 						http_con.fd = fd;
 						http_con.netcon = netcon;
+
 						http_con.read_buf.clear();
+						http_con.parse_pos = 0;
+						http_con.line.clear();
+						http_con.uploads = null;
+						http_con.phase = 0;
+
 						http_con.out_buf.clear();
+						http_con.out_pos = 0;
 					}
 
 					let lsn = poll.listener(fd, index);
@@ -156,7 +163,13 @@ class Server {
 				}
 
 				if event.is_writable() {
-					println("send more: " + nr.str());
+					//println("send more: " + nr.str());
+
+					http_con.send_response_bytes();
+
+					if(!http_con.has_data_to_send()){
+						lsn.write(false);
+					}
 					continue;
 				}
 				if event.is_readable() {
@@ -166,6 +179,23 @@ class Server {
 						index_pool.add(index)!;
 						continue;
 					};
+					if http_con.headers_parsed {
+
+						// Clear read data
+						http_con.read_buf.clear();
+						http_con.parse_pos = 0;
+						http_con.line.clear();
+						http_con.uploads = null;
+						http_con.phase = 0;
+
+						if(http_con.has_data_to_send()){
+							lsn.write(true);
+						} else {
+							// Clear out data
+							http_con.out_buf.clear();
+							http_con.out_pos = 0;
+						}
+					}
 					continue;
 				}
 			}
@@ -198,11 +228,15 @@ class Server {
 			}
 		}
 
-		let resp = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\nConnection: keep-alive\r\nContent-Type: text/html\r\n\r\nHello, World!";
+		if !http_con.headers_parsed {
+			http_con.respond(Response.error(400));
+			throw sent_error;
+		}
 
-		io:write(http_con.fd, resp);
-		//io:close(http_con.fd);
-		//println("❌ Close");
+		http_con.respond(Response.html("Hello, World!"));
+
+		//let resp = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\nConnection: keep-alive\r\nContent-Type: text/html\r\n\r\nHello, World!";
+		//io:write(http_con.fd, resp) !? 0;
 	}
 }
 
