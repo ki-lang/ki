@@ -10,11 +10,11 @@ class ServerData async {
 	max_connections: uxx;
 	socket: net:SocketTCP;
 	thread_nr: uxx = 0;
+	handler: fn(Request)(Response);
 }
 
 class Server {
 	host: String;
-	handler: fn(Request)(Response);
 	data: ServerData;
 	port: u16;
 
@@ -27,10 +27,10 @@ class Server {
 		return Server{
 			host: host,
 			port: port,
-			handler: handler,
 			data: ServerData {
 				socket: socket,
 				max_connections: max_connections,
+				handler: handler,
 			}
 		};
 	}
@@ -63,7 +63,10 @@ class Server {
 	}
 
 	private static func worker(data: ServerData) void {
+
 		let max_connections = data.max_connections;
+		let handler = data.handler;
+
 		let cons = Array[Connection].init(50);
 		let index_pool = utils:Pool[uxx].init(max_connections);
 		let nr = atomicop data.thread_nr ADD 1;
@@ -173,7 +176,7 @@ class Server {
 					continue;
 				}
 				if event.is_readable() {
-					Server.respond(http_con) !! {
+					Server.respond(http_con, handler) !! {
 						io:close(fd);
 						poll.remove(lsn);
 						index_pool.add(index)!;
@@ -202,7 +205,7 @@ class Server {
 		}
 	}
 
-	static func respond(http_con: Connection) void !read_error !sent_error {
+	static func respond(http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
 		let buf_size : i32 = 65535;
 		let read_buf = http_con.read_buf;
@@ -233,7 +236,8 @@ class Server {
 			throw sent_error;
 		}
 
-		http_con.respond(Response.html("Hello, World!"));
+		let resp = handler(Request{});
+		http_con.respond(resp);
 
 		//let resp = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\nConnection: keep-alive\r\nContent-Type: text/html\r\n\r\nHello, World!";
 		//io:write(http_con.fd, resp) !? 0;
