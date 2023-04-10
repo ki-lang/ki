@@ -18,6 +18,8 @@ class Connection {
 	headers_parsed: bool = false;
 	headers: Map[String] = Map[String].init();
 	request_method: String = "GET";
+	request_path: String = "/";
+	request_protocol: String = "HTTP/1.1";
 
 	func parse_headers() void !sent_error {
 		if this.headers_parsed {
@@ -51,7 +53,7 @@ class Connection {
 					// Header
 					let headers = this.headers;
 					let split_index = line.index_of_byte(':') !! {
-						this.respond(Response.error(415)); // Invalid request
+						this.respond(Response.error(400)); // Invalid request
 						throw sent_error;
 					};
 					// Key
@@ -65,8 +67,31 @@ class Connection {
 
 				} else if phase == 0 {
 					// HTTP line
-					//println(line.to_str());
-					//this.respond(Response.error(415)); // Unsupported protocol
+					let first_space_index = line.index_of_byte(' ') !! {
+						this.respond(Response.error(400)); // Invalid request
+						throw sent_error;
+					};
+					let second_space_index = line.index_of_byte(' ', first_space_index + 1) !! {
+						this.respond(Response.error(400)); // Invalid request
+						throw sent_error;
+					};
+					// Method
+					let method = line.sub_str(0, first_space_index);
+					// Path
+					let path_index = first_space_index + 1;
+					let path = line.sub_str(path_index, second_space_index - path_index);
+					// Protocol
+					let proto_index = second_space_index + 1;
+					let proto = line.sub_str(proto_index, line.length - proto_index);
+					if proto != "HTTP/1.1" && proto != "HTTP/1.0" {
+						this.respond(Response.error(415)); // Unsupported protocol
+						throw sent_error;
+					}
+
+					this.request_method = method;
+					this.request_path = path;
+					this.request_protocol = proto;
+					
 					phase = 1;
 				}
 
