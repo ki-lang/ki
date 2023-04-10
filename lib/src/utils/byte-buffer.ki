@@ -62,14 +62,57 @@ class ByteBuffer {
 		return mem:equal(this.data, str.data(), len);
 	}
 
-	// Converts
+	// Find
+
+	func index_of_byte(byte: u8, start_index: uxx = 0) uxx !not_found {
+		let mut index = start_index;
+		let len = this.length;
+		let data = this.data;
+		while index < len {
+			let ch = ptrv (data + index) as u8;
+			if ch == byte {
+				return index;
+			}
+			index++;
+		}
+		throw not_found;
+	}
+
+	func index_where_byte_is_not(byte: u8, start_index: uxx = 0) uxx !not_found {
+		let mut index = start_index;
+		let len = this.length;
+		let data = this.data;
+		while index < len {
+			let ch = ptrv (data + index) as u8;
+			if ch != byte {
+				return index;
+			}
+			index++;
+		}
+		throw not_found;
+	}
+
+	// String functions
 
 	func to_str() String {
 		if(this.length == 0){
 			return "";
 		}
-		let str = String.make_empty(this.length -> u32);
+		let str = String.make_empty(this.length);
 		mem:copy(this.data, str.data(), this.length);
+		return str;
+	}
+
+	func sub_str(start_index: uxx, mut length: uxx) String {
+		let len = this.length;
+		if start_index >= len {
+			return "";
+		}
+		if start_index + length > len {
+			length = len - start_index;
+		}
+		let str = String.make_empty(length);
+		mem:copy(this.data + start_index, str.data(), length);
 		return str;
 	}
 

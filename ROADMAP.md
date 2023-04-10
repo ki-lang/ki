@@ -26,6 +26,7 @@ Feature todo list in order:
 
 ## Done
 
+- __eq
 - @vs { ... } (value-scopes)
 - __before_free
 - Strict ownership types

@@ -126,6 +126,8 @@ class Server {
 						http_con.line.clear();
 						http_con.uploads = null;
 						http_con.phase = 0;
+						http_con.headers_parsed = false;
+						http_con.headers = Map[String].init();
 
 						http_con.out_buf.clear();
 						http_con.out_pos = 0;
@@ -190,6 +192,8 @@ class Server {
 						http_con.line.clear();
 						http_con.uploads = null;
 						http_con.phase = 0;
+						http_con.headers_parsed = false;
+						http_con.headers = Map[String].init();
 
 						if(http_con.has_data_to_send()){
 							lsn.write(true);

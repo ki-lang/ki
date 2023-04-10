@@ -17,6 +17,7 @@ class Connection {
 	line: utils:ByteBuffer = utils:ByteBuffer.init(200);
 	headers_parsed: bool = false;
 	headers: Map[String] = Map[String].init();
+	request_method: String = "GET";
 
 	func parse_headers() void !sent_error {
 		if this.headers_parsed {
@@ -48,11 +49,26 @@ class Connection {
 
 				if phase == 1 {
 					// Header
-					//println(line.to_str());
+					let headers = this.headers;
+					let split_index = line.index_of_byte(':') !! {
+						this.respond(Response.error(415)); // Invalid request
+						throw sent_error;
+					};
+					// Key
+					let key = line.sub_str(0, split_index);
+
+					// Value
+					let value_start_index = split_index + 1;
+					let value_index = line.index_where_byte_is_not(' ', value_start_index) !? value_start_index;
+					let value = line.sub_str(value_index, line.length - value_index);
+
+					//println(key + " -> " + value);
+					headers.set(key, value);
+
 				} else if phase == 0 {
 					// HTTP line
 					//println(line.to_str());
-					//http_con.respond(Response.error(415)); // Unsupported protocol
+					//this.respond(Response.error(415)); // Unsupported protocol
 					phase = 1;
 				}
 

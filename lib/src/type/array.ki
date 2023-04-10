@@ -27,7 +27,7 @@ class Array[T] {
 			let new_data = mem:alloc(new_size * sizeof(T));
 			mem:copy(data, new_data, size * sizeof(T));
 			data = new_data;
-			this.data = data;
+			this.data = new_data;
 			this.size = new_size;
 		}
 
@@ -72,9 +72,9 @@ class Array[T] {
 	func index_of(item: T) uxx !not_found {
 		let mut index : uxx = 0;
 		let mut adr = this.data;
-		while(index < this.length){
-
-			let x = ptrv adr as T;
+		let len = this.length;
+		while(index < len){
+			let x = ptrv adr as &T;
 			if x == item {
 				return index;
 			}
