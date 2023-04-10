@@ -56,13 +56,11 @@ class Connection {
 					};
 					// Key
 					let key = line.sub_str(0, split_index);
-
 					// Value
 					let value_start_index = split_index + 1;
 					let value_index = line.index_where_byte_is_not(' ', value_start_index) !? value_start_index;
 					let value = line.sub_str(value_index, line.length - value_index);
 
-					//println(key + " -> " + value);
 					headers.set(key, value);
 
 				} else if phase == 0 {
