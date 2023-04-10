@@ -484,19 +484,18 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
             if (op == op_eq || op == op_ne) {
                 Class *lclass = v->rett->class;
-                // if(lclass){
-                //     let cfunc = lclass.funcs.get("__eq") or value null;
-                //     verify cfunc {
-                //         let func = cfunc.func;
-                //         let values = Array<Value>.make(2);
-                //         values.push(v);
-                //         values.push(right);
-                //         let on = value_gen_func_ptr(func, null);
-                //         fcall_type_check(fc, on, values);
-                //         v = value_gen_fcall(fc.b, scope, on, values, func.return_type);
-                //         magic = true;
-                //     }
-                // }
+                if (lclass) {
+                    Func *func = map_get(lclass->funcs, "__eq");
+                    if (func) {
+                        Array *values = array_make(alc, 4);
+                        array_push(values, v);
+                        array_push(values, right);
+                        Value *on = vgen_fptr(alc, func, NULL);
+                        fcall_type_check(fc, on, values);
+                        v = vgen_fcall(alc, scope, on, values, func->rett, NULL);
+                        magic = true;
+                    }
+                }
             }
 
             if (!magic) {
