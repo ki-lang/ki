@@ -493,6 +493,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                         Value *on = vgen_fptr(alc, func, NULL);
                         fcall_type_check(fc, on, values);
                         v = vgen_fcall(alc, scope, on, values, func->rett, NULL);
+                        if (op == op_ne) {
+                            v = vgen_compare(alc, b, v, vgen_vint(alc, 0, type_gen(b, alc, "bool"), true), op_eq);
+                        }
                         magic = true;
                     }
                 }
