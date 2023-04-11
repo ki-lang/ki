@@ -23,12 +23,14 @@ void stage_7(Fc *fc) {
     lb->char_buf = al(alc, 100);
     lb->str_buf = str_make(alc, 1000);
 
-    lb->ir_final = str_make(alc, 2000);
-    lb->ir_struct = str_make(alc, 1000);
-    lb->ir_global = str_make(alc, 1000);
-    lb->ir_extern_func = str_make(alc, 500);
+    lb->ir_final = str_make(alc, 10000);
+    lb->ir_struct = str_make(alc, 2000);
+    lb->ir_global = str_make(alc, 2000);
+    lb->ir_extern_func = str_make(alc, 1000);
+    lb->ir_attr = str_make(alc, 1000);
 
     lb->strc = 0;
+    lb->attrc = 1;
     lb->while_cond = NULL;
     lb->while_after = NULL;
 

@@ -105,13 +105,22 @@ void llvm_write_ast(LB *b, Scope *scope) {
             Value *cond = w->cond;
             Scope *sub = w->scope;
 
+            Str *ir_a = b->ir_attr;
+            char *loop_attr = llvm_attr(b);
+            str_append_chars(ir_a, loop_attr);
+            str_append_chars(ir_a, " = distinct !{");
+            str_append_chars(ir_a, loop_attr);
+            str_append_chars(ir_a, ", !0}\n");
+
             LLVMBlock *b_cond = llvm_block_init_auto(b);
             LLVMBlock *b_code = llvm_block_init_auto(b);
             LLVMBlock *b_after = llvm_block_init_auto(b);
             LLVMBlock *prev_cond = b->while_cond;
             LLVMBlock *prev_after = b->while_after;
+            char *prev_attr = b->loop_attr;
             b->while_cond = b_cond;
             b->while_after = b_after;
+            b->loop_attr = loop_attr;
 
             llvm_ir_jump(llvm_b_ir(b), b_cond);
 
@@ -124,10 +133,11 @@ void llvm_write_ast(LB *b, Scope *scope) {
             b->lfunc->block = b_code;
             llvm_write_ast(b, sub);
             if (!sub->did_return) {
-                llvm_ir_jump(llvm_b_ir(b), b_cond);
+                llvm_ir_jump_loop(b, b_cond);
             }
 
             b->lfunc->block = b_after;
+            b->loop_attr = prev_attr;
             b->while_cond = prev_cond;
             b->while_after = prev_after;
             continue;
@@ -237,7 +247,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
         }
         if (t->type == tkn_continue) {
             LLVMBlock *cond_block = b->while_cond;
-            llvm_ir_jump(llvm_b_ir(b), cond_block);
+            llvm_ir_jump_loop(b, cond_block);
             continue;
         }
         if (t->type == tkn_statement) {

@@ -65,8 +65,8 @@ class Connection {
 
 					headers.set(key, value);
 
-					if key == "content-length" {
-					}
+					//if key == "content-length" {
+					//}
 
 				} else if phase == 0 {
 					// HTTP line

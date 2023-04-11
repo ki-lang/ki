@@ -50,6 +50,14 @@ void llvm_ir_jump(Str *ir, LLVMBlock *block) {
     str_append_chars(ir, block->name);
     str_append_chars(ir, "\n");
 }
+void llvm_ir_jump_loop(LB *b, LLVMBlock *block) {
+    Str *ir = llvm_b_ir(b);
+    str_append_chars(ir, "  br label %");
+    str_append_chars(ir, block->name);
+    str_append_chars(ir, ", !llvm.loop ");
+    str_append_chars(ir, b->loop_attr);
+    str_append_chars(ir, "\n");
+}
 
 void llvm_ir_cond_jump(LB *b, Str *ir, char *var_i1, LLVMBlock *a_block, LLVMBlock *b_block) {
     str_append_chars(ir, "  br i1 ");

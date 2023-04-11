@@ -14,6 +14,7 @@ void llvm_gen_global_ir(LB *b);
 char *llvm_var(LB *b);
 char *llvm_alloca(LB *b, Type *type);
 char *llvm_get_global(LB *b, char *name, Type *type);
+char *llvm_attr(LB *b);
 
 // Func
 void llvm_gen_func_ir(LB *b);
@@ -37,6 +38,7 @@ char *llvm_ir_isnull_i1(LB *b, char *ltype, char *val);
 char *llvm_ir_iszero_i1(LB *b, char *ltype, char *val);
 char *llvm_ir_cmp(LB *b, char *ltype, char *val, char *cmd, char *with);
 void llvm_ir_jump(Str *ir, LLVMBlock *block);
+void llvm_ir_jump_loop(LB *b, LLVMBlock *block);
 void llvm_ir_cond_jump(LB *b, Str *ir, char *var_i1, LLVMBlock *a_block, LLVMBlock *b_block);
 void llvm_ir_store(LB *b, Type *type, char *var, char *val);
 char *llvm_ir_load(LB *b, Type *type, char *var);
@@ -62,11 +64,14 @@ struct LB {
     Str *ir_struct;
     Str *ir_global;
     Str *ir_extern_func;
-    int strc;
+    Str *ir_attr;
     LLVMBlock *while_cond;
     LLVMBlock *while_after;
+    char *loop_attr;
     Str *str_buf;
     char *char_buf;
+    int strc;
+    int attrc;
     bool use_stack_save;
 };
 
@@ -80,9 +85,9 @@ struct LLVMFunc {
     LLVMBlock *block;
     Str *ir;
     Array *blocks;
-    int varc;
-    int blockc;
     char *stack_save_vn;
     LLVMBlock *block_entry;
     LLVMBlock *block_code;
+    int varc;
+    int blockc;
 };

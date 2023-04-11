@@ -42,6 +42,10 @@ void llvm_build_ir(LB *b) {
         str_append_chars(ir, "declare i8* @llvm.stacksave()\n");
         str_append_chars(ir, "declare void @llvm.stackrestore(i8*)\n\n");
     }
+
+    str_append_chars(ir, "!0 = !{!\"llvm.loop.mustprogress\"}\n");
+    str_append(ir, b->ir_attr);
+    str_append_chars(ir, "\n");
 }
 
 void llvm_gen_global_ir(LB *b) {
@@ -163,4 +167,12 @@ char *llvm_get_global(LB *b, char *name, Type *type) {
     map_set(b->globals, name, result);
 
     return result;
+}
+
+char *llvm_attr(LB *b) {
+    char *res = al(b->alc, 8);
+    char nr[20];
+    sprintf(res, "!%d", b->attrc);
+    b->attrc++;
+    return res;
 }
