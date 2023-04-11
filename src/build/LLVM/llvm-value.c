@@ -103,7 +103,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         } else if (op == op_shl) {
             str_append_chars(ir, "shl ");
         } else if (op == op_shr) {
-            str_append_chars(ir, "shr ");
+            str_append_chars(ir, "lshr ");
         } else {
             die("Unknown LLVM math operation (compiler bug)");
         }

@@ -48,29 +48,11 @@ class String type:ptr async {
 		let mut pos : uxx = 0;
 		while pos < bytes {
 			let byte : u8 = @ptrv(data, u8, pos);
-
 			if byte > 127 {
-				let mut utf_chars : uxx = 1;
-				if (byte & 32) > 0 {
-					utf_chars++;
-					if (byte & 64) > 0 {
-						utf_chars++;
-					}
-				}
-				if (pos + utf_chars) >= bytes {
-					utf_chars = bytes - pos;
-				}
-
 				@ptrv(new_data, u8, pos) = byte;
 				pos++;
-				while(utf_chars > 0) {
-					@ptrv(new_data, u8, pos) = @ptrv(data, u8, pos);
-					pos++;
-					utf_chars--;
-				}
 				continue;
 			}
-			//
 			let is_upper = (byte > 64 && byte < 91) -> u8;
 			@ptrv(new_data, u8, pos) = byte + (is_upper * 32);
 			pos++;
