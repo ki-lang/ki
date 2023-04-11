@@ -1,3 +1,13 @@
 
 class ptr type:ptr math async {
+
+	func str() String {
+        let num = this -> uxx;
+        return num.str_base(16);
+    }
+
+    func debug() void {
+        let num = this -> uxx;
+        num.debug_base(16);
+    }
 }
