@@ -40,6 +40,32 @@ class String type:ptr async {
 	// Converts
 	/////////////////////
 
+	func to_lower() .String {
+		let bytes = this.bytes();
+		let data = this.data();
+		let new_str = String.make_empty(bytes);
+		let new_data = new_str.data();
+		let mut pos : uxx = 0;
+		while pos < bytes {
+			let mut byte : u8 = ptrv (data + pos) as u8;
+			if byte > 127 {
+				let b2 = (byte & 32) > 0;
+				let b3 = (byte & 16) > 0 && b2;
+				let utf_chars : u8 = 2 + (b2 -> u8) + (b3 -> u8);
+				let fits = ((pos + utf_chars) < bytes) -> u8;
+				let utf_chars_safe = utf_chars * fits + (bytes - pos) * (fits == 0#u8) -> u8;
+				mem:copy(data + pos, new_data + pos, utf_chars);
+				pos += utf_chars;
+				continue;
+			}
+			//
+			let is_upper = (byte > 64 && byte < 91) -> u8;
+			ptrv (new_data + pos) as u8 = byte + (is_upper * 32);
+			pos++;
+		}
+		return new_str;
+	}
+
 	func cstring() cstring {
 		let len = this.bytes();
 		let bytes = len + 1;

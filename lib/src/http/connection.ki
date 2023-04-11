@@ -57,13 +57,16 @@ class Connection {
 						throw sent_error;
 					};
 					// Key
-					let key = line.sub_str(0, split_index);
+					let key = line.sub_str(0, split_index).to_lower();
 					// Value
 					let value_start_index = split_index + 1;
 					let value_index = line.index_where_byte_is_not(' ', value_start_index) !? value_start_index;
 					let value = line.sub_str(value_index, line.length - value_index);
 
 					headers.set(key, value);
+
+					if key == "content-length" {
+					}
 
 				} else if phase == 0 {
 					// HTTP line
