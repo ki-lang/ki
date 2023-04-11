@@ -43,8 +43,8 @@ class Array[T] {
 			throw not_found;
 		}
 
-		let data = this.data + (index * sizeof(T));
-		let value = @ptrv(data, T, 0);
+		let data = this.data;
+		let value = @ptrv(data, T, index);
 		@ref value;
 
 		return value;
@@ -54,10 +54,10 @@ class Array[T] {
 		if index >= this.length {
 			throw out_of_range;
 		}
-		let data = this.data + (index * sizeof(T));
-		let current = @ptrv(data, T, 0);
+		let data = this.data;
+		let current = @ptrv(data, T, index);
 
-		@ptrv(data, T, 0) = value;
+		@ptrv(data, T, index) = value;
 		@move value;
 	}
 
@@ -74,12 +74,11 @@ class Array[T] {
 		let mut adr = this.data;
 		let len = this.length;
 		while(index < len){
-			let x = @ptrv(adr, &T, 0);
+			let x = @ptrv(adr, &T, index);
 			if x == item {
 				return index;
 			}
 			index++;
-			adr += sizeof(T);
 		}
 		throw not_found;
 	}
@@ -101,9 +100,9 @@ class Array[T] {
 		// Deref items
 		let mut index = 0#uxx;
 		let length = this.length;
+		let data = this.data;
 		while index < length {
-			let data = this.data + (index * sizeof(T));
-			let value = @ptrv(data, T, 0);
+			let value = @ptrv(data, T, index);
 			index++;
 		}
 
