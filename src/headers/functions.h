@@ -143,6 +143,7 @@ Type *type_gen_fptr(Allocator *alc, Func *func);
 Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed);
 Type *type_gen_void(Allocator *alc);
 Type *type_gen(Build *b, Allocator *alc, char *name);
+Type *type_array_of(Allocator *alc, Build *b, Type *type, int size);
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space, bool is_arg);
 bool type_compat(Type *t1, Type *t2, char **reason);
 char *type_to_str(Type *t, char *res);
@@ -180,7 +181,7 @@ bool value_is_assignable(Value *v);
 
 Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type);
 Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type);
-Value *vgen_ptrv(Allocator *alc, Value *on, Type *as);
+Value *vgen_ptrv(Allocator *alc, Value *on, Type *as, Value *index);
 Value *vgen_op(Allocator *alc, Build *b, Value *left, Value *right, int op, bool is_ptr);
 Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op);
 Value *vgen_fcall(Allocator *alc, Scope *scope, Value *on, Array *values, Type *rett, FCallOr * or);
@@ -198,6 +199,7 @@ Value *vgen_value_and_exec(Allocator *alc, Value *value, Scope *exec_scope, bool
 Value *vgen_value_then_ir_value(Allocator *alc, Value *value);
 Value *vgen_incr_decr(Allocator *alc, Value *on, bool is_incr);
 Value *vgen_atomicop(Allocator *alc, Value *left, Value *right, int op);
+Value *vgen_array_item(Allocator *alc, Value *on, Value *index);
 
 // Ast
 void read_ast(Fc *fc, Scope *scope, bool single_line);

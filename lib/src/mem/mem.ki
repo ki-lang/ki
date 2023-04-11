@@ -29,24 +29,24 @@ func alloc(size: uxx) ptr {
 	}
 
 	let adr : ptr = (alcs -> ptr) + (pow * sizeof(ptr));
-	let mut alc = ptrv adr as ?Allocator;
+	let mut alc = @ptrv(adr, ?Allocator, 0);
 	if alc == null {
 		alc = Allocator.init(1#uxx << pow + 1, 1);
-		ptrv adr as ?Allocator = alc;
+		@ptrv(adr, ?Allocator, 0) = alc;
 	}
 	// Get chunk
 	rep alc = alc -> Allocator;
 	let res = alc.get_slot();
-	ptrv res as u8 = pow;
+	@ptrv(res, u8, 0) = pow;
 
 	return res + 1;
 }
 func free(mut adr: ptr) void {
 	let alcs = allocators -> ptr;
 	adr-=1;
-	let pow : u32 = ptrv adr as u8;
+	let pow : u32 = @ptrv(adr, u8, 0);
 	let alc_adr = alcs + (pow * sizeof(ptr));
-	let mut alc = ptrv alc_adr as Allocator;
+	let mut alc = @ptrv(alc_adr, Allocator, 0);
 	alc.free(adr);
 	return;
 }
@@ -61,22 +61,22 @@ func sys_free(adr: ptr) void {
 
 func clear(mut adrc: ptr, mut size: uxx) void {
 	while(size > sizeof(ptr)){
-		ptrv adrc as uxx = 0#uxx;
+		@ptrv(adrc, uxx, 0) = 0#uxx;
 		adrc += sizeof(ptr);
 		size -= sizeof(ptr);
 	}
 	while(size > 3){
-		ptrv adrc as u32 = 0#u32;
+		@ptrv(adrc, u32, 0) = 0#u32;
 		adrc += 4;
 		size -= 4;
 	}
 	while(size > 1){
-		ptrv adrc as u16 = 0#u16;
+		@ptrv(adrc, u16, 0) = 0#u16;
 		adrc += 2;
 		size -= 2;
 	}
 	while(size > 0){
-		ptrv adrc as u8 = 0#u8;
+		@ptrv(adrc, u8, 0) = 0#u8;
 		adrc+=1;
 		size-=1;
 	}
@@ -86,25 +86,25 @@ func copy(mut from: ptr, mut to: ptr, mut len: uxx) void {
 
   while(len > sizeof(ptr)){
 	  len -= sizeof(ptr);
-	  ptrv to as uxx = ptrv from as uxx;
+	  @ptrv(to, uxx, 0) = @ptrv(from, uxx, 0);
 	  from += sizeof(ptr);
 	  to += sizeof(ptr);
   }
   while(len > 3){
 	  len -= 4;
-	  ptrv to as u32 = ptrv from as u32;
+	  @ptrv(to, u32, 0) = @ptrv(from, u32, 0);
 	  from += 4;
 	  to += 4;
   }
   while(len > 1){
 	  len -= 2;
-	  ptrv to as u16 = ptrv from as u16;
+	  @ptrv(to, u16, 0) = @ptrv(from, u16, 0);
 	  from += 2;
 	  to += 2;
   }
   while (len > 0){
 	  len-=1;
-	  ptrv to as u8 = ptrv from as u8;
+	  @ptrv(to, u8, 0) = @ptrv(from, u8, 0);
 	  from+=1;
 	  to+=1;
   }
@@ -116,8 +116,8 @@ func equal(mut a: ptr, mut b: ptr, mut length: uxx) bool {
 	while(length > sizeof(uxx)){
 		a -= sizeof(uxx);
 		b -= sizeof(uxx);
-		let av = ptrv a as uxx;
-		let bv = ptrv b as uxx;
+		let av = @ptrv(a, uxx, 0);
+		let bv = @ptrv(b, uxx, 0);
 		if(av != bv) {
 			return false;
 		}
@@ -126,8 +126,8 @@ func equal(mut a: ptr, mut b: ptr, mut length: uxx) bool {
 	while(length > 3){
 		a -= 4;
 		b -= 4;
-		let av = ptrv a as u32;
-		let bv = ptrv b as u32;
+		let av = @ptrv(a, u32, 0);
+		let bv = @ptrv(b, u32, 0);
 		if(av != bv) {
 			return false;
 		}
@@ -136,8 +136,8 @@ func equal(mut a: ptr, mut b: ptr, mut length: uxx) bool {
 	while(length > 0){
 		a--;
 		b--;
-		let av = ptrv a as u8;
-		let bv = ptrv b as u8;
+		let av = @ptrv(a, u8, 0);
+		let bv = @ptrv(b, u8, 0);
 		if(av != bv) {
 			return false;
 		}

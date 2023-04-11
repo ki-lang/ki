@@ -34,10 +34,10 @@ class Connection {
 		let data = read_buf.data;
 		let mut prev_ch = '\0';
 		if line.length > 0 {
-			prev_ch = ptrv (line.data + line.length - 1) as u8;
+			prev_ch = @ptrv(line.data, u8, line.length - 1);
 		}
 		while pos < length {
-			let ch = ptrv (data + pos) as u8;
+			let ch = @ptrv(data, u8, pos);
 			pos++;
 
 			if prev_ch == '\r' && ch == '\n' {

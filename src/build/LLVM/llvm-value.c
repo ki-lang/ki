@@ -606,6 +606,13 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
         return llvm_ir_load(b, rett, sub->vscope->lvar);
     }
+    if (v->type == v_array_item) {
+        VPair *pair = v->item;
+        Value *on = pair->left;
+        Type *item_type = on->rett->array_of;
+        char *result = llvm_assign_value(b, scope, v);
+        return llvm_ir_load(b, item_type, result);
+    }
 
     return "???";
 }
@@ -621,11 +628,15 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
         return llvm_get_global(b, g->gname, g->type);
     }
     if (v->type == v_ptrv) {
-        Value *val = v->item;
+        VPair *pair = v->item;
+        Value *on = pair->left;
+        Value *index = pair->right;
         Type *as_type = v->rett;
 
-        char *lval = llvm_value(b, scope, val);
-        char *lval_type = llvm_type(b, val->rett);
+        char *lval = llvm_value(b, scope, on);
+        char *lval_type = llvm_type(b, on->rett);
+        char *lindex = llvm_value(b, scope, index);
+        char *lindex_type = llvm_type(b, index->rett);
         char *ltype = llvm_type(b, as_type);
         char *var_result = llvm_var(b);
 
@@ -640,7 +651,22 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
         str_append_chars(ir, ltype);
         str_append_chars(ir, "*\n");
 
-        return var_result;
+        char *result = llvm_var(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, result);
+        str_append_chars(ir, " = getelementptr inbounds ");
+        str_append_chars(ir, ltype);
+        str_append_chars(ir, ", ");
+        str_append_chars(ir, ltype);
+        str_append_chars(ir, "* ");
+        str_append_chars(ir, var_result);
+        str_append_chars(ir, ", ");
+        str_append_chars(ir, lindex_type);
+        str_append_chars(ir, " ");
+        str_append_chars(ir, lindex);
+        str_append_chars(ir, "\n");
+
+        return result;
     }
     if (v->type == v_class_pa) {
         VClassPA *pa = v->item;
@@ -654,6 +680,35 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_ir_assign_val) {
         IRAssignVal *item = v->item;
         return item->ir_value;
+    }
+    if (v->type == v_array_item) {
+        VPair *pair = v->item;
+        Value *on = pair->left;
+        Value *index = pair->right;
+        char *lon = llvm_value(b, scope, on);
+        char *lindex = llvm_value(b, scope, index);
+
+        Type *item_type = on->rett->array_of;
+        char *l_item_type = llvm_type(b, item_type);
+        char *l_index_type = llvm_type(b, index->rett);
+
+        Str *ir = llvm_b_ir(b);
+        char *result = llvm_var(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, result);
+        str_append_chars(ir, " = getelementptr inbounds ");
+        str_append_chars(ir, l_item_type);
+        str_append_chars(ir, ", ");
+        str_append_chars(ir, l_item_type);
+        str_append_chars(ir, "* ");
+        str_append_chars(ir, lon);
+        str_append_chars(ir, ", ");
+        str_append_chars(ir, l_index_type);
+        str_append_chars(ir, " ");
+        str_append_chars(ir, lindex);
+        str_append_chars(ir, "\n");
+
+        return result;
     }
 
     die("LLVM : Cannot assign to this value");

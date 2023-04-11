@@ -6,7 +6,7 @@ class u8 type:int:1:false {
 	func str_char() .String {
 		let str = String.make_empty(1);
 		let data = str.data();
-		ptrv data as u8 = this;
+		@ptrv(data, u8, 0) = this;
 		return str;
 	}
 }

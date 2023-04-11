@@ -219,9 +219,11 @@ struct Type {
     Array *func_args;
     Type *func_rett;
     Array *func_errors;
+    Type *array_of;
     int type;
     int bytes;
     int ptr_depth;
+    int array_size;
     bool is_signed;
     bool nullable;
     bool func_can_error;

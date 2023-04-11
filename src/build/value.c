@@ -77,25 +77,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         v = vgen_vint(alc, 0, type_gen(b, alc, "bool"), true);
     } else if (strcmp(token, "null") == 0) {
         v = vgen_null(alc, b);
-    } else if (strcmp(token, "ptrv") == 0) {
-        Value *on = read_value(fc, alc, scope, false, 1, false);
-        Type *type = on->rett;
-        if (type->ptr_depth < 1) {
-            sprintf(fc->sbuf, "You can only use 'ptrv' on pointer type values");
-            fc_error(fc);
-        }
-        if (type->type == type_ptr) {
-            tok_expect(fc, "as", true, true);
-            type = read_type(fc, alc, scope, true, true, false);
-        } else {
-            type = type_clone(alc, type);
-            type->ptr_depth--;
-        }
-        v = vgen_ptrv(alc, on, type);
-        //
     } else if (strcmp(token, "getptr") == 0) {
         Value *on = read_value(fc, alc, scope, false, 0, false);
-        if (on->type != v_class_pa && on->type != v_ptrv && on->type != v_decl) {
+        if (on->type != v_class_pa && on->type != v_ptrv && on->type != v_decl && on->type != v_array_item) {
             sprintf(fc->sbuf, "Value must be assignable, such as a mutable variable");
             fc_error(fc);
         }
@@ -197,6 +181,29 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             }
 
             return value_init(alc, v_scope, sub, rett);
+
+        } else if (strcmp(token, "ptrv") == 0) {
+            tok_expect(fc, "(", false, true);
+            // On
+            Value *on = read_value(fc, alc, scope, false, 0, false);
+            // Type
+            tok_expect(fc, ",", false, true);
+            if (on->rett->type != type_ptr) {
+                sprintf(fc->sbuf, "You can only use 'ptrv' on pointer type values");
+                fc_error(fc);
+            }
+            Type *type = read_type(fc, alc, scope, true, true, false);
+            // Index
+            tok_expect(fc, ",", false, true);
+            Value *index = read_value(fc, alc, scope, false, 0, false);
+            if (index->rett->type != type_int) {
+                sprintf(fc->sbuf, "@ptrv index must be of type integer");
+                fc_error(fc);
+            }
+            tok_expect(fc, ")", false, true);
+
+            v = vgen_ptrv(alc, on, type, index);
+            //
         } else {
             sprintf(fc->sbuf, "Unexpected token: '%s' after '@' | expected: v", token);
             fc_error(fc);
@@ -285,7 +292,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
     }
 
     tok(fc, token, true, false);
-    while (strcmp(token, ".") == 0 || strcmp(token, "(") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0) {
+    while (strcmp(token, ".") == 0 || strcmp(token, "(") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "[") == 0) {
 
         Type *rett = v->rett;
 
@@ -350,6 +357,22 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             }
             bool is_ptr = vtt == type_ptr;
             v = vgen_incr_decr(alc, v, strcmp(token, "++") == 0);
+            //
+        } else if (strcmp(token, "[") == 0) {
+            Type *rett = v->rett;
+            if (rett->type != type_arr) {
+                sprintf(fc->sbuf, "Unexpected '['");
+                fc_error(fc);
+            }
+            Value *index = read_value(fc, alc, scope, true, 0, false);
+            if (index->rett->type != type_int) {
+                sprintf(fc->sbuf, "Array index expression must return an integer value");
+                fc_error(fc);
+            }
+
+            tok_expect(fc, "]", true, true);
+
+            v = vgen_array_item(alc, v, index);
         }
 
         tok(fc, token, true, false);
@@ -804,6 +827,16 @@ void value_equalize_types(Allocator *alc, Fc *fc, Scope *scope, VPair *pair) {
         pair->right = right;
         rt = right->rett;
     }
+    if (lt->type == type_arr) {
+        left = vgen_cast(alc, left, type_gen(b, alc, "uxx"));
+        pair->left = left;
+        lt = left->rett;
+    }
+    if (rt->type == type_arr) {
+        right = vgen_cast(alc, right, type_gen(b, alc, "uxx"));
+        pair->right = right;
+        rt = right->rett;
+    }
     if (lt->type == type_null) {
         left = vgen_vint(alc, 0, type_gen(b, alc, "u8"), false);
         pair->left = left;
@@ -1113,5 +1146,5 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
 bool value_is_assignable(Value *v) {
     //
-    return (v->type == v_decl || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global);
+    return (v->type == v_decl || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global || v->type == v_array_item);
 }

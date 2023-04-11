@@ -32,7 +32,7 @@ class AsyncArray[T] async {
 			this.size = new_size;
 		}
 
-		ptrv (data + (length * sizeof(T))) as T = value;
+		@ptrv(data, T, length) = value;
 		this.length = length + 1;
 
 		return length;
@@ -43,7 +43,7 @@ class AsyncArray[T] async {
 			throw not_found;
 		}
 		let data = this.data + (index * sizeof(T));
-		return ptrv data as T;
+		return @ptrv(data, T, 0);
 	}
 
 	func set(index: uxx, value: +T) void !out_of_range {
@@ -51,7 +51,7 @@ class AsyncArray[T] async {
 			throw out_of_range;
 		}
 		let data = this.data + (index * sizeof(T));
-		ptrv data as T = value;
+		@ptrv(data, T, 0) = value;
 	}
 
 	func __iter_init() uxx {

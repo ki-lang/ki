@@ -7,6 +7,7 @@ enum TYPES {
     type_float,
     type_func_ptr,
     type_null,
+    type_arr,
 };
 
 enum IDFOR {
@@ -92,6 +93,7 @@ enum VALUETYPE {
     v_atomicop,
     v_stack_alloc,
     v_scope,
+    v_array_item,
 };
 
 enum OPTYPE {

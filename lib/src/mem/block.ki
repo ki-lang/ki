@@ -46,7 +46,7 @@ class Block norc {
 		b.data = data;
 
 		let mut adr = data;
-		ptrv adr as ptr = b -> ptr;
+		@ptrv(adr, ptr, 0) = b -> ptr;
 		adr += sizeof(ptr);
 
 		b.data_slot_nrs = adr;
@@ -54,24 +54,24 @@ class Block norc {
 		// Setup slot positions
 		let mut i = 0#u8;
 		while i < slot_count {
-			ptrv adr as u8 = i;
+			@ptrv(adr, u8, 0) = i;
 			adr += 1;
 			i += 1;
 		}
-		ptrv adr as u8 = slot_count;
+		@ptrv(adr, u8, 0) = slot_count;
 		adr += 1;
 
 		//
 		b.align_bytes = align_bytes;
 		adr += align_bytes;
-		ptrv adr as u8 = align_bytes;
+		@ptrv(adr, u8, 0) = align_bytes;
 		adr += 1;
 
 		b.data_slots = adr;
 
 		i = 0;
 		while i < slot_count {
-			ptrv adr as u8 = i;
+			@ptrv(adr, u8, 0) = i;
 			adr += slot_size;
 			i += 1;
 		}
@@ -87,7 +87,7 @@ class Block norc {
 		let head = this.head;
 
 		let slot_nr_adr = this.data_slot_nrs + head;
-		let slot_nr = ptrv slot_nr_adr as u8;
+		let slot_nr = @ptrv(slot_nr_adr, u8, 0);
 
 		let slot_adr = this.data_slots + (slot_nr * this.slot_size);
 
@@ -118,7 +118,7 @@ class Block norc {
 		// }
 
 		let slot_nr_adr = this.data_slot_nrs + tail;
-		ptrv slot_nr_adr as u8 = slot_nr;
+		@ptrv(slot_nr_adr, u8, 0) = slot_nr;
 
 		// Remove when atomic
 		let mut next_tail = tail + 1;

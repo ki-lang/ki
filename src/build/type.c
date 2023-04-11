@@ -13,6 +13,8 @@ Type *type_init(Allocator *alc) {
     type->nullable = false;
     type->class = NULL;
     type->enu = NULL;
+    type->array_of = NULL;
+    type->array_size = 0;
     //
     type->take_ownership = true;
     type->strict_ownership = false;
@@ -272,8 +274,20 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     tok(fc, token, true, false);
-    while (strcmp(token, "*") == 0) {
-        type->ptr_depth++;
+    while (strcmp(token, "[") == 0) {
+        tok(fc, token, true, true);
+        int count = -1;
+        if (is_valid_number(token)) {
+            count = atoi(token);
+        } else {
+            sprintf(fc->sbuf, "Invalid array size number (0-9 characters only)");
+            fc_error(fc);
+        }
+
+        tok_expect(fc, "]", true, true);
+
+        type = type_array_of(alc, fc->b, type, count);
+
         tok(fc, token, true, false);
     }
     rtok(fc);
@@ -292,6 +306,17 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     return type;
+}
+
+Type *type_array_of(Allocator *alc, Build *b, Type *type, int size) {
+    //
+    Type *new = type_init(alc);
+    new->type = type_arr;
+    new->array_of = type;
+    new->array_size = size;
+    new->bytes = b->ptr_size;
+    new->ptr_depth = 1;
+    return new;
 }
 
 Type *type_clone(Allocator *alc, Type *type) {
@@ -414,8 +439,7 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
                 *reason = "Classes are not the same";
             return false;
         }
-    }
-    if (t1t == type_func_ptr) {
+    } else if (t1t == type_func_ptr) {
         Array *t1_args = t1->func_args;
         Array *t2_args = t2->func_args;
         if (t1_args->length != t2_args->length) {
@@ -440,6 +464,19 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
         if (t1->func_can_error != t2->func_can_error) {
             if (reason)
                 *reason = "One type can return errors, the other cannot";
+            return false;
+        }
+    } else if (t1t == type_arr) {
+        int t1as = t1->array_size;
+        int t2as = t2->array_size;
+        if (t2as != t1as && (t1as == -1 || (t2as != -1 && t2as < t1as))) {
+            if (reason)
+                *reason = "Right side array size is smaller than left side array size";
+            return false;
+        }
+        if (!type_compat(t1->array_of, t2->array_of, NULL)) {
+            if (reason)
+                *reason = "Right side array item type is not compatible with left side array item type";
             return false;
         }
     }
@@ -496,6 +533,15 @@ char *type_to_str(Type *t, char *res) {
         if (t->func_errors) {
             strcat(res, "!");
         }
+    } else if (t->type == type_arr) {
+        char sub_str[256];
+        strcat(res, type_to_str(t->array_of, sub_str));
+        strcat(res, "[");
+        char nr[10];
+        sprintf(nr, "%d", t->array_size);
+        strcat(res, t->array_size == -1 ? "" : nr);
+        strcat(res, "]");
+        depth--;
     } else {
         strcat(res, "(Unknown type)");
     }

@@ -16,9 +16,12 @@ Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type) {
     return value_init(alc, v_float, item, type_gen(b, alc, "fxx"));
 }
 
-Value *vgen_ptrv(Allocator *alc, Value *on, Type *as) {
+Value *vgen_ptrv(Allocator *alc, Value *on, Type *as, Value *index) {
     //
-    return value_init(alc, v_ptrv, on, as);
+    VPair *item = al(alc, sizeof(VPair));
+    item->left = on;
+    item->right = index;
+    return value_init(alc, v_ptrv, item, as);
 }
 
 Value *vgen_op(Allocator *alc, Build *b, Value *left, Value *right, int op, bool is_ptr) {
@@ -189,4 +192,12 @@ Value *vgen_atomicop(Allocator *alc, Value *left, Value *right, int op) {
     item->right = right;
     item->op = op;
     return value_init(alc, v_atomicop, item, left->rett);
+}
+
+Value *vgen_array_item(Allocator *alc, Value *on, Value *index) {
+    //
+    VPair *item = al(alc, sizeof(VPair));
+    item->left = on;
+    item->right = index;
+    return value_init(alc, v_array_item, item, on->rett->array_of);
 }

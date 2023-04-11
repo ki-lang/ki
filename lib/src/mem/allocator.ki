@@ -82,17 +82,17 @@ class Allocator norc {
 
 	func free(mut adr: ptr) void {
 		adr -= 1;
-		let slot_nr = ptrv adr as u8;
+		let slot_nr = @ptrv(adr, u8, 0);
 		adr -= (slot_nr * this.slot_size_real);
 
 		adr -= 1;
-		let align_bytes = ptrv adr as u8;
+		let align_bytes = @ptrv(adr, u8, 0);
 		adr -= align_bytes + 1;
-		let slot_count = ptrv adr as u8;
+		let slot_count = @ptrv(adr, u8, 0);
 		//println((slot_count -> u32).str());
 		adr -= slot_count + sizeof(ptr);
 
-		let b = ptrv adr as Block;
+		let b = @ptrv(adr, Block, 0);
 		b.free_slot(slot_nr);
 
 		// Make atomic

@@ -47,14 +47,14 @@ trait Number {
             } else {
                 ch = rem + '0';
             }
-			ptrv buf_adr as u8 = ch;
+			@ptrv(buf_adr, u8, 0) = ch;
             buf_adr++;
             len++;
             abs = abs/base;
         }
 
         if (negative) {
-            ptrv buf_adr as u8 = '-';
+            @ptrv(buf_adr, u8, 0) = '-';
             buf_adr++;
             len++;
         }
@@ -65,7 +65,7 @@ trait Number {
         while(len > 0){
             len-=1;
             buf_adr-=1;
-			ptrv str_adr as u8 = ptrv buf_adr as u8;
+			@ptrv(str_adr, u8, 0) = @ptrv(buf_adr, u8, 0);
             str_adr+=1;
         }
         return str;
@@ -103,14 +103,14 @@ trait Number {
             } else {
                 ch = rem + '0';
             }
-			ptrv buf_adr as u8 = ch;
+			@ptrv(buf_adr, u8, 0) = ch;
             buf_adr++;
             len++;
             abs = abs/base;
         }
 
         if (negative) {
-            ptrv buf_adr as u8 = '-';
+            @ptrv(buf_adr, u8, 0) = '-';
             buf_adr++;
             len++;
         }
@@ -122,7 +122,7 @@ trait Number {
         while(len > 0){
             len-=1;
             buf_adr-=1;
-			ptrv str_adr as u8 = ptrv buf_adr as u8;
+			@ptrv(str_adr, u8, 0) = @ptrv(buf_adr, u8, 0);
             str_adr+=1;
         }
 	    io:write_from_ptr(1, res, bytes) !? 0;

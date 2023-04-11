@@ -31,7 +31,7 @@ class Array[T] {
 			this.size = new_size;
 		}
 
-		ptrv (data + (length * sizeof(T))) as T = value;
+		@ptrv(data, T, length) = value;
 		this.length = length + 1;
 		@move value;
 
@@ -44,7 +44,7 @@ class Array[T] {
 		}
 
 		let data = this.data + (index * sizeof(T));
-		let value = ptrv data as T;
+		let value = @ptrv(data, T, 0);
 		@ref value;
 
 		return value;
@@ -55,9 +55,9 @@ class Array[T] {
 			throw out_of_range;
 		}
 		let data = this.data + (index * sizeof(T));
-		let current = ptrv data as T;
+		let current = @ptrv(data, T, 0);
 
-		ptrv data as T = value;
+		@ptrv(data, T, 0) = value;
 		@move value;
 	}
 
@@ -74,7 +74,7 @@ class Array[T] {
 		let mut adr = this.data;
 		let len = this.length;
 		while(index < len){
-			let x = ptrv adr as &T;
+			let x = @ptrv(adr, &T, 0);
 			if x == item {
 				return index;
 			}
@@ -89,11 +89,11 @@ class Array[T] {
 	func __iter_init() uxx {
 		return 0;
 	}
-	func __iter_get(key: uxx, next_key: uxx*) T !end {
+	func __iter_get(key: uxx, next_key: uxx[1]) T !end {
 		if key == this.length {
 			throw end;
 		}
-		ptrv next_key = key + 1;
+		next_key[0] = key + 1;
 		return this.get(key) !! throw end;;
 	}
 
@@ -103,7 +103,7 @@ class Array[T] {
 		let length = this.length;
 		while index < length {
 			let data = this.data + (index * sizeof(T));
-			let value = ptrv data as T;
+			let value = @ptrv(data, T, 0);
 			index++;
 		}
 

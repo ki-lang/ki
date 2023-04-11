@@ -150,23 +150,25 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             continue;
         }
         if (strcmp(token, "@") == 0) {
+            Chunk prev[1];
+            *prev = *fc->chunk_prev;
             tok(fc, token, true, false);
             if (strcmp(token, "move") == 0) {
                 Value *on = read_value(fc, alc, scope, true, 0, false);
                 on = usage_move_value(alc, fc, scope, on);
                 array_push(scope->ast, token_init(alc, tkn_statement, on));
                 tok_expect(fc, ";", false, true);
+                continue;
             } else if (strcmp(token, "ref") == 0 || strcmp(token, "deref") == 0) {
                 bool deref = strcmp(token, "deref") == 0;
                 Value *on = read_value(fc, alc, scope, true, 0, false);
                 Type *rett = on->rett;
                 class_ref_change(alc, scope, on, deref ? -1 : 1);
                 tok_expect(fc, ";", false, true);
+                continue;
             } else {
-                sprintf(fc->sbuf, "Unexpected token: '%s' after '@' | expected: move, ref, deref", token);
-                fc_error(fc);
+                *fc->chunk_prev = *prev;
             }
-            continue;
         }
 
         rtok(fc);

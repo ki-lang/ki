@@ -12,18 +12,18 @@ class String type:ptr async {
 	/////////////////////
 
 	func is_const() bool %inline {
-		return (ptrv (this -> ptr + sizeof(uxx)) as u8) == 1#u8;
+		return @ptrv(this -> ptr + sizeof(uxx), u8, 0) == 1#u8;
 	}
 
 	func bytes() uxx %inline {
-		return ptrv (this -> ptr) as uxx;
+		return @ptrv(this -> ptr, uxx, 0);
 	}
 
 	func rc() u32 %inline {
 		if(this.is_const()) { return 666; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 666.
 		let mut adr = this -> ptr;
 		adr += sizeof(uxx) + 4;
-		return ptrv adr as u32;
+		return @ptrv(adr, u32, 0);
 	}
 
 	func data() ptr %inline {
@@ -47,7 +47,8 @@ class String type:ptr async {
 		let new_data = new_str.data();
 		let mut pos : uxx = 0;
 		while pos < bytes {
-			let mut byte : u8 = ptrv (data + pos) as u8;
+			let byte : u8 = @ptrv(data + pos, u8, 0);
+
 			if byte > 127 {
 				let mut utf_chars : uxx = 2;
 				if (byte & 32) > 0 {
@@ -65,7 +66,7 @@ class String type:ptr async {
 			}
 			//
 			let is_upper = (byte > 64 && byte < 91) -> u8;
-			ptrv (new_data + pos) as u8 = byte + (is_upper * 32);
+			@ptrv(new_data + pos, u8, 0) = byte + (is_upper * 32);
 			pos++;
 		}
 		return new_str;
@@ -76,7 +77,7 @@ class String type:ptr async {
 		let bytes = len + 1;
 		let adr = mem:alloc(bytes);
 		mem:copy(this.data(), adr, len);
-		ptrv (adr + len) as u8 = 0;
+		@ptrv(adr + len, u8, 0) = 0;
 		return adr -> cstring;
 	}
 
@@ -87,12 +88,12 @@ class String type:ptr async {
 	func __ref() void {
 		if this.is_const() { return; }
 		let adr = (this -> ptr) + sizeof(uxx) + 4;
-		let rc = atomicop ptrv adr as u32 ADD 1;
+		let rc = atomicop @ptrv(adr, u32, 0) ADD 1;
 	}
 	func __deref() void {
 		if this.is_const() { return; }
 		let adr = (this -> ptr) + sizeof(uxx) + 4;
-		let rc = atomicop ptrv adr as u32 SUB 1;
+		let rc = atomicop @ptrv(adr, u32, 0) SUB 1;
 		if rc == 1 {
 			this.__free();
 		}
@@ -133,13 +134,13 @@ class String type:ptr async {
 	func __iter_init() uxx {
 		return 0;
 	}
-	func __iter_get(key: uxx, next_key: uxx*) u8 !end {
+	func __iter_get(key: uxx, next_key: uxx[1]) u8 !end {
 		if key == this.bytes() {
 			throw end;
 		}
-		ptrv next_key = key + 1;
+		next_key[0] = key + 1;
 		let data = this.data();
-		return ptrv (data + key) as u8;
+		return @ptrv(data + key, u8, 0);
 	}
 
 	/////////////////////
@@ -149,11 +150,11 @@ class String type:ptr async {
 	static func make_empty(size: uxx) .String {
 		let mut adr = mem:alloc(size + 8 + sizeof(uxx));
 		let adr_ = adr;
-		ptrv adr as uxx = size;
+		@ptrv(adr, uxx, 0) = size;
 		adr += sizeof(uxx);
-		ptrv adr as u8 = 0#u8;
+		@ptrv(adr, u8, 0) = 0#u8;
 		adr += 4;
-		ptrv adr as u32 = 1#u32;
+		@ptrv(adr, u32, 0) = 1#u32;
 		let res = adr_ -> .String;
 		return res;
 	}

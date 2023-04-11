@@ -61,6 +61,9 @@ char *llvm_type(LB *b, Type *type) {
         int bytes = type->bytes;
         char *num_type = llvm_type_int(b, bytes);
         str_append_chars(result, num_type);
+    } else if (type->type == type_arr) {
+        char *lof = llvm_type(b, type->array_of);
+        str_append_chars(result, lof);
     } else {
         printf("Type: %d\n", type->type);
         die("Unknown LLVM type (bug)");

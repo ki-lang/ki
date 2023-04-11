@@ -43,7 +43,7 @@ class ByteBuffer {
 			this.minimum_size(new_bytes);
 		}
 		let to : ptr = this.data + bytes;
-		ptrv to as u8 = byte;
+		@ptrv(to, u8, 0) = byte;
 		this.length = new_bytes;
 	}
 
@@ -69,7 +69,7 @@ class ByteBuffer {
 		let len = this.length;
 		let data = this.data;
 		while index < len {
-			let ch = ptrv (data + index) as u8;
+			let ch = @ptrv(data, u8, index);
 			if ch == byte {
 				return index;
 			}
@@ -83,7 +83,7 @@ class ByteBuffer {
 		let len = this.length;
 		let data = this.data;
 		while index < len {
-			let ch = ptrv (data + index) as u8;
+			let ch = @ptrv(data, u8, index);
 			if ch != byte {
 				return index;
 			}

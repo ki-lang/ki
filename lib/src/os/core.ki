@@ -24,7 +24,7 @@ func exit(code: i32) void {
 //	let res = Array<String>.make(argc);
 //	while(argc > 0) {
 //		argc--;
-//		let cstr = ptrv argv as cstring;
+//		let cstr = @ptrv(argv, cstring, 0);
 //		argv += sizeof(ptr);
 //		res.push(cstr.str());
 //	}

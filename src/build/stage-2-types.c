@@ -513,9 +513,10 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
         }
         stage_2_class_type_check(fc, func_iter, args, 1, NULL, false);
         Type *key_type = type_clone(alc, func_iter->rett);
-        key_type->ptr_depth++;
+        key_type = type_array_of(alc, fc->b, key_type, 1);
         key_type->take_ownership = false;
         key_type->strict_ownership = false;
+
         args[1] = func_iter->rett;
         args[2] = key_type;
         func = map_get(class->funcs, "__iter_get");
