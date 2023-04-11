@@ -54,7 +54,7 @@ class String type:ptr async {
 				let utf_chars : u8 = 2 + (b2 -> u8) + (b3 -> u8);
 				let fits = ((pos + utf_chars) < bytes) -> u8;
 				let utf_chars_safe = utf_chars * fits + (bytes - pos) * (fits == 0#u8) -> u8;
-				mem:copy(data + pos, new_data + pos, utf_chars);
+				mem:copy(data + pos, new_data + pos, utf_chars_safe);
 				pos += utf_chars;
 				continue;
 			}
