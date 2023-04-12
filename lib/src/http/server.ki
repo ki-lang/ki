@@ -35,7 +35,7 @@ class Server {
 		};
 	}
 
-	func .start(mut worker_count: i32 = 16) void {
+	func .start(mut worker_count: i32 = 32) void {
 
 		// SIGINT
         os:signal(os:SIG.hup, interrupt);
@@ -71,8 +71,7 @@ class Server {
 		let index_pool = utils:Pool[uxx].init(max_connections);
 		let nr = atomicop data.thread_nr ADD 1;
 
-		let nr_str = nr.str();
-		println("[-] Start thread: " + nr.str());
+		//println("[-] Start thread: " + nr.str());
 
 		let sock = data.socket;
 		let sock_fd = sock.fd;
