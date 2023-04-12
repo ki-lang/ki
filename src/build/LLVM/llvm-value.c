@@ -56,7 +56,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
         char nr[20];
         char partc_str[20];
-        sprintf(partc_str, "%d", partc);
+        sprintf(partc_str, "%d", partc * type->bytes);
         char *part_adr = llvm_ir_stack_alloc(b, partc_str, "i64");
         char *part_bc = llvm_ir_bitcast(b, part_adr, "i8*", "i8**");
         for (int i = 0; i < partc; i++) {
@@ -69,7 +69,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         }
 
         char valuec_str[20];
-        sprintf(valuec_str, "%d", valuec);
+        sprintf(valuec_str, "%d", valuec * type->bytes);
         char *value_adr = llvm_ir_stack_alloc(b, valuec_str, "i64");
         char *value_bc = llvm_ir_bitcast(b, value_adr, "i8*", "i8**");
         for (int i = 0; i < valuec; i++) {
