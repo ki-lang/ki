@@ -228,7 +228,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 sprintf(fc->sbuf, "You can only use 'ptrv' on pointer type values");
                 fc_error(fc);
             }
-            Type *type = read_type(fc, alc, scope, true, true, false);
+            Type *type = read_type(fc, alc, scope, true, true, true);
             // Index
             tok_expect(fc, ",", false, true);
             Value *index = read_value(fc, alc, scope, false, 0, false);

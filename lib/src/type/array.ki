@@ -44,7 +44,7 @@ class Array[T] {
 		}
 
 		let data = this.data;
-		let value = @ptrv(data, T, index);
+		let value = @ptrv(data, +T, index);
 		@ref value;
 
 		return value;
@@ -55,7 +55,7 @@ class Array[T] {
 			throw out_of_range;
 		}
 		let data = this.data;
-		let current = @ptrv(data, T, index);
+		let current = @ptrv(data, +T, index);
 
 		@ptrv(data, T, index) = value;
 		@move value;
@@ -102,7 +102,7 @@ class Array[T] {
 		let length = this.length;
 		let data = this.data;
 		while index < length {
-			let value = @ptrv(data, T, index);
+			let value = @ptrv(data, +T, index);
 			index++;
 		}
 
