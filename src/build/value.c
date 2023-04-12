@@ -151,6 +151,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         tok_expect(fc, "(", true, false);
         Type *type = read_type(fc, alc, scope, false, true, false);
         tok_expect(fc, ")", false, true);
+        v = vgen_vint(alc, type->bytes, type_gen(b, alc, "i32"), false);
+    } else if (strcmp(token, "sizeof_class") == 0) {
+        tok_expect(fc, "(", true, false);
+        Type *type = read_type(fc, alc, scope, false, true, false);
+        tok_expect(fc, ")", false, true);
         int size = type->bytes;
         if (type->type == type_struct) {
             size = type->class->size;
