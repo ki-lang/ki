@@ -102,7 +102,7 @@ struct PollResult {
 		if(index >= this.count) {
 			return null;
 		}
-		let adr : ptr = this.events + (index * sizeof(PollEvent));
+		let adr : ptr = this.events + (index * sizeof_class(PollEvent));
 		return adr -> PollEvent;
 	}
 }

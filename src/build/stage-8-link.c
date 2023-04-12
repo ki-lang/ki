@@ -16,6 +16,7 @@
 #include <llvm-c/Transforms/PassBuilder.h>
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 #include <llvm-c/Transforms/Scalar.h>
+#include <llvm-c/lto.h>
 
 void llvm_init(Build *b);
 void stage_8_compile_o(Build *b, Array *ir_files, char *path_o);
