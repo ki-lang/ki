@@ -156,11 +156,12 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         tok_expect(fc, "(", true, false);
         Type *type = read_type(fc, alc, scope, false, true, false);
         tok_expect(fc, ")", false, true);
-        int size = type->bytes;
-        if (type->type == type_struct) {
-            size = type->class->size;
+        Class *class = type->class;
+        if (!class) {
+            sprintf(fc->sbuf, "The type has no class associated with it", token);
+            fc_error(fc);
         }
-        v = vgen_vint(alc, size, type_gen(b, alc, "i32"), false);
+        v = vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false);
         //
     } else if (strcmp(token, "@") == 0) {
         tok(fc, token, true, false);
