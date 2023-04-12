@@ -407,7 +407,7 @@ char *llvm_ir_string(LB *b, char *body) {
     while (index < len) {
         unsigned char ch = body[index];
         index++;
-        if (ch > 32 && ch < 127) {
+        if (ch > 34 && ch < 127 && ch != 92) {
             str_append_char(ir, ch);
             continue;
         }

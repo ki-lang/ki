@@ -1,0 +1,55 @@
+
+header "ki_os" as kos;
+
+use mem;
+
+func open(path: +String, read: bool, write: bool) .FileStream !err_open {
+    let fd = kos.ki_os__file_open(path.data(), path.bytes() -> i32, read, write);
+    if(fd == -1) {
+        throw err_open;
+    }
+    return FileStream{ path: path, fd: fd, can_read: read, can_write: write };
+}
+
+class FileStream {
+    readonly path: String;
+    private fd: i32 ;
+    private can_read: bool;
+    private can_write: bool;
+    readonly reading: bool = true;
+
+    func read(bytes: uxx = 10240) String !read_err {
+        if(this.can_read == false){
+            return "";
+        }
+        if(this.reading == false) {
+            return "";
+        }
+        let buf = stack_alloc(bytes);
+        let rcount = kos.ki_os__fd_read(this.fd, buf, bytes);
+        if(rcount < 0){
+            throw read_err;
+        }
+
+		rep rcount = rcount -> uxx;
+        let str = String.make_empty(rcount);
+        mem:copy(buf, str.data(), rcount);
+
+        if(rcount < bytes) {
+            this.close();
+            this.reading = false;
+        }
+
+        return str;
+    }
+
+    func close() void {
+        if(this.reading) {
+            let check = kos.ki_os__fd_close(this.fd);
+        }
+    }
+
+    func __before_free() void {
+        this.close();
+    }
+}

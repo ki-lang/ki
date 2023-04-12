@@ -3,6 +3,8 @@
 
 Feature todo list in order:
 
+- isset keyword
+- compare errors
 - dont allow class_pa of strict type values, swap token
 - Calling functions using named arguments
 - Package manager
@@ -14,8 +16,8 @@ Feature todo list in order:
 - Custom allocators | MyClass{...} @my_alloc
 - --watch param to watch for file changes
 - vscode extension
-- Async library
 - Cross compiling
+- Async library
 - __leave_scope (code executed when a variable leaves its scope)
 - Anonymous functions
 

@@ -1,5 +1,6 @@
 {
 	"namespaces": {
+		"fs": "src/fs",
 		"io": "src/io",
 		"http": "src/http",
 		"mem": "src/mem",

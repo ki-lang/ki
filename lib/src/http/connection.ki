@@ -2,14 +2,13 @@
 use io;
 use net;
 use utils;
+use fs;
 
 class Connection {
 	netcon: net:Connection;
 	fd: i32;
 	uploads: ?Array[String] = null;
 	read_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
-	out_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
-	out_pos: uxx = 0;
 
 	// Parsing
 	phase: uxx = 0;
@@ -20,6 +19,11 @@ class Connection {
 	request_method: String = "GET";
 	request_path: String = "/";
 	request_protocol: String = "HTTP/1.1";
+
+	// Response
+	out_file: ?fs:FileStream = null;
+	out_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
+	out_pos: uxx = 0;
 
 	func parse_headers() void !sent_error {
 		if this.headers_parsed {
@@ -109,25 +113,87 @@ class Connection {
 		this.parse_pos = pos;
 	}
 
+	func send_file(stream: +fs:FileStream) void {
+
+		let out = this.out_buf;
+		let fsize = fs:size(stream.path);
+
+		this.out_file = stream;
+
+		out.append_str("HTTP/1.1 200 OK\r\n");
+		out.append_str("Content-Type: image/png\r\n");
+		out.append_str("Content-Length: " + fsize.str() + "\r\n");
+
+		//let mut exts = g_inline_exts;
+		//ifnull exts set {
+		//	let exts = Array<String>.make(20);
+		//	exts.push("png");
+		//	exts.push("jpg");
+		//	exts.push("jpeg");
+		//	exts.push("bmp");
+		//	exts.push("gif");
+		//	exts.push("ico");
+		//	exts.push("mp3");
+		//	exts.push("mp4");
+		//	exts.push("js");
+		//	g_inline_exts = exts;
+		//	return exts;
+		//};
+
+		//let inline_mime = exts.contains(ext);
+		// Browsers use inline as their default 
+		// header += "Content-Disposition: inline\r\n";
+
+			out.append_str("Content-Disposition: attachment; filename=\"test.avi\"\r\n");
+		//if(inline_mime == false) {
+			//out.append_str("Content-Disposition: attachment; filename=\"" + fn + "\"\r\n");
+		//}
+
+		out.append_str("\r\n");
+
+		this.send_response_bytes();
+	}
+
 	func respond(resp: Response) void {
 		resp.compile(this.out_buf);
 		this.send_response_bytes();
 	}
 
 	func has_data_to_send() bool {
-		return this.out_pos < this.out_buf.length;
+		if this.out_pos < this.out_buf.length {
+			return true;
+		}
+		let file = this.out_file;
+		if file != null {
+			let file = file -> fs:FileStream; // TODO replace using isset
+			if file.reading {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// Returns 'true' if all bytes were sent
-	func send_response_bytes() bool {
+	func send_response_bytes() void {
+
 		let out = this.out_buf;
+
+		// Check file stream
+		let file = this.out_file;
+		if file != null {
+			let file = file -> fs:FileStream; // TODO replace using isset
+			if file.reading {
+				let part = file.read(65535) !? "";
+				out.append_str(part);
+			}
+		}
+
 		let pos = this.out_pos;
 		let mut bytes = out.length - pos;
 		if bytes > 0 {
 			let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) !? 0;
 			this.out_pos += wbytes;
 		}
-		return this.out_pos == out.length;
 	}
 }
 

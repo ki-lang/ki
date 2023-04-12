@@ -1,10 +1,11 @@
 
 header "ki_os" as kos;
 
-use ki:os;
-use ki:net;
-use ki:io;
-use ki:utils;
+use os;
+use net;
+use io;
+use utils;
+use fs;
 
 class ServerData async {
 	max_connections: uxx;
@@ -218,9 +219,9 @@ class Server {
 			if (rcvd == -2){
 				// EAGAIN
 				return;
-			} else if (rcvd < 0){
+			} else if (rcvd < 0) {
 				throw read_error;
-			} else if (rcvd == 0){
+			} else if (rcvd == 0) {
 				break;
 			}
 
@@ -239,12 +240,20 @@ class Server {
 			throw sent_error;
 		}
 
+		//let stream = fs:open("/mnt/c/www/ki/debug/test.avi", true, false) !! {
+		//	println("[x] File not found");
+		//	http_con.respond(Response.error(404));
+		//	throw sent_error;
+		//};
+		//http_con.send_file(stream);
+
 		let resp = handler(Request{
 			http_con: http_con,
 			headers: http_con.headers,
 			method: http_con.request_method,
 			path: http_con.request_path,
 		});
+
 		http_con.respond(resp);
 	}
 }
