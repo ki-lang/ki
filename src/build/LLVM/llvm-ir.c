@@ -425,3 +425,64 @@ char *llvm_ir_string(LB *b, char *body) {
     sprintf(fc->sbuf, "getelementptr inbounds ([%d x i8], [%d x i8]* %s, i64 0, i64 0)", blen, blen, var);
     return dups(b->alc, fc->sbuf);
 }
+
+char *llvm_ir_stack_alloc(LB *b, char *amount, char *amount_type) {
+    //
+    Str *ir = llvm_b_ir(b);
+    LLVMFunc *lfunc = b->lfunc;
+
+    if (lfunc->stack_save_vn == NULL) {
+        b->use_stack_save = true;
+        char *save_vn = llvm_var(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, save_vn);
+        str_append_chars(ir, " = call i8* @llvm.stacksave()\n");
+        lfunc->stack_save_vn = save_vn;
+    }
+
+    char *var = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, var);
+    str_append_chars(ir, " = alloca i8, ");
+    str_append_chars(ir, amount_type);
+    str_append_chars(ir, " ");
+    str_append_chars(ir, amount);
+    str_append_chars(ir, ", align 8\n");
+
+    return var;
+}
+char *llvm_ir_gep(LB *b, char *type, char *lon, char *index, char *index_type) {
+    //
+    Str *ir = llvm_b_ir(b);
+    char *result = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, result);
+    str_append_chars(ir, " = getelementptr inbounds ");
+    str_append_chars(ir, type);
+    str_append_chars(ir, ", ");
+    str_append_chars(ir, type);
+    str_append_chars(ir, "* ");
+    str_append_chars(ir, lon);
+    str_append_chars(ir, ", ");
+    str_append_chars(ir, index_type);
+    str_append_chars(ir, " ");
+    str_append_chars(ir, index);
+    str_append_chars(ir, "\n");
+
+    return result;
+}
+
+char *llvm_ir_bitcast(LB *b, char *value, char *from_type, char *to_type) {
+    Str *ir = llvm_b_ir(b);
+    char *var = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, var);
+    str_append_chars(ir, " = bitcast ");
+    str_append_chars(ir, from_type);
+    str_append_chars(ir, " ");
+    str_append_chars(ir, value);
+    str_append_chars(ir, " to ");
+    str_append_chars(ir, to_type);
+    str_append_chars(ir, "\n");
+    return var;
+}

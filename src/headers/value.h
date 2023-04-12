@@ -23,6 +23,7 @@ typedef struct IRLoad IRLoad;
 typedef struct ValueThenIRValue ValueThenIRValue;
 typedef struct ValueAndExec ValueAndExec;
 typedef struct VIncrDecr VIncrDecr;
+typedef struct VFString VFString;
 
 struct Value {
     int type;
@@ -112,6 +113,10 @@ struct FCallOr {
     Scope *else_scope;
     Scope *deref_scope;
     Value *value;
+};
+struct VFString {
+    Array *parts;
+    Array *values;
 };
 
 #endif

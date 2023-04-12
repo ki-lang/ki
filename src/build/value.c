@@ -31,9 +31,39 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         skip_move = true;
         //
     } else if (strcmp(token, "\"") == 0) {
+        Chunk before_str[1];
+        *before_str = *fc->chunk;
         Str *str = read_string(fc);
         char *body = str_to_chars(alc, str);
-        v = value_init(alc, v_string, body, type_gen(fc->b, alc, "String"));
+        if (get_char(fc, 0) == '{') {
+            // Format string
+            *fc->chunk = *before_str;
+            Array *parts = read_string_chunks(alc, fc);
+
+            tok_expect(fc, "{", true, false);
+
+            int valuec = parts->length - 1;
+            Array *values = array_make(alc, valuec);
+            for (int i = 0; i < valuec; i++) {
+                if (i > 0) {
+                    tok_expect(fc, ",", false, true);
+                }
+                Value *val = read_value(fc, alc, scope, false, 0, false);
+                if (!type_is_string(val->rett, b)) {
+                    sprintf(fc->sbuf, "Format string values must return a string");
+                    fc_error(fc);
+                }
+                array_push(values, val);
+            }
+            VFString *vfs = al(alc, sizeof(VFString));
+            vfs->parts = parts;
+            vfs->values = values;
+            v = value_init(alc, v_fstring, vfs, type_gen(fc->b, alc, "String"));
+
+            tok_expect(fc, "}", false, true);
+        } else {
+            v = value_init(alc, v_string, body, type_gen(fc->b, alc, "String"));
+        }
         //
     } else if (strcmp(token, "'") == 0) {
         char ch = get_char(fc, 0);
@@ -158,7 +188,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         tok_expect(fc, ")", false, true);
         Class *class = type->class;
         if (!class) {
-            sprintf(fc->sbuf, "The type has no class associated with it", token);
+            sprintf(fc->sbuf, "The type has no class associated with it");
             fc_error(fc);
         }
         v = vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false);

@@ -216,6 +216,12 @@ Str *read_string(Fc *fc) {
                 add = '\f';
             } else if (add == 'b') {
                 add = '\b';
+            } else if (add == 'v') {
+                add = '\v';
+            } else if (add == 'f') {
+                add = '\f';
+            } else if (add == 'a') {
+                add = '\a';
             }
             i++;
 
@@ -241,4 +247,75 @@ Str *read_string(Fc *fc) {
     chunk->line = line;
 
     return buf;
+}
+
+Array *read_string_chunks(Allocator *alc, Fc *fc) {
+    //
+    Array *result = array_make(alc, 4);
+    Str *buf = fc->b->str_buf;
+    str_clear(buf);
+
+    Chunk *chunk = fc->chunk;
+    char *data = chunk->content;
+    int i = chunk->i;
+    int line = chunk->line;
+    int len = chunk->length;
+    while (i < len) {
+        char ch = *(data + i);
+        i++;
+
+        if (ch == '\\') {
+            if (i == len) {
+                break;
+            }
+            char add = *(data + i);
+            if (add == 'n') {
+                add = '\n';
+            } else if (add == 'r') {
+                add = '\r';
+            } else if (add == 't') {
+                add = '\t';
+            } else if (add == 'f') {
+                add = '\f';
+            } else if (add == 'b') {
+                add = '\b';
+            } else if (add == 'v') {
+                add = '\v';
+            } else if (add == 'f') {
+                add = '\f';
+            } else if (add == 'a') {
+                add = '\a';
+            }
+            i++;
+
+            str_append_char(buf, add);
+            continue;
+        }
+
+        if (ch == '"') {
+            array_push(result, str_to_chars(alc, buf));
+            str_clear(buf);
+            break;
+        }
+
+        if (ch == '%') {
+            array_push(result, str_to_chars(alc, buf));
+            str_clear(buf);
+            continue;
+        }
+
+        if (is_newline(ch))
+            line++;
+        str_append_char(buf, ch);
+    }
+
+    if (i == len) {
+        sprintf(fc->sbuf, "Missing end of string");
+        fc_error(fc);
+    }
+
+    chunk->i = i;
+    chunk->line = line;
+
+    return result;
 }

@@ -50,7 +50,9 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr * o
 char *llvm_ir_func_ptr(LB *b, Func *func);
 char *llvm_ir_cast(LB *b, char *lval, Type *from_type, Type *to_type);
 char *llvm_ir_string(LB *b, char *body);
-void llvm_ir_RC(LB *b, char *on, Type *type, int amount, bool free_check);
+char *llvm_ir_stack_alloc(LB *b, char *amount, char *amount_type);
+char *llvm_ir_gep(LB *b, char *type, char *lon, char *index, char *index_type);
+char *llvm_ir_bitcast(LB *b, char *value, char *from_type, char *to_type);
 
 struct LB {
     Fc *fc;

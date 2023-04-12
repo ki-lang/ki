@@ -3,7 +3,6 @@
 
 Feature todo list in order:
 
-- format string
 - dont allow class_pa of strict type values, swap token
 - Calling functions using named arguments
 - Package manager
@@ -26,6 +25,8 @@ Feature todo list in order:
 
 ## Done
 
+- format string
+- http server
 - __eq
 - @vs { ... } (value-scopes)
 - __before_free

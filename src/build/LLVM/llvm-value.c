@@ -42,6 +42,56 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_string) {
         return llvm_ir_string(b, v->item);
     }
+    if (v->type == v_fstring) {
+        VFString *vfs = v->item;
+        Class *class = v->rett->class;
+        Array *parts = vfs->parts;
+        Array *values = vfs->values;
+        int partc = parts->length;
+        int valuec = values->length;
+
+        Type *type = v->rett;
+        char *ltype = llvm_type(b, v->rett);
+        int base_len = 0;
+
+        char nr[20];
+        char partc_str[20];
+        sprintf(partc_str, "%d", partc);
+        char *part_adr = llvm_ir_stack_alloc(b, partc_str, "i64");
+        char *part_bc = llvm_ir_bitcast(b, part_adr, "i8*", "i8**");
+        for (int i = 0; i < partc; i++) {
+            sprintf(nr, "%d", i);
+            char *part_gep = llvm_ir_gep(b, ltype, part_bc, nr, "i64");
+            char *str = array_get_index(parts, i);
+            char *lstr = llvm_ir_string(b, str);
+            llvm_ir_store(b, type, part_gep, lstr);
+            base_len += strlen(str);
+        }
+
+        char valuec_str[20];
+        sprintf(valuec_str, "%d", valuec);
+        char *value_adr = llvm_ir_stack_alloc(b, valuec_str, "i64");
+        char *value_bc = llvm_ir_bitcast(b, value_adr, "i8*", "i8**");
+        for (int i = 0; i < valuec; i++) {
+            sprintf(nr, "%d", i);
+            char *value_gep = llvm_ir_gep(b, ltype, value_bc, nr, "i64");
+            char *lvalue = llvm_value(b, scope, array_get_index(values, i));
+            llvm_ir_store(b, type, value_gep, lvalue);
+        }
+
+        Func *func = map_get(class->funcs, "format");
+        Array *format_values = array_make(alc, func->args->length + 1);
+        array_push(format_values, vgen_vint(alc, base_len, type_gen(build, alc, "uxx"), false));
+        array_push(format_values, value_init(alc, v_ir_raw_val, part_adr, type_gen(build, alc, "ptr")));
+        array_push(format_values, vgen_vint(alc, partc, type_gen(build, alc, "uxx"), false));
+        array_push(format_values, value_init(alc, v_ir_raw_val, value_adr, type_gen(build, alc, "ptr")));
+
+        Array *lvals = llvm_ir_fcall_args(b, scope, format_values);
+        char *on = llvm_ir_func_ptr(b, func);
+        char *res = llvm_ir_func_call(b, on, lvals, ltype, NULL);
+
+        return res;
+    }
     if (v->type == v_null) {
         return "null";
     }
@@ -448,6 +498,9 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         IRAssignVal *item = v->item;
         return item->ir_value;
     }
+    if (v->type == v_ir_raw_val) {
+        return v->item;
+    }
     if (v->type == v_ir_load) {
         Value *val = v->item;
         char *lval = llvm_value(b, scope, val);
@@ -523,29 +576,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char *val = llvm_value(b, scope, item);
         Type *type = item->rett;
         char *ltype = llvm_type(b, type);
-
-        Str *ir = llvm_b_ir(b);
-        LLVMFunc *lfunc = b->lfunc;
-
-        if (lfunc->stack_save_vn == NULL) {
-            b->use_stack_save = true;
-            char *save_vn = llvm_var(b);
-            str_append_chars(ir, "  ");
-            str_append_chars(ir, save_vn);
-            str_append_chars(ir, " = call i8* @llvm.stacksave()\n");
-            lfunc->stack_save_vn = save_vn;
-        }
-
-        char *var = llvm_var(b);
-        str_append_chars(ir, "  ");
-        str_append_chars(ir, var);
-        str_append_chars(ir, " = alloca i8, ");
-        str_append_chars(ir, ltype);
-        str_append_chars(ir, " ");
-        str_append_chars(ir, val);
-        str_append_chars(ir, ", align 8\n");
-
-        return var;
+        return llvm_ir_stack_alloc(b, val, ltype);
     }
     if (v->type == v_atomicop) {
         VOp *vop = v->item;

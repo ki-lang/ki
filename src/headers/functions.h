@@ -85,6 +85,7 @@ void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space);
 char get_char(Fc *fc, int index);
 void read_hex(Fc *fc, char *token);
 Str *read_string(Fc *fc);
+Array *read_string_chunks(Allocator *alc, Fc *fc);
 
 // Skips
 void skip_body(Fc *fc, char until_ch);
@@ -138,6 +139,7 @@ int type_get_size(Build *b, Type *type);
 bool type_is_void(Type *type);
 bool type_is_ptr(Type *type, Build *b);
 bool type_is_bool(Type *type, Build *b);
+bool type_is_string(Type *type, Build *b);
 Type *type_gen_class(Allocator *alc, Class *class);
 Type *type_gen_fptr(Allocator *alc, Func *func);
 Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed);

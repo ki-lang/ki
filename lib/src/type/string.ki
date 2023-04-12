@@ -147,4 +147,32 @@ class String type:ptr async {
 		return res;
 	}
 
+	static func format(baselen: uxx, parts: ptr, partc: uxx, values: ptr) .String {
+		let mut bytes = baselen;
+		let valuec = partc - 1;
+		let mut i : uxx = 0;
+		while i < valuec {
+			let val = @ptrv(values, String, i);
+			bytes += val.bytes();
+			i++;
+		}
+		let result = String.make_empty(bytes);
+		let mut data = result.data();
+		i = 0;
+		while i < partc {
+			if i > 0 {
+				let val = @ptrv(values, String, i - 1);
+				let val_bytes = val.bytes();
+				mem:copy(val.data(), data, val_bytes);
+				data += val_bytes;
+			}
+			let part = @ptrv(parts, String, i);
+			let part_bytes = part.bytes();
+			mem:copy(part.data(), data, part_bytes);
+			data += part_bytes;
+			i++;
+		}
+		return result;
+	}
+
 }

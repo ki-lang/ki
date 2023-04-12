@@ -65,6 +65,7 @@ enum TOKENTYPE {
 
 enum VALUETYPE {
     v_string,
+    v_fstring,
     v_vint,
     v_float,
     v_ptrv,
@@ -85,6 +86,7 @@ enum VALUETYPE {
     v_upref_value,
     v_ir_val,
     v_ir_assign_val,
+    v_ir_raw_val,
     v_ir_load,
     v_global,
     v_value_and_exec,

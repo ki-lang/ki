@@ -54,6 +54,10 @@ bool type_is_bool(Type *type, Build *b) {
     //
     return type->class == ki_get_class(b, "type", "bool");
 }
+bool type_is_string(Type *type, Build *b) {
+    //
+    return type->class == ki_get_class(b, "type", "String");
+}
 
 Type *type_gen_class(Allocator *alc, Class *class) {
     //

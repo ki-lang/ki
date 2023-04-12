@@ -1,6 +1,8 @@
 
 header "ki_os" as os;
 
+use mem;
+
 func print(str: String) void {
 	let c = os.ki_os__fd_write(1, str.data(), str.bytes());
 }
