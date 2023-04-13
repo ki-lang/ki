@@ -20,7 +20,7 @@ class Server {
 	data: ServerData;
 	port: u16;
 
-	static func init(host: +String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
+	static func init(host: >String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
 
 		let max_connections : uxx = 10000;
 		let socket = net:Socket.init_tcp(host, port) !! throw socket_init_error;;
@@ -209,7 +209,7 @@ class Server {
 		}
 	}
 
-	static func respond(data: ServerData, http_con: +Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+	static func respond(data: ServerData, http_con: >Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
 		let buf_size : i32 = 65535;
 		let read_buf = http_con.read_buf;
@@ -240,7 +240,9 @@ class Server {
 			throw sent_error;
 		}
 
-		//let static_dirs = data.static_dirs;
+		each data.static_dirs as dir {
+			let x = dir;
+		}
 
 		//let stream = fs:open("/mnt/c/www/ki/debug/test.avi", true, false) !! {
 		//	println("[x] File not found");
@@ -259,7 +261,7 @@ class Server {
 		http_con.respond(resp);
 	}
 
-    func add_static_dir(path: +String) void {
+    func add_static_dir(path: >String) void {
         println("[+] Add static dir: " + path);
         this.data.static_dirs.push(path + "");
     }

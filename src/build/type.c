@@ -137,18 +137,22 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, true);
     }
 
+    // if (is_arg && strcmp(token, "&") == 0) {
+    //     take_ownership = false;
+    //     tok(fc, token, true, false);
+    if (is_arg) {
+        if (strcmp(token, ">") == 0) {
+            take_ownership = true;
+            tok(fc, token, true, false);
+        }
+    }
+
     if (strcmp(token, "?") == 0) {
         nullable = true;
         tok(fc, token, true, false);
     }
-    if (strcmp(token, "&") == 0) {
-        take_ownership = false;
-        tok(fc, token, true, false);
-    } else if (strcmp(token, "+") == 0) {
-        take_ownership = true;
-        tok(fc, token, true, false);
-    } else if (strcmp(token, ".") == 0) {
-        take_ownership = true;
+
+    if (strcmp(token, ".") == 0) {
         strict_ownership = true;
         tok(fc, token, true, false);
     }

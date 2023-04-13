@@ -16,7 +16,7 @@ class Array[T] {
 		};
 	}
 
-	func push(value: +T) uxx {
+	func push(value: >T) uxx {
 		let size = this.size;
 		let length = this.length;
 		let mut data = this.data;
@@ -44,18 +44,18 @@ class Array[T] {
 		}
 
 		let data = this.data;
-		let value = @ptrv(data, +T, index);
+		let value = @ptrv(data, >T, index);
 		@ref value;
 
 		return value;
 	}
 
-	func set(index: uxx, value: +T) void !out_of_range {
+	func set(index: uxx, value: >T) void !out_of_range {
 		if index >= this.length {
 			throw out_of_range;
 		}
 		let data = this.data;
-		let current = @ptrv(data, +T, index);
+		let current = @ptrv(data, >T, index);
 
 		@ptrv(data, T, index) = value;
 		@move value;
@@ -74,7 +74,7 @@ class Array[T] {
 		let mut adr = this.data;
 		let len = this.length;
 		while(index < len){
-			let x = @ptrv(adr, &T, index);
+			let x = @ptrv(adr, T, index);
 			if x == item {
 				return index;
 			}
@@ -102,7 +102,7 @@ class Array[T] {
 		let length = this.length;
 		let data = this.data;
 		while index < length {
-			let value = @ptrv(data, +T, index);
+			let value = @ptrv(data, >T, index);
 			index++;
 		}
 
