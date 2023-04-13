@@ -11,6 +11,7 @@ Value *value_init(Allocator *alc, int type, void *item, Type *rett) {
     v->type = type;
     v->item = item;
     v->rett = rett;
+    v->issets = NULL;
 
     return v;
 }
@@ -176,6 +177,26 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         type_check(fc, on->rett, right->rett);
 
         v = vgen_atomicop(alc, on, right, op);
+
+    } else if (strcmp(token, "isset") == 0) {
+
+        tok_expect(fc, "(", true, false);
+        Value *on = read_value(fc, alc, scope, false, 0, false);
+
+        if (!on->rett->nullable) {
+            sprintf(fc->sbuf, "You can only use isset on nullable values");
+            fc_error(fc);
+        }
+
+        tok_expect(fc, ")", false, true);
+
+        v = value_init(alc, v_isset, on, type_gen(b, alc, "bool"));
+
+        if (on->type == v_decl) {
+            Array *issets = array_make(alc, 4);
+            v->issets = issets;
+            array_push(issets, on);
+        }
 
     } else if (strcmp(token, "sizeof") == 0) {
         tok_expect(fc, "(", true, false);
@@ -628,14 +649,20 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
     //
     char *token = fc->token;
 
+    if (idf->type == idf_decl_type_overwrite) {
+        DeclOverwrite *dov = idf->item;
+        Decl *decl = dov->decl;
+        UsageLine *ul = usage_line_get(scope, decl);
+        if (ul)
+            ul->read_after_move = true;
+        return value_init(alc, v_decl, decl, dov->type);
+    }
     if (idf->type == idf_decl) {
         Decl *decl = idf->item;
         UsageLine *ul = usage_line_get(scope, decl);
-        // if (ul->moves > 0) {
         if (ul)
             ul->read_after_move = true;
-        // }
-        return value_init(alc, v_decl, idf->item, decl->type);
+        return value_init(alc, v_decl, decl, decl->type);
     }
 
     if (idf->type == idf_global) {

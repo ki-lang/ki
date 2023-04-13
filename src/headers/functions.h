@@ -116,6 +116,7 @@ void name_taken_check(Fc *fc, Scope *scope, char *name);
 Scope *scope_find(Scope *scope, int type);
 Scope *scope_find_return_scope(Scope *scope);
 bool scope_contains(Scope *parent_scope, Scope *scope);
+void scope_apply_issets(Allocator *alc, Scope *scope, Array *issets);
 
 // Func
 Func *func_init(Allocator *alc);

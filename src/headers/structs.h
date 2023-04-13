@@ -21,6 +21,7 @@ typedef struct ClassProp ClassProp;
 typedef struct Func Func;
 typedef struct Enum Enum;
 typedef struct Decl Decl;
+typedef struct DeclOverwrite DeclOverwrite;
 typedef struct Var Var;
 typedef struct Arg Arg;
 typedef struct UsageLine UsageLine;
@@ -311,6 +312,10 @@ struct Decl {
     char *llvm_val;
     bool is_mut;
     bool is_arg;
+};
+struct DeclOverwrite {
+    Type *type;
+    Decl *decl;
 };
 struct Var {
     Decl *decl;

@@ -140,7 +140,28 @@ Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op) 
     item->left = left;
     item->right = right;
     Type *rett = type_gen(b, alc, "bool");
-    return value_init(alc, v_and_or, item, rett);
+
+    Value *result = value_init(alc, v_and_or, item, rett);
+
+    // merge issets when using '&&'
+    if (op == op_and && (left->issets || right->issets)) {
+        Array *issets = array_make(alc, 4);
+        if (left->issets) {
+            Array *prev = left->issets;
+            for (int i = 0; i < prev->length; i++) {
+                array_push(issets, array_get_index(prev, i));
+            }
+        }
+        if (right->issets) {
+            Array *prev = right->issets;
+            for (int i = 0; i < prev->length; i++) {
+                array_push(issets, array_get_index(prev, i));
+            }
+        }
+        result->issets = issets;
+    }
+
+    return result;
 }
 
 Value *vgen_ir_val(Allocator *alc, Value *value, Type *rett) {

@@ -20,6 +20,7 @@ enum IDFOR {
     idf_fc,
     idf_global,
     idf_type,
+    idf_decl_type_overwrite,
 };
 
 enum SCOPETYPE {
@@ -96,6 +97,7 @@ enum VALUETYPE {
     v_stack_alloc,
     v_scope,
     v_array_item,
+    v_isset,
 };
 
 enum OPTYPE {

@@ -644,6 +644,23 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char *result = llvm_assign_value(b, scope, v);
         return llvm_ir_load(b, item_type, result);
     }
+    if (v->type == v_isset) {
+        Value *on = v->item;
+        char *ltype = llvm_type(b, on->rett);
+        char *lval = llvm_value(b, scope, on);
+
+        char *i1 = llvm_ir_notnull_i1(b, ltype, lval);
+
+        Str *ir = llvm_b_ir(b);
+        char *var = llvm_var(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, var);
+        str_append_chars(ir, " = sext i1 ");
+        str_append_chars(ir, i1);
+        str_append_chars(ir, " to i8\n");
+
+        return var;
+    }
 
     return "???";
 }

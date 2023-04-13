@@ -246,7 +246,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         Type *rett = val->rett;
         Class *class = rett->class;
 
-        if (!type_is_void(val->rett) && (class->must_deref || class->must_ref)) {
+        if (!type_is_void(rett) && class && (class->must_deref || class->must_ref)) {
             sprintf(fc->sbuf, "Statement returns a value, but no variable to store it in");
             fc_error(fc);
         }
@@ -471,6 +471,8 @@ void token_if(Allocator *alc, Fc *fc, Scope *scope) {
     Scope *sub = usage_scope_init(alc, scope, sct_default);
     Scope *else_scope = usage_scope_init(alc, scope, sct_default);
 
+    scope_apply_issets(alc, sub, cond->issets);
+
     read_ast(fc, sub, single);
 
     tok(fc, token, false, true);
@@ -516,6 +518,8 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
     }
 
     tok_expect(fc, "{", false, true);
+
+    scope_apply_issets(alc, sub, cond->issets);
 
     read_ast(fc, sub, false);
 

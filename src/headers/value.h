@@ -29,6 +29,7 @@ struct Value {
     int type;
     void *item;
     Type *rett;
+    Array *issets;
 };
 
 struct VInt {

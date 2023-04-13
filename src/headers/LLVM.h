@@ -35,6 +35,7 @@ void llvm_write_ast(LB *b, Scope *scope);
 
 // IR
 char *llvm_ir_isnull_i1(LB *b, char *ltype, char *val);
+char *llvm_ir_notnull_i1(LB *b, char *ltype, char *val);
 char *llvm_ir_iszero_i1(LB *b, char *ltype, char *val);
 char *llvm_ir_cmp(LB *b, char *ltype, char *val, char *cmd, char *with);
 void llvm_ir_jump(Str *ir, LLVMBlock *block);

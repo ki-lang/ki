@@ -164,8 +164,7 @@ class Connection {
 			return true;
 		}
 		let file = this.out_file;
-		if file != null {
-			let file = file -> fs:FileStream; // TODO replace using isset
+		if isset(file) {
 			if file.reading {
 				return true;
 			}
@@ -180,8 +179,7 @@ class Connection {
 
 		// Check file stream
 		let file = this.out_file;
-		if file != null {
-			let file = file -> fs:FileStream; // TODO replace using isset
+		if isset(file) {
 			if file.reading {
 				let part = file.read(65535) !? "";
 				out.append_str(part);
