@@ -504,17 +504,16 @@ char *type_to_str(Type *t, char *res) {
     //     strcat(res, "ptr");
     //     return res;
     // }
-    if (t->nullable) {
-        strcat(res, "?");
-    }
     if (type_tracks_ownership(t)) {
         if (!t->take_ownership) {
             strcat(res, "&");
-        } else if (t->strict_ownership) {
-            strcat(res, ".");
-        } else {
-            strcat(res, "+");
         }
+    }
+    if (t->nullable) {
+        strcat(res, "?");
+    }
+    if (t->strict_ownership) {
+        strcat(res, ".");
     }
 
     if (t->class) {
