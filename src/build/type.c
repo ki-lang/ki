@@ -275,7 +275,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     type->take_ownership = take_ownership;
-    if (strict_ownership_overwrite)
+    if (strict_ownership || strict_ownership_overwrite)
         type->strict_ownership = strict_ownership;
 
     if (async) {
