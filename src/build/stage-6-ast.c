@@ -376,7 +376,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
 
         if (scope == fscope) {
             if (val->rett->strict_ownership && !frett->strict_ownership && func->only_returns_strict) {
-                sprintf(fc->sbuf, "💡 If you only return strict ownership values then the function return type should be a strict ownership type. You can make a type have strict ownership by placing '.' in front of it. This is just a forced rule by the language to prevent the problem of someone needing strict ownership at some point and the function not giving it, even though it has strict ownership.");
+                sprintf(fc->sbuf, "💡 If you only return strict ownership values then the function return type should be a strict ownership type. You can make a type have strict ownership by placing a '.' in front of it. This is just a forced rule by the language to prevent the problem of someone needing strict ownership at some point and the function not giving it, even though it has strict ownership.");
                 fc_error(fc);
             }
         } else {
