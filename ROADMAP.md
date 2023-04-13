@@ -3,7 +3,6 @@
 
 Feature todo list in order:
 
-- isset keyword
 - compare errors
 - dont allow class_pa of strict type values, swap token
 - Calling functions using named arguments
@@ -28,6 +27,7 @@ Feature todo list in order:
 
 ## Done
 
+- isset keyword
 - format string
 - http server
 - __eq
