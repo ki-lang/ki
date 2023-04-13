@@ -28,21 +28,21 @@ func alloc(size: uxx) ptr {
 		pow += 1;
 	}
 
-	let adr : ptr = (alcs -> ptr) + (pow * sizeof(ptr));
+	let adr : ptr = (alcs @as ptr) + (pow * sizeof(ptr));
 	let mut alc = @ptrv(adr, ?Allocator, 0);
 	if alc == null {
 		alc = Allocator.init(1#uxx << pow + 1, 1);
 		@ptrv(adr, ?Allocator, 0) = alc;
 	}
 	// Get chunk
-	rep alc = alc -> Allocator;
+	rep alc = alc @as Allocator;
 	let res = alc.get_slot();
 	@ptrv(res, u8, 0) = pow;
 
 	return res + 1;
 }
 func free(mut adr: ptr) void {
-	let alcs = allocators -> ptr;
+	let alcs = allocators @as ptr;
 	adr-=1;
 	let pow : u32 = @ptrv(adr, u8, 0);
 	let alc_adr = alcs + (pow * sizeof(ptr));

@@ -103,7 +103,7 @@ struct PollResult {
 			return null;
 		}
 		let adr : ptr = this.events + (index * sizeof_class(PollEvent));
-		return adr -> PollEvent;
+		return adr @as PollEvent;
 	}
 }
 

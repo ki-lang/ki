@@ -22,7 +22,7 @@ class Block norc {
 		misalign_bytes += 1; // Slot byte
 		misalign_bytes = misalign_bytes % 8;
 
-		let b = sys_alloc(sizeof(Block)) -> Block;
+		let b = sys_alloc(sizeof(Block)) @as Block;
 		b.alc = alc;
 		b.prev = null;
 		b.next = null;
@@ -38,7 +38,7 @@ class Block norc {
 		tmp = 8 - tmp % 8;
 		tmp -= misalign_bytes;
 		if tmp < 0 { tmp += 8; }
-		let align_bytes = tmp -> u8;
+		let align_bytes = tmp @as u8;
 
 		// Setup data
 		let size : uxx = sizeof(ptr) + 2 + slot_count + align_bytes + (slot_count * slot_size);
@@ -46,7 +46,7 @@ class Block norc {
 		b.data = data;
 
 		let mut adr = data;
-		@ptrv(adr, ptr, 0) = b -> ptr;
+		@ptrv(adr, ptr, 0) = b @as ptr;
 		adr += sizeof(ptr);
 
 		b.data_slot_nrs = adr;

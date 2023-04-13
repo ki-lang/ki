@@ -225,7 +225,7 @@ class Server {
 				break;
 			}
 
-			read_buf.length += rcvd -> uxx;
+			read_buf.length += rcvd @as uxx;
 			http_con.parse_headers() !! {
 				throw sent_error;
 			};

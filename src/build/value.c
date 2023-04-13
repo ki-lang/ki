@@ -218,57 +218,51 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false);
         //
-    } else if (strcmp(token, "@") == 0) {
-        tok(fc, token, true, false);
-        if (strcmp(token, "v") == 0) {
-            // value scope
-            tok_expect(fc, ":", false, true);
-            Type *rett = read_type(fc, alc, scope, false, true, false);
-            if (type_is_void(rett)) {
-                sprintf(fc->sbuf, "Value scope return type cannot be void");
-                fc_error(fc);
-            }
-
-            tok_expect(fc, "{", false, true);
-            Scope *sub = scope_init(alc, sct_vscope, scope, true);
-            sub->vscope = al(alc, sizeof(VScope));
-            sub->vscope->rett = rett;
-            sub->vscope->lvar = NULL;
-            read_ast(fc, sub, false);
-
-            if (!sub->did_return) {
-                sprintf(fc->sbuf, "Value scope did not return a value");
-                fc_error(fc);
-            }
-
-            return value_init(alc, v_scope, sub, rett);
-
-        } else if (strcmp(token, "ptrv") == 0) {
-            tok_expect(fc, "(", false, true);
-            // On
-            Value *on = read_value(fc, alc, scope, false, 0, false);
-            // Type
-            tok_expect(fc, ",", false, true);
-            if (on->rett->type != type_ptr) {
-                sprintf(fc->sbuf, "You can only use 'ptrv' on pointer type values");
-                fc_error(fc);
-            }
-            Type *type = read_type(fc, alc, scope, true, true, true);
-            // Index
-            tok_expect(fc, ",", false, true);
-            Value *index = read_value(fc, alc, scope, false, 0, false);
-            if (index->rett->type != type_int) {
-                sprintf(fc->sbuf, "@ptrv index must be of type integer");
-                fc_error(fc);
-            }
-            tok_expect(fc, ")", false, true);
-
-            v = vgen_ptrv(alc, on, type, index);
-            //
-        } else {
-            sprintf(fc->sbuf, "Unexpected token: '%s' after '@' | expected: v", token);
+    } else if (strcmp(token, "@v") == 0) {
+        // value scope
+        tok_expect(fc, ":", false, true);
+        Type *rett = read_type(fc, alc, scope, false, true, false);
+        if (type_is_void(rett)) {
+            sprintf(fc->sbuf, "Value scope return type cannot be void");
             fc_error(fc);
         }
+
+        tok_expect(fc, "{", false, true);
+        Scope *sub = scope_init(alc, sct_vscope, scope, true);
+        sub->vscope = al(alc, sizeof(VScope));
+        sub->vscope->rett = rett;
+        sub->vscope->lvar = NULL;
+        read_ast(fc, sub, false);
+
+        if (!sub->did_return) {
+            sprintf(fc->sbuf, "Value scope did not return a value");
+            fc_error(fc);
+        }
+
+        v = value_init(alc, v_scope, sub, rett);
+
+    } else if (strcmp(token, "@ptrv") == 0) {
+        tok_expect(fc, "(", false, true);
+        // On
+        Value *on = read_value(fc, alc, scope, false, 0, false);
+        // Type
+        tok_expect(fc, ",", false, true);
+        if (on->rett->type != type_ptr) {
+            sprintf(fc->sbuf, "You can only use 'ptrv' on pointer type values");
+            fc_error(fc);
+        }
+        Type *type = read_type(fc, alc, scope, true, true, true);
+        // Index
+        tok_expect(fc, ",", false, true);
+        Value *index = read_value(fc, alc, scope, false, 0, false);
+        if (index->rett->type != type_int) {
+            sprintf(fc->sbuf, "@ptrv index must be of type integer");
+            fc_error(fc);
+        }
+        tok_expect(fc, ")", false, true);
+
+        v = vgen_ptrv(alc, on, type, index);
+        //
 
     } else if (is_number(token[0]) || strcmp(token, "-") == 0) {
 
@@ -443,9 +437,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
     tok(fc, token, false, true);
 
     if (prio == 0 || prio > 7) {
-        while (strcmp(token, "->") == 0) {
+        while (strcmp(token, "@as") == 0) {
             if (type_is_void(v->rett)) {
-                sprintf(fc->sbuf, "Left side of '->' must return a value");
+                sprintf(fc->sbuf, "Left side of '@as' must return a value");
                 fc_error(fc);
             }
 

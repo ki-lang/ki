@@ -9,7 +9,7 @@ func write(fd: i32, str: String) uxx !failed !again {
 	if c < 0 {
 		throw failed;
 	}
-	return c -> uxx;
+	return c @as uxx;
 }
 
 func write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
@@ -20,7 +20,7 @@ func write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
 	if c < 0 {
 		throw failed;
 	}
-	return c -> uxx;
+	return c @as uxx;
 }
 
 func close(fd: i32) void {

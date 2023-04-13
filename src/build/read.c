@@ -93,7 +93,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             pos++;
             ch = content[i];
         }
-    } else if (is_valid_varname_char(ch)) {
+    } else if (is_valid_varname_char(ch) || ch == '@') {
         // Read var name
         ch = content[i];
         while (is_valid_varname_char(ch)) {

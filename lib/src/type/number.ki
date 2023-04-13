@@ -34,14 +34,14 @@ trait Number {
         }
         #end
  
-        let mut abs = num -> uxx;
+        let mut abs = num @as uxx;
  
         // Process individual digits
         let mut buf_adr = stack_alloc(32);
         let mut len : u32 = 0;
         let mut ch : u8 = 0;
         while (abs != 0) {
-            let rem : u8 = (abs % base) -> u8;
+            let rem : u8 = (abs % base) @as u8;
             if(rem > 9){
                 ch = (rem-10) + 'a';
             } else {
@@ -90,14 +90,14 @@ trait Number {
         }
         #end
  
-        let mut abs = num -> uxx;
+        let mut abs = num @as uxx;
  
         // Process individual digits
         let mut buf_adr = stack_alloc(32);
         let mut len : u32 = 0;
         let mut ch : u8 = 0;
         while (abs != 0) {
-            let rem : u8 = (abs % base) -> u8;
+            let rem : u8 = (abs % base) @as u8;
             if(rem > 9){
                 ch = (rem-10) + 'a';
             } else {
