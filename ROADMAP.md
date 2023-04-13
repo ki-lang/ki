@@ -12,7 +12,7 @@ Feature todo list in order:
 - declare functions for classes/structs from other libraries
 - multi-threaded AST parsing + IR gen
 - inline if ... ? ... : ...
-- Custom allocators | MyClass{...} @my_alloc
+- custom allocators | MyClass{...} @my_alloc
 - --watch param to watch for file changes
 - vscode extension
 - cross compiling
@@ -20,6 +20,7 @@ Feature todo list in order:
 - __leave_scope (code executed when a variable leaves its scope)
 - anonymous functions
 - implement IO URing where useful
+- replace malloc with something better
 
 ## Maybe
 
