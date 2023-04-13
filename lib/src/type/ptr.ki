@@ -1,7 +1,7 @@
 
 class ptr type:ptr math async {
 
-	func str() String {
+	func str() .String {
         let num = this -> uxx;
         return num.str_base(16);
     }

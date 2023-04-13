@@ -94,7 +94,7 @@ class ByteBuffer {
 
 	// String functions
 
-	func to_str() String {
+	func to_str() .String {
 		if(this.length == 0){
 			return "";
 		}
@@ -103,7 +103,7 @@ class ByteBuffer {
 		return str;
 	}
 
-	func sub_str(start_index: uxx, mut length: uxx) String {
+	func sub_str(start_index: uxx, mut length: uxx) .String {
 		let len = this.length;
 		if length == 0 || start_index >= len {
 			return "";

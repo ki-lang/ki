@@ -44,7 +44,7 @@ class String type:ptr {
 		return @ptrv(this.data(), u8, index);
 	}
 
-	func sub_str_bytes(start_index: uxx, mut length: uxx) String {
+	func sub_str_bytes(start_index: uxx, mut length: uxx) .String {
 		let this_bytes = this.bytes();
 		if(start_index > this_bytes){
 			return "";
@@ -116,7 +116,7 @@ class String type:ptr {
 		mem:free(this -> ptr);
 	}
 
-	func __add(str: String) String {
+	func __add(str: String) .String {
 		let this_len = this.bytes();
 		let str_len = str.bytes();
 		let len = this_len + str_len;

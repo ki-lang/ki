@@ -5,7 +5,7 @@ class Request {
 	method: String;
 	path: String;
 
-	func body() String {
+	func body() .String {
 		let con = this.http_con;
 		let buf = con.read_buf;
 		let pos = con.parse_pos;

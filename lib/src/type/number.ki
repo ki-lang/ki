@@ -3,19 +3,19 @@ use io;
 
 trait Number {
 
-	func str() String {
+	func str() .String {
         return this.str_base(10);
     }
 
-    func __string() String {
+    func __string() .String {
         return this.str_base(10);
     }
 
-    func hex() String {
+    func hex() .String {
         return this.str_base(16);
     }
 
-	func str_base(base: u8) String {
+	func str_base(base: u8) .String {
 
 		let mut negative = false;
         let mut num = this;

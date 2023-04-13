@@ -129,6 +129,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     bool take_ownership = is_arg ? false : true;
     bool strict_ownership = false;
+    bool strict_ownership_overwrite = true;
 
     tok(fc, token, sameline, allow_space);
 
@@ -258,6 +259,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
                 Type *t = idf->item;
                 type = type_init(alc);
                 *type = *t;
+                strict_ownership_overwrite = false;
             } else if (idf->type == idf_enum) {
                 type = type_gen(fc->b, alc, "i32");
                 type->enu = idf->item;
@@ -273,7 +275,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     type->take_ownership = take_ownership;
-    type->strict_ownership = strict_ownership;
+    if (strict_ownership_overwrite)
+        type->strict_ownership = strict_ownership;
+
     if (async) {
         if (!type_allowed_async(type, true)) {
             Str *chain = str_make(alc, 500);

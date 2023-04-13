@@ -18,7 +18,7 @@ class FileStream {
     private can_write: bool;
     readonly reading: bool = true;
 
-    func read(bytes: uxx = 10240) String !read_err {
+    func read(bytes: uxx = 10240) .String !read_err {
         if(this.can_read == false){
             return "";
         }

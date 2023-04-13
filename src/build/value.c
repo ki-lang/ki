@@ -59,11 +59,15 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             VFString *vfs = al(alc, sizeof(VFString));
             vfs->parts = parts;
             vfs->values = values;
-            v = value_init(alc, v_fstring, vfs, type_gen(fc->b, alc, "String"));
+            Type *rett = type_gen(fc->b, alc, "String");
+            rett->strict_ownership = true;
+            v = value_init(alc, v_fstring, vfs, rett);
 
             tok_expect(fc, "}", false, true);
         } else {
-            v = value_init(alc, v_string, body, type_gen(fc->b, alc, "String"));
+            Type *rett = type_gen(fc->b, alc, "String");
+            rett->strict_ownership = true;
+            v = value_init(alc, v_string, body, rett);
         }
         //
     } else if (strcmp(token, "'") == 0) {

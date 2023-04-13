@@ -1,5 +1,5 @@
 
-func ext(path: String) String {
+func ext(path: String) .String {
 	let len = path.bytes();
 	let mut start = len;
 	let mut found = false;
@@ -25,7 +25,7 @@ func ext(path: String) String {
 // e.g. /etc/nginx/ -> /etc/
 // e.g. /etc -> /
 // e.g. / -> /
-func dir_of(path: String) String {
+func dir_of(path: String) .String {
 	let mut end = path.bytes() - 1;
 	while(end > 0){
 		end--;
@@ -42,7 +42,7 @@ func dir_of(path: String) String {
 // e.g. /etc/nginx/ -> nginx
 // e.g. / -> ""
 // e.g. "" -> ""
-func basename(path: String) String {
+func basename(path: String) .String {
 	let len = path.bytes();
 	let mut start = len;
 	while(start > 0){
