@@ -498,3 +498,20 @@ char *llvm_ir_bitcast(LB *b, char *value, char *from_type, char *to_type) {
     str_append_chars(ir, "\n");
     return var;
 }
+
+char *llvm_ir_atomic_xchange(LB *b, char *var, char *type, char *new_value) {
+    Str *ir = llvm_b_ir(b);
+    char *result = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, var);
+    str_append_chars(ir, " = atomicrmw xchg ");
+    str_append_chars(ir, type);
+    str_append_chars(ir, "* ");
+    str_append_chars(ir, var);
+    str_append_chars(ir, ", ");
+    str_append_chars(ir, type);
+    str_append_chars(ir, " ");
+    str_append_chars(ir, new_value);
+    str_append_chars(ir, " seq_cst\n");
+    return result;
+}
