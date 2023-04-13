@@ -113,41 +113,21 @@ class Connection {
 		this.parse_pos = pos;
 	}
 
-	func send_file(stream: +fs:FileStream) void {
+	func send_file(stream: +fs:FileStream, filename: ?String) void {
 
 		let out = this.out_buf;
-		let fsize = fs:size(stream.path);
+		let path = stream.path;
+		let fsize = fs:size(path);
+		let ext = fs:ext(path);
+		let mime = fs:mime(ext);
 
 		this.out_file = stream;
 
-		out.append_str("HTTP/1.1 200 OK\r\n");
-		out.append_str("Content-Type: image/png\r\n");
-		out.append_str("Content-Length: " + fsize.str() + "\r\n");
+		out.append_str("HTTP/1.1 200 OK\r\nContent-Type: %\r\nContent-Length: %\r\n"{ mime, fsize.str() });
 
-		//let mut exts = g_inline_exts;
-		//ifnull exts set {
-		//	let exts = Array<String>.make(20);
-		//	exts.push("png");
-		//	exts.push("jpg");
-		//	exts.push("jpeg");
-		//	exts.push("bmp");
-		//	exts.push("gif");
-		//	exts.push("ico");
-		//	exts.push("mp3");
-		//	exts.push("mp4");
-		//	exts.push("js");
-		//	g_inline_exts = exts;
-		//	return exts;
-		//};
-
-		//let inline_mime = exts.contains(ext);
-		// Browsers use inline as their default 
-		// header += "Content-Disposition: inline\r\n";
-
-			out.append_str("Content-Disposition: attachment; filename=\"test.avi\"\r\n");
-		//if(inline_mime == false) {
-			//out.append_str("Content-Disposition: attachment; filename=\"" + fn + "\"\r\n");
-		//}
+		if isset(filename) {
+			out.append_str("Content-Disposition: attachment; filename=\"" + filename + "\"\r\n");
+		}
 
 		out.append_str("\r\n");
 

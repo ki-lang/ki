@@ -2,7 +2,6 @@
 header "ki_os" as kos;
 
 class SocketTCP async {
-	host: String;
 	readonly os_socket: ptr;
 	readonly fd: i32;
 	port: u16;
@@ -20,7 +19,6 @@ class SocketTCP async {
 		}
 
 		return SocketTCP{
-			host: host,
 			port: port,
 			os_socket: os_sock,
 			fd: fd,

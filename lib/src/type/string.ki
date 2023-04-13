@@ -5,7 +5,7 @@
 use mem;
 use os;
 
-class String type:ptr async {
+class String type:ptr {
 
 	/////////////////////
 	// Core
@@ -34,6 +34,31 @@ class String type:ptr async {
 			adr += sizeof(uxx) + 8;
 		}
 		return adr;
+	}
+
+	/////////////////////
+	// Read
+	/////////////////////
+
+	func byte(index: uxx) u8 %inline {
+		return @ptrv(this.data(), u8, index);
+	}
+
+	func sub_str_bytes(start_index: uxx, mut length: uxx) String {
+		let this_bytes = this.bytes();
+		if(start_index > this_bytes){
+			return "";
+		}
+		if((start_index + length) > this_bytes){
+			length = this_bytes - start_index;
+		}
+		if(length == 0){
+			return "";
+		}
+		let from = this.data() + start_index;
+		let res = String.make_empty(length);
+		mem:copy(from, res.data(), length);
+		return res;
 	}
 
 	/////////////////////
@@ -76,13 +101,13 @@ class String type:ptr async {
 	func __ref() void {
 		if this.is_const() { return; }
 		let adr = (this -> ptr) + sizeof(uxx) + 4;
-		let rc = atomicop @ptrv(adr, u32, 0) ADD 1;
+		let rc = @ptrv(adr, u32, 0) + 1;
 	}
 	func __deref() void {
 		if this.is_const() { return; }
 		let adr = (this -> ptr) + sizeof(uxx) + 4;
-		let rc = atomicop @ptrv(adr, u32, 0) SUB 1;
-		if rc == 1 {
+		let rc = @ptrv(adr, u32, 0) - 1;
+		if rc == 0 {
 			this.__free();
 		}
 	}

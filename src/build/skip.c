@@ -25,11 +25,11 @@ void skip_body(Fc *fc, char until_ch) {
             continue;
         }
 
-        if (ch == '{' || ch == '(') {
+        if (ch == '{' || ch == '(' || ch == '[') {
             depth++;
             continue;
         }
-        if (ch == '}' || ch == ')') {
+        if (ch == '}' || ch == ')' || ch == ']') {
             depth--;
             if (depth == 0 && until_ch == ch)
                 break;
@@ -275,11 +275,13 @@ void skip_type(Fc *fc) {
             chunk->i = i;
             skip_body(fc, ')');
             i = chunk->i;
+            continue;
         }
         if (ch == '[') {
             chunk->i = i;
             skip_body(fc, ']');
             i = chunk->i;
+            continue;
         }
         if (is_valid_varname_char(ch)) {
             continue;

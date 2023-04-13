@@ -12,13 +12,13 @@ class ServerData async {
 	socket: net:SocketTCP;
 	thread_nr: uxx = 0;
 	handler: fn(Request)(Response);
+	static_dirs: .Array[.String] = Array[.String].init();
 }
 
 class Server {
 	host: String;
 	data: ServerData;
 	port: u16;
-
 
 	static func init(host: +String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
 
@@ -178,7 +178,7 @@ class Server {
 					continue;
 				}
 				if event.is_readable() {
-					Server.respond(http_con, handler) !! {
+					Server.respond(data, http_con, handler) !! {
 						io:close(fd);
 						poll.remove(lsn);
 						index_pool.add(index)!;
@@ -209,7 +209,7 @@ class Server {
 		}
 	}
 
-	static func respond(http_con: +Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+	static func respond(data: ServerData, http_con: +Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
 		let buf_size : i32 = 65535;
 		let read_buf = http_con.read_buf;
@@ -240,6 +240,8 @@ class Server {
 			throw sent_error;
 		}
 
+		//let static_dirs = data.static_dirs;
+
 		//let stream = fs:open("/mnt/c/www/ki/debug/test.avi", true, false) !! {
 		//	println("[x] File not found");
 		//	http_con.respond(Response.error(404));
@@ -256,6 +258,11 @@ class Server {
 
 		http_con.respond(resp);
 	}
+
+    func add_static_dir(path: +String) void {
+        println("[+] Add static dir: " + path);
+        this.data.static_dirs.push(path + "");
+    }
 }
 
 global interrupted : bool;

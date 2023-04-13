@@ -1,0 +1,91 @@
+
+global g_mimes : ?Map[String];
+func mime(extension_no_dot: String) String {
+
+	let mimes = g_mimes ?? @v : Map[String] {
+		let mimes = Map[String]{};
+
+		mimes.set("aac", "audio/aac");
+		mimes.set("abw", "application/x-abiword");
+		mimes.set("arc", "application/x-freearc");
+		mimes.set("avif", "image/avif");
+		mimes.set("avi", "video/x-msvideo");
+		mimes.set("azw", "application/vnd.amazon.ebook");
+		mimes.set("bin", "application/octet-stream");
+		mimes.set("bmp", "image/bmp");
+		mimes.set("bz", "application/x-bzip");
+		mimes.set("bz2", "application/x-bzip2");
+		mimes.set("cda", "application/x-cdf");
+		mimes.set("csh", "application/x-csh");
+		mimes.set("css", "text/css");
+		mimes.set("csv", "text/csv");
+		mimes.set("doc", "application/msword");
+		mimes.set("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+		mimes.set("eot", "application/vnd.ms-fontobject");
+		mimes.set("epub", "application/epub+zip");
+		mimes.set("gz", "application/gzip");
+		mimes.set("gif", "image/gif");
+		mimes.set("htm", "text/html");
+		mimes.set("html", "text/html");
+		mimes.set("ico", "image/vnd.microsoft.icon");
+		mimes.set("ics", "text/calendar");
+		mimes.set("jar", "application/java-archive");
+		mimes.set("jpeg", "image/jpeg");
+		mimes.set("jpg", "image/jpeg");
+		mimes.set("js", "text/javascript");
+		mimes.set("json", "application/json");
+		mimes.set("jsonld", "application/ld+json");
+		mimes.set("mid", "audio/midi audio/x-midi");
+		mimes.set("midi", "audio/midi audio/x-midi");
+		mimes.set("mjs", "text/javascript");
+		mimes.set("mp3", "audio/mpeg");
+		mimes.set("mp4", "video/mp4");
+		mimes.set("mpeg", "video/mpeg");
+		mimes.set("mpkg", "application/vnd.apple.installer+xml");
+		mimes.set("odp", "application/vnd.oasis.opendocument.presentation");
+		mimes.set("ods", "application/vnd.oasis.opendocument.spreadsheet");
+		mimes.set("odt", "application/vnd.oasis.opendocument.text");
+		mimes.set("oga", "audio/ogg");
+		mimes.set("ogv", "video/ogg");
+		mimes.set("ogx", "application/ogg");
+		mimes.set("opus", "audio/opus");
+		mimes.set("otf", "font/otf");
+		mimes.set("png", "image/png");
+		mimes.set("pdf", "application/pdf");
+		mimes.set("php", "application/x-httpd-php");
+		mimes.set("ppt", "application/vnd.ms-powerpoint");
+		mimes.set("pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+		mimes.set("rar", "application/vnd.rar");
+		mimes.set("rtf", "application/rtf");
+		mimes.set("sh", "application/x-sh");
+		mimes.set("svg", "image/svg+xml");
+		mimes.set("tar", "application/x-tar");
+		mimes.set("tif .tiff", "image/tiff");
+		mimes.set("ts", "video/mp2t");
+		mimes.set("ttf", "font/ttf");
+		mimes.set("txt", "text/plain");
+		mimes.set("vsd", "application/vnd.visio");
+		mimes.set("wav", "audio/wav");
+		mimes.set("weba", "audio/webm");
+		mimes.set("webm", "video/webm");
+		mimes.set("webp", "image/webp");
+		mimes.set("woff", "font/woff");
+		mimes.set("woff2", "font/woff2");
+		mimes.set("xhtml", "application/xhtml+xml");
+		mimes.set("xls", "application/vnd.ms-excel");
+		mimes.set("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+		mimes.set("xml", "application/xml");
+		mimes.set("xul", "application/vnd.mozilla.xul+xml");
+		mimes.set("zip", "application/zip");
+		mimes.set("3gp", "video/3gpp");
+		mimes.set("3g2", "video/3gpp2");
+		mimes.set("7z", "application/x-7z-compressed");
+
+		g_mimes = mimes;
+		return mimes;
+	};
+
+	let mime = mimes.get(extension_no_dot) !? "application/octet-stream";
+	//println("MI:"+mime);
+	return mime;
+}
