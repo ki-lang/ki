@@ -80,7 +80,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         if (ul) {
 
             if (!decl->type->take_ownership) {
-                sprintf(fc->sbuf, "🏹 You cannot give away borrowed ownership (variable: '%s'). To make it have real ownership, you must change the type of the variable/argument by simply putting a '+' before the type name (e.g. +MyType) or alternatively a '.' for strict ownership.", decl->name);
+                sprintf(fc->sbuf, "🏹 You cannot give away a borrowed value (variable: '%s'). It must have ownership. To achieve this, put a '>' in front of the type. This will tell the compiler to pass on ownership.", decl->name);
                 fc_error(fc);
             }
 
