@@ -300,5 +300,8 @@ void stage_8_link(Build *b, Array *o_files) {
         printf("Link cmd: %s\n", cmd_str);
     }
 
-    system(cmd_str);
+    int res = system(cmd_str);
+    if (res != 0) {
+        die("❌ Failed to link");
+    }
 }

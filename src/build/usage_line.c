@@ -101,6 +101,11 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
             int incr = in_loop ? 2 : 1;
             usage_line_incr_moves(ul, incr);
 
+            if (decl->type->strict_ownership && ul->moves > 1) {
+                sprintf(fc->sbuf, "🎭 Multiple moves of a strict ownership value. (variable: '%s'). If you did not intend for this value to have strict ownership, you can place a '+' in front of the value to convert it to shared ownership.", decl->name);
+                fc_error(fc);
+            }
+
             if (!ul->first_move) {
                 ul->first_move = chunk_clone(alc, chunk);
             }

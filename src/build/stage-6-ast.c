@@ -36,6 +36,7 @@ void stage_6(Fc *fc) {
 
 void stage_6_func(Fc *fc, Func *func) {
     //
+    fc->error_func_info = func;
 
     if (func->is_generated) {
         return;
@@ -50,6 +51,8 @@ void stage_6_func(Fc *fc, Func *func) {
         sprintf(fc->sbuf, "Function did not return a value");
         fc_error(fc);
     }
+
+    fc->error_func_info = NULL;
 }
 
 void read_ast(Fc *fc, Scope *scope, bool single_line) {

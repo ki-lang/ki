@@ -26,7 +26,7 @@ class Poll {
 		let listeners = this.listeners;
 
 		let lsn = pool.pop() !? @v : PollListener {
-			let new = PollListener {
+			let new = +PollListener {
 				os_poll: this.os_poll,
 				fd: fd,
 				key: key,

@@ -106,6 +106,18 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             fc_error(fc);
         }
         v = vgen_compare(alc, b, on, vgen_vint(alc, 0, type_gen(b, alc, "bool"), true), op_eq);
+    } else if (strcmp(token, "+") == 0) {
+        Value *on = read_value(fc, alc, scope, false, 8, false);
+        if (on->type != v_fcall && on->type != v_class_init) {
+            sprintf(fc->sbuf, "You can only convert values to shared ownership if the value is a function call or class initialization");
+            fc_error(fc);
+        }
+        if (on->rett->strict_ownership) {
+            Type *rett = type_clone(alc, on->rett);
+            rett->strict_ownership = false;
+            on->rett = rett;
+        }
+        v = on;
     } else if (strcmp(token, "true") == 0) {
         v = vgen_vint(alc, 1, type_gen(b, alc, "bool"), true);
     } else if (strcmp(token, "false") == 0) {

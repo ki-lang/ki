@@ -71,6 +71,9 @@ void stage_2(Fc *fc) {
 void stage_2_class(Fc *fc, Class *class) {
 
     //
+    Class *prev_error_class_info = fc->error_class_info;
+    fc->error_class_info = class;
+
     fc->chunk = class->chunk_body;
     stage_2_class_props(fc, class, false);
 
@@ -96,6 +99,8 @@ void stage_2_class(Fc *fc, Class *class) {
     if (!class_check_size(class)) {
         array_push(fc->class_size_checks, class);
     }
+
+    fc->error_class_info = prev_error_class_info;
 }
 
 void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
@@ -288,6 +293,9 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
 void stage_2_func(Fc *fc, Func *func) {
     //
+    Func *prev_error_func_info = fc->error_func_info;
+    fc->error_func_info = func;
+    //
     fc->chunk = func->chunk_args;
     char *token = fc->token;
     Allocator *alc = fc->alc;
@@ -454,6 +462,8 @@ void stage_2_func(Fc *fc, Func *func) {
     //         fc_error(fc, "main() should not return errors", NULL);
     //     }
     // }
+
+    fc->error_func_info = prev_error_func_info;
 }
 
 void stage_2_class_defaults(Fc *fc, Class *class) {

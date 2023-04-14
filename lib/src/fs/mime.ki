@@ -3,7 +3,7 @@ global g_mimes : ?Map[String];
 func mime(extension_no_dot: String) String {
 
 	let mimes = g_mimes ?? @v : Map[String] {
-		let mimes = Map[String]{};
+		let mimes = +Map[String]{};
 
 		mimes.set("aac", "audio/aac");
 		mimes.set("abw", "application/x-abiword");

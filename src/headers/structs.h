@@ -137,11 +137,14 @@ struct Fc {
     Scope *scope;
     MacroScope *current_macro_scope;
     //
+    Func *error_func_info;
+    Class *error_class_info;
+    //
     Array *funcs;
     Array *classes;
+    Array *globals;
     Array *class_size_checks;
     Array *type_size_checks;
-    Array *globals;
     //
     cJSON *cache;
     //

@@ -39,13 +39,20 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     fc->sbuf = b->sbuf;
     fc->chunk = chunk_init(alc, fc);
     fc->chunk_prev = chunk_init(alc, fc);
+    fc->id_buf = id_init(alc);
+
     fc->scope = scope_init(alc, sct_fc, nsc->scope, false);
+    fc->current_macro_scope = NULL;
+
+    fc->error_func_info = NULL;
+    fc->error_class_info = NULL;
+
     fc->funcs = array_make(alc, 20);
     fc->classes = array_make(alc, 4);
     fc->globals = array_make(alc, 4);
-    fc->id_buf = id_init(alc);
     fc->class_size_checks = array_make(alc, 4);
     fc->type_size_checks = array_make(alc, 20);
+
     fc->cache = NULL;
     fc->is_header = is_header;
     fc->ir_changed = false;
@@ -145,9 +152,16 @@ void fc_error(Fc *fc) {
     int start = i;
 
     printf("\n");
-    printf("File: %s\n", fc->path_ki);
     if (chunk->fc != fc) {
-        printf("Parsing: %s\n", chunk->fc->path_ki);
+        printf("File: %s\n", chunk->fc->path_ki);
+    } else {
+        printf("File: %s\n", fc->path_ki);
+    }
+    if (fc->error_class_info) {
+        printf("Class: %s\n", fc->error_class_info->dname);
+    }
+    if (fc->error_func_info) {
+        printf("Function: %s\n", fc->error_func_info->dname);
     }
     printf("Line: %d\n", line);
     printf("Col: %d\n", col);
