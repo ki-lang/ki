@@ -8,6 +8,7 @@ Feature todo list in order:
 - Calling functions using named arguments
 - package manager
 - testing features
+- do not allow globals in a fcall argument that borrows the value
 - access type 'namespace'
 - declare functions for classes/structs from other libraries
 - multi-threaded AST parsing + IR gen
@@ -32,7 +33,7 @@ Feature todo list in order:
 - format string
 - http server
 - __eq
-- @vs { ... } (value-scopes)
+- @v { ... } (value-scopes)
 - __before_free
 - strict ownership types
 - shared ownership types

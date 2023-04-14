@@ -414,16 +414,10 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
         return false;
     }
     bool t1o = type_tracks_ownership(t1);
-    // bool t2o = type_tracks_ownership(t2);
-    // if (t1o != t2o) {
-    //     if (reason)
-    //         *reason = "One type tracks ownership, the other does not";
-    //     return false;
-    // }
     if (t1o) {
         if (t1->take_ownership && !t2->take_ownership) {
             if (reason)
-                *reason = "Trying to pass a type with borrowed ownership to a type that requires normal ownership";
+                *reason = "Trying to pass a type with borrowed ownership to a type that requires real ownership";
             return false;
         }
         if (t1->strict_ownership && !t2->strict_ownership) {
