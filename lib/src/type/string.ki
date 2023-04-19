@@ -144,14 +144,15 @@ class String type:ptr {
 		return mem:equal(this.data(), b.data(), bytes);
 	}
 
-	func __iter_init() uxx {
+	func __each_init() uxx {
 		return 0;
 	}
-	func __iter_get(key: uxx, next_key: uxx[1]) u8 !end {
+	func __each(key_ref: uxx[1]) u8 !end {
+		let key = key_ref[0];
 		if key == this.bytes() {
 			throw end;
 		}
-		next_key[0] = key + 1;
+		key_ref[0] = key + 1;
 		let data = this.data();
 		return @ptrv(data + key, u8, 0);
 	}

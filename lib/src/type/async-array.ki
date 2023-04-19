@@ -54,14 +54,15 @@ class AsyncArray[T] async {
 		@ptrv(data, T, 0) = value;
 	}
 
-	func __iter_init() uxx {
+	func __each_init() uxx {
 		return 0;
 	}
-	func __iter_get(key: uxx, next_key: uxx*) T !end {
+	func __each(key_ref: uxx[1]) T !end {
+		let key = key_ref[0];
 		if key == this.length {
 			throw end;
 		}
-		ptrv next_key = key + 1;
+		key_ref[0] = key + 1;
 		return this.get(key) !! throw end;;
 	}
 }

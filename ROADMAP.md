@@ -3,12 +3,14 @@
 
 Feature todo list in order:
 
+- borrow_each
 - compare errors
 - dont allow class_pa of strict type values, swap token
 - Calling functions using named arguments
 - package manager
 - testing features
 - do not allow globals in a fcall argument that borrows the value
+- install global packages + "bin" setting in ki.json to place binaries in ~/.ki/bin
 - access type 'namespace'
 - declare functions for classes/structs from other libraries
 - multi-threaded AST parsing + IR gen

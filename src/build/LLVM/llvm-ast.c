@@ -155,8 +155,8 @@ void llvm_write_ast(LB *b, Scope *scope) {
 
             Type *type = on->rett;
             Class *class = type->class;
-            Func *f_init = map_get(class->funcs, "__iter_init");
-            Func *f_get = map_get(class->funcs, "__iter_get");
+            Func *f_init = map_get(class->funcs, "__each_init");
+            Func *f_get = map_get(class->funcs, "__each");
             char *lf_init = llvm_ir_func_ptr(b, f_init);
             char *lf_get = llvm_ir_func_ptr(b, f_get);
             Type *key_type = f_init->rett;
@@ -166,7 +166,6 @@ void llvm_write_ast(LB *b, Scope *scope) {
 
             Arg *f_init_0 = array_get_index(f_init->args, 0);
             Arg *f_get_0 = array_get_index(f_get->args, 0);
-            Arg *f_get_1 = array_get_index(f_get->args, 1);
 
             char key_ltype_pointer[200];
             strcpy(key_ltype_pointer, key_ltype);
@@ -198,22 +197,18 @@ void llvm_write_ast(LB *b, Scope *scope) {
 
             // Start loop (get value & next key)
             b->lfunc->block = b_cond;
-            // Call __iter_get
+            // Call __each
             char *key_val = llvm_ir_load(b, f_init->rett, next_key_var);
             // Referencing
             Scope *upref_get = scope_init(alc, sct_default, scope, true);
             if (f_get_0->type->take_ownership) {
                 class_ref_change(alc, upref_get, value_init(alc, v_ir_value, lon, on->rett), 1);
             }
-            if (f_get_1->type->take_ownership) {
-                class_ref_change(alc, upref_get, value_init(alc, v_ir_value, key_val, f_get_1->type), 1);
-            }
             llvm_write_ast(b, upref_get);
 
             //
             Array *get_args = array_make(alc, 2);
             array_push(get_args, llvm_ir_fcall_arg(b, lon, lon_type));
-            array_push(get_args, llvm_ir_fcall_arg(b, key_val, key_ltype));
             array_push(get_args, llvm_ir_fcall_arg(b, next_key_var, key_ltype_pointer));
             char *lval = llvm_ir_func_call(b, lf_get, get_args, value_ltype, NULL);
             // Check error

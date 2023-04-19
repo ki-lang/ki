@@ -43,8 +43,7 @@ class Array[T] {
 			throw not_found;
 		}
 
-		let data = this.data;
-		let value = @ptrv(data, >T, index);
+		let value = @ptrv(this.data, >T, index);
 		@ref value;
 
 		return value;
@@ -84,15 +83,27 @@ class Array[T] {
 	}
 
 	// Internals
-
-	func __iter_init() uxx {
+	func __borrow_each_init() uxx {
 		return 0;
 	}
-	func __iter_get(key: uxx, next_key: uxx[1]) T !end {
-		if key == this.length {
+	//func __borrow_each(key_ref: uxx[1]) &T !end {
+	//	let key = key_ref[0];
+	//	if key >= this.length {
+	//		throw end;
+	//	}
+	//	key_ref[0] = key + 1;
+	//	return @ptrv(this.data, T, key);
+	//}
+
+	func __each_init() uxx {
+		return 0;
+	}
+	func __each(key_ref: uxx[1]) T !end {
+		let key = key_ref[0];
+		if key >= this.length {
 			throw end;
 		}
-		next_key[0] = key + 1;
+		key_ref[0] = key + 1;
 		return this.get(key) !! throw end;;
 	}
 

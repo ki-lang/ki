@@ -542,8 +542,8 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     Func *f_init = NULL;
     Func *f_get = NULL;
     if (valid) {
-        f_init = map_get(class->funcs, "__iter_init");
-        f_get = map_get(class->funcs, "__iter_get");
+        f_init = map_get(class->funcs, "__each_init");
+        f_get = map_get(class->funcs, "__each");
         valid = f_init && f_get;
     }
     if (!valid) {

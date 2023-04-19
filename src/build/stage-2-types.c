@@ -514,11 +514,11 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
         stage_2_class_type_check(fc, func, args, 1, type_gen_void(alc), false);
 
     // Iter
-    Func *func_iter = map_get(class->funcs, "__iter_init");
+    Func *func_iter = map_get(class->funcs, "__each_init");
     if (func_iter) {
         if (type_is_void(func_iter->rett)) {
             fc->chunk = func_iter->chunk_args;
-            sprintf(fc->sbuf, "__iter_init can have any return type except 'void'");
+            sprintf(fc->sbuf, "__each_init can have any return type except 'void'");
             fc_error(fc);
         }
         stage_2_class_type_check(fc, func_iter, args, 1, NULL, false);
@@ -527,16 +527,15 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
         key_type->take_ownership = false;
         key_type->strict_ownership = false;
 
-        args[1] = func_iter->rett;
-        args[2] = key_type;
-        func = map_get(class->funcs, "__iter_get");
+        args[1] = key_type;
+        func = map_get(class->funcs, "__each");
         if (func) {
             if (type_is_void(func->rett)) {
                 fc->chunk = func->chunk_args;
-                sprintf(fc->sbuf, "__iter_get can have any return type except 'void'");
+                sprintf(fc->sbuf, "__each can have any return type except 'void'");
                 fc_error(fc);
             }
-            stage_2_class_type_check(fc, func, args, 3, NULL, true);
+            stage_2_class_type_check(fc, func, args, 2, NULL, true);
             class->can_iter = true;
         }
     }
