@@ -3,6 +3,7 @@
 
 Feature todo list in order:
 
+- readonly types
 - borrow_each
 - compare errors
 - dont allow class_pa|array_item of strict type values, swap token
@@ -31,6 +32,7 @@ Feature todo list in order:
 
 ## Done
 
+- automatically check if vars are mutated or not to know if we need to alloc on the stack or not
 - isset keyword
 - format string
 - http server
