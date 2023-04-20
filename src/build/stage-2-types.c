@@ -330,7 +330,7 @@ void stage_2_func(Fc *fc, Func *func) {
         Type *type = read_type(fc, alc, func->scope->parent, true, true, true);
 
         if (mutable && !type->take_ownership && type_tracks_ownership(type)) {
-            sprintf(fc->sbuf, "🔇 If your argument is mutable, your argument must have a type that takes ownership. Simply put a '+' before the type name (e.g. +MyType) or a '.' for strict ownership.");
+            sprintf(fc->sbuf, "▶ If your argument is mutable, your argument must have a type that takes ownership. Simply put a '>' before the type (e.g. >MyType)");
             fc_error(fc);
         }
 

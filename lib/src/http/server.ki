@@ -187,8 +187,11 @@ class Server {
 					if http_con.headers_parsed {
 
 						// Clear read data
-						http_con.read_buf.clear();
-						http_con.parse_pos = 0;
+						let read_buf = http_con.read_buf;
+						if http_con.parse_pos == read_buf.length {
+							read_buf.clear();
+							http_con.parse_pos = 0;
+						}
 						http_con.line.clear();
 						http_con.uploads = null;
 						http_con.phase = 0;

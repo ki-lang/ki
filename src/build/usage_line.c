@@ -80,7 +80,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         if (ul) {
 
             if (!decl->type->take_ownership) {
-                sprintf(fc->sbuf, "🏹 You cannot give away a borrowed value (variable: '%s'). It must have ownership. To achieve this, put a '>' in front of the type. This will tell the compiler to pass on ownership.", decl->name);
+                sprintf(fc->sbuf, "▶ You cannot give away a borrowed value (variable: '%s'). It must have ownership. To achieve this, put a '>' in front of the type. This will tell the compiler to pass on ownership.", decl->name);
                 fc_error(fc);
             }
 
@@ -102,7 +102,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
             usage_line_incr_moves(ul, incr);
 
             if (decl->type->strict_ownership && ul->moves > 1) {
-                sprintf(fc->sbuf, "🎭 Multiple moves of a strict ownership value. (variable: '%s'). If you did not intend for this value to have strict ownership, you can place a '+' in front of the value to convert it to shared ownership.", decl->name);
+                sprintf(fc->sbuf, "➕ Multiple moves of a strict ownership value. (variable: '%s'). If you did not intend for this value to have strict ownership, you can place a '+' in front of the value to convert it to shared ownership.", decl->name);
                 fc_error(fc);
             }
 
