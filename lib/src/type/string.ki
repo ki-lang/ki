@@ -21,13 +21,13 @@ class String type:ptr {
 
 	func rc() u32 %inline {
 		if(this.is_const()) { return 666; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 666.
-		let mut adr = this @as ptr;
+		let adr = this @as ptr;
 		adr += sizeof(uxx) + 4;
 		return @ptrv(adr, u32, 0);
 	}
 
 	func data() ptr %inline {
-		let mut adr = this @as ptr;
+		let adr = this @as ptr;
 		if(this.is_const()){
 			adr += sizeof(uxx) + 1;
 		} else {
@@ -44,7 +44,7 @@ class String type:ptr {
 		return @ptrv(this.data(), u8, index);
 	}
 
-	func sub_str_bytes(start_index: uxx, mut length: uxx) .String {
+	func sub_str_bytes(start_index: uxx, length: uxx) .String {
 		let this_bytes = this.bytes();
 		if(start_index > this_bytes){
 			return "";
@@ -70,7 +70,7 @@ class String type:ptr {
 		let data = this.data();
 		let new_str = String.make_empty(bytes);
 		let new_data = new_str.data();
-		let mut pos : uxx = 0;
+		let pos : uxx = 0;
 		while pos < bytes {
 			let byte : u8 = @ptrv(data, u8, pos);
 			if byte > 127 {
@@ -124,7 +124,7 @@ class String type:ptr {
 			return "";
 		}
 		let new_str = String.make_empty(len);
-		let mut new_adr = new_str.data();
+		let new_adr = new_str.data();
 		mem:copy(this.data(), new_adr, this_len);
 		new_adr += this_len;
 		mem:copy(str.data(), new_adr, str_len);
@@ -162,7 +162,7 @@ class String type:ptr {
 	/////////////////////
 
 	static func make_empty(size: uxx) .String {
-		let mut adr = mem:alloc(size + 8 + sizeof(uxx));
+		let adr = mem:alloc(size + 8 + sizeof(uxx));
 		let adr_ = adr;
 		@ptrv(adr, uxx, 0) = size;
 		adr += sizeof(uxx);
@@ -174,16 +174,16 @@ class String type:ptr {
 	}
 
 	static func format(baselen: uxx, parts: ptr, partc: uxx, values: ptr) .String {
-		let mut bytes = baselen;
+		let bytes = baselen;
 		let valuec = partc - 1;
-		let mut i : uxx = 0;
+		let i : uxx = 0;
 		while i < valuec {
 			let val = @ptrv(values, String, i);
 			bytes += val.bytes();
 			i++;
 		}
 		let result = String.make_empty(bytes);
-		let mut data = result.data();
+		let data = result.data();
 		i = 0;
 		while i < partc {
 			if i > 0 {

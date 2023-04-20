@@ -17,7 +17,7 @@ class Block norc {
 	misalign_bytes: u8;
 	has_free_slots: bool;
 
-	static func create(alc: Allocator, slot_size: uxx, slot_count: u8, mut misalign_bytes: u8) Block {
+	static func create(alc: Allocator, slot_size: uxx, slot_count: u8, misalign_bytes: u8) Block {
 
 		misalign_bytes += 1; // Slot byte
 		misalign_bytes = misalign_bytes % 8;
@@ -34,7 +34,7 @@ class Block norc {
 		b.has_free_slots = true;
 
 		// Alignment
-		let mut tmp = 0#i32 + slot_count + 2;
+		let tmp = 0#i32 + slot_count + 2;
 		tmp = 8 - tmp % 8;
 		tmp -= misalign_bytes;
 		if tmp < 0 { tmp += 8; }
@@ -45,14 +45,14 @@ class Block norc {
 		let data = sys_alloc(size);
 		b.data = data;
 
-		let mut adr = data;
+		let adr = data;
 		@ptrv(adr, ptr, 0) = b @as ptr;
 		adr += sizeof(ptr);
 
 		b.data_slot_nrs = adr;
 
 		// Setup slot positions
-		let mut i = 0#u8;
+		let i = 0#u8;
 		while i < slot_count {
 			@ptrv(adr, u8, 0) = i;
 			adr += 1;
@@ -91,7 +91,7 @@ class Block norc {
 
 		let slot_adr = this.data_slots + (slot_nr * this.slot_size);
 
-		let mut next_head = head + 1;
+		let next_head = head + 1;
 		if next_head == this.slot_count {
 			next_head = 0;
 		}
@@ -121,7 +121,7 @@ class Block norc {
 		@ptrv(slot_nr_adr, u8, 0) = slot_nr;
 
 		// Remove when atomic
-		let mut next_tail = tail + 1;
+		let next_tail = tail + 1;
 		if next_tail == slot_count {
 			next_tail = 0;
 		}

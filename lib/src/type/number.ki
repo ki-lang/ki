@@ -17,8 +17,8 @@ trait Number {
 
 	func str_base(base: u8) .String {
 
-		let mut negative = false;
-        let mut num = this;
+		let negative = false;
+        let num = this;
 
         // Handle 0 explicitly, otherwise empty string is printed for 0
         if (num == 0) {
@@ -34,12 +34,12 @@ trait Number {
         }
         #end
  
-        let mut abs = num @as uxx;
+        let abs = num @as uxx;
  
         // Process individual digits
-        let mut buf_adr = stack_alloc(32);
-        let mut len : u32 = 0;
-        let mut ch : u8 = 0;
+        let buf_adr = stack_alloc(32);
+        let len : u32 = 0;
+        let ch : u8 = 0;
         while (abs != 0) {
             let rem : u8 = (abs % base) @as u8;
             if(rem > 9){
@@ -61,7 +61,7 @@ trait Number {
  
         // Reverse the string
         let str = String.make_empty(len);
-        let mut str_adr = str.data();
+        let str_adr = str.data();
         while(len > 0){
             len-=1;
             buf_adr-=1;
@@ -73,8 +73,8 @@ trait Number {
 
 	func debug_base(base: u8) void {
 
-		let mut negative = false;
-        let mut num = this;
+		let negative = false;
+        let num = this;
 
         // Handle 0 explicitly, otherwise empty string is printed for 0
         if (num == 0) {
@@ -90,12 +90,12 @@ trait Number {
         }
         #end
  
-        let mut abs = num @as uxx;
+        let abs = num @as uxx;
  
         // Process individual digits
-        let mut buf_adr = stack_alloc(32);
-        let mut len : u32 = 0;
-        let mut ch : u8 = 0;
+        let buf_adr = stack_alloc(32);
+        let len : u32 = 0;
+        let ch : u8 = 0;
         while (abs != 0) {
             let rem : u8 = (abs % base) @as u8;
             if(rem > 9){
@@ -117,7 +117,7 @@ trait Number {
  
         // Reverse the string
         let res = stack_alloc(32);
-        let mut str_adr = res;
+        let str_adr = res;
         let bytes = len;
         while(len > 0){
             len-=1;

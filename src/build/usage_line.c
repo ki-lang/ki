@@ -366,22 +366,25 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
         } else {
             // Add deref token
             if (class->must_deref) {
-                if (decl->type->strict_ownership) {
-                    Scope *sub = scope_init(alc, sct_default, ul->scope, true);
-                    Value *val = value_init(alc, v_decl, decl, type);
-                    class_free_value(alc, sub, val);
-                    Token *t = tgen_exec(alc, sub, true);
-                    array_push((ul->deref_scope ? ul->deref_scope : ul->scope)->ast, t);
-                    ul->deref_token = t->item;
-                } else {
-                    Scope *sub = scope_init(alc, sct_default, ul->scope, true);
-                    Value *val = value_init(alc, v_decl, decl, type);
-                    class_ref_change(alc, sub, val, -1);
-                    Token *t = tgen_exec(alc, sub, true);
-                    array_push((ul->deref_scope ? ul->deref_scope : ul->scope)->ast, t);
-                    // array_push(ul->scope->ast, t);
-                    ul->deref_token = t->item;
-                }
+                // We could free instantly if it's a strict type, but.. we wont.
+                // Derefing instead might allow some interesting hacks.
+                // A CLI option could be added to free instantly
+
+                // if (decl->type->strict_ownership) {
+                //     Scope *sub = scope_init(alc, sct_default, ul->scope, true);
+                //     Value *val = value_init(alc, v_decl, decl, type);
+                //     class_free_value(alc, sub, val);
+                //     Token *t = tgen_exec(alc, sub, true);
+                //     array_push((ul->deref_scope ? ul->deref_scope : ul->scope)->ast, t);
+                //     ul->deref_token = t->item;
+                // } else {
+                Scope *sub = scope_init(alc, sct_default, ul->scope, true);
+                Value *val = value_init(alc, v_decl, decl, type);
+                class_ref_change(alc, sub, val, -1);
+                Token *t = tgen_exec(alc, sub, true);
+                array_push((ul->deref_scope ? ul->deref_scope : ul->scope)->ast, t);
+                ul->deref_token = t->item;
+                // }
             }
         }
     }

@@ -25,7 +25,7 @@ class Response {
 		return Response{ body: body, status: code, content_type: content_type, headers: headers };
 	}
 	//public static func redirect(String location, u32 code = 301, ?Map[String] headers_ = null) Response {
-	//	let mut headers = headers_;
+	//	let headers = headers_;
 	//	ifnull headers set Map[String]{};
 	//	headers.set("Location", location);
 	//	let r = Response{ status: code, headers: headers };

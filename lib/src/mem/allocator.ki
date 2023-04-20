@@ -12,9 +12,9 @@ class Allocator norc {
 	static func init(slot_size: uxx, misalign_bytes: u8 = 0) Allocator {
 
 		// Calculate size
-		let mut real_size = slot_size + 1;
+		let real_size = slot_size + 1;
 		// 8 - 9 % 8 = 7 
-		let mut mod = slot_size;
+		let mod = slot_size;
 		if mod > 8 { mod = 8; }
 		real_size += mod - real_size % mod;
 
@@ -35,7 +35,7 @@ class Allocator norc {
 
 	func get_slot() ptr {
 		this.total_slots_used += 1;
-		let mut b = this.current;
+		let b = this.current;
 		while true {
 			if b.is_empty() && false {
 				// Decide wether to free the block or not
@@ -58,11 +58,11 @@ class Allocator norc {
 		// Decide to create new block or use previous blocks
 		if this.block_count < 10 || (this.total_slots / this.total_slots_used) < 2 {
 			// Create new block
-			let mut pow = this.block_count;
+			let pow = this.block_count;
 			if pow > 10 {
 				pow = 10;
 			}
-			let mut count = 4 << pow;
+			let count = 4 << pow;
 			if count > 240 {
 				count = 240;
 			}
@@ -80,7 +80,7 @@ class Allocator norc {
 		return this.get_slot();
 	}
 
-	func free(mut adr: ptr) void {
+	func free(adr: ptr) void {
 		adr -= 1;
 		let slot_nr = @ptrv(adr, u8, 0);
 		adr -= (slot_nr * this.slot_size_real);

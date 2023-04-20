@@ -59,7 +59,7 @@ Value *vgen_fcall(Allocator *alc, Scope *scope, Value *on, Array *values, Type *
     item->ul = NULL;
 
     if (scope && type_tracks_ownership(rett)) {
-        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false, false);
+        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);
         item->ul = usage_line_init(alc, scope, decl);
     }
     return value_init(alc, v_fcall, item, rett);
@@ -92,7 +92,7 @@ Value *vgen_class_init(Allocator *alc, Scope *scope, Class *class, Map *values) 
     rett->strict_ownership = true;
 
     if (scope) {
-        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false, false);
+        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);
         item->ul = usage_line_init(alc, scope, decl);
     }
 

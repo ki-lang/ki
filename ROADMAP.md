@@ -5,7 +5,7 @@ Feature todo list in order:
 
 - borrow_each
 - compare errors
-- dont allow class_pa of strict type values, swap token
+- dont allow class_pa|array_item of strict type values, swap token
 - Calling functions using named arguments
 - package manager
 - testing features

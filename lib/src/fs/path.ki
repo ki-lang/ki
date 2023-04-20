@@ -1,8 +1,8 @@
 
 func ext(path: String) .String {
 	let len = path.bytes();
-	let mut start = len;
-	let mut found = false;
+	let start = len;
+	let found = false;
 	while start > 0 {
 		start--;
 		let ch = path.byte(start);
@@ -26,7 +26,7 @@ func ext(path: String) .String {
 // e.g. /etc -> /
 // e.g. / -> /
 func dir_of(path: String) .String {
-	let mut end = path.bytes() - 1;
+	let end = path.bytes() - 1;
 	while(end > 0){
 		end--;
 		let ch = path.byte(end);
@@ -44,7 +44,7 @@ func dir_of(path: String) .String {
 // e.g. "" -> ""
 func basename(path: String) .String {
 	let len = path.bytes();
-	let mut start = len;
+	let start = len;
 	while(start > 0){
 		start--;
 		let ch = path.byte(start);

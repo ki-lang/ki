@@ -87,7 +87,7 @@ void llvm_gen_func_ir(LB *b) {
 
             Arg *arg = array_get_index(func->args, o);
 
-            if (!arg->is_mut) {
+            if (!arg->decl->is_mut) {
                 continue;
             }
 

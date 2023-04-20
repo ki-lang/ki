@@ -304,13 +304,6 @@ void stage_2_func(Fc *fc, Func *func) {
     tok(fc, token, true, true);
     while (strcmp(token, ")") != 0) {
 
-        bool mutable = false;
-
-        if (strcmp(token, "mut") == 0) {
-            mutable = true;
-            tok(fc, token, true, true);
-        }
-
         if (!is_valid_varname(token)) {
             sprintf(fc->sbuf, "Invalid argument name: '%s'", token);
             fc_error(fc);
@@ -329,11 +322,6 @@ void stage_2_func(Fc *fc, Func *func) {
 
         Type *type = read_type(fc, alc, func->scope->parent, true, true, true);
 
-        if (mutable && !type->take_ownership && type_tracks_ownership(type)) {
-            sprintf(fc->sbuf, "▶ If your argument is mutable, your argument must have a type that takes ownership. Simply put a '>' before the type (e.g. >MyType)");
-            fc_error(fc);
-        }
-
         tok(fc, token, true, true);
         if (strcmp(token, "=") == 0) {
             val_chunk = chunk_clone(alc, fc->chunk);
@@ -350,7 +338,7 @@ void stage_2_func(Fc *fc, Func *func) {
             fc_error(fc);
         }
 
-        Arg *arg = arg_init(alc, name, type, mutable);
+        Arg *arg = arg_init(alc, name, type);
         arg->value_chunk = val_chunk;
         arg->type_chunk = type_chunk;
 

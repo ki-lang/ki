@@ -133,8 +133,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         if (on->type == v_decl) {
             Decl *decl = v->item;
             if (!decl->is_mut) {
-                sprintf(fc->sbuf, "Variable must be mutable, otherwise it has no address in memory");
-                fc_error(fc);
+                decl->is_mut = true;
             }
         }
         v = value_init(alc, v_getptr, on, type_gen(b, alc, "ptr"));
@@ -162,8 +161,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         if (on->type == v_decl) {
             Decl *decl = v->item;
             if (!decl->is_mut) {
-                sprintf(fc->sbuf, "Variable must be mutable, otherwise it has no address in memory");
-                fc_error(fc);
+                decl->is_mut = true;
             }
         }
         if (on->rett->type != type_int) {
@@ -412,8 +410,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             if (v->type == v_decl) {
                 Decl *decl = v->item;
                 if (!decl->is_mut) {
-                    sprintf(fc->sbuf, "Variable must be mutable");
-                    fc_error(fc);
+                    decl->is_mut = true;
                 }
             }
             Type *vt = v->rett;

@@ -192,7 +192,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
             // type->take_ownership = take_ownership;
             // type->strict_ownership = strict_ownership;
 
-            Arg *arg = arg_init(alc, "", type, false);
+            Arg *arg = arg_init(alc, "", type);
             array_push(args, arg);
             tok(fc, token, true, true);
             if (strcmp(token, ",") == 0) {

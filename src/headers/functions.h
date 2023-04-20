@@ -156,9 +156,9 @@ bool type_tracks_ownership(Type *type);
 bool type_allowed_async(Type *type, bool recursive);
 
 // Var
-Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_mut, bool is_arg);
+Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_arg);
 Var *var_init(Allocator *alc, Decl *decl, Type *type);
-Arg *arg_init(Allocator *alc, char *name, Type *type, bool is_mut);
+Arg *arg_init(Allocator *alc, char *name, Type *type);
 
 // UsageLine
 UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl);

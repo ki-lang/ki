@@ -20,7 +20,7 @@ func exit(code: i32) void {
 	kos.ki_os__exit(code);
 }
 
-//func parse_args(i32 mut argc, ptr mut argv) Array<String> {
+//func parse_args(i32 argc, ptr argv) Array<String> {
 //	let res = Array<String>.make(argc);
 //	while(argc > 0) {
 //		argc--;

@@ -6,7 +6,7 @@ class Array[T] {
 	readonly length: uxx = 0;
 	readonly data: ptr;
 
-	static func init(mut start_size: uxx = 2) .CLASS {
+	static func init(start_size: uxx = 2) .CLASS {
 		if start_size < 2 {
 			start_size = 2;
 		}
@@ -19,7 +19,7 @@ class Array[T] {
 	func push(value: >T) uxx {
 		let size = this.size;
 		let length = this.length;
-		let mut data = this.data;
+		let data = this.data;
 
 		if length == size {
 			// Increase mem
@@ -69,8 +69,8 @@ class Array[T] {
 	}
 
 	func index_of(item: T) uxx !not_found {
-		let mut index : uxx = 0;
-		let mut adr = this.data;
+		let index : uxx = 0;
+		let adr = this.data;
 		let len = this.length;
 		while(index < len){
 			let x = @ptrv(adr, T, index);
@@ -109,7 +109,7 @@ class Array[T] {
 
 	func __before_free() void {
 		// Deref items
-		let mut index = 0#uxx;
+		let index = 0#uxx;
 		let length = this.length;
 		let data = this.data;
 		while index < length {

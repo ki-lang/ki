@@ -30,13 +30,13 @@ class Connection {
 			return;
 		}
 
-		let mut phase = this.phase;
-		let mut pos = this.parse_pos;
+		let phase = this.phase;
+		let pos = this.parse_pos;
 		let read_buf = this.read_buf;
 		let line = this.line;
 		let length = read_buf.length;
 		let data = read_buf.data;
-		let mut prev_ch = '\0';
+		let prev_ch = '\0';
 		if line.length > 0 {
 			prev_ch = @ptrv(line.data, u8, line.length - 1);
 		}
@@ -167,7 +167,7 @@ class Connection {
 		}
 
 		let pos = this.out_pos;
-		let mut bytes = out.length - pos;
+		let bytes = out.length - pos;
 		if bytes > 0 {
 			let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) !? 0;
 			this.out_pos += wbytes;

@@ -36,7 +36,7 @@ class Server {
 		};
 	}
 
-	func .start(mut worker_count: i32 = 32) void {
+	func .start(worker_count: i32 = 32) void {
 
 		// SIGINT
         os:signal(os:SIG.hup, interrupt);
@@ -84,7 +84,7 @@ class Server {
 		while true {
 			let result = poll.wait();
 			let result_count = result.count;
-			let mut i : u32 = 0;
+			let i : u32 = 0;
 
 			while i < result_count {
 				let event = result.get(i) ?! break;;
@@ -104,7 +104,7 @@ class Server {
 					let fd = netcon.fd;
 					println("[+] New connection: " + fd.str());
 
-					let mut index = index_pool.pop() !? max_connections;
+					let index = index_pool.pop() !? max_connections;
 					if index == max_connections {
 						let http_con = Connection {
 							netcon: netcon,

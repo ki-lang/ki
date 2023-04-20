@@ -7,7 +7,7 @@ class Pool[T] {
 	head: uxx = 0;
 	tail: uxx = 0;
 
-	static func init(mut max_items: uxx) .CLASS {
+	static func init(max_items: uxx) .CLASS {
 		if max_items < 2{
 			max_items = 2;
 		}
@@ -38,7 +38,7 @@ class Pool[T] {
 	func add(item: >T) void !full {
 		let size = this.size;
 		let head = this.head;
-		let mut next_head = head + 1;
+		let next_head = head + 1;
 		let tail = this.tail;
 
 		if next_head == size {

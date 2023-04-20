@@ -183,8 +183,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 if (left->type == v_decl) {
                     Decl *decl = left->item;
                     if (!decl->is_mut) {
-                        sprintf(fc->sbuf, "Cannot assign value to an immutable variable");
-                        fc_error(fc);
+                        decl->is_mut = true;
                     }
                 }
 
@@ -264,12 +263,6 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
 
     tok(fc, token, true, true);
 
-    bool mutable = false;
-
-    if (strcmp(token, "mut") == 0) {
-        mutable = true;
-        tok(fc, token, true, true);
-    }
     if (is_valid_varname_char(token[0])) {
         sprintf(fc->sbuf, "Invalid variable name syntax '%s'", token);
     }
@@ -321,7 +314,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
 
     tok_expect(fc, ";", false, true);
 
-    Decl *decl = decl_init(alc, scope, name, type, val, mutable, false);
+    Decl *decl = decl_init(alc, scope, name, type, val, false);
     array_push(scope->ast, token_init(alc, tkn_declare, decl));
 
     Idf *idf = idf_init(alc, idf_decl);
@@ -582,16 +575,16 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     }
 
     // Declare next_key
-    Decl *decl_nk = decl_init(alc, scope, "each_next_key", f_init->rett, NULL, false, false);
+    Decl *decl_nk = decl_init(alc, scope, "each_next_key", f_init->rett, NULL, false);
     UsageLine *ul_nk = usage_line_init(alc, scope, decl_nk);
 
     // New sub scope
     Scope *sub = usage_scope_init(alc, scope, sct_loop);
 
     // Declare scope variables
-    Decl *decl_k = decl_init(alc, sub, key_name, f_init->rett, NULL, false, false);
+    Decl *decl_k = decl_init(alc, sub, key_name, f_init->rett, NULL, false);
     UsageLine *ul_k = usage_line_init(alc, sub, decl_k);
-    Decl *decl_v = decl_init(alc, sub, value_name, f_get->rett, NULL, false, false);
+    Decl *decl_v = decl_init(alc, sub, value_name, f_get->rett, NULL, false);
     UsageLine *ul_v = usage_line_init(alc, sub, decl_v);
 
     //
