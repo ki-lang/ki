@@ -127,7 +127,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
     } else if (strcmp(token, "getptr") == 0) {
         Value *on = read_value(fc, alc, scope, false, 0, false);
         if (on->type != v_class_pa && on->type != v_ptrv && on->type != v_decl && on->type != v_array_item) {
-            sprintf(fc->sbuf, "Value must be assignable, such as a mutable variable");
+            sprintf(fc->sbuf, "Value used in 'getptr' must be assignable");
             fc_error(fc);
         }
         if (on->type == v_decl) {
@@ -155,7 +155,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
         Value *on = read_value(fc, alc, scope, true, 0, true);
         if (!value_is_assignable(on)) {
-            sprintf(fc->sbuf, "Value must be assignable, such as a mutable variable");
+            sprintf(fc->sbuf, "The first parameter for 'atomicop' must be an assignable value");
             fc_error(fc);
         }
         if (on->type == v_decl) {

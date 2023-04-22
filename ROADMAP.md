@@ -3,6 +3,7 @@
 
 Feature todo list in order:
 
+- trait sub-types (same syntax as generics)
 - readonly types
 - borrow_each
 - compare errors
