@@ -183,6 +183,10 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 if (left->type == v_decl) {
                     Decl *decl = left->item;
                     if (!decl->is_mut) {
+                        if (type_tracks_ownership(decl->type) && !decl->type->take_ownership) {
+                            sprintf(fc->sbuf, "You cannot mutate variable that contain borrowed values");
+                            fc_error(fc);
+                        }
                         decl->is_mut = true;
                     }
                 }
