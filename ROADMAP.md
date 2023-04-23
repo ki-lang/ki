@@ -3,7 +3,7 @@
 
 Feature todo list in order:
 
-- immutability so one can borrow properties while knowing they wont go out of scope
+- temporary borrow types that can be returned from functions
 - trait sub-types (same syntax as generics)
 - readonly types
 - borrow_each
