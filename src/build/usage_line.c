@@ -79,10 +79,14 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
 
         if (ul) {
 
-            if (!decl->type->take_ownership) {
-                sprintf(fc->sbuf, "▶ You cannot give away a borrowed value (variable: '%s'). It must have ownership. To achieve this, put a '>' in front of the type. This will tell the compiler to pass on ownership.", decl->name);
-                fc_error(fc);
-            }
+            // if (!decl->type->take_ownership && decl->is_arg) {
+            // if (decl->is_arg) {
+            // sprintf(fc->sbuf, "▶ You cannot give away a borrowed value (argument: '%s'). It must have ownership. You can tell the compiler to pass ownership by putting a '>' character at the start of the argument type", decl->name);
+            // } else {
+            //     sprintf(fc->sbuf, "▶ You cannot give away a borrowed value (variable: '%s'). It must have ownership.", decl->name);
+            // }
+            // fc_error(fc);
+            // }
 
             // Check if in loop
             bool in_loop = false;
@@ -312,7 +316,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
         return;
 
     Decl *decl = ul->decl;
-    if (!decl->type->take_ownership) {
+    if (!decl->type->take_ownership && decl->is_arg) {
         // printf("Keep:%s in %s\n", decl->name, decl->scope->func->dname);
         return;
     }

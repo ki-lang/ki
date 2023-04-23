@@ -122,3 +122,10 @@ enum OPTYPE {
     op_and,
     op_or,
 };
+
+enum READTYPECTX {
+    rtc_default,
+    rtc_func_arg,
+    rtc_func_rett,
+    rtc_ptrv,
+};

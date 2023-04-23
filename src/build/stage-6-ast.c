@@ -291,7 +291,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
 
     tok(fc, token, false, true);
     if (strcmp(token, ":") == 0) {
-        type = read_type(fc, alc, scope, false, true, false);
+        type = read_type(fc, alc, scope, false, true, rtc_default);
         tok(fc, token, false, true);
     }
 

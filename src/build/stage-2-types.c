@@ -47,7 +47,7 @@ void stage_2(Fc *fc) {
     for (int i = 0; i < fc->globals->length; i++) {
         Global *g = array_get_index(fc->globals, i);
         fc->chunk = g->type_chunk;
-        Type *type = read_type(fc, fc->alc, fc->scope, true, true, false);
+        Type *type = read_type(fc, fc->alc, fc->scope, true, true, rtc_default);
         if (type->ptr_depth > 0 && !type->nullable) {
             sprintf(fc->sbuf, "Global types must be prefixed with '?' because the default value of a global is 'null' for pointer types");
             fc_error(fc);
@@ -263,7 +263,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
             tok(fc, token, true, true);
             if (strcmp(token, ":") == 0) {
-                Type *type = read_type(fc, fc->alc, scope, true, true, false);
+                Type *type = read_type(fc, fc->alc, scope, true, true, rtc_default);
                 if (type_is_void(type)) {
                     sprintf(fc->sbuf, "Cannot use 'void' as a type for a class property");
                     fc_error(fc);
@@ -320,7 +320,7 @@ void stage_2_func(Fc *fc, Func *func) {
         Chunk *val_chunk = NULL;
         Chunk *type_chunk = chunk_clone(alc, fc->chunk);
 
-        Type *type = read_type(fc, alc, func->scope->parent, true, true, true);
+        Type *type = read_type(fc, alc, func->scope->parent, true, true, rtc_func_arg);
 
         tok(fc, token, true, true);
         if (strcmp(token, "=") == 0) {
@@ -347,7 +347,7 @@ void stage_2_func(Fc *fc, Func *func) {
     }
 
     // Return type
-    func->rett = read_type(fc, alc, func->scope->parent, true, true, false);
+    func->rett = read_type(fc, alc, func->scope->parent, true, true, rtc_func_rett);
 
     Array *errors = NULL;
 

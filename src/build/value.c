@@ -214,12 +214,12 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
     } else if (strcmp(token, "sizeof") == 0) {
         tok_expect(fc, "(", true, false);
-        Type *type = read_type(fc, alc, scope, false, true, false);
+        Type *type = read_type(fc, alc, scope, false, true, rtc_default);
         tok_expect(fc, ")", false, true);
         v = vgen_vint(alc, type->bytes, type_gen(b, alc, "i32"), false);
     } else if (strcmp(token, "sizeof_class") == 0) {
         tok_expect(fc, "(", true, false);
-        Type *type = read_type(fc, alc, scope, false, true, false);
+        Type *type = read_type(fc, alc, scope, false, true, rtc_default);
         tok_expect(fc, ")", false, true);
         Class *class = type->class;
         if (!class) {
@@ -231,7 +231,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
     } else if (strcmp(token, "@v") == 0) {
         // value scope
         tok_expect(fc, ":", false, true);
-        Type *rett = read_type(fc, alc, scope, false, true, false);
+        Type *rett = read_type(fc, alc, scope, false, true, rtc_default);
         if (type_is_void(rett)) {
             sprintf(fc->sbuf, "Value scope return type cannot be void");
             fc_error(fc);
@@ -261,7 +261,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             sprintf(fc->sbuf, "You can only use 'ptrv' on pointer type values");
             fc_error(fc);
         }
-        Type *type = read_type(fc, alc, scope, true, true, true);
+        Type *type = read_type(fc, alc, scope, true, true, rtc_ptrv);
         // Index
         tok_expect(fc, ",", false, true);
         Value *index = read_value(fc, alc, scope, false, 0, false);
@@ -329,7 +329,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             }
             if (get_char(fc, 0) == '#') {
                 chunk_move(fc->chunk, 1);
-                Type *type = read_type(fc, alc, scope, true, false, false);
+                Type *type = read_type(fc, alc, scope, true, false, rtc_default);
                 if (type->type != type_int) {
                     sprintf(fc->sbuf, "Invalid integer type");
                     fc_error(fc);
@@ -452,7 +452,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 fc_error(fc);
             }
 
-            Type *type = read_type(fc, alc, scope, false, true, true);
+            Type *type = read_type(fc, alc, scope, false, true, rtc_ptrv);
             v = vgen_cast(alc, v, type);
 
             tok(fc, token, false, true);

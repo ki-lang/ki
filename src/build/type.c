@@ -120,14 +120,15 @@ Type *type_gen_void(Allocator *alc) {
     return t;
 }
 
-Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space, bool is_arg) {
+Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space, int context) {
     //
     char *token = fc->token;
     bool nullable = false;
     bool t_inline = false;
     bool async = false;
 
-    bool take_ownership = is_arg ? false : true;
+    bool must_specify_ownership = context == rtc_func_arg || context == rtc_ptrv;
+    bool take_ownership = must_specify_ownership ? false : true;
     bool strict_ownership = false;
 
     tok(fc, token, sameline, allow_space);
@@ -140,7 +141,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     // if (is_arg && strcmp(token, "&") == 0) {
     //     take_ownership = false;
     //     tok(fc, token, true, false);
-    if (is_arg) {
+    if (must_specify_ownership) {
         if (strcmp(token, ">") == 0) {
             take_ownership = true;
             tok(fc, token, true, false);
@@ -188,7 +189,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
             rtok(fc);
             // }
 
-            Type *type = read_type(fc, alc, scope, true, true, true);
+            Type *type = read_type(fc, alc, scope, true, true, rtc_func_arg);
             // type->take_ownership = take_ownership;
             // type->strict_ownership = strict_ownership;
 
@@ -203,7 +204,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
         // Check return type
         tok_expect(fc, "(", true, false);
-        type->func_rett = read_type(fc, alc, scope, true, true, false);
+        type->func_rett = read_type(fc, alc, scope, true, true, rtc_func_rett);
         tok_expect(fc, ")", true, true);
 
         // i = tok(fc, token, true, true);
@@ -264,7 +265,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
             } else if (idf->type == idf_fc) {
                 Fc *fc_ = idf->item;
                 tok_expect(fc, ".", true, false);
-                type = read_type(fc, alc, fc_->scope, true, false, false);
+                type = read_type(fc, alc, fc_->scope, true, false, rtc_default);
             } else {
                 sprintf(fc->sbuf, "Not a type");
                 fc_error(fc);

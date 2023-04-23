@@ -147,7 +147,7 @@ Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed);
 Type *type_gen_void(Allocator *alc);
 Type *type_gen(Build *b, Allocator *alc, char *name);
 Type *type_array_of(Allocator *alc, Build *b, Type *type, int size);
-Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space, bool is_arg);
+Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space, int context);
 bool type_compat(Type *t1, Type *t2, char **reason);
 char *type_to_str(Type *t, char *res);
 void type_check(Fc *fc, Type *t1, Type *t2);
