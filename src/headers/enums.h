@@ -128,4 +128,5 @@ enum READTYPECTX {
     rtc_func_arg,
     rtc_func_rett,
     rtc_ptrv,
+    rtc_decl,
 };

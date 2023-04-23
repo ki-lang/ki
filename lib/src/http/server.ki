@@ -243,8 +243,10 @@ class Server {
 			throw sent_error;
 		}
 
-		each data.static_dirs as dir {
-			let x = dir;
+		if data.static_dirs.length > 0 {
+			each data.static_dirs as dir {
+				let x = dir;
+			}
 		}
 
 		//let stream = fs:open("/mnt/c/www/ki/debug/test.avi", true, false) !! {

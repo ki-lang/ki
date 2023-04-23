@@ -128,6 +128,8 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     bool async = false;
 
     bool must_specify_ownership = context == rtc_func_arg || context == rtc_ptrv;
+    bool allow_borrow_type = context == rtc_func_rett || context == rtc_decl;
+
     bool take_ownership = must_specify_ownership ? false : true;
     bool strict_ownership = false;
 
@@ -138,9 +140,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, true);
     }
 
-    // if (is_arg && strcmp(token, "&") == 0) {
-    //     take_ownership = false;
-    //     tok(fc, token, true, false);
+    if (allow_borrow_type && strcmp(token, "&") == 0) {
+        take_ownership = false;
+        tok(fc, token, true, false);
+    }
     if (must_specify_ownership) {
         if (strcmp(token, ">") == 0) {
             take_ownership = true;

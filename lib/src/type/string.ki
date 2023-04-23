@@ -102,6 +102,7 @@ class String type:ptr {
 		if this.is_const() { return; }
 		let adr = (this @as ptr) + sizeof(uxx) + 4;
 		let rc = @ptrv(adr, u32, 0) + 1;
+		@ptrv(adr, u32, 0) = rc;
 	}
 	func __deref() void {
 		if this.is_const() { return; }
@@ -109,6 +110,8 @@ class String type:ptr {
 		let rc = @ptrv(adr, u32, 0) - 1;
 		if rc == 0 {
 			this.__free();
+		} else {
+			@ptrv(adr, u32, 0) = rc;
 		}
 	}
 	func __free() void {

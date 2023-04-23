@@ -132,6 +132,19 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         fc_error(fc);
         // }
 
+    } else if (strcmp(token, "IS_STRICT_TYPE") == 0) {
+
+        Id *id = read_id(fc, true, true, true);
+        Idf *idf = idf_by_id(fc, scope, id, true);
+
+        if (idf && idf->type == idf_type) {
+            Type *type = idf->item;
+            result = type->strict_ownership;
+        } else {
+            sprintf(fc->sbuf, "Not a type: '%s'", id->name);
+            fc_error(fc);
+        }
+
     } else if (strcmp(token, "IS_SIGNED_NUMBER_TYPE") == 0) {
 
         Id *id = read_id(fc, true, true, true);
