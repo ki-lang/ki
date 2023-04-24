@@ -3,13 +3,10 @@
 
 Feature todo list in order:
 
-- temporary borrow types that can be returned from functions
 - trait sub-types (same syntax as generics)
-- readonly types
-- borrow_each
 - compare errors
-- dont allow class_pa|array_item of strict type values, swap token
-- Calling functions using named arguments
+- swap token
+- calling functions using named arguments
 - package manager
 - testing features
 - do not allow globals in a fcall argument that borrows the value
@@ -34,6 +31,7 @@ Feature todo list in order:
 
 ## Done
 
+- immutable types
 - automatically check if vars are mutated or not to know if we need to alloc on the stack or not
 - isset keyword
 - format string
