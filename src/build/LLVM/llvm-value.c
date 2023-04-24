@@ -344,11 +344,15 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
         b->lfunc->block = b_code;
         llvm_write_ast(b, sub);
-        llvm_ir_jump(llvm_b_ir(b), b_after);
+        if (!sub->did_return) {
+            llvm_ir_jump(llvm_b_ir(b), b_after);
+        }
 
         b->lfunc->block = b_else;
         llvm_write_ast(b, vob->else_scope);
-        llvm_ir_jump(llvm_b_ir(b), b_after);
+        if (!vob->else_scope->did_return) {
+            llvm_ir_jump(llvm_b_ir(b), b_after);
+        }
 
         b->lfunc->block = b_after;
         return lval;

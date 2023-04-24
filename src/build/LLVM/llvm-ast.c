@@ -235,7 +235,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
             b->lfunc->block = b_code;
             llvm_write_ast(b, sub);
             if (!sub->did_return) {
-                llvm_ir_jump(llvm_b_ir(b), b_cond);
+                llvm_ir_jump_loop(b, b_cond);
             }
 
             b->lfunc->block = b_after;

@@ -172,7 +172,7 @@ class Server {
 				}
 
 				if event.is_writable() {
-					//println("send more: " + nr.str());
+					//println("[+] Continue sending response: " + fd.str());
 
 					http_con.send_response_bytes();
 
@@ -248,11 +248,16 @@ class Server {
 		}
 
 		if data.static_dirs.length > 0 {
+			let path = http_con.request_path.trim("/");
 			each data.static_dirs as dir {
-				let path = dir + http_con.request_path; 
-				println("Lookup: " + path);
-				let stream = fs:open(path, true, false) !! continue;;
-				http_con.send_file(stream, null);
+				let fullpath = dir + path; 
+				if fs:is_file(fullpath) {
+					let stream = fs:open(fullpath, true, false) !! {
+						continue;
+					};
+					http_con.send_file(stream, null);
+					return;
+				}
 			}
 		}
 
@@ -274,7 +279,7 @@ class Server {
 	}
 
     func add_static_dir(path: >String) void {
-		let full = fs:exe_dir() + path;
+		let full = fs:exe_dir() + "/" + path.trim("/") + "/";
         println("[+] Add static dir: " + full);
         this.data.static_dirs.push(full);
     }

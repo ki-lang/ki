@@ -622,5 +622,9 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
 
     read_ast(fc, sub, single_line);
 
+    Array *ancestors = array_make(alc, 2);
+    array_push(ancestors, sub);
+    usage_merge_ancestors(alc, scope, ancestors);
+
     array_push(scope->ast, tgen_each(alc, on, sub, decl_k, decl_v));
 }

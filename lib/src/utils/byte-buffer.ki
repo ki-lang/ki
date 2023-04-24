@@ -1,5 +1,6 @@
 
 use mem;
+use os;
 
 class ByteBuffer {
 	data: ptr;

@@ -144,7 +144,12 @@ class String type:ptr {
 	// Adjustments
 	/////////////////////
 
-	func >rtrim(part: String) .String {
+	func trim(part: String) .String {
+		let res = this.ltrim(part);
+		return res.rtrim(part);
+	}
+
+	func rtrim(part: String) .String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -156,6 +161,22 @@ class String type:ptr {
 				break;
 			}
 			result = result.sub_str_bytes(0, new_len);
+			bytes = result.bytes();
+		}
+		return result;
+	}
+
+	func ltrim(part: String) .String {
+		let part_bytes = part.bytes();
+		let part_data = part.data();
+		let bytes = this.bytes();
+		let result = this + "";
+		while part_bytes <= bytes {
+			let data = result.data();
+			if !mem:equal(data, part_data, part_bytes) {
+				break;
+			}
+			result = result.sub_str_bytes(part_bytes, bytes -  part_bytes);
 			bytes = result.bytes();
 		}
 		return result;

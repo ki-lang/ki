@@ -272,11 +272,15 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
             b->lfunc->block = b_code;
             llvm_ir_store(b, err_code_type, "@ki_err_code_buffer", "0");
             llvm_write_ast(b, ort->scope);
-            llvm_ir_jump(llvm_b_ir(b), b_after);
+            if (!ort->scope->did_return) {
+                llvm_ir_jump(llvm_b_ir(b), b_after);
+            }
 
             b->lfunc->block = b_else;
             llvm_write_ast(b, ort->else_scope);
-            llvm_ir_jump(llvm_b_ir(b), b_after);
+            if (!ort->else_scope->did_return) {
+                llvm_ir_jump(llvm_b_ir(b), b_after);
+            }
 
             b->lfunc->block = b_after;
         }

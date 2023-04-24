@@ -349,6 +349,7 @@ struct UsageLine {
     int reads_after_move;
     bool read_after_move;
     bool enable;
+    bool first_in_scope;
 };
 
 struct Global {

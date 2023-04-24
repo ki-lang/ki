@@ -21,6 +21,7 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
     v->reads_after_move = 0;
     v->read_after_move = false;
     v->enable = true;
+    v->first_in_scope = false;
 
     if (scope->usage_keys == NULL) {
         scope->usage_keys = array_make(alc, 8);
@@ -201,6 +202,7 @@ Scope *usage_scope_init(Allocator *alc, Scope *parent, int type) {
             ul->deref_scope = NULL;
             ul->read_after_move = false;
             ul->scope = scope;
+            ul->first_in_scope = true;
 
             array_push(keys, decl);
             array_push(vals, ul);
@@ -249,6 +251,7 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
         new_ul->clone_from = is_loop ? NULL : l_ul;
         new_ul->deref_scope = NULL;
         new_ul->read_after_move = false;
+        new_ul->first_in_scope = false;
 
         array_set_index(lvals, i, new_ul);
 
@@ -348,11 +351,17 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
                     UsageLine *oldest = anc;
                     while (oldest->parent)
                         oldest = oldest->parent;
+                    if (!oldest->first_in_scope) {
+                        all_deref = false;
+                        break;
+                    }
                     if (!oldest->deref_token) {
                         all_deref = false;
+                        break;
                     }
                     if (oldest->read_after_move) {
                         read_after_move = true;
+                        break;
                     }
                 }
                 if (all_deref && !read_after_move) {
