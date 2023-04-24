@@ -17,7 +17,7 @@ class ServerData {
 
 class Server {
 	host: String;
-	data: ServerData;
+	data: imut .ServerData;
 	port: u16;
 
 	static func init(host: >mut String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
@@ -25,14 +25,16 @@ class Server {
 		let max_connections : uxx = 10000;
 		let socket = net:Socket.init_tcp(host, port) !! throw socket_init_error;;
 
+		let data = ServerData {
+			socket: socket,
+			max_connections: max_connections,
+			handler: handler,
+		};
+
 		return Server{
 			host: host,
 			port: port,
-			data: ServerData {
-				socket: socket,
-				max_connections: max_connections,
-				handler: handler,
-			}
+			data: @imut data,
 		};
 	}
 
@@ -54,13 +56,7 @@ class Server {
 		println("[+] Running http server on port " + this.port.str());
 		println("[+] Worker count: " + worker_count.str());
 
-		let x = this.data;
-		let data_strict = ServerData {
-			socket: x.socket,
-			max_connections: x.max_connections,
-			handler: x.handler,
-		};
-		let data = @imut data_strict;
+		let data = this.data;
 
 		worker_count--;
 		while worker_count > 0 {
