@@ -19,6 +19,7 @@ Type *type_init(Allocator *alc) {
     type->strict_ownership = false;
     type->borrow = false;
     type->imut = false;
+    type->ignore_mutability = false;
     //
     type->func_args = NULL;
     type->func_rett = NULL;
@@ -128,14 +129,13 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     bool t_inline = false;
     bool async = false;
 
-    bool must_specify_ownership = context == rtc_func_arg || context == rtc_ptrv;
-
     bool strict_ownership = false;
     bool borrow = false;
     bool imut = false;
 
     if (context == rtc_func_arg || context == rtc_ptrv) {
         borrow = true;
+        imut = true;
     }
 
     tok(fc, token, sameline, allow_space);
@@ -145,24 +145,23 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, true);
     }
 
-    // if (strcmp(token, "&") == 0) {
-    //     borrow = true;
-    //     tok(fc, token, true, false);
-    // } else {
-    if (must_specify_ownership) {
-        if (strcmp(token, ">") == 0) {
-            borrow = false;
-            tok(fc, token, true, false);
-        }
+    if (strcmp(token, "&") == 0) {
+        borrow = true;
+        tok(fc, token, true, false);
+    } else if (strcmp(token, ">") == 0) {
+        borrow = false;
+        tok(fc, token, true, false);
     }
-    // }
 
     if (strcmp(token, "?") == 0) {
         nullable = true;
         tok(fc, token, true, false);
     }
 
-    if (strcmp(token, "imut") == 0) {
+    if (strcmp(token, "mut") == 0) {
+        imut = false;
+        tok(fc, token, true, true);
+    } else if (strcmp(token, "imut") == 0) {
         imut = true;
         tok(fc, token, true, true);
     }
@@ -428,7 +427,7 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
                 *reason = "Trying to pass a type with borrowed strict ownership to a type that requires real ownership";
             return false;
         }
-        if (!t1->imut && t2->imut) {
+        if (!t1->imut && t2->imut && !t1->ignore_mutability) {
             if (reason)
                 *reason = "Trying to pass an immutable type to a mutable type";
             return false;
@@ -512,8 +511,8 @@ char *type_to_str(Type *t, char *res) {
     if (t->nullable) {
         strcat(res, "?");
     }
-    if (t->imut) {
-        strcat(res, "imut ");
+    if (!t->imut) {
+        strcat(res, "mut ");
     }
     if (t->strict_ownership) {
         strcat(res, ".");

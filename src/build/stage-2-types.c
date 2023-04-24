@@ -188,7 +188,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             // Function
             tok(fc, token, true, true);
 
-            bool imut = false;
+            bool imut = true;
             bool borrow = true;
             bool strict_ownership = false;
             if (!is_static) {
@@ -196,9 +196,9 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
                     borrow = false;
                     tok(fc, token, true, false);
                 }
-                if (strcmp(token, "imut") == 0) {
-                    imut = true;
-                    tok(fc, token, true, false);
+                if (strcmp(token, "mut") == 0) {
+                    imut = false;
+                    tok(fc, token, true, true);
                 }
                 if (strcmp(token, ".") == 0) {
                     strict_ownership = true;
@@ -493,6 +493,7 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
 
     args[0] = type_gen_class(alc, class);
     args[0]->borrow = true;
+    args[0]->ignore_mutability = true;
 
     func = map_get(class->funcs, "__ref");
     if (func)

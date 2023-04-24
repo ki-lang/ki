@@ -22,7 +22,7 @@ class Block norc {
 		misalign_bytes += 1; // Slot byte
 		misalign_bytes = misalign_bytes % 8;
 
-		let b = sys_alloc(sizeof(Block)) @as Block;
+		let b = sys_alloc(sizeof(Block)) @as mut Block;
 		b.alc = alc;
 		b.prev = null;
 		b.next = null;
@@ -83,7 +83,7 @@ class Block norc {
 		return this.tail == this.head && this.has_free_slots;
 	}
 
-	func get_slot() ptr {
+	func mut get_slot() ptr {
 		let head = this.head;
 
 		let slot_nr_adr = this.data_slot_nrs + head;
@@ -104,7 +104,7 @@ class Block norc {
 		return slot_adr + 1;
 	}
 
-	func free_slot(slot_nr: u8) void {
+	func mut free_slot(slot_nr: u8) void {
 
 		let slot_count = this.slot_count;
 

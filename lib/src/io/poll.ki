@@ -68,7 +68,7 @@ struct PollListener {
 	readonly fd : i32 = -1;
     private state: u32 = 0;
 
-	public func read(v: bool) void {
+	public func mut read(v: bool) void {
 		if(v) {
 			this.state = this.state | 0x1;
 		} else if (this.state & 0x1) > 0 {
@@ -76,7 +76,7 @@ struct PollListener {
 		}
 		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
 	}
-	public func write(v: bool) void {
+	public func mut write(v: bool) void {
 		if(v) {
 			this.state = this.state | 0x2;
 		} else if (this.state & 0x2) > 0 {
@@ -84,7 +84,7 @@ struct PollListener {
 		}
 		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
 	}
-	public func stopped_reading(v: bool) void {
+	public func mut stopped_reading(v: bool) void {
 		if(v) {
 			this.state = this.state | 0x10;
 		} else if (this.state & 0x10) > 0 {

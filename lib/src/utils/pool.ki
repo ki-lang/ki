@@ -17,7 +17,7 @@ class Pool[T] {
 		};
 	}
 
-	func pop() T !empty {
+	func mut pop() T !empty {
 		let head = this.head;
 		let tail = this.tail;
 		if tail == head {
@@ -35,7 +35,7 @@ class Pool[T] {
 		return result;
 	}
 
-	func add(item: >T) void !full {
+	func mut add(item: >T) void !full {
 		let size = this.size;
 		let head = this.head;
 		let next_head = head + 1;

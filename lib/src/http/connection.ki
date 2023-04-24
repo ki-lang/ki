@@ -25,7 +25,7 @@ class Connection {
 	out_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
 	out_pos: uxx = 0;
 
-	func parse_headers() void !sent_error {
+	func mut parse_headers() void !sent_error {
 		if this.headers_parsed {
 			return;
 		}
@@ -113,7 +113,7 @@ class Connection {
 		this.parse_pos = pos;
 	}
 
-	func send_file(stream: >fs:FileStream, filename: ?String) void {
+	func mut send_file(stream: >mut fs:FileStream, filename: ?String) void {
 
 		let out = this.out_buf;
 		let path = stream.path;
@@ -153,7 +153,7 @@ class Connection {
 	}
 
 	// Returns 'true' if all bytes were sent
-	func send_response_bytes() void {
+	func mut send_response_bytes() void {
 
 		let out = this.out_buf;
 

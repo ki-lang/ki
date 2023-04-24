@@ -180,6 +180,13 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             if (strstr(".=.+=.-=.*=./=.", fc->sbuf)) {
                 char *sign = dups(alc, token);
 
+                if (left->rett->imut) {
+                    if (left->type == v_class_pa || left->type == v_array_item) {
+                        sprintf(fc->sbuf, "You cannot modify an immutable object or static array");
+                        fc_error(fc);
+                    }
+                }
+
                 if (left->type == v_decl) {
                     Decl *decl = left->item;
                     if (!decl->is_mut) {

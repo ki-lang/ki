@@ -78,7 +78,13 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
     VClassPA *item = al(alc, sizeof(VClassPA));
     item->on = on;
     item->prop = prop;
-    return value_init(alc, v_class_pa, item, prop->type);
+
+    Type *rett = prop->type;
+    if (on->rett->imut && !rett->imut) {
+        rett = type_clone(alc, rett);
+        rett->imut = true;
+    }
+    return value_init(alc, v_class_pa, item, rett);
 }
 
 Value *vgen_class_init(Allocator *alc, Scope *scope, Class *class, Map *values) {
@@ -220,5 +226,12 @@ Value *vgen_array_item(Allocator *alc, Value *on, Value *index) {
     VPair *item = al(alc, sizeof(VPair));
     item->left = on;
     item->right = index;
-    return value_init(alc, v_array_item, item, on->rett->array_of);
+
+    Type *rett = on->rett->array_of;
+    if (on->rett->imut && !rett->imut) {
+        rett = type_clone(alc, rett);
+        rett->imut = true;
+    }
+
+    return value_init(alc, v_array_item, item, rett);
 }

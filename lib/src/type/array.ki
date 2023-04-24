@@ -16,7 +16,7 @@ class Array[T] {
 		};
 	}
 
-	func push(value: >T) uxx {
+	func mut push(value: >T) uxx {
 		let size = this.size;
 		let length = this.length;
 		let data = this.data;
@@ -43,7 +43,7 @@ class Array[T] {
 			throw not_found;
 		}
 
-		let value = @ptrv(this.data, >T, index);
+		let value = @ptrv(this.data, >mut T, index);
 		@ref value;
 
 		return value;
@@ -88,7 +88,7 @@ class Array[T] {
 	}
 
 	#if IS_STRICT_TYPE T
-	func __each(key_ref: uxx[1]) imut T !end {
+	func __each(key_ref: mut uxx[1]) imut T !end {
 		let key = key_ref[0];
 		if key >= this.length {
 			throw end;
@@ -103,7 +103,7 @@ class Array[T] {
 
 	#else
 
-	func __each(key_ref: uxx[1]) T !end {
+	func __each(key_ref: mut uxx[1]) T !end {
 		let key = key_ref[0];
 		if key >= this.length {
 			throw end;
