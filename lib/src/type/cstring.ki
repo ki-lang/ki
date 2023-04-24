@@ -1,3 +1,22 @@
 
+use mem;
+
 class cstring type:ptr {
+
+	func to_str() .String {
+		let len = this.length();
+		let str = String.make_empty(len);
+		let from = this @as ptr;
+		mem:copy(from, str.data(), len);
+		return str;
+	}
+
+	func length() uxx {
+		let i = 0;
+		let adr = this @as ptr;
+		while @ptrv(adr, u8, i) != '\0' {
+			i++;
+		}
+		return i;
+	}
 }

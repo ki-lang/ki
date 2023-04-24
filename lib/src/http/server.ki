@@ -249,7 +249,10 @@ class Server {
 
 		if data.static_dirs.length > 0 {
 			each data.static_dirs as dir {
-				//println("Lookup: " + dir);
+				let path = dir + http_con.request_path; 
+				println("Lookup: " + path);
+				let stream = fs:open(path, true, false) !! continue;;
+				http_con.send_file(stream, null);
 			}
 		}
 
@@ -271,8 +274,9 @@ class Server {
 	}
 
     func add_static_dir(path: >String) void {
-        println("[+] Add static dir: " + path);
-        this.data.static_dirs.push(path + "");
+		let full = fs:exe_dir() + path;
+        println("[+] Add static dir: " + full);
+        this.data.static_dirs.push(full);
     }
 }
 

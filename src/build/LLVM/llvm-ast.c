@@ -171,13 +171,23 @@ void llvm_write_ast(LB *b, Scope *scope) {
             strcpy(key_ltype_pointer, key_ltype);
             strcat(key_ltype_pointer, "*");
 
+            char *loop_attr = llvm_attr(b);
+            Str *ir_a = b->ir_attr;
+            str_append_chars(ir_a, loop_attr);
+            str_append_chars(ir_a, " = distinct !{");
+            str_append_chars(ir_a, loop_attr);
+            str_append_chars(ir_a, ", !0}\n");
+            char *prev_attr = b->loop_attr;
+
             LLVMBlock *b_cond = llvm_block_init_auto(b);
             LLVMBlock *b_code = llvm_block_init_auto(b);
             LLVMBlock *b_after = llvm_block_init_auto(b);
+
             LLVMBlock *prev_cond = b->while_cond;
             LLVMBlock *prev_after = b->while_after;
             b->while_cond = b_cond;
             b->while_after = b_after;
+            b->loop_attr = loop_attr;
 
             // Init key
             char *next_key_var = llvm_alloca(b, key_type);
@@ -231,6 +241,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
             b->lfunc->block = b_after;
             llvm_ir_store(b, err_code_type, "@ki_err_code_buffer", "0");
 
+            b->loop_attr = prev_attr;
             b->while_cond = prev_cond;
             b->while_after = prev_after;
             continue;

@@ -67,6 +67,11 @@ class Array[T] {
 		}
 		println("remove: " + (this.length).str());
 	}
+	func pop() void {
+		if this.length > 0 {
+			this.remove(this.length - 1);
+		}
+	}
 
 	func index_of(item: T) uxx !not_found {
 		let index : uxx = 0;

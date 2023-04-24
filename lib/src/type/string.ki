@@ -4,6 +4,7 @@
 
 use mem;
 use os;
+use utils;
 
 class String type:ptr {
 
@@ -59,6 +60,105 @@ class String type:ptr {
 		let res = String.make_empty(length);
 		mem:copy(from, res.data(), length);
 		return res;
+	}
+
+	/////////////////////
+	// Split / Merge
+	/////////////////////
+
+	func split(on: String) .Array[String] {
+		let result = Array[String].init();
+
+		let pos : uxx = 0;
+		let adr = this.data();
+		let adr_on = on.data();
+		let bytes = this.bytes();
+		let bytes_left = bytes;
+		let bytes_on = on.bytes();
+
+		let part = utils:ByteBuffer.init(100);
+		while pos < bytes {
+			if(bytes_on > bytes_left){
+				break;
+			}
+			let i : uxx = 0;
+			let tmp_adr1 = adr;
+			let tmp_adr2 = adr_on;
+			while(i < bytes_on){
+				let byte1 : u8 = @ptrv(tmp_adr1, u8, 0);
+				let byte2 : u8 = @ptrv(tmp_adr2, u8, 0);
+				if(byte1 != byte2) {
+					break;
+				}
+				i++;
+				tmp_adr1++;
+				tmp_adr2++;
+			}
+			if(i == bytes_on){
+				result.push(part.to_str());
+				part.clear();
+				pos += bytes_on;
+				adr += bytes_on;
+				bytes_left -= bytes_on;
+				continue;
+			}
+
+			let bytec : u8 = 1;
+			let byte : u8 = @ptrv(adr, u8, 0);
+			if(byte > 127){
+				byte = byte << 1;
+				while(byte > 127){
+					bytec++;
+					byte = byte << 1;
+				}
+			}
+			if(bytec > 4){
+				// Invalid utf8 char
+				bytec = 1;
+			}
+			if(bytec > bytes_left){
+				break;
+			}
+			pos += bytec;
+			bytes_left -= bytec;
+			while(bytec > 0){
+				let byte : u8 = @ptrv(adr, u8, 0);
+				part.append_byte(byte);
+				bytec--;
+				adr++;
+			}
+		}
+		while bytes_left > 0 {
+			let byte : u8 = @ptrv(adr, u8, 0);
+			part.append_byte(byte);
+			bytes_left--;
+			adr++;
+		}
+
+		result.push(part.to_str());
+
+		return result;
+	}
+
+	/////////////////////
+	// Adjustments
+	/////////////////////
+
+	func >rtrim(part: String) .String {
+		let part_bytes = part.bytes();
+		let part_data = part.data();
+		let bytes = this.bytes();
+		let result = this + "";
+		while part_bytes <= bytes {
+			let data = result.data();
+			let new_len = bytes -  part_bytes;
+			if !mem:equal(data + new_len, part_data, part_bytes) {
+				break;
+			}
+			result = result.sub_str_bytes(0, new_len);
+			bytes = result.bytes();
+		}
+		return result;
 	}
 
 	/////////////////////

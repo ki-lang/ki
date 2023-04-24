@@ -1,4 +1,68 @@
 
+header "ki_os" as kos;
+
+global EXE_PATH : ?String;
+global EXE_DIR : ?String;
+
+class Path {
+	parts: Array[String];
+
+	static func init(path: String) .Path {
+		return Path{
+			parts: path.split("/"),
+		};
+	}
+
+	static func exe_dir() .Path {
+		let path = Path.exe_path();
+		path.pop();
+		return path;
+	}
+	static func exe_path() .Path {
+		return Path.init(exe_dir());
+	}
+
+	func copy() .Path {
+		let parts = this.parts;
+		let new = Array[String].init();
+		each parts as part {
+			new.push(part);
+		}
+		return Path{
+			parts: new,
+		};
+	}
+
+	func pop() void {
+		let parts = this.parts;
+		if parts.length > 1 {
+			parts.pop();
+		}
+	}
+
+	//func to_str() .String {
+	//	return this.parts.join("/");
+	//}
+}
+
+func exe_dir() String {
+	let res = EXE_DIR ?! {
+		let dir = +dir_of(exe_path());
+		EXE_DIR = dir;
+		return dir;
+	};
+	return res;
+}
+func exe_path() String {
+	let cstr = kos.ki_os__exe_path();
+	let res = EXE_PATH ?! {
+		let dir = +cstr.to_str();
+		EXE_PATH = dir;
+		return dir;
+	};
+	return res;
+}
+
 func ext(path: String) .String {
 	let len = path.bytes();
 	let start = len;
@@ -21,21 +85,24 @@ func ext(path: String) .String {
 	return path.sub_str_bytes(start, len - start);
 }
 
-// e.g. /etc/nginx/nginx.conf -> /etc/nginx/
-// e.g. /etc/nginx/ -> /etc/
+// e.g. /etc/nginx/nginx.conf -> /etc/nginx
+// e.g. /etc/nginx/ -> /etc
 // e.g. /etc -> /
-// e.g. / -> /
+// e.g. "" -> ""
+// e.g. etc -> etc
 func dir_of(path: String) .String {
 	let end = path.bytes() - 1;
 	while(end > 0){
 		end--;
 		let ch = path.byte(end);
 		if(ch == '/' || ch == '\\'){
-			end++;
-			break;
+			if end == 0 {
+				end++;
+			}
+			return path.sub_str_bytes(0, end);
 		}
 	}
-	return path.sub_str_bytes(0, end);
+	return path + "";
 }
 
 // e.g. /etc/nginx/nginx.conf -> nginx.conf
