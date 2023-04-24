@@ -316,7 +316,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
         return;
 
     Decl *decl = ul->decl;
-    if (!decl->type->take_ownership && decl->is_arg) {
+    if (decl->type->borrow) {
         // printf("Keep:%s in %s\n", decl->name, decl->scope->func->dname);
         return;
     }

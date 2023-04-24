@@ -232,8 +232,9 @@ struct Type {
     bool nullable;
     bool func_can_error;
     bool borrow_ownership;
-    bool take_ownership;
     bool strict_ownership;
+    bool borrow;
+    bool imut;
 };
 
 struct Class {

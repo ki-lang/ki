@@ -16,8 +16,9 @@ Type *type_init(Allocator *alc) {
     type->array_of = NULL;
     type->array_size = 0;
     //
-    type->take_ownership = true;
     type->strict_ownership = false;
+    type->borrow = false;
+    type->imut = false;
     //
     type->func_args = NULL;
     type->func_rett = NULL;
@@ -128,10 +129,14 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     bool async = false;
 
     bool must_specify_ownership = context == rtc_func_arg || context == rtc_ptrv;
-    bool allow_borrow_type = context == rtc_func_rett || context == rtc_decl;
 
-    bool take_ownership = must_specify_ownership ? false : true;
     bool strict_ownership = false;
+    bool borrow = false;
+    bool imut = false;
+
+    if (context == rtc_func_arg || context == rtc_ptrv) {
+        borrow = true;
+    }
 
     tok(fc, token, sameline, allow_space);
 
@@ -140,20 +145,26 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, true);
     }
 
-    if (allow_borrow_type && strcmp(token, "&") == 0) {
-        take_ownership = false;
-        tok(fc, token, true, false);
-    }
+    // if (strcmp(token, "&") == 0) {
+    //     borrow = true;
+    //     tok(fc, token, true, false);
+    // } else {
     if (must_specify_ownership) {
         if (strcmp(token, ">") == 0) {
-            take_ownership = true;
+            borrow = false;
             tok(fc, token, true, false);
         }
     }
+    // }
 
     if (strcmp(token, "?") == 0) {
         nullable = true;
         tok(fc, token, true, false);
+    }
+
+    if (strcmp(token, "imut") == 0) {
+        imut = true;
+        tok(fc, token, true, true);
     }
 
     if (strcmp(token, ".") == 0) {
@@ -179,22 +190,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, true);
         while (strcmp(token, ")") != 0) {
 
-            // bool take_ownership = false;
-            // bool strict_ownership = false;
-            // if (strcmp(token, "*") == 0) {
-            //     take_ownership = true;
-            //     tok(fc, token, true, true);
-            // } else if (strcmp(token, "**") == 0) {
-            //     take_ownership = true;
-            //     strict_ownership = true;
-            //     tok(fc, token, true, true);
-            // } else {
             rtok(fc);
-            // }
 
             Type *type = read_type(fc, alc, scope, true, true, rtc_func_arg);
-            // type->take_ownership = take_ownership;
-            // type->strict_ownership = strict_ownership;
 
             Arg *arg = arg_init(alc, "", type);
             array_push(args, arg);
@@ -276,7 +274,8 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         }
     }
 
-    type->take_ownership = take_ownership;
+    type->borrow = borrow;
+    type->imut = imut;
     if (strict_ownership)
         type->strict_ownership = strict_ownership;
 
@@ -419,14 +418,19 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
     }
     bool t1o = type_tracks_ownership(t1);
     if (t1o) {
-        if (t1->take_ownership && !t2->take_ownership) {
-            if (reason)
-                *reason = "Trying to pass a type with borrowed ownership to a type that requires real ownership";
-            return false;
-        }
         if (t1->strict_ownership && !t2->strict_ownership) {
             if (reason)
                 *reason = "One type has strict ownership, the other does not";
+            return false;
+        }
+        if (!t1->borrow && t2->borrow && t2->strict_ownership) {
+            if (reason)
+                *reason = "Trying to pass a type with borrowed strict ownership to a type that requires real ownership";
+            return false;
+        }
+        if (!t1->imut && t2->imut) {
+            if (reason)
+                *reason = "Trying to pass an immutable type to a mutable type";
             return false;
         }
     }
@@ -501,12 +505,15 @@ char *type_to_str(Type *t, char *res) {
     //     return res;
     // }
     if (type_tracks_ownership(t)) {
-        if (!t->take_ownership) {
+        if (t->borrow) {
             strcat(res, "&");
         }
     }
     if (t->nullable) {
         strcat(res, "?");
+    }
+    if (t->imut) {
+        strcat(res, "imut ");
     }
     if (t->strict_ownership) {
         strcat(res, ".");

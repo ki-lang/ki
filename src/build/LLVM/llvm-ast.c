@@ -185,7 +185,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
             array_push(key_init_args, llvm_ir_fcall_arg(b, lon, lon_type));
             // Referencing
             Scope *upref_init_0 = scope_init(alc, sct_default, scope, true);
-            if (f_init_0->type->take_ownership) {
+            if (!f_init_0->type->borrow) {
                 class_ref_change(alc, upref_init_0, value_init(alc, v_ir_value, lon, on->rett), 1);
             }
             llvm_write_ast(b, upref_init_0);
@@ -201,7 +201,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
             char *key_val = llvm_ir_load(b, f_init->rett, next_key_var);
             // Referencing
             Scope *upref_get = scope_init(alc, sct_default, scope, true);
-            if (f_get_0->type->take_ownership) {
+            if (!f_get_0->type->borrow) {
                 class_ref_change(alc, upref_get, value_init(alc, v_ir_value, lon, on->rett), 1);
             }
             llvm_write_ast(b, upref_get);

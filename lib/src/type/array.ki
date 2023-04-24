@@ -88,14 +88,14 @@ class Array[T] {
 	}
 
 	#if IS_STRICT_TYPE T
-	func __each(key_ref: uxx[1]) &T !end {
+	func __each(key_ref: uxx[1]) imut T !end {
 		let key = key_ref[0];
 		if key >= this.length {
 			throw end;
 		}
 		key_ref[0] = key + 1;
 
-		let result = @ptrv(this.data, T, key);
+		let result = @ptrv(this.data, >imut T, key);
 		@ref result;
 
 		return result;

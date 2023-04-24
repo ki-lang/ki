@@ -1090,7 +1090,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
             Arg *arg = array_get_index(func->args, 0);
 
-            if (arg->type->take_ownership) {
+            if (!arg->type->borrow) {
                 first_val = usage_move_value(alc, fc, scope, first_val);
             }
 
@@ -1118,7 +1118,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
                 Value *val = read_value(fc, alc, scope, false, 0, false);
                 val = try_convert(fc, alc, val, arg->type);
-                if (arg->type->take_ownership) {
+                if (!arg->type->borrow) {
                     val = usage_move_value(alc, fc, scope, val);
                 }
 
