@@ -13,6 +13,7 @@ class ServerData {
 	thread_nr: uxx = 0;
 	handler: fn(Request)(Response);
 	static_dirs: .Array[.String] = Array[.String].init();
+	show_info: bool = true;
 }
 
 class Server {
@@ -106,7 +107,7 @@ class Server {
 					};
 
 					let fd = netcon.fd;
-					println("[+] New connection: " + fd.str());
+					//println("[+] New connection: " + fd.str());
 
 					let index = index_pool.pop() !? max_connections;
 					if index == max_connections {
@@ -164,7 +165,7 @@ class Server {
 
 				// Existing connection
 				if event.wants_to_close() {
-					println("[+] Close connection: " + fd.str());
+					//println("[+] Close connection: " + fd.str());
 					io:close(fd);
 					poll.remove(lsn);
 					index_pool.add(index)!;
@@ -281,7 +282,10 @@ class Server {
     func add_static_dir(path: >String) void {
 		let full = fs:exe_dir() + "/" + path.trim("/") + "/";
         println("[+] Add static dir: " + full);
-        this.data.static_dirs.push(full);
+        //this.data.static_dirs.push(full);
+    }
+    func silent(b: bool) void {
+		//this.data.show_info = !b;
     }
 }
 

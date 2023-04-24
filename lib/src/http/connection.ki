@@ -134,7 +134,7 @@ class Connection {
 		this.send_response_bytes();
 	}
 
-	func respond(resp: Response) void {
+	func mut respond(resp: Response) void {
 		resp.compile(this.out_buf);
 		this.send_response_bytes();
 	}

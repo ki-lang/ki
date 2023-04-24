@@ -1108,6 +1108,8 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 first_val = usage_move_value(alc, fc, scope, first_val);
             }
 
+            type_check(fc, arg->type, first_val->rett);
+
             array_push(values, first_val);
             index++;
         }

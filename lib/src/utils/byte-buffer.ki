@@ -48,7 +48,7 @@ class ByteBuffer {
 		this.length = new_bytes;
 	}
 
-	func append_str(str: String) void {
+	func mut append_str(str: String) void {
 		this.append(str.data(), str.bytes());
 	}
 
@@ -118,7 +118,7 @@ class ByteBuffer {
 	}
 
 	// 
-	func minimum_free_space(length: uxx) void {
+	func mut minimum_free_space(length: uxx) void {
 		this.minimum_size(this.length + length);
 	}
 	func mut minimum_size(minimum_size: uxx) void {

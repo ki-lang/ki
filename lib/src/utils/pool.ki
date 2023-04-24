@@ -57,7 +57,7 @@ class Pool[T] {
 		this.head = next_head;
 	}
 
-	func __before_free() void {
+	func mut __before_free() void {
 		// Deref items 
 		while true {
 			let item = this.pop() !! break;;

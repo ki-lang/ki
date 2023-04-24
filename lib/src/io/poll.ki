@@ -20,7 +20,7 @@ class Poll {
 		return x;
 	}
 
-	public func listener(fd: i32, key: uxx = 0) PollListener {
+	public func mut listener(fd: i32, key: uxx = 0) PollListener {
 
 		let pool = this.pool;
 		let listeners = this.listeners;
@@ -43,7 +43,7 @@ class Poll {
 		return lsn;
 	}
 
-	public func remove(listener: PollListener) void {
+	public func mut remove(listener: PollListener) void {
 		kos.ki_os__poll_remove_fd(this.os_poll, listener);
 		this.pool.add(listener)!;
 	}

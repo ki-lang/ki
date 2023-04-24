@@ -35,7 +35,7 @@ class Response {
 		return Response{ status: code };
 	}
 
-	public func compile(buf: utils:ByteBuffer) void {
+	public func compile(buf: mut utils:ByteBuffer) void {
 
 		let len = this.body.bytes();
 

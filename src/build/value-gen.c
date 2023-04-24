@@ -80,8 +80,8 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
     item->prop = prop;
 
     Type *rett = prop->type;
-    if (!prop->type->imut) {
-        if (prop->type->strict_ownership || (on->rett->imut && !rett->imut)) {
+    if (!rett->imut) {
+        if (prop->type->strict_ownership || on->rett->imut) {
             rett = type_clone(alc, rett);
             rett->imut = true;
             rett->strict_ownership = false;
