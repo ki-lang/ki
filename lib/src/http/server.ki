@@ -13,13 +13,14 @@ class ServerData {
 	thread_nr: uxx = 0;
 	handler: fn(Request)(Response);
 	static_dirs: .Array[.String] = Array[.String].init();
-	show_info: bool = true;
+	show_info: bool = false;
 }
 
 class Server {
 	host: String;
-	data: imut .ServerData;
+	data: ServerData;
 	port: u16;
+	static_dirs: Array[.String] = Array[.String].init();
 
 	static func init(host: >mut String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
 
@@ -35,7 +36,7 @@ class Server {
 		return Server{
 			host: host,
 			port: port,
-			data: @imut data,
+			data: data,
 		};
 	}
 
@@ -59,12 +60,26 @@ class Server {
 
 		let data = this.data;
 
+		let dirs = Array[.String].init();
+		each this.static_dirs as dir {
+			dirs.push(dir);
+		}
+
+		let copy = @imut ServerData {
+			socket: data.socket,
+			max_connections: data.max_connections,
+			handler: data.handler,
+			show_info: data.show_info,
+			static_dirs: dirs,
+
+		};
+
 		worker_count--;
 		while worker_count > 0 {
 			worker_count--;
-			let thread = os:Thread[imut .ServerData].start(Server.worker, data);
+			let thread = os:Thread[imut .ServerData].start(Server.worker, copy);
 		}
-		Server.worker(data);
+		Server.worker(copy);
 		os:sleep_ms(200);
 	}
 
@@ -107,7 +122,9 @@ class Server {
 					};
 
 					let fd = netcon.fd;
-					//println("[+] New connection: " + fd.str());
+					if data.show_info {
+						println("[+] New connection: " + fd.str());
+					}
 
 					let index = index_pool.pop() !? max_connections;
 					if index == max_connections {
@@ -165,7 +182,9 @@ class Server {
 
 				// Existing connection
 				if event.wants_to_close() {
-					//println("[+] Close connection: " + fd.str());
+					if data.show_info {
+						println("[+] Close connection: " + fd.str());
+					}
 					io:close(fd);
 					poll.remove(lsn);
 					index_pool.add(index)!;
@@ -279,13 +298,13 @@ class Server {
 		http_con.respond(resp);
 	}
 
-    func add_static_dir(path: >String) void {
+    func mut add_static_dir(path: >String) void {
 		let full = fs:exe_dir() + "/" + path.trim("/") + "/";
         println("[+] Add static dir: " + full);
-        //this.data.static_dirs.push(full);
+        this.static_dirs.push(full);
     }
-    func silent(b: bool) void {
-		//this.data.show_info = !b;
+    func mut show_info(b: bool) void {
+		this.data.show_info = b;
     }
 }
 
