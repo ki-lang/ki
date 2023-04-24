@@ -105,7 +105,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
             int incr = in_loop ? 2 : 1;
             usage_line_incr_moves(ul, incr);
 
-            if (decl->type->strict_ownership && ul->moves > 1) {
+            if (decl->type->strict_ownership && !decl->type->imut && ul->moves > 1) {
                 sprintf(fc->sbuf, "➕ Multiple moves of a strict ownership value. (variable: '%s'). If you did not intend for this value to have strict ownership, you can place a '+' in front of the value to convert it to shared ownership.", decl->name);
                 fc_error(fc);
             }
@@ -139,7 +139,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         if (class && class->must_ref) {
             VClassPA *pa = val->item;
             ClassProp *prop = pa->prop;
-            if (prop->type->strict_ownership) {
+            if (val->rett->strict_ownership) {
                 sprintf(fc->sbuf, "You cannot move a property with strict ownership. You must use 'swap' to replace existing value with something else.");
                 fc_error(fc);
             }

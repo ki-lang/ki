@@ -18,7 +18,7 @@ class Thread[T] {
 		mem:free(entry @as ptr);
 	}
 
-	static func start(start_func: fn(T)(void), data: async >mut T) .CLASS {
+	static func start(start_func: fn(T)(void), data: async >T) .CLASS {
 
 		let entry = ThreadEntry[fn(T)(void), T]{ start_func: start_func, data: data };
 		let os_thread = kos.ki_os__thread_create(CLASS.entry, entry @as ptr);

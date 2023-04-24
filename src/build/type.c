@@ -274,7 +274,8 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     type->borrow = borrow;
-    type->imut = imut;
+    if (imut)
+        type->imut = imut;
     if (strict_ownership)
         type->strict_ownership = strict_ownership;
 
@@ -511,9 +512,9 @@ char *type_to_str(Type *t, char *res) {
     if (t->nullable) {
         strcat(res, "?");
     }
-    if (!t->imut) {
-        strcat(res, "mut ");
-    }
+
+    strcat(res, t->imut ? "imut " : "mut ");
+
     if (t->strict_ownership) {
         strcat(res, ".");
     }
@@ -594,6 +595,10 @@ bool type_tracks_ownership(Type *type) {
 }
 
 bool type_allowed_async(Type *type, bool recursive) {
+    if (type->imut) {
+        if (!type_tracks_ownership(type) || type->strict_ownership)
+            return true;
+    }
     Class *class = type->class;
     if (!class || class->type == ct_int || class->type == ct_float) {
         return true;
