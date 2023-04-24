@@ -259,6 +259,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
                 Type *t = idf->item;
                 type = type_init(alc);
                 *type = *t;
+
             } else if (idf->type == idf_enum) {
                 type = type_gen(fc->b, alc, "i32");
                 type->enu = idf->item;
