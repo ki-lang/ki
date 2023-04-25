@@ -2,6 +2,8 @@
 CC=gcc
 LCC=gcc
 
+VERSION=dev
+
 CFLAGS=-g -pthread -O2
 LLVMCF=`llvm-config --cflags`
 LDFLAGS=`llvm-config --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf` -lcurl -lm -lz -lstdc++
@@ -43,13 +45,14 @@ macos: ki $(os_macos)
 
 # STATIC DIST BULDS
 
-dist_dir: mkdir -p dist
-
 linux_dist: $(OBJECTS) $(os_linux) debug/build/link.o
 	mkdir -p dist/linux-x64/lib
 	rm -rf dist/linux-x64/lib
 	cp -r lib dist/linux-x64/
+	cp -r src/scripts/install.sh dist/linux-x64/
+	sed -i 's/__VERSION__/$(VERSION)/' dist/linux-x64/install.sh
 	$(LCC) $(CFLAGS_DIST) -o dist/linux-x64/ki $(OBJECTS) debug/build/link.o -L/usr/lib/llvm-14/lib/ $(LDFLAGS_DIST)
+	tar -czf dist/ki-$(VERSION)-x64.tar.gz dist/linux-x64/*
 
 #
 
