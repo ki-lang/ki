@@ -60,9 +60,11 @@ void stage_6_func(Fc *fc, Func *func) {
             Decl *decl = array_get_index(decls, i);
             UsageLine *ul = array_get_index(fscope->usage_values, i);
 
-            if (decl->is_arg && !decl->type->borrow && ul->moves == 0) {
-                sprintf(fc->sbuf, "Argument '%s' passes ownership but it doesnt need it. Remove the '>' sign from your argument type.", decl->name);
-                fc_error(fc);
+            if (decl->is_arg) {
+                if (!decl->type->borrow && ul->moves == 0) {
+                    sprintf(fc->sbuf, "Argument '%s' passes ownership but it doesnt need it. Remove the '>' sign from your argument type.", decl->name);
+                    fc_error(fc);
+                }
             }
         }
     }
