@@ -40,7 +40,7 @@ class Server {
         };
     }
 
-    func mut .start(worker_count: i32 = 32) void {
+    func mut start(worker_count: i32 = 32) void {
 
         // SIGINT
         os:signal(os:SIG.hup, interrupt);
@@ -236,12 +236,15 @@ class Server {
         }
     }
 
-    static func respond(data: ServerData, http_con: >mut Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+    private static func respond(data: ServerData, http_con: >mut Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
         let buf_size : i32 = 65535;
         let read_buf = http_con.read_buf;
         read_buf.minimum_free_space(buf_size);
         while true {
+            //let rcvd = io:read(http_con.fd, read_buf.data + read_buf.length, buf_size) !! {
+            //};
+
             let rcvd = kos.ki_os__fd_read(http_con.fd, read_buf.data + read_buf.length, buf_size);
             if (rcvd == -2){
                 // EAGAIN

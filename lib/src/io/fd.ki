@@ -23,7 +23,17 @@ func write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
 	return c @as uxx;
 }
 
-func close(fd: i32) void {
-	let c = kos.ki_os__fd_close(fd);
+func read(fd: i32, buffer: ptr, buffer_size: uxx) uxx !failed !again {
+	let rcvd = kos.ki_os__fd_read(fd, buffer, buffer_size);
+	if rcvd == -2 {
+		throw again;
+	}
+	if rcvd < 0 {
+		throw failed;
+	}
+	return rcvd @as uxx;
 }
 
+func close(fd: i32) void %inline {
+	let c = kos.ki_os__fd_close(fd);
+}
