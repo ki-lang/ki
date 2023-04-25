@@ -24,7 +24,7 @@ TARGET=ki
 os_linux=./lib/libs/linux-x64/libki_os.a
 os_macos=./lib/libs/macos-x64/libki_os.a
 
-ki: $(OBJECTS) $(os_linux) debug/build/link.o
+ki: $(OBJECTS) debug/build/link.o
 	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) debug/build/link.o $(LDFLAGS)
 
 debug/build/link.o: src/build/stage-8-link.c
