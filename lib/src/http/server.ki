@@ -8,296 +8,296 @@ use utils;
 use fs;
 
 class ServerData {
-	max_connections: uxx;
-	socket: net:SocketTCP;
-	thread_nr: uxx = 0;
-	handler: fn(Request)(Response);
-	static_dirs: .Array[.String] = Array[.String].init();
-	show_info: bool = false;
+    max_connections: uxx;
+    socket: net:SocketTCP;
+    thread_nr: uxx = 0;
+    handler: fn(Request)(Response);
+    static_dirs: .Array[.String] = Array[.String].init();
+    show_info: bool = false;
 }
 
 class Server {
-	host: String;
-	data: ServerData;
-	port: u16;
-	static_dirs: Array[.String] = Array[.String].init();
+    host: String;
+    data: ServerData;
+    port: u16;
+    static_dirs: Array[.String] = Array[.String].init();
 
-	static func init(host: >mut String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
+    static func init(host: >mut String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
 
-		let max_connections : uxx = 10000;
-		let socket = net:Socket.init_tcp(host, port) !! throw socket_init_error;;
+        let max_connections : uxx = 10000;
+        let socket = net:Socket.init_tcp(host, port) !! throw socket_init_error;;
 
-		let data = ServerData {
-			socket: socket,
-			max_connections: max_connections,
-			handler: handler,
-		};
+        let data = ServerData {
+            socket: socket,
+            max_connections: max_connections,
+            handler: handler,
+        };
 
-		return Server{
-			host: host,
-			port: port,
-			data: data,
-		};
-	}
+        return Server{
+            host: host,
+            port: port,
+            data: data,
+        };
+    }
 
-	func mut .start(worker_count: i32 = 32) void {
+    func mut .start(worker_count: i32 = 32) void {
 
-		// SIGINT
+        // SIGINT
         os:signal(os:SIG.hup, interrupt);
         // SIGPIPE
         os:signal_ignore(os:SIG.pipe);
 
-		if worker_count < 1 {
-			worker_count = 1;
-		}
-		if worker_count > 128 {
-			worker_count = 128;
-		}
-		//worker_count = 1;
+        if worker_count < 1 {
+            worker_count = 1;
+        }
+        if worker_count > 128 {
+            worker_count = 128;
+        }
+        //worker_count = 1;
 
-		println("[+] Running http server on port " + this.port.str());
-		println("[+] Worker count: " + worker_count.str());
+        println("[+] Running http server on port " + this.port.str());
+        println("[+] Worker count: " + worker_count.str());
 
-		let data = this.data;
+        let data = this.data;
 
-		let dirs = Array[.String].init();
-		each this.static_dirs as dir {
-			dirs.push(dir);
-		}
+        let dirs = Array[.String].init();
+        each this.static_dirs as dir {
+            dirs.push(dir);
+        }
 
-		let copy = @imut ServerData {
-			socket: data.socket,
-			max_connections: data.max_connections,
-			handler: data.handler,
-			show_info: data.show_info,
-			static_dirs: dirs,
+        let copy = @imut ServerData {
+            socket: data.socket,
+            max_connections: data.max_connections,
+            handler: data.handler,
+            show_info: data.show_info,
+            static_dirs: dirs,
 
-		};
+        };
 
-		worker_count--;
-		while worker_count > 0 {
-			worker_count--;
-			let thread = os:Thread[imut .ServerData].start(Server.worker, copy);
-		}
-		Server.worker(copy);
-		os:sleep_ms(200);
-	}
+        worker_count--;
+        while worker_count > 0 {
+            worker_count--;
+            let thread = os:Thread[imut .ServerData].start(Server.worker, copy);
+        }
+        Server.worker(copy);
+        os:sleep_ms(200);
+    }
 
-	private static func worker(data: imut .ServerData) void {
+    private static func worker(data: imut .ServerData) void {
 
-		let max_connections = data.max_connections;
-		let handler = data.handler;
+        let max_connections = data.max_connections;
+        let handler = data.handler;
 
-		let cons = Array[Connection].init(50);
-		let index_pool = utils:Pool[uxx].init(max_connections);
-		let nr = atomicop data.thread_nr ADD 1;
+        let cons = Array[Connection].init(50);
+        let index_pool = utils:Pool[uxx].init(max_connections);
+        let nr = atomicop data.thread_nr ADD 1;
 
-		//println("[-] Start thread: " + nr.str());
+        //println("[-] Start thread: " + nr.str());
 
-		let sock = data.socket;
-		let sock_fd = sock.fd;
+        let sock = data.socket;
+        let sock_fd = sock.fd;
 
-		let poll = io:Poll.init(max_connections);
-		let sock_lsn = poll.listener(sock_fd);
-		sock_lsn.read(true);
+        let poll = io:Poll.init(max_connections);
+        let sock_lsn = poll.listener(sock_fd);
+        sock_lsn.read(true);
 
-		while true {
-			let result = poll.wait();
-			let result_count = result.count;
-			let i : u32 = 0;
+        while true {
+            let result = poll.wait();
+            let result_count = result.count;
+            let i : u32 = 0;
 
-			while i < result_count {
-				let event = result.get(i) ?! break;;
-				i++;
+            while i < result_count {
+                let event = result.get(i) ?! break;;
+                i++;
 
-				let lsn = event.listener;
-				let fd = lsn.fd;
+                let lsn = event.listener;
+                let fd = lsn.fd;
 
-				//println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
+                //println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
 
-				if fd == sock_fd {
-					// New connection
-					let netcon = sock.accept() !! {
-						continue;
-					};
+                if fd == sock_fd {
+                    // New connection
+                    let netcon = sock.accept() !! {
+                        continue;
+                    };
 
-					let fd = netcon.fd;
-					if data.show_info {
-						println("[+] New connection: " + fd.str());
-					}
+                    let fd = netcon.fd;
+                    if data.show_info {
+                        println("[+] New connection: " + fd.str());
+                    }
 
-					let index = index_pool.pop() !? max_connections;
-					if index == max_connections {
-						let http_con = Connection {
-							netcon: netcon,
-							fd: fd,
-						};
-						index = cons.push(http_con);
-					} else {
-						// Clear existing connection io buffers
-						let http_con = cons.get(index) !! {
-							io:close(fd);
-							println("[+] Max connections reached, closing connection");
-							continue;
-						};
-						http_con.fd = fd;
-						http_con.netcon = netcon;
+                    let index = index_pool.pop() !? max_connections;
+                    if index == max_connections {
+                        let http_con = Connection {
+                            netcon: netcon,
+                            fd: fd,
+                        };
+                        index = cons.push(http_con);
+                    } else {
+                        // Clear existing connection io buffers
+                        let http_con = cons.get(index) !! {
+                            io:close(fd);
+                            println("[+] Max connections reached, closing connection");
+                            continue;
+                        };
+                        http_con.fd = fd;
+                        http_con.netcon = netcon;
 
-						http_con.read_buf.clear();
-						http_con.parse_pos = 0;
-						http_con.line.clear();
-						http_con.uploads = null;
-						http_con.phase = 0;
-						http_con.headers_parsed = false;
-						http_con.headers = Map[String].init();
+                        http_con.read_buf.clear();
+                        http_con.parse_pos = 0;
+                        http_con.line.clear();
+                        http_con.uploads = null;
+                        http_con.phase = 0;
+                        http_con.headers_parsed = false;
+                        http_con.headers = Map[String].init();
 
-						http_con.out_buf.clear();
-						http_con.out_pos = 0;
-					}
+                        http_con.out_buf.clear();
+                        http_con.out_pos = 0;
+                    }
 
-					let lsn = poll.listener(fd, index);
-					lsn.read(true);
-					lsn.stopped_reading(true);
+                    let lsn = poll.listener(fd, index);
+                    lsn.read(true);
+                    lsn.stopped_reading(true);
 
-					continue;
-				}
+                    continue;
+                }
 
-				// Get connection
-				let index = lsn.key;
-				let http_con = cons.get(index) !! {
-					println("❓ Missing http connection : " + nr.str());
-					io:close(fd);
-					poll.remove(lsn);
-					index_pool.add(index)!;
-					continue;
-				};
+                // Get connection
+                let index = lsn.key;
+                let http_con = cons.get(index) !! {
+                    println("❓ Missing http connection : " + nr.str());
+                    io:close(fd);
+                    poll.remove(lsn);
+                    index_pool.add(index)!;
+                    continue;
+                };
 
-				if http_con.fd != fd {
-					println("❗ fd changed : " + nr.str() + " | " + http_con.fd.str() + " -> " + fd.str() + " | key: " + lsn.key.str());
-					io:close(fd);
-					poll.remove(lsn);
-					index_pool.add(index)!;
-					continue;
-				}
+                if http_con.fd != fd {
+                    println("❗ fd changed : " + nr.str() + " | " + http_con.fd.str() + " -> " + fd.str() + " | key: " + lsn.key.str());
+                    io:close(fd);
+                    poll.remove(lsn);
+                    index_pool.add(index)!;
+                    continue;
+                }
 
-				// Existing connection
-				if event.wants_to_close() {
-					if data.show_info {
-						println("[+] Close connection: " + fd.str());
-					}
-					io:close(fd);
-					poll.remove(lsn);
-					index_pool.add(index)!;
-					continue;
-				}
+                // Existing connection
+                if event.wants_to_close() {
+                    if data.show_info {
+                        println("[+] Close connection: " + fd.str());
+                    }
+                    io:close(fd);
+                    poll.remove(lsn);
+                    index_pool.add(index)!;
+                    continue;
+                }
 
-				if event.is_writable() {
-					//println("[+] Continue sending response: " + fd.str());
+                if event.is_writable() {
+                    //println("[+] Continue sending response: " + fd.str());
 
-					http_con.send_response_bytes();
+                    http_con.send_response_bytes();
 
-					if(!http_con.has_data_to_send()){
-						lsn.write(false);
-					}
-					continue;
-				}
-				if event.is_readable() {
-					Server.respond(data, http_con, handler) !! {
-						io:close(fd);
-						poll.remove(lsn);
-						index_pool.add(index)!;
-						continue;
-					};
-					if http_con.headers_parsed {
+                    if(!http_con.has_data_to_send()){
+                        lsn.write(false);
+                    }
+                    continue;
+                }
+                if event.is_readable() {
+                    Server.respond(data, http_con, handler) !! {
+                        io:close(fd);
+                        poll.remove(lsn);
+                        index_pool.add(index)!;
+                        continue;
+                    };
+                    if http_con.headers_parsed {
 
-						// Clear read data
-						let read_buf = http_con.read_buf;
-						if http_con.parse_pos == read_buf.length {
-							read_buf.clear();
-							http_con.parse_pos = 0;
-						}
-						http_con.line.clear();
-						http_con.uploads = null;
-						http_con.phase = 0;
-						http_con.headers_parsed = false;
-						http_con.headers = Map[String].init();
+                        // Clear read data
+                        let read_buf = http_con.read_buf;
+                        if http_con.parse_pos == read_buf.length {
+                            read_buf.clear();
+                            http_con.parse_pos = 0;
+                        }
+                        http_con.line.clear();
+                        http_con.uploads = null;
+                        http_con.phase = 0;
+                        http_con.headers_parsed = false;
+                        http_con.headers = Map[String].init();
 
-						if(http_con.has_data_to_send()){
-							lsn.write(true);
-						} else {
-							// Clear out data
-							http_con.out_buf.clear();
-							http_con.out_pos = 0;
-						}
-					}
-					continue;
-				}
-			}
-		}
-	}
+                        if(http_con.has_data_to_send()){
+                            lsn.write(true);
+                        } else {
+                            // Clear out data
+                            http_con.out_buf.clear();
+                            http_con.out_pos = 0;
+                        }
+                    }
+                    continue;
+                }
+            }
+        }
+    }
 
-	static func respond(data: ServerData, http_con: >mut Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+    static func respond(data: ServerData, http_con: >mut Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
-		let buf_size : i32 = 65535;
-		let read_buf = http_con.read_buf;
-		read_buf.minimum_free_space(buf_size);
-		while true {
-			let rcvd = kos.ki_os__fd_read(http_con.fd, read_buf.data + read_buf.length, buf_size);
-			if (rcvd == -2){
-				// EAGAIN
-				return;
-			} else if (rcvd < 0) {
-				throw read_error;
-			} else if (rcvd == 0) {
-				break;
-			}
+        let buf_size : i32 = 65535;
+        let read_buf = http_con.read_buf;
+        read_buf.minimum_free_space(buf_size);
+        while true {
+            let rcvd = kos.ki_os__fd_read(http_con.fd, read_buf.data + read_buf.length, buf_size);
+            if (rcvd == -2){
+                // EAGAIN
+                return;
+            } else if (rcvd < 0) {
+                throw read_error;
+            } else if (rcvd == 0) {
+                break;
+            }
 
-			read_buf.length += rcvd @as uxx;
-			http_con.parse_headers() !! {
-				throw sent_error;
-			};
+            read_buf.length += rcvd @as uxx;
+            http_con.parse_headers() !! {
+                throw sent_error;
+            };
 
-			if(rcvd < buf_size) {
-				break;
-			}
-		}
+            if(rcvd < buf_size) {
+                break;
+            }
+        }
 
-		if !http_con.headers_parsed {
-			http_con.respond(Response.error(400));
-			throw sent_error;
-		}
+        if !http_con.headers_parsed {
+            http_con.respond(Response.error(400));
+            throw sent_error;
+        }
 
-		if data.static_dirs.length > 0 {
-			let path = http_con.request_path.trim("/");
-			each data.static_dirs as dir {
-				let fullpath = dir + path; 
-				if fs:is_file(fullpath) {
-					let stream = fs:open(fullpath, true, false) !! {
-						continue;
-					};
-					http_con.send_file(stream, null);
-					return;
-				}
-			}
-		}
+        if data.static_dirs.length > 0 {
+            let path = http_con.request_path.trim("/");
+            each data.static_dirs as dir {
+                let fullpath = dir + path; 
+                if fs:is_file(fullpath) {
+                    let stream = fs:open(fullpath, true, false) !! {
+                        continue;
+                    };
+                    http_con.send_file(stream, null);
+                    return;
+                }
+            }
+        }
 
-		let resp = handler(Request{
-			http_con: http_con,
-			headers: http_con.headers,
-			method: http_con.request_method,
-			path: http_con.request_path,
-		});
+        let resp = handler(Request{
+            http_con: http_con,
+            headers: http_con.headers,
+            method: http_con.request_method,
+            path: http_con.request_path,
+        });
 
-		http_con.respond(resp);
-	}
+        http_con.respond(resp);
+    }
 
-    func mut add_static_dir(path: >String) void {
-		let full = fs:exe_dir() + "/" + path.trim("/") + "/";
+    func mut add_static_dir(path: String) void {
+        let full = fs:exe_dir() + "/" + path.trim("/") + "/";
         println("[+] Add static dir: " + full);
         this.static_dirs.push(full);
     }
     func mut show_info(b: bool) void {
-		this.data.show_info = b;
+        this.data.show_info = b;
     }
 }
 

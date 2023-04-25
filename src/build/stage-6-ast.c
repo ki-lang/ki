@@ -42,14 +42,29 @@ void stage_6_func(Fc *fc, Func *func) {
         return;
     }
 
+    Scope *fscope = func->scope;
     Chunk *chunk = func->chunk_body;
     fc->chunk = chunk;
 
     read_ast(fc, func->scope, false);
 
-    if (!type_is_void(func->rett) && !func->scope->did_return) {
+    if (!type_is_void(func->rett) && !fscope->did_return) {
         sprintf(fc->sbuf, "Function did not return a value");
         fc_error(fc);
+    }
+
+    // Check unused ownership args
+    Array *decls = fscope->usage_keys;
+    if (decls) {
+        for (int i = 0; i < decls->length; i++) {
+            Decl *decl = array_get_index(decls, i);
+            UsageLine *ul = array_get_index(fscope->usage_values, i);
+
+            if (decl->is_arg && !decl->type->borrow && ul->moves == 0) {
+                sprintf(fc->sbuf, "Argument '%s' passes ownership but it doesnt need it. Remove the '>' sign from your argument type.", decl->name);
+                fc_error(fc);
+            }
+        }
     }
 
     fc->error_func_info = NULL;
