@@ -454,9 +454,10 @@ void ki_os__poll_new_fd(void *poller_, ki_poll_listener *listener) {
     ((unsigned int *)&ev.data)[1] = index;
     int res = epoll_ctl(p->poll_fd, EPOLL_CTL_ADD, listener->fd, &ev);
 }
-void ki_os__poll_update_fd(void *poller_, ki_poll_listener *listener, unsigned int state) {
+void ki_os__poll_update_fd(void *poller_, ki_poll_listener *listener) {
     //
     ki_poller *p = (ki_poller *)poller_;
+    unsigned int state = listener->state;
     unsigned int track = 0;
     if (state & 0x1) {
         track = EPOLLIN; // | EPOLLET;

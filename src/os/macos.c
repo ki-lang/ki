@@ -21,7 +21,7 @@
 // #include <libproc.h>
 #include <mach-o/dyld.h>
 
-#include "./shared.h"
+#include "../headers/os.h"
 
 ////////////
 // Memory
@@ -29,12 +29,11 @@
 
 void *ki_os__alloc(size_t size) {
     //
-    // MAP_ANONYMOUS: 0x20, // No file, use fd -1
-    return mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    return malloc(size);
 }
-void ki_os__free(void *adr, size_t size) {
+void ki_os__free(void *adr) {
     //
-    munmap(adr, size);
+    free(adr);
 }
 
 ////////////
@@ -326,19 +325,47 @@ int ki_os__socket_get_fd(void *sock) {
     ki_socket *s = (ki_socket *)sock;
     return s->fd;
 }
-bool ki_os__socket_set_ipv4(void *sock, char *ip, int port) {
+// bool ki_os__socket_set_ipv4(void *sock, char *ip, char *port) {
+//     //
+//     ki_socket *s = (ki_socket *)sock;
+//     if (s->domain != AF_INET)
+//         return false;
+//     s->ipv4_adr.sin_family = s->domain;
+//     s->ipv4_adr.sin_port = htons(port);
+//     int res = inet_aton(ip, &s->ipv4_adr.sin_addr);
+//     if (res == 0) {
+//         return false;
+//     }
+//     return true;
+// }
+bool ki_os__socket_set_ipv4(void *sock, char *ip, char *port) {
     //
     ki_socket *s = (ki_socket *)sock;
+
     if (s->domain != AF_INET)
         return false;
-    s->ipv4_adr.sin_family = s->domain;
-    s->ipv4_adr.sin_port = htons(port);
-    int res = inet_aton(ip, &s->ipv4_adr.sin_addr);
-    if (res == 0) {
+
+    struct addrinfo *addrinfo = NULL, hints = {.ai_family = AF_INET, .ai_socktype = SOCK_STREAM, .ai_flags = AI_PASSIVE};
+    int e = getaddrinfo(ip, port, &hints, &addrinfo);
+
+    (void)setsockopt(s->fd, SOL_SOCKET, SO_REUSEADDR, (int[]){1}, sizeof(int));
+    (void)setsockopt(s->fd, SOL_SOCKET, SO_REUSEPORT, (int[]){1}, sizeof(int));
+
+    e = bind(s->fd, addrinfo->ai_addr, addrinfo->ai_addrlen);
+    if (e == -1) {
+        e = close(s->fd);
         return false;
+    } else {
+        e = listen(s->fd, INT_MAX);
+        if (e == -1)
+            return false;
     }
+
+    freeaddrinfo(addrinfo);
+
     return true;
 }
+
 bool ki_os__socket_set_ipv6(void *sock, char *ip, int port) {
     //
     ki_socket *s = (ki_socket *)sock;
@@ -398,23 +425,25 @@ int ki_os__socket_accept(void *sock, char *ip_buffer) {
     ki_socket *s = (ki_socket *)sock;
     int con_fd = -1;
     if (s->domain == AF_INET) {
-        struct sockaddr_in ip_buf;
-        int len = sizeof(ip_buf);
-        con_fd = accept(s->fd, (struct sockaddr *)&ip_buf, &len);
-        if (ip_buffer) {
-            strcpy(ip_buffer, inet_ntoa(ip_buf.sin_addr));
-        }
-    } else if (s->domain == AF_INET6) {
-        struct sockaddr_in6 ip_buf;
-        int len = sizeof(ip_buf);
-        con_fd = accept(s->fd, (struct sockaddr *)&ip_buf, &len);
-        if (ip_buffer) {
-            char str_buf[48];
-            inet_ntop(AF_INET, &ip_buf.sin6_addr, str_buf, sizeof(str_buf));
-            strcpy(ip_buffer, str_buf);
-        }
-    } else if (s->domain == AF_LOCAL) {
         con_fd = accept(s->fd, NULL, NULL);
+
+        // struct sockaddr_in ip_buf;
+        // int len = sizeof(ip_buf);
+        // con_fd = accept(s->fd, (struct sockaddr *)&ip_buf, &len);
+        // if (ip_buffer) {
+        //     strcpy(ip_buffer, inet_ntoa(ip_buf.sin_addr));
+        // }
+        // } else if (s->domain == AF_INET6) {
+        //     struct sockaddr_in6 ip_buf;
+        //     int len = sizeof(ip_buf);
+        //     con_fd = accept(s->fd, (struct sockaddr *)&ip_buf, &len);
+        //     if (ip_buffer) {
+        //         char str_buf[48];
+        //         inet_ntop(AF_INET, &ip_buf.sin6_addr, str_buf, sizeof(str_buf));
+        //         strcpy(ip_buffer, str_buf);
+        //     }
+        // } else if (s->domain == AF_LOCAL) {
+        //     con_fd = accept(s->fd, NULL, NULL);
     } else {
         return -1;
     }
@@ -432,6 +461,7 @@ int ki_os__socket_accept(void *sock, char *ip_buffer) {
 typedef struct ki_poller {
     int max_fd;
     int fd_count;
+    ki_poll_listener **listeners;
     struct pollfd *events;
     ki_poll_result *result;
 } ki_poller;
@@ -441,6 +471,7 @@ void *ki_os__poll_init() {
     ki_poller *p = ki_os__alloc(sizeof(ki_poller));
     p->max_fd = 0;
     p->fd_count = 0;
+    p->listeners = NULL;
     p->events = NULL;
     p->result = malloc(sizeof(ki_poll_result));
     p->result->count = 0;
@@ -456,56 +487,64 @@ void ki_os__poll_free(void *poller_) {
     free(p->events);
     free(p);
 }
-void ki_os__poll_set_fd(void *poller_, int fd, bool is_new, bool edge_triggered, bool track_in, bool track_out, bool track_err, bool track_closed, bool track_stopped_reading) {
+void ki_os__poll_new_fd(void *poller_, ki_poll_listener *listener) {
     //
+    int fd = listener->fd;
+
     ki_poller *p = (ki_poller *)poller_;
-    if (is_new) {
-        if (fd >= p->max_fd) {
+    if (fd >= p->max_fd) {
 
-            int old_max_fd = p->max_fd;
-            size_t old_size = old_max_fd * sizeof(struct pollfd);
+        int old_max_fd = p->max_fd;
+        size_t old_size = old_max_fd * sizeof(struct pollfd);
 
-            if (old_max_fd == 0)
-                p->max_fd = 20;
-            while (fd >= p->max_fd) {
-                p->max_fd = p->max_fd * 2;
-            }
+        if (old_max_fd == 0)
+            p->max_fd = 20;
+        while (fd >= p->max_fd) {
+            p->max_fd = p->max_fd * 2;
+        }
 
-            void *new_events = calloc(sizeof(struct pollfd), p->max_fd);
-            if (old_size > 0) {
-                memcpy(new_events, p->events, old_size);
-            }
-            p->events = new_events;
+        void *new_events = calloc(sizeof(struct pollfd), p->max_fd);
+        void *new_listeners = calloc(sizeof(ki_poll_listener), p->max_fd);
+        if (old_size > 0) {
+            memcpy(new_events, p->events, old_size);
+            memcpy(new_listeners, p->listeners, old_size);
+        }
+        p->events = new_events;
+        p->listeners = new_listeners;
 
-            while (old_max_fd < p->max_fd) {
-                struct pollfd ev;
-                ev.fd = -1;
-                ev.events = 0;
-                ev.revents = 0;
-                p->events[old_max_fd] = ev;
-                old_max_fd++;
-            }
+        while (old_max_fd < p->max_fd) {
+            struct pollfd ev;
+            ev.fd = -1;
+            ev.events = 0;
+            ev.revents = 0;
+            p->events[old_max_fd] = ev;
+            old_max_fd++;
         }
     }
 
-    short track = 0;
-    if (edge_triggered) {
-        // track |= EPOLLET;
+    struct pollfd ev;
+    ev.fd = fd;
+    ev.events = 0;
+    ev.revents = 0;
+
+    p->events[fd] = ev;
+    p->listeners[fd] = listener;
+    p->fd_count++;
+}
+void ki_os__poll_update_fd(void *poller_, ki_poll_listener *listener) {
+    //
+    ki_poller *p = (ki_poller *)poller_;
+    int fd = listener->fd;
+    unsigned int state = listener->state;
+    unsigned int track = 0;
+    if (state & 0x1) {
+        track = POLLIN;
     }
-    if (track_in) {
-        track |= POLLIN;
-    }
-    if (track_out) {
+    if (state & 0x2) {
         track |= POLLOUT;
     }
-    if (track_err) {
-        track |= POLLERR;
-    }
-    if (track_closed) {
+    if (state & 0x10) {
         track |= POLLHUP;
-    }
-    if (track_stopped_reading) {
-        // track |= POLLRDHUP;
     }
 
     struct pollfd ev;
@@ -514,12 +553,11 @@ void ki_os__poll_set_fd(void *poller_, int fd, bool is_new, bool edge_triggered,
     ev.revents = 0;
 
     p->events[fd] = ev;
-    p->fd_count++;
 }
-void ki_os__poll_remove_fd(void *poller_, int fd) {
+void ki_os__poll_remove_fd(void *poller_, ki_poll_listener *listener) {
     //
     ki_poller *p = (ki_poller *)poller_;
-    struct pollfd *ev = &p->events[fd];
+    struct pollfd *ev = &p->events[listener->fd];
     ev->fd = -1;
 
     p->fd_count--;
@@ -559,7 +597,7 @@ ki_poll_result *ki_os__poll_wait(void *poller_, int timeout) {
 
         ki_poll_event *re = result->events;
         ki_poll_event *ke = &re[i];
-        ke->fd = e.fd;
+        ke->listener = p->listeners[e.fd];
 
         int state = 0;
         short states = e.revents;

@@ -124,7 +124,8 @@ char *get_binary_dir() {
         fprintf(stderr, "Could not determine macos ki executable path\n");
         exit(1);
     }
-    char *fp = get_fullpath(buf);
+    char *full = malloc(KI_PATH_MAX);
+    char *fp = get_fullpath(buf, full);
     free(buf);
     buf = fp;
 #else

@@ -74,7 +74,7 @@ struct PollListener {
 		} else if (this.state & 0x1) > 0 {
 			this.state = this.state ^ 0x1;
 		}
-		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
+		kos.ki_os__poll_update_fd(this.os_poll, this);
 	}
 	public func mut write(v: bool) void {
 		if(v) {
@@ -82,7 +82,7 @@ struct PollListener {
 		} else if (this.state & 0x2) > 0 {
 			this.state = this.state ^ 0x2;
 		}
-		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
+		kos.ki_os__poll_update_fd(this.os_poll, this);
 	}
 	public func mut stopped_reading(v: bool) void {
 		if(v) {
@@ -90,7 +90,7 @@ struct PollListener {
 		} else if (this.state & 0x10) > 0 {
 			this.state = this.state ^ 0x10;
 		}
-		kos.ki_os__poll_update_fd(this.os_poll, this, this.state);
+		kos.ki_os__poll_update_fd(this.os_poll, this);
 	}
 }
 
