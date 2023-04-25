@@ -281,13 +281,6 @@ class Server {
 			}
 		}
 
-		//let stream = fs:open("/mnt/c/www/ki/debug/test.avi", true, false) !! {
-		//	println("[x] File not found");
-		//	http_con.respond(Response.error(404));
-		//	throw sent_error;
-		//};
-		//http_con.send_file(stream);
-
 		let resp = handler(Request{
 			http_con: http_con,
 			headers: http_con.headers,
