@@ -2,7 +2,7 @@
 // TODO : Use hash maps
 class Map[T] {
 	private _keys : Array[String] = Array[String].init();
-	private _values : Array[String] = Array[String].init();
+	private _values : Array[T] = Array[T].init();
 
 	static func init() .CLASS {
 		return CLASS{};

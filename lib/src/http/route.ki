@@ -1,0 +1,15 @@
+
+class Route {
+	public handler: fn(Request)(Response);
+	public args: Array[RouteArg];
+
+	public func get_params(uri: String) .Map[String] {
+		let result = Map[String]{};
+		let parts = uri.split("/"); 
+		each this.args as arg {
+			let p = parts.get(arg.i) !! continue;;
+			result.set(arg.name, p);
+		}
+		return result;
+	}
+}

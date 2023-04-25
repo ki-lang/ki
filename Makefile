@@ -77,7 +77,7 @@ linux_dist_from_linux: $(OBJECTS) $(os_linux) debug/build/link.o
 	cp -r src/scripts/install.sh dist/linux-x64/
 	sed -i 's/__VERSION__/$(VERSION)/' dist/linux-x64/install.sh
 	$(LCC) -o dist/linux-x64/ki $(OBJECTS) debug/build/link.o $(LDFLAGS_DIST)
-	tar -czf dist/ki-linux-$(VERSION)-x64.tar.gz dist/linux-x64/*
+	tar -czf dist/ki-$(VERSION)-linux-x64.tar.gz dist/linux-x64/*
 
 macos_dist_from_linux: $(os_macos) debug/build/link.o
 	mkdir -p dist/macos-x64/lib
@@ -88,7 +88,7 @@ macos_dist_from_linux: $(os_macos) debug/build/link.o
 	export SDKROOT=$(CURDIR)/dist/macos-sdk-11-3 && \
 	export MACOSX_DEPLOYMENT_TARGET=11.6 && \
 	$(LCC) $(CFLAGS) --target=x86_64-apple-darwin-macho $(CROSS_OSX_FROM_LINUX) -o dist/macos-x64/ki $(SRC) src/build/stage-8-link.c -lm -lz -lcurses -lcurl -lpthread -pthread -lc++ -Wl,-platform_version,macos,11.6.0,11.3 $(LDFLAGS_OSX_DIST)
-	tar -czf dist/ki-macos-$(VERSION)-x64.tar.gz dist/macos-x64/*
+	tar -czf dist/ki-$(VERSION)-macos-x64.tar.gz dist/macos-x64/*
 
 #
 

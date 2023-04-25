@@ -228,7 +228,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false);
         //
-    } else if (strcmp(token, "@v") == 0) {
+    } else if (strcmp(token, "@vs") == 0) {
         // value scope
         tok_expect(fc, ":", false, true);
         Type *rett = read_type(fc, alc, scope, false, true, rtc_default);

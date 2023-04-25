@@ -40,7 +40,7 @@ Feature todo list in order:
 - format string
 - http server
 - __eq
-- @v { ... } (value-scopes)
+- @vs { ... } (value-scopes)
 - __before_free
 - strict ownership types
 - shared ownership types

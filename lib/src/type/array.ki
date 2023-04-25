@@ -16,7 +16,7 @@ class Array[T] {
 		};
 	}
 
-	func mut push(value: >T) uxx {
+	func mut push(item: >T) uxx {
 		let size = this.size;
 		let length = this.length;
 		let data = this.data;
@@ -31,11 +31,38 @@ class Array[T] {
 			this.size = new_size;
 		}
 
-		@ptrv(data, T, length) = value;
+		@ptrv(data, T, length) = item;
 		this.length = length + 1;
-		@move value;
+		@move item;
 
 		return length;
+	}
+
+	public func mut prepend(item: >T) void {
+
+		let size = this.size;
+		let length = this.length;
+		let data = this.data;
+
+		if length == size {
+			// Increase mem
+			let new_size = size * 2;
+			let new_data = mem:alloc(new_size * sizeof(T));
+			mem:copy(data, new_data, size * sizeof(T));
+			data = new_data;
+			this.data = new_data;
+			this.size = new_size;
+		}
+
+		let to_pos = length;
+		while to_pos > 0 {
+			@ptrv(data, T, to_pos) = @ptrv(data, T, to_pos);
+			to_pos--;
+		}
+
+		@ptrv(data, T, 0) = item;
+		this.length = length + 1;
+		@move item;
 	}
 
 	func get(index: uxx) T !not_found {

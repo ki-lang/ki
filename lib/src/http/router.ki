@@ -1,0 +1,120 @@
+
+class RouteBlock {
+	public route: ?Route = null;
+	public blocks: Map[RouteBlock];
+}
+
+class RouteArg {
+	public name: String;
+	public i: i32;
+}
+
+class Router {
+
+	private block: RouteBlock;
+	public inited: bool = false;
+
+	public static func init() .Router {
+		return Router{
+			block: RouteBlock{
+				blocks: Map[RouteBlock]{}
+			}
+		};
+	}
+
+	public func mut add(method: String, url: String, handler: fn(Request)(Response)) void !invalid_route {
+
+		if url.bytes() == 0 || url.byte(0) != '/' {
+			throw invalid_route;
+		}
+
+		let url_tmp = url.sub_str_bytes(1, url.bytes() - 1);
+		let parts = url_tmp.split("/");
+		parts.prepend(method);
+
+		let block = this.block;
+		let args = Array[RouteArg].init(2);
+		let wcard_index = -1#i32;
+
+		each parts as i, part {
+			if part.bytes() == 0 {
+				continue;
+			}
+
+			let blocks = block.blocks;
+
+			let is_arg = part.byte(0) == '@';
+			let is_wcard = part == "*";
+			let key = part;
+
+			if is_arg {
+				let name = part.sub_str_bytes(1, part.bytes() - 1);
+				if name.bytes() == 0 {
+					throw invalid_route;
+				}
+				args.push(RouteArg { i: i @as i32, name: name });
+				key = "@";
+			} else if is_wcard {
+				key = "*";
+				wcard_index = i @as i32;
+			}
+
+			if wcard_index >= 0 && is_wcard == false {
+				throw invalid_route;
+			}
+
+			let find = blocks.get(key) !? @vs : RouteBlock {
+				let v = +RouteBlock{ blocks: Map[RouteBlock]{} };
+				blocks.set(key, v);
+				return v;
+			};
+
+			block = find;
+		}
+
+		block.route = Route{ handler: handler, args: args };
+	}
+
+	public func mut find(method: String, url: String) ?Route {
+		let parts_ = url.split("/");
+		let parts = Array[String].init(2);
+		each parts_ as i, part {
+			if part.bytes() == 0 {
+				continue;
+			}
+			parts.push(part);
+		}
+
+		parts.prepend(method);
+		let arg_c = parts.length;
+
+		return Router.find_route(this.block, 0, arg_c @as u8, parts);
+	}
+
+	private static func find_route(block: mut RouteBlock, index: u8, arg_c: u8, parts: Array[String]) ?Route {
+
+		if index == arg_c {
+			return block.route;
+		}
+
+		let p = parts.get(index) !! return null;;
+
+		let check_parts = Array[String].init(2);
+		check_parts.push(p);
+		check_parts.push("@");
+
+		each check_parts as i, part {
+
+			if part == "*" : continue;
+
+			let sub_block = block.blocks.get(part) !! continue;;
+			let route = Router.find_route(sub_block, index + 1, arg_c, parts);
+			if isset(route) {
+				return route;
+			}
+		}
+
+		let sub_block = block.blocks.get("*") !! return null;;
+		return sub_block.route;
+	}
+}
