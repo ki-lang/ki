@@ -1,6 +1,7 @@
 
 ki
 debug
+dist
 .vscode
 callgrind.*
 
