@@ -3,31 +3,31 @@
 
 Feature todo list in order:
 
-- trait sub-types (same syntax as generics)
+- Only allow local variables as a borrowed argument in a function call
 - compare errors
 - swap token
-- calling functions using named arguments
 - package manager
 - testing features
-- do not allow globals in a fcall argument that borrows the value
 - install global packages + "bin" setting in ki.json to place binaries in ~/.ki/bin
 - access type 'namespace'
 - declare functions for classes/structs from other libraries
+- trait sub-types (same syntax as generics)
 - multi-threaded AST parsing + IR gen
 - inline if ... ? ... : ...
 - custom allocators | MyClass{...} @my_alloc
-- --watch param to watch for file changes
+- --watch param to watch for file changes and trigger a build
 - vscode extension
+- closure functions
 - cross compiling
 - async library
-- __leave_scope (code executed when a variable leaves its scope)
-- anonymous functions
+- calling functions using named arguments
 - implement IO URing where useful
 - replace malloc with something better
+- __leave_scope (code executed when a variable leaves its scope)
 
 ## Maybe
 
-- interfaces | they are kind of pointless because we dont use virtual functions and therefore cant use them as types
+- interfaces | useful, but we'll have to introduce virtual functions which we try to avoid
 
 ## Done
 
