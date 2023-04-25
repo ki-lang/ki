@@ -6,16 +6,18 @@ VERSION=dev
 UNAME=$(shell uname)
 
 CFLAGS=-g -O2 -std=gnu99 -pthread
-LLVMCF=`llvm-config --cflags`
 
 LDFLAGS=
 
 ifeq ($(UNAME), Darwin)
-CFLAGS=$(CFLAGS) -I/usr/local/opt/llvm@14/include
-LDFLAGS=$(LDFLAGS) -L/usr/local/opt/llvm@14/lib
+CFLAGS:=$(CFLAGS) -I/usr/local/opt/llvm@14/include
+LDFLAGS:=$(LDFLAGS) -L/usr/local/opt/llvm@14/lib
+LLVMCF=`/usr/loca/opt/llvm@14/bin/llvm-config --cflags`
+else
+LLVMCF=`llvm-config --cflags`
 endif
 
-LDFLAGS=$(LDFLAGS) `llvm-config --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf` -lcurl -lm -lz -lstdc++
+LDFLAGS:=$(LDFLAGS) `llvm-config --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf` -lcurl -lm -lz -lstdc++
 
 LDFLAGS_DIST=`llvm-config --ldflags --system-libs --libs --link-static all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf` `curl-config --static-libs` -lm -lz -lstdc++ -ldl -lpthread
 
