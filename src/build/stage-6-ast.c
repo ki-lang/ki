@@ -481,9 +481,13 @@ void token_if(Allocator *alc, Fc *fc, Scope *scope) {
     }
 
     tok(fc, token, false, true);
-    bool single = strcmp(token, "{") != 0;
-    if (single) {
-        rtok(fc);
+    bool single = false;
+    if (strcmp(token, "{") == 0) {
+    } else if (strcmp(token, ":") == 0) {
+        single = true;
+    } else {
+        sprintf(fc->sbuf, "Expected '{' (scope) or ':' (single line) after the if-condition");
+        fc_error(fc);
     }
 
     Scope *sub = usage_scope_init(alc, scope, sct_default);
@@ -502,9 +506,13 @@ void token_if(Allocator *alc, Fc *fc, Scope *scope) {
         } else {
             rtok(fc);
             tok(fc, token, false, true);
-            bool single = strcmp(token, "{") != 0;
-            if (single) {
-                rtok(fc);
+            bool single = false;
+            if (strcmp(token, "{") == 0) {
+            } else if (strcmp(token, ":") == 0) {
+                single = true;
+            } else {
+                sprintf(fc->sbuf, "Expected '{' (scope) or ':' (single line) after 'else' token");
+                fc_error(fc);
             }
             read_ast(fc, else_scope, single);
         }
@@ -525,9 +533,8 @@ void token_if(Allocator *alc, Fc *fc, Scope *scope) {
 
 void token_while(Allocator *alc, Fc *fc, Scope *scope) {
     //
+    char *token = fc->token;
     Scope *sub = usage_scope_init(alc, scope, sct_loop);
-    // Scope *sub = scope_init(alc, sct_loop, scope, true);
-
     Value *cond = read_value(fc, alc, sub, true, 0, false);
 
     if (!type_is_bool(cond->rett, fc->b)) {
@@ -535,11 +542,19 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
         fc_error(fc);
     }
 
-    tok_expect(fc, "{", false, true);
+    tok(fc, token, false, true);
+    bool single = false;
+    if (strcmp(token, "{") == 0) {
+    } else if (strcmp(token, ":") == 0) {
+        single = true;
+    } else {
+        sprintf(fc->sbuf, "Expected '{' (scope) or ':' (single line) after the while-condition");
+        fc_error(fc);
+    }
 
     scope_apply_issets(alc, sub, cond->issets);
 
-    read_ast(fc, sub, false);
+    read_ast(fc, sub, single);
 
     // usage_clear_ancestors(scope);
     Array *ancestors = array_make(alc, 2);
@@ -631,13 +646,16 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     map_set(sub->identifiers, value_name, idf);
 
     //
-    bool single_line = strcmp(token, ":") == 0;
-    if (!single_line && strcmp(token, "{") != 0) {
-        sprintf(fc->sbuf, "Expected '{' or ':' here, found '%s'", token);
+    bool single = false;
+    if (strcmp(token, "{") == 0) {
+    } else if (strcmp(token, ":") == 0) {
+        single = true;
+    } else {
+        sprintf(fc->sbuf, "Expected '{' (scope) or ':' (single line) after the each-condition");
         fc_error(fc);
     }
 
-    read_ast(fc, sub, single_line);
+    read_ast(fc, sub, single);
 
     Array *ancestors = array_make(alc, 2);
     array_push(ancestors, sub);

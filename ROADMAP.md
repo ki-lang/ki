@@ -8,6 +8,7 @@ Feature todo list in order:
 - compare errors
 - swap token
 - package manager
+- 'each' declarations in structs/classes, 'each chars: each_chars_init, each_chars;' | usage: 'each mystr.chars as char {...}'
 - testing features
 - install global packages + "bin" setting in ki.json to place binaries in ~/.ki/bin
 - access type 'namespace'
@@ -32,6 +33,7 @@ Feature todo list in order:
 
 ## Done
 
+- use ':' for single line scopes for if/else/while/each
 - immutable types
 - automatically check if vars are mutated or not to know if we need to alloc on the stack or not
 - isset keyword
