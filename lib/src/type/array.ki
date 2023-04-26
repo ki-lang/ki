@@ -70,7 +70,7 @@ class Array[T] {
 			throw not_found;
 		}
 
-		let value = @ptrv(this.data,  >T, index);
+		let value = @ptrv(this.data, >T, index);
 		@ref value;
 
 		return value;

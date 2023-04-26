@@ -293,7 +293,7 @@ class String type:ptr {
 		@ptrv(adr, u8, 0) = 0#u8;
 		adr += 4;
 		@ptrv(adr, u32, 0) = 1#u32;
-		let res = adr_ @as  >.String;
+		let res = adr_ @as >.String;
 		return res;
 	}
 

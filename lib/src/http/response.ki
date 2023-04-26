@@ -15,13 +15,13 @@ class Response {
 	//	let r = Response{ filepath: path };
 	//	return r;
 	//}
-	public static func html(body:  >String, code: u32 = 200, headers: >?Map[String] = null) .Response {
+	public static func html(body: >String, code: u32 = 200, headers: >?Map[String] = null) .Response {
 		return Response{ body: body, status: code, content_type: "text/html", headers: headers };
 	}
-	public static func json(body:  >String, code: u32 = 200, headers: >?Map[String] = null) .Response {
+	public static func json(body: >String, code: u32 = 200, headers: >?Map[String] = null) .Response {
 		return Response{ body: body, status: code, content_type: "application/json", headers: headers };
 	}
-	public static func text(body:  >String, code: u32 = 200, content_type:  >String = "text/plain", headers: >?Map[String] = null) .Response {
+	public static func text(body: >String, code: u32 = 200, content_type: >String = "text/plain", headers: >?Map[String] = null) .Response {
 		return Response{ body: body, status: code, content_type: content_type, headers: headers };
 	}
 	//public static func redirect(String location, u32 code = 301, ?Map[String] headers_ = null) Response {
