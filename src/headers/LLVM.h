@@ -55,7 +55,6 @@ char *llvm_ir_cast(LB *b, char *lval, Type *from_type, Type *to_type);
 char *llvm_ir_string(LB *b, char *body);
 char *llvm_ir_stack_alloc(LB *b, char *amount, char *amount_type);
 char *llvm_ir_gep(LB *b, char *type, char *lon, char *index, char *index_type);
-char *llvm_ir_bitcast(LB *b, char *value, char *from_type, char *to_type);
 
 struct LB {
     Fc *fc;

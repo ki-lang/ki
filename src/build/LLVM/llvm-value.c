@@ -58,7 +58,6 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char partc_str[20];
         sprintf(partc_str, "%d", partc * type->bytes);
         char *part_adr = llvm_ir_stack_alloc(b, partc_str, "i64");
-        // char *part_bc = llvm_ir_bitcast(b, part_adr, "i8*", "i8**");
         for (int i = 0; i < partc; i++) {
             sprintf(nr, "%d", i);
             char *part_gep = llvm_ir_gep(b, ltype, part_adr, nr, "i64");
@@ -71,7 +70,6 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char valuec_str[20];
         sprintf(valuec_str, "%d", valuec * type->bytes);
         char *value_adr = llvm_ir_stack_alloc(b, valuec_str, "i64");
-        // char *value_bc = llvm_ir_bitcast(b, value_adr, "i8*", "i8**");
         for (int i = 0; i < valuec; i++) {
             sprintf(nr, "%d", i);
             char *value_gep = llvm_ir_gep(b, ltype, value_adr, nr, "i64");
@@ -101,18 +99,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     }
     if (v->type == v_getptr) {
         Value *val = v->item;
-        char *lval = llvm_assign_value(b, scope, val);
-        return lval;
-        // char *var = llvm_var(b);
-        // Str *ir = llvm_b_ir(b);
-        // str_append_chars(ir, "  ");
-        // str_append_chars(ir, var);
-        // str_append_chars(ir, " = bitcast ");
-        // str_append_chars(ir, llvm_type(b, val->rett));
-        // str_append_chars(ir, "* ");
-        // str_append_chars(ir, lval);
-        // str_append_chars(ir, " to i8*\n");
-        // return var;
+        return llvm_assign_value(b, scope, val);
     }
     if (v->type == v_op) {
         VOp *vop = v->item;

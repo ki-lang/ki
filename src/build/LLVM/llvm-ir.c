@@ -476,22 +476,6 @@ char *llvm_ir_gep(LB *b, char *type, char *lon, char *index, char *index_type) {
     return result;
 }
 
-char *llvm_ir_bitcast(LB *b, char *value, char *from_type, char *to_type) {
-    return value;
-    // Str *ir = llvm_b_ir(b);
-    // char *var = llvm_var(b);
-    // str_append_chars(ir, "  ");
-    // str_append_chars(ir, var);
-    // str_append_chars(ir, " = bitcast ");
-    // str_append_chars(ir, from_type);
-    // str_append_chars(ir, " ");
-    // str_append_chars(ir, value);
-    // str_append_chars(ir, " to ");
-    // str_append_chars(ir, to_type);
-    // str_append_chars(ir, "\n");
-    // return var;
-}
-
 char *llvm_ir_atomic_xchange(LB *b, char *var, char *type, char *new_value) {
     Str *ir = llvm_b_ir(b);
     char *result = llvm_var(b);

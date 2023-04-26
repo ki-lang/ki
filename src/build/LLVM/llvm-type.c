@@ -70,26 +70,11 @@ char *llvm_type(LB *b, Type *type) {
         str_append_chars(result, "i8");
         //
     } else if (class && class->type == ct_struct) {
+
+        llvm_check_defined(b, class);
+
         char name[100];
         sprintf(name, "%%struct.%s", class->gname);
-        if (!array_contains(b->defined_classes, class, arr_find_adr)) {
-            array_push(b->defined_classes, class);
-
-            Str *ir = str_make(b->alc, 1000);
-            str_append_chars(ir, name);
-            str_append_chars(ir, " = type { ");
-
-            for (int i = 0; i < class->props->keys->length; i++) {
-                ClassProp *prop = array_get_index(class->props->values, i);
-                if (i > 0) {
-                    str_append_chars(ir, ", ");
-                }
-                str_append_chars(ir, llvm_type(b, prop->type));
-            }
-            str_append_chars(ir, " }\n");
-
-            str_append(b->ir_struct, ir);
-        }
         str_append_chars(result, name);
         //
     } else if (type->type == type_func_ptr) {
@@ -120,11 +105,6 @@ char *llvm_type(LB *b, Type *type) {
     } else {
         printf("Type: %d\n", type->type);
         die("Unknown LLVM type (bug)");
-    }
-    //
-    while (depth > 0) {
-        str_append_chars(result, "*");
-        depth--;
     }
     //
     return str_to_chars(b->alc, result);
