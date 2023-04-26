@@ -141,7 +141,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
             VClassPA *pa = val->item;
             ClassProp *prop = pa->prop;
             if (val->rett->strict_ownership) {
-                sprintf(fc->sbuf, "You cannot move a property with strict ownership. You must use 'swap' to replace existing value with something else.");
+                sprintf(fc->sbuf, "You cannot move a property with strict ownership. You must use 'swap'(not implemented yet) to replace existing value with something else.");
                 fc_error(fc);
             }
             val = value_init(alc, v_upref_value, val, val->rett);
