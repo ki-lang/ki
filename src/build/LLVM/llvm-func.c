@@ -106,9 +106,7 @@ void llvm_gen_func_ir(LB *b) {
             str_append_chars(cir, ltype);
             str_append_chars(cir, " ");
             str_append_chars(cir, lval);
-            str_append_chars(cir, ", ");
-            str_append_chars(cir, ltype);
-            str_append_chars(cir, "* ");
+            str_append_chars(cir, ", ptr ");
             str_append_chars(cir, var);
             str_append_chars(cir, ", align ");
             str_append_chars(cir, bytes);

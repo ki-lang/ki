@@ -58,10 +58,10 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char partc_str[20];
         sprintf(partc_str, "%d", partc * type->bytes);
         char *part_adr = llvm_ir_stack_alloc(b, partc_str, "i64");
-        char *part_bc = llvm_ir_bitcast(b, part_adr, "i8*", "i8**");
+        // char *part_bc = llvm_ir_bitcast(b, part_adr, "i8*", "i8**");
         for (int i = 0; i < partc; i++) {
             sprintf(nr, "%d", i);
-            char *part_gep = llvm_ir_gep(b, ltype, part_bc, nr, "i64");
+            char *part_gep = llvm_ir_gep(b, ltype, part_adr, nr, "i64");
             char *str = array_get_index(parts, i);
             char *lstr = llvm_ir_string(b, str);
             llvm_ir_store(b, type, part_gep, lstr);
@@ -71,10 +71,10 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char valuec_str[20];
         sprintf(valuec_str, "%d", valuec * type->bytes);
         char *value_adr = llvm_ir_stack_alloc(b, valuec_str, "i64");
-        char *value_bc = llvm_ir_bitcast(b, value_adr, "i8*", "i8**");
+        // char *value_bc = llvm_ir_bitcast(b, value_adr, "i8*", "i8**");
         for (int i = 0; i < valuec; i++) {
             sprintf(nr, "%d", i);
-            char *value_gep = llvm_ir_gep(b, ltype, value_bc, nr, "i64");
+            char *value_gep = llvm_ir_gep(b, ltype, value_adr, nr, "i64");
             char *lvalue = llvm_value(b, scope, array_get_index(values, i));
             llvm_ir_store(b, type, value_gep, lvalue);
         }
@@ -102,16 +102,17 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_getptr) {
         Value *val = v->item;
         char *lval = llvm_assign_value(b, scope, val);
-        char *var = llvm_var(b);
-        Str *ir = llvm_b_ir(b);
-        str_append_chars(ir, "  ");
-        str_append_chars(ir, var);
-        str_append_chars(ir, " = bitcast ");
-        str_append_chars(ir, llvm_type(b, val->rett));
-        str_append_chars(ir, "* ");
-        str_append_chars(ir, lval);
-        str_append_chars(ir, " to i8*\n");
-        return var;
+        return lval;
+        // char *var = llvm_var(b);
+        // Str *ir = llvm_b_ir(b);
+        // str_append_chars(ir, "  ");
+        // str_append_chars(ir, var);
+        // str_append_chars(ir, " = bitcast ");
+        // str_append_chars(ir, llvm_type(b, val->rett));
+        // str_append_chars(ir, "* ");
+        // str_append_chars(ir, lval);
+        // str_append_chars(ir, " to i8*\n");
+        // return var;
     }
     if (v->type == v_op) {
         VOp *vop = v->item;
@@ -285,14 +286,14 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
             char bytes[10];
             sprintf(bytes, "%d", type->bytes);
 
+            llvm_check_defined(b, class);
+
             Str *ir = llvm_b_ir(b);
             str_append_chars(ir, "  ");
             str_append_chars(ir, pvar);
             str_append_chars(ir, " = getelementptr inbounds %struct.");
             str_append_chars(ir, class->gname);
-            str_append_chars(ir, ", %struct.");
-            str_append_chars(ir, class->gname);
-            str_append_chars(ir, "* ");
+            str_append_chars(ir, ", ptr ");
             str_append_chars(ir, var_ob);
             str_append_chars(ir, ", i32 0, i32 ");
             str_append_chars(ir, index);
@@ -302,9 +303,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
             str_append_chars(ir, ltype);
             str_append_chars(ir, " ");
             str_append_chars(ir, lval);
-            str_append_chars(ir, ", ");
-            str_append_chars(ir, ltype);
-            str_append_chars(ir, "* ");
+            str_append_chars(ir, ", ptr ");
             str_append_chars(ir, pvar);
             str_append_chars(ir, ", align ");
             str_append_chars(ir, bytes);
@@ -686,32 +685,18 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
         Type *as_type = v->rett;
 
         char *lval = llvm_value(b, scope, on);
-        char *lval_type = llvm_type(b, on->rett);
         char *lindex = llvm_value(b, scope, index);
         char *lindex_type = llvm_type(b, index->rett);
-        char *ltype = llvm_type(b, as_type);
-        char *var_result = llvm_var(b);
-
-        Str *ir = llvm_b_ir(b);
-        str_append_chars(ir, "  ");
-        str_append_chars(ir, var_result);
-        str_append_chars(ir, " = bitcast ");
-        str_append_chars(ir, lval_type);
-        str_append_chars(ir, " ");
-        str_append_chars(ir, lval);
-        str_append_chars(ir, " to ");
-        str_append_chars(ir, ltype);
-        str_append_chars(ir, "*\n");
+        char *ltype = llvm_type_real(b, as_type);
 
         char *result = llvm_var(b);
+        Str *ir = llvm_b_ir(b);
         str_append_chars(ir, "  ");
         str_append_chars(ir, result);
         str_append_chars(ir, " = getelementptr inbounds ");
         str_append_chars(ir, ltype);
-        str_append_chars(ir, ", ");
-        str_append_chars(ir, ltype);
-        str_append_chars(ir, "* ");
-        str_append_chars(ir, var_result);
+        str_append_chars(ir, ", ptr ");
+        str_append_chars(ir, lval);
         str_append_chars(ir, ", ");
         str_append_chars(ir, lindex_type);
         str_append_chars(ir, " ");
@@ -741,7 +726,7 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
         char *lindex = llvm_value(b, scope, index);
 
         Type *item_type = on->rett->array_of;
-        char *l_item_type = llvm_type(b, item_type);
+        char *l_item_type = llvm_type_real(b, item_type);
         char *l_index_type = llvm_type(b, index->rett);
 
         Str *ir = llvm_b_ir(b);
@@ -750,9 +735,7 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
         str_append_chars(ir, result);
         str_append_chars(ir, " = getelementptr inbounds ");
         str_append_chars(ir, l_item_type);
-        str_append_chars(ir, ", ");
-        str_append_chars(ir, l_item_type);
-        str_append_chars(ir, "* ");
+        str_append_chars(ir, ", ptr ");
         str_append_chars(ir, lon);
         str_append_chars(ir, ", ");
         str_append_chars(ir, l_index_type);

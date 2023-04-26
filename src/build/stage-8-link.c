@@ -100,6 +100,8 @@ void stage_8(Build *b) {
 void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
     //
     LLVMContextRef ctx = LLVMGetGlobalContext();
+    LLVMContextSetOpaquePointers(ctx, true);
+
     LLVMModuleRef nsc_mod = LLVMModuleCreateWithName("ki_module");
 
     int ir_count = ir_files->length;
@@ -114,14 +116,14 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
 
         LLVMBool check = LLVMCreateMemoryBufferWithContentsOfFile(ir_path, &buf, &msg);
         if (msg) {
-            printf("LLVM Load IR error: %s\n", msg);
+            printf("LLVM load IR error: %s\n", msg);
             printf("Path: %s\n", ir_path);
             exit(1);
         }
 
         LLVMParseIRInContext(ctx, buf, &mod, &msg);
         if (msg) {
-            printf("LLVM Error: %s\n", msg);
+            printf("LLVM IR parse error: %s\n", msg);
             exit(1);
         }
 
@@ -134,7 +136,7 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
         char *ir_code = LLVMPrintModuleToString(nsc_mod);
         // printf("LLVM IR Code:\n%s\n", ir_code);
         printf("File: %s\n", path_o);
-        printf("ERROR: %s\n", error);
+        printf("LLVM verify error: %s\n", error);
         exit(1);
     }
 
@@ -192,7 +194,7 @@ void stage_8_optimize(LLVMModuleRef mod) {
     LLVMAddLoopRerollPass(func_passes);
     LLVMAddLoopUnrollPass(func_passes);
     LLVMAddLoopUnrollAndJamPass(func_passes);
-    LLVMAddLoopUnswitchPass(func_passes);
+    // LLVMAddLoopUnswitchPass(func_passes);
 
     // LLVMAddScalarReplAggregatesPass(func_passes);
     // LLVMAddScalarReplAggregatesPassSSA(func_passes);

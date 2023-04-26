@@ -1,10 +1,63 @@
 
 #include "../../headers/LLVM.h"
 
+void llvm_check_defined(LB *b, Class *class) {
+    //
+    if (!array_contains(b->defined_classes, class, arr_find_adr)) {
+        char name[100];
+        sprintf(name, "%%struct.%s", class->gname);
+
+        array_push(b->defined_classes, class);
+
+        Str *ir = str_make(b->alc, 1000);
+        str_append_chars(ir, name);
+        str_append_chars(ir, " = type { ");
+
+        for (int i = 0; i < class->props->keys->length; i++) {
+            ClassProp *prop = array_get_index(class->props->values, i);
+            if (i > 0) {
+                str_append_chars(ir, ", ");
+            }
+            str_append_chars(ir, llvm_type(b, prop->type));
+        }
+        str_append_chars(ir, " }\n");
+
+        str_append(b->ir_struct, ir);
+    }
+}
+
+char *llvm_type_real(LB *b, Type *type) {
+    Class *class = type->class;
+
+    if (class && class->type == ct_struct) {
+        Str *result = str_make(b->alc, 100);
+        int depth = type->ptr_depth;
+
+        llvm_check_defined(b, class);
+
+        char name[100];
+        sprintf(name, "%%struct.%s", class->gname);
+        str_append_chars(result, name);
+        //
+        while (depth > 0) {
+            str_append_chars(result, "*");
+            depth--;
+        }
+        //
+        return str_to_chars(b->alc, result);
+    }
+
+    return llvm_type(b, type);
+}
+
 char *llvm_type(LB *b, Type *type) {
     //
-    Str *result = str_make(b->alc, 100);
     int depth = type->ptr_depth;
+    if (depth > 0) {
+        return "ptr";
+    }
+
+    Str *result = str_make(b->alc, 100);
     Class *class = type->class;
 
     if (type_is_void(type)) {

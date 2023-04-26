@@ -26,7 +26,9 @@ char *llvm_value(LB *b, Scope *scope, Value *v);
 char *llvm_assign_value(LB *b, Scope *scope, Value *v);
 
 // Type
+void llvm_check_defined(LB *b, Class *class);
 char *llvm_type(LB *b, Type *type);
+char *llvm_type_real(LB *b, Type *type);
 char *llvm_type_int(LB *b, int bytes);
 char *llvm_type_ixx(LB *b);
 
