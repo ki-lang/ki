@@ -19,7 +19,7 @@ class Allocator norc {
 		real_size += mod - real_size % mod;
 
 		let count = 4#u16;
-		let alc = sys_alloc(sizeof(Allocator)) @as mut Allocator;
+		let alc = sys_alloc(sizeof(Allocator)) @as Allocator;
 		let block = Block.create(alc, real_size, count @as u8, misalign_bytes);
 		alc.first = block;
 		alc.current = block;
@@ -33,7 +33,7 @@ class Allocator norc {
 		return alc;
 	}
 
-	func mut get_slot() ptr {
+	func get_slot() ptr {
 		this.total_slots_used += 1;
 		let b = this.current;
 		while true {
@@ -80,7 +80,7 @@ class Allocator norc {
 		return this.get_slot();
 	}
 
-	func mut free(adr: ptr) void {
+	func free(adr: ptr) void {
 		adr -= 1;
 		let slot_nr = @ptrv(adr, u8, 0);
 		adr -= (slot_nr * this.slot_size_real);

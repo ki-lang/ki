@@ -234,7 +234,6 @@ struct Type {
     bool borrow_ownership;
     bool strict_ownership;
     bool borrow;
-    bool imut;
     bool ignore_mutability;
 };
 

@@ -274,20 +274,6 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         v = vgen_ptrv(alc, on, type, index);
         //
 
-    } else if (strcmp(token, "@imut") == 0) {
-
-        Value *on = read_value(fc, alc, scope, false, 0, false);
-        Type *rett = on->rett;
-        if (!rett->imut) {
-            Type *nt = type_clone(alc, rett);
-            nt->imut = true;
-            nt->strict_ownership = rett->strict_ownership;
-            rett = nt;
-        }
-
-        on->rett = rett;
-        v = on;
-
     } else if (is_number(token[0]) || strcmp(token, "-") == 0) {
 
         bool is_negative = strcmp(token, "-") == 0;

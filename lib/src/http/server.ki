@@ -22,7 +22,7 @@ class Server {
     port: u16;
     static_dirs: Array[.String] = Array[.String].init();
 
-    static func init(host: >mut String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
+    static func init(host:  >String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
 
         let max_connections : uxx = 10000;
         let socket = net:Socket.init_tcp(host, port) !! throw socket_init_error;;
@@ -40,7 +40,25 @@ class Server {
         };
     }
 
-    func mut start(worker_count: i32 = 32) void {
+    private func server_data() .ServerData {
+        let data = this.data;
+
+        let dirs = Array[.String].init();
+        each this.static_dirs as dir {
+            dirs.push(dir);
+        }
+
+        return ServerData {
+            socket: data.socket,
+            max_connections: data.max_connections,
+            handler: data.handler,
+            show_info: data.show_info,
+            static_dirs: dirs,
+
+        };
+    }
+
+    func start(worker_count: i32 = 32) void {
 
         // SIGINT
         os:signal(os:SIG.hup, interrupt);
@@ -58,32 +76,20 @@ class Server {
         println("[+] Running http server on port " + this.port.str());
         println("[+] Worker count: " + worker_count.str());
 
-        let data = this.data;
-
-        let dirs = Array[.String].init();
-        each this.static_dirs as dir {
-            dirs.push(dir);
-        }
-
-        let copy = @imut ServerData {
-            socket: data.socket,
-            max_connections: data.max_connections,
-            handler: data.handler,
-            show_info: data.show_info,
-            static_dirs: dirs,
-
-        };
 
         worker_count--;
         while worker_count > 0 {
             worker_count--;
-            let thread = os:Thread[imut .ServerData].start(Server.worker, copy);
+            let copy = this.server_data();
+            let thread = os:Thread[.ServerData].start(Server.worker, copy);
         }
+
+        let copy = this.server_data();
         Server.worker(copy);
         os:sleep_ms(200);
     }
 
-    private static func worker(data: imut .ServerData) void {
+    private static func worker(data: .ServerData) void {
 
         let max_connections = data.max_connections;
         let handler = data.handler;
@@ -236,7 +242,7 @@ class Server {
         }
     }
 
-    private static func respond(data: ServerData, http_con: >mut Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+    private static func respond(data: ServerData, http_con:  >Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
         let buf_size : i32 = 65535;
         let read_buf = http_con.read_buf;
@@ -294,12 +300,12 @@ class Server {
         http_con.respond(resp);
     }
 
-    func mut add_static_dir(path: String) void {
+    func add_static_dir(path: String) void {
         let full = fs:exe_dir() + "/" + path.trim("/") + "/";
         println("[+] Add static dir: " + full);
         this.static_dirs.push(full);
     }
-    func mut show_info(b: bool) void {
+    func show_info(b: bool) void {
         this.data.show_info = b;
     }
 }

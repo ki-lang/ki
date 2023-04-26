@@ -22,7 +22,7 @@ class Router {
 		};
 	}
 
-	public func mut add(method: String, url: String, handler: fn(Request)(Response)) void !invalid_route {
+	public func add(method: String, url: String, handler: fn(Request)(Response)) void !invalid_route {
 
 		if url.bytes() == 0 || url.byte(0) != '/' {
 			throw invalid_route;
@@ -75,7 +75,7 @@ class Router {
 		block.route = Route{ handler: handler, args: args };
 	}
 
-	public func mut find(method: String, url: String) ?Route {
+	public func find(method: String, url: String) ?Route {
 		let parts_ = url.split("/");
 		let parts = Array[String].init(2);
 		each parts_ as i, part {
@@ -91,7 +91,7 @@ class Router {
 		return Router.find_route(this.block, 0, arg_c @as u8, parts);
 	}
 
-	private static func find_route(block: mut RouteBlock, index: u8, arg_c: u8, parts: Array[String]) ?Route {
+	private static func find_route(block: RouteBlock, index: u8, arg_c: u8, parts: Array[String]) ?Route {
 
 		if index == arg_c {
 			return block.route;

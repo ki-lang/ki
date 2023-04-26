@@ -17,13 +17,13 @@ class ByteBuffer {
 		};
 	}
 
-	func mut clear() void %inline {
+	func clear() void %inline {
 		this.length = 0;
 	}
 
 	// Appending
 
-	func mut append(data: ptr, length: uxx) void {
+	func append(data: ptr, length: uxx) void {
 		if(length == 0) {
 			return;
 		}
@@ -37,7 +37,7 @@ class ByteBuffer {
 		this.length = new_bytes;
 	}
 
-	func mut append_byte(byte: u8) void {
+	func append_byte(byte: u8) void {
 		let bytes : uxx = this.length;
 		let new_bytes : uxx = bytes + 1;
 		if(new_bytes > this.size){
@@ -48,7 +48,7 @@ class ByteBuffer {
 		this.length = new_bytes;
 	}
 
-	func mut append_str(str: String) void {
+	func append_str(str: String) void {
 		this.append(str.data(), str.bytes());
 	}
 
@@ -118,10 +118,10 @@ class ByteBuffer {
 	}
 
 	// 
-	func mut minimum_free_space(length: uxx) void {
+	func minimum_free_space(length: uxx) void {
 		this.minimum_size(this.length + length);
 	}
-	func mut minimum_size(minimum_size: uxx) void {
+	func minimum_size(minimum_size: uxx) void {
 		let size : uxx = this.size;
 		let new_size : uxx = size;
 		while new_size < minimum_size {

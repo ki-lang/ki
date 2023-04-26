@@ -240,7 +240,7 @@ class String type:ptr {
 		mem:free(this @as ptr);
 	}
 
-	func __add(str: imut String) .String {
+	func __add(str: String) .String {
 		let this_len = this.bytes();
 		let str_len = str.bytes();
 		let len = this_len + str_len;
@@ -271,7 +271,7 @@ class String type:ptr {
 	func __each_init() uxx {
 		return 0;
 	}
-	func __each(key_ref: mut uxx[1]) u8 !end {
+	func __each(key_ref: uxx[1]) u8 !end {
 		let key = key_ref[0];
 		if key == this.bytes() {
 			throw end;
@@ -293,7 +293,7 @@ class String type:ptr {
 		@ptrv(adr, u8, 0) = 0#u8;
 		adr += 4;
 		@ptrv(adr, u32, 0) = 1#u32;
-		let res = adr_ @as >mut .String;
+		let res = adr_ @as  >.String;
 		return res;
 	}
 

@@ -188,17 +188,12 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             // Function
             tok(fc, token, true, true);
 
-            bool imut = true;
             bool borrow = true;
             bool strict_ownership = false;
             if (!is_static) {
                 if (strcmp(token, ">") == 0) {
                     borrow = false;
                     tok(fc, token, true, false);
-                }
-                if (strcmp(token, "mut") == 0) {
-                    imut = false;
-                    tok(fc, token, true, true);
                 }
                 if (strcmp(token, ".") == 0) {
                     strict_ownership = true;
@@ -220,7 +215,6 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
             if (!is_static) {
                 Arg *arg = array_get_index(func->args, 0);
-                arg->type->imut = imut;
                 arg->type->borrow = borrow;
                 arg->type->strict_ownership = strict_ownership;
             }

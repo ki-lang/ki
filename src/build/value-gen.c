@@ -80,13 +80,6 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
     item->prop = prop;
 
     Type *rett = prop->type;
-    if (!rett->imut) {
-        if (prop->type->strict_ownership || on->rett->imut) {
-            rett = type_clone(alc, rett);
-            rett->imut = true;
-            rett->strict_ownership = false;
-        }
-    }
     return value_init(alc, v_class_pa, item, rett);
 }
 
@@ -231,11 +224,5 @@ Value *vgen_array_item(Allocator *alc, Value *on, Value *index) {
     item->right = index;
 
     Type *rett = on->rett->array_of;
-    if (rett->strict_ownership || (on->rett->imut && !rett->imut)) {
-        rett = type_clone(alc, rett);
-        rett->imut = true;
-        rett->strict_ownership = false;
-    }
-
     return value_init(alc, v_array_item, item, rett);
 }

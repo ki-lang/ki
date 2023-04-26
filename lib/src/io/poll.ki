@@ -20,7 +20,7 @@ class Poll {
 		return x;
 	}
 
-	public func mut listener(fd: i32, key: uxx = 0) PollListener {
+	public func listener(fd: i32, key: uxx = 0) PollListener {
 
 		let pool = this.pool;
 		let listeners = this.listeners;
@@ -43,7 +43,7 @@ class Poll {
 		return lsn;
 	}
 
-	public func mut remove(listener: PollListener) void {
+	public func remove(listener: PollListener) void {
 		kos.ki_os__poll_remove_fd(this.os_poll, listener);
 		this.pool.add(listener)!;
 	}
@@ -68,7 +68,7 @@ struct PollListener {
 	readonly fd : i32 = -1;
     private state: u32 = 0;
 
-	public func mut read(v: bool) void {
+	public func read(v: bool) void {
 		if(v) {
 			this.state = this.state | 0x1;
 		} else if (this.state & 0x1) > 0 {
@@ -76,7 +76,7 @@ struct PollListener {
 		}
 		kos.ki_os__poll_update_fd(this.os_poll, this);
 	}
-	public func mut write(v: bool) void {
+	public func write(v: bool) void {
 		if(v) {
 			this.state = this.state | 0x2;
 		} else if (this.state & 0x2) > 0 {
@@ -84,7 +84,7 @@ struct PollListener {
 		}
 		kos.ki_os__poll_update_fd(this.os_poll, this);
 	}
-	public func mut stopped_reading(v: bool) void {
+	public func stopped_reading(v: bool) void {
 		if(v) {
 			this.state = this.state | 0x10;
 		} else if (this.state & 0x10) > 0 {

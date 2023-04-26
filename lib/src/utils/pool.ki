@@ -17,14 +17,14 @@ class Pool[T] {
 		};
 	}
 
-	func mut pop() T !empty {
+	func pop() T !empty {
 		let head = this.head;
 		let tail = this.tail;
 		if tail == head {
 			throw empty;
 		}
 		let data = this.data;
-		let result = @ptrv(data, >mut T, tail);
+		let result = @ptrv(data,  >T, tail);
 		let new_tail = tail + 1;
 		if new_tail == this.size {
 			this.tail = 0;
@@ -35,7 +35,7 @@ class Pool[T] {
 		return result;
 	}
 
-	func mut add(item: >T) void !full {
+	func add(item: >T) void !full {
 		let size = this.size;
 		let head = this.head;
 		let next_head = head + 1;
@@ -57,7 +57,7 @@ class Pool[T] {
 		this.head = next_head;
 	}
 
-	func mut __before_free() void {
+	func __before_free() void {
 		// Deref items 
 		while true {
 			let item = this.pop() !! break;;
