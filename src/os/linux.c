@@ -618,7 +618,7 @@ void *ki_os__signal_wait_create() {
     pthread_cond_t *cond = malloc(sizeof(pthread_cond_t));
     pthread_cond_init(cond, NULL);
     ki_signal_wait *sw = malloc(sizeof(ki_signal_wait));
-    sw - >= mut;
+    sw->mut = mut;
     sw->cond = cond;
     sw->is_waiting = false;
     return (void *)sw;
