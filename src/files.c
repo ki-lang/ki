@@ -125,9 +125,9 @@ char *get_binary_dir() {
         exit(1);
     }
     char *full = malloc(KI_PATH_MAX);
-    char *fp = get_fullpath(buf, full);
+    get_fullpath(buf, full);
     free(buf);
-    buf = fp;
+    buf = full;
 #else
     int len = readlink("/proc/self/exe", buf, KI_PATH_MAX);
     buf[len] = '\0';
