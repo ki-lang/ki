@@ -188,6 +188,9 @@ void cmd_build(int argc, char *argv[]) {
     b->LOC = 0;
     //
 
+    struct timeval begin, end;
+    gettimeofday(&begin, NULL);
+
     Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));
     Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
 
@@ -227,10 +230,20 @@ void cmd_build(int argc, char *argv[]) {
         }
     }
 
+    gettimeofday(&end, NULL);
+    double time_ast = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
+
+    if (verbose > 0) {
+        printf("⌚ Parse + IR gen: %.3fs\n", time_ast);
+    }
+
     stage_8(b);
 
+    gettimeofday(&end, NULL);
+    double time_all = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
+
     if (!run_code || b->verbose > 0) {
-        printf("✅ Done\n");
+        printf("✅ Compiled in: %.3fs\n", time_all);
     }
 
     if (run_code) {

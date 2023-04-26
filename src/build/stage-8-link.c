@@ -35,6 +35,9 @@ void stage_8(Build *b) {
     bool compiled_any = false;
     Array *o_files = array_make(b->alc, 20);
 
+    struct timeval begin, end;
+    gettimeofday(&begin, NULL);
+
     for (int i = 0; i < b->packages->length; i++) {
         Pkc *pkc = array_get_index(b->packages, i);
         for (int o = 0; o < pkc->namespaces->values->length; o++) {
@@ -70,12 +73,27 @@ void stage_8(Build *b) {
         }
     }
 
+    gettimeofday(&end, NULL);
+    double time_llvm = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
+    gettimeofday(&begin, NULL);
+
+    if (b->verbose > 0) {
+        printf("⌚ LLVM build o: %.3fs\n", time_llvm);
+    }
+
     if (!b->main_func) {
         die("❌ Missing 'main' function");
     }
 
     if (compiled_any || !file_exists(b->path_out)) {
         stage_8_link(b, o_files);
+    }
+
+    gettimeofday(&end, NULL);
+    double time_link = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
+
+    if (b->verbose > 0) {
+        printf("⌚ Link: %.3fs\n", time_link);
     }
 }
 
