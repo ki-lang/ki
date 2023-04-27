@@ -14,7 +14,7 @@ class Router {
 	private block: RouteBlock;
 	public inited: bool = false;
 
-	public static func init() .Router {
+	public static func init() Router {
 		return Router{
 			block: RouteBlock{
 				blocks: Map[RouteBlock]{}

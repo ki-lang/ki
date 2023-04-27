@@ -19,6 +19,7 @@ Class *class_init(Allocator *alc) {
     class->props = map_make(alc);
     class->funcs = map_make(alc);
     class->allow_math = false;
+    class->track_ownership = false;
     class->is_struct = false;
     class->can_iter = false;
     class->async = false;

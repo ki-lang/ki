@@ -18,6 +18,7 @@ UsageLine *usage_line_init(Allocator *alc, Scope *scope, Decl *decl) {
     v->clone_from = NULL;
     v->deref_scope = NULL;
     v->moves = 0;
+    v->moves_possible = 0;
     v->reads_after_move = 0;
     v->read_after_move = false;
     v->enable = true;
@@ -67,6 +68,7 @@ void usage_read_value(Allocator *alc, Scope *scope, Value *val) {
 void usage_line_incr_moves(UsageLine *ul, int amount) {
     //
     ul->moves += amount;
+    ul->moves_possible += amount;
 }
 
 Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
@@ -140,8 +142,8 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         if (class && class->must_ref) {
             VClassPA *pa = val->item;
             ClassProp *prop = pa->prop;
-            if (val->rett->strict_ownership) {
-                sprintf(fc->sbuf, "You cannot move a property with strict ownership. You must use 'swap'(not implemented yet) to replace existing value with something else.");
+            if (!val->rett->ref) {
+                sprintf(fc->sbuf, "You cannot move a property. You must use 'swap'(not implemented yet) to replace existing value with something else.");
                 fc_error(fc);
             }
             val = value_init(alc, v_upref_value, val, val->rett);
@@ -292,8 +294,11 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
 
             UsageLine *r_ul = array_get_index(rvals, i);
 
-            new_ul->moves = max_num(new_ul->moves, r_ul->moves);
-            new_ul->reads_after_move = max_num(new_ul->reads_after_move, r_ul->reads_after_move);
+            if (!right->did_exit_function) {
+                new_ul->moves = max_num(new_ul->moves, r_ul->moves);
+                new_ul->reads_after_move = max_num(new_ul->reads_after_move, r_ul->reads_after_move);
+            }
+            new_ul->moves_possible = max_num(new_ul->moves_possible, r_ul->moves_possible);
 
             if (!new_ul->first_move)
                 new_ul->first_move = r_ul->first_move;

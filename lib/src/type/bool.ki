@@ -1,14 +1,14 @@
 
 class bool type:int:1:true {
 
-	func str() .String {
+	func str() String {
 		if(this) {
 			return "1";
 		}
 		return "0";
 	}
 
-    func __string() .String {
+    func __string() String {
         return this.str();
     }
 }

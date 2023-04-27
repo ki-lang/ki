@@ -61,7 +61,7 @@ void stage_6_func(Fc *fc, Func *func) {
             UsageLine *ul = array_get_index(fscope->usage_values, i);
 
             if (decl->is_arg) {
-                if (!decl->type->borrow && ul->moves == 0) {
+                if (!decl->type->borrow && ul->moves_possible == 0) {
                     sprintf(fc->sbuf, "Argument '%s' passes ownership but it doesnt need it. Remove the '>' sign from your argument type.", decl->name);
                     fc_error(fc);
                 }
@@ -228,8 +228,25 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, left->rett);
                 type_check(fc, left->rett, right->rett);
 
+                if (right->rett->ref && (left->type == v_class_pa || left->type == v_global)) {
+                    sprintf(fc->sbuf, "You cannot store refs in pa's or globals");
+                    fc_error(fc);
+                }
                 if (left->type != v_ptrv) {
                     right = usage_move_value(alc, fc, scope, right);
+                }
+                if (left->type == v_class_pa) {
+                    // Check if assigning to moved value
+                    VClassPA *pa = left->item;
+                    Value *on = pa->on;
+                    if (on->type == v_decl) {
+                        Decl *decl = on->item;
+                        UsageLine *ul = usage_line_get(scope, decl);
+                        if (ul && ul->moves > 0) {
+                            sprintf(fc->sbuf, "You cannot assign values to a property of a moved value (variable: %s)", decl->name);
+                            fc_error(fc);
+                        }
+                    }
                 }
 
                 Value *ir_right = vgen_ir_val(alc, right, right->rett);
@@ -238,8 +255,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 if (left->type == v_decl) {
                     Decl *decl = left->item;
                     UsageLine *ul = usage_line_get(scope, decl);
-                    if (ul)
+                    if (ul) {
                         end_usage_line(alc, ul);
+                    }
                 } else if (left->type == v_class_pa || left->type == v_global) {
                     // Deref
                     class_ref_change(alc, scope, left, -1);
@@ -422,6 +440,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
     tok_expect(fc, ";", false, true);
 
     scope->did_return = true;
+    scope->did_exit_function = true;
 }
 
 void token_throw(Allocator *alc, Fc *fc, Scope *scope) {

@@ -9,22 +9,22 @@ global EXE_DIR : ?String;
 class Path {
 	parts: Array[String];
 
-	static func init(path: String) .Path {
+	static func init(path: String) Path {
 		return Path{
 			parts: path.split("/"),
 		};
 	}
 
-	static func exe_dir() .Path {
+	static func exe_dir() Path {
 		let path = Path.exe_path();
 		path.pop();
 		return path;
 	}
-	static func exe_path() .Path {
+	static func exe_path() Path {
 		return Path.init(exe_dir());
 	}
 
-	func copy() .Path {
+	func copy() Path {
 		let parts = this.parts;
 		let new = Array[String].init();
 		each parts as part {
@@ -42,20 +42,20 @@ class Path {
 		}
 	}
 
-	//func to_str() .String {
+	//func to_str() String {
 	//	return this.parts.join("/");
 	//}
 }
 
-func exe_dir() String {
+func exe_dir() &String {
 	let res = EXE_DIR ?! {
-		let dir = +dir_of(exe_path());
+		let dir = dir_of(exe_path());
 		EXE_DIR = dir;
-		return dir;
+		return exe_dir();
 	};
 	return res;
 }
-func exe_path() String {
+func exe_path() &String {
 	let cstr = kos.ki_os__exe_path();
 	let res = EXE_PATH ?! {
 		let dir = +cstr.to_str();
@@ -65,7 +65,7 @@ func exe_path() String {
 	return res;
 }
 
-func ext(path: String) .String {
+func ext(path: String) String {
 	let len = path.bytes();
 	let start = len;
 	let found = false;
@@ -92,7 +92,7 @@ func ext(path: String) .String {
 // e.g. /etc -> /
 // e.g. "" -> ""
 // e.g. etc -> etc
-func dir_of(path: String) .String {
+func dir_of(path: String) String {
 	let end = path.bytes() - 1;
 	while(end > 0){
 		end--;
@@ -111,7 +111,7 @@ func dir_of(path: String) .String {
 // e.g. /etc/nginx/ -> nginx
 // e.g. / -> ""
 // e.g. "" -> ""
-func basename(path: String) .String {
+func basename(path: String) String {
 	let len = path.bytes();
 	let start = len;
 	while(start > 0){
@@ -126,11 +126,11 @@ func basename(path: String) .String {
 }
 
 global g_stat_buf : ?kos.ki_file_stats;
-func get_stat_buf() kos.ki_file_stats {
+func get_stat_buf() &kos.ki_file_stats {
 	let s = g_stat_buf ?! {
-		let s = mem:alloc(sizeof_class(kos.ki_file_stats)) @as kos.ki_file_stats;
+		let s = mem:alloc(sizeof_class(kos.ki_file_stats)) @as >.kos.ki_file_stats;
 		g_stat_buf = s;
-		return s;
+		return get_stat_buf();
 	};
 	return s;
 }

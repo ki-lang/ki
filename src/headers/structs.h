@@ -196,6 +196,7 @@ struct Scope {
     Array *usage_values;
     VScope *vscope;
     bool did_return;
+    bool did_exit_function;
     bool in_loop;
 };
 struct VScope {
@@ -231,10 +232,9 @@ struct Type {
     bool is_signed;
     bool nullable;
     bool func_can_error;
-    bool borrow_ownership;
     bool strict_ownership;
     bool borrow;
-    bool ignore_mutability;
+    bool ref;
 };
 
 struct Class {
@@ -264,6 +264,7 @@ struct Class {
     bool packed;
     bool is_generic_base;
     bool allow_math;
+    bool track_ownership;
     bool must_ref;
     bool must_deref;
     bool is_struct;
@@ -345,6 +346,7 @@ struct UsageLine {
     UsageLine *clone_from;
     Scope *deref_scope;
     int moves;
+    int moves_possible;
     int reads_after_move;
     bool read_after_move;
     bool enable;

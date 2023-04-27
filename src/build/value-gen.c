@@ -80,6 +80,10 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
     item->prop = prop;
 
     Type *rett = prop->type;
+    if (!rett->ref && type_tracks_ownership(rett)) {
+        rett = type_clone(alc, rett);
+        rett->ref = true;
+    }
     return value_init(alc, v_class_pa, item, rett);
 }
 

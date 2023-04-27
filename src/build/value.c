@@ -674,7 +674,10 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_global) {
         Global *g = idf->item;
-        return value_init(alc, v_global, g, g->type);
+        Type *rett = g->type;
+        rett = type_clone(alc, rett);
+        rett->ref = true;
+        return value_init(alc, v_global, g, rett);
     }
 
     if (idf->type == idf_func) {

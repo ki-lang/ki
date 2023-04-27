@@ -7,7 +7,7 @@ class ByteBuffer {
 	size: uxx;
 	length: uxx = 0;
 
-	static func init(start_size: uxx) .ByteBuffer {
+	static func init(start_size: uxx) ByteBuffer {
 		if start_size < 10 {
 			start_size = 10;
 		}
@@ -95,7 +95,7 @@ class ByteBuffer {
 
 	// String functions
 
-	func to_str() .String {
+	func to_str() String {
 		if(this.length == 0){
 			return "";
 		}
@@ -104,7 +104,7 @@ class ByteBuffer {
 		return str;
 	}
 
-	func sub_str(start_index: uxx, length: uxx) .String {
+	func sub_str(start_index: uxx, length: uxx) String {
 		let len = this.length;
 		if length == 0 || start_index >= len {
 			return "";

@@ -16,9 +16,9 @@ Type *type_init(Allocator *alc) {
     type->array_of = NULL;
     type->array_size = 0;
     //
-    type->strict_ownership = false;
+    type->strict_ownership = true;
     type->borrow = false;
-    type->ignore_mutability = false;
+    type->ref = false;
     //
     type->func_args = NULL;
     type->func_rett = NULL;
@@ -128,10 +128,11 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     bool t_inline = false;
     bool async = false;
 
-    bool strict_ownership = false;
     bool borrow = false;
+    bool ref = false;
 
     if (context == rtc_func_arg || context == rtc_ptrv) {
+        ref = true;
         borrow = true;
     }
 
@@ -142,21 +143,24 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, true);
     }
 
-    if (strcmp(token, "&") == 0) {
-        borrow = true;
-        tok(fc, token, true, false);
-    } else if (strcmp(token, ">") == 0) {
-        borrow = false;
-        tok(fc, token, true, false);
+    if (context == rtc_func_arg || context == rtc_ptrv) {
+        if (strcmp(token, ">") == 0) {
+            borrow = false;
+            tok(fc, token, true, false);
+        }
+        if (strcmp(token, ".") == 0) {
+            ref = false;
+            tok(fc, token, true, false);
+        }
+    } else if (context == rtc_func_rett) {
+        if (strcmp(token, "&") == 0) {
+            ref = true;
+            tok(fc, token, true, false);
+        }
     }
 
     if (strcmp(token, "?") == 0) {
         nullable = true;
-        tok(fc, token, true, false);
-    }
-
-    if (strcmp(token, ".") == 0) {
-        strict_ownership = true;
         tok(fc, token, true, false);
     }
 
@@ -263,9 +267,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         }
     }
 
-    type->borrow = borrow;
-    if (strict_ownership)
-        type->strict_ownership = strict_ownership;
+    if (type_tracks_ownership(type)) {
+        type->ref = ref;
+        type->borrow = borrow;
+    }
 
     if (async) {
         if (!type_allowed_async(type, true)) {
@@ -354,6 +359,7 @@ Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed) {
         }
     }
     die("Cannot generate integer type (bug)");
+    return NULL;
 }
 
 Type *type_gen(Build *b, Allocator *alc, char *name) {
@@ -406,14 +412,14 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
     }
     bool t1o = type_tracks_ownership(t1);
     if (t1o) {
-        if (t1->strict_ownership && !t2->strict_ownership) {
+        if (!t1->borrow && t2->borrow) {
             if (reason)
-                *reason = "One type has strict ownership, the other does not";
+                *reason = "Trying to pass a borrowed type to a type that requires ownership";
             return false;
         }
-        if (!t1->borrow && t2->borrow && t2->strict_ownership) {
+        if (!t1->ref && t2->ref) {
             if (reason)
-                *reason = "Trying to pass a type with borrowed strict ownership to a type that requires real ownership";
+                *reason = "Trying to pass a reference type to a non-reference type";
             return false;
         }
     }
@@ -489,15 +495,14 @@ char *type_to_str(Type *t, char *res) {
     // }
     if (type_tracks_ownership(t)) {
         if (t->borrow) {
+            strcat(res, "borrow ");
+        }
+        if (t->ref) {
             strcat(res, "&");
         }
     }
     if (t->nullable) {
         strcat(res, "?");
-    }
-
-    if (t->strict_ownership) {
-        strcat(res, ".");
     }
 
     if (t->class) {
@@ -562,17 +567,14 @@ void type_check(Fc *fc, Type *t1, Type *t2) {
 
 bool type_tracks_ownership(Type *type) {
     //
-    if (type->strict_ownership) {
-        return true;
-    }
     Class *class = type->class;
     if (!class) {
         return false;
     }
-    if (class->is_rc || class->must_ref || class->must_deref) {
-        return true;
+    if (class->type != ct_struct && !class->track_ownership) {
+        return false;
     }
-    return false;
+    return true;
 }
 
 bool type_allowed_async(Type *type, bool recursive) {

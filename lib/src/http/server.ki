@@ -8,51 +8,49 @@ use utils;
 use fs;
 
 class ServerData {
-    max_connections: uxx;
     socket: net:SocketTCP;
+    max_connections: uxx;
     thread_nr: uxx = 0;
     handler: fn(Request)(Response);
-    static_dirs: .Array[.String] = Array[.String].init();
-    show_info: bool = false;
+    static_dirs: Array[String] = Array[String].init();
+    show_info: bool;
 }
 
 class Server {
     host: String;
-    data: ServerData;
     port: u16;
-    static_dirs: Array[.String] = Array[.String].init();
+    socket: net:SocketTCP;
+    max_connections: uxx;
+    handler: fn(Request)(Response);
+    static_dirs: Array[String] = Array[String].init();
+    show_info: bool = false;
 
-    static func init(host: >String, port: u16, handler: fn(Request)(Response)) .Server !socket_init_error {
+    static func init(host: >String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error {
 
         let max_connections : uxx = 10000;
         let socket = net:Socket.init_tcp(host, port) !! throw socket_init_error;;
 
-        let data = ServerData {
+        return Server{
+            host: host,
+            port: port,
             socket: socket,
             max_connections: max_connections,
             handler: handler,
         };
-
-        return Server{
-            host: host,
-            port: port,
-            data: data,
-        };
     }
 
-    private func server_data() .ServerData {
-        let data = this.data;
+    private func server_data() ServerData {
 
-        let dirs = Array[.String].init();
+        let dirs = Array[String].init();
         each this.static_dirs as dir {
             dirs.push(dir);
         }
 
         return ServerData {
-            socket: data.socket,
-            max_connections: data.max_connections,
-            handler: data.handler,
-            show_info: data.show_info,
+            socket: this.socket,
+            max_connections: this.max_connections,
+            handler: this.handler,
+            show_info: this.show_info,
             static_dirs: dirs,
 
         };
@@ -76,12 +74,11 @@ class Server {
         println("[+] Running http server on port " + this.port.str());
         println("[+] Worker count: " + worker_count.str());
 
-
         worker_count--;
         while worker_count > 0 {
             worker_count--;
             let copy = this.server_data();
-            let thread = os:Thread[.ServerData].start(Server.worker, copy);
+            let thread = os:Thread[ServerData].start(Server.worker, copy);
         }
 
         let copy = this.server_data();
@@ -89,7 +86,7 @@ class Server {
         os:sleep_ms(200);
     }
 
-    private static func worker(data: .ServerData) void {
+    private static func worker(data: ServerData) void {
 
         let max_connections = data.max_connections;
         let handler = data.handler;
@@ -304,9 +301,6 @@ class Server {
         let full = fs:exe_dir() + "/" + path.trim("/") + "/";
         println("[+] Add static dir: " + full);
         this.static_dirs.push(full);
-    }
-    func show_info(b: bool) void {
-        this.data.show_info = b;
     }
 }
 

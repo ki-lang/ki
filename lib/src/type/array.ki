@@ -6,7 +6,7 @@ class Array[T] {
 	readonly length: uxx = 0;
 	readonly data: ptr;
 
-	static func init(start_size: uxx = 2) .CLASS {
+	static func init(start_size: uxx = 2) CLASS {
 		if start_size < 2 {
 			start_size = 2;
 		}
@@ -70,7 +70,7 @@ class Array[T] {
 			throw not_found;
 		}
 
-		let value = @ptrv(this.data, >T, index);
+		let value = @ptrv(this.data, >.T, index);
 		@ref value;
 
 		return value;

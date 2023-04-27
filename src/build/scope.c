@@ -15,6 +15,7 @@ Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast) {
     scope->vscope = NULL;
 
     scope->did_return = false;
+    scope->did_exit_function = false;
     scope->in_loop = type == sct_loop;
 
     if (parent) {

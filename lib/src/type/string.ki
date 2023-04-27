@@ -6,7 +6,7 @@ use mem;
 use os;
 use utils;
 
-class String type:ptr {
+class String type:ptr track {
 
 	/////////////////////
 	// Core
@@ -45,7 +45,7 @@ class String type:ptr {
 		return @ptrv(this.data(), u8, index);
 	}
 
-	func sub_str_bytes(start_index: uxx, length: uxx) .String {
+	func sub_str_bytes(start_index: uxx, length: uxx) String {
 		let this_bytes = this.bytes();
 		if(start_index > this_bytes){
 			return "";
@@ -66,7 +66,7 @@ class String type:ptr {
 	// Split / Merge
 	/////////////////////
 
-	func split(on: String) .Array[String] {
+	func split(on: String) Array[String] {
 		let result = Array[String].init();
 
 		let pos : uxx = 0;
@@ -144,12 +144,12 @@ class String type:ptr {
 	// Adjustments
 	/////////////////////
 
-	func trim(part: String) .String {
+	func trim(part: String) String {
 		let res = this.ltrim(part);
 		return res.rtrim(part);
 	}
 
-	func rtrim(part: String) .String {
+	func rtrim(part: String) String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -166,7 +166,7 @@ class String type:ptr {
 		return result;
 	}
 
-	func ltrim(part: String) .String {
+	func ltrim(part: String) String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -186,7 +186,7 @@ class String type:ptr {
 	// Converts
 	/////////////////////
 
-	func to_lower() .String {
+	func to_lower() String {
 		let bytes = this.bytes();
 		let data = this.data();
 		let new_str = String.make_empty(bytes);
@@ -240,7 +240,7 @@ class String type:ptr {
 		mem:free(this @as ptr);
 	}
 
-	func __add(str: String) .String {
+	func __add(str: String) String {
 		let this_len = this.bytes();
 		let str_len = str.bytes();
 		let len = this_len + str_len;
@@ -285,7 +285,7 @@ class String type:ptr {
 	// Other
 	/////////////////////
 
-	static func make_empty(size: uxx) .String {
+	static func make_empty(size: uxx) String {
 		let adr = mem:alloc(size + 8 + sizeof(uxx));
 		let adr_ = adr;
 		@ptrv(adr, uxx, 0) = size;
@@ -297,7 +297,7 @@ class String type:ptr {
 		return res;
 	}
 
-	static func format(baselen: uxx, parts: ptr, partc: uxx, values: ptr) .String {
+	static func format(baselen: uxx, parts: ptr, partc: uxx, values: ptr) String {
 		let bytes = baselen;
 		let valuec = partc - 1;
 		let i : uxx = 0;
