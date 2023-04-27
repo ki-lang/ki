@@ -6,6 +6,7 @@ Feature todo list in order:
 - strict ownership only + new ref type '&', refs can only be stored in variables
 - >&?MyClass | new type syntax
 - do not allow borrow and '&' in generic types
+- allow '&' types in object properties, check for circular references after stage 2 
 
 - enums
 - Only allow local variables as a borrowed argument in a function call
