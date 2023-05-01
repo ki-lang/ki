@@ -294,7 +294,7 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
 
             UsageLine *r_ul = array_get_index(rvals, i);
 
-            if (!right->did_exit_function) {
+            if (!right->did_return) {
                 new_ul->moves = max_num(new_ul->moves, r_ul->moves);
                 new_ul->reads_after_move = max_num(new_ul->reads_after_move, r_ul->reads_after_move);
             }

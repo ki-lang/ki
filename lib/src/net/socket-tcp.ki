@@ -34,4 +34,12 @@ class SocketTCP async {
 			fd: fd,
 		};
 	}
+
+	func clone() CLASS {
+		return CLASS {
+			os_socket: this.os_socket,
+			fd: this.fd,
+			port: this.port,
+		};
+	}
 }

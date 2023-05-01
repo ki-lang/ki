@@ -243,7 +243,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                         Decl *decl = on->item;
                         UsageLine *ul = usage_line_get(scope, decl);
                         if (ul && ul->moves > 0) {
-                            sprintf(fc->sbuf, "You cannot assign values to a property of a moved value (variable: %s)", decl->name);
+                            sprintf(fc->sbuf, "You cannot assign a value to a property of a moved value (variable: %s)", decl->name);
                             fc_error(fc);
                         }
                     }

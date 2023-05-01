@@ -25,7 +25,7 @@ class Server {
     static_dirs: Array[String] = Array[String].init();
     show_info: bool = false;
 
-    static func init(host: >String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error {
+    static func init(host: >.String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error {
 
         let max_connections : uxx = 10000;
         let socket = net:Socket.init_tcp(host, port) !! throw socket_init_error;;
@@ -47,7 +47,7 @@ class Server {
         }
 
         return ServerData {
-            socket: this.socket,
+            socket: this.socket.clone(),
             max_connections: this.max_connections,
             handler: this.handler,
             show_info: this.show_info,
@@ -239,7 +239,7 @@ class Server {
         }
     }
 
-    private static func respond(data: ServerData, http_con: >Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+    private static func respond(data: ServerData, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
         let buf_size : i32 = 65535;
         let read_buf = http_con.read_buf;

@@ -1046,7 +1046,8 @@ Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type) {
 
     if (vt->type == type_null) {
         if (to_type->nullable) {
-            return vgen_cast(alc, val, to_type);
+            // Value* v = vgen_cast(alc, val, to_type);
+            // return v;
         }
     }
 
