@@ -82,7 +82,7 @@ class Router {
 			if part.bytes() == 0 {
 				continue;
 			}
-			parts.push(part);
+			parts.push(part + "");
 		}
 
 		parts.prepend(method);
@@ -100,7 +100,7 @@ class Router {
 		let p = parts.get(index) !! return null;;
 
 		let check_parts = Array[String].init(2);
-		check_parts.push(p);
+		check_parts.push(p + "");
 		check_parts.push("@");
 
 		each check_parts as i, part {

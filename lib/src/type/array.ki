@@ -65,7 +65,7 @@ class Array[T] {
 		@move item;
 	}
 
-	func get(index: uxx) T !not_found {
+	func get(index: uxx) &T !not_found {
 		if index >= this.length {
 			throw not_found;
 		}
@@ -94,10 +94,12 @@ class Array[T] {
 		}
 		println("remove: " + (this.length).str());
 	}
-	func pop() void {
+	func pop() T !empty {
 		if this.length > 0 {
-			this.remove(this.length - 1);
+			let value = @ptrv(this.data, T, this.length - 1);
+			return value;
 		}
+		throw empty;
 	}
 
 	func index_of(item: *T) uxx !not_found {
@@ -135,7 +137,7 @@ class Array[T] {
 
 	//#else
 
-	func __each(key_ref: uxx[1]) T !end {
+	func __each(key_ref: uxx[1]) &T !end {
 		let key = key_ref[0];
 		if key >= this.length {
 			throw end;

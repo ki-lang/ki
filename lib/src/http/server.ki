@@ -43,7 +43,7 @@ class Server {
 
         let dirs = Array[String].init();
         each this.static_dirs as dir {
-            dirs.push(dir);
+            dirs.push(dir + "");
         }
 
         return ServerData {

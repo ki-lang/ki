@@ -54,9 +54,13 @@ class Poll {
 
 	public func __before_free() void {
 
-		each this.listeners as li {
-			li.__free();
+		while true {
+			let item = this.listeners.pop() !! break;;
+			item.__free();
 		}
+		//each this.listeners as li {
+		//	li.__free();
+		//}
 
 		kos.ki_os__poll_free(this.os_poll);
 	}
@@ -103,7 +107,7 @@ struct PollResult {
 			return null;
 		}
 		let adr : ptr = this.events + (index * sizeof_class(PollEvent));
-		return adr @as ?PollEvent;
+		return adr @as PollEvent;
 	}
 }
 

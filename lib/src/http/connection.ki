@@ -67,7 +67,7 @@ class Connection {
 					let value_index = line.index_where_byte_is_not(' ', value_start_index) !? value_start_index;
 					let value = line.sub_str(value_index, line.length - value_index);
 
-					headers.set(key, value);
+					//headers.set(key, value);
 
 					//if key == "content-length" {
 					//}

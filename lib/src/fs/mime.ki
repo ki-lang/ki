@@ -87,5 +87,5 @@ func mime(extension_no_dot: *String) String {
 
 	let mime = mimes.get(extension_no_dot) !? "application/octet-stream";
 	//println("MI:"+mime);
-	return mime;
+	return mime + "";
 }

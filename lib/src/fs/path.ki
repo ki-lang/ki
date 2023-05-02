@@ -28,7 +28,7 @@ class Path {
 		let parts = this.parts;
 		let new = Array[String].init();
 		each parts as part {
-			new.push(part);
+			new.push(part + "");
 		}
 		return Path{
 			parts: new,
@@ -36,10 +36,7 @@ class Path {
 	}
 
 	func pop() void {
-		let parts = this.parts;
-		if parts.length > 1 {
-			parts.pop();
-		}
+		let v = this.parts.pop() !! return;;
 	}
 
 	//func to_str() String {
