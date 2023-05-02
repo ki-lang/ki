@@ -113,7 +113,7 @@ class Connection {
 		this.parse_pos = pos;
 	}
 
-	func send_file(stream: >fs:FileStream, filename: ?String) void {
+	func send_file(stream: >.fs:FileStream, filename: ?String) void {
 
 		let out = this.out_buf;
 		let path = stream.path;

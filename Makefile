@@ -1,6 +1,6 @@
 
-CC=clang
-LCC=clang
+CC=clang-15
+LCC=clang-15
 
 VERSION=dev
 UNAME=$(shell uname)
@@ -16,8 +16,8 @@ LDFLAGS:=$(LDFLAGS) -L/usr/local/opt/llvm@15/lib `/usr/local/opt/llvm@15/bin/llv
 LLVMCF=`/usr/loca/opt/llvm@15/bin/llvm-config --cflags`
 else
 # From linux
-LDFLAGS:=$(LDFLAGS) `llvm-config --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf`
-LLVMCF=`llvm-config --cflags`
+LDFLAGS:=$(LDFLAGS) `llvm-config-15 --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf`
+LLVMCF=`llvm-config-15 --cflags`
 endif
 
 LDFLAGS:=$(LDFLAGS) -lcurl -lm -lz -lstdc++
