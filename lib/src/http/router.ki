@@ -48,7 +48,7 @@ class Router {
 			let key = part;
 
 			if is_arg {
-				let name = part.sub_str_bytes(1, part.bytes() - 1);
+				let name = key.sub_str_bytes(1, key.bytes() - 1);
 				if name.bytes() == 0 {
 					throw invalid_route;
 				}
@@ -63,10 +63,11 @@ class Router {
 				throw invalid_route;
 			}
 
-			let find = blocks.get(key) !? @vs : RouteBlock {
-				let v = +RouteBlock{ blocks: Map[RouteBlock]{} };
+			let find = blocks.get(key) !? @vs : &RouteBlock {
+				let v = RouteBlock{ blocks: Map[RouteBlock]{} };
+				let ref = &v;
 				blocks.set(key, v);
-				return v;
+				return ref;
 			};
 
 			block = find;

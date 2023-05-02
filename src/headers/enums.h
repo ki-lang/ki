@@ -98,6 +98,7 @@ enum VALUETYPE {
     v_scope,
     v_array_item,
     v_isset,
+    v_ref,
 };
 
 enum OPTYPE {

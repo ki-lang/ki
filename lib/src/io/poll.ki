@@ -26,12 +26,12 @@ class Poll {
 		let listeners = this.listeners;
 
 		let lsn = pool.pop() !? @vs : PollListener {
-			let new = +PollListener {
+			let new = PollListener {
 				os_poll: this.os_poll,
 				fd: fd,
 				key: key,
 			};
-			listeners.push(new);
+			//listeners.push(new);
 			return new;
 		};
 

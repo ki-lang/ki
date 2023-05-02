@@ -86,9 +86,9 @@ class Server {
         os:sleep_ms(200);
     }
 
-    private static func worker(data: ServerData) void {
+    private static func worker(data_: ServerData) void {
 
-        let data_ = data;
+        let data = data_;
 
         let max_connections = data.max_connections;
         let handler = data.handler;

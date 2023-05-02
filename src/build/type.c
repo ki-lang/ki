@@ -558,6 +558,9 @@ void type_check(Fc *fc, Type *t1, Type *t2) {
 
 bool type_tracks_ownership(Type *type) {
     //
+    if (type->borrow) {
+        return false;
+    }
     Class *class = type->class;
     if (!class) {
         return false;

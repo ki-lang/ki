@@ -74,6 +74,10 @@ void usage_line_incr_moves(UsageLine *ul, int amount) {
 Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
     Chunk *chunk = fc->chunk;
     //
+    if (val->rett->borrow) {
+        return val;
+    }
+
     int vt = val->type;
     if (vt == v_decl) {
 
@@ -155,6 +159,8 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         if (type_tracks_ownership(on->rett) && type_tracks_ownership(val->rett)) {
             val = value_init(alc, v_upref_value, val, val->rett);
         }
+    } else if (vt == v_ref) {
+        val = value_init(alc, v_upref_value, val, val->rett);
     } else if (vt == v_or_break) {
         VOrBreak *vob = val->item;
         vob->value = usage_move_value(alc, fc, scope, vob->value);

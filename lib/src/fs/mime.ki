@@ -2,8 +2,8 @@
 global g_mimes : ?Map[String];
 func mime(extension_no_dot: *String) String {
 
-	let mimes = g_mimes ?? @vs : Map[String] {
-		let mimes = +Map[String]{};
+	let mimes = g_mimes ?? @vs : &Map[String] {
+		let mimes = Map[String]{};
 
 		mimes.set("aac", "audio/aac");
 		mimes.set("abw", "application/x-abiword");
@@ -81,8 +81,9 @@ func mime(extension_no_dot: *String) String {
 		mimes.set("3g2", "video/3gpp2");
 		mimes.set("7z", "application/x-7z-compressed");
 
+		let ref = &mimes;
 		g_mimes = mimes;
-		return mimes;
+		return ref;
 	};
 
 	let mime = mimes.get(extension_no_dot) !? "application/octet-stream";

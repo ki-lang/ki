@@ -24,6 +24,10 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Global *g = v->item;
         return llvm_ir_load(b, g->type, llvm_get_global(b, g->gname, g->type));
     }
+    if (v->type == v_ref) {
+        Value *on = v->item;
+        return llvm_value(b, scope, on);
+    }
     if (v->type == v_ir_value) {
         return v->item;
     }

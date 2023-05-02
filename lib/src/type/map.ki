@@ -23,4 +23,5 @@ class Map[T] {
 		let index = this._keys.index_of(key) !! throw not_found;;
 		return this._values.get(index) !! throw not_found;;
 	}
+
 }
