@@ -6,7 +6,7 @@ class SocketTCP async {
 	readonly fd: i32;
 	port: u16;
 
-	static func init(host: String, port: u16) SocketTCP !os_socket_create_error {
+	static func init(host: *String, port: u16) SocketTCP !os_socket_create_error {
 
 		let os_sock = kos.ki_os__socket_create(kos.KI_SOCK_DOMAIN.sock_dom_ipv4, kos.KI_SOCK_CON_TYPE.sock_con_type_stream) ?! throw os_socket_create_error;;
 		let fd = kos.ki_os__socket_get_fd(os_sock);

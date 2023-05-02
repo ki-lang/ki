@@ -14,11 +14,11 @@ class Thread[T] {
 
 	private static func entry(data: ptr) void {
 		let entry = data @as ThreadEntry[fn(T)(void), T];
-		entry.start_func(entry.data);
+		entry.start_func(entry.data @as T);
 		mem:free(entry @as ptr);
 	}
 
-	static func start(start_func: fn(T)(void), data: async >T) CLASS {
+	static func start(start_func: fn(T)(void), data: async T) CLASS {
 
 		let entry = ThreadEntry[fn(T)(void), T]{ start_func: start_func, data: data };
 		let os_thread = kos.ki_os__thread_create(CLASS.entry, entry @as ptr);

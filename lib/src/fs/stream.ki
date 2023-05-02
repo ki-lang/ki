@@ -3,7 +3,7 @@ header "ki_os" as kos;
 
 use mem;
 
-func open(path: >.String, read: bool, write: bool) FileStream !err_open {
+func open(path: String, read: bool, write: bool) FileStream !err_open {
     let fd = kos.ki_os__file_open(path.data(), path.bytes() @as i32, read, write);
     if(fd == -1) {
         throw err_open;

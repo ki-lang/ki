@@ -131,11 +131,6 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     bool borrow = false;
     bool ref = false;
 
-    if (context == rtc_func_arg || context == rtc_ptrv) {
-        ref = true;
-        borrow = true;
-    }
-
     tok(fc, token, sameline, allow_space);
 
     if (strcmp(token, "async") == 0) {
@@ -143,13 +138,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, true);
     }
 
-    if (context == rtc_func_arg || context == rtc_ptrv) {
-        if (strcmp(token, ">") == 0) {
-            borrow = false;
-            tok(fc, token, true, false);
-        }
-        if (strcmp(token, ".") == 0) {
-            ref = false;
+    if (context == rtc_prop_type || context == rtc_func_arg || context == rtc_ptrv) {
+        if (strcmp(token, "*") == 0) {
+            borrow = true;
             tok(fc, token, true, false);
         }
     } else if (context == rtc_func_rett) {
@@ -417,7 +408,7 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
                 *reason = "Trying to pass a borrowed type to a type that requires ownership";
             return false;
         }
-        if (!t1->ref && t2->ref) {
+        if (!t1->ref && !t1->borrow && t2->ref) {
             if (reason)
                 *reason = "Trying to pass a reference type to a non-reference type";
             return false;
@@ -495,7 +486,7 @@ char *type_to_str(Type *t, char *res) {
     // }
     if (type_tracks_ownership(t)) {
         if (t->borrow) {
-            strcat(res, "borrow ");
+            strcat(res, "*");
         }
         if (t->ref) {
             strcat(res, "&");

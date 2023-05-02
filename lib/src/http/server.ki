@@ -11,7 +11,7 @@ class ServerData {
     socket: net:SocketTCP;
     max_connections: uxx;
     thread_nr: uxx = 0;
-    handler: fn(Request)(Response);
+    handler: fn(*Request)(Response);
     static_dirs: Array[String] = Array[String].init();
     show_info: bool;
 }
@@ -21,11 +21,11 @@ class Server {
     port: u16;
     socket: net:SocketTCP;
     max_connections: uxx;
-    handler: fn(Request)(Response);
+    handler: fn(*Request)(Response);
     static_dirs: Array[String] = Array[String].init();
     show_info: bool = false;
 
-    static func init(host: >.String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error {
+    static func init(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error {
 
         let max_connections : uxx = 10000;
         let socket = net:Socket.init_tcp(host, port) !! throw socket_init_error;;
@@ -87,6 +87,8 @@ class Server {
     }
 
     private static func worker(data: ServerData) void {
+
+        let data_ = data;
 
         let max_connections = data.max_connections;
         let handler = data.handler;
@@ -165,6 +167,8 @@ class Server {
                     continue;
                 }
 
+                rep lsn = lsn @as io:PollListener;
+
                 // Get connection
                 let index = lsn.key;
                 let http_con = cons.get(index) !! {
@@ -239,7 +243,7 @@ class Server {
         }
     }
 
-    private static func respond(data: ServerData, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+    private static func respond(data: *ServerData, http_con: *Connection, handler: fn(*Request)(Response)) void !read_error !sent_error {
 
         let buf_size : i32 = 65535;
         let read_buf = http_con.read_buf;
@@ -289,15 +293,15 @@ class Server {
 
         let resp = handler(Request{
             http_con: http_con,
-            headers: http_con.headers,
-            method: http_con.request_method,
-            path: http_con.request_path,
+            headers: http_con.headers @as *Map[String],
+            method: http_con.request_method @as *String,
+            path: http_con.request_path @as *String,
         });
 
         http_con.respond(resp);
     }
 
-    func add_static_dir(path: String) void {
+    func add_static_dir(path: *String) void {
         let full = fs:exe_dir() + "/" + path.trim("/") + "/";
         println("[+] Add static dir: " + full);
         this.static_dirs.push(full);

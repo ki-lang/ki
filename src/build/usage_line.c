@@ -109,7 +109,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
             usage_line_incr_moves(ul, incr);
 
             if (decl->type->strict_ownership && ul->moves > 1) {
-                sprintf(fc->sbuf, "➕ Multiple moves of a strict ownership value. (variable: '%s'). If you did not intend for this value to have strict ownership, you can place a '+' in front of the value to convert it to shared ownership.", decl->name);
+                sprintf(fc->sbuf, "Multiple moves of a value. (variable: '%s')", decl->name);
                 fc_error(fc);
             }
 

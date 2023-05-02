@@ -66,7 +66,7 @@ class String type:ptr track {
 	// Split / Merge
 	/////////////////////
 
-	func split(on: String) Array[String] {
+	func split(on: *String) Array[String] {
 		let result = Array[String].init();
 
 		let pos : uxx = 0;
@@ -144,12 +144,12 @@ class String type:ptr track {
 	// Adjustments
 	/////////////////////
 
-	func trim(part: String) String {
+	func trim(part: *String) String {
 		let res = this.ltrim(part);
 		return res.rtrim(part);
 	}
 
-	func rtrim(part: String) String {
+	func rtrim(part: *String) String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -166,7 +166,7 @@ class String type:ptr track {
 		return result;
 	}
 
-	func ltrim(part: String) String {
+	func ltrim(part: *String) String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -240,7 +240,7 @@ class String type:ptr track {
 		mem:free(this @as ptr);
 	}
 
-	func __add(str: String) String {
+	func __add(str: *String) String {
 		let this_len = this.bytes();
 		let str_len = str.bytes();
 		let len = this_len + str_len;
@@ -255,7 +255,7 @@ class String type:ptr track {
 		return new_str;
 	}
 
-	public func __eq(b: String) bool {
+	public func __eq(b: *String) bool {
 		let a_ptr = this @as ptr;
 		let b_ptr = b @as ptr;
 		if(a_ptr == b_ptr) {
@@ -293,7 +293,7 @@ class String type:ptr track {
 		@ptrv(adr, u8, 0) = 0#u8;
 		adr += 4;
 		@ptrv(adr, u32, 0) = 1#u32;
-		let res = adr_ @as >.String;
+		let res = adr_ @as String;
 		return res;
 	}
 

@@ -189,15 +189,11 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             tok(fc, token, true, true);
 
             bool borrow = true;
-            bool ref = true;
+            bool ref = false;
             if (!is_static) {
                 if (strcmp(token, ">") == 0) {
                     borrow = false;
                     tok(fc, token, true, false);
-                }
-                if (strcmp(token, ".") == 0) {
-                    ref = false;
-                    tok(fc, token, true, true);
                 }
             }
 
@@ -263,10 +259,13 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
             tok(fc, token, true, true);
             if (strcmp(token, ":") == 0) {
-                Type *type = read_type(fc, fc->alc, scope, true, true, rtc_default);
+                Type *type = read_type(fc, fc->alc, scope, true, true, rtc_prop_type);
                 if (type_is_void(type)) {
                     sprintf(fc->sbuf, "Cannot use 'void' as a type for a class property");
                     fc_error(fc);
+                }
+                if (type->borrow) {
+                    class->has_borrows = true;
                 }
                 prop->type = type;
 

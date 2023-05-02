@@ -16,7 +16,7 @@ class Array[T] {
 		};
 	}
 
-	func push(item: >T) uxx {
+	func push(item: T) uxx {
 		let size = this.size;
 		let length = this.length;
 		let data = this.data;
@@ -38,7 +38,7 @@ class Array[T] {
 		return length;
 	}
 
-	public func prepend(item: >T) void {
+	public func prepend(item: T) void {
 
 		let size = this.size;
 		let length = this.length;
@@ -70,18 +70,18 @@ class Array[T] {
 			throw not_found;
 		}
 
-		let value = @ptrv(this.data, >.T, index);
+		let value = @ptrv(this.data, T, index);
 		@ref value;
 
 		return value;
 	}
 
-	func set(index: uxx, value: >T) void !out_of_range {
+	func set(index: uxx, value: T) void !out_of_range {
 		if index >= this.length {
 			throw out_of_range;
 		}
 		let data = this.data;
-		let current = @ptrv(data, >T, index);
+		let current = @ptrv(data, T, index);
 
 		@ptrv(data, T, index) = value;
 		@move value;
@@ -100,7 +100,7 @@ class Array[T] {
 		}
 	}
 
-	func index_of(item: T) uxx !not_found {
+	func index_of(item: *T) uxx !not_found {
 		let index : uxx = 0;
 		let adr = this.data;
 		let len = this.length;
@@ -151,7 +151,7 @@ class Array[T] {
 		let length = this.length;
 		let data = this.data;
 		while index < length {
-			let value = @ptrv(data, >T, index);
+			let value = @ptrv(data, T, index);
 			index++;
 		}
 

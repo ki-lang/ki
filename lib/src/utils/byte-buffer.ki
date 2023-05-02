@@ -48,13 +48,13 @@ class ByteBuffer {
 		this.length = new_bytes;
 	}
 
-	func append_str(str: String) void {
+	func append_str(str: *String) void {
 		this.append(str.data(), str.bytes());
 	}
 
 	// Compare
 
-	func eq_str(str: String) bool {
+	func eq_str(str: *String) bool {
 		let str_len = str.bytes();
 		let len = this.length;
 		if str_len != len {

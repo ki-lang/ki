@@ -1,6 +1,6 @@
 
 global g_mimes : ?Map[String];
-func mime(extension_no_dot: String) String {
+func mime(extension_no_dot: *String) String {
 
 	let mimes = g_mimes ?? @vs : Map[String] {
 		let mimes = +Map[String]{};

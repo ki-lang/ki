@@ -270,6 +270,7 @@ struct Class {
     bool is_struct;
     bool can_iter;
     bool async;
+    bool has_borrows;
 };
 struct ClassProp {
     Type *type;

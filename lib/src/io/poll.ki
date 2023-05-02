@@ -43,7 +43,7 @@ class Poll {
 		return lsn;
 	}
 
-	public func remove(listener: >PollListener) void {
+	public func remove(listener: PollListener) void {
 		kos.ki_os__poll_remove_fd(this.os_poll, listener);
 		this.pool.add(listener)!;
 	}
@@ -103,7 +103,7 @@ struct PollResult {
 			return null;
 		}
 		let adr : ptr = this.events + (index * sizeof_class(PollEvent));
-		return adr @as >.?PollEvent;
+		return adr @as ?PollEvent;
 	}
 }
 
