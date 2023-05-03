@@ -280,6 +280,22 @@ void llvm_write_ast(LB *b, Scope *scope) {
             continue;
         }
     }
+
+    if (scope->did_exit_function) {
+        Func *func = scope->func;
+        if (func) {
+            Str *ir = llvm_b_ir(b);
+            Type *rett = func->rett;
+            if (type_is_void(rett)) {
+                str_append_chars(ir, "  ret void\n");
+            } else {
+                char *ltype = llvm_type(b, rett);
+                str_append_chars(ir, "  ret ");
+                str_append_chars(ir, ltype);
+                str_append_chars(ir, " 0\n");
+            }
+        }
+    }
 }
 
 void llvm_if(LB *b, Scope *scope, TIf *ift) {

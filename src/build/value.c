@@ -1228,6 +1228,15 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
+    if (on->type == v_fptr) {
+        VFuncPtr *fp = on->item;
+        Func *func = fp->func;
+        if (func->will_exit) {
+            scope->did_return = true;
+            scope->did_exit_function = true;
+        }
+    }
+
     return vgen_fcall(alc, scope, on, values, rett, or);
 }
 

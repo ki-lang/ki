@@ -440,7 +440,6 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
     tok_expect(fc, ";", false, true);
 
     scope->did_return = true;
-    scope->did_exit_function = true;
 }
 
 void token_throw(Allocator *alc, Fc *fc, Scope *scope) {

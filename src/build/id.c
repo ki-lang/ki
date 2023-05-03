@@ -95,6 +95,9 @@ Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail) {
                     if (strstr(".print.println.", fc->sbuf)) {
                         return ki_lib_get(fc->b, "io", name);
                     }
+                    if (strstr(".exit.panic.", fc->sbuf)) {
+                        return ki_lib_get(fc->b, "os", name);
+                    }
                     // if (strstr(".Task.", fc->sbuf)) {
                     //     return ki_lib_get("async", name);
                     // }

@@ -83,6 +83,12 @@ void stage_1_func(Fc *fc) {
     char *token = fc->token;
     tok(fc, token, true, true);
 
+    bool will_exit = false;
+    if (strcmp(token, "!") == 0) {
+        will_exit = true;
+        tok(fc, token, true, false);
+    }
+
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid function name syntax '%s'", token);
         fc_error(fc);
@@ -100,6 +106,7 @@ void stage_1_func(Fc *fc) {
     func->dname = dname;
     func->scope = scope_init(fc->alc, sct_func, fc->scope, true);
     func->scope->func = func;
+    func->will_exit = will_exit;
 
     array_push(fc->funcs, func);
 

@@ -298,6 +298,7 @@ struct Func {
     bool is_generated;
     bool can_error;
     bool only_returns_strict;
+    bool will_exit;
     // Optimizations
     bool opt_hot;
     bool opt_inline;

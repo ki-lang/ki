@@ -9,14 +9,14 @@ func sleep_ns(ns: uxx) void {
 	kos.ki_os__sleep_ns(ns);
 }
 
-func panic(msg: *String) void {
+func !panic(msg: *String) void {
 	print("PANIC ERROR : ");
 	print(msg);
 	print("\n");
 	exit(1);
 }
 
-func exit(code: i32) void {
+func !exit(code: i32) void {
 	kos.ki_os__exit(code);
 }
 

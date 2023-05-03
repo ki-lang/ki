@@ -190,6 +190,13 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
             bool borrow = true;
             bool ref = false;
+            bool will_exit = false;
+
+            if (strcmp(token, "!") == 0) {
+                will_exit = true;
+                tok(fc, token, true, false);
+            }
+
             if (!is_static) {
                 if (strcmp(token, ">") == 0) {
                     borrow = false;
@@ -208,6 +215,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
             Func *func = class_define_func(fc, class, is_static, token, NULL, NULL);
             func->act = act;
+            func->will_exit = will_exit;
 
             if (!is_static) {
                 Arg *arg = array_get_index(func->args, 0);
@@ -347,6 +355,11 @@ void stage_2_func(Fc *fc, Func *func) {
 
     // Return type
     func->rett = read_type(fc, alc, func->scope->parent, true, true, rtc_func_rett);
+
+    if (func->will_exit && !type_is_void(func->rett)) {
+        sprintf(fc->sbuf, "Using '!' before the function name tells the compiler this function will exit the program. Therefore the return type must be void.", token);
+        fc_error(fc);
+    }
 
     Array *errors = NULL;
 
