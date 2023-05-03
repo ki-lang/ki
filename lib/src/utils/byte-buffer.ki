@@ -23,15 +23,17 @@ class ByteBuffer {
 
 	// Appending
 
-	func append(data: ptr, length: uxx) void {
+	func append(buffer: *ByteBuffer) void {
+		this.append_from_ptr(buffer.data, buffer.length);
+	}
+
+	func append_from_ptr(data: ptr, length: uxx) void {
 		if(length == 0) {
 			return;
 		}
 		let bytes : uxx = this.length;
 		let new_bytes : uxx = bytes + length;
-		if(new_bytes > this.size){
-			this.minimum_size(new_bytes);
-		}
+		this.minimum_size(new_bytes);
 		let to : ptr = this.data + bytes;
 		mem:copy(data, to, length);
 		this.length = new_bytes;
@@ -49,19 +51,7 @@ class ByteBuffer {
 	}
 
 	func append_str(str: *String) void {
-		this.append(str.data(), str.bytes());
-	}
-
-	func append_bytes_from_ptr(adr: ptr, len: uxx) void {
-		if len == 0 {
-			return;
-		}
-		let bytes : uxx = this.length;
-		let new_bytes : uxx = bytes + len;
-		this.minimum_size(new_bytes);
-		let to : ptr = this.data + bytes;
-		mem:copy(adr, to, len);
-		this.length = new_bytes;
+		this.append_from_ptr(str.data(), str.bytes());
 	}
 
 	// Compare

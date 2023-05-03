@@ -267,6 +267,50 @@ class String type:ptr track {
 		return buf.to_str();
 	}
 
+	public func append_byte(byte: u8) String {
+		let this_len = this.bytes();
+		let len = this_len + 1;
+		let str = String.make_empty(len);
+		let res_data = str.data();
+		mem:copy(this.data(), res_data, this_len);
+		@ptrv(res_data, u8, this_len) = byte;
+		return str;
+	}
+
+	/////////////////////
+	// Index
+	/////////////////////
+
+	public func index_of_byte(fch: u8, start_index: uxx = 0) uxx !not_found !invalid_utf8 {
+		let bytes = this.bytes();
+		let pos = start_index;
+		let adr = this.data();
+		while(pos < bytes){
+			let ch = @ptrv(adr, u8, pos);
+			if(ch > 240){
+				throw invalid_utf8;
+			}
+			if(ch > 127) {
+				// utf8 char
+				let bytec = 1#uxx;
+				ch = ch << 1;
+				while(ch > 127){
+					bytec++;
+					ch = ch << 1;
+				}
+				if(pos + bytec > bytes) {
+					throw invalid_utf8;
+				}
+				pos += bytec;
+				continue;
+			} else if(ch == fch) {
+				return pos;
+			}
+			pos++;
+		}
+		throw not_found;
+	}
+
 	/////////////////////
 	// Converts
 	/////////////////////

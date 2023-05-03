@@ -25,7 +25,7 @@ func read(path: *String) String !open !read !close {
 		if(readcount < 0){
 			throw read;
 		}
-		res.append_bytes_from_ptr(buf, readcount @as uxx);
+		res.append_from_ptr(buf, readcount @as uxx);
 		if(readcount != readcount_) {
 			break;
 		}
