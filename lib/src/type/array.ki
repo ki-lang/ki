@@ -56,7 +56,7 @@ class Array[T] {
 
 		let to_pos = length;
 		while to_pos > 0 {
-			@ptrv(data, T, to_pos) = @ptrv(data, T, to_pos - 1);
+			@ptrv(data, *T, to_pos) = @ptrv(data, *T, to_pos - 1);
 			to_pos--;
 		}
 
