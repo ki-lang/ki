@@ -21,7 +21,7 @@ class String type:ptr track {
 	}
 
 	func rc() u32 %inline {
-		if(this.is_const()) { return 666; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 666.
+		if(this.is_const()) { return 420; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 420.
 		let adr = this @as ptr;
 		adr += sizeof(uxx) + 4;
 		return @ptrv(adr, u32, 0);
