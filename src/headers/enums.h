@@ -98,6 +98,7 @@ enum VALUETYPE {
     v_scope,
     v_array_item,
     v_isset,
+    v_ref,
 };
 
 enum OPTYPE {
@@ -129,4 +130,5 @@ enum READTYPECTX {
     rtc_func_rett,
     rtc_ptrv,
     rtc_decl,
+    rtc_prop_type,
 };

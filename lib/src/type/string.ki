@@ -6,7 +6,7 @@ use mem;
 use os;
 use utils;
 
-class String type:ptr {
+class String type:ptr track {
 
 	/////////////////////
 	// Core
@@ -21,7 +21,7 @@ class String type:ptr {
 	}
 
 	func rc() u32 %inline {
-		if(this.is_const()) { return 666; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 666.
+		if(this.is_const()) { return 420; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 420.
 		let adr = this @as ptr;
 		adr += sizeof(uxx) + 4;
 		return @ptrv(adr, u32, 0);
@@ -45,7 +45,7 @@ class String type:ptr {
 		return @ptrv(this.data(), u8, index);
 	}
 
-	func sub_str_bytes(start_index: uxx, length: uxx) .String {
+	func sub_str_bytes(start_index: uxx, length: uxx) String {
 		let this_bytes = this.bytes();
 		if(start_index > this_bytes){
 			return "";
@@ -66,7 +66,7 @@ class String type:ptr {
 	// Split / Merge
 	/////////////////////
 
-	func split(on: String) .Array[String] {
+	func split(on: *String) Array[String] {
 		let result = Array[String].init();
 
 		let pos : uxx = 0;
@@ -144,12 +144,12 @@ class String type:ptr {
 	// Adjustments
 	/////////////////////
 
-	func trim(part: String) .String {
+	func trim(part: *String) String {
 		let res = this.ltrim(part);
 		return res.rtrim(part);
 	}
 
-	func rtrim(part: String) .String {
+	func rtrim(part: *String) String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -166,7 +166,7 @@ class String type:ptr {
 		return result;
 	}
 
-	func ltrim(part: String) .String {
+	func ltrim(part: *String) String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -186,7 +186,7 @@ class String type:ptr {
 	// Converts
 	/////////////////////
 
-	func to_lower() .String {
+	func to_lower() String {
 		let bytes = this.bytes();
 		let data = this.data();
 		let new_str = String.make_empty(bytes);
@@ -240,7 +240,7 @@ class String type:ptr {
 		mem:free(this @as ptr);
 	}
 
-	func __add(str: String) .String {
+	func __add(str: *String) String {
 		let this_len = this.bytes();
 		let str_len = str.bytes();
 		let len = this_len + str_len;
@@ -255,7 +255,7 @@ class String type:ptr {
 		return new_str;
 	}
 
-	public func __eq(b: String) bool {
+	public func __eq(b: *String) bool {
 		let a_ptr = this @as ptr;
 		let b_ptr = b @as ptr;
 		if(a_ptr == b_ptr) {
@@ -285,7 +285,7 @@ class String type:ptr {
 	// Other
 	/////////////////////
 
-	static func make_empty(size: uxx) .String {
+	static func make_empty(size: uxx) String {
 		let adr = mem:alloc(size + 8 + sizeof(uxx));
 		let adr_ = adr;
 		@ptrv(adr, uxx, 0) = size;
@@ -293,16 +293,16 @@ class String type:ptr {
 		@ptrv(adr, u8, 0) = 0#u8;
 		adr += 4;
 		@ptrv(adr, u32, 0) = 1#u32;
-		let res = adr_ @as >.String;
+		let res = adr_ @as String;
 		return res;
 	}
 
-	static func format(baselen: uxx, parts: ptr, partc: uxx, values: ptr) .String {
+	static func format(baselen: uxx, parts: ptr, partc: uxx, values: ptr) String {
 		let bytes = baselen;
 		let valuec = partc - 1;
 		let i : uxx = 0;
 		while i < valuec {
-			let val = @ptrv(values, String, i);
+			let val = @ptrv(values, *String, i);
 			bytes += val.bytes();
 			i++;
 		}
@@ -311,12 +311,12 @@ class String type:ptr {
 		i = 0;
 		while i < partc {
 			if i > 0 {
-				let val = @ptrv(values, String, i - 1);
+				let val = @ptrv(values, *String, i - 1);
 				let val_bytes = val.bytes();
 				mem:copy(val.data(), data, val_bytes);
 				data += val_bytes;
 			}
-			let part = @ptrv(parts, String, i);
+			let part = @ptrv(parts, *String, i);
 			let part_bytes = part.bytes();
 			mem:copy(part.data(), data, part_bytes);
 			data += part_bytes;

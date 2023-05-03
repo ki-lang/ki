@@ -293,6 +293,8 @@ void stage_1_class(Fc *fc, bool is_struct) {
             class->packed = true;
         } else if (strcmp(token, "math") == 0) {
             class->allow_math = true;
+        } else if (strcmp(token, "track") == 0) {
+            class->track_ownership = true;
         } else if (strcmp(token, "async") == 0) {
             class->async = true;
         } else {

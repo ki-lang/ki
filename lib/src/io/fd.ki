@@ -1,7 +1,7 @@
 
 header "ki_os" as kos;
 
-func write(fd: i32, str: String) uxx !failed !again {
+func write(fd: i32, str: *String) uxx !failed !again {
 	let c = kos.ki_os__fd_write(fd, str.data(), str.bytes());
 	if c == -2 {
 		throw again;

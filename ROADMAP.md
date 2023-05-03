@@ -3,10 +3,6 @@
 
 Feature todo list in order:
 
-- strict ownership only + new ref type '&', refs can only be stored in variables
-- >&?MyClass | new type syntax
-- do not allow borrow and '&' in generic types
-
 - enums
 - Only allow local variables as a borrowed argument in a function call
 - compare errors
@@ -37,6 +33,7 @@ Feature todo list in order:
 
 ## Done
 
+- Rework type system, ownership by default, & for references and * for borrows
 - use ':' for single line scopes for if/else/while/each
 - automatically check if vars are mutated or not to know if we need to alloc on the stack or not
 - isset keyword

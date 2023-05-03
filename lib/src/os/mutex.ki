@@ -28,7 +28,7 @@ class Mutex[T] async {
 
 	private value: async T;
 
-	public static func init(value: async +T) .CLASS { 
+	public static func init(value: async +T) CLASS { 
 		let m = CLASS { mutex: kos.ki_os__mutex_create(), value: value };
 		return m;
 	}

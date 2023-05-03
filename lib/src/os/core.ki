@@ -9,7 +9,7 @@ func sleep_ns(ns: uxx) void {
 	kos.ki_os__sleep_ns(ns);
 }
 
-func panic(msg: String) void {
+func panic(msg: *String) void {
 	print("PANIC ERROR : ");
 	print(msg);
 	print("\n");
@@ -21,7 +21,7 @@ func exit(code: i32) void {
 }
 
 //func parse_args(i32 argc, ptr argv) Array<String> {
-//	let res = Array<String>.make(argc);
+//	let res = Array[String].make(argc);
 //	while(argc > 0) {
 //		argc--;
 //		let cstr = @ptrv(argv, cstring, 0);

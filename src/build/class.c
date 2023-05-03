@@ -19,6 +19,7 @@ Class *class_init(Allocator *alc) {
     class->props = map_make(alc);
     class->funcs = map_make(alc);
     class->allow_math = false;
+    class->track_ownership = false;
     class->is_struct = false;
     class->can_iter = false;
     class->async = false;
@@ -154,7 +155,7 @@ void class_generate_deref_props(Class *class) {
         char *name = array_get_index(class->props->keys, i);
         ClassProp *prop = array_get_index(props, i);
         Class *pclass = prop->type->class;
-        if (pclass && pclass->must_deref) {
+        if (!prop->type->borrow && pclass && pclass->must_deref) {
 
             Value *pa = vgen_class_pa(alc, this, prop);
 

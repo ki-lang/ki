@@ -109,7 +109,7 @@ void simple_hash(char *content_, char *buf_) {
         }
 
         diff += (str_ch + str_pos) * 0b00010101 + res_pos;
-        buf[res_pos++] = str_ch + diff;
+        buf[res_pos++] += str_ch + diff;
 
         if (res_pos == hash_len) {
             if (end) {

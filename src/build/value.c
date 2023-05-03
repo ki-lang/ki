@@ -106,18 +106,19 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             fc_error(fc);
         }
         v = vgen_compare(alc, b, on, vgen_vint(alc, 0, type_gen(b, alc, "bool"), true), op_eq);
-    } else if (strcmp(token, "+") == 0) {
+    } else if (strcmp(token, "&") == 0) {
         Value *on = read_value(fc, alc, scope, false, 8, false);
-        if (on->type != v_fcall && on->type != v_class_init) {
-            sprintf(fc->sbuf, "You can only convert values to shared ownership if the value is a function call or class initialization");
+        if (!on->rett->strict_ownership) {
+            sprintf(fc->sbuf, "You can only create reference from values with ownership");
             fc_error(fc);
         }
         if (on->rett->strict_ownership) {
             Type *rett = type_clone(alc, on->rett);
             rett->strict_ownership = false;
+            rett->ref = true;
             on->rett = rett;
         }
-        v = on;
+        v = value_init(alc, v_ref, on, on->rett);
     } else if (strcmp(token, "true") == 0) {
         v = vgen_vint(alc, 1, type_gen(b, alc, "bool"), true);
     } else if (strcmp(token, "false") == 0) {
@@ -231,7 +232,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
     } else if (strcmp(token, "@vs") == 0) {
         // value scope
         tok_expect(fc, ":", false, true);
-        Type *rett = read_type(fc, alc, scope, false, true, rtc_default);
+        Type *rett = read_type(fc, alc, scope, false, true, rtc_func_rett);
         if (type_is_void(rett)) {
             sprintf(fc->sbuf, "Value scope return type cannot be void");
             fc_error(fc);
@@ -667,14 +668,22 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
     if (idf->type == idf_decl) {
         Decl *decl = idf->item;
         UsageLine *ul = usage_line_get(scope, decl);
-        if (ul)
+        if (ul) {
+            if (ul->moves > 0) {
+                sprintf(fc->sbuf, "Read after move, variable: '%s'", decl->name);
+                fc_error(fc);
+            }
             ul->read_after_move = true;
+        }
         return value_init(alc, v_decl, decl, decl->type);
     }
 
     if (idf->type == idf_global) {
         Global *g = idf->item;
-        return value_init(alc, v_global, g, g->type);
+        Type *rett = g->type;
+        rett = type_clone(alc, rett);
+        rett->ref = true;
+        return value_init(alc, v_global, g, rett);
     }
 
     if (idf->type == idf_func) {
@@ -1043,7 +1052,8 @@ Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type) {
 
     if (vt->type == type_null) {
         if (to_type->nullable) {
-            return vgen_cast(alc, val, to_type);
+            // Value* v = vgen_cast(alc, val, to_type);
+            // return v;
         }
     }
 
@@ -1202,7 +1212,12 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 right = try_convert(fc, alc, right, rett);
                 usage_merge_ancestors(alc, scope, ancestors);
 
-                type_check(fc, rett, right->rett);
+                Type *rt = right->rett;
+                if (rt->nullable && !rett->nullable && rett->ptr_depth > 0) {
+                    rett = type_clone(alc, rett);
+                    rett->nullable = true;
+                }
+                type_check(fc, rett, rt);
 
                 or->value = right;
 

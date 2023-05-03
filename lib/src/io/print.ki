@@ -3,10 +3,24 @@ header "ki_os" as os;
 
 use mem;
 
-func print(str: String) void {
+func print(str: *String) void {
 	let c = os.ki_os__fd_write(1, str.data(), str.bytes());
 }
 
-func println(str: String) void {
-	print(str + "\n");
+func println(str: *String) void {
+	let size = str.bytes();
+	let rsize = size + 1;
+	let adr = stack_alloc(rsize + 8 + sizeof(uxx));
+	let adr_ = adr;
+	@ptrv(adr, uxx, 0) = rsize;
+	adr += sizeof(uxx);
+	@ptrv(adr, u8, 0) = 0#u8;
+	adr += 4;
+	@ptrv(adr, u32, 0) = 1#u32;
+	let res = adr_ @as *String;
+	let data_adr = str.data();
+	let res_data_adr = res.data();
+	mem:copy(data_adr, res_data_adr, size);
+	@ptrv(res_data_adr, u8, size) = '\n';
+	print(res);
 }

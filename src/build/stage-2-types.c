@@ -189,15 +189,11 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             tok(fc, token, true, true);
 
             bool borrow = true;
-            bool strict_ownership = false;
+            bool ref = false;
             if (!is_static) {
                 if (strcmp(token, ">") == 0) {
                     borrow = false;
                     tok(fc, token, true, false);
-                }
-                if (strcmp(token, ".") == 0) {
-                    strict_ownership = true;
-                    tok(fc, token, true, true);
                 }
             }
 
@@ -216,7 +212,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             if (!is_static) {
                 Arg *arg = array_get_index(func->args, 0);
                 arg->type->borrow = borrow;
-                arg->type->strict_ownership = strict_ownership;
+                arg->type->ref = ref;
             }
 
             if (strcmp(func->name, "__ref") == 0) {
@@ -263,10 +259,13 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
             tok(fc, token, true, true);
             if (strcmp(token, ":") == 0) {
-                Type *type = read_type(fc, fc->alc, scope, true, true, rtc_default);
+                Type *type = read_type(fc, fc->alc, scope, true, true, rtc_prop_type);
                 if (type_is_void(type)) {
                     sprintf(fc->sbuf, "Cannot use 'void' as a type for a class property");
                     fc_error(fc);
+                }
+                if (type->borrow) {
+                    class->has_borrows = true;
                 }
                 prop->type = type;
 
@@ -487,7 +486,7 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
 
     args[0] = type_gen_class(alc, class);
     args[0]->borrow = true;
-    args[0]->ignore_mutability = true;
+    args[0]->ref = true;
 
     func = map_get(class->funcs, "__ref");
     if (func)

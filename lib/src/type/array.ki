@@ -6,7 +6,7 @@ class Array[T] {
 	readonly length: uxx = 0;
 	readonly data: ptr;
 
-	static func init(start_size: uxx = 2) .CLASS {
+	static func init(start_size: uxx = 2) CLASS {
 		if start_size < 2 {
 			start_size = 2;
 		}
@@ -16,7 +16,7 @@ class Array[T] {
 		};
 	}
 
-	func push(item: >T) uxx {
+	func push(item: T) uxx {
 		let size = this.size;
 		let length = this.length;
 		let data = this.data;
@@ -38,7 +38,7 @@ class Array[T] {
 		return length;
 	}
 
-	public func prepend(item: >T) void {
+	public func prepend(item: T) void {
 
 		let size = this.size;
 		let length = this.length;
@@ -65,23 +65,23 @@ class Array[T] {
 		@move item;
 	}
 
-	func get(index: uxx) T !not_found {
+	func get(index: uxx) &T !not_found {
 		if index >= this.length {
 			throw not_found;
 		}
 
-		let value = @ptrv(this.data, >T, index);
+		let value = @ptrv(this.data, T, index);
 		@ref value;
 
 		return value;
 	}
 
-	func set(index: uxx, value: >T) void !out_of_range {
+	func set(index: uxx, value: T) void !out_of_range {
 		if index >= this.length {
 			throw out_of_range;
 		}
 		let data = this.data;
-		let current = @ptrv(data, >T, index);
+		let current = @ptrv(data, T, index);
 
 		@ptrv(data, T, index) = value;
 		@move value;
@@ -94,18 +94,20 @@ class Array[T] {
 		}
 		println("remove: " + (this.length).str());
 	}
-	func pop() void {
+	func pop() T !empty {
 		if this.length > 0 {
-			this.remove(this.length - 1);
+			let value = @ptrv(this.data, T, this.length - 1);
+			return value;
 		}
+		throw empty;
 	}
 
-	func index_of(item: T) uxx !not_found {
+	func index_of(item: *T) uxx !not_found {
 		let index : uxx = 0;
 		let adr = this.data;
 		let len = this.length;
 		while(index < len){
-			let x = @ptrv(adr, T, index);
+			let x = @ptrv(adr, *T, index);
 			if x == item {
 				return index;
 			}
@@ -135,7 +137,7 @@ class Array[T] {
 
 	//#else
 
-	func __each(key_ref: uxx[1]) T !end {
+	func __each(key_ref: uxx[1]) &T !end {
 		let key = key_ref[0];
 		if key >= this.length {
 			throw end;
@@ -151,7 +153,7 @@ class Array[T] {
 		let length = this.length;
 		let data = this.data;
 		while index < length {
-			let value = @ptrv(data, >T, index);
+			let value = @ptrv(data, T, index);
 			index++;
 		}
 

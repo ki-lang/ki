@@ -1,7 +1,7 @@
 
 header "ki_os" as kos;
 
-func size(path: String) uxx {
+func size(path: *String) uxx {
 	let buf = stack_alloc(sizeof_class(kos.ki_file_stats)) @as kos.ki_file_stats;
 	let stat = kos.ki_os__file_stats(path.data(), path.bytes() @as i32, buf);
 	rep stat = stat ?! return 0;;

@@ -46,7 +46,7 @@ func ki_os__file_write(path: ptr, path_len: i32, content: ptr, len: uxx, append:
 func ki_os__file_delete(path: ptr, path_len: i32) bool;
 func ki_os__file_mkdir(path: ptr, path_len: i32) bool;
 func ki_os__file_sync() void;
-func ki_os__file_stats(path: ptr, path_len: i32, buf: ki_file_stats) ?ki_file_stats;
+func ki_os__file_stats(path: ptr, path_len: i32, buf: *ki_file_stats) ?ki_file_stats;
 func ki_os__files_in_dir(path: ptr, path_len: i32) ?ptr;
 //
 func ki_os__domain_to_ip(domain: ptr, domain_len: i32) ?cstring;
@@ -59,9 +59,9 @@ func ki_os__socket_accept(sock: ptr, ip_buffer: ?cstring) i32;
 //
 func ki_os__poll_init() ptr;
 func ki_os__poll_free(instance: ptr) void;
-func ki_os__poll_new_fd(instance: ptr, lsn: io:PollListener) void;
-func ki_os__poll_update_fd(instance: ptr, lsn: io:PollListener) void;
-func ki_os__poll_remove_fd(instance: ptr, lsn: io:PollListener) void;
+func ki_os__poll_new_fd(instance: ptr, lsn: *io:PollListener) void;
+func ki_os__poll_update_fd(instance: ptr, lsn: *io:PollListener) void;
+func ki_os__poll_remove_fd(instance: ptr, lsn: *io:PollListener) void;
 func ki_os__poll_wait(instance: ptr, timeout: i32) io:PollResult;
 //
 func ki_os__thread_create(handler: fn(?ptr)(void), data: ?ptr) ptr;

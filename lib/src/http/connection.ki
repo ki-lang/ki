@@ -67,7 +67,7 @@ class Connection {
 					let value_index = line.index_where_byte_is_not(' ', value_start_index) !? value_start_index;
 					let value = line.sub_str(value_index, line.length - value_index);
 
-					headers.set(key, value);
+					//headers.set(key, value);
 
 					//if key == "content-length" {
 					//}
@@ -113,7 +113,7 @@ class Connection {
 		this.parse_pos = pos;
 	}
 
-	func send_file(stream: >fs:FileStream, filename: ?String) void {
+	func send_file(stream: fs:FileStream, filename: *?String) void {
 
 		let out = this.out_buf;
 		let path = stream.path;
@@ -134,7 +134,7 @@ class Connection {
 		this.send_response_bytes();
 	}
 
-	func respond(resp: Response) void {
+	func respond(resp: *Response) void {
 		resp.compile(this.out_buf);
 		this.send_response_bytes();
 	}

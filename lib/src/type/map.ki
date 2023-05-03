@@ -4,14 +4,14 @@ class Map[T] {
 	private _keys : Array[String] = Array[String].init();
 	private _values : Array[T] = Array[T].init();
 
-	static func init() .CLASS {
+	static func init() CLASS {
 		return CLASS{};
 	}
 
-	func set(key: >String, value: >T) void {
+	func set(key: *String, value: T) void {
 		let index = this._keys.index_of(key) !! {
 			// Set new key / value
-			this._keys.push(key);
+			this._keys.push(key + "");
 			this._values.push(value);
 			return;
 		};
@@ -19,8 +19,9 @@ class Map[T] {
 		this._values.set(index, value) !! return;;
 	}
 
-	func get(key: String) T !not_found {
+	func get(key: *String) &T !not_found {
 		let index = this._keys.index_of(key) !! throw not_found;;
 		return this._values.get(index) !! throw not_found;;
 	}
+
 }

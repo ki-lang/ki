@@ -10,7 +10,7 @@ class Poll {
 	private listeners: Array[PollListener] = Array[PollListener].init();
 	readonly max_connections: uxx;
 
-	public static func init(max_connections: uxx) .Poll {
+	public static func init(max_connections: uxx) Poll {
 		let p = kos.ki_os__poll_init();
 		let x = Poll {
 			os_poll: p,
@@ -26,12 +26,12 @@ class Poll {
 		let listeners = this.listeners;
 
 		let lsn = pool.pop() !? @vs : PollListener {
-			let new = +PollListener {
+			let new = PollListener {
 				os_poll: this.os_poll,
 				fd: fd,
 				key: key,
 			};
-			listeners.push(new);
+			//listeners.push(new);
 			return new;
 		};
 
@@ -54,9 +54,13 @@ class Poll {
 
 	public func __before_free() void {
 
-		each this.listeners as li {
-			li.__free();
+		while true {
+			let item = this.listeners.pop() !! break;;
+			item.__free();
 		}
+		//each this.listeners as li {
+		//	li.__free();
+		//}
 
 		kos.ki_os__poll_free(this.os_poll);
 	}
