@@ -38,3 +38,22 @@ func read(path: *String) String !open !read !close {
 
 	return res.to_str();
 }
+
+func exists(path: *String) bool {
+	let fd = kos.ki_os__file_open(path.data(), path.bytes() @as i32, true, false);
+	if(fd == -1) {
+		return false;
+	}
+	let check = kos.ki_os__fd_close(fd);
+	return true;
+}
+func delete(path: *String) void !failed {
+	if !kos.ki_os__file_delete(path.data(), path.bytes() @as i32) {
+		throw failed;
+	}
+}
+func mkdir(path: *String) void !failed {
+	if !kos.ki_os__file_mkdir(path.data(), path.bytes() @as i32) {
+		throw failed;
+	}
+}

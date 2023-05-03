@@ -62,7 +62,7 @@ void stage_6_func(Fc *fc, Func *func) {
 
             if (decl->is_arg) {
                 if (!decl->type->borrow && ul->moves_possible == 0) {
-                    sprintf(fc->sbuf, "Argument '%s' passes ownership but it doesnt need it. Add a '*' sign to your argument type.", decl->name);
+                    sprintf(fc->sbuf, "Argument '%s' passes ownership but it doesnt need it. Add a '*' sign to your argument type to make it a borrow type.", decl->name);
                     fc_error(fc);
                 }
             }

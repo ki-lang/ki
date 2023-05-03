@@ -182,6 +182,70 @@ class String type:ptr track {
 		return result;
 	}
 
+	public func replace(find: *String, with: *String) String {
+		let pos : uxx = 0;
+		let adr = this.data();
+		let adr_find = find.data();
+		let bytes = this.bytes();
+		let bytes_left = bytes;
+		let bytes_find = find.bytes();
+		if bytes_find == 0 {
+			return this + "";
+		}
+		let buf = utils:ByteBuffer.init(bytes);
+		while(pos < bytes){
+			if(bytes_find > bytes_left){
+				break;
+			}
+			let i : uxx = 0;
+			while(i < bytes_find){
+				let byte1 : u8 = @ptrv(adr, u8, i);
+				let byte2 : u8 = @ptrv(adr_find, u8, i);
+				if byte1 != byte2 {
+					break;
+				}
+				i++;
+			}
+			if(i == bytes_find){
+				buf.append_str(with);
+				pos += bytes_find;
+				adr += bytes_find;
+				bytes_left -= bytes_find;
+				continue;
+			}
+
+			let bytec : u8 = 1;
+			let byte : u8 = @ptrv(adr, u8, 0);
+			if((byte & 128) > 0){
+				bytec = 0;
+				while((byte & 128) > 0 ){
+					bytec++;
+					byte = byte << 1;
+				}
+			}
+			if(bytec > 4){
+				// Invalid utf8 char
+				bytec = 1;
+			}
+			pos += bytec;
+			bytes_left -= bytec;
+			while(bytec > 0){
+				let byte : u8 = @ptrv(adr, u8, 0);
+				buf.append_byte(byte);
+				bytec--;
+				adr++;
+			}
+		}
+		while(bytes_left > 0){
+			let byte : u8 = @ptrv(adr, u8, 0);
+			buf.append_byte(byte);
+			bytes_left--;
+			adr++;
+		}
+
+		return buf.to_str();
+	}
+
 	func replace_bytes(find: u8, with: *String) String {
 		let len = this.bytes();
 		let len_with = with.bytes();

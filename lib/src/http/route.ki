@@ -1,11 +1,11 @@
 
-class Route {
-	public handler: fn(*Request)(Response);
+class Route[T] {
+	public handler: T;
 	public args: Array[RouteArg];
 
-	public func get_params(uri: *String) Map[String] {
+	public func params(path: *String) Map[String] {
 		let result = Map[String]{};
-		let parts = uri.split("/"); 
+		let parts = path.split("/"); 
 		each this.args as arg {
 			let p = parts.get(arg.i) !! continue;;
 			result.set(arg.name, p + "");

@@ -1,7 +1,7 @@
 
-class RouteBlock {
-	public route: ?Route = null;
-	public blocks: Map[RouteBlock];
+class RouteBlock[T] {
+	public route: ?Route[T] = null;
+	public blocks: Map[RouteBlock[T]];
 }
 
 class RouteArg {
@@ -9,20 +9,20 @@ class RouteArg {
 	public i: i32;
 }
 
-class Router {
+class Router[T] {
 
-	private block: RouteBlock;
+	private block: RouteBlock[T];
 	public inited: bool = false;
 
-	public static func init() Router {
-		return Router{
-			block: RouteBlock{
-				blocks: Map[RouteBlock]{}
+	public static func init() CLASS {
+		return CLASS {
+			block: RouteBlock[T] {
+				blocks: Map[RouteBlock[T]]{}
 			}
 		};
 	}
 
-	public func add(method: *String, url: *String, handler: fn(*Request)(Response)) void !invalid_route {
+	public func add(method: *String, url: *String, handler: T) void !invalid_route {
 
 		if url.bytes() == 0 || url.byte(0) != '/' {
 			throw invalid_route;
@@ -63,8 +63,8 @@ class Router {
 				throw invalid_route;
 			}
 
-			let find = blocks.get(key) !? @vs : &RouteBlock {
-				let v = RouteBlock{ blocks: Map[RouteBlock]{} };
+			let find = blocks.get(key) !? @vs : &RouteBlock[T] {
+				let v = RouteBlock[T]{ blocks: Map[RouteBlock[T]]{} };
 				let ref = &v;
 				blocks.set(key, v);
 				return ref;
@@ -73,10 +73,10 @@ class Router {
 			block = find;
 		}
 
-		block.route = Route{ handler: handler, args: args };
+		block.route = Route[T]{ handler: handler, args: args };
 	}
 
-	public func find(method: *String, url: *String) &Route !not_found {
+	public func find(method: *String, url: *String) &Route[T] !not_found {
 		let parts_ = url.split("/");
 		let parts = Array[String].init(2);
 		each parts_ as i, part {
@@ -89,10 +89,10 @@ class Router {
 		parts.prepend(method + "");
 		let arg_c = parts.length;
 
-		return Router.find_route(this.block, 0, arg_c @as u8, parts) ?! throw not_found;;
+		return Router[T].find_route(this.block, 0, arg_c @as u8, parts) ?! throw not_found;;
 	}
 
-	private static func find_route(block: *RouteBlock, index: u8, arg_c: u8, parts: *Array[String]) &?Route {
+	private static func find_route(block: *RouteBlock[T], index: u8, arg_c: u8, parts: *Array[String]) &?Route[T] {
 
 		if index == arg_c {
 			return block.route;
@@ -105,7 +105,7 @@ class Router {
 		if part != "*" {
 			let sub_block = block.blocks.get(part) !? null;
 			if isset(sub_block) {
-				let route = Router.find_route(sub_block, index + 1, arg_c, parts);
+				let route = CLASS.find_route(sub_block, index + 1, arg_c, parts);
 				if isset(route) : return route;
 			}
 		}
@@ -113,7 +113,7 @@ class Router {
 		part = "@";
 		let sub_block = block.blocks.get(part) !? null;
 		if isset(sub_block) {
-			let route = Router.find_route(sub_block, index + 1, arg_c, parts);
+			let route = CLASS.find_route(sub_block, index + 1, arg_c, parts);
 			if isset(route) : return route;
 		}
 

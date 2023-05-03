@@ -135,6 +135,15 @@ class Connection {
 	}
 
 	func respond(resp: *Response) void {
+		let filepath = resp.filepath;
+		if isset(filepath) {
+			let stream = fs:open(filepath + "", true, false) !! {
+				this.respond(Response.error(404));
+				return;
+            };
+            this.send_file(stream, null);
+		}
+
 		resp.compile(this.out_buf);
 		this.send_response_bytes();
 	}

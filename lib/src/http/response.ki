@@ -24,15 +24,16 @@ class Response {
 	public static func text(body: String, code: u32 = 200, content_type: String = "text/plain", headers: ?Map[String] = null) Response {
 		return Response{ body: body, status: code, content_type: content_type, headers: headers };
 	}
-	//public static func redirect(String location, u32 code = 301, ?Map[String] headers_ = null) Response {
-	//	let headers = headers_;
-	//	ifnull headers set Map[String]{};
-	//	headers.set("Location", location);
-	//	let r = Response{ status: code, headers: headers };
-	//	return r;
-	//}
+	public static func redirect(location: String, code: u32  = 301, headers: ?Map[String] = null) Response {
+		rep headers = headers ?? Map[String]{};
+		headers.set("Location", location);
+		return Response{ status: code, headers: headers };
+	}
 	public static func error(code: u32) Response {
 		return Response{ status: code };
+	}
+	public static func file(path: *String) Response {
+		return Response{ filepath: path + "" };
 	}
 
 	public func compile(buf: *utils:ByteBuffer) void {
