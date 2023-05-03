@@ -299,6 +299,7 @@ struct Func {
     bool can_error;
     bool only_returns_strict;
     bool will_exit;
+    bool uses_stack_alloc;
     // Optimizations
     bool opt_hot;
     bool opt_inline;

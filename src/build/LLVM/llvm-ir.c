@@ -435,16 +435,6 @@ char *llvm_ir_string(LB *b, char *body) {
 char *llvm_ir_stack_alloc(LB *b, char *amount, char *amount_type) {
     //
     Str *ir = llvm_b_ir(b);
-    LLVMFunc *lfunc = b->lfunc;
-
-    if (lfunc->stack_save_vn == NULL) {
-        b->use_stack_save = true;
-        char *save_vn = llvm_var(b);
-        str_append_chars(ir, "  ");
-        str_append_chars(ir, save_vn);
-        str_append_chars(ir, " = call i8* @llvm.stacksave()\n");
-        lfunc->stack_save_vn = save_vn;
-    }
 
     char *var = llvm_var(b);
     str_append_chars(ir, "  ");

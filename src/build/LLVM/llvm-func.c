@@ -113,6 +113,15 @@ void llvm_gen_func_ir(LB *b) {
             str_append_chars(cir, "\n");
         }
 
+        if (func->uses_stack_alloc) {
+            b->use_stack_save = true;
+            char *save_vn = llvm_var(b);
+            str_append_chars(cir, "  ");
+            str_append_chars(cir, save_vn);
+            str_append_chars(cir, " = call i8* @llvm.stacksave()\n");
+            lfunc->stack_save_vn = save_vn;
+        }
+
         // AST
         llvm_write_ast(b, fscope);
         if (!fscope->did_return) {

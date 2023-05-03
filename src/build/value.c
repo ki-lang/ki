@@ -141,6 +141,15 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         //
     } else if (strcmp(token, "stack_alloc") == 0) {
 
+        Scope *fscope = scope_find(scope, sct_func);
+        if (!fscope) {
+            sprintf(fc->sbuf, "You cannot use stack_alloc outside a function");
+            fc_error(fc);
+        }
+
+        Func *func = fscope->func;
+        func->uses_stack_alloc = true;
+
         tok_expect(fc, "(", true, false);
         Value *val = read_value(fc, alc, scope, false, 0, false);
 
