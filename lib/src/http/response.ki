@@ -52,15 +52,16 @@ class Response {
 		buf.append_str(this.body.bytes().str());
 		buf.append_str("\r\n");
 
-		//let headers = this.headers;
-		//verify headers {
-		//	each headers as k,v {
-		//		buf.append(k);
-		//		buf.append(": ");
-		//		buf.append(v);
-		//		buf.append("\r\n");
-		//	}
-		//}
+		let headers = this.headers;
+		if isset(headers) {
+			each headers._keys as i,k {
+				let v = headers._values.get(i) !! break;;
+				buf.append_str(k);
+				buf.append_str(": ");
+				buf.append_str(v);
+				buf.append_str("\r\n");
+			}
+		}
 
 		buf.append_str("\r\n");
 		buf.append_str(this.body);

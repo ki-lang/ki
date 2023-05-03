@@ -1,8 +1,8 @@
 
 // TODO : Use hash maps
 class Map[T] {
-	private _keys : Array[String] = Array[String].init();
-	private _values : Array[T] = Array[T].init();
+	readonly _keys : Array[String] = Array[String].init();
+	readonly _values : Array[T] = Array[T].init();
 
 	static func init() CLASS {
 		return CLASS{};
