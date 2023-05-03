@@ -182,6 +182,27 @@ class String type:ptr track {
 		return result;
 	}
 
+	func replace_bytes(find: u8, with: *String) String {
+		let len = this.bytes();
+		let len_with = with.bytes();
+		if len == 0 {
+			return this + "";
+		}
+		let adr = this.data();
+		let buf = utils:ByteBuffer.init(len);
+		let i : u32 = 0;
+		while i < len {
+			let ch = @ptrv(adr, u8, i);
+			i++;
+			if ch == find {
+				buf.append_str(with);
+			} else {
+				buf.append_byte(ch);
+			}
+		}
+		return buf.to_str();
+	}
+
 	/////////////////////
 	// Converts
 	/////////////////////
@@ -206,13 +227,29 @@ class String type:ptr track {
 		return new_str;
 	}
 
-	func cstring() cstring {
+	func to_cstring() cstring {
 		let len = this.bytes();
 		let bytes = len + 1;
 		let adr = mem:alloc(bytes);
 		mem:copy(this.data(), adr, len);
 		@ptrv(adr + len, u8, 0) = 0;
 		return adr @as cstring;
+	}
+
+	func to_uxx() uxx !invalid_syntax {
+		let i = this.bytes();
+		let result : uxx = 0;
+		let mult : uxx = 1;
+		while i > 0 {
+			i--;
+			let ch = this.byte(i);
+			if(ch < 48 || ch > 57){
+				throw invalid_syntax;
+			}
+			result += ((ch @as uxx) - 48) * mult;
+			mult *= 10;
+		}
+		return result;
 	}
 
 	/////////////////////

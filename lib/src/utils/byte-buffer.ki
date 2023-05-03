@@ -52,6 +52,18 @@ class ByteBuffer {
 		this.append(str.data(), str.bytes());
 	}
 
+	func append_bytes_from_ptr(adr: ptr, len: uxx) void {
+		if len == 0 {
+			return;
+		}
+		let bytes : uxx = this.length;
+		let new_bytes : uxx = bytes + len;
+		this.minimum_size(new_bytes);
+		let to : ptr = this.data + bytes;
+		mem:copy(adr, to, len);
+		this.length = new_bytes;
+	}
+
 	// Compare
 
 	func eq_str(str: *String) bool {
