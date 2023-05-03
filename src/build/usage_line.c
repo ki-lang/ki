@@ -330,12 +330,13 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
         return;
 
     Decl *decl = ul->decl;
-    if (decl->type->borrow) {
+    Type *type = decl->type;
+
+    if (type->borrow) {
         // printf("Keep:%s in %s\n", decl->name, decl->scope->func->dname);
         return;
     }
 
-    Type *type = decl->type;
     Class *class = type->class;
     if (class && (class->must_deref || class->must_ref)) {
 

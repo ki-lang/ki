@@ -107,7 +107,7 @@ class Array[T] {
 		let adr = this.data;
 		let len = this.length;
 		while(index < len){
-			let x = @ptrv(adr, T, index);
+			let x = @ptrv(adr, *T, index);
 			if x == item {
 				return index;
 			}
@@ -142,6 +142,8 @@ class Array[T] {
 		if key >= this.length {
 			throw end;
 		}
+		print(">>>");
+		key.debug();
 		key_ref[0] = key + 1;
 		return this.get(key) !! throw end;;
 	}

@@ -71,6 +71,10 @@ trait Number {
         return str;
     }
 
+	func debug() void {
+        this.debug_base(10);
+    }
+
 	func debug_base(base: u8) void {
 
 		let negative = false;
