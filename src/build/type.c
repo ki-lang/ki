@@ -484,14 +484,14 @@ char *type_to_str(Type *t, char *res) {
     //     strcat(res, "ptr");
     //     return res;
     // }
-    if (type_tracks_ownership(t)) {
-        if (t->borrow) {
-            strcat(res, "*");
-        }
-        if (t->ref) {
-            strcat(res, "&");
-        }
+    // if (type_tracks_ownership(t)) {
+    if (t->borrow) {
+        strcat(res, "*");
     }
+    if (t->ref) {
+        strcat(res, "&");
+    }
+    // }
     if (t->nullable) {
         strcat(res, "?");
     }

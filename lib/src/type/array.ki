@@ -142,8 +142,6 @@ class Array[T] {
 		if key >= this.length {
 			throw end;
 		}
-		print(">>>");
-		key.debug();
 		key_ref[0] = key + 1;
 		return this.get(key) !! throw end;;
 	}

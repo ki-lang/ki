@@ -265,6 +265,9 @@ void skip_type(Fc *fc) {
         if (ch == '?') {
             continue;
         }
+        if (ch == ':') {
+            continue;
+        }
         if (ch == '.') {
             continue;
         }

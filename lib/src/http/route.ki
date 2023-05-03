@@ -1,6 +1,6 @@
 
 class Route {
-	public handler: fn(Request)(Response);
+	public handler: fn(*Request)(Response);
 	public args: Array[RouteArg];
 
 	public func get_params(uri: *String) Map[String] {

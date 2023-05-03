@@ -1212,7 +1212,12 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 right = try_convert(fc, alc, right, rett);
                 usage_merge_ancestors(alc, scope, ancestors);
 
-                type_check(fc, rett, right->rett);
+                Type *rt = right->rett;
+                if (rt->nullable && !rett->nullable && rett->ptr_depth > 0) {
+                    rett = type_clone(alc, rett);
+                    rett->nullable = true;
+                }
+                type_check(fc, rett, rt);
 
                 or->value = right;
 
