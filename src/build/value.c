@@ -132,7 +132,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             fc_error(fc);
         }
         if (on->type == v_decl) {
-            Decl *decl = v->item;
+            Decl *decl = on->item;
             if (!decl->is_mut) {
                 decl->is_mut = true;
             }
