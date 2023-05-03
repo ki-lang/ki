@@ -289,10 +289,14 @@ void llvm_write_ast(LB *b, Scope *scope) {
             if (type_is_void(rett)) {
                 str_append_chars(ir, "  ret void\n");
             } else {
-                char *ltype = llvm_type(b, rett);
-                str_append_chars(ir, "  ret ");
-                str_append_chars(ir, ltype);
-                str_append_chars(ir, " 0\n");
+                if (rett->ptr_depth > 0) {
+                    str_append_chars(ir, "  ret ptr null\n");
+                } else {
+                    char *ltype = llvm_type(b, rett);
+                    str_append_chars(ir, "  ret ");
+                    str_append_chars(ir, ltype);
+                    str_append_chars(ir, " 0\n");
+                }
             }
         }
     }
