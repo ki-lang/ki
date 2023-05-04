@@ -142,6 +142,7 @@ class Connection {
 				return;
             };
             this.send_file(stream, null);
+			return;
 		}
 
 		resp.compile(this.out_buf);
