@@ -21,6 +21,7 @@ void array_push(Array *, void *);
 void array_push_unique(Array *arr, void *item);
 void array_push_unique_chars(Array *arr, void *item);
 void *array_pop(Array *arr);
+void *array_pop_first(Array *arr);
 bool array_contains(Array *, void *, int);
 int array_find(Array *, void *, int);
 void array_shift(Array *arr, void *item);

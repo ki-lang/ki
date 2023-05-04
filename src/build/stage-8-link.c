@@ -18,25 +18,35 @@
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/lto.h>
 
+#include <threads.h>
+
 void llvm_init(Build *b);
-void stage_8_compile_o(Build *b, Array *ir_files, char *path_o);
+void *stage_8_compile_o(void *data_);
 void stage_8_optimize(LLVMModuleRef mod);
 void stage_8_link(Build *b, Array *o_files);
 
-LLVMTargetMachineRef g_target_machine;
-LLVMTargetDataRef g_target_data;
-char *g_llvm_triple;
-char *g_llvm_data_layout;
+thread_local LLVMTargetMachineRef g_target_machine;
+thread_local LLVMTargetDataRef g_target_data;
+thread_local char *g_llvm_triple;
+thread_local char *g_llvm_data_layout;
+
+struct CompileData {
+    Build *b;
+    Array *ir_files;
+    char *path_o;
+};
 
 void stage_8(Build *b) {
     //
-    llvm_init(b);
 
     bool compiled_any = false;
     Array *o_files = array_make(b->alc, 20);
+    Array *threads = array_make(b->alc, 20);
 
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
+
+    // LLVMStartMultithreaded();
 
     for (int i = 0; i < b->packages->length; i++) {
         Pkc *pkc = array_get_index(b->packages, i);
@@ -66,12 +76,35 @@ void stage_8(Build *b) {
                 if (b->verbose > 1) {
                     printf("⚙ Compile o file: %s\n", nsc->path_o);
                 }
-                stage_8_compile_o(b, ir_files, nsc->path_o);
+
+                pthread_t *thr = al(b->alc, sizeof(pthread_t));
+                struct CompileData *data = al(b->alc, sizeof(struct CompileData));
+                data->b = b;
+                data->ir_files = ir_files;
+                data->path_o = nsc->path_o;
+                // stage_8_compile_o((void *)data);
+
+                if (threads->length >= 20) {
+                    // Wait for a thread first thread
+                    pthread_t *thr = array_pop_first(threads);
+                    pthread_join(*thr, NULL);
+                }
+
+                pthread_create(thr, NULL, stage_8_compile_o, (void *)data);
+
+                array_push(threads, thr);
             }
 
             array_push(o_files, nsc->path_o);
         }
     }
+
+    for (int i = 0; i < threads->length; i++) {
+        pthread_t *thr = array_get_index(threads, i);
+        pthread_join(*thr, NULL);
+    }
+
+    // LLVMStopMultithreaded();
 
     gettimeofday(&end, NULL);
     double time_llvm = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
@@ -97,12 +130,23 @@ void stage_8(Build *b) {
     }
 }
 
-void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
+void *stage_8_compile_o(void *data_) {
+
+    struct CompileData *data = (struct CompileData *)data_;
+    Build *b = data->b;
+    Array *ir_files = data->ir_files;
+    char *path_o = data->path_o;
+
+    // struct timeval begin, end;
+    // gettimeofday(&begin, NULL);
+
+    llvm_init(b);
+
     //
-    LLVMContextRef ctx = LLVMGetGlobalContext();
+    LLVMContextRef ctx = LLVMContextCreate();
     LLVMContextSetOpaquePointers(ctx, true);
 
-    LLVMModuleRef nsc_mod = LLVMModuleCreateWithName("ki_module");
+    LLVMModuleRef nsc_mod = LLVMModuleCreateWithNameInContext("ki_module", ctx);
 
     int ir_count = ir_files->length;
     int i = 0;
@@ -160,6 +204,12 @@ void stage_8_compile_o(Build *b, Array *ir_files, char *path_o) {
 
     LLVMDisposeMessage(error);
     LLVMDisposeModule(nsc_mod);
+
+    // gettimeofday(&end, NULL);
+    // double time_o = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
+    // printf("⌚ %.3fs | %s\n", time_o, path_o);
+
+    return NULL;
 }
 
 void stage_8_optimize(LLVMModuleRef mod) {

@@ -74,6 +74,26 @@ void array_shift(Array *arr, void *item) {
     *adr = item;
 }
 
+void *array_pop_first(Array *arr) {
+    if (arr->length == 0) {
+        return NULL;
+    }
+    void *data = arr->data;
+    void *first = *(void **)data;
+
+    int last_i = arr->length - 1;
+    int i = 0;
+    while (i < last_i) {
+        void **from = data + (i + 1) * sizeof(void *);
+        void **to = data + i * sizeof(void *);
+        *to = *from;
+        i++;
+    }
+
+    arr->length--;
+    return first;
+}
+
 void *array_get_index(Array *arr, int index) {
     if (index >= arr->length) {
         return NULL;

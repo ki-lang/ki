@@ -5,7 +5,7 @@ LCC=clang-15
 VERSION=dev
 UNAME=$(shell uname)
 
-CFLAGS=-g -O2 -std=gnu99 -pthread
+CFLAGS=-g -O2 -std=gnu99 -pthread 
 
 LDFLAGS=
 

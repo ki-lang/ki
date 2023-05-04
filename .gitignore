@@ -4,6 +4,7 @@ ki-old
 debug
 .vscode
 callgrind.*
+profile.sh
 
 # Prerequisites
 *.d
