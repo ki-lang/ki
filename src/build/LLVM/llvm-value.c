@@ -247,7 +247,14 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_class_pa) {
         VClassPA *pa = v->item;
         char *lval = llvm_assign_value(b, scope, v);
-        return llvm_ir_load(b, pa->prop->type, lval);
+        char *res = llvm_ir_load(b, pa->prop->type, lval);
+        if (pa->ul) {
+            Scope *sub = scope_init(alc, sct_default, scope, true);
+            class_ref_change(alc, sub, value_init(alc, v_ir_value, res, v->rett), 1);
+            llvm_write_ast(b, sub);
+            pa->ul->decl->llvm_val = res;
+        }
+        return res;
     }
     if (v->type == v_class_init) {
         VClassInit *ci = v->item;

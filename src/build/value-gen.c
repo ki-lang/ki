@@ -73,16 +73,19 @@ Value *vgen_fptr(Allocator *alc, Func *func, Value *first_arg) {
     return value_init(alc, v_fptr, item, type_gen_fptr(alc, func));
 }
 
-Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
+Value *vgen_class_pa(Allocator *alc, Scope *scope, Value *on, ClassProp *prop) {
     //
     VClassPA *item = al(alc, sizeof(VClassPA));
     item->on = on;
     item->prop = prop;
+    item->ul = NULL;
 
     Type *rett = prop->type;
-    if (!rett->ref && type_tracks_ownership(rett)) {
+    if (scope && type_tracks_ownership(rett)) {
         rett = type_clone(alc, rett);
         rett->ref = true;
+        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);
+        item->ul = usage_line_init(alc, scope, decl);
     }
     return value_init(alc, v_class_pa, item, rett);
 }

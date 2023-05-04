@@ -394,7 +394,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     fc_error(fc);
                 }
 
-                v = vgen_class_pa(alc, v, prop);
+                v = vgen_class_pa(alc, scope, v, prop);
             } else {
                 // Class func
                 Func *func = map_get(class->funcs, token);

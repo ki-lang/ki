@@ -207,6 +207,13 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                         decl->is_mut = true;
                     }
                 }
+                if (left->type == v_class_pa) {
+                    VClassPA *pa = left->item;
+                    if (pa->ul) {
+                        pa->ul->enable = false;
+                        pa->ul = NULL;
+                    }
+                }
 
                 Value *right = read_value(fc, alc, scope, false, 0, false);
                 if (type_is_void(right->rett)) {
