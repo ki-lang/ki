@@ -78,16 +78,29 @@ Value *vgen_class_pa(Allocator *alc, Scope *scope, Value *on, ClassProp *prop) {
     VClassPA *item = al(alc, sizeof(VClassPA));
     item->on = on;
     item->prop = prop;
-    item->ul = NULL;
+    item->llvm_val = NULL;
+    item->deref_token = NULL;
+    item->upref_token = NULL;
 
-    Type *rett = prop->type;
-    if (scope && type_tracks_ownership(rett)) {
-        rett = type_clone(alc, rett);
+    Type *prop_type = prop->type;
+    Value *res = value_init(alc, v_class_pa, item, prop_type);
+
+    if (scope && type_tracks_ownership(prop_type)) {
+        Type *rett = type_clone(alc, prop_type);
         rett->ref = true;
-        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);
-        item->ul = usage_line_init(alc, scope, decl);
+        res->rett = rett;
+
+        Value *from = vgen_ir_from(alc, res);
+        item->deref_token = tgen_ref_change_exec(alc, scope, from, -1);
+        item->upref_token = tgen_ref_change_exec(alc, scope, from, 1);
+        scope_add_defer_token(alc, scope, item->deref_token);
     }
-    return value_init(alc, v_class_pa, item, rett);
+    return res;
+}
+
+Value *vgen_ir_from(Allocator *alc, Value *from) {
+    //
+    return value_init(alc, v_ir_from, from, from->rett);
 }
 
 Value *vgen_class_init(Allocator *alc, Scope *scope, Class *class, Map *values) {

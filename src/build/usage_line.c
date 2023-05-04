@@ -143,12 +143,10 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         irv->value = usage_move_value(alc, fc, scope, irv->value);
     } else if (vt == v_class_pa) {
         Class *class = val->rett->class;
-        if (class && class->must_ref) {
-            VClassPA *pa = val->item;
-            UsageLine *ul = pa->ul;
-            if (ul) {
-                ul->enable = false;
-            }
+        VClassPA *pa = val->item;
+        if (pa->deref_token) {
+            TExec *exec = pa->deref_token->item;
+            exec->enable = false;
         }
     } else if (vt == v_array_item) {
         Class *class = val->rett->class;
@@ -338,7 +336,7 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
     }
 }
 
-void end_usage_line(Allocator *alc, UsageLine *ul) {
+void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
     //
     if (!ul->enable)
         return;
@@ -364,7 +362,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
             for (int i = 0; i < ul->ancestors->length; i++) {
                 UsageLine *anc = array_get_index(ul->ancestors, i);
                 if (!anc->scope->did_return) {
-                    end_usage_line(alc, anc);
+                    end_usage_line(alc, anc, ast);
                 }
             }
 
@@ -398,38 +396,25 @@ void end_usage_line(Allocator *alc, UsageLine *ul) {
                             oldest = oldest->parent;
                         oldest->deref_token->enable = false;
                     }
-                    end_usage_line(alc, ul->clone_from);
+                    end_usage_line(alc, ul->clone_from, ast);
                 }
             }
 
         } else {
             // Add deref token
             if (class->must_deref) {
-                // We could free instantly if it's a strict type, but.. we wont.
-                // Derefing instead might allow some interesting hacks.
-                // A CLI option could be added to free instantly
-
-                // if (decl->type->strict_ownership) {
-                //     Scope *sub = scope_init(alc, sct_default, ul->scope, true);
-                //     Value *val = value_init(alc, v_decl, decl, type);
-                //     class_free_value(alc, sub, val);
-                //     Token *t = tgen_exec(alc, sub, true);
-                //     array_push((ul->deref_scope ? ul->deref_scope : ul->scope)->ast, t);
-                //     ul->deref_token = t->item;
-                // } else {
                 Scope *sub = scope_init(alc, sct_default, ul->scope, true);
                 Value *val = value_init(alc, v_decl, decl, type);
                 class_ref_change(alc, sub, val, -1);
                 Token *t = tgen_exec(alc, sub, true);
-                array_push((ul->deref_scope ? ul->deref_scope : ul->scope)->ast, t);
+                array_push((ul->deref_scope ? ul->deref_scope->ast : ast), t);
                 ul->deref_token = t->item;
-                // }
             }
         }
     }
 }
 
-void deref_expired_decls(Allocator *alc, Scope *scope) {
+void deref_expired_decls(Allocator *alc, Scope *scope, Array *ast) {
     //
     Array *decls = scope->usage_keys;
     if (decls) {
@@ -438,34 +423,31 @@ void deref_expired_decls(Allocator *alc, Scope *scope) {
             UsageLine *ul = array_get_index(scope->usage_values, i);
 
             if (decl->scope == scope) {
-                end_usage_line(alc, ul);
+                end_usage_line(alc, ul, ast);
             }
         }
     }
 }
 
-void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
-    Array *decls = scope_->usage_keys;
-    if (decls) {
-        for (int i = 0; i < decls->length; i++) {
-            Decl *decl = array_get_index(decls, i);
-            UsageLine *ul = array_get_index(scope_->usage_values, i);
-
-            Scope *scope = scope_;
-            while (scope) {
-
-                if (scope == decl->scope) {
-                    if (!scope->did_return) {
-                        end_usage_line(alc, ul);
-                    }
-                    break;
+void deref_scope(Allocator *alc, Scope *scope, Scope *until) {
+    Array *ast = scope->ast;
+    while (scope) {
+        if (!scope->did_return) {
+            //
+            deref_expired_decls(alc, scope, ast);
+            // Defer code
+            if (scope->defer_ast) {
+                Array *def_ast = scope->defer_ast;
+                for (int i = 0; i < def_ast->length; i++) {
+                    Token *t = array_get_index(def_ast, i);
+                    // array_push(ast, t);
                 }
-
-                if (scope == until)
-                    break;
-                scope = scope->parent;
             }
         }
+
+        if (scope == until)
+            break;
+        scope = scope->parent;
     }
 }
 

@@ -209,9 +209,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 }
                 if (left->type == v_class_pa) {
                     VClassPA *pa = left->item;
-                    if (pa->ul) {
-                        pa->ul->enable = false;
-                        pa->ul = NULL;
+                    if (pa->deref_token) {
+                        TExec *exec = pa->deref_token->item;
+                        exec->enable = false;
+                        exec = pa->upref_token->item;
+                        exec->enable = false;
                     }
                 }
                 if (left->type == v_array_item) {
@@ -277,11 +279,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     Decl *decl = left->item;
                     UsageLine *ul = usage_line_get(scope, decl);
                     if (ul) {
-                        end_usage_line(alc, ul);
+                        end_usage_line(alc, ul, scope->ast);
                     }
                 } else if (left->type == v_class_pa || left->type == v_global) {
                     // Deref
-                    class_ref_change(alc, scope, left, -1);
+                    // class_ref_change(alc, scope, left, -1);
                 }
 
                 array_push(scope->ast, tgen_assign(alc, left, ir_right));
@@ -313,7 +315,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
     // Derefs
     if (!scope->did_return) {
-        deref_expired_decls(alc, scope);
+        deref_expired_decls(alc, scope, scope->ast);
     }
 }
 

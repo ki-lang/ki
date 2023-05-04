@@ -254,13 +254,23 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     }
     if (v->type == v_class_pa) {
         VClassPA *pa = v->item;
+        if (pa->llvm_val) {
+            if (pa->deref_token) {
+                printf("File: %s\n", b->fc->path_ki);
+                printf("Func: %s\n", scope->func->dname);
+                die("LLVM IR: generated the same value twice (class property access)(compiler bug)");
+            }
+            return pa->llvm_val;
+        }
+
         char *lval = llvm_assign_value(b, scope, v);
         char *res = llvm_ir_load(b, pa->prop->type, lval);
-        if (pa->ul) {
+        pa->llvm_val = res;
+
+        if (pa->upref_token) {
             Scope *sub = scope_init(alc, sct_default, scope, true);
-            class_ref_change(alc, sub, value_init(alc, v_ir_value, res, v->rett), 1);
+            array_push(sub->ast, pa->upref_token);
             llvm_write_ast(b, sub);
-            pa->ul->decl->llvm_val = res;
         }
         return res;
     }
@@ -502,6 +512,15 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_ir_val) {
         IRVal *item = v->item;
         return item->ir_value;
+    }
+    if (v->type == v_ir_from) {
+        Value *from = v->item;
+        if (from->type == v_class_pa) {
+            VClassPA *pa = from->item;
+            return pa->llvm_val;
+        } else {
+            die("LLVM IR error, cannot generate v_ir_val from this value");
+        }
     }
     if (v->type == v_ir_assign_val) {
         IRAssignVal *item = v->item;

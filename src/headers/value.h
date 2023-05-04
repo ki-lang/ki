@@ -69,7 +69,9 @@ struct VFuncPtr {
 struct VClassPA {
     Value *on;
     ClassProp *prop;
-    UsageLine *ul;
+    char *llvm_val;
+    Token *deref_token;
+    Token *upref_token;
 };
 struct VClassInit {
     Class *class;

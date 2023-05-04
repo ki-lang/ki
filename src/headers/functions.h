@@ -117,6 +117,7 @@ Scope *scope_find(Scope *scope, int type);
 Scope *scope_find_return_scope(Scope *scope);
 bool scope_contains(Scope *parent_scope, Scope *scope);
 void scope_apply_issets(Allocator *alc, Scope *scope, Array *issets);
+void scope_add_defer_token(Allocator *alc, Scope *scope, Token *token);
 
 // Func
 Func *func_init(Allocator *alc);
@@ -169,9 +170,9 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val);
 Scope *usage_scope_init(Allocator *alc, Scope *parent, int type);
 void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors);
 void usage_collect_used_decls(Allocator *alc, Scope *left, Scope *right, Array **list);
-void end_usage_line(Allocator *alc, UsageLine *ul);
+void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast);
 void deref_scope(Allocator *alc, Scope *scope, Scope *until);
-void deref_expired_decls(Allocator *alc, Scope *scope);
+void deref_expired_decls(Allocator *alc, Scope *scope, Array *ast);
 void usage_clear_ancestors(Scope *scope);
 Scope *usage_create_deref_scope(Allocator *alc, Scope *scope);
 
@@ -197,6 +198,7 @@ Value *vgen_or_break(Allocator *alc, Value *value, Scope *or_scope, Scope *else_
 Value *vgen_or_value(Allocator *alc, Value *left, Value *right, Scope *value_scope, Scope *else_scope, Scope *deref_scope);
 Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op);
 Value *vgen_ir_val(Allocator *alc, Value *value, Type *rett);
+Value *vgen_ir_from(Allocator *alc, Value *from);
 Value *vgen_ir_assign_val(Allocator *alc, Value *value, Type *rett);
 Value *vgen_value_and_exec(Allocator *alc, Value *value, Scope *exec_scope, bool before_value, bool enable_exec);
 Value *vgen_value_then_ir_value(Allocator *alc, Value *value);
@@ -216,4 +218,5 @@ Token *tgen_return(Allocator *alc, Scope *fscope, Value *retv);
 Token *tgen_vscope_return(Allocator *alc, Scope *vscope, Value *retv);
 Token *tgen_while(Allocator *alc, Value *cond, Scope *scope);
 Token *tgen_exec(Allocator *alc, Scope *scope, bool enable);
+Token *tgen_ref_change_exec(Allocator *alc, Scope *scope, Value *on, int amount);
 Token *tgen_each(Allocator *alc, Value *value, Scope *scope, Decl *decl_key, Decl *decl_value);
