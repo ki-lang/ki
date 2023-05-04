@@ -160,7 +160,14 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
             }
         }
     } else if (vt == v_global) {
-        val = value_init(alc, v_upref_value, val, val->rett);
+        Class *class = val->rett->class;
+        if (class && class->must_ref) {
+            VGlobal *vg = val->item;
+            UsageLine *ul = vg->ul;
+            if (ul) {
+                ul->enable = false;
+            }
+        }
     } else if (vt == v_cast) {
         Value *on = val->item;
         if (type_tracks_ownership(on->rett) && type_tracks_ownership(val->rett)) {

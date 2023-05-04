@@ -221,6 +221,13 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                         ai->ul = NULL;
                     }
                 }
+                if (left->type == v_global) {
+                    VGlobal *vg = left->item;
+                    if (vg->ul) {
+                        vg->ul->enable = false;
+                        vg->ul = NULL;
+                    }
+                }
 
                 Value *right = read_value(fc, alc, scope, false, 0, false);
                 if (type_is_void(right->rett)) {

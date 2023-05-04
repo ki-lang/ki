@@ -127,7 +127,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         v = vgen_null(alc, b);
     } else if (strcmp(token, "getptr") == 0) {
         Value *on = read_value(fc, alc, scope, false, 0, false);
-        if (on->type != v_class_pa && on->type != v_ptrv && on->type != v_decl && on->type != v_array_item) {
+        if (!value_is_assignable(on)) {
             sprintf(fc->sbuf, "Value used in 'getptr' must be assignable");
             fc_error(fc);
         }
@@ -689,10 +689,19 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_global) {
         Global *g = idf->item;
+        VGlobal *vg = al(alc, sizeof(VGlobal));
+        vg->g = g;
+        vg->ul = NULL;
+
         Type *rett = g->type;
         rett = type_clone(alc, rett);
-        rett->ref = true;
-        return value_init(alc, v_global, g, rett);
+        if (type_tracks_ownership(rett)) {
+            rett = type_clone(alc, rett);
+            rett->ref = true;
+            Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);
+            vg->ul = usage_line_init(alc, scope, decl);
+        }
+        return value_init(alc, v_global, vg, rett);
     }
 
     if (idf->type == idf_func) {

@@ -21,8 +21,16 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         return llvm_ir_load(b, decl->type, var_val);
     }
     if (v->type == v_global) {
-        Global *g = v->item;
-        return llvm_ir_load(b, g->type, llvm_get_global(b, g->gname, g->type));
+        VGlobal *vg = v->item;
+        Global *g = vg->g;
+        char *res = llvm_ir_load(b, g->type, llvm_get_global(b, g->gname, g->type));
+        if (vg->ul) {
+            Scope *sub = scope_init(alc, sct_default, scope, true);
+            class_ref_change(alc, sub, value_init(alc, v_ir_value, res, v->rett), 1);
+            llvm_write_ast(b, sub);
+            vg->ul->decl->llvm_val = res;
+        }
+        return res;
     }
     if (v->type == v_ref) {
         Value *on = v->item;
@@ -680,7 +688,8 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
         return decl->llvm_val;
     }
     if (v->type == v_global) {
-        Global *g = v->item;
+        VGlobal *vg = v->item;
+        Global *g = vg->g;
         return llvm_get_global(b, g->gname, g->type);
     }
     if (v->type == v_ptrv) {
