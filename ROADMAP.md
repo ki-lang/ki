@@ -5,7 +5,7 @@ Feature todo list in order:
 
 - let x = *Myclass ?? Myclass should throw an error
 
-- enums
+- unions
 - Only allow local variables as a borrowed argument in a function call
 - compare errors
 - swap token
