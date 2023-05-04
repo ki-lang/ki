@@ -15,6 +15,7 @@ typedef struct FCallOr FCallOr;
 typedef struct VFuncPtr VFuncPtr;
 typedef struct VClassPA VClassPA;
 typedef struct VClassInit VClassInit;
+typedef struct VArrayItem VArrayItem;
 typedef struct VOrBreak VOrBreak;
 typedef struct VOrValue VOrValue;
 typedef struct IRVal IRVal;
@@ -72,6 +73,11 @@ struct VClassPA {
 struct VClassInit {
     Class *class;
     Map *values;
+    UsageLine *ul;
+};
+struct VArrayItem {
+    Value *left;
+    Value *right;
     UsageLine *ul;
 };
 struct VOrBreak {

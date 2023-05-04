@@ -224,12 +224,19 @@ Value *vgen_atomicop(Allocator *alc, Value *left, Value *right, int op) {
     return value_init(alc, v_atomicop, item, left->rett);
 }
 
-Value *vgen_array_item(Allocator *alc, Value *on, Value *index) {
+Value *vgen_array_item(Allocator *alc, Scope *scope, Value *on, Value *index) {
     //
-    VPair *item = al(alc, sizeof(VPair));
+    VArrayItem *item = al(alc, sizeof(VArrayItem));
     item->left = on;
     item->right = index;
+    item->ul = NULL;
 
     Type *rett = on->rett->array_of;
+    if (scope && type_tracks_ownership(rett)) {
+        rett = type_clone(alc, rett);
+        rett->ref = true;
+        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);
+        item->ul = usage_line_init(alc, scope, decl);
+    }
     return value_init(alc, v_array_item, item, rett);
 }

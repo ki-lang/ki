@@ -446,7 +446,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
             tok_expect(fc, "]", true, true);
 
-            v = vgen_array_item(alc, v, index);
+            v = vgen_array_item(alc, scope, v, index);
         }
 
         tok(fc, token, true, false);

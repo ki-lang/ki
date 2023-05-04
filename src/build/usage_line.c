@@ -149,13 +149,15 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
             if (ul) {
                 ul->enable = false;
             }
-
-            // ClassProp *prop = pa->prop;
-            // if (!val->rett->ref) {
-            //     sprintf(fc->sbuf, "You cannot move a property. You must use 'swap'(not implemented yet) to replace existing value with something else.");
-            //     fc_error(fc);
-            // }
-            // val = value_init(alc, v_upref_value, val, val->rett);
+        }
+    } else if (vt == v_array_item) {
+        Class *class = val->rett->class;
+        if (class && class->must_ref) {
+            VArrayItem *ai = val->item;
+            UsageLine *ul = ai->ul;
+            if (ul) {
+                ul->enable = false;
+            }
         }
     } else if (vt == v_global) {
         val = value_init(alc, v_upref_value, val, val->rett);

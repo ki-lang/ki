@@ -214,6 +214,13 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                         pa->ul = NULL;
                     }
                 }
+                if (left->type == v_array_item) {
+                    VArrayItem *ai = left->item;
+                    if (ai->ul) {
+                        ai->ul->enable = false;
+                        ai->ul = NULL;
+                    }
+                }
 
                 Value *right = read_value(fc, alc, scope, false, 0, false);
                 if (type_is_void(right->rett)) {

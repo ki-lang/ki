@@ -639,11 +639,18 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         return llvm_ir_load(b, rett, sub->vscope->lvar);
     }
     if (v->type == v_array_item) {
-        VPair *pair = v->item;
-        Value *on = pair->left;
+        VArrayItem *ai = v->item;
+        Value *on = ai->left;
         Type *item_type = on->rett->array_of;
         char *result = llvm_assign_value(b, scope, v);
-        return llvm_ir_load(b, item_type, result);
+        char *res = llvm_ir_load(b, item_type, result);
+        if (ai->ul) {
+            Scope *sub = scope_init(alc, sct_default, scope, true);
+            class_ref_change(alc, sub, value_init(alc, v_ir_value, res, v->rett), 1);
+            llvm_write_ast(b, sub);
+            ai->ul->decl->llvm_val = res;
+        }
+        return res;
     }
     if (v->type == v_isset) {
         Value *on = v->item;
@@ -717,9 +724,9 @@ char *llvm_assign_value(LB *b, Scope *scope, Value *v) {
         return item->ir_value;
     }
     if (v->type == v_array_item) {
-        VPair *pair = v->item;
-        Value *on = pair->left;
-        Value *index = pair->right;
+        VArrayItem *ai = v->item;
+        Value *on = ai->left;
+        Value *index = ai->right;
         char *lon = llvm_value(b, scope, on);
         char *lindex = llvm_value(b, scope, index);
 
