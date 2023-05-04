@@ -283,7 +283,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     }
                 } else if (left->type == v_class_pa || left->type == v_global) {
                     // Deref
-                    // class_ref_change(alc, scope, left, -1);
+                    Value *on = vgen_value_then_ir_value(alc, left);
+                    class_ref_change(alc, scope, on, -1);
                 }
 
                 array_push(scope->ast, tgen_assign(alc, left, ir_right));
