@@ -85,7 +85,7 @@ void stage_8(Build *b) {
                 // stage_8_compile_o((void *)data);
 
                 if (threads->length >= 20) {
-                    // Wait for a thread first thread
+                    // Wait for the first thread
                     pthread_t *thr = array_pop_first(threads);
                     pthread_join(*thr, NULL);
                 }
