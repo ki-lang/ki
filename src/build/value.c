@@ -506,6 +506,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 Value *right = read_value(fc, alc, usage_scope, true, 9, false);
                 usage_merge_ancestors(alc, scope, ancestors);
 
+                if (v->rett->borrow != right->rett->borrow) {
+                    sprintf(fc->sbuf, "One side of '??' has a borrow value and the other does not");
+                    fc_error(fc);
+                }
+
                 type_check(fc, v->rett, right->rett);
 
                 v = vgen_or_value(alc, v, right, usage_scope, else_scope, deref_scope);

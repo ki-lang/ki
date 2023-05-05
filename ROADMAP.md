@@ -3,8 +3,6 @@
 
 Feature todo list in order:
 
-- let x = *Myclass ?? Myclass should throw an error
-
 - unions
 - compare errors
 - swap token
