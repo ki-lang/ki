@@ -69,7 +69,9 @@ struct VFuncPtr {
 struct VClassPA {
     Value *on;
     ClassProp *prop;
-    UsageLine *ul;
+    char *llvm_val;
+    Token *deref_token;
+    Token *upref_token;
 };
 struct VClassInit {
     Class *class;
@@ -79,11 +81,15 @@ struct VClassInit {
 struct VArrayItem {
     Value *left;
     Value *right;
-    UsageLine *ul;
+    char *llvm_val;
+    Token *deref_token;
+    Token *upref_token;
 };
 struct VGlobal {
     Global *g;
-    UsageLine *ul;
+    char *llvm_val;
+    Token *deref_token;
+    Token *upref_token;
 };
 struct VOrBreak {
     Value *value;

@@ -691,17 +691,24 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         Global *g = idf->item;
         VGlobal *vg = al(alc, sizeof(VGlobal));
         vg->g = g;
-        vg->ul = NULL;
+        vg->llvm_val = NULL;
+        vg->deref_token = NULL;
+        vg->upref_token = NULL;
 
-        Type *rett = g->type;
-        rett = type_clone(alc, rett);
-        if (type_tracks_ownership(rett)) {
-            rett = type_clone(alc, rett);
+        Type *type = g->type;
+        Value *res = value_init(alc, v_global, vg, type);
+
+        if (scope && type_tracks_ownership(type)) {
+            Type *rett = type_clone(alc, type);
             rett->ref = true;
-            Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);
-            vg->ul = usage_line_init(alc, scope, decl);
+            res->rett = rett;
+
+            Value *from = vgen_ir_from(alc, res);
+            vg->deref_token = tgen_ref_change_exec(alc, scope, from, -1);
+            vg->upref_token = tgen_ref_change_exec(alc, scope, from, 1);
+            scope_add_defer_token(alc, scope, vg->deref_token);
         }
-        return value_init(alc, v_global, vg, rett);
+        return res;
     }
 
     if (idf->type == idf_func) {
@@ -1261,4 +1268,35 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 bool value_is_assignable(Value *v) {
     //
     return (v->type == v_decl || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global || v->type == v_array_item);
+}
+
+void value_disable_upref_deref(Value *val) {
+    //
+    if (val->type == v_class_pa) {
+        VClassPA *pa = val->item;
+        if (pa->deref_token) {
+            TExec *exec = pa->deref_token->item;
+            exec->enable = false;
+            exec = pa->upref_token->item;
+            exec->enable = false;
+        }
+    }
+    if (val->type == v_array_item) {
+        VArrayItem *ai = val->item;
+        if (ai->deref_token) {
+            TExec *exec = ai->deref_token->item;
+            exec->enable = false;
+            exec = ai->upref_token->item;
+            exec->enable = false;
+        }
+    }
+    if (val->type == v_global) {
+        VGlobal *vg = val->item;
+        if (vg->deref_token) {
+            TExec *exec = vg->deref_token->item;
+            exec->enable = false;
+            exec = vg->upref_token->item;
+            exec->enable = false;
+        }
+    }
 }
