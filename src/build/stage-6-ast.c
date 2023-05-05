@@ -225,9 +225,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 }
                 if (left->type == v_global) {
                     VGlobal *vg = left->item;
-                    if (vg->ul) {
-                        vg->ul->enable = false;
-                        vg->ul = NULL;
+                    if (vg->deref_token) {
+                        TExec *exec = vg->deref_token->item;
+                        exec->enable = false;
+                        exec = vg->upref_token->item;
+                        exec->enable = false;
                     }
                 }
 

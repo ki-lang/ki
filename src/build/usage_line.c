@@ -142,7 +142,6 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         IRVal *irv = val->item;
         irv->value = usage_move_value(alc, fc, scope, irv->value);
     } else if (vt == v_class_pa) {
-        Class *class = val->rett->class;
         VClassPA *pa = val->item;
         if (pa->deref_token) {
             TExec *exec = pa->deref_token->item;
@@ -158,13 +157,10 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
             }
         }
     } else if (vt == v_global) {
-        Class *class = val->rett->class;
-        if (class && class->must_ref) {
-            VGlobal *vg = val->item;
-            UsageLine *ul = vg->ul;
-            if (ul) {
-                ul->enable = false;
-            }
+        VGlobal *vg = val->item;
+        if (vg->deref_token) {
+            TExec *exec = vg->deref_token->item;
+            exec->enable = false;
         }
     } else if (vt == v_cast) {
         Value *on = val->item;

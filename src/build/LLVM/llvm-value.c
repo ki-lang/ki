@@ -24,11 +24,12 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         VGlobal *vg = v->item;
         Global *g = vg->g;
         char *res = llvm_ir_load(b, g->type, llvm_get_global(b, g->gname, g->type));
-        if (vg->ul) {
+        vg->llvm_val = res;
+
+        if (vg->upref_token) {
             Scope *sub = scope_init(alc, sct_default, scope, true);
-            class_ref_change(alc, sub, value_init(alc, v_ir_value, res, v->rett), 1);
+            array_push(sub->ast, vg->upref_token);
             llvm_write_ast(b, sub);
-            vg->ul->decl->llvm_val = res;
         }
         return res;
     }
@@ -517,9 +518,16 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Value *from = v->item;
         if (from->type == v_class_pa) {
             VClassPA *pa = from->item;
+            if (!pa->llvm_val)
+                die("LLVM IR error, missing llvm_val from v_class_pa (compiler bug)");
             return pa->llvm_val;
+        } else if (from->type == v_global) {
+            VGlobal *vg = from->item;
+            if (!vg->llvm_val)
+                die("LLVM IR error, missing llvm_val from v_global (compiler bug)");
+            return vg->llvm_val;
         } else {
-            die("LLVM IR error, cannot generate v_ir_val from this value");
+            die("LLVM IR error, cannot generate v_ir_val from this value (compiler bug)");
         }
     }
     if (v->type == v_ir_assign_val) {

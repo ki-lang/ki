@@ -85,7 +85,9 @@ struct VArrayItem {
 };
 struct VGlobal {
     Global *g;
-    UsageLine *ul;
+    char *llvm_val;
+    Token *deref_token;
+    Token *upref_token;
 };
 struct VOrBreak {
     Value *value;
