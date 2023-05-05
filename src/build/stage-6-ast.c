@@ -207,33 +207,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                         decl->is_mut = true;
                     }
                 }
-                if (left->type == v_class_pa) {
-                    VClassPA *pa = left->item;
-                    if (pa->deref_token) {
-                        TExec *exec = pa->deref_token->item;
-                        exec->enable = false;
-                        exec = pa->upref_token->item;
-                        exec->enable = false;
-                    }
-                }
-                if (left->type == v_array_item) {
-                    VArrayItem *ai = left->item;
-                    if (ai->deref_token) {
-                        TExec *exec = ai->deref_token->item;
-                        exec->enable = false;
-                        exec = ai->upref_token->item;
-                        exec->enable = false;
-                    }
-                }
-                if (left->type == v_global) {
-                    VGlobal *vg = left->item;
-                    if (vg->deref_token) {
-                        TExec *exec = vg->deref_token->item;
-                        exec->enable = false;
-                        exec = vg->upref_token->item;
-                        exec->enable = false;
-                    }
-                }
+
+                value_disable_upref_deref(left);
 
                 Value *right = read_value(fc, alc, scope, false, 0, false);
                 if (type_is_void(right->rett)) {

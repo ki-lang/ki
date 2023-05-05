@@ -1269,3 +1269,34 @@ bool value_is_assignable(Value *v) {
     //
     return (v->type == v_decl || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global || v->type == v_array_item);
 }
+
+void value_disable_upref_deref(Value *val) {
+    //
+    if (val->type == v_class_pa) {
+        VClassPA *pa = val->item;
+        if (pa->deref_token) {
+            TExec *exec = pa->deref_token->item;
+            exec->enable = false;
+            exec = pa->upref_token->item;
+            exec->enable = false;
+        }
+    }
+    if (val->type == v_array_item) {
+        VArrayItem *ai = val->item;
+        if (ai->deref_token) {
+            TExec *exec = ai->deref_token->item;
+            exec->enable = false;
+            exec = ai->upref_token->item;
+            exec->enable = false;
+        }
+    }
+    if (val->type == v_global) {
+        VGlobal *vg = val->item;
+        if (vg->deref_token) {
+            TExec *exec = vg->deref_token->item;
+            exec->enable = false;
+            exec = vg->upref_token->item;
+            exec->enable = false;
+        }
+    }
+}

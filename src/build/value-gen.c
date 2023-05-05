@@ -75,6 +75,8 @@ Value *vgen_fptr(Allocator *alc, Func *func, Value *first_arg) {
 
 Value *vgen_class_pa(Allocator *alc, Scope *scope, Value *on, ClassProp *prop) {
     //
+    value_disable_upref_deref(on);
+
     VClassPA *item = al(alc, sizeof(VClassPA));
     item->on = on;
     item->prop = prop;
@@ -239,6 +241,8 @@ Value *vgen_atomicop(Allocator *alc, Value *left, Value *right, int op) {
 
 Value *vgen_array_item(Allocator *alc, Scope *scope, Value *on, Value *index) {
     //
+    value_disable_upref_deref(on);
+
     VArrayItem *item = al(alc, sizeof(VArrayItem));
     item->left = on;
     item->right = index;

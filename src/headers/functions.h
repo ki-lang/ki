@@ -182,6 +182,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op);
 Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type);
 bool value_is_assignable(Value *v);
+void value_disable_upref_deref(Value *val);
 
 Value *vgen_vint(Allocator *alc, long int value, Type *type, bool force_type);
 Value *vgen_vfloat(Allocator *alc, Build *b, float value, bool force_type);
