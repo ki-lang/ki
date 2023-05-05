@@ -197,13 +197,22 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             if (strstr(".=.+=.-=.*=./=.", fc->sbuf)) {
                 char *sign = dups(alc, token);
 
+                if (left->rett->borrow && left->type != v_ptrv) {
+                    if (left->type == v_decl) {
+                        Scope *fscope = scope->func->scope;
+                        if (fscope != scope) {
+                            sprintf(fc->sbuf, "You cannot change the value of a variable that has a borrow type while being inside an if/while/... or any other sub scope.");
+                            fc_error(fc);
+                        }
+                    } else {
+                        sprintf(fc->sbuf, "You cannot change the value of a property that has a borrow type");
+                        fc_error(fc);
+                    }
+                }
+
                 if (left->type == v_decl) {
                     Decl *decl = left->item;
                     if (!decl->is_mut) {
-                        if (type_tracks_ownership(decl->type) && decl->type->borrow) {
-                            sprintf(fc->sbuf, "You cannot mutate variable that contain borrowed values");
-                            fc_error(fc);
-                        }
                         decl->is_mut = true;
                     }
                 }
