@@ -15,6 +15,12 @@ ki is a programming language designed to be super fast and easy to use. You can 
 
 Goals: fast run time, fast compile times, simplicity and great package management.
 
+## Install
+
+```
+curl -s https://ki-lang.dev/dist/install.sh | bash -s latest
+```
+
 ## Basic usage
 
 ```bash
