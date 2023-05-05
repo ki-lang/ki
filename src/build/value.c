@@ -507,7 +507,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 usage_merge_ancestors(alc, scope, ancestors);
 
                 if (v->rett->borrow != right->rett->borrow) {
-                    sprintf(fc->sbuf, "One side of '??' has a borrow value and the other does not");
+                    sprintf(fc->sbuf, "One side of '??' has a borrowed value and the other does not");
                     fc_error(fc);
                 }
 
