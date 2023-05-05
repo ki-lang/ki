@@ -86,15 +86,6 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
 
         if (ul) {
 
-            // if (!decl->type->take_ownership && decl->is_arg) {
-            // if (decl->is_arg) {
-            // sprintf(fc->sbuf, "▶ You cannot give away a borrowed value (argument: '%s'). It must have ownership. You can tell the compiler to pass ownership by putting a '>' character at the start of the argument type", decl->name);
-            // } else {
-            //     sprintf(fc->sbuf, "▶ You cannot give away a borrowed value (variable: '%s'). It must have ownership.", decl->name);
-            // }
-            // fc_error(fc);
-            // }
-
             // Check if in loop
             bool in_loop = false;
             Scope *s = scope;
@@ -148,13 +139,10 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
             exec->enable = false;
         }
     } else if (vt == v_array_item) {
-        Class *class = val->rett->class;
-        if (class && class->must_ref) {
-            VArrayItem *ai = val->item;
-            UsageLine *ul = ai->ul;
-            if (ul) {
-                ul->enable = false;
-            }
+        VArrayItem *ai = val->item;
+        if (ai->deref_token) {
+            TExec *exec = ai->deref_token->item;
+            exec->enable = false;
         }
     } else if (vt == v_global) {
         VGlobal *vg = val->item;

@@ -218,9 +218,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 }
                 if (left->type == v_array_item) {
                     VArrayItem *ai = left->item;
-                    if (ai->ul) {
-                        ai->ul->enable = false;
-                        ai->ul = NULL;
+                    if (ai->deref_token) {
+                        TExec *exec = ai->deref_token->item;
+                        exec->enable = false;
+                        exec = ai->upref_token->item;
+                        exec->enable = false;
                     }
                 }
                 if (left->type == v_global) {

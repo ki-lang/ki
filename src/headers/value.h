@@ -81,7 +81,9 @@ struct VClassInit {
 struct VArrayItem {
     Value *left;
     Value *right;
-    UsageLine *ul;
+    char *llvm_val;
+    Token *deref_token;
+    Token *upref_token;
 };
 struct VGlobal {
     Global *g;

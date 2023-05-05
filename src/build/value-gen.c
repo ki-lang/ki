@@ -242,14 +242,22 @@ Value *vgen_array_item(Allocator *alc, Scope *scope, Value *on, Value *index) {
     VArrayItem *item = al(alc, sizeof(VArrayItem));
     item->left = on;
     item->right = index;
-    item->ul = NULL;
+    item->llvm_val = NULL;
+    item->deref_token = NULL;
+    item->upref_token = NULL;
 
-    Type *rett = on->rett->array_of;
-    if (scope && type_tracks_ownership(rett)) {
-        rett = type_clone(alc, rett);
+    Type *type = on->rett->array_of;
+    Value *res = value_init(alc, v_array_item, item, type);
+
+    if (scope && type_tracks_ownership(type)) {
+        Type *rett = type_clone(alc, type);
         rett->ref = true;
-        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);
-        item->ul = usage_line_init(alc, scope, decl);
+        res->rett = rett;
+
+        Value *from = vgen_ir_from(alc, res);
+        item->deref_token = tgen_ref_change_exec(alc, scope, from, -1);
+        item->upref_token = tgen_ref_change_exec(alc, scope, from, 1);
+        scope_add_defer_token(alc, scope, item->deref_token);
     }
-    return value_init(alc, v_array_item, item, rett);
+    return res;
 }
