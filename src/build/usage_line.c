@@ -352,6 +352,8 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
     Class *class = type->class;
     if (class && (class->must_deref || class->must_ref)) {
 
+        ast = ul->scope->ast;
+
         if (ul->upref_token && !ul->read_after_move) {
             // Disable upref
             ul->upref_token->enable_exec = false;
@@ -362,12 +364,12 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
             for (int i = 0; i < ul->ancestors->length; i++) {
                 UsageLine *anc = array_get_index(ul->ancestors, i);
                 if (!anc->scope->did_return) {
-                    end_usage_line(alc, anc, ast);
+                    end_usage_line(alc, anc, ul->scope->ast);
                 }
             }
 
             // Simplify algorithm of previous scopes
-            if (ul->clone_from) {
+            if (ul->clone_from && false) {
                 bool all_deref = true;
                 bool read_after_move = false;
                 for (int i = 0; i < ul->ancestors->length; i++) {
@@ -427,9 +429,58 @@ void deref_expired_decls(Allocator *alc, Scope *scope, Array *ast) {
             }
         }
     }
+
+    // Defer
+    if (scope->defer_ast) {
+        Array *def_ast = scope->defer_ast;
+        for (int i = 0; i < def_ast->length; i++) {
+            Token *t = array_get_index(def_ast, i);
+            array_push(scope->ast, t);
+        }
+    }
 }
 
-void deref_scope(Allocator *alc, Scope *scope, Scope *until) {
+void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
+    Array *decls = scope_->usage_keys;
+    if (decls) {
+        for (int i = 0; i < decls->length; i++) {
+            Decl *decl = array_get_index(decls, i);
+            UsageLine *ul = array_get_index(scope_->usage_values, i);
+
+            Scope *scope = scope_;
+            while (scope) {
+
+                if (scope == decl->scope) {
+                    if (!scope->did_return) {
+                        end_usage_line(alc, ul, ul->scope->ast);
+                    }
+                    break;
+                }
+
+                if (scope == until)
+                    break;
+                scope = scope->parent;
+            }
+        }
+    }
+
+    // Defer
+    Scope *scope = scope_;
+    while (scope) {
+        if (scope->defer_ast) {
+            Array *def_ast = scope->defer_ast;
+            for (int i = 0; i < def_ast->length; i++) {
+                Token *t = array_get_index(def_ast, i);
+                array_push(scope_->ast, t);
+            }
+        }
+        if (scope == until)
+            break;
+        scope = scope->parent;
+    }
+}
+
+void deref_scope_(Allocator *alc, Scope *scope, Scope *until) {
     Array *ast = scope->ast;
     while (scope) {
         if (!scope->did_return) {
