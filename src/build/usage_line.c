@@ -352,8 +352,6 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
     Class *class = type->class;
     if (class && (class->must_deref || class->must_ref)) {
 
-        ast = ul->scope->ast;
-
         if (ul->upref_token && !ul->read_after_move) {
             // Disable upref
             ul->upref_token->enable_exec = false;
@@ -364,12 +362,12 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
             for (int i = 0; i < ul->ancestors->length; i++) {
                 UsageLine *anc = array_get_index(ul->ancestors, i);
                 if (!anc->scope->did_return) {
-                    end_usage_line(alc, anc, ul->scope->ast);
+                    end_usage_line(alc, anc, anc->scope->ast);
                 }
             }
 
             // Simplify algorithm of previous scopes
-            if (ul->clone_from && false) {
+            if (ul->clone_from) {
                 bool all_deref = true;
                 bool read_after_move = false;
                 for (int i = 0; i < ul->ancestors->length; i++) {
@@ -398,7 +396,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
                             oldest = oldest->parent;
                         oldest->deref_token->enable = false;
                     }
-                    end_usage_line(alc, ul->clone_from, ast);
+                    end_usage_line(alc, ul->clone_from, ul->clone_from->scope->ast);
                 }
             }
 
@@ -409,7 +407,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
                 Value *val = value_init(alc, v_decl, decl, type);
                 class_ref_change(alc, sub, val, -1);
                 Token *t = tgen_exec(alc, sub, true);
-                array_push((ul->deref_scope ? ul->deref_scope->ast : ast), t);
+                array_push((ul->deref_scope ? ul->deref_scope->ast : ul->scope->ast), t);
                 ul->deref_token = t->item;
             }
         }
@@ -425,7 +423,7 @@ void deref_expired_decls(Allocator *alc, Scope *scope, Array *ast) {
             UsageLine *ul = array_get_index(scope->usage_values, i);
 
             if (decl->scope == scope) {
-                end_usage_line(alc, ul, ast);
+                end_usage_line(alc, ul, ul->scope->ast);
             }
         }
     }

@@ -279,7 +279,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     Decl *decl = left->item;
                     UsageLine *ul = usage_line_get(scope, decl);
                     if (ul) {
-                        end_usage_line(alc, ul, scope->ast);
+                        end_usage_line(alc, ul, ul->scope->ast);
                     }
                 } else if (left->type == v_class_pa || left->type == v_global) {
                     // Deref
