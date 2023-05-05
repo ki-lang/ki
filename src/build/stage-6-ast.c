@@ -199,8 +199,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
                 if (left->rett->borrow && left->type != v_ptrv) {
                     if (left->type == v_decl) {
-                        Scope *fscope = scope->func->scope;
-                        if (fscope != scope) {
+                        Decl *decl = left->item;
+                        if (scope != decl->scope) {
                             sprintf(fc->sbuf, "You cannot change the value of a variable that has a borrow type while being inside an if/while/... or any other sub scope.");
                             fc_error(fc);
                         }
