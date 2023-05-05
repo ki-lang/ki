@@ -57,8 +57,6 @@ UsageLine *usage_line_get(Scope *scope, Decl *decl) {
     }
 
     return NULL;
-    // printf("Usage line for '%s' not found (compiler bug)\n", decl->name);
-    // raise(11);
 }
 
 void usage_read_value(Allocator *alc, Scope *scope, Value *val) {
@@ -329,7 +327,6 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
     Type *type = decl->type;
 
     if (type->borrow) {
-        // printf("Keep:%s in %s\n", decl->name, decl->scope->func->dname);
         return;
     }
 
@@ -456,28 +453,6 @@ void deref_scope(Allocator *alc, Scope *scope_, Scope *until) {
                 array_push(scope_->ast, t);
             }
         }
-        if (scope == until)
-            break;
-        scope = scope->parent;
-    }
-}
-
-void deref_scope_(Allocator *alc, Scope *scope, Scope *until) {
-    Array *ast = scope->ast;
-    while (scope) {
-        if (!scope->did_return) {
-            //
-            deref_expired_decls(alc, scope, ast);
-            // Defer code
-            if (scope->defer_ast) {
-                Array *def_ast = scope->defer_ast;
-                for (int i = 0; i < def_ast->length; i++) {
-                    Token *t = array_get_index(def_ast, i);
-                    // array_push(ast, t);
-                }
-            }
-        }
-
         if (scope == until)
             break;
         scope = scope->parent;
