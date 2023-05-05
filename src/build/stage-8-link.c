@@ -18,23 +18,24 @@
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/lto.h>
 
-#include <threads.h>
-
-void llvm_init(Build *b);
-void *stage_8_compile_o(void *data_);
-void stage_8_optimize(LLVMModuleRef mod);
-void stage_8_link(Build *b, Array *o_files);
-
-thread_local LLVMTargetMachineRef g_target_machine;
-thread_local LLVMTargetDataRef g_target_data;
-thread_local char *g_llvm_triple;
-thread_local char *g_llvm_data_layout;
+struct Target {
+    LLVMTargetMachineRef target_machine;
+    LLVMTargetDataRef target_data;
+    char *llvm_triple;
+    char *llvm_data_layout;
+};
 
 struct CompileData {
     Build *b;
     Array *ir_files;
     char *path_o;
+    struct Target *target;
 };
+
+void llvm_init(Build *b, struct Target *t);
+void *stage_8_compile_o(void *data_);
+void stage_8_optimize(LLVMModuleRef mod);
+void stage_8_link(Build *b, Array *o_files);
 
 void stage_8(Build *b) {
     //
@@ -82,6 +83,7 @@ void stage_8(Build *b) {
                 data->b = b;
                 data->ir_files = ir_files;
                 data->path_o = nsc->path_o;
+                data->target = al(b->alc, sizeof(struct Target));
                 // stage_8_compile_o((void *)data);
 
                 if (threads->length >= 20) {
@@ -136,11 +138,12 @@ void *stage_8_compile_o(void *data_) {
     Build *b = data->b;
     Array *ir_files = data->ir_files;
     char *path_o = data->path_o;
+    struct Target *target = data->target;
 
     // struct timeval begin, end;
     // gettimeofday(&begin, NULL);
 
-    llvm_init(b);
+    llvm_init(b, target);
 
     //
     LLVMContextRef ctx = LLVMContextCreate();
@@ -186,14 +189,14 @@ void *stage_8_compile_o(void *data_) {
 
     // Compile
     error = NULL;
-    LLVMSetTarget(nsc_mod, g_llvm_triple);
-    LLVMSetDataLayout(nsc_mod, g_llvm_data_layout);
+    LLVMSetTarget(nsc_mod, target->llvm_triple);
+    LLVMSetDataLayout(nsc_mod, target->llvm_data_layout);
 
     if (b->optimize) {
         stage_8_optimize(nsc_mod);
     }
 
-    if (LLVMTargetMachineEmitToFile(g_target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
+    if (LLVMTargetMachineEmitToFile(target->target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
         fprintf(stderr, "Failed to emit machine code!\n");
         fprintf(stderr, "Error: %s\n", error);
         LLVMDisposeMessage(error);
@@ -290,7 +293,7 @@ void stage_8_optimize(LLVMModuleRef mod) {
     LLVMDisposePassManager(mod_passes);
 }
 
-void llvm_init(Build *b) {
+void llvm_init(Build *b, struct Target *t) {
     //
     char *error = NULL;
     //
@@ -316,10 +319,10 @@ void llvm_init(Build *b) {
     LLVMTargetDataRef datalayout = LLVMCreateTargetDataLayout(machine);
     char *datalayout_str = LLVMCopyStringRepOfTargetData(datalayout);
 
-    g_target_machine = machine;
-    g_target_data = LLVMCreateTargetDataLayout(g_target_machine);
-    g_llvm_triple = triple;
-    g_llvm_data_layout = datalayout_str;
+    t->target_machine = machine;
+    t->target_data = LLVMCreateTargetDataLayout(t->target_machine);
+    t->llvm_triple = triple;
+    t->llvm_data_layout = datalayout_str;
 
     // printf("target: %s, [%s], %d, %d\n", LLVMGetTargetName(target), LLVMGetTargetDescription(target), LLVMTargetHasJIT(target), LLVMTargetHasTargetMachine(target));
     // printf("triple: %s\n", LLVMGetDefaultTargetTriple());
