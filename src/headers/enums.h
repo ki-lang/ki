@@ -86,6 +86,7 @@ enum VALUETYPE {
     v_ir_value,
     v_upref_value,
     v_ir_val,
+    v_ir_from,
     v_ir_assign_val,
     v_ir_raw_val,
     v_ir_load,

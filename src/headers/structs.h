@@ -192,6 +192,7 @@ struct Scope {
     Map *upref_slots;
     Func *func;
     Array *ast;
+    Array *defer_ast;
     Array *usage_keys;
     Array *usage_values;
     VScope *vscope;

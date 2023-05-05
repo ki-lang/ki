@@ -219,8 +219,10 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
             if (!is_static) {
                 Arg *arg = array_get_index(func->args, 0);
-                arg->type->borrow = borrow;
-                arg->type->ref = ref;
+                if (type_tracks_ownership(arg->type)) {
+                    arg->type->borrow = borrow;
+                    arg->type->ref = ref;
+                }
             }
 
             if (strcmp(func->name, "__ref") == 0) {

@@ -197,37 +197,27 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             if (strstr(".=.+=.-=.*=./=.", fc->sbuf)) {
                 char *sign = dups(alc, token);
 
+                if (left->rett->borrow && left->type != v_ptrv) {
+                    if (left->type == v_decl) {
+                        Decl *decl = left->item;
+                        if (scope != decl->scope) {
+                            sprintf(fc->sbuf, "You cannot change the value of a variable that has a borrow type while being inside an if/while/... or any other sub scope.");
+                            fc_error(fc);
+                        }
+                    } else {
+                        sprintf(fc->sbuf, "You cannot change the value of a property that has a borrow type");
+                        fc_error(fc);
+                    }
+                }
+
                 if (left->type == v_decl) {
                     Decl *decl = left->item;
                     if (!decl->is_mut) {
-                        if (type_tracks_ownership(decl->type) && decl->type->borrow) {
-                            sprintf(fc->sbuf, "You cannot mutate variable that contain borrowed values");
-                            fc_error(fc);
-                        }
                         decl->is_mut = true;
                     }
                 }
-                if (left->type == v_class_pa) {
-                    VClassPA *pa = left->item;
-                    if (pa->ul) {
-                        pa->ul->enable = false;
-                        pa->ul = NULL;
-                    }
-                }
-                if (left->type == v_array_item) {
-                    VArrayItem *ai = left->item;
-                    if (ai->ul) {
-                        ai->ul->enable = false;
-                        ai->ul = NULL;
-                    }
-                }
-                if (left->type == v_global) {
-                    VGlobal *vg = left->item;
-                    if (vg->ul) {
-                        vg->ul->enable = false;
-                        vg->ul = NULL;
-                    }
-                }
+
+                value_disable_upref_deref(left);
 
                 Value *right = read_value(fc, alc, scope, false, 0, false);
                 if (type_is_void(right->rett)) {
@@ -277,11 +267,12 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     Decl *decl = left->item;
                     UsageLine *ul = usage_line_get(scope, decl);
                     if (ul) {
-                        end_usage_line(alc, ul);
+                        end_usage_line(alc, ul, ul->scope->ast);
                     }
                 } else if (left->type == v_class_pa || left->type == v_global) {
                     // Deref
-                    class_ref_change(alc, scope, left, -1);
+                    Value *on = vgen_value_then_ir_value(alc, left);
+                    class_ref_change(alc, scope, on, -1);
                 }
 
                 array_push(scope->ast, tgen_assign(alc, left, ir_right));
@@ -313,7 +304,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
     // Derefs
     if (!scope->did_return) {
-        deref_expired_decls(alc, scope);
+        deref_expired_decls(alc, scope, scope->ast);
     }
 }
 

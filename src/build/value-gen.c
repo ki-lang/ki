@@ -75,19 +75,34 @@ Value *vgen_fptr(Allocator *alc, Func *func, Value *first_arg) {
 
 Value *vgen_class_pa(Allocator *alc, Scope *scope, Value *on, ClassProp *prop) {
     //
+    value_disable_upref_deref(on);
+
     VClassPA *item = al(alc, sizeof(VClassPA));
     item->on = on;
     item->prop = prop;
-    item->ul = NULL;
+    item->llvm_val = NULL;
+    item->deref_token = NULL;
+    item->upref_token = NULL;
 
-    Type *rett = prop->type;
-    if (scope && type_tracks_ownership(rett)) {
-        rett = type_clone(alc, rett);
+    Type *prop_type = prop->type;
+    Value *res = value_init(alc, v_class_pa, item, prop_type);
+
+    if (scope && type_tracks_ownership(prop_type)) {
+        Type *rett = type_clone(alc, prop_type);
         rett->ref = true;
-        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);
-        item->ul = usage_line_init(alc, scope, decl);
+        res->rett = rett;
+
+        Value *from = vgen_ir_from(alc, res);
+        item->deref_token = tgen_ref_change_exec(alc, scope, from, -1);
+        item->upref_token = tgen_ref_change_exec(alc, scope, from, 1);
+        scope_add_defer_token(alc, scope, item->deref_token);
     }
-    return value_init(alc, v_class_pa, item, rett);
+    return res;
+}
+
+Value *vgen_ir_from(Allocator *alc, Value *from) {
+    //
+    return value_init(alc, v_ir_from, from, from->rett);
 }
 
 Value *vgen_class_init(Allocator *alc, Scope *scope, Class *class, Map *values) {
@@ -226,17 +241,27 @@ Value *vgen_atomicop(Allocator *alc, Value *left, Value *right, int op) {
 
 Value *vgen_array_item(Allocator *alc, Scope *scope, Value *on, Value *index) {
     //
+    value_disable_upref_deref(on);
+
     VArrayItem *item = al(alc, sizeof(VArrayItem));
     item->left = on;
     item->right = index;
-    item->ul = NULL;
+    item->llvm_val = NULL;
+    item->deref_token = NULL;
+    item->upref_token = NULL;
 
-    Type *rett = on->rett->array_of;
-    if (scope && type_tracks_ownership(rett)) {
-        rett = type_clone(alc, rett);
+    Type *type = on->rett->array_of;
+    Value *res = value_init(alc, v_array_item, item, type);
+
+    if (scope && type_tracks_ownership(type)) {
+        Type *rett = type_clone(alc, type);
         rett->ref = true;
-        Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);
-        item->ul = usage_line_init(alc, scope, decl);
+        res->rett = rett;
+
+        Value *from = vgen_ir_from(alc, res);
+        item->deref_token = tgen_ref_change_exec(alc, scope, from, -1);
+        item->upref_token = tgen_ref_change_exec(alc, scope, from, 1);
+        scope_add_defer_token(alc, scope, item->deref_token);
     }
-    return value_init(alc, v_array_item, item, rett);
+    return res;
 }

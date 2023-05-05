@@ -10,6 +10,7 @@ Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast) {
     scope->upref_slots = map_make(alc);
     scope->func = NULL;
     scope->ast = has_ast ? array_make(alc, 10) : NULL;
+    scope->defer_ast = NULL;
     scope->usage_keys = NULL;
     scope->usage_values = NULL;
     scope->vscope = NULL;
@@ -81,4 +82,12 @@ void scope_apply_issets(Allocator *alc, Scope *scope, Array *issets) {
             map_set(scope->identifiers, decl->name, idf);
         }
     }
+}
+
+void scope_add_defer_token(Allocator *alc, Scope *scope, Token *token) {
+    //
+    if (!scope->defer_ast) {
+        scope->defer_ast = array_make(alc, 6);
+    }
+    array_push(scope->defer_ast, token);
 }
