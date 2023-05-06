@@ -248,34 +248,38 @@ class Server {
             }
 
             read_buf.length += rcvd @as uxx;
-            http_con.parse() !! {
-                throw sent_error;
-            };
 
-            if http_con.body_parsed {
+            while http_con.parse_pos < http_con.read_buf.length {
+        
+                http_con.parse() !! {
+                    throw sent_error;
+                };
 
-                if data.static_dirs.length > 0 {
-                    let path = http_con.request_path.trim("/");
-                    each data.static_dirs as dir {
-                        let fullpath = dir + path; 
-                        if fs:is_file(fullpath) {
-                            let stream = fs:open(fullpath, true, false) !! continue;;
-                            http_con.send_file(stream, null);
-                            http_con.reset_request_data();
-                            return;
+                if http_con.body_parsed {
+
+                    if data.static_dirs.length > 0 {
+                        let path = http_con.request_path.trim("/");
+                        each data.static_dirs as dir {
+                            let fullpath = dir + path; 
+                            if fs:is_file(fullpath) {
+                                let stream = fs:open(fullpath, true, false) !! continue;;
+                                http_con.send_file(stream, null);
+                                http_con.reset_request_data();
+                                return;
+                            }
                         }
                     }
+
+                    let resp = handler(Request{
+                        http_con: http_con,
+                        headers: http_con.headers @as *Map[String],
+                        method: http_con.request_method @as *String,
+                        path: http_con.request_path @as *String,
+                    });
+
+                    http_con.respond(resp);
+                    http_con.reset_request_data();
                 }
-
-                let resp = handler(Request{
-                    http_con: http_con,
-                    headers: http_con.headers @as *Map[String],
-                    method: http_con.request_method @as *String,
-                    path: http_con.request_path @as *String,
-                });
-
-                http_con.respond(resp);
-                http_con.reset_request_data();
             }
 
             if(rcvd < buf_size) {
