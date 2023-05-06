@@ -14,21 +14,66 @@ class Connection {
 	phase: uxx = 0;
 	parse_pos: uxx = 0;
 	line: utils:ByteBuffer = utils:ByteBuffer.init(200);
-	headers_parsed: bool = false;
 	headers: Map[String] = Map[String].init();
 	request_method: String = "GET";
 	request_path: String = "/";
 	request_protocol: String = "HTTP/1.1";
+	content_length: uxx = 0;
+	content_end_pos: uxx = 0;
+
+	headers_parsed: bool = false;
+	body_parsed: bool = false;
 
 	// Response
 	out_file: ?fs:FileStream = null;
 	out_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
 	out_pos: uxx = 0;
 
-	func parse_headers() void !sent_error {
+	func reset_parser() void {
+
+        let read_buf = this.read_buf;
+        if this.parse_pos == read_buf.length {
+            read_buf.clear();
+            this.parse_pos = 0;
+        }
+        this.line.clear();
+	}
+
+	func reset_out() void {
+        this.out_buf.clear();
+        this.out_pos = 0;
+	}
+
+	func reset_request_data() void {
+        this.uploads = null;
+        this.phase = 0;
+        this.headers = Map[String].init();
+        this.headers_parsed = false;
+		this.body_parsed = false;
+		this.content_length = 0;
+		//
+		this.parse_pos = this.content_end_pos;
+		this.content_end_pos = 0;
+	}
+
+	func parse() void !sent_error {
 		if this.headers_parsed {
-			return;
+			this.parse_body();
+		} else {
+			this.parse_headers() !! throw sent_error;;
+			if this.headers_parsed {
+				this.parse_body();
+			}
 		}
+	}
+
+	private func parse_body() void {
+		if this.read_buf.length >= this.content_end_pos {
+			this.body_parsed = true;
+		}
+	}
+
+	private func parse_headers() void !sent_error {
 
 		let phase = this.phase;
 		let pos = this.parse_pos;
@@ -50,6 +95,7 @@ class Connection {
 
 				if line.length == 0 {
 					this.headers_parsed = true;
+					this.content_end_pos = pos + this.content_length;
 					break;
 				}
 
@@ -67,10 +113,14 @@ class Connection {
 					let value_index = line.index_where_byte_is_not(' ', value_start_index) !? value_start_index;
 					let value = line.sub_str(value_index, line.length - value_index);
 
-					//headers.set(key, value);
+					if key == "content-length" {
+						this.content_length = value.to_uxx() !! {
+							this.respond(Response.error(400)); // Invalid request
+							throw sent_error;
+						};
+					}
 
-					//if key == "content-length" {
-					//}
+					headers.set(key, value);
 
 				} else if phase == 0 {
 					// HTTP line
