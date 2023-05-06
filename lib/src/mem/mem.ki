@@ -84,30 +84,34 @@ func clear(adrc: ptr, size: uxx) void {
 
 func copy(from: ptr, to: ptr, len: uxx) void {
 
-  while(len > sizeof(ptr)){
-	  len -= sizeof(ptr);
-	  @ptrv(to, uxx, 0) = @ptrv(from, uxx, 0);
-	  from += sizeof(ptr);
-	  to += sizeof(ptr);
-  }
-  while(len > 3){
-	  len -= 4;
-	  @ptrv(to, u32, 0) = @ptrv(from, u32, 0);
-	  from += 4;
-	  to += 4;
-  }
-  while(len > 1){
-	  len -= 2;
-	  @ptrv(to, u16, 0) = @ptrv(from, u16, 0);
-	  from += 2;
-	  to += 2;
-  }
-  while (len > 0){
-	  len-=1;
-	  @ptrv(to, u8, 0) = @ptrv(from, u8, 0);
-	  from+=1;
-	  to+=1;
-  }
+	let i = len / sizeof(ptr);
+	let y = i;
+  	while i > 0 {
+	 	i--;
+	 	@ptrv(to, uxx, i) = @ptrv(from, uxx, i);
+  	}
+	len -= y * sizeof(ptr);
+	from += y * sizeof(ptr);
+	to += y * sizeof(ptr);
+
+  	while(len > 3){
+	 	len -= 4;
+	 	@ptrv(to, u32, 0) = @ptrv(from, u32, 0);
+	 	from += 4;
+	 	to += 4;
+  	}
+  	while(len > 1){
+	 	len -= 2;
+	 	@ptrv(to, u16, 0) = @ptrv(from, u16, 0);
+	 	from += 2;
+	 	to += 2;
+  	}
+  	while (len > 0){
+	 	len-=1;
+	 	@ptrv(to, u8, 0) = @ptrv(from, u8, 0);
+	 	from+=1;
+	 	to+=1;
+  	}
 }
 
 func equal(a: ptr, b: ptr, length: uxx) bool {
