@@ -240,7 +240,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 type_check(fc, left->rett, right->rett);
 
                 if (right->rett->ref && (left->type == v_class_pa || left->type == v_global)) {
-                    sprintf(fc->sbuf, "You cannot store refs in pa's or globals");
+                    sprintf(fc->sbuf, "References can only be assigned to local variables");
                     fc_error(fc);
                 }
                 if (left->type != v_ptrv) {
