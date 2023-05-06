@@ -63,7 +63,7 @@ else
 endif
 
 clean:
-	rm -f ki $(OBJECTS)
+	rm -f ki $(OBJECTS) debug/build/link.o
 
 linux: ki $(os_linux)
 macos: ki $(os_macos)

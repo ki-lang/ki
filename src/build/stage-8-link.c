@@ -86,7 +86,7 @@ void stage_8(Build *b) {
                 data->target = al(b->alc, sizeof(struct Target));
                 // stage_8_compile_o((void *)data);
 
-                if (threads->length >= 20) {
+                if (threads->length >= 16) {
                     // Wait for the first thread
                     pthread_t *thr = array_pop_first(threads);
                     pthread_join(*thr, NULL);
