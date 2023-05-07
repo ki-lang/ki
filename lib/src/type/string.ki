@@ -364,6 +364,11 @@ class String type:ptr track {
 	// Internals
 	/////////////////////
 
+	func copy() String {
+		@ref this;
+		return this @as String;
+	}
+
 	func __ref() void {
 		if this.is_const() { return; }
 		let adr = (this @as ptr) + sizeof(uxx) + 4;
@@ -388,6 +393,10 @@ class String type:ptr track {
 	func __add(str: *String) String {
 		let this_len = this.bytes();
 		let str_len = str.bytes();
+		if str_len == 0 {
+			@ref this;
+			return this @as String;
+		}
 		let len = this_len + str_len;
 		if len == 0 {
 			return "";
