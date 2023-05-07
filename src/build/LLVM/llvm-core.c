@@ -80,7 +80,9 @@ void llvm_gen_global_ir(LB *b) {
         char *ltype = llvm_type(b, type);
         str_append_chars(ir, "@");
         str_append_chars(ir, name);
-        str_append_chars(ir, " = dso_local global ");
+        str_append_chars(ir, " = dso_local ");
+        str_append_chars(ir, g->shared ? "" : "thread_local(initialexec) ");
+        str_append_chars(ir, " global ");
         str_append_chars(ir, ltype);
         str_append_chars(ir, " ");
         if (type->ptr_depth > 0) {

@@ -21,9 +21,9 @@ func alloc(size: uxx) ptr {
 		alcs = list;
 	}
 
-	let pow = 4#u8;
-	let cmp = 16#uxx;
-	while cmp < size {
+	let pow = 1#u8;
+	let cmp = 32#uxx;
+	while cmp <= size {
 		cmp = cmp << 1;
 		pow += 1;
 	}
@@ -31,12 +31,12 @@ func alloc(size: uxx) ptr {
 	let adr : ptr = (alcs @as ptr) + (pow * sizeof(ptr));
 	let alc = @ptrv(adr, ?Allocator, 0);
 	if alc == null {
-		alc = Allocator.init(1#uxx << pow + 1, 1);
+		alc = Allocator.init(cmp + 1);
 		@ptrv(adr, ?Allocator, 0) = alc;
 	}
 	// Get chunk
 	rep alc = alc @as Allocator;
-	let res = alc.get_slot();
+	let res = alc.alloc();
 	@ptrv(res, u8, 0) = pow;
 
 	return res + 1;
