@@ -282,40 +282,16 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
         } else if (amount < 0) {
             //
             Value *ir_sub;
-            Value *is_zero;
 
             if (class->async) {
                 Value *sub = vgen_atomicop(alc, ir_pa, vgen_vint(alc, amount * -1, prop->type, false), op_sub);
-                ir_sub = vgen_ir_val(alc, sub, prop->type);
-                array_push(scope->ast, token_init(alc, tkn_ir_val, ir_sub->item));
-                is_zero = vgen_compare(alc, class->fc->b, ir_sub, vgen_vint(alc, 1, prop->type, false), op_eq);
+                array_push(scope->ast, token_init(alc, tkn_statement, sub));
             } else {
                 Value *ir_pa_load = value_init(alc, v_ir_load, ir_pa, prop->type);
                 Value *sub = vgen_op(alc, class->fc->b, ir_pa_load, vgen_vint(alc, amount * -1, prop->type, false), op_sub, false);
-                ir_sub = vgen_ir_val(alc, sub, prop->type);
-                array_push(scope->ast, token_init(alc, tkn_ir_val, ir_sub->item));
-                is_zero = vgen_compare(alc, class->fc->b, ir_sub, vgen_vint(alc, 0, prop->type, false), op_eq);
+                Token *as = tgen_assign(alc, ir_pa, sub);
+                array_push(scope->ast, as);
             }
-
-            Scope *code = scope_init(alc, sct_default, scope, true);
-            Scope *elif = scope_init(alc, sct_default, scope, true);
-            // == 0 : Call free
-            Value *fptr = vgen_fptr(alc, class->func_free, NULL);
-            Array *values = array_make(alc, 2);
-            array_push(values, ir_on);
-            Value *fcall = vgen_fcall(alc, NULL, fptr, values, type_gen_void(alc), NULL);
-            array_push(code->ast, token_init(alc, tkn_statement, fcall));
-
-            // != 0 : else update _RC
-            if (!class->async) {
-                Token *as = tgen_assign(alc, ir_pa, ir_sub);
-                array_push(elif->ast, as);
-            }
-
-            //
-            TIf *ift = tgen_tif(alc, is_zero, code, elif, NULL);
-            Token *t = token_init(alc, tkn_if, ift);
-            array_push(scope->ast, t);
         }
     }
 }

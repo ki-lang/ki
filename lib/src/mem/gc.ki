@@ -1,0 +1,46 @@
+
+// Allocator starts with 1 chunk (4 slots)
+// All slot addresses are stored in a free_slot array
+
+// When allocating we take the first item in the free_slot array and return it
+// If no spots left, we do a RC check on all objects
+// If RC == 0 | add to free_slot array
+
+// If free_slot count < 25% of total slot count : try removing empty blocks until total slots is reduced by 50% 
+// If free_slot count > 75% of total slot count : Create a new block and dubble the total slot count
+// return first item in the free_slot array
+
+struct Alc[T] {
+
+	let slot_total: uxx;
+	let free_index: uxx = 0;
+	let free_list: ptr;
+
+	let block_total: uxx;
+	let block_count: uxx;
+	let blocks: ptr;
+
+	static instance: CLASS;
+
+	func alloc() ptr {
+
+		let alc = CLASS.instance ?? @vs : &CLASS {
+
+			let slot_total = 4;
+
+			let free_list = mem:alloc(slot_total * sizeof(T));
+
+			let block_count = 1;
+			let block_total = blockc;
+
+			let alc = CLASS {
+			};
+
+			let res = &alc;
+			CLASS.instance = alc;
+			return res;
+		};
+
+
+	}
+}
