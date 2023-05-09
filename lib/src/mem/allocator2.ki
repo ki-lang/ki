@@ -17,8 +17,8 @@ struct Allocator2 {
 	size: uxx;
 	block: ptr;
 
-	total_slots = 0;
-	total_slots_free = 0;
+	total_slots: uxx = 0;
+	total_slots_free: uxx = 0;
 
 	static func init(size_: uxx) CLASS {
 		let adr = sys_alloc(sizeof_class(CLASS));
@@ -26,19 +26,19 @@ struct Allocator2 {
 		let alc =  adr @as CLASS;
 
 		let size = size_ + sizeof(uxx);
-		let slots = 4;
-		let ps = sizeof(ptr);
-		let block = mem:sys_alloc(ps * 4 + (slots * ps) + (slots * size));
+		let slots : uxx = 4;
+		let ps : uxx = sizeof(ptr);
+		let block = sys_alloc(ps * 4 + (slots * ps) + (slots * size));
 
-		@ptrv(block, ptr, 0) = null;
-		@ptrv(block, ptr, 1) = null;
+		@ptrv(block, ?ptr, 0) = null;
+		@ptrv(block, ?ptr, 1) = null;
 		@ptrv(block, uxx, 2) = slots;
 		@ptrv(block, uxx, 3) = slots;
 
 		let free_list = block + 4 * ps;
 		let data = free_list + (slots * ps);
-		let i = 0;
-		while(i < slots) {
+		let i : uxx = 0;
+		while i < slots {
 			let slot_adr = data + (i * size);
 			@ptrv(free_list, ptr, i) = slot_adr;
 			@ptrv(slot_adr, uxx, 0) = 1;
@@ -54,7 +54,7 @@ struct Allocator2 {
 	func alloc() ptr {
 
 		let block = this.block;
-		let ps = sizeof(ptr);
+		let ps : uxx = sizeof(ptr);
 
 		while true {
 			let slots_free = @ptrv(block, uxx, 3);
@@ -71,7 +71,7 @@ struct Allocator2 {
 
 		// No free slots in all blocks
 		// Let gc free up slots
-		gc();
+		this.gc();
 
 		let total_slots = this.total_slots;
 		let total_free = this.total_slots_free;
@@ -81,11 +81,11 @@ struct Allocator2 {
 			let next = this.new_block(@ptrv(block, uxx, 2) * 2);
 			@ptrv(block, ptr, 1) = next;
 
-		} else if slots_free > (slots_total - quarter) {
+		} else if total_free > (total_slots - quarter) {
 			// Reduce amount of slots
 			let prev_block = @ptrv(block, ?ptr, 0);
 			if isset(prev_block) {
-				@ptrv(prev_block, ptr, 1) = null;
+				@ptrv(prev_block, ?ptr, 1) = null;
 				sys_free(block);
 			}
 		}
@@ -106,19 +106,19 @@ struct Allocator2 {
 	func new_block(slots: uxx) ptr {
 
 		let size = this.size;
-		let ps = sizeof(ptr);
+		let ps : uxx = sizeof(ptr);
 
-		let block = mem:sys_alloc(ps * 4 + (slots * ps) + (slots * size));
+		let block = sys_alloc(ps * 4 + (slots * ps) + (slots * size));
 
-		@ptrv(block, ptr, 0) = null;
-		@ptrv(block, ptr, 1) = null;
+		@ptrv(block, ?ptr, 0) = null;
+		@ptrv(block, ?ptr, 1) = null;
 		@ptrv(block, uxx, 2) = slots;
 		@ptrv(block, uxx, 3) = slots;
 
 		let free_list = block + 4 * ps;
 		let data = free_list + (slots * ps);
-		let i = 0;
-		while(i < slots) {
+		let i : uxx = 0;
+		while i < slots {
 			let slot_adr = data + (i * size);
 			@ptrv(free_list, ptr, i) = slot_adr;
 			@ptrv(slot_adr, uxx, 0) = 1;
@@ -132,15 +132,16 @@ struct Allocator2 {
 		let total_slots: uxx = 0;
 		let total_free: uxx = 0;
 		let size = this.size;
+		let ps : uxx = sizeof(ptr);
 
 		let block = this.block;
 
 		while true {
 			let slots = @ptrv(block, uxx, 2);
-			let free_count = 0;
+			let free_count : uxx = 0;
 			let free_list = block + 4 * ps;
 			let data = free_list + (slots * ps);
-			let i = 0;
+			let i : uxx = 0;
 			while i < slots {
 				let slot_adr = data + (i * size);
 				let rc = @ptrv(slot_adr, uxx, 0);
