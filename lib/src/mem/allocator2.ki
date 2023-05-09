@@ -1,5 +1,5 @@
 
-// Allocator starts with 1 chunk (4 slots)
+// Allocator starts with 1 block (4 slots)
 // All slot addresses are stored in a free_slot array
 
 // When allocating we take the first item in the free_slot array and return it
@@ -10,7 +10,7 @@
 // If free_slot count > 75% of total slot count : Create a new block and dubble the total slot count
 // return first item in the free_slot array
 
-// block | ptr:prev_block | ptr:next_block | uxx:slots | uxx:free_count | ptr[slots]:free | sizeof(T)[slots]:data
+// block | ptr:prev_block | ptr:next_block | uxx:slots | uxx:free_count | ptr[slots]:free | (uxx: rc + ?ptr: deref_props_func + size)[slots]:data
 
 struct Allocator2 {
 
@@ -51,7 +51,7 @@ struct Allocator2 {
 		return alc;
 	}
 
-	func alloc() ptr {
+	func alloc(deref_props_func: ?ptr) ptr {
 
 		let block = this.block;
 		let ps : uxx = sizeof(ptr);
@@ -62,7 +62,9 @@ struct Allocator2 {
 				let index = slots_free - 1;
 				@ptrv(block, uxx, 3) = index;
 				let free_list = block + 4 * ps;
-				return @ptrv(free_list, ptr, index) + sizeof(uxx);
+				let slot_adr = @ptrv(free_list, ptr, index);
+				@ptrv(slot_adr, ?ptr, 1) = deref_props_func;
+				return slot_adr + ps + ps;
 			}
 			// No slots left, check next block
 			let next = @ptrv(block, ?ptr, 1);
@@ -100,7 +102,9 @@ struct Allocator2 {
 		let index = slots_free - 1;
 		@ptrv(block, uxx, 3) = index;
 		let free_list = block + 4 * ps;
-		return @ptrv(free_list, ptr, index) + sizeof(uxx);
+		let slot_adr = @ptrv(free_list, ptr, index);
+		@ptrv(slot_adr, ?ptr, 1) = deref_props_func;
+		return slot_adr + ps + ps;
 	}
 
 	func new_block(slots: uxx) ptr {
@@ -148,6 +152,10 @@ struct Allocator2 {
 				if rc == 0 {
 					// Free slot
 					@ptrv(free_list, ptr, free_count) = slot_adr;
+					let deref_props_func = @ptrv(slot_adr, ?fn(ptr)(void), 1);
+					if isset(deref_props_func) {
+						deref_props_func(slot_adr + ps + ps);
+					}
 					free_count++;
 					@ptrv(slot_adr, uxx, 1); // Set RC back to 1
 				}
