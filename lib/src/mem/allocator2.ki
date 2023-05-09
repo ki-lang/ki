@@ -1,0 +1,174 @@
+
+// Allocator starts with 1 chunk (4 slots)
+// All slot addresses are stored in a free_slot array
+
+// When allocating we take the first item in the free_slot array and return it
+// If no spots left, we do a RC check on all objects
+// If RC == 0 | add to free_slot array
+
+// If free_slot count < 25% of total slot count : try removing empty blocks until total slots is reduced by 50% 
+// If free_slot count > 75% of total slot count : Create a new block and dubble the total slot count
+// return first item in the free_slot array
+
+// block | ptr:prev_block | ptr:next_block | uxx:slots | uxx:free_count | ptr[slots]:free | sizeof(T)[slots]:data
+
+struct Allocator2 {
+
+	size: uxx;
+	block: ptr;
+
+	total_slots = 0;
+	total_slots_free = 0;
+
+	static func init(size_: uxx) CLASS {
+		let adr = sys_alloc(sizeof_class(CLASS));
+		clear(adr, sizeof_class(CLASS));
+		let alc =  adr @as CLASS;
+
+		let size = size_ + sizeof(uxx);
+		let slots = 4;
+		let ps = sizeof(ptr);
+		let block = mem:sys_alloc(ps * 4 + (slots * ps) + (slots * size));
+
+		@ptrv(block, ptr, 0) = null;
+		@ptrv(block, ptr, 1) = null;
+		@ptrv(block, uxx, 2) = slots;
+		@ptrv(block, uxx, 3) = slots;
+
+		let free_list = block + 4 * ps;
+		let data = free_list + (slots * ps);
+		let i = 0;
+		while(i < slots) {
+			let slot_adr = data + (i * size);
+			@ptrv(free_list, ptr, i) = slot_adr;
+			@ptrv(slot_adr, uxx, 0) = 1;
+			i++;
+		}
+
+		alc.size = size;
+		alc.block = block;
+
+		return alc;
+	}
+
+	func alloc() ptr {
+
+		let block = this.block;
+		let ps = sizeof(ptr);
+
+		while true {
+			let slots_free = @ptrv(block, uxx, 3);
+			if slots_free > 0 {
+				let index = slots_free - 1;
+				@ptrv(block, uxx, 3) = index;
+				let free_list = block + 4 * ps;
+				return @ptrv(free_list, ptr, index) + sizeof(uxx);
+			}
+			// No slots left, check next block
+			let next = @ptrv(block, ?ptr, 1);
+			block = next ?! break;;
+		}
+
+		// No free slots in all blocks
+		// Let gc free up slots
+		gc();
+
+		let total_slots = this.total_slots;
+		let total_free = this.total_slots_free;
+		let quarter = total_slots / 4;
+		if total_free < quarter {
+			// Increase amount of slots
+			let next = this.new_block(@ptrv(block, uxx, 2) * 2);
+			@ptrv(block, ptr, 1) = next;
+
+		} else if slots_free > (slots_total - quarter) {
+			// Reduce amount of slots
+			let prev_block = @ptrv(block, ?ptr, 0);
+			if isset(prev_block) {
+				@ptrv(prev_block, ptr, 1) = null;
+				sys_free(block);
+			}
+		}
+
+		// Blocks 
+		rep block = this.block;
+		let slots_free = @ptrv(block, uxx, 3);
+		if slots_free == 0 {
+			block = @ptrv(block, ptr, 1);
+			slots_free = @ptrv(block, uxx, 3);
+		}
+		let index = slots_free - 1;
+		@ptrv(block, uxx, 3) = index;
+		let free_list = block + 4 * ps;
+		return @ptrv(free_list, ptr, index) + sizeof(uxx);
+	}
+
+	func new_block(slots: uxx) ptr {
+
+		let size = this.size;
+		let ps = sizeof(ptr);
+
+		let block = mem:sys_alloc(ps * 4 + (slots * ps) + (slots * size));
+
+		@ptrv(block, ptr, 0) = null;
+		@ptrv(block, ptr, 1) = null;
+		@ptrv(block, uxx, 2) = slots;
+		@ptrv(block, uxx, 3) = slots;
+
+		let free_list = block + 4 * ps;
+		let data = free_list + (slots * ps);
+		let i = 0;
+		while(i < slots) {
+			let slot_adr = data + (i * size);
+			@ptrv(free_list, ptr, i) = slot_adr;
+			@ptrv(slot_adr, uxx, 0) = 1;
+			i++;
+		}
+
+		return block;
+	}
+
+	func gc() void {
+		let total_slots: uxx = 0;
+		let total_free: uxx = 0;
+		let size = this.size;
+
+		let block = this.block;
+
+		while true {
+			let slots = @ptrv(block, uxx, 2);
+			let free_count = 0;
+			let free_list = block + 4 * ps;
+			let data = free_list + (slots * ps);
+			let i = 0;
+			while i < slots {
+				let slot_adr = data + (i * size);
+				let rc = @ptrv(slot_adr, uxx, 0);
+				if rc == 0 {
+					// Free slot
+					@ptrv(free_list, ptr, free_count) = slot_adr;
+					free_count++;
+					@ptrv(slot_adr, uxx, 1); // Set RC back to 1
+				}
+				i++;
+			}
+
+			let fc = free_count;
+			if fc > 0 {
+				total_free += fc;
+				@ptrv(block, uxx, 3) = fc;
+				this.block = block;
+			}
+
+			let prev_block = @ptrv(block, ?ptr, 0);
+			if isset(prev_block) {
+				block = prev_block;
+				continue;
+			}
+			break;
+		}
+
+		this.total_slots = total_slots;
+		this.total_slots_free = total_free;
+	}
+}
