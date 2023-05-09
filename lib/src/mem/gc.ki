@@ -12,28 +12,48 @@
 
 struct Alc[T] {
 
-	let slot_total: uxx;
-	let free_index: uxx = 0;
-	let free_list: ptr;
+	let block_list: ptr;
+	let block_list_size: uxx;
 
-	let block_total: uxx;
-	let block_count: uxx;
-	let blocks: ptr;
+	let block_index: uxx = 0;
+	let current_block: ptr;
+
+	let slot_total: uxx;
+	let slot_free: uxx;
+
+	let free_list: uxx;
 
 	static instance: CLASS;
 
-	func alloc() ptr {
+	func get_instance() &CLASS {
 
-		let alc = CLASS.instance ?? @vs : &CLASS {
+		let alc = CLASS.instance ?! {
+
+			let block_list_size = 10;
+			let block_list = mem:alloc(block_list_size * sizeof(ptr));
 
 			let slot_total = 4;
+			let free_list = mem:alloc(slot_total * sizeof(ptr));
 
-			let free_list = mem:alloc(slot_total * sizeof(T));
+			let block = mem:calloc(slot_total * sizeof_class(T));
 
-			let block_count = 1;
-			let block_total = blockc;
+			@ptrv(block_list, ptr, 0) = block;
+
+			let i = slot_total;
+			while(i < slot_total) {
+				@ptrv(free_list, ptr, i) = block + (i * sizeof_class(T));
+				i++;
+			}
 
 			let alc = CLASS {
+				block_list_size: free_list,
+				block_list: block_list,
+
+				current_block: block,
+
+				slot_total: slot_total,
+				slot_free: slot_total,
+				free_list: free_list,
 			};
 
 			let res = &alc;
@@ -41,6 +61,14 @@ struct Alc[T] {
 			return res;
 		};
 
+		return alc;
+	}
 
+	func alloc() ptr {
+		let alc = CLASS.get_instance();
+
+		let slot_free = alc.slot_free;
+		if slot_free == 0 {
+		}
 	}
 }
