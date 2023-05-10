@@ -1,56 +1,12 @@
 
 header "ki_os" as os;
 
-global allocators : ?ptr;
-
-#if 1
 func alloc(size: uxx) ptr {
 	return os.ki_os__alloc(size);
 }
 func free(adr: ptr) void {
 	os.ki_os__free(adr);
 }
-#else
-func alloc(size: uxx) ptr {
-	let alcs = allocators;
-	if alcs == null {
-		let size : uxx = 64#uxx * sizeof(ptr);
-		let list = sys_alloc(size);
-		clear(list, size);
-		allocators = list;
-		alcs = list;
-	}
-
-	let pow = 1#u8;
-	let cmp = 32#uxx;
-	while cmp <= size {
-		cmp = cmp << 1;
-		pow += 1;
-	}
-
-	let adr : ptr = (alcs @as ptr) + (pow * sizeof(ptr));
-	let alc = @ptrv(adr, ?Allocator, 0);
-	if alc == null {
-		alc = Allocator.init(cmp + 1);
-		@ptrv(adr, ?Allocator, 0) = alc;
-	}
-	// Get chunk
-	rep alc = alc @as Allocator;
-	let res = alc.alloc();
-	@ptrv(res, u8, 0) = pow;
-
-	return res + 1;
-}
-func free(adr: ptr) void {
-	let alcs = allocators @as ptr;
-	adr-=1;
-	let pow : u32 = @ptrv(adr, u8, 0);
-	let alc_adr = alcs + (pow * sizeof(ptr));
-	let alc = @ptrv(alc_adr, Allocator, 0);
-	alc.free(adr);
-	return;
-}
-#end
 
 func sys_alloc(size: uxx) ptr {
 	return os.ki_os__alloc(size);
