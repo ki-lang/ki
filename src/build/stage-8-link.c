@@ -232,52 +232,12 @@ void stage_8_optimize(LLVMModuleRef mod) {
 
     // Other optimizations
 
-    // LLVMAddInstructionCombiningPass(func_passes);
-
-    // LLVMAddBasicAliasAnalysisPass(func_passes);
-    // LLVMAddBasicAliasAnalysisPass(mod_passes);
-    // LLVMAddTypeBasedAliasAnalysisPass(func_passes);
-    // LLVMAddScopedNoAliasAAPass(func_passes);
-    // LLVMAddAggressiveDCEPass(func_passes);
-    // LLVMAddBitTrackingDCEPass(func_passes);
-
     LLVMAddLoopDeletionPass(func_passes);
     LLVMAddLoopIdiomPass(func_passes);
     LLVMAddLoopRotatePass(func_passes);
     LLVMAddLoopRerollPass(func_passes);
     LLVMAddLoopUnrollPass(func_passes);
     LLVMAddLoopUnrollAndJamPass(func_passes);
-    // LLVMAddLoopUnswitchPass(func_passes);
-
-    // LLVMAddScalarReplAggregatesPass(func_passes);
-    // LLVMAddScalarReplAggregatesPassSSA(func_passes);
-    // LLVMAddScalarReplAggregatesPassWithThreshold(func_passes, 10);
-    // LLVMAddSimplifyLibCallsPass(func_passes);
-
-    LLVMAddDemoteMemoryToRegisterPass(func_passes);
-    // LLVMAddVerifierPass(func_passes);
-    // LLVMAddCorrelatedValuePropagationPass(func_passes);
-
-    // LLVMAddEarlyCSEPass(func_passes);
-    // LLVMAddEarlyCSEMemSSAPass(func_passes);
-    // LLVMAddLowerExpectIntrinsicPass(func_passes);
-
-    // LLVMAddGlobalDCEPass(mod_passes);
-    // LLVMAddGlobalOptimizerPass(mod_passes);
-    // LLVMAddPruneEHPass(mod_passes);
-    // LLVMAddIPSCCPPass(mod_passes);
-
-    // LLVMAddArgumentPromotionPass(mod_passes);
-    // LLVMAddConstantMergePass(mod_passes);
-    // // LLVMAddInternalizePass(mod_passes, 10);
-    // LLVMAddStripDeadPrototypesPass(mod_passes);
-    // LLVMAddStripSymbolsPass(mod_passes);
-
-    // LLVMAddCalledValuePropagationPass(mod_passes);
-    // LLVMAddDeadArgEliminationPass(mod_passes);
-    // // LLVMAddFunctionAttrsPass(mod_passes);
-    // LLVMAddFunctionInliningPass(mod_passes);
-    // LLVMAddAlwaysInlinerPass(mod_passes);
 
     LLVMPassManagerBuilderDispose(passBuilder);
     LLVMInitializeFunctionPassManager(func_passes);
