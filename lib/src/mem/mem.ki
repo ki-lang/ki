@@ -15,24 +15,24 @@ func sys_free(adr: ptr) void {
 	os.ki_os__free(adr);
 }
 
-func clear(adrc: ptr, size: uxx) void {
-	let chunks = size / sizeof(ptr);
+func clear(adrc: ptr, length: uxx) void {
+	let chunks = length / sizeof(ptr);
 	let i : uxx = chunks;
 	while i > 0 {
 		i--;
 		@ptrv(adrc, uxx, i) = 0;
 	}
 	rep adrc = adrc + chunks * sizeof(uxx);
-	i = size % sizeof(uxx);
+	i = length % sizeof(uxx);
 	while i > 0 {
 		i--;
 		@ptrv(adrc, u8, i) = 0;
 	}
 }
 
-func copy(from: ptr, to: ptr, len: uxx) void {
+func copy(from: ptr, to: ptr, length: uxx) void {
 
-	let chunks = len / sizeof(ptr);
+	let chunks = length / sizeof(ptr);
 	let i : uxx = chunks;
 	while i > 0 {
 		i--;
@@ -40,7 +40,7 @@ func copy(from: ptr, to: ptr, len: uxx) void {
 	}
 	rep from = from + chunks * sizeof(uxx);
 	rep to = to + chunks * sizeof(uxx);
-	i = len % sizeof(uxx);
+	i = length % sizeof(uxx);
 	while i > 0 {
 		i--;
 		@ptrv(to, u8, i) = @ptrv(from, u8, i);
