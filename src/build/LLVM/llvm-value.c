@@ -43,6 +43,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_vint) {
         VInt *vint = v->item;
         char *res = al(alc, 20);
+        // char *ltype = llvm_type(b, v->rett);
         sprintf(res, "%ld", vint->value);
         return res;
     }
@@ -280,7 +281,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Class *class = ci->class;
         Map *values = ci->values;
 
-        Func *func = ki_get_func(build, "mem", "alloc");
+        Func *func = ki_get_func(build, "mem", "alloc2");
         Value *fptr = vgen_fptr(alc, func, NULL);
         Array *alloc_values = array_make(alc, func->args->length + 1);
         Value *vint = vgen_vint(alc, class->size, type_gen(build, alc, "uxx"), false);

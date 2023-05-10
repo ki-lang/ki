@@ -10,7 +10,7 @@
 // If free_slot count > 75% of total slot count : Create a new block and dubble the total slot count
 // return first item in the free_slot array
 
-// block | ptr:prev_block | ptr:next_block | uxx:slots | uxx:free_count | ptr[slots]:free | (uxx: rc + ?ptr: deref_props_func + size)[slots]:data
+// block | ptr:prev_block | ptr:next_block | uxx:slots | uxx:free_count | ptr[slots]:free | (uxx: rc + size)[slots]:data
 
 struct Allocator2 {
 
@@ -18,16 +18,16 @@ struct Allocator2 {
 	block: ptr;
 
 	total_slots: uxx = 0;
-	total_slots_free: uxx = 0;
+	total_slots_free: uxx = 4;
 
 	static func init(size_: uxx) CLASS {
 		let adr = sys_alloc(sizeof_class(CLASS));
 		clear(adr, sizeof_class(CLASS));
 		let alc =  adr @as CLASS;
 
-		let size = size_ + sizeof(uxx);
-		let slots : uxx = 4;
 		let ps : uxx = sizeof(ptr);
+		let size = size_ + ps + ps;
+		let slots : uxx = 4;
 		let block = sys_alloc(ps * 4 + (slots * ps) + (slots * size));
 
 		@ptrv(block, ?ptr, 0) = null;
@@ -42,6 +42,7 @@ struct Allocator2 {
 			let slot_adr = data + (i * size);
 			@ptrv(free_list, ptr, i) = slot_adr;
 			@ptrv(slot_adr, uxx, 0) = 1;
+			@ptrv(slot_adr, uxx, 1) = 0; // mark
 			i++;
 		}
 
@@ -51,7 +52,7 @@ struct Allocator2 {
 		return alc;
 	}
 
-	func alloc(deref_props_func: ?ptr) ptr {
+	func alloc() ptr {
 
 		let block = this.block;
 		let ps : uxx = sizeof(ptr);
@@ -63,12 +64,12 @@ struct Allocator2 {
 				@ptrv(block, uxx, 3) = index;
 				let free_list = block + 4 * ps;
 				let slot_adr = @ptrv(free_list, ptr, index);
-				@ptrv(slot_adr, ?ptr, 1) = deref_props_func;
 				return slot_adr + ps + ps;
 			}
 			// No slots left, check next block
 			let next = @ptrv(block, ?ptr, 1);
 			block = next ?! break;;
+			this.block = block;
 		}
 
 		// No free slots in all blocks
@@ -81,21 +82,22 @@ struct Allocator2 {
 		if total_free < quarter {
 			// Increase amount of slots
 			let next = this.new_block(@ptrv(block, uxx, 2) * 2);
+			@ptrv(next, ptr, 0) = block;
 			@ptrv(block, ptr, 1) = next;
 
 		} else if total_free > (total_slots - quarter) {
 			// Reduce amount of slots
 			let prev_block = @ptrv(block, ?ptr, 0);
 			if isset(prev_block) {
-				@ptrv(prev_block, ?ptr, 1) = null;
-				sys_free(block);
+				//@ptrv(prev_block, ?ptr, 1) = null;
+				//sys_free(block);
 			}
 		}
 
 		// Blocks 
 		rep block = this.block;
 		let slots_free = @ptrv(block, uxx, 3);
-		if slots_free == 0 {
+		while slots_free == 0 {
 			block = @ptrv(block, ptr, 1);
 			slots_free = @ptrv(block, uxx, 3);
 		}
@@ -103,7 +105,6 @@ struct Allocator2 {
 		@ptrv(block, uxx, 3) = index;
 		let free_list = block + 4 * ps;
 		let slot_adr = @ptrv(free_list, ptr, index);
-		@ptrv(slot_adr, ?ptr, 1) = deref_props_func;
 		return slot_adr + ps + ps;
 	}
 
@@ -126,6 +127,7 @@ struct Allocator2 {
 			let slot_adr = data + (i * size);
 			@ptrv(free_list, ptr, i) = slot_adr;
 			@ptrv(slot_adr, uxx, 0) = 1;
+			@ptrv(slot_adr, uxx, 1) = 0; // mark
 			i++;
 		}
 
@@ -135,6 +137,7 @@ struct Allocator2 {
 	func gc() void {
 		let total_slots: uxx = 0;
 		let total_free: uxx = 0;
+		let max_free = this.total_slots_free / 10;
 		let size = this.size;
 		let ps : uxx = sizeof(ptr);
 
@@ -142,6 +145,8 @@ struct Allocator2 {
 
 		while true {
 			let slots = @ptrv(block, uxx, 2);
+			total_slots += slots;
+
 			let free_count : uxx = 0;
 			let free_list = block + 4 * ps;
 			let data = free_list + (slots * ps);
@@ -152,12 +157,14 @@ struct Allocator2 {
 				if rc == 0 {
 					// Free slot
 					@ptrv(free_list, ptr, free_count) = slot_adr;
-					let deref_props_func = @ptrv(slot_adr, ?fn(ptr)(void), 1);
-					if isset(deref_props_func) {
-						deref_props_func(slot_adr + ps + ps);
-					}
 					free_count++;
-					@ptrv(slot_adr, uxx, 1); // Set RC back to 1
+
+					let mark = @ptrv(slot_adr, uxx, 1);
+					if mark == 0 : 
+					deref_props(slot_adr + ps + ps, (size - ps - ps) / ps);
+
+					@ptrv(slot_adr, uxx, 0) = 1; // Set RC back to 1
+					@ptrv(slot_adr, uxx, 1) = 0; // mark
 				}
 				i++;
 			}
@@ -167,6 +174,9 @@ struct Allocator2 {
 				total_free += fc;
 				@ptrv(block, uxx, 3) = fc;
 				this.block = block;
+				if(total_free > max_free) {
+					break;
+				}
 			}
 
 			let prev_block = @ptrv(block, ?ptr, 0);
@@ -179,5 +189,21 @@ struct Allocator2 {
 
 		this.total_slots = total_slots;
 		this.total_slots_free = total_free;
+	}
+}
+
+func deref_props(slot_adr: ptr, pc: uxx) void {
+	let ps : uxx = sizeof(ptr);
+	@ptrv(slot_adr - ps, uxx, 0) = 1; // mark
+	let i : uxx = 0;
+	while i < pc {
+		let adr = @ptrv(slot_adr, ptr, i);
+		if adr > 0 {
+			let rc_adr = adr - ps - ps;
+			let rc = @ptrv(rc_adr, uxx, 0) - 1;
+			@ptrv(rc_adr, uxx, 0) = rc;
+			if rc == 0 : deref_props(adr, pc);
+		}
+		i++;
 	}
 }

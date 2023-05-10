@@ -2,6 +2,7 @@
 header "ki_os" as os;
 
 global allocators : ?ptr;
+global allocators2 : ?ptr;
 
 #if 1
 func alloc(size: uxx) ptr {
@@ -51,6 +52,34 @@ func free(adr: ptr) void {
 	return;
 }
 #end
+
+func alloc2(size: uxx) ptr {
+	let alcs = allocators;
+	if alcs == null {
+		let size : uxx = 64#uxx * sizeof(ptr);
+		let list = sys_alloc(size);
+		clear(list, size);
+		allocators = list;
+		alcs = list;
+	}
+
+	let pow = 0#u8;
+	let cmp = 16#uxx;
+	while cmp < size {
+		cmp = cmp << 1;
+		pow++;
+	}
+
+	let adr : ptr = (alcs @as ptr) + (pow * sizeof(ptr));
+	let alc = @ptrv(adr, ?Allocator2, 0);
+	if alc == null {
+		alc = Allocator2.init(cmp);
+		@ptrv(adr, ?Allocator2, 0) = alc;
+	}
+	// Get chunk
+	rep alc = alc @as Allocator2;
+	return alc.alloc();
+}
 
 func calloc(size: uxx) ptr {
 	let res = alloc(size);

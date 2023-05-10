@@ -157,9 +157,53 @@ void class_generate_deref_props(Class *class) {
         Class *pclass = prop->type->class;
         if (!prop->type->borrow && pclass && pclass->must_deref) {
 
+            // if(this.prop != null) { this.prop.RC--; if(this.prop.RC == 0){ this.prop.drf = null; this.prop.deref_props() } }
+
             Value *pa = vgen_class_pa(alc, NULL, this, prop);
             Scope *scope = fscope;
-            class_ref_change(b->alc, scope, pa, -1);
+
+            Value *ir_pa = vgen_ir_val(alc, pa, pa->rett);
+            array_push(scope->ast, token_init(alc, tkn_ir_val, ir_pa->item));
+
+            if (prop->type->nullable) {
+                Value *is_null = vgen_compare(alc, class->fc->b, ir_pa, vgen_null(alc, b), op_ne);
+                Scope *sub = scope_init(alc, sct_default, scope, true);
+                TIf *ift = tgen_tif(alc, is_null, sub, NULL, NULL);
+                Token *t = token_init(alc, tkn_if, ift);
+                array_push(scope->ast, t);
+                scope = sub;
+            }
+
+            class_ref_change(b->alc, scope, ir_pa, -1);
+
+            Type *uxx = type_gen(b, alc, "uxx");
+            Type *ptr = type_gen(b, alc, "ptr");
+
+            Value *num = vgen_cast(alc, ir_pa, uxx);
+            Value *rc_num = vgen_op(alc, b, num, vgen_vint(alc, b->ptr_size * 2, uxx, false), op_sub, true);
+            Value *rc_ptr = vgen_cast(alc, rc_num, ptr);
+            Value *rc_ptrv = vgen_ptrv(alc, rc_ptr, uxx, vgen_vint(alc, 0, uxx, false));
+
+            Value *is_zero = vgen_compare(alc, b, rc_ptrv, vgen_vint(alc, 0, uxx, false), op_eq);
+            Scope *sub = scope_init(alc, sct_default, scope, true);
+            TIf *ift = tgen_tif(alc, is_zero, sub, NULL, NULL);
+            Token *t = token_init(alc, tkn_if, ift);
+            array_push(scope->ast, t);
+
+            // If pa.RC == 0
+            Value *drf_num = vgen_op(alc, b, num, vgen_vint(alc, b->ptr_size * 1, uxx, false), op_sub, true);
+            Value *drf_ptr = vgen_cast(alc, drf_num, type_gen(b, alc, "ptr"));
+            Value *drf_ptrv = vgen_ptrv(alc, drf_ptr, ptr, vgen_vint(alc, 0, uxx, false));
+            Token *as = tgen_assign(alc, drf_ptrv, vgen_null(alc, b));
+            array_push(sub->ast, as);
+
+            if (pclass->func_deref_props) {
+                Value *on = vgen_fptr(alc, pclass->func_deref_props, NULL);
+                Array *values = array_make(alc, 2);
+                array_push(values, ir_pa);
+                Value *fcall = vgen_fcall(alc, NULL, on, values, type_gen_void(alc), NULL);
+                array_push(sub->ast, token_init(alc, tkn_statement, fcall));
+            }
         }
     }
 }
@@ -258,41 +302,49 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
     } else if (class->is_rc) {
 
         // _RC-- or _RC++
-        Value *ir_on = vgen_ir_val(alc, on, on->rett);
-        array_push(scope->ast, token_init(alc, tkn_ir_val, ir_on->item));
+        Type *uxx = type_gen(b, alc, "uxx");
 
-        ClassProp *prop = map_get(class->props, "_RC");
-        Value *pa = vgen_class_pa(alc, NULL, ir_on, prop);
+        Value *num = vgen_cast(alc, on, uxx);
+        Value *rc_num = vgen_op(alc, class->fc->b, num, vgen_vint(alc, b->ptr_size * 2, uxx, false), op_sub, true);
+        Value *rc_ptr = vgen_cast(alc, rc_num, type_gen(b, alc, "ptr"));
+        Value *rc_ptrv = vgen_ptrv(alc, rc_ptr, uxx, vgen_vint(alc, 0, uxx, false));
 
-        Value *ir_pa = vgen_ir_assign_val(alc, pa, prop->type);
-        array_push(scope->ast, token_init(alc, tkn_ir_assign_val, ir_pa->item));
+        Value *rc_new = vgen_op(alc, class->fc->b, rc_ptrv, vgen_vint(alc, amount, uxx, false), op_add, false);
+        Token *as = tgen_assign(alc, rc_ptrv, rc_new);
+        array_push(scope->ast, as);
 
-        if (amount > 0) {
+        // ClassProp *prop = map_get(class->props, "_RC");
+        // Value *pa = vgen_class_pa(alc, NULL, ir_on, prop);
 
-            if (class->async) {
-                Value *add = vgen_atomicop(alc, ir_pa, vgen_vint(alc, amount, prop->type, false), op_add);
-                array_push(scope->ast, token_init(alc, tkn_statement, add));
-            } else {
-                Value *ir_pa_load = value_init(alc, v_ir_load, ir_pa, prop->type);
-                Value *add = vgen_op(alc, class->fc->b, ir_pa_load, vgen_vint(alc, amount, prop->type, false), op_add, false);
-                Token *as = tgen_assign(alc, ir_pa, add);
-                array_push(scope->ast, as);
-            }
+        // Value *ir_pa = vgen_ir_assign_val(alc, pa, prop->type);
+        // array_push(scope->ast, token_init(alc, tkn_ir_assign_val, ir_pa->item));
 
-        } else if (amount < 0) {
-            //
-            Value *ir_sub;
+        // if (amount > 0) {
 
-            if (class->async) {
-                Value *sub = vgen_atomicop(alc, ir_pa, vgen_vint(alc, amount * -1, prop->type, false), op_sub);
-                array_push(scope->ast, token_init(alc, tkn_statement, sub));
-            } else {
-                Value *ir_pa_load = value_init(alc, v_ir_load, ir_pa, prop->type);
-                Value *sub = vgen_op(alc, class->fc->b, ir_pa_load, vgen_vint(alc, amount * -1, prop->type, false), op_sub, false);
-                Token *as = tgen_assign(alc, ir_pa, sub);
-                array_push(scope->ast, as);
-            }
-        }
+        //     if (class->async) {
+        //         Value *add = vgen_atomicop(alc, ir_pa, vgen_vint(alc, amount, prop->type, false), op_add);
+        //         array_push(scope->ast, token_init(alc, tkn_statement, add));
+        //     } else {
+        //         Value *ir_pa_load = value_init(alc, v_ir_load, ir_pa, prop->type);
+        //         Value *add = vgen_op(alc, class->fc->b, ir_pa_load, vgen_vint(alc, amount, prop->type, false), op_add, false);
+        //         Token *as = tgen_assign(alc, ir_pa, add);
+        //         array_push(scope->ast, as);
+        //     }
+
+        // } else if (amount < 0) {
+        //     //
+        //     Value *ir_sub;
+
+        //     if (class->async) {
+        //         Value *sub = vgen_atomicop(alc, ir_pa, vgen_vint(alc, amount * -1, prop->type, false), op_sub);
+        //         array_push(scope->ast, token_init(alc, tkn_statement, sub));
+        //     } else {
+        //         Value *ir_pa_load = value_init(alc, v_ir_load, ir_pa, prop->type);
+        //         Value *sub = vgen_op(alc, class->fc->b, ir_pa_load, vgen_vint(alc, amount * -1, prop->type, false), op_sub, false);
+        //         Token *as = tgen_assign(alc, ir_pa, sub);
+        //         array_push(scope->ast, as);
+        //     }
+        // }
     }
 }
 
