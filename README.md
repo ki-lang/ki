@@ -31,9 +31,9 @@ ki build src/*.ki -o hello
 
 ## Build from source (Linux / macOS / WSL)
 
-macOS: `brew install llvm && link --force llvm`
+macOS: `brew install llvm-15 && link --force llvm`
 
-Linux: `sudo apt install llvm`
+Linux: install `llvm-15`, see: [apt.llvm.org](https://apt.llvm.org/)
 
 ```bash
 git clone git@github.com:ki-lang/ki.git
