@@ -265,3 +265,11 @@ Value *vgen_array_item(Allocator *alc, Scope *scope, Value *on, Value *index) {
     }
     return res;
 }
+
+Value *vgen_swap(Allocator *alc, Value *var, Value *with) {
+    //
+    VPair *item = al(alc, sizeof(VPair));
+    item->left = var;
+    item->right = with;
+    return value_init(alc, v_swap, item, var->rett);
+}

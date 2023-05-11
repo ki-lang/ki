@@ -206,6 +206,7 @@ Value *vgen_value_then_ir_value(Allocator *alc, Value *value);
 Value *vgen_incr_decr(Allocator *alc, Value *on, bool is_incr);
 Value *vgen_atomicop(Allocator *alc, Value *left, Value *right, int op);
 Value *vgen_array_item(Allocator *alc, Scope *scope, Value *on, Value *index);
+Value *vgen_swap(Allocator *alc, Value *var, Value *with);
 
 // Ast
 void read_ast(Fc *fc, Scope *scope, bool single_line);

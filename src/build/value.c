@@ -125,6 +125,30 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         v = vgen_vint(alc, 0, type_gen(b, alc, "bool"), true);
     } else if (strcmp(token, "null") == 0) {
         v = vgen_null(alc, b);
+    } else if (strcmp(token, "@swap") == 0) {
+
+        Value *var = read_value(fc, alc, scope, false, 0, false);
+        if (!value_is_assignable(var)) {
+            sprintf(fc->sbuf, "The first argument in '@swap' must be assignable. e.g. a variable");
+            fc_error(fc);
+        }
+        if (var->type == v_decl) {
+            Decl *decl = var->item;
+            if (!decl->is_mut) {
+                decl->is_mut = true;
+            }
+        }
+
+        tok_expect(fc, "with", false, true);
+
+        Value *with = read_value(fc, alc, scope, false, 0, false);
+        with = try_convert(fc, alc, with, var->rett);
+        type_check(fc, var->rett, with->rett);
+
+        with = usage_move_value(alc, fc, scope, with);
+
+        v = vgen_swap(alc, var, with);
+
     } else if (strcmp(token, "@getptr") == 0) {
         Value *on = read_value(fc, alc, scope, false, 0, false);
         if (!value_is_assignable(on)) {
@@ -161,7 +185,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         tok_expect(fc, ")", false, true);
         v = value_init(alc, v_stack_alloc, val, type_gen(b, alc, "ptr"));
 
-    } else if (strcmp(token, "@atomicop") == 0) {
+    } else if (strcmp(token, "@atomic_op") == 0) {
 
         Value *on = read_value(fc, alc, scope, true, 0, true);
         if (!value_is_assignable(on)) {

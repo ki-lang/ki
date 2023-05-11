@@ -340,6 +340,18 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         char *lval = llvm_value(b, scope, val);
         return llvm_ir_cast(b, lval, from_type, to_type);
     }
+    if (v->type == v_swap) {
+        VPair *item = v->item;
+        Value *var = item->left;
+        Value *val = item->right;
+        char *lvar = llvm_assign_value(b, scope, var);
+        char *res = llvm_ir_load(b, var->rett, lvar);
+
+        char *lval = llvm_value(b, scope, val);
+        llvm_ir_store(b, var->rett, lvar, lval);
+
+        return res;
+    }
     if (v->type == v_or_break) {
         VOrBreak *vob = v->item;
         Value *val = vob->value;

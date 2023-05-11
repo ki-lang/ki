@@ -8,6 +8,8 @@ Feature todo list in order:
 - swap token
 - package manager
 - 'each' declarations in structs/classes, 'each chars: each_chars_init, each_chars;' | usage: 'each mystr.chars as char {...}'
+- debug info
+
 - testing features
 - install global packages + "bin" setting in ki.json to place binaries in ~/.ki/bin
 - access type 'namespace'
@@ -15,7 +17,6 @@ Feature todo list in order:
 - trait sub-types (same syntax as generics)
 - multi-threaded AST parsing + IR gen
 - inline if ... ? ... : ...
-- custom allocators | MyClass{...} @my_alloc
 - --watch param to watch for file changes and trigger a build
 - vscode extension
 - closure functions
@@ -24,10 +25,11 @@ Feature todo list in order:
 - calling functions using named arguments
 - implement IO URing where useful
 - replace malloc with something better
-- __leave_scope (code executed when a variable leaves its scope)
 
 ## Maybe
 
+- custom allocators | MyClass{...} @my_alloc
+- defer token
 - interfaces | useful, but we'll have to introduce virtual functions which we try to avoid
 
 ## Done

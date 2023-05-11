@@ -100,6 +100,7 @@ enum VALUETYPE {
     v_array_item,
     v_isset,
     v_ref,
+    v_swap,
 };
 
 enum OPTYPE {
