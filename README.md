@@ -33,7 +33,7 @@ ki build src/*.ki -o hello
 
 macOS: `brew install llvm-15 && link --force llvm`
 
-Linux: install `llvm-15`, see: [apt.llvm.org](https://apt.llvm.org/)
+Linux: install `llvm-15`, Ubuntu/debian see: [apt.llvm.org](https://apt.llvm.org/)
 
 ```bash
 git clone git@github.com:ki-lang/ki.git
