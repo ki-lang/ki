@@ -5,7 +5,6 @@ Feature todo list in order:
 
 - unions
 - compare errors
-- swap token
 - package manager
 - 'each' declarations in structs/classes, 'each chars: each_chars_init, each_chars;' | usage: 'each mystr.chars as char {...}'
 - debug info
