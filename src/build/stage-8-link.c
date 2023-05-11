@@ -47,8 +47,6 @@ void stage_8(Build *b) {
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
 
-    // LLVMStartMultithreaded();
-
     for (int i = 0; i < b->packages->length; i++) {
         Pkc *pkc = array_get_index(b->packages, i);
         for (int o = 0; o < pkc->namespaces->values->length; o++) {
@@ -84,6 +82,7 @@ void stage_8(Build *b) {
                 data->ir_files = ir_files;
                 data->path_o = nsc->path_o;
                 data->target = al(b->alc, sizeof(struct Target));
+                llvm_init(b, data->target);
                 // stage_8_compile_o((void *)data);
 
                 if (threads->length >= 16) {
@@ -105,8 +104,6 @@ void stage_8(Build *b) {
         pthread_t *thr = array_get_index(threads, i);
         pthread_join(*thr, NULL);
     }
-
-    // LLVMStopMultithreaded();
 
     gettimeofday(&end, NULL);
     double time_llvm = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
@@ -134,6 +131,7 @@ void stage_8(Build *b) {
 
 void *stage_8_compile_o(void *data_) {
 
+    // LLVMStartMultithreaded();
     struct CompileData *data = (struct CompileData *)data_;
     Build *b = data->b;
     Array *ir_files = data->ir_files;
@@ -142,9 +140,6 @@ void *stage_8_compile_o(void *data_) {
 
     // struct timeval begin, end;
     // gettimeofday(&begin, NULL);
-
-    llvm_init(b, target);
-
     //
     LLVMContextRef ctx = LLVMContextCreate();
     LLVMContextSetOpaquePointers(ctx, true);
@@ -212,7 +207,10 @@ void *stage_8_compile_o(void *data_) {
     // double time_o = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
     // printf("⌚ %.3fs | %s\n", time_o, path_o);
 
-    return NULL;
+    // LLVMStopMultithreaded();
+
+    // return NULL;
+    pthread_exit(NULL);
 }
 
 void stage_8_optimize(LLVMModuleRef mod) {
