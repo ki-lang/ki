@@ -33,6 +33,7 @@ Feature todo list in order:
 
 ## Done
 
+- swap token
 - Rework type system, ownership by default, & for references and * for borrows
 - use ':' for single line scopes for if/else/while/each
 - automatically check if vars are mutated or not to know if we need to alloc on the stack or not
