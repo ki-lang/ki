@@ -175,7 +175,7 @@ class Connection {
 
 		out.append_str("HTTP/1.1 200 OK\r\nContent-Type: %\r\nContent-Length: %\r\n"{ mime, fsize.str() });
 
-		if isset(filename) {
+		if @isset(filename) {
 			out.append_str("Content-Disposition: attachment; filename=\"" + filename + "\"\r\n");
 		}
 
@@ -186,7 +186,7 @@ class Connection {
 
 	func respond(resp: *Response) void {
 		let filepath = resp.filepath;
-		if isset(filepath) {
+		if @isset(filepath) {
 			let stream = fs:open(filepath + "", true, false) !! {
 				this.respond(Response.error(404));
 				return;
@@ -204,7 +204,7 @@ class Connection {
 			return true;
 		}
 		let file = this.out_file;
-		if isset(file) {
+		if @isset(file) {
 			if file.reading {
 				return true;
 			}
@@ -219,7 +219,7 @@ class Connection {
 
 		// Check file stream
 		let file = this.out_file;
-		if isset(file) {
+		if @isset(file) {
 			if file.reading {
 				let part = file.read(65535) !? "";
 				out.append_str(part);

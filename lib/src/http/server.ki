@@ -95,7 +95,7 @@ class Server {
 
         let cons = Array[Connection].init(50);
         let index_pool = utils:Pool[uxx].init(max_connections);
-        let nr = atomicop data.thread_nr ADD 1;
+        let nr = @atomicop data.thread_nr ADD 1;
 
         //println("[-] Start thread: " + nr.str());
 

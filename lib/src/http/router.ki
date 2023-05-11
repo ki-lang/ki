@@ -104,17 +104,17 @@ class Router[T] {
 
 		if part != "*" {
 			let sub_block = block.blocks.get(part) !? null;
-			if isset(sub_block) {
+			if @isset(sub_block) {
 				let route = CLASS.find_route(sub_block, index + 1, arg_c, parts);
-				if isset(route) : return route;
+				if @isset(route) : return route;
 			}
 		}
 
 		part = "@";
 		let sub_block = block.blocks.get(part) !? null;
-		if isset(sub_block) {
+		if @isset(sub_block) {
 			let route = CLASS.find_route(sub_block, index + 1, arg_c, parts);
-			if isset(route) : return route;
+			if @isset(route) : return route;
 		}
 
 

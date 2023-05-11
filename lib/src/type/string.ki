@@ -13,7 +13,7 @@ class String type:ptr track {
 	/////////////////////
 
 	func is_const() bool %inline {
-		return @ptrv(this @as ptr + sizeof(uxx), u8, 0) == 1#u8;
+		return @ptrv(this @as ptr + @sizeof(uxx), u8, 0) == 1#u8;
 	}
 
 	func bytes() uxx %inline {
@@ -23,16 +23,16 @@ class String type:ptr track {
 	func rc() u32 %inline {
 		if(this.is_const()) { return 420; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 420.
 		let adr = this @as ptr;
-		adr += sizeof(uxx) + 4;
+		adr += @sizeof(uxx) + 4;
 		return @ptrv(adr, u32, 0);
 	}
 
 	func data() ptr %inline {
 		let adr = this @as ptr;
 		if(this.is_const()){
-			adr += sizeof(uxx) + 1;
+			adr += @sizeof(uxx) + 1;
 		} else {
-			adr += sizeof(uxx) + 8;
+			adr += @sizeof(uxx) + 8;
 		}
 		return adr;
 	}
@@ -371,13 +371,13 @@ class String type:ptr track {
 
 	func __ref() void {
 		if this.is_const() { return; }
-		let adr = (this @as ptr) + sizeof(uxx) + 4;
+		let adr = (this @as ptr) + @sizeof(uxx) + 4;
 		let rc = @ptrv(adr, u32, 0) + 1;
 		@ptrv(adr, u32, 0) = rc;
 	}
 	func __deref() void {
 		if this.is_const() { return; }
-		let adr = (this @as ptr) + sizeof(uxx) + 4;
+		let adr = (this @as ptr) + @sizeof(uxx) + 4;
 		let rc = @ptrv(adr, u32, 0) - 1;
 		if rc == 0 {
 			this.__free();
@@ -440,10 +440,10 @@ class String type:ptr track {
 	/////////////////////
 
 	static func make_empty(size: uxx) String {
-		let adr = mem:alloc(size + 8 + sizeof(uxx));
+		let adr = mem:alloc(size + 8 + @sizeof(uxx));
 		let adr_ = adr;
 		@ptrv(adr, uxx, 0) = size;
-		adr += sizeof(uxx);
+		adr += @sizeof(uxx);
 		@ptrv(adr, u8, 0) = 0#u8;
 		adr += 4;
 		@ptrv(adr, u32, 0) = 1#u32;

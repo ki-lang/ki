@@ -25,7 +25,7 @@ func !exit(code: i32) void {
 //	while(argc > 0) {
 //		argc--;
 //		let cstr = @ptrv(argv, cstring, 0);
-//		argv += sizeof(ptr);
+//		argv += @sizeof(ptr);
 //		res.push(cstr.str());
 //	}
 //	return res;

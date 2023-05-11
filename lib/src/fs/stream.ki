@@ -25,7 +25,7 @@ class FileStream {
         if(this.reading == false) {
             return "";
         }
-        let buf = stack_alloc(bytes);
+        let buf = @stack_alloc(bytes);
         let rcount = kos.ki_os__fd_read(this.fd, buf, bytes);
         if(rcount < 0){
             throw read_err;

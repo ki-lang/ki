@@ -125,10 +125,10 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         v = vgen_vint(alc, 0, type_gen(b, alc, "bool"), true);
     } else if (strcmp(token, "null") == 0) {
         v = vgen_null(alc, b);
-    } else if (strcmp(token, "getptr") == 0) {
+    } else if (strcmp(token, "@getptr") == 0) {
         Value *on = read_value(fc, alc, scope, false, 0, false);
         if (!value_is_assignable(on)) {
-            sprintf(fc->sbuf, "Value used in 'getptr' must be assignable");
+            sprintf(fc->sbuf, "Value used in '@getptr' must be assignable");
             fc_error(fc);
         }
         if (on->type == v_decl) {
@@ -139,7 +139,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = value_init(alc, v_getptr, on, type_gen(b, alc, "ptr"));
         //
-    } else if (strcmp(token, "stack_alloc") == 0) {
+    } else if (strcmp(token, "@stack_alloc") == 0) {
 
         Scope *fscope = scope_find(scope, sct_func);
         if (!fscope) {
@@ -161,7 +161,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         tok_expect(fc, ")", false, true);
         v = value_init(alc, v_stack_alloc, val, type_gen(b, alc, "ptr"));
 
-    } else if (strcmp(token, "atomicop") == 0) {
+    } else if (strcmp(token, "@atomicop") == 0) {
 
         Value *on = read_value(fc, alc, scope, true, 0, true);
         if (!value_is_assignable(on)) {
@@ -202,7 +202,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
         v = vgen_atomicop(alc, on, right, op);
 
-    } else if (strcmp(token, "isset") == 0) {
+    } else if (strcmp(token, "@isset") == 0) {
 
         tok_expect(fc, "(", true, false);
         Value *on = read_value(fc, alc, scope, false, 0, false);
@@ -222,12 +222,12 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             array_push(issets, on);
         }
 
-    } else if (strcmp(token, "sizeof") == 0) {
+    } else if (strcmp(token, "@sizeof") == 0) {
         tok_expect(fc, "(", true, false);
         Type *type = read_type(fc, alc, scope, false, true, rtc_default);
         tok_expect(fc, ")", false, true);
         v = vgen_vint(alc, type->bytes, type_gen(b, alc, "i32"), false);
-    } else if (strcmp(token, "sizeof_class") == 0) {
+    } else if (strcmp(token, "@sizeof_class") == 0) {
         tok_expect(fc, "(", true, false);
         Type *type = read_type(fc, alc, scope, false, true, rtc_default);
         tok_expect(fc, ")", false, true);

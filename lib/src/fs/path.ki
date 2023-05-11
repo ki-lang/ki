@@ -126,7 +126,7 @@ func basename(path: *String) String {
 global g_stat_buf : ?kos.ki_file_stats;
 func get_stat_buf() &kos.ki_file_stats {
 	let s = g_stat_buf ?! {
-		let s = mem:alloc(sizeof_class(kos.ki_file_stats)) @as kos.ki_file_stats;
+		let s = mem:alloc(@sizeof_class(kos.ki_file_stats)) @as kos.ki_file_stats;
 		g_stat_buf = s;
 		return get_stat_buf();
 	};

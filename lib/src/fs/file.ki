@@ -4,7 +4,7 @@ header "ki_os" as kos;
 use utils;
 
 func size(path: *String) uxx {
-	let buf = stack_alloc(sizeof_class(kos.ki_file_stats)) @as kos.ki_file_stats;
+	let buf = @stack_alloc(@sizeof_class(kos.ki_file_stats)) @as kos.ki_file_stats;
 	let stat = kos.ki_os__file_stats(path.data(), path.bytes() @as i32, buf);
 	rep stat = stat ?! return 0;;
 	return stat.size;
@@ -18,7 +18,7 @@ func read(path: *String) String !open !read !close {
 	let len : uxx = 0;
 
 	let res = utils:ByteBuffer.init(4096);
-	let buf = stack_alloc(4096);
+	let buf = @stack_alloc(4096);
 	let readcount_ : ixx = 4096;
 	while true {
 		let readcount = kos.ki_os__fd_read(fd, buf, 4096);

@@ -16,14 +16,14 @@ func sys_free(adr: ptr) void {
 }
 
 func clear(adrc: ptr, length: uxx) void {
-	let chunks = length / sizeof(ptr);
+	let chunks = length / @sizeof(ptr);
 	let i : uxx = chunks;
 	while i > 0 {
 		i--;
 		@ptrv(adrc, uxx, i) = 0;
 	}
-	rep adrc = adrc + chunks * sizeof(uxx);
-	i = length % sizeof(uxx);
+	rep adrc = adrc + chunks * @sizeof(uxx);
+	i = length % @sizeof(uxx);
 	while i > 0 {
 		i--;
 		@ptrv(adrc, u8, i) = 0;
@@ -32,15 +32,15 @@ func clear(adrc: ptr, length: uxx) void {
 
 func copy(from: ptr, to: ptr, length: uxx) void {
 
-	let chunks = length / sizeof(ptr);
+	let chunks = length / @sizeof(ptr);
 	let i : uxx = chunks;
 	while i > 0 {
 		i--;
 		@ptrv(to, uxx, i) = @ptrv(from, uxx, i);
 	}
-	rep from = from + chunks * sizeof(uxx);
-	rep to = to + chunks * sizeof(uxx);
-	i = length % sizeof(uxx);
+	rep from = from + chunks * @sizeof(uxx);
+	rep to = to + chunks * @sizeof(uxx);
+	i = length % @sizeof(uxx);
 	while i > 0 {
 		i--;
 		@ptrv(to, u8, i) = @ptrv(from, u8, i);
@@ -48,7 +48,7 @@ func copy(from: ptr, to: ptr, length: uxx) void {
 }
 
 func equal(a: ptr, b: ptr, length: uxx) bool {
-	let chunks = length / sizeof(ptr);
+	let chunks = length / @sizeof(ptr);
 	let i : uxx = chunks;
 	while i > 0 {
 		i--;
@@ -58,8 +58,8 @@ func equal(a: ptr, b: ptr, length: uxx) bool {
 			return false;
 		}
 	}
-	i = length % sizeof(ptr);
-	let offset = chunks * sizeof(ptr);
+	i = length % @sizeof(ptr);
+	let offset = chunks * @sizeof(ptr);
 	let ao = a + offset;
 	let bo = b + offset;
 	while i > 0 {

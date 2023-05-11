@@ -12,7 +12,7 @@ class Array[T] {
 		}
 		return CLASS {
 			size: start_size,
-			data: mem:alloc(start_size * sizeof(T)),
+			data: mem:alloc(start_size * @sizeof(T)),
 		};
 	}
 
@@ -24,8 +24,8 @@ class Array[T] {
 		if length == size {
 			// Increase mem
 			let new_size = size * 2;
-			let new_data = mem:alloc(new_size * sizeof(T));
-			mem:copy(data, new_data, size * sizeof(T));
+			let new_data = mem:alloc(new_size * @sizeof(T));
+			mem:copy(data, new_data, size * @sizeof(T));
 			data = new_data;
 			this.data = new_data;
 			this.size = new_size;
@@ -47,8 +47,8 @@ class Array[T] {
 		if length == size {
 			// Increase mem
 			let new_size = size * 2;
-			let new_data = mem:alloc(new_size * sizeof(T));
-			mem:copy(data, new_data, size * sizeof(T));
+			let new_data = mem:alloc(new_size * @sizeof(T));
+			mem:copy(data, new_data, size * @sizeof(T));
 			data = new_data;
 			this.data = new_data;
 			this.size = new_size;

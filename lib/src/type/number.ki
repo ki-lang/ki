@@ -37,7 +37,7 @@ trait Number {
         let abs = num @as uxx;
  
         // Process individual digits
-        let buf_adr = stack_alloc(32);
+        let buf_adr = @stack_alloc(32);
         let len : u32 = 0;
         let ch : u8 = 0;
         while (abs != 0) {
@@ -97,7 +97,7 @@ trait Number {
         let abs = num @as uxx;
  
         // Process individual digits
-        let buf_adr = stack_alloc(32);
+        let buf_adr = @stack_alloc(32);
         let len : u32 = 0;
         let ch : u8 = 0;
         while (abs != 0) {
@@ -120,7 +120,7 @@ trait Number {
         }
  
         // Reverse the string
-        let res = stack_alloc(32);
+        let res = @stack_alloc(32);
         let str_adr = res;
         let bytes = len;
         while(len > 0){
