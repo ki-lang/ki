@@ -49,8 +49,6 @@ func ki_os__file_sync() void;
 func ki_os__file_stats(path: ptr, path_len: i32, buf: *ki_file_stats) ?ki_file_stats;
 func ki_os__files_in_dir(path: ptr, path_len: i32) ?ptr;
 //
-func ki_os__domain_to_ip(domain: ptr, domain_len: i32) ?cstring;
-//
 func ki_os__socket_create(arg_0: i32, arg_1: i32) ?ptr;
 func ki_os__socket_free(sock: ptr) void;
 func ki_os__socket_get_fd(sock: ptr) i32;

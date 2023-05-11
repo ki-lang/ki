@@ -99,8 +99,6 @@ bool ki_os__file_mkdir(void *path, int path_len);
 void ki_os__file_sync();
 ki_file_stats *ki_os__file_stats(void *path, int path_len, ki_file_stats *s);
 void *ki_os__files_in_dir(void *path, int path_len);
-// net
-char *ki_os__domain_to_ip(void *domain, int domain_len);
 // socket
 void *ki_os__socket_create(int ki_domain, int ki_connection_type);
 void ki_os__socket_free(void *sock);

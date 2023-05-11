@@ -285,23 +285,23 @@ void *ki_os__files_in_dir(void *path, int path_len) {
 // Net
 ////////////
 
-char *ki_os__domain_to_ip(void *domain, int domain_len) {
-    //
-    char cpath[domain_len + 1];
-    memcpy(cpath, domain, domain_len);
-    cpath[domain_len] = '\0';
-    //
-    struct hostent *he = gethostbyname(domain);
-    if (he) {
-        struct in_addr **addr_list = (struct in_addr **)he->h_addr_list;
-        for (int i = 0; addr_list[i] != NULL; i++) {
-            char *ip = ki_os__alloc(32);
-            strcpy(ip, inet_ntoa(*addr_list[i]));
-            return ip;
-        }
-    }
-    return NULL;
-}
+// char *ki_os__domain_to_ip(void *domain, int domain_len) {
+//     //
+//     char cpath[domain_len + 1];
+//     memcpy(cpath, domain, domain_len);
+//     cpath[domain_len] = '\0';
+//     //
+//     struct hostent *he = gethostbyname(domain);
+//     if (he) {
+//         struct in_addr **addr_list = (struct in_addr **)he->h_addr_list;
+//         for (int i = 0; addr_list[i] != NULL; i++) {
+//             char *ip = ki_os__alloc(32);
+//             strcpy(ip, inet_ntoa(*addr_list[i]));
+//             return ip;
+//         }
+//     }
+//     return NULL;
+// }
 
 ////////////
 // Sockets

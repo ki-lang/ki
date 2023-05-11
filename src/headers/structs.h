@@ -116,6 +116,7 @@ struct Build {
     bool clear_cache;
     bool run_code;
     bool core_types_scanned;
+    bool link_static;
 };
 
 struct Fc {

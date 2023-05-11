@@ -292,7 +292,11 @@ void stage_8_link(Build *b, Array *o_files) {
     //
     Str *cmd = str_make(b->alc, 1000);
 
-    str_append_chars(cmd, "gcc -o ");
+    str_append_chars(cmd, "gcc ");
+    if (b->link_static) {
+        str_append_chars(cmd, "-static ");
+    }
+    str_append_chars(cmd, "-o ");
     str_append_chars(cmd, b->path_out);
     str_append_chars(cmd, " ");
 

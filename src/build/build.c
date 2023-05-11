@@ -57,6 +57,7 @@ void cmd_build(int argc, char *argv[]) {
     bool debug = array_contains(args, "--debug", arr_find_str) || array_contains(args, "-d", arr_find_str);
     bool test = array_contains(args, "--test", arr_find_str);
     bool clear_cache = array_contains(args, "--clear", arr_find_str) || array_contains(args, "-c", arr_find_str);
+    bool link_static = array_contains(args, "--static", arr_find_str) || array_contains(args, "-s", arr_find_str);
 
     //
     Build *b = al(alc, sizeof(Build));
@@ -186,6 +187,7 @@ void cmd_build(int argc, char *argv[]) {
     b->clear_cache = clear_cache;
     b->run_code = run_code;
     b->LOC = 0;
+    b->link_static = link_static;
     //
 
     struct timeval begin, end;
