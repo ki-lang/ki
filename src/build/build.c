@@ -221,7 +221,8 @@ void cmd_build(int argc, char *argv[]) {
 
     // Compile CLI files
     build_add_files(b, files);
-    compile_loop(b, 6);
+    compile_loop(b, 5); // Get everything to stage 5 first
+    compile_loop(b, 6); // Parse AST & generate IR
 
     b->ir_ready = true;
 
