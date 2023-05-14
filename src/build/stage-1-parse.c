@@ -457,7 +457,8 @@ void stage_1_header(Fc *fc) {
     tok_expect(fc, "\"", true, true);
 
     Str *buf = read_string(fc);
-    char *fn = str_to_chars(fc->alc, buf);
+    Str *fnstr = macro_replace_str_vars(fc->alc, fc, buf);
+    char *fn = str_to_chars(fc->alc, fnstr);
 
     Array *dirs = fc->nsc->pkc->header_dirs;
     bool found = false;

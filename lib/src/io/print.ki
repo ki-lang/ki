@@ -1,10 +1,11 @@
 
-header "ki_os" as os;
+header "ki_os" as kos;
+header "os" as os;
 
 use mem;
 
 func print(str: *String) void {
-	let c = os.ki_os__fd_write(1, str.data(), str.bytes());
+	let c = kos.ki_os__fd_write(1, str.data(), str.bytes());
 }
 
 func println(str: *String) void {
