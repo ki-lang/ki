@@ -58,7 +58,7 @@ char *nsc_gname(Nsc *nsc, char *name);
 char *nsc_dname(Nsc *nsc, char *name);
 
 // Fc
-Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated);
+Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated);
 void fc_error(Fc *fc);
 void fc_update_cahce(Fc *fc);
 
@@ -110,6 +110,7 @@ Idf *idf_init(Allocator *alc, int type);
 Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash);
 Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail);
 Idf *ki_lib_get(Build *b, char *ns, char *name);
+Idf *idf_get_from_header(Fc *hfc, char *name, int depth);
 
 // Scope
 Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast);

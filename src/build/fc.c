@@ -1,8 +1,17 @@
 
 #include "../all.h"
 
-Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
+Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) {
     //
+    Fc *prev = map_get(b->all_fcs, path_ki);
+    if (prev) {
+        if (!prev->is_header) {
+            sprintf(b->sbuf, "Compiler tried to import the same file twice: %s", path_ki);
+            die(b->sbuf);
+        }
+        return prev;
+    }
+
     bool is_header = ends_with(path_ki, ".kh");
 
     Allocator *alc = b->alc;
@@ -32,9 +41,11 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     fc->ir = NULL;
     fc->ir_hash = "";
     fc->nsc = nsc;
+    fc->pkc_config = pkc_config;
     fc->alc = alc;
     fc->alc_ast = b->alc_ast;
     fc->deps = array_make(alc, 20);
+    fc->sub_headers = array_make(alc, 2);
     fc->token = b->token;
     fc->sbuf = b->sbuf;
     fc->chunk = chunk_init(alc, fc);
@@ -42,7 +53,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     fc->id_buf = id_init(alc);
 
     fc->scope = scope_init(alc, sct_fc, nsc->scope, false);
-    fc->current_macro_scope = NULL;
+    fc->current_macro_scope = b->mc;
 
     fc->error_func_info = NULL;
     fc->error_class_info = NULL;
@@ -81,6 +92,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated) {
     }
 
     array_push(nsc->fcs, fc);
+    map_set(b->all_fcs, path_ki, fc);
 
     return fc;
 }

@@ -113,10 +113,9 @@ void stage_1_func(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_func);
     idf->item = func;
 
+    map_set(fc->nsc->scope->identifiers, name, idf);
     if (fc->is_header) {
         map_set(fc->scope->identifiers, name, idf);
-    } else {
-        map_set(fc->nsc->scope->identifiers, name, idf);
     }
 
     if (strcmp(func->gname, "main") == 0) {
@@ -170,10 +169,9 @@ void stage_1_class(Fc *fc, bool is_struct) {
     Idf *idf = idf_init(fc->alc, idf_class);
     idf->item = class;
 
+    map_set(fc->nsc->scope->identifiers, name, idf);
     if (fc->is_header) {
         map_set(fc->scope->identifiers, name, idf);
-    } else {
-        map_set(fc->nsc->scope->identifiers, name, idf);
     }
 
     map_set(class->scope->identifiers, "CLASS", idf);
@@ -322,6 +320,10 @@ void stage_1_trait(Fc *fc) {
     char *token = fc->token;
     tok(fc, token, true, true);
 
+    if (fc->is_header) {
+        sprintf(fc->sbuf, "You cannot use 'trait' inside a header file");
+        fc_error(fc);
+    }
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid trait name syntax '%s'", token);
         fc_error(fc);
@@ -343,11 +345,7 @@ void stage_1_trait(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_trait);
     idf->item = tr;
 
-    if (fc->is_header) {
-        map_set(fc->scope->identifiers, name, idf);
-    } else {
-        map_set(fc->nsc->scope->identifiers, name, idf);
-    }
+    map_set(fc->nsc->scope->identifiers, name, idf);
 
     tr->chunk = chunk_clone(fc->alc, fc->chunk);
 
@@ -445,10 +443,9 @@ void stage_1_enum(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_enum);
     idf->item = enu;
 
+    map_set(fc->nsc->scope->identifiers, name, idf);
     if (fc->is_header) {
         map_set(fc->scope->identifiers, name, idf);
-    } else {
-        map_set(fc->nsc->scope->identifiers, name, idf);
     }
 }
 
@@ -459,8 +456,9 @@ void stage_1_header(Fc *fc) {
     Str *buf = read_string(fc);
     Str *fnstr = macro_replace_str_vars(fc->alc, fc, buf);
     char *fn = str_to_chars(fc->alc, fnstr);
+    Nsc *nsc_main = fc->b->nsc_main;
 
-    Array *dirs = fc->nsc->pkc->header_dirs;
+    Array *dirs = fc->pkc_config->header_dirs;
     bool found = false;
     for (int i = 0; i < dirs->length; i++) {
         char *dir = array_get_index(dirs, i);
@@ -468,29 +466,33 @@ void stage_1_header(Fc *fc) {
 
         if (file_exists(fc->sbuf)) {
             char *path = dups(fc->alc, fc->sbuf);
-            Fc *hfc = fc_init(fc->b, path, fc->b->nsc_main, false);
+            Fc *hfc = fc_init(fc->b, path, nsc_main, fc->nsc->pkc, false);
 
             //
-            tok_expect(fc, "as", true, true);
+            if (fc->is_header) {
+                array_push(fc->sub_headers, hfc);
+            } else {
+                tok_expect(fc, "as", true, true);
 
-            char *token = fc->token;
-            tok(fc, token, true, true);
+                char *token = fc->token;
+                tok(fc, token, true, true);
 
-            if (!is_valid_varname_char(token[0])) {
-                sprintf(fc->sbuf, "Invalid variable name syntax: '%s'", token);
-                fc_error(fc);
+                if (!is_valid_varname_char(token[0])) {
+                    sprintf(fc->sbuf, "Invalid variable name syntax: '%s'", token);
+                    fc_error(fc);
+                }
+                name_taken_check(fc, fc->scope, token);
+
+                char *as = dups(fc->alc, token);
+
+                //
+                Idf *idf = idf_init(fc->alc, idf_fc);
+                idf->item = hfc;
+
+                map_set(fc->scope->identifiers, as, idf);
             }
-            name_taken_check(fc, fc->scope, token);
-
-            char *as = dups(fc->alc, token);
 
             tok_expect(fc, ";", true, true);
-
-            //
-            Idf *idf = idf_init(fc->alc, idf_fc);
-            idf->item = hfc;
-
-            map_set(fc->scope->identifiers, as, idf);
 
             found = true;
             break;
@@ -504,7 +506,7 @@ void stage_1_header(Fc *fc) {
             printf("Lookup: %s\n", fc->sbuf);
         }
 
-        sprintf(fc->sbuf, "Header not found: '%s'\n", fn);
+        sprintf(fc->sbuf, "Header not found: '%s.kh'\n", fn);
         fc_error(fc);
     }
 }
@@ -598,9 +600,8 @@ void stage_1_global(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_global);
     idf->item = g;
 
+    map_set(fc->nsc->scope->identifiers, name, idf);
     if (fc->is_header) {
         map_set(fc->scope->identifiers, name, idf);
-    } else {
-        map_set(fc->nsc->scope->identifiers, name, idf);
     }
 }

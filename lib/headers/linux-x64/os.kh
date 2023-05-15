@@ -1,2 +1,2 @@
 
-func read(fd: u32, buf: cstring, size: uxx);
+func read(fd: u32, buf: cstring, size: uxx) void;

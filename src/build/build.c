@@ -64,6 +64,11 @@ void cmd_build(int argc, char *argv[]) {
     b->token = al(alc, KI_TOKEN_MAX);
     b->sbuf = al(alc, 2000);
 
+    MacroScope *mc = init_macro_scope(alc);
+    map_set(mc->identifiers, "OS", os);
+    map_set(mc->identifiers, "ARCH", arch);
+    b->mc = mc;
+
     // Filter out files
     char *first_file = NULL;
     Array *files = array_make(alc, argc);
@@ -154,6 +159,7 @@ void cmd_build(int argc, char *argv[]) {
     b->all_ki_files = array_make(alc, 1000);
     b->link_libs = array_make(alc, 160);
     b->link_dirs = array_make(alc, 40);
+    b->all_fcs = map_make(alc);
     b->main_func = NULL;
     b->str_buf = str_make(alc, 5000);
     b->str_buf_io = str_make(alc_io, 10000);
@@ -260,7 +266,7 @@ void build_add_files(Build *b, Array *files) {
     int filec = files->length;
     for (int i = 0; i < filec; i++) {
         char *path = array_get_index(files, i);
-        Fc *fc = fc_init(b, path, b->nsc_main, false);
+        Fc *fc = fc_init(b, path, b->nsc_main, b->nsc_main->pkc, false);
     }
 }
 

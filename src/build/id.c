@@ -126,3 +126,23 @@ Idf *ki_lib_get(Build *b, char *ns, char *name) {
     }
     return idf;
 }
+
+Idf *idf_get_from_header(Fc *hfc, char *name, int depth) {
+    //
+    if (depth > 5) {
+        return NULL;
+    }
+    Idf *idf = map_get(hfc->scope->identifiers, name);
+    if (idf) {
+        return idf;
+    }
+    depth++;
+    for (int i = 0; i < hfc->sub_headers->length; i++) {
+        Fc *hfc = array_get_index(hfc->sub_headers, i);
+        idf = idf_get_from_header(hfc, name, depth);
+        if (idf) {
+            return idf;
+        }
+    }
+    return NULL;
+}

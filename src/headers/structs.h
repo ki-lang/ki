@@ -74,10 +74,13 @@ struct Build {
     Nsc *nsc_type;
     Nsc *nsc_io;
     //
+    MacroScope *mc;
+    //
     Array *packages;
     Array *all_ki_files;
     Array *link_dirs;
     Array *link_libs;
+    Map *all_fcs;
     Str *str_buf;
     Str *str_buf_io;
     //
@@ -130,9 +133,11 @@ struct Fc {
     char *ir_hash;
     Id *id_buf;
     Nsc *nsc;
+    Pkc *pkc_config;
     Allocator *alc;
     Allocator *alc_ast;
     Array *deps;
+    Array *sub_headers;
     Chunk *chunk;
     Chunk *chunk_prev;
     Scope *scope;

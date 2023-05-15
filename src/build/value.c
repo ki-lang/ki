@@ -839,7 +839,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         tok_expect(fc, ".", true, false);
         tok(fc, token, true, false);
 
-        Idf *idf_ = map_get(rfc->scope->identifiers, token);
+        Idf *idf_ = idf_get_from_header(rfc, token, 0);
         if (!idf_) {
             sprintf(fc->sbuf, "Unknown property: '%s'", token);
             fc_error(fc);
