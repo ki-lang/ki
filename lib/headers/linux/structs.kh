@@ -1,0 +1,38 @@
+
+struct cstruct_stat {
+	temp: i32;
+}
+
+struct cstruct_timespec {
+	tv_sec: ixx; // seconds
+	tv_nsec: ixx; // nanoseconds
+}
+
+struct cstruct_timeval {
+	tv_sec: ixx; // seconds
+	tv_usec: ixx; // microseconds
+}
+
+struct cstruct_pollfd {
+	fd: i32;
+	events: i16;  // detect events
+	revents: i16; // detected events
+}
+
+struct cstruct_sockaddr {
+	sa_family: u16;
+	sa_data_1: u32;
+	sa_data_2: u32;
+	sa_data_3: u32;
+	sa_data_4: u16;
+}
+
+struct cstruct_timezone {
+	tz_minuteswest: i32; // Minutes west of GMT
+	tz_dsttime: i32; // Nonzero if DST is ever in effect
+}
+
+struct cstruct_epoll_event {
+  events: u32; // events
+  data: ptr; // data
+}

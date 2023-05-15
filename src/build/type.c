@@ -130,11 +130,16 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     bool borrow = false;
     bool ref = false;
+    bool inline_ = false;
 
     tok(fc, token, sameline, allow_space);
 
     if (strcmp(token, "async") == 0) {
         async = true;
+        tok(fc, token, true, true);
+    }
+    if (strcmp(token, "inline") == 0) {
+        inline_ = true;
         tok(fc, token, true, true);
     }
 
@@ -263,6 +268,13 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         type->borrow = borrow;
     }
 
+    if (inline_ && type->ptr_depth > 0) {
+        type->ptr_depth--;
+        if (type->type == type_struct && type->ptr_depth == 0) {
+            type->bytes = type->class->size;
+        }
+    }
+
     if (async) {
         if (!type_allowed_async(type, true)) {
             Str *chain = str_make(alc, 500);
@@ -276,6 +288,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         int count = -1;
         if (is_valid_number(token)) {
             count = atoi(token);
+        } else if (strcmp(token, "unsafe") == 0) {
         } else {
             sprintf(fc->sbuf, "Invalid array size number (0-9 characters only)");
             fc_error(fc);
