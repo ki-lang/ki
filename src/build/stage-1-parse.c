@@ -516,7 +516,8 @@ void stage_1_link(Fc *fc) {
     tok_expect(fc, "\"", true, true);
 
     Str *buf = read_string(fc);
-    char *fn = str_to_chars(fc->alc, buf);
+    Str *fnstr = macro_replace_str_vars(fc->alc, fc, buf);
+    char *fn = str_to_chars(fc->alc, fnstr);
 
     array_push(fc->b->link_libs, fn);
 
