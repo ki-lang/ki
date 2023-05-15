@@ -53,6 +53,15 @@ foreach ($versions as $v) {
 					];
 				}
 
+				if ($type == 'int') {
+					$type = 'i32';
+				} else if ($type == 'Handle') {
+					$type = 'uxx';
+				} else {
+					echo "Unknown type: $type\n";
+					continue;
+				}
+
 				$defines[$os]['var'][$key] = $type;
 			}
 		}
@@ -74,6 +83,6 @@ foreach ($defines as $os => $defs) {
 	foreach ($defs['var'] as $k => $v) {
 		$globals[] = "global $k : $v;";
 	}
-	$out = "\n" . implode("\n", $globals) . "\n\nenum OS {\n" . implode("\n", $lines) . "\n}\n";
+	$out = "\n" . implode("\n", $globals) . "\n\nenum OS {\n" . implode(",\n", $lines) . "\n}\n";
 	file_put_contents($out_dir . '/' . $os . '.kh', $out);
 }

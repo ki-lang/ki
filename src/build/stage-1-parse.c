@@ -8,7 +8,7 @@ void stage_1_enum(Fc *fc);
 void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
 void stage_1_link(Fc *fc);
-void stage_1_global(Fc *fc);
+void stage_1_global(Fc *fc, bool shared);
 
 void stage_1(Fc *fc) {
     //
@@ -64,7 +64,11 @@ void stage_1(Fc *fc) {
             continue;
         }
         if (strcmp(token, "global") == 0) {
-            stage_1_global(fc);
+            stage_1_global(fc, false);
+            continue;
+        }
+        if (strcmp(token, "shared") == 0) {
+            stage_1_global(fc, true);
             continue;
         }
 
@@ -389,6 +393,11 @@ void stage_1_enum(Fc *fc) {
         tok(fc, token, false, true);
         if (strcmp(token, ":") == 0) {
             tok(fc, token, false, true);
+            bool negative = false;
+            if (strcmp(token, "-") == 0) {
+                negative = true;
+                tok(fc, token, true, false);
+            }
             if (is_valid_number(token)) {
                 int value = 0;
                 if (strcmp(token, "0") == 0 && get_char(fc, 0) == 'x') {
@@ -400,15 +409,14 @@ void stage_1_enum(Fc *fc) {
                     // Number
                     value = atoi(token);
                 }
-                if (array_contains(values->values, (void *)(intptr_t)value, arr_find_adr)) {
-                    sprintf(fc->sbuf, "Duplicate value: '%s'", token);
-                    fc_error(fc);
-                }
+                if (negative)
+                    value = value * -1;
 
                 map_set(values, name, (void *)(intptr_t)value);
 
                 tok(fc, token, false, true);
                 if (strcmp(token, ",") == 0) {
+                    tok(fc, token, false, true);
                     continue;
                 } else if (strcmp(token, "}") == 0) {
                     break;
@@ -418,7 +426,7 @@ void stage_1_enum(Fc *fc) {
                 }
 
             } else {
-                sprintf(fc->sbuf, "Invalid enum property name '%s'", token);
+                sprintf(fc->sbuf, "Invalid enum property value '%s'", token);
                 fc_error(fc);
             }
             continue;
@@ -565,7 +573,7 @@ void stage_1_use(Fc *fc) {
     tok_expect(fc, ";", true, true);
 }
 
-void stage_1_global(Fc *fc) {
+void stage_1_global(Fc *fc, bool shared) {
     //
     char *token = fc->token;
     tok(fc, token, true, true);
@@ -585,7 +593,7 @@ void stage_1_global(Fc *fc) {
     g->name = name;
     g->gname = gname;
     g->dname = dname;
-    g->shared = false;
+    g->shared = shared;
     g->type = NULL;
 
     array_push(fc->globals, g);
