@@ -1,2 +1,3 @@
 
+header "[OS]-[ARCH]/structs";
 header "[OS]-[ARCH]/os";

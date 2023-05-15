@@ -1,0 +1,4 @@
+
+struct cstruct_stat {
+	temp: i32;
+}

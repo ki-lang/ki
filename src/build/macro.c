@@ -287,6 +287,7 @@ Str *macro_replace_str_vars(Allocator *alc, Fc *fc, Str *str) {
                 vi++;
                 i++;
             }
+            var_name[vi] = '\0';
             if (vi > 0) {
                 char *value = macro_get_var(fc->current_macro_scope, var_name);
                 if (!value) {

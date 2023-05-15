@@ -4,8 +4,13 @@ shared stderr : i32;
 shared stdin : i32;
 shared stdout : i32;
 
-func read(fd: u32, buf: cstring, size: uxx) ixx;
-func write(fd: u32, buf: cstring, size: uxx) ixx;
+func read(fd: i32, buf: cstring, size: uxx) ixx;
+func write(fd: i32, buf: cstring, size: uxx) ixx;
+func open(path: cstring, flags: i32) i32;
+func close(fd: i32) i32;
+
+func stat(path: cstring, stat_buf: cstruct_stat) i32;
+func fstat(fd: i32, stat_buf: cstruct_stat) i32;
 
 enum OS {
     LOG_ALERT: 1,
