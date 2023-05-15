@@ -1,4 +1,8 @@
 
-header "[OS]/structs";
-header "[OS]/api";
-header "[OS]-[ARCH]/enum";
+
+#if OS == linux
+header "linux/structs";
+header "linux/api";
+header "linux-[ARCH]/enum";
+#end
+

@@ -236,11 +236,9 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         result = strcmp(value, "1") == 0;
 
         tok(fc, token, true, true);
-        if (strcmp(token, "=") == 0) {
+        if (strcmp(token, "==") == 0) {
             tok(fc, token, true, true);
-            if (result) {
-                result = strcmp(value, token) == 0;
-            }
+            result = strcmp(value, token) == 0;
         } else {
             rtok(fc);
         }

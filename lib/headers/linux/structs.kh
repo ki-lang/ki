@@ -1,6 +1,23 @@
 
 struct cstruct_stat {
-	temp: i32;
+	st_dev: uxx;
+	st_ino: uxx;
+	st_mode: u16;
+	st_nlink: u16;
+	st_uid: u16;
+	st_gid: u16;
+	st_rdev: uxx;
+	st_size: uxx;
+	st_blksize: uxx;
+	st_blocks: uxx;
+	st_atime: uxx;
+	st_atime_nsec: uxx;
+	st_mtime: uxx;
+	st_mtime_nsec: uxx;
+	st_ctime: uxx;
+	st_ctime_nsec: uxx;
+	__unused4: uxx;
+	__unused5: uxx;
 }
 
 struct cstruct_timespec {
