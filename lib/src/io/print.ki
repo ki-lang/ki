@@ -1,11 +1,11 @@
 
-header "os" as os;
+header "sys" as sys;
 
 use mem;
 
 func print(str: *String) void {
-    let byte_count = os.write(1, str.data(), str.bytes());
-    //if (byte_count < 0 && (os.errno == EAGAIN || os.errno == EWOULDBLOCK)) {
+    let byte_count = sys.write(1, str.data(), str.bytes());
+    //if (byte_count < 0 && (sys.errno == EAGAIN || sys.errno == EWOULDBLOCK)) {
 	//    throw err
     //}
 }
