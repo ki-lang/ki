@@ -138,8 +138,8 @@ Idf *idf_get_from_header(Fc *hfc, char *name, int depth) {
     }
     depth++;
     for (int i = 0; i < hfc->sub_headers->length; i++) {
-        Fc *hfc = array_get_index(hfc->sub_headers, i);
-        idf = idf_get_from_header(hfc, name, depth);
+        Fc *sfc = array_get_index(hfc->sub_headers, i);
+        idf = idf_get_from_header(sfc, name, depth);
         if (idf) {
             return idf;
         }

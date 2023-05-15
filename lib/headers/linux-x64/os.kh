@@ -1,2 +1,5 @@
 
-func read(fd: u32, buf: cstring, size: uxx) void;
+global errno: i32;
+
+func read(fd: u32, buf: cstring, size: uxx) ixx;
+func write(fd: u32, buf: cstring, size: uxx) ixx;

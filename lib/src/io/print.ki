@@ -1,11 +1,13 @@
 
-header "ki_os" as kos;
 header "os" as os;
 
 use mem;
 
 func print(str: *String) void {
-	let c = kos.ki_os__fd_write(1, str.data(), str.bytes());
+    let byte_count = os.write(1, str.data(), str.bytes());
+    if (byte_count < 0 && (os.errno == EAGAIN || os.errno == EWOULDBLOCK)) {
+		// throw err
+    }
 }
 
 func println(str: *String) void {
