@@ -11,6 +11,77 @@ func close(fd: i32) i32;
 
 func stat(path: cstring, stat_buf: cstruct_stat) i32;
 func fstat(fd: i32, stat_buf: cstruct_stat) i32;
+func lstat(path: cstring, stat_buf: cstruct_stat) i32;
+
+//func poll(fds: cstruct_pollfd_list, nfds: u32, timeout: i32) i32;
+
+//int pipe(int pipefd[2]);
+//int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict exceptfds, struct timeval *restrict timeout);
+func dup(old_fd: i32) i32;
+func dup2(old_fd: i32, new_fd: i32) i32;
+
+//func nanosleep(req: cstruct_timespec, rem: cstruct_timespec) i32;
+
+int socket(int domain, int type, int protocol);
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int accept(int sockfd, struct sockaddr *restrict addr, socklen_t *restrict addrlen);
+//int accept4(int sockfd, struct sockaddr *restrict addr, socklen_t *restrict addrlen, int flags);
+int shutdown(int sockfd, int how);
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int listen(int sockfd, int backlog);
+
+int getsockopt(int sockfd, int level, int optname, void *restrict optval, socklen_t *restrict optlen);
+int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+
+//int clone(int (*fn)(void *), void *stack, int flags, void *arg, .../* pid_t *parent_tid, void *tls, pid_t *child_tid */ );
+pid_t fork(void);
+//pid_t vfork(void);
+
+int execve(const char *pathname, char *const argv[], char *const envp[]);
+
+//pid_t wait3(int *wstatus, int options, struct rusage *rusage);
+//pid_t wait4(pid_t pid, int *wstatus, int options, struct rusage *rusage);
+
+int kill(pid_t pid, int sig);
+int uname(struct utsname *buf);
+
+//int fcntl(int fd, int cmd, ... /* arg */ );
+
+char *getcwd(char *buf, size_t size);
+//char *getwd(char *buf);
+//char *get_current_dir_name(void);
+//int chdir(const char *path);
+//int fchdir(int fd);
+
+int rename(const char *oldpath, const char *newpath);
+int mkdir(const char *pathname, mode_t mode);
+int rmdir(const char *pathname);
+int link(const char *oldpath, const char *newpath);
+int unlink(const char *pathname);
+int symlink(const char *target, const char *linkpath);
+ssize_t readlink(const char *restrict pathname, char *restrict buf, size_t bufsiz);
+
+int chmod(const char *pathname, mode_t mode);
+int fchmod(int fd, mode_t mode);
+int chown(const char *pathname, uid_t owner, gid_t group);
+int fchown(int fd, uid_t owner, gid_t group);
+int lchown(const char *pathname, uid_t owner, gid_t group);
+
+mode_t umask(mode_t mask);
+
+int gettimeofday(struct timeval *restrict tv, struct timezone *restrict tz);
+int settimeofday(const struct timeval *tv, const struct timezone *tz);
+//time_t time(time_t *tloc);
+
+//int sysinfo(struct sysinfo *info);
+
+void sync(void);
+
+pid_t gettid(void);
+
+int epoll_create(int size);
+int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
+//int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
 
 enum OS {
     LOG_ALERT: 1,
