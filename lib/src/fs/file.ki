@@ -101,7 +101,6 @@ func mkdir(path: *String) void !failed {
 func is_file(path: *String) bool {
 	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
 	stat(path, buf) !! return false;;
-	println(@sizeof_class(sys.cstruct_stat).str());
 	return (buf.st_mode & 0xF000) == 0x8000;
 }
 func is_dir(path: *String) bool {

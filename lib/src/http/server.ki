@@ -1,5 +1,5 @@
 
-header "ki_os" as kos;
+header "sys" as sys;
 
 use os;
 use net;
@@ -234,10 +234,7 @@ class Server {
         let read_buf = http_con.read_buf;
         read_buf.minimum_free_space(buf_size);
         while true {
-            //let rcvd = io:read(http_con.fd, read_buf.data + read_buf.length, buf_size) !! {
-            //};
-
-            let rcvd = kos.ki_os__fd_read(http_con.fd, read_buf.data + read_buf.length, buf_size);
+            let rcvd = sys.read(http_con.fd, read_buf.data + read_buf.length, buf_size);
             if (rcvd == -2){
                 // EAGAIN
                 return;
