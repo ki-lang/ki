@@ -88,3 +88,5 @@ func gettid() i32;
 func epoll_create(size: i32) i32;
 func epoll_wait(epfd: i32, events: inline cstruct_epoll_event[unsafe], maxevents: i32, timeout: i32) i32;
 func epoll_ctl(epfd: i32, op: i32, fd: i32, event: *cstruct_epoll_event) i32;
+
+func exit(status: i32) void;

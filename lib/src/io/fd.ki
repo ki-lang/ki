@@ -1,8 +1,8 @@
 
-header "ki_os" as kos;
+header "sys" as sys;
 
 func write(fd: i32, str: *String) uxx !failed !again {
-	let c = kos.ki_os__fd_write(fd, str.data(), str.bytes());
+	let c = sys.write(fd, str.data(), str.bytes());
 	if c == -2 {
 		throw again;
 	}
@@ -13,7 +13,7 @@ func write(fd: i32, str: *String) uxx !failed !again {
 }
 
 func write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
-	let c = kos.ki_os__fd_write(fd, data, length);
+	let c = sys.write(fd, data, length);
 	if c == -2 {
 		throw again;
 	}
@@ -24,7 +24,7 @@ func write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
 }
 
 func read(fd: i32, buffer: ptr, buffer_size: uxx) uxx !failed !again {
-	let rcvd = kos.ki_os__fd_read(fd, buffer, buffer_size);
+	let rcvd = sys.read(fd, buffer, buffer_size);
 	if rcvd == -2 {
 		throw again;
 	}
@@ -35,5 +35,5 @@ func read(fd: i32, buffer: ptr, buffer_size: uxx) uxx !failed !again {
 }
 
 func close(fd: i32) void %inline {
-	let c = kos.ki_os__fd_close(fd);
+	let c = sys.close(fd);
 }

@@ -1,12 +1,20 @@
 
-header "ki_os" as kos;
+header "sys" as sys;
 
 func sleep_ms(ms: uxx) void {
-	kos.ki_os__sleep_ms(ms);
+	let msec = ms @as ixx;
+	let ts = @stack_object(sys.cstruct_timespec);
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+    sys.nanosleep(ts, ts);
 }
 
 func sleep_ns(ns: uxx) void {
-	kos.ki_os__sleep_ns(ns);
+	let nsec = ns @as ixx;
+	let ts = @stack_object(sys.cstruct_timespec);
+    ts.tv_sec = nsec / 1000000000;
+    ts.tv_nsec = (nsec % 1000000000);
+    sys.nanosleep(ts, ts);
 }
 
 func !panic(msg: *String) void {
@@ -17,7 +25,7 @@ func !panic(msg: *String) void {
 }
 
 func !exit(code: i32) void {
-	kos.ki_os__exit(code);
+	sys.exit(code);
 }
 
 //func parse_args(i32 argc, ptr argv) Array<String> {

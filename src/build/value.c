@@ -185,6 +185,28 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         tok_expect(fc, ")", false, true);
         v = value_init(alc, v_stack_alloc, val, type_gen(b, alc, "ptr"));
 
+    } else if (strcmp(token, "@stack_object") == 0) {
+
+        Scope *fscope = scope_find(scope, sct_func);
+        if (!fscope) {
+            sprintf(fc->sbuf, "You cannot use stack_alloc outside a function");
+            fc_error(fc);
+        }
+
+        Func *func = fscope->func;
+        func->uses_stack_alloc = true;
+
+        tok_expect(fc, "(", true, false);
+        Type *type = read_type(fc, alc, scope, false, true, rtc_default);
+        if (!type->class) {
+            sprintf(fc->sbuf, "@stack_make type must have a class");
+            fc_error(fc);
+        }
+        Class *class = type->class;
+
+        tok_expect(fc, ")", false, true);
+        v = value_init(alc, v_stack_alloc, vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false), type_gen_class(alc, class));
+
     } else if (strcmp(token, "@atomic_op") == 0) {
 
         Value *on = read_value(fc, alc, scope, true, 0, true);
