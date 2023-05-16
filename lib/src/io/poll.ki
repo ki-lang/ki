@@ -1,5 +1,4 @@
 
-header "ki_os" as kos;
 header "sys" as sys;
 
 use mem;
@@ -110,11 +109,9 @@ class Poll {
 			let item = this.listeners.pop() !! break;;
 			item.__free();
 		}
-		//each this.listeners as li {
-		//	li.__free();
-		//}
 
-		//kos.ki_os__poll_free(this.os_poll);
+		mem:free(this.results);
+		mem:free(this.results_int);
 	}
 }
 
