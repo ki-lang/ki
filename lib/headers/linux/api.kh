@@ -90,3 +90,6 @@ func epoll_wait(epfd: i32, events: inline cstruct_epoll_event[unsafe], maxevents
 func epoll_ctl(epfd: i32, op: i32, fd: i32, event: *cstruct_epoll_event) i32;
 
 func exit(status: i32) void;
+func signal(signum: i32, handler: ?fn(i32)(void)) void;
+func raise(sig: i32) i32;
+
