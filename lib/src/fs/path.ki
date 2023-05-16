@@ -1,9 +1,9 @@
 
-header "ki_os" as kos;
+header "sys" as sys;
 
 use mem;
 
-global EXE_PATH : ?String;
+shared EXE_PATH : ?String;
 global EXE_DIR : ?String;
 
 class Path {
@@ -52,15 +52,19 @@ func exe_dir() &String {
 	};
 	return res;
 }
+
 func exe_path() &String {
-	let cstr = kos.ki_os__exe_path();
-	let res = EXE_PATH ?! {
-		let dir = cstr.to_str();
-		let ref = &dir;
-		EXE_PATH = dir;
+	let path = EXE_PATH ?! {
+		let str = String.make_empty(sys.OS.PATHMAX);
+		let data = str.data();
+		let link = "/proc/self/exe".to_cstring();
+    	let len = sys.readlink(link, data, sys.OS.PATHMAX);
+		mem:free(link);
+		let ref = &str;
+		EXE_PATH = str;
 		return ref;
 	};
-	return res;
+	return path;
 }
 
 func ext(path: *String) String {
@@ -121,27 +125,4 @@ func basename(path: *String) String {
 		}
 	}
 	return path.sub_str_bytes(start, len - start);
-}
-
-global g_stat_buf : ?kos.ki_file_stats;
-func get_stat_buf() &kos.ki_file_stats {
-	let s = g_stat_buf ?! {
-		let s = mem:alloc(@sizeof_class(kos.ki_file_stats)) @as kos.ki_file_stats;
-		g_stat_buf = s;
-		return get_stat_buf();
-	};
-	return s;
-}
-
-func is_file(path: *String) bool {
-	let buf = get_stat_buf();
-	let stat = kos.ki_os__file_stats(path.data(), path.bytes() @as i32, buf);
-	rep stat = stat ?! return false;;
-	return stat.is_file;
-}
-func is_dir(path: *String) bool {
-	let buf = get_stat_buf();
-	let stat = kos.ki_os__file_stats(path.data(), path.bytes() @as i32, buf);
-	rep stat = stat ?! return false;;
-	return stat.is_file == false;
 }
