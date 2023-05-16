@@ -60,7 +60,6 @@ func ki_os__poll_free(instance: ptr) void;
 func ki_os__poll_new_fd(instance: ptr, lsn: *io:PollListener) void;
 func ki_os__poll_update_fd(instance: ptr, lsn: *io:PollListener) void;
 func ki_os__poll_remove_fd(instance: ptr, lsn: *io:PollListener) void;
-func ki_os__poll_wait(instance: ptr, timeout: i32) io:PollResult;
 //
 func ki_os__thread_create(handler: fn(?ptr)(void), data: ?ptr) ptr;
 //

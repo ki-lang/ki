@@ -7,6 +7,11 @@ func alloc(size: uxx) ptr {
 func free(adr: ptr) void {
 	os.ki_os__free(adr);
 }
+func calloc(size: uxx) ptr {
+	let res = os.ki_os__alloc(size);
+	clear(res, size);
+	return res;
+}
 
 func sys_alloc(size: uxx) ptr {
 	return os.ki_os__alloc(size);

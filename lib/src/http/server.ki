@@ -111,12 +111,11 @@ class Server {
         sock_lsn.read(true);
 
         while true {
-            let result = poll.wait();
-            let result_count = result.count;
-            let i : u32 = 0;
+            let result_count = poll.wait();
+            let i : uxx = 0;
 
             while i < result_count {
-                let event = result.get(i) ?! break;;
+                let event = poll.get_event(i) !! break;;
                 i++;
 
                 let lsn = event.listener;

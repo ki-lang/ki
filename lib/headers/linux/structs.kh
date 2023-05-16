@@ -62,7 +62,7 @@ struct cstruct_timezone {
 	tz_dsttime: i32; // Nonzero if DST is ever in effect
 }
 
-struct cstruct_epoll_event {
+struct cstruct_epoll_event packed {
     events: u32; // events
     data: ptr; // data
 }
