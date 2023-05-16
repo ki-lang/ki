@@ -161,7 +161,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     Type *type = NULL;
-    if (strcmp(token, "void") == 0) {
+    if (strcmp(token, "(") == 0) {
+        type = read_type(fc, alc, scope, true, true, context);
+        tok_expect(fc, ")", true, true);
+    } else if (strcmp(token, "void") == 0) {
         type = type_init(alc);
         type->type = type_void;
         return type;
@@ -539,8 +542,9 @@ char *type_to_str(Type *t, char *res) {
         }
     } else if (t->type == type_arr) {
         char sub_str[256];
+        strcat(res, "(");
         strcat(res, type_to_str(t->array_of, sub_str));
-        strcat(res, "[");
+        strcat(res, ")[");
         char nr[10];
         sprintf(nr, "%d", t->array_size);
         strcat(res, t->array_size == -1 ? "" : nr);

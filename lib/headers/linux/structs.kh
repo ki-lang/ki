@@ -38,6 +38,17 @@ struct cstruct_pollfd {
 	revents: i16; // detected events
 }
 
+struct cstruct_addrinfo {
+    ai_flags: i32;
+    ai_family: i32;
+    ai_socktype: i32;
+    ai_protocol: i32;
+    ai_addrlen: u32;
+    ai_addr: cstruct_sockaddr;
+    ai_canonname: cstring;
+    ai_next: cstruct_addrinfo;
+}
+
 struct cstruct_sockaddr {
 	sa_family: u16;
 	sa_data_1: u32;
@@ -52,6 +63,6 @@ struct cstruct_timezone {
 }
 
 struct cstruct_epoll_event {
-  events: u32; // events
-  data: ptr; // data
+    events: u32; // events
+    data: ptr; // data
 }

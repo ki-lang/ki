@@ -149,12 +149,14 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
         v = vgen_swap(alc, var, with);
 
-    } else if (strcmp(token, "@getptr") == 0) {
+    } else if (strcmp(token, "@var_ptr") == 0) {
+        tok_expect(fc, "(", true, false);
         Value *on = read_value(fc, alc, scope, false, 0, false);
         if (!value_is_assignable(on)) {
-            sprintf(fc->sbuf, "Value used in '@getptr' must be assignable");
+            sprintf(fc->sbuf, "Value used in '@var_ptr' must be assignable");
             fc_error(fc);
         }
+        tok_expect(fc, ")", false, true);
         if (on->type == v_decl) {
             Decl *decl = on->item;
             if (!decl->is_mut) {
@@ -162,6 +164,22 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             }
         }
         v = value_init(alc, v_getptr, on, type_gen(b, alc, "ptr"));
+
+    } else if (strcmp(token, "@var_array") == 0) {
+        tok_expect(fc, "(", true, false);
+        Value *on = read_value(fc, alc, scope, false, 0, false);
+        if (!value_is_assignable(on)) {
+            sprintf(fc->sbuf, "Value used in '@var_array' must be assignable");
+            fc_error(fc);
+        }
+        tok_expect(fc, ")", false, true);
+        if (on->type == v_decl) {
+            Decl *decl = on->item;
+            if (!decl->is_mut) {
+                decl->is_mut = true;
+            }
+        }
+        v = value_init(alc, v_getptr, on, type_array_of(alc, b, on->rett, 1));
         //
     } else if (strcmp(token, "@stack_alloc") == 0) {
 
@@ -205,7 +223,10 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         Class *class = type->class;
 
         tok_expect(fc, ")", false, true);
-        v = value_init(alc, v_stack_alloc, vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false), type_gen_class(alc, class));
+
+        Type *rett = type_gen_class(alc, class);
+        rett->borrow = true;
+        v = value_init(alc, v_stack_alloc, vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false), rett);
 
     } else if (strcmp(token, "@atomic_op") == 0) {
 

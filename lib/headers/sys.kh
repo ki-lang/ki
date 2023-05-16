@@ -4,4 +4,3 @@ header "linux/structs";
 header "linux/api";
 header "linux-[ARCH]/enum";
 #end
-

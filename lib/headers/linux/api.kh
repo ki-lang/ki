@@ -30,14 +30,16 @@ func nanosleep(req: *cstruct_timespec, rem: *cstruct_timespec) i32;
 
 func socket(domain: i32, type: i32, protocol: i32) i32;
 func connect(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32) i32;
-func accept(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32[1]) i32;
-func accept4(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32[1], flags: i32) i32;
+func accept(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1]) i32;
+func accept4(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1], flags: i32) i32;
 func shutdown(sockfd: i32, how: i32) i32;
 func bind(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32) i32;
 func listen(sockfd: i32, backlog: i32) i32;
 
 func getsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
 func setsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
+func getaddrinfo(host: cstring, port: cstring, hints: *cstruct_addrinfo, res: (?cstruct_addrinfo)[1]) i32;
+func freeaddrinfo(info: cstruct_addrinfo) i32;
 
 //int clone(int (*fn)(void *), void *stack, int flags, void *arg, .../* pid_t *parent_tid, void *tls, pid_t *child_tid */ );
 func fork() i32;
