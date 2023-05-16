@@ -1,5 +1,7 @@
 
-header "ki_os" as kos;
+header "pthread" as pt;
+
+use mem;
 
 class Mutex[T] async {
 
@@ -9,42 +11,46 @@ class Mutex[T] async {
 
 	// VOID
 
-	public static func init() =CLASS { 
-		let m = CLASS { mutex: kos.ki_os__mutex_create() };
-		return m;
+	public static func init() CLASS { 
+		let mut = mem:calloc(pt.CONST.mutex_size);
+		pt.pthread_mutex_init(mut);
+		return CLASS { mutex: mut };
 	}
 
 	public func lock() void {
-		kos.ki_os__mutex_lock(this.mutex);
+		pt.pthread_mutex_lock(this.mutex);
 	}
 
 	public func unlock() void {
-		kos.ki_os__mutex_unlock(this.mutex);
+		pt.pthread_mutex_unlock(this.mutex);
 	}
 
 	#else
 
 	// NONE VOID
 
-	private value: async T;
+	private value: ?T;
 
-	public static func init(value: async +T) CLASS { 
-		let m = CLASS { mutex: kos.ki_os__mutex_create(), value: value };
-		return m;
+	public static func init(value: T) CLASS { 
+		let mut = mem:calloc(pt.CONST.mutex_size);
+		pt.pthread_mutex_init(mut);
+		return CLASS { mutex: mut, value: value };
 	}
 
-	public func lock() async T {
-		kos.ki_os__mutex_lock(this.mutex);
-		return this.value;
+	public func lock() T {
+		pt.pthread_mutex_lock(this.mutex);
+		return swap this.value with null;
 	}
 
-	public func unlock(>value: async T) void {
+	public func unlock(value: T) void {
+		pt.pthread_mutex_unlock(this.mutex);
 		this.value = value;
-		kos.ki_os__mutex_unlock(this.mutex);
 	}
+
 	#end
 
 	public func __before_free() void {
-		kos.ki_os__mutex_free(this.mutex);
+		pt.pthread_mutex_destroy(this.mutex);
+		mem:free(this.mutex);
 	}
 }

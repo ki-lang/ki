@@ -3,5 +3,13 @@ struct pthread_t {
 	data: uxx;
 }
 
+enum CONST {
+	mutex_size: 64, // It's actually smaller, but the c code is just a mess, just take 64 bytes
+}
+
 func pthread_create(thread: *pthread_t, attr: ?ptr, entry: fn(ptr)(void), data: ?ptr) i32;
 
+func pthread_mutex_init(mutex: ptr, attr: ?ptr) i32;
+func pthread_mutex_destroy(mutex: ptr) i32;
+func pthread_mutex_lock(mutex: ptr) i32;
+func pthread_mutex_unlock(mutex: ptr) i32;
