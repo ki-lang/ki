@@ -1,19 +1,29 @@
 
 header "ki_os" as kos;
+header "sys" as sys;
 
 use mem;
 use utils;
 
 class Poll {
-	readonly os_poll: ptr;
+	private fd: i32;
+	private resultc: uxx = 0;
+	private results: sys.cstruct_epoll_event[unsafe];
+	//
 	private pool: utils:Pool[PollListener];
 	private listeners: Array[PollListener] = Array[PollListener].init();
 	readonly max_connections: uxx;
 
 	public static func init(max_connections: uxx) Poll {
-		let p = kos.ki_os__poll_init();
+
+		#if OS == linux
+		let fd = sys.epoll_create(1);
+		let results = mem:calloc(sizeof_class(sys.cstruct_epoll_event) * 20) @as sys.cstruct_epoll_event[unsafe];
+		#end
+
 		let x = Poll {
-			os_poll: p,
+			fd: fd,
+			results: results,
 			pool: utils:Pool[PollListener].init(max_connections),
 			max_connections: max_connections,
 		};
@@ -38,19 +48,60 @@ class Poll {
 		lsn.fd = fd;
 		lsn.key = key;
 
-		kos.ki_os__poll_new_fd(this.os_poll, lsn);
+		let ev = stack_object(sys.cstruct_epoll_event);
+    	ev.events = 0;
+    	ev.data.ptr = lsn @as ptr;
+    	let res = sys.epoll_ctl(this.fd, EPOLL_CTL_ADD, fd, ev);
 
 		return lsn;
 	}
 
 	public func remove(listener: PollListener) void {
-		kos.ki_os__poll_remove_fd(this.os_poll, listener);
+
+		let ev = stack_object(sys.cstruct_epoll_event);
+    	ev.events = 0;
+    	let res = sys.epoll_ctl(this.fd, EPOLL_CTL_ADD, listener.fd, ev);
+
 		this.pool.add(listener)!;
 	}
 
 	public func wait(timeout: i32 = -1) PollResult {
+
+    	let event_count = sys.epoll_wait(this.fd, this.results, 20, timeout);
+
+    	ki_poll_result *result = p->result;
+    	result->count = event_count;
+
+    	for (int i = 0; i < event_count; i++) {
+    	    struct epoll_event *e = p->events + i;
+    	    ki_poll_event *ke = result->events + i;
+    	    ke->listener = e->data.ptr;
+    	    unsigned short state = 0;
+    	    int states = e->events;
+    	    if (states & EPOLLIN) {
+    	        state = state | 0x1;
+    	    }
+    	    if (states & EPOLLOUT) {
+    	        state = state | 0x2;
+    	    }
+    	    if (states & EPOLLERR) {
+    	        state = state | 0x4;
+    	    }
+    	    if (states & EPOLLHUP) {
+    	        state = state | 0x8;
+    	    }
+    	    if (states & EPOLLRDHUP) {
+    	        state = state | 0x10;
+    	    }
+    	    ke->state = state;
+    	}
+
+    	return result;
+
 		return kos.ki_os__poll_wait(this.os_poll, timeout);
 	}
+
+	public func 
 
 	public func __before_free() void {
 
@@ -62,7 +113,7 @@ class Poll {
 		//	li.__free();
 		//}
 
-		kos.ki_os__poll_free(this.os_poll);
+		//kos.ki_os__poll_free(this.os_poll);
 	}
 }
 
