@@ -1,4 +1,6 @@
 
+link "pthread";
+
 struct pthread_t {
 	data: uxx;
 }

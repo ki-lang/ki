@@ -1,23 +1,23 @@
 
-header "ki_os" as os;
+header "sys" as sys;
 
 func alloc(size: uxx) ptr {
-	return os.ki_os__alloc(size);
+	return sys.malloc(size);
 }
 func free(adr: ptr) void {
-	os.ki_os__free(adr);
+	sys.free(adr);
 }
 func calloc(size: uxx) ptr {
-	let res = os.ki_os__alloc(size);
+	let res = alloc(size);
 	clear(res, size);
 	return res;
 }
 
 func sys_alloc(size: uxx) ptr {
-	return os.ki_os__alloc(size);
+	return sys.malloc(size);
 }
 func sys_free(adr: ptr) void {
-	os.ki_os__free(adr);
+	sys.free(adr);
 }
 
 func clear(adrc: ptr, length: uxx) void {

@@ -10,6 +10,9 @@ shared stdout : i32;
 // uid_t = u32
 // gid_t = u32
 
+func malloc(size: uxx) ptr;
+func free(adr: ptr) void;
+
 func read(fd: i32, buf: cstring, size: uxx) ixx;
 func write(fd: i32, buf: cstring, size: uxx) ixx;
 func open(path: cstring, flags: i32) i32;
