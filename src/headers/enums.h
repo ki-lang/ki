@@ -134,3 +134,9 @@ enum READTYPECTX {
     rtc_decl,
     rtc_prop_type,
 };
+
+enum LINKTYPE {
+    link_default,
+    link_dynamic,
+    link_static,
+};

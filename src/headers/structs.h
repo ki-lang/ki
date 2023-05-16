@@ -80,6 +80,8 @@ struct Build {
     Array *all_ki_files;
     Array *link_dirs;
     Array *link_libs;
+    Array *link_libs_dynamic;
+    Array *link_libs_static;
     Map *all_fcs;
     Str *str_buf;
     Str *str_buf_io;

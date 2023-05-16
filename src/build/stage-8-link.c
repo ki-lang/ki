@@ -291,21 +291,22 @@ void llvm_init(Build *b, struct Target *t) {
 void stage_8_link(Build *b, Array *o_files) {
     //
     Str *cmd = str_make(b->alc, 1000);
+    bool is_linux = strcmp(b->os, "linux") == 0;
+    bool is_macos = strcmp(b->os, "macos") == 0;
+    bool is_win = strcmp(b->os, "win") == 0;
 
-    str_append_chars(cmd, "gcc ");
-    if (b->link_static) {
-        str_append_chars(cmd, "-static ");
+    bool use_ld = false;
+
+    if (use_ld) {
+        str_append_chars(cmd, "ld ");
+    } else {
+        str_append_chars(cmd, "gcc -v ");
     }
     str_append_chars(cmd, "-o ");
     str_append_chars(cmd, b->path_out);
     str_append_chars(cmd, " ");
 
-    for (int i = 0; i < o_files->length; i++) {
-        char *path = array_get_index(o_files, i);
-        str_append_chars(cmd, path);
-        str_append_chars(cmd, " ");
-    }
-
+    // Link dirs
     for (int i = 0; i < b->link_dirs->length; i++) {
         char *path = array_get_index(b->link_dirs, i);
         str_append_chars(cmd, "-L");
@@ -317,11 +318,64 @@ void stage_8_link(Build *b, Array *o_files) {
         str_append_chars(cmd, " ");
     }
 
+    // Details
+    if (use_ld) {
+        if (is_linux) {
+            str_append_chars(cmd, "-melf_x86_64 ");
+        }
+
+        if (b->link_static) {
+
+        } else {
+            str_append_chars(cmd, "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
+        }
+
+        str_append_chars(cmd, "-l:crt1.o ");
+        str_append_chars(cmd, "-l:crti.o ");
+    }
+
+    // Object files
+    for (int i = 0; i < o_files->length; i++) {
+        char *path = array_get_index(o_files, i);
+        str_append_chars(cmd, path);
+        str_append_chars(cmd, " ");
+    }
+
+    // Link libs : static
+    str_append_chars(cmd, "-Wl,-Bstatic ");
+
+    for (int i = 0; i < b->link_libs_static->length; i++) {
+        char *name = array_get_index(b->link_libs_static, i);
+        str_append_chars(cmd, "-l");
+        str_append_chars(cmd, name);
+        str_append_chars(cmd, " ");
+    }
+
+    // Link libs : default
+    if (!b->link_static) {
+        str_append_chars(cmd, "-Wl,-Bdynamic ");
+    }
+
     for (int i = 0; i < b->link_libs->length; i++) {
         char *name = array_get_index(b->link_libs, i);
         str_append_chars(cmd, "-l");
         str_append_chars(cmd, name);
         str_append_chars(cmd, " ");
+    }
+
+    // Link libs : dynamic
+    str_append_chars(cmd, "-Wl,-Bdynamic ");
+
+    for (int i = 0; i < b->link_libs_dynamic->length; i++) {
+        char *name = array_get_index(b->link_libs_dynamic, i);
+        str_append_chars(cmd, "-l");
+        str_append_chars(cmd, name);
+        str_append_chars(cmd, " ");
+    }
+
+    // End
+    if (use_ld) {
+        str_append_chars(cmd, "-l:crtn.o ");
     }
 
     // if (b->ldflags) {

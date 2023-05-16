@@ -7,7 +7,7 @@ void stage_1_trait(Fc *fc);
 void stage_1_enum(Fc *fc);
 void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
-void stage_1_link(Fc *fc);
+void stage_1_link(Fc *fc, int link_type);
 void stage_1_global(Fc *fc, bool shared);
 
 void stage_1(Fc *fc) {
@@ -60,7 +60,15 @@ void stage_1(Fc *fc) {
             continue;
         }
         if (strcmp(token, "link") == 0) {
-            stage_1_link(fc);
+            stage_1_link(fc, link_default);
+            continue;
+        }
+        if (strcmp(token, "link_dynamic") == 0) {
+            stage_1_link(fc, link_dynamic);
+            continue;
+        }
+        if (strcmp(token, "link_static") == 0) {
+            stage_1_link(fc, link_static);
             continue;
         }
         if (strcmp(token, "global") == 0) {
@@ -519,7 +527,7 @@ void stage_1_header(Fc *fc) {
     }
 }
 
-void stage_1_link(Fc *fc) {
+void stage_1_link(Fc *fc, int link_type) {
     //
     tok_expect(fc, "\"", true, true);
 
@@ -527,7 +535,13 @@ void stage_1_link(Fc *fc) {
     Str *fnstr = macro_replace_str_vars(fc->alc, fc, buf);
     char *fn = str_to_chars(fc->alc, fnstr);
 
-    array_push(fc->b->link_libs, fn);
+    if (link_type == link_default) {
+        array_push(fc->b->link_libs, fn);
+    } else if (link_type == link_dynamic) {
+        array_push(fc->b->link_libs_dynamic, fn);
+    } else if (link_type == link_static) {
+        array_push(fc->b->link_libs_static, fn);
+    }
 
     tok_expect(fc, ";", true, true);
 }

@@ -1,5 +1,5 @@
 
-link "pthread";
+link_dynamic "pthread";
 
 struct pthread_t {
 	data: uxx;

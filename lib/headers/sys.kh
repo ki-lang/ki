@@ -1,5 +1,6 @@
 
 #if OS == linux
+link "c";
 header "linux/structs";
 header "linux/api";
 header "linux-[ARCH]/enum";
