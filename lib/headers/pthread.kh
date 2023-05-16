@@ -1,1 +1,7 @@
 
+struct pthread_t {
+	data: uxx;
+}
+
+func pthread_create(thread: *pthread_t, attr: ?ptr, entry: fn(ptr)(void), data: ?ptr) i32;
+
