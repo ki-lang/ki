@@ -55,6 +55,9 @@ class Poll {
     	ev.events = 0;
     	ev.data = lsn @as ptr;
     	let res = sys.epoll_ctl(this.fd, sys.OS.EPOLL_CTL_ADD, fd, ev);
+		if res != 0 {
+			//println("> Failed to add epoll listener");
+		}
 
 		return lsn;
 	}
@@ -98,8 +101,7 @@ class Poll {
 			throw invalid_index;
 		}
 		let results_int = this.results_int;
-    	let ei = (results_int + (index * @sizeof_class(PollEvent))) @as PollEvent;
-		return ei @as PollEvent;
+    	return (results_int + (index * @sizeof_class(PollEvent))) @as PollEvent;
 	}
 
 	public func __before_free() void {
@@ -140,9 +142,9 @@ struct PollListener {
 	}
 	public func stopped_reading(v: bool) void {
 		if(v) {
-			this.detect_events = this.detect_events | sys.OS.EPOLLHUP;
-		} else if (this.detect_events & sys.OS.EPOLLHUP) > 0 {
-			this.detect_events = this.detect_events ^ sys.OS.EPOLLHUP;
+			this.detect_events = this.detect_events | sys.OS.EPOLLRDHUP;
+		} else if (this.detect_events & sys.OS.EPOLLRDHUP) > 0 {
+			this.detect_events = this.detect_events ^ sys.OS.EPOLLRDHUP;
 		}
 		this.update_epoll();
 	}
@@ -151,6 +153,9 @@ struct PollListener {
     	ev.events = this.detect_events;
     	ev.data = this @as ptr;
     	let res = sys.epoll_ctl(this.poll_fd, sys.OS.EPOLL_CTL_MOD, this.fd, ev);
+		if res != 0 {
+			//println("> Failed to update epoll events");
+		}
 	}
 }
 
@@ -165,11 +170,11 @@ struct PollEvent {
 		return (this.events & sys.OS.EPOLLOUT) > 0;
 	}
 	public func is_stopped_reading() bool %inline {
-		return (this.events & sys.OS.EPOLLHUP) > 0;
+		return (this.events & sys.OS.EPOLLRDHUP) > 0;
 	}
 
 	public func wants_to_close() bool %inline {
-		return (this.events & sys.OS.EPOLLHUP) > 0;
+		return (this.events & sys.OS.EPOLLRDHUP) > 0;
 	}
 }
 

@@ -905,10 +905,20 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
             // If both are number literals
             if (op == op_add) {
                 lint->value += rint->value;
+                return left;
             } else if (op == op_sub) {
                 lint->value -= rint->value;
+                return left;
+            } else if (op == op_mul) {
+                lint->value *= rint->value;
+                return left;
+            } else if (op == op_div) {
+                lint->value /= rint->value;
+                return left;
+            } else if (op == op_mod) {
+                lint->value %= rint->value;
+                return left;
             }
-            return left;
         }
     }
 
