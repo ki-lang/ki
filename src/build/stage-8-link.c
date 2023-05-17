@@ -333,9 +333,9 @@ void stage_8_link(Build *b, Array *o_files) {
     // Details
 
     if (is_linux) {
-        // str_append_chars(cmd, "--sysroot=");
-        // str_append_chars(cmd, ki_lib_dir);
-        // str_append_chars(cmd, "/root ");
+        str_append_chars(cmd, "--sysroot=");
+        str_append_chars(cmd, ki_lib_dir);
+        str_append_chars(cmd, "/root ");
 
         if (is_x64) {
             str_append_chars(cmd, "-m elf_x86_64 ");
