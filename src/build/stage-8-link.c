@@ -307,13 +307,13 @@ void stage_8_link(Build *b, Array *o_files) {
     bool is_macos = strcmp(b->os, "macos") == 0;
     bool is_win = strcmp(b->os, "win") == 0;
 
-    bool use_ld = true;
+    bool is_x64 = strcmp(b->arch, "x64") == 0;
+    bool is_arm64 = strcmp(b->arch, "arm64") == 0;
 
-    if (use_ld) {
-        str_append_chars(cmd, "ld -pie ");
-    } else {
-        str_append_chars(cmd, "gcc ");
-    }
+    //
+    char *ki_lib_dir = b->pkc_ki->dir;
+
+    str_append_chars(cmd, "ld -pie ");
     str_append_chars(cmd, "-o ");
     str_append_chars(cmd, b->path_out);
     str_append_chars(cmd, " ");
@@ -331,16 +331,35 @@ void stage_8_link(Build *b, Array *o_files) {
     }
 
     // Details
-    if (use_ld) {
-        if (is_linux) {
-            str_append_chars(cmd, "-melf_x86_64 ");
-        }
 
-        str_append_chars(cmd, "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
+    if (is_linux) {
+        // str_append_chars(cmd, "--sysroot=");
+        // str_append_chars(cmd, ki_lib_dir);
+        // str_append_chars(cmd, "/root ");
+
+        if (is_x64) {
+            str_append_chars(cmd, "-m elf_x86_64 ");
+            str_append_chars(cmd, "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
+        } else if (is_arm64) {
+            str_append_chars(cmd, "-m aarch64linux ");
+            str_append_chars(cmd, "--dynamic-linker /lib/ld-linux-aarch64.so.1 ");
+        }
 
         str_append_chars(cmd, "-l:Scrt1.o ");
         str_append_chars(cmd, "-l:crti.o ");
-        // str_append_chars(cmd, "-l:crtbeginS.o ");
+
+    } else if (is_macos) {
+        str_append_chars(cmd, "-syslibroot ");
+        str_append_chars(cmd, ki_lib_dir);
+        str_append_chars(cmd, "/root ");
+
+        // ppc, ppc64, i386, x86_64
+        if (is_x64) {
+            str_append_chars(cmd, "-arch x86_64 ");
+        } else if (is_arm64) {
+            str_append_chars(cmd, "-arch arm64 ");
+        }
+        // -macosx_version_min 11.1.0 -sdk_version 11.1.0
     }
 
     // Object files
@@ -350,35 +369,21 @@ void stage_8_link(Build *b, Array *o_files) {
         str_append_chars(cmd, " ");
     }
 
-    str_append_chars(cmd, "--start-group ");
-    // Link libs : static
-
+    // Link libs
     stage_8_link_libs(cmd, b, link_dynamic);
-    str_append_chars(cmd, "--end-group ");
-
     str_append_chars(cmd, "-Bstatic ");
-    str_append_chars(cmd, "--start-group ");
-
     stage_8_link_libs(cmd, b, link_static);
-    str_append_chars(cmd, "--end-group ");
 
     // End
-    if (use_ld) {
-        // str_append_chars(cmd, "-l:crtendS.o ");
+    if (is_linux) {
         str_append_chars(cmd, "-l:crtn.o ");
     }
 
-    // if (b->ldflags) {
-    //     str_append_chars(cmd, b->ldflags);
-    //     str_append_chars(cmd, " ");
-    // }
-
+    // Run command
     char *cmd_str = str_to_chars(b->alc, cmd);
-
     if (b->verbose > 1) {
         printf("Link cmd: %s\n", cmd_str);
     }
-
     int res = system(cmd_str);
     if (res != 0) {
         die("❌ Failed to link");

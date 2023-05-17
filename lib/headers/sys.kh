@@ -1,8 +1,17 @@
 
 #if OS == linux
+
 link_dynamic "pthread";
 link_dynamic "c";
+link_dynamic ":libc_nonshared.a";
+link_dynamic ":ld-linux-x86-64.so.2";
+
 header "linux/structs";
 header "linux/api";
 header "linux-[ARCH]/enum";
+
+#elif OS == macos
+
+link_dynamic "System";
+
 #end
