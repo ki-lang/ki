@@ -288,6 +288,18 @@ void llvm_init(Build *b, struct Target *t) {
     // printf("datalayout: %s\n", datalayout_str);
 }
 
+void stage_8_link_libs(Str *cmd, Build *b, int type) {
+    //
+    for (int i = 0; i < b->link_libs->values->length; i++) {
+        char *name = array_get_index(b->link_libs->keys, i);
+        Link *link = array_get_index(b->link_libs->values, i);
+        if (link->type != type)
+            continue;
+        str_append_chars(cmd, "-l");
+        str_append_chars(cmd, name);
+        str_append_chars(cmd, " ");
+    }
+}
 void stage_8_link(Build *b, Array *o_files) {
     //
     Str *cmd = str_make(b->alc, 1000);
@@ -295,12 +307,12 @@ void stage_8_link(Build *b, Array *o_files) {
     bool is_macos = strcmp(b->os, "macos") == 0;
     bool is_win = strcmp(b->os, "win") == 0;
 
-    bool use_ld = false;
+    bool use_ld = true;
 
     if (use_ld) {
-        str_append_chars(cmd, "ld ");
+        str_append_chars(cmd, "ld -pie ");
     } else {
-        str_append_chars(cmd, "gcc -v ");
+        str_append_chars(cmd, "gcc ");
     }
     str_append_chars(cmd, "-o ");
     str_append_chars(cmd, b->path_out);
@@ -324,14 +336,11 @@ void stage_8_link(Build *b, Array *o_files) {
             str_append_chars(cmd, "-melf_x86_64 ");
         }
 
-        if (b->link_static) {
+        str_append_chars(cmd, "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
 
-        } else {
-            str_append_chars(cmd, "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
-        }
-
-        str_append_chars(cmd, "-l:crt1.o ");
+        str_append_chars(cmd, "-l:Scrt1.o ");
         str_append_chars(cmd, "-l:crti.o ");
+        // str_append_chars(cmd, "-l:crtbeginS.o ");
     }
 
     // Object files
@@ -341,40 +350,21 @@ void stage_8_link(Build *b, Array *o_files) {
         str_append_chars(cmd, " ");
     }
 
+    str_append_chars(cmd, "--start-group ");
     // Link libs : static
-    str_append_chars(cmd, "-Wl,-Bstatic ");
 
-    for (int i = 0; i < b->link_libs_static->length; i++) {
-        char *name = array_get_index(b->link_libs_static, i);
-        str_append_chars(cmd, "-l");
-        str_append_chars(cmd, name);
-        str_append_chars(cmd, " ");
-    }
+    stage_8_link_libs(cmd, b, link_dynamic);
+    str_append_chars(cmd, "--end-group ");
 
-    // Link libs : default
-    if (!b->link_static) {
-        str_append_chars(cmd, "-Wl,-Bdynamic ");
-    }
+    str_append_chars(cmd, "-Bstatic ");
+    str_append_chars(cmd, "--start-group ");
 
-    for (int i = 0; i < b->link_libs->length; i++) {
-        char *name = array_get_index(b->link_libs, i);
-        str_append_chars(cmd, "-l");
-        str_append_chars(cmd, name);
-        str_append_chars(cmd, " ");
-    }
-
-    // Link libs : dynamic
-    str_append_chars(cmd, "-Wl,-Bdynamic ");
-
-    for (int i = 0; i < b->link_libs_dynamic->length; i++) {
-        char *name = array_get_index(b->link_libs_dynamic, i);
-        str_append_chars(cmd, "-l");
-        str_append_chars(cmd, name);
-        str_append_chars(cmd, " ");
-    }
+    stage_8_link_libs(cmd, b, link_static);
+    str_append_chars(cmd, "--end-group ");
 
     // End
     if (use_ld) {
+        // str_append_chars(cmd, "-l:crtendS.o ");
         str_append_chars(cmd, "-l:crtn.o ");
     }
 

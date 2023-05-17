@@ -1,6 +1,7 @@
 
 #if OS == linux
-link "c";
+link_dynamic "pthread";
+link_dynamic "c";
 header "linux/structs";
 header "linux/api";
 header "linux-[ARCH]/enum";

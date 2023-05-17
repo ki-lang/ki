@@ -536,11 +536,17 @@ void stage_1_link(Fc *fc, int link_type) {
     char *fn = str_to_chars(fc->alc, fnstr);
 
     if (link_type == link_default) {
-        array_push(fc->b->link_libs, fn);
-    } else if (link_type == link_dynamic) {
-        array_push(fc->b->link_libs_dynamic, fn);
-    } else if (link_type == link_static) {
-        array_push(fc->b->link_libs_static, fn);
+        link_type = fc->b->link_static ? link_static : link_dynamic;
+    }
+
+    Link *link = map_get(fc->b->link_libs, fn);
+    if (!link) {
+        link = malloc(sizeof(Link));
+        link->type = link_type;
+        map_set(fc->b->link_libs, fn, link);
+    }
+    if (link_type == link_dynamic && link->type != link_dynamic) {
+        link->type = link_dynamic;
     }
 
     tok_expect(fc, ";", true, true);

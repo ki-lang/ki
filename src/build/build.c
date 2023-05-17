@@ -157,9 +157,7 @@ void cmd_build(int argc, char *argv[]) {
     //
     b->packages = array_make(alc, 100);
     b->all_ki_files = array_make(alc, 1000);
-    b->link_libs = array_make(alc, 20);
-    b->link_libs_dynamic = array_make(alc, 20);
-    b->link_libs_static = array_make(alc, 20);
+    b->link_libs = map_make(alc);
     b->link_dirs = array_make(alc, 40);
     b->all_fcs = map_make(alc);
     b->main_func = NULL;

@@ -9,6 +9,7 @@ typedef struct Fc Fc;
 typedef struct Nsc Nsc;
 typedef struct Pkc Pkc;
 typedef struct Config Config;
+typedef struct Link Link;
 typedef struct Chunk Chunk;
 typedef struct Scope Scope;
 typedef struct VScope VScope;
@@ -79,9 +80,7 @@ struct Build {
     Array *packages;
     Array *all_ki_files;
     Array *link_dirs;
-    Array *link_libs;
-    Array *link_libs_dynamic;
-    Array *link_libs_static;
+    Map *link_libs;
     Map *all_fcs;
     Str *str_buf;
     Str *str_buf_io;
@@ -184,6 +183,10 @@ struct Config {
     char *path;
     char *content;
     cJSON *json;
+};
+
+struct Link {
+    int type;
 };
 
 struct Chunk {

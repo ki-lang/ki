@@ -136,7 +136,7 @@ enum READTYPECTX {
 };
 
 enum LINKTYPE {
-    link_default,
-    link_dynamic,
-    link_static,
+    link_default = 1,
+    link_dynamic = 2,
+    link_static = 4,
 };
