@@ -11,6 +11,8 @@ LDFLAGS=
 
 ifeq ($(UNAME), Darwin)
 # From macos
+CC=clang
+LCC=clang
 CFLAGS:=$(CFLAGS) -I/usr/local/opt/llvm@15/include
 LDFLAGS:=$(LDFLAGS) -L/usr/local/opt/llvm@15/lib `/usr/local/opt/llvm@15/bin/llvm-config --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf`
 LLVMCF=`/usr/loca/opt/llvm@15/bin/llvm-config --cflags`
