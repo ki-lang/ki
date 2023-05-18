@@ -13,5 +13,8 @@ header "linux-[ARCH]/enum";
 #elif OS == macos
 
 link_dynamic "System";
+header "macos/structs";
+header "macos/api";
+header "macos-[ARCH]/enum";
 
 #end

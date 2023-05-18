@@ -1,5 +1,8 @@
 
+// Linux
+
 enum OS {
+
 	AF_INET: 2,
 	AF_UNIX: 1,
 	AF_UNSPEC: 0,
