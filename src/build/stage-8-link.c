@@ -262,8 +262,31 @@ void llvm_init(Build *b, struct Target *t) {
     LLVMInitializeAllAsmParsers();
     LLVMInitializeAllAsmPrinters();
     //
-    char *triple = LLVMGetDefaultTargetTriple();
+    // char *triple = LLVMGetDefaultTargetTriple();
+    char *triple = NULL;
     char *cpu = "generic";
+    if (b->target_os == os_linux) {
+        if (b->target_arch == arch_x64) {
+            triple = "x86_64-unknown-linux-gnu";
+        } else if (b->target_arch == arch_arm64) {
+            triple = "aarch64-unknown-linux-gnu";
+        }
+    } else if (b->target_os == os_macos) {
+        if (b->target_arch == arch_x64) {
+            triple = "x86_64-apple-darwin";
+        } else if (b->target_arch == arch_arm64) {
+            triple = "aarch64-apple-darwin";
+        }
+    } else if (b->target_os == os_win) {
+        if (b->target_arch == arch_x64) {
+            triple = "x86_64-pc-windows-msvc";
+        } else if (b->target_arch == arch_arm64) {
+            triple = "aarch64-pc-windows-msvc";
+        }
+    }
+    if (!triple) {
+        die("❌ Could not figure out the LLVM triple");
+    }
 
     LLVMTargetRef target;
     if (LLVMGetTargetFromTriple(triple, &target, &error) != 0) {
