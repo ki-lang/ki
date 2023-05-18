@@ -3,6 +3,7 @@ ki
 ki-old
 debug
 .vscode
+.DS_Store
 callgrind.*
 profile.sh
 
