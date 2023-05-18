@@ -1,8 +1,8 @@
 
 #include "../all.h"
 
-char *default_os();
-char *default_arch();
+int default_os();
+int default_arch();
 void cmd_build_help(bool run_code);
 void build_add_files(Build *b, Array *files);
 char *find_config_dir(Allocator *alc, char *ki_path);
@@ -31,18 +31,66 @@ void cmd_build(int argc, char *argv[]) {
 
     char *os = map_get(options, "--os");
     char *arch = map_get(options, "--arch");
-    if (!os)
-        os = default_os();
-    if (!arch)
-        arch = default_arch();
 
-    int ptr_size = 8;
-    if (strcmp(arch, "x86") == 0) {
-        ptr_size = 4;
+    int target_os = -1;
+    int target_arch = -1;
+    int host_os = default_os();
+    int host_arch = default_arch();
+
+    if (os) {
+        if (strcmp(os, "linux") == 0) {
+            target_os = os_linux;
+        } else if (strcmp(os, "macos") == 0) {
+            target_os = os_macos;
+        } else if (strcmp(os, "win") == 0) {
+            target_os = os_win;
+        } else {
+            char err[256];
+            sprintf(err, "Unsupported target os: '%s'", os);
+            die(err);
+        }
+    }
+    if (arch) {
+        if (strcmp(os, "x64") == 0) {
+            target_arch = arch_x64;
+        } else if (strcmp(os, "arm64") == 0) {
+            target_arch = arch_arm64;
+        } else {
+            char err[256];
+            sprintf(err, "Unsupported target arch: '%s'", arch);
+            die(err);
+        }
     }
 
+    if (target_os == -1) {
+        target_os = host_os;
+        if (host_os == os_linux) {
+            os = "linux";
+        } else if (host_os == os_macos) {
+            os = "macos";
+        } else if (host_os == os_win) {
+            os = "win";
+        }
+    }
+    if (target_arch == -1) {
+        target_arch = host_arch;
+        if (host_arch == arch_x64) {
+            arch = "x64";
+        } else if (host_arch == arch_arm64) {
+            arch = "arm64";
+        }
+    }
+
+    if (target_os == os_linux && (target_arch == arch_x64 || target_arch == arch_arm64)) {
+    } else if (target_os == os_macos && (target_arch == arch_x64 || target_arch == arch_arm64)) {
+    } else if (target_os == os_win && (target_arch == arch_x64 || target_arch == arch_arm64)) {
+    } else {
+        die("❌ Invalid os/arch compile target. Use the --os (linux,macos,win) and the --arch (x64,arm64) arguments to set the correct target.");
+    }
+
+    int ptr_size = 8;
     int verbose = 0;
-    ;
+
     if (array_contains(args, "-v", arr_find_str)) {
         verbose = 1;
     }
@@ -142,8 +190,14 @@ void cmd_build(int argc, char *argv[]) {
     }
 
     //
+    b->host_os = host_os;
+    b->host_arch = host_arch;
+    b->target_os = target_os;
+    b->target_arch = target_arch;
+    //
     b->os = os;
     b->arch = arch;
+    //
     b->path_out = path_out;
     b->ptr_size = ptr_size;
     b->alc = alc;
@@ -270,32 +324,32 @@ void build_add_files(Build *b, Array *files) {
     }
 }
 
-char *default_os() {
+int default_os() {
 //
 #if _WIN32
-    return "win";
+    return os_win;
 #endif
 #if __unix__
 #if __linux__
-    return "linux";
+    return os_linux;
 #else
-    return "bsd";
+    // return os_bsd;
 #endif
 #endif
 #if __APPLE__
-    return "macos";
+    return os_macos;
 #endif
     die("Cannot determine default target 'os', use --os to specify manually");
 }
 
-char *default_arch() {
+int default_arch() {
 //
 #if defined(__x86_64__) || defined(_M_X64)
-    return "x64";
-#elif defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
-    return "x86";
+    return arch_x64;
+// #elif defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
+//     return "x86";
 #elif defined(__aarch64__) || defined(_M_ARM64)
-    return "arm64";
+    return arch_arm64;
 #endif
     die("Cannot determine default target 'arch', use --arch to specify manually");
 }

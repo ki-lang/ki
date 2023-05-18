@@ -58,8 +58,14 @@ struct ChainItem {
 };
 
 struct Build {
+    int host_os;
+    int host_arch;
+    int target_os;
+    int target_arch;
+    //
     char *os;
     char *arch;
+    //
     char *path_out;
     char *cache_dir;
     char *token;

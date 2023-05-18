@@ -310,10 +310,38 @@ void stage_8_link(Build *b, Array *o_files) {
     bool is_x64 = strcmp(b->arch, "x64") == 0;
     bool is_arm64 = strcmp(b->arch, "arm64") == 0;
 
+    bool host_os_is_target = b->host_os == b->target_os;
+    bool host_arch_is_target = b->host_arch == b->target_arch;
+    bool host_system_is_target = host_os_is_target && host_arch_is_target;
+
+    char *linker = NULL;
+    if (host_system_is_target) {
+        if (is_linux) {
+            linker = "ld";
+        } else if (is_macos) {
+            linker = "ld64";
+        } else if (is_win) {
+            linker = "lld-link";
+        }
+    } else {
+        if (is_linux) {
+            linker = "ld.lld";
+        } else if (is_macos) {
+            linker = "ld64.lld";
+        } else if (is_win) {
+            linker = "lld-link";
+        }
+    }
+
+    if (!linker) {
+        die("❌ Could not figure out which linker to use for your host os / target os.");
+    }
+
     //
     char *ki_lib_dir = b->pkc_ki->dir;
 
-    str_append_chars(cmd, "ld -pie ");
+    str_append_chars(cmd, linker);
+    str_append_chars(cmd, " -pie ");
     str_append_chars(cmd, "-o ");
     str_append_chars(cmd, b->path_out);
     str_append_chars(cmd, " ");

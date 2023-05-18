@@ -140,3 +140,13 @@ enum LINKTYPE {
     link_dynamic = 2,
     link_static = 4,
 };
+
+enum TARGET_OS {
+    os_linux,
+    os_macos,
+    os_win,
+};
+enum TARGET_ARCH {
+    arch_x64,
+    arch_arm64,
+};
