@@ -342,7 +342,7 @@ void stage_8_link(Build *b, Array *o_files) {
         if (is_linux) {
             linker = "ld";
         } else if (is_macos) {
-            linker = "ld64";
+            linker = "ld";
         } else if (is_win) {
             linker = "lld-link";
         }
