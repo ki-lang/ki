@@ -410,6 +410,8 @@ void stage_8_link(Build *b, Array *o_files) {
         } else if (is_arm64) {
             str_append_chars(cmd, "-arch arm64 ");
         }
+        str_append_chars(cmd, "-platform_version macos 11 11 ");
+        // str_append_chars(cmd, "-sdk_version 11.1 ");
         // -macosx_version_min 11.1.0 -sdk_version 11.1.0
     }
 
@@ -422,8 +424,8 @@ void stage_8_link(Build *b, Array *o_files) {
 
     // Link libs
     stage_8_link_libs(cmd, b, link_dynamic);
-    str_append_chars(cmd, "-Bstatic ");
-    stage_8_link_libs(cmd, b, link_static);
+    // str_append_chars(cmd, "-Bstatic ");
+    // stage_8_link_libs(cmd, b, link_static);
 
     // End
     if (is_linux) {

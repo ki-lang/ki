@@ -53,6 +53,12 @@ enum OS {
     AI_CANONNAME: 2,
     AI_NUMERICHOST: 4,
 
+	POLLIN: 1,
+	POLLOUT: 4,
+	POLLERR: 8,
+	POLLHUP: 16,
+	POLLRDHUP: 0x2000,
+
     ///////////
 
     LOG_ALERT: 1,
