@@ -10,4 +10,16 @@ class ptr type:ptr math async {
         let num = this @as uxx;
         num.debug_base(16);
     }
+
+    func print_bytes(count: uxx) void {
+        let i : uxx = 0;
+        while i < count {
+            if i > 0 {
+                print(" ");
+            }
+            let b = @ptrv(this, u8, i);
+            print(b.str_base(16));
+            i++;
+        }
+    }
 }
