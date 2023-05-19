@@ -270,10 +270,10 @@ struct PollListener {
         }
 
         #if OS == linux
-        let ev = @stack_object(sys.cstruct_epoll_event);
-        ev.events = this.detect_events;
-        ev.data = this @as ptr;
-        let res = sys.epoll_ctl(this.poll_fd, sys.OS.EPOLL_CTL_MOD, this.fd, ev);
+        let evo = @stack_object(sys.cstruct_epoll_event);
+        evo.events = this.detect_events;
+        evo.data = this @as ptr;
+        let res = sys.epoll_ctl(this.poll_fd, sys.OS.EPOLL_CTL_MOD, this.fd, evo);
         if res != 0 {
             //println("> Failed to update epoll events");
         }
