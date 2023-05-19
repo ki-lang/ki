@@ -121,7 +121,7 @@ class Poll {
             let old_size = this.lsn_by_fd_size;
             let new_size = old_size * 2;
             let new_list = mem:calloc(@sizeof_class(ptr) * new_size);
-            mem:copy(this.lsn_by_fd, new_list, @sizeof_class(ptr) * old_size);
+            mem:copy(this.lsn_by_fd, new_list, @sizeof(ptr) * old_size);
             mem:free(this.lsn_by_fd);
             this.lsn_by_fd_size = new_size;
             this.lsn_by_fd = new_list;
@@ -196,6 +196,7 @@ class Poll {
             let event = (events + @sizeof_class(sys.cstruct_pollfd) * i) @as sys.cstruct_pollfd;
             i++;
             if event.fd == -1 : continue;
+            if event.revents == 0 : continue;
 
             let ei = (results_int + (ri * @sizeof_class(PollEvent))) @as PollEvent;
             ri++;
@@ -316,7 +317,12 @@ struct PollEvent {
     }
 
     public func wants_to_close() bool %inline {
-        return this.is_stopped_reading();
+        let evs = this.events;
+        #if OS == linux
+        return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0;
+        #else
+        return (evs & sys.OS.POLLRDHUP) > 0 || (evs & sys.OS.POLLHUP) > 0 || (evs & sys.OS.POLLERR) > 0;
+        #end
     }
 }
 

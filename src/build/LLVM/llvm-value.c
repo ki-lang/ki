@@ -584,6 +584,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Value *val = item->value;
         bool is_incr = item->is_incr;
         char *lval = llvm_value(b, scope, val);
+        char *retv = lval;
         char *lvarval = llvm_assign_value(b, scope, val);
         Type *type = v->rett;
         Type *vtype = type;
@@ -622,7 +623,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
         llvm_ir_store(b, type, lvarval, var_result);
 
-        return var_result;
+        return retv;
     }
     if (v->type == v_stack_alloc) {
         Value *item = v->item;
