@@ -871,6 +871,10 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         tok_expect(fc, ".", true, false);
 
         tok(fc, token, true, false);
+        if (!map_contains(enu->values, token)) {
+            sprintf(fc->sbuf, "Enum property does not exist '%s'", token);
+            fc_error(fc);
+        }
         int value = (int)(intptr_t)map_get(enu->values, token);
 
         return vgen_vint(alc, value, type_gen(fc->b, alc, "i32"), false);

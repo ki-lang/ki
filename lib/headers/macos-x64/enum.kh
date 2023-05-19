@@ -58,6 +58,7 @@ enum OS {
 	POLLERR: 8,
 	POLLHUP: 16,
 	POLLRDHUP: 0x2000,
+    PATHMAX: 4096,
 
     ///////////
 

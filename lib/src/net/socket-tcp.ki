@@ -9,7 +9,12 @@ class SocketTCP async {
 
 	static func init(host: *String, port: u16) SocketTCP !os_socket_create !get_addr_info !bind !listen {
 
+        #if OS == linux
     	let fd = sys.socket(sys.OS.AF_INET, sys.OS.SOCK_STREAM | sys.OS.SOCK_NONBLOCK, 0);
+		#else
+    	let fd = sys.socket(sys.OS.AF_INET, sys.OS.SOCK_STREAM, 0);
+		#end
+
     	if fd == -1 {
 			throw os_socket_create;
     	}
