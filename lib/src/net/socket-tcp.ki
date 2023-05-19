@@ -22,7 +22,7 @@ class SocketTCP async {
 		let yes : i32 = 1;
 		let yes_ptr = @var_ptr(yes);
     	sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_REUSEADDR, yes_ptr, @sizeof(i32));
-    	sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_REUSEPORT, yes_ptr, @sizeof(i32));
+    	//sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_REUSEPORT, yes_ptr, @sizeof(i32));
 		
 		let addrinfo : ?sys.cstruct_addrinfo = null;
 		let hints = @stack_object(sys.cstruct_addrinfo);
