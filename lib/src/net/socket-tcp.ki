@@ -55,7 +55,11 @@ class SocketTCP async {
 	}
 
 	func accept() Connection !error {
+        #if OS == linux
+		let fd = sys.accept4(this.fd, null, null, sys.OS.SOCK_NONBLOCK);
+		#else
 		let fd = sys.accept(this.fd, null, null);
+		#end
 		if fd == -1 {
 			throw error;
 		}
