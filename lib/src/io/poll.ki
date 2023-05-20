@@ -131,13 +131,15 @@ class Poll {
         if fd @as uxx >= this.lsn_by_fd_size {
             let old_size = this.lsn_by_fd_size;
             let new_size = old_size * 2;
+            while fd @as uxx >= new_size {
+                new_size *= 2;
+            }
             let new_list = mem:calloc(@sizeof_class(ptr) * new_size);
             mem:copy(this.lsn_by_fd, new_list, @sizeof(ptr) * old_size);
             mem:free(this.lsn_by_fd);
             this.lsn_by_fd_size = new_size;
             this.lsn_by_fd = new_list;
         }
-        //println("SET index " + lsn.poll_index.str() + " | fd: " + fd.str());
         let events = this.results;
         let event = (events + @sizeof_class(sys.cstruct_pollfd) * lsn.poll_index) @as sys.cstruct_pollfd;
         event.fd = fd;
@@ -198,7 +200,6 @@ class Poll {
         let events = this.results;
         let event_count = sys.poll(events, this.poll_index @as u32, timeout);
         if event_count < 0 {
-			//println("WSA socket error: " + sys.WSAGetLastError().str());
             this.resultc = 0;
             return 0;
         }

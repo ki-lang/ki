@@ -69,7 +69,6 @@ class Server {
         if worker_count > 128 {
             worker_count = 128;
         }
-        //worker_count = 1;
 
         println("[+] Running http server on port " + this.port.str());
         println("[+] Worker count: " + worker_count.str());

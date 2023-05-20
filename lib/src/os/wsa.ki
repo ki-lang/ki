@@ -16,12 +16,8 @@ func WSA_init() void {
         @ptrv(v_ptr, u8, 0) = 2;
         @ptrv(v_ptr, u8, 1) = 2;
 
-        print("startup\n");
-        println("size: " + (@sizeof_class(sys.WSADATA)).str());
-        println("size: " + (@sizeof(.sys.WSADATA)).str());
         let data = mem:alloc(@sizeof(.sys.WSADATA)) @as sys.WSADATA;
         let err = sys.WSAStartup(v, data);
-        print("started\n");
         if err != 0 {
 			println("WSA startup error: " + sys.WSAGetLastError().str());
             panic("Windows WSAStartup failed");
