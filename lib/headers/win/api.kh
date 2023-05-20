@@ -9,6 +9,7 @@ alias _write as write;
 alias _open as open;
 alias _close as close;
 
+alias _stat as stat;
 alias _mkdir as mkdir;
 alias _unlink as unlink;
 
@@ -20,7 +21,7 @@ func _write(fd: i32, buf: cstring, size: uxx) ixx;
 func _open(path: cstring, flags: i32) i32;
 func _close(fd: i32) i32;
 
-func stat(path: cstring, stat_buf: *cstruct_stat) i32;
+func _stat(path: cstring, stat_buf: *cstruct_stat) i32;
 func fstat(fd: i32, stat_buf: *cstruct_stat) i32;
 func lstat(path: cstring, stat_buf: *cstruct_stat) i32;
 
