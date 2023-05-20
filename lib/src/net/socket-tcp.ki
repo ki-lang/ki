@@ -10,8 +10,6 @@ class SocketTCP async {
 
 	static func init(host: *String, port: u16) SocketTCP !os_socket_create !get_addr_info !bind !listen {
 
-		println("socket init");
-
         #if OS == win
 		os:WSA_init();
 		#end
@@ -21,12 +19,11 @@ class SocketTCP async {
 		#else
     	let fd = sys.socket(sys.OS.AF_INET, sys.OS.SOCK_STREAM, 0);
         #if OS == win
-		println("Socket fd: " + fd.str());
+		//println("Socket fd: " + fd.str());
 		rep fd = os:WSA_unix_fd(fd);
 		#end
 		#end
 
-		println("Socket fd: " + fd.str());
     	if fd == -1 {
         	#if OS == win
 			//println("WSA socket error: " + sys.WSAGetLastError().str());
