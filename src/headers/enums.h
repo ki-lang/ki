@@ -101,6 +101,7 @@ enum VALUETYPE {
     v_isset,
     v_ref,
     v_swap,
+    v_ptrval,
 };
 
 enum OPTYPE {
@@ -149,4 +150,9 @@ enum TARGET_OS {
 enum TARGET_ARCH {
     arch_x64,
     arch_arm64,
+};
+
+enum ALIAS {
+    alias_id,
+    alias_type,
 };

@@ -156,6 +156,8 @@ void cmd_build(int argc, char *argv[]) {
     char *cache_dir = al(alc, KI_PATH_MAX);
     get_dir_from_path(first_file, cache_buf);
     strcat(cache_buf, "||");
+    strcat(cache_buf, os);
+    strcat(cache_buf, arch);
     strcat(cache_buf, optimize ? "1" : "0");
     strcat(cache_buf, debug ? "1" : "0");
     strcat(cache_buf, test ? "1" : "0");

@@ -2,25 +2,40 @@
 header "sys" as sys;
 
 use mem;
+use os;
 
 class SocketTCP async {
 	readonly fd: i32;
-	port: u16;
+	readonly port: u16;
 
 	static func init(host: *String, port: u16) SocketTCP !os_socket_create !get_addr_info !bind !listen {
+
+		println("socket init");
+
+        #if OS == win
+		os:WSA_init();
+		#end
 
         #if OS == linux
     	let fd = sys.socket(sys.OS.AF_INET, sys.OS.SOCK_STREAM | sys.OS.SOCK_NONBLOCK, 0);
 		#else
     	let fd = sys.socket(sys.OS.AF_INET, sys.OS.SOCK_STREAM, 0);
+        #if OS == win
+		println("Socket fd: " + fd.str());
+		rep fd = os:WSA_unix_fd(fd);
+		#end
 		#end
 
+		println("Socket fd: " + fd.str());
     	if fd == -1 {
+        	#if OS == win
+			//println("WSA socket error: " + sys.WSAGetLastError().str());
+			#end
 			throw os_socket_create;
     	}
 
 		let yes : i32 = 1;
-		let yes_ptr = @var_ptr(yes);
+		let yes_ptr = @ptr_of(yes);
     	sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_REUSEADDR, yes_ptr, @sizeof(i32));
     	//sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_REUSEPORT, yes_ptr, @sizeof(i32));
 		
@@ -33,7 +48,7 @@ class SocketTCP async {
 
 		let chost = host.to_cstring();
 		let cport = port.str().to_cstring();
-    	let err = sys.getaddrinfo(chost, cport, hints, @var_array(addrinfo));
+    	let err = sys.getaddrinfo(chost, cport, hints, @array_of(addrinfo));
 		if err != 0 {
 			throw get_addr_info;
 		}
@@ -41,12 +56,14 @@ class SocketTCP async {
 			throw get_addr_info;
 		};
 
-    	err = sys.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen);
+    	err = sys.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen @as i32);
+		println("bind-err: " + err.str());
 		if err != 0 {
 			throw bind;
 		}
 
     	err = sys.listen(fd, 2000000);
+		println("listen-err: " + err.str());
 		if err != 0 {
 			throw listen;
 		}
@@ -64,6 +81,9 @@ class SocketTCP async {
 		let fd = sys.accept4(this.fd, null, null, sys.OS.SOCK_NONBLOCK);
 		#else
 		let fd = sys.accept(this.fd, null, null);
+        #if OS == win
+		rep fd = os:WSA_unix_fd(fd);
+		#end
 		#end
 		if fd == -1 {
 			throw error;

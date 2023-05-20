@@ -3,6 +3,7 @@ header "sys" as sys;
 
 use mem;
 use utils;
+use os;
 
 class Poll {
     #if OS == linux
@@ -23,6 +24,10 @@ class Poll {
     readonly max_connections: uxx;
 
     public static func init(max_connections: uxx) Poll {
+
+        #if OS == win
+		os:WSA_init();
+		#end
 
         #if OS == linux
         let fd = sys.epoll_create(1);
@@ -62,7 +67,13 @@ class Poll {
         let last = i + count;
         while i < last {
             let event = (list + @sizeof_class(sys.cstruct_pollfd) * i) @as sys.cstruct_pollfd;
+            #if OS == win
+            event.fd = 0^-1;
+            #else
             event.fd = -1;
+            #end
+            event.events = 0;
+            event.revents = 0;
             i++;
         }
     }
@@ -126,6 +137,7 @@ class Poll {
             this.lsn_by_fd_size = new_size;
             this.lsn_by_fd = new_list;
         }
+        println("SET index " + lsn.poll_index.str() + " | fd: " + fd.str());
         let events = this.results;
         let event = (events + @sizeof_class(sys.cstruct_pollfd) * lsn.poll_index) @as sys.cstruct_pollfd;
         event.fd = fd;
@@ -146,7 +158,12 @@ class Poll {
         #else
         let events = this.results;
         let event = (events + @sizeof_class(sys.cstruct_pollfd) * listener.poll_index) @as sys.cstruct_pollfd;
+        #if OS == win
+        event.fd = 0^-1;
+        #else
         event.fd = -1;
+        #end
+        event.events = 0;
         #end
 
         this.pool.add(listener)!;
@@ -175,12 +192,18 @@ class Poll {
             ei.listener = e.data @as PollListener;
         }
         #else
+        print("wait\n");
+        println("lookcount: " + this.poll_index.str());
+        os:sleep_ms(1000);
         if this.poll_index == 0 {
             return 0;
         }
         let events = this.results;
         let event_count = sys.poll(events, this.poll_index @as u32, timeout);
+        println("count: " + event_count.str());
         if event_count < 0 {
+			println("WSA socket error: " + sys.WSAGetLastError().str());
+            if true : exit(1);
             this.resultc = 0;
             return 0;
         }
@@ -189,13 +212,19 @@ class Poll {
         let results_int = this.results_int;
         let lsn_by_fd = this.lsn_by_fd;
 
+        #if OS == win
+        let invalid : uxx = 0^-1;
+        #else
+        let invalid : i32 = -1;
+        #end
+
         let i : uxx = 0;
         let ri : uxx = 0;
         let last = this.poll_index;
         while i < last {
             let event = (events + @sizeof_class(sys.cstruct_pollfd) * i) @as sys.cstruct_pollfd;
             i++;
-            if event.fd == -1 : continue;
+            if event.fd == invalid : continue;
             if event.revents == 0 : continue;
 
             let ei = (results_int + (ri * @sizeof_class(PollEvent))) @as PollEvent;
@@ -236,7 +265,7 @@ struct PollListener {
     readonly poll_index: uxx;
     #end
     readonly key: uxx = 0;
-    readonly fd : i32 = -1;
+    readonly fd : i32 = 0;
     private detect_events: u32 = 0;
 
     public func read(v: bool) void {

@@ -1,6 +1,18 @@
 
+header "sys" as sys;
+
+use io;
+
 class Socket {
 	static func init_tcp(host: *String, port: u16) SocketTCP !init_error {
 		return SocketTCP.init(host, port) !! throw init_error;;
+	}
+
+	static func close(fd: i32) void {
+		#if OS == win
+        sys.closesocket(fd @as sys.SOCKET);
+        #else
+        io:close(fd);
+        #end
 	}
 }

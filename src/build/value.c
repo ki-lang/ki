@@ -149,11 +149,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
         v = vgen_swap(alc, var, with);
 
-    } else if (strcmp(token, "@var_ptr") == 0) {
+    } else if (strcmp(token, "@ptr_of") == 0) {
         tok_expect(fc, "(", true, false);
         Value *on = read_value(fc, alc, scope, false, 0, false);
         if (!value_is_assignable(on)) {
-            sprintf(fc->sbuf, "Value used in '@var_ptr' must be assignable");
+            sprintf(fc->sbuf, "Value used in '@ptr_of' must be assignable");
             fc_error(fc);
         }
         tok_expect(fc, ")", false, true);
@@ -165,11 +165,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = value_init(alc, v_getptr, on, type_gen(b, alc, "ptr"));
 
-    } else if (strcmp(token, "@var_array") == 0) {
+    } else if (strcmp(token, "@array_of") == 0) {
         tok_expect(fc, "(", true, false);
         Value *on = read_value(fc, alc, scope, false, 0, false);
         if (!value_is_assignable(on)) {
-            sprintf(fc->sbuf, "Value used in '@var_array' must be assignable");
+            sprintf(fc->sbuf, "Value used in '@array_of' must be assignable");
             fc_error(fc);
         }
         tok_expect(fc, ")", false, true);
@@ -181,6 +181,23 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = value_init(alc, v_getptr, on, type_array_of(alc, b, on->rett, 1));
         //
+
+    } else if (strcmp(token, "@ptr_val") == 0) {
+        tok_expect(fc, "(", true, false);
+        Value *on = read_value(fc, alc, scope, false, 0, false);
+        Type *rett = on->rett;
+        if (rett->ptr_depth == 0 || (!rett->class && !rett->array_of)) {
+            sprintf(fc->sbuf, "Value used in '@ptr_val' must be a pointer value and the sub-type must be known (so 'ptr' also does not work)");
+            fc_error(fc);
+        }
+        tok_expect(fc, ")", false, true);
+        if (rett->ptr_depth == 1 && rett->type == type_arr) {
+            rett = rett->array_of;
+        } else {
+            rett = type_get_inline(alc, rett);
+        }
+        v = value_init(alc, v_ptrval, on, rett);
+
     } else if (strcmp(token, "@stack_alloc") == 0) {
 
         Scope *fscope = scope_find(scope, sct_func);

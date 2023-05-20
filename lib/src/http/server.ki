@@ -121,7 +121,7 @@ class Server {
                 let lsn = event.listener;
                 let fd = lsn.fd;
 
-                //println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
+                println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
 
                 if fd == sock_fd {
                     // New connection
@@ -144,7 +144,7 @@ class Server {
                     } else {
                         // Clear existing connection io buffers
                         let http_con = cons.get(index) !! {
-                            io:close(fd);
+                            net:Socket.close(fd);
                             println("[+] Max connections reached, closing connection");
                             continue;
                         };
@@ -170,7 +170,7 @@ class Server {
                 let index = lsn.key;
                 let http_con = cons.get(index) !! {
                     println("❓ Missing http connection : " + nr.str());
-                    io:close(fd);
+                    net:Socket.close(fd);
                     poll.remove(lsn);
                     index_pool.add(index)!;
                     continue;
@@ -178,7 +178,7 @@ class Server {
 
                 if http_con.fd != fd {
                     println("❗ fd changed : " + nr.str() + " | " + http_con.fd.str() + " -> " + fd.str() + " | key: " + lsn.key.str());
-                    io:close(fd);
+                    net:Socket.close(fd);
                     poll.remove(lsn);
                     index_pool.add(index)!;
                     continue;
@@ -189,7 +189,7 @@ class Server {
                     if data.show_info {
                         println("[+] Close connection: " + fd.str());
                     }
-                    io:close(fd);
+                    net:Socket.close(fd);
                     poll.remove(lsn);
                     index_pool.add(index)!;
                     continue;
@@ -211,7 +211,7 @@ class Server {
                         if data.show_info {
                             println("[+] Invalid request: " + fd.str());
                         }
-                        io:close(fd);
+                        net:Socket.close(fd);
                         poll.remove(lsn);
                         index_pool.add(index)!;
                         continue;
@@ -237,7 +237,11 @@ class Server {
         let read_buf = http_con.read_buf;
         read_buf.minimum_free_space(buf_size);
         while true {
+            #if OS == win
+            let rcvd = sys.recv(http_con.fd, read_buf.data + read_buf.length, buf_size, 0);
+            #else
             let rcvd = sys.read(http_con.fd, read_buf.data + read_buf.length, buf_size);
+            #end
             if (rcvd == -2){
                 // EAGAIN
                 return;

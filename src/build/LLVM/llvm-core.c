@@ -114,7 +114,11 @@ void llvm_gen_global_ir(LB *b) {
         }
 
         char bytes[20];
-        sprintf(bytes, "%d", type->bytes);
+        int abytes = type->bytes;
+        if (abytes > b->fc->b->ptr_size) {
+            abytes = b->fc->b->ptr_size;
+        }
+        sprintf(bytes, "%d", abytes);
 
         str_append_chars(ir, ", align ");
         str_append_chars(ir, bytes);
@@ -146,7 +150,11 @@ char *llvm_alloca(LB *b, Type *type) {
     Str *ir = block->ir;
 
     char bytes[20];
-    sprintf(bytes, "%d", type->bytes);
+    int abytes = type->bytes;
+    if (abytes > b->fc->b->ptr_size) {
+        abytes = b->fc->b->ptr_size;
+    }
+    sprintf(bytes, "%d", abytes);
 
     char *var = llvm_var(b);
     str_append_chars(ir, "  ");
@@ -172,7 +180,11 @@ char *llvm_get_global(LB *b, char *name, Type *type) {
     char *ltype = llvm_type(b, type);
 
     char bytes[20];
-    sprintf(bytes, "%d", type->bytes);
+    int abytes = type->bytes;
+    if (abytes > b->fc->b->ptr_size) {
+        abytes = b->fc->b->ptr_size;
+    }
+    sprintf(bytes, "%d", abytes);
 
     str_append_chars(ir, "@");
     str_append_chars(ir, name);

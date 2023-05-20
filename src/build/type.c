@@ -36,6 +36,8 @@ int type_get_size(Build *b, Type *type) {
     int size = 0;
     if (type->ptr_depth > 0) {
         size = b->ptr_size;
+    } else if (type->type == type_arr) {
+        size = type->array_of->bytes * type->array_size;
     } else if (type->class) {
         size = type->class->size;
     }
@@ -138,9 +140,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         async = true;
         tok(fc, token, true, true);
     }
-    if (strcmp(token, "inline") == 0) {
+    if (strcmp(token, ".") == 0) {
         inline_ = true;
-        tok(fc, token, true, true);
+        tok(fc, token, true, false);
     }
 
     if (context == rtc_prop_type || context == rtc_func_arg || context == rtc_ptrv) {
@@ -154,10 +156,14 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
             tok(fc, token, true, false);
         }
     }
-
     if (strcmp(token, "?") == 0) {
         nullable = true;
         tok(fc, token, true, false);
+    }
+
+    if (inline_ && (borrow || ref || nullable)) {
+        sprintf(fc->sbuf, "You cannot use &/*/? on inline types '.'");
+        fc_error(fc);
     }
 
     Type *type = NULL;
@@ -271,20 +277,6 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         type->borrow = borrow;
     }
 
-    if (inline_ && type->ptr_depth > 0) {
-        type->ptr_depth--;
-        if (type->type == type_struct && type->ptr_depth == 0) {
-            type->bytes = type->class->size;
-        }
-    }
-
-    if (async) {
-        if (!type_allowed_async(type, true)) {
-            Str *chain = str_make(alc, 500);
-            type_allowed_async_error(fc, type, chain);
-        }
-    }
-
     tok(fc, token, true, false);
     while (strcmp(token, "[") == 0) {
         tok(fc, token, true, true);
@@ -304,6 +296,18 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
     rtok(fc);
+    //
+
+    if (inline_ && type->ptr_depth > 0) {
+        type = type_get_inline(alc, type);
+    }
+
+    if (async) {
+        if (!type_allowed_async(type, true)) {
+            Str *chain = str_make(alc, 500);
+            type_allowed_async_error(fc, type, chain);
+        }
+    }
 
     //
     if (nullable) {
@@ -319,6 +323,25 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     return type;
+}
+
+Type *type_get_inline(Allocator *alc, Type *type) {
+    //
+    if (type->ptr_depth == 0) {
+        return type;
+    }
+    Type *rett = type_clone(alc, type);
+    rett->ptr_depth--;
+    if (rett->ptr_depth == 0) {
+        rett->borrow = false;
+        rett->ref = false;
+        if (rett->type == type_arr) {
+            rett->bytes = rett->array_of->bytes * rett->array_size;
+        } else {
+            rett->bytes = rett->class->size;
+        }
+    }
+    return rett;
 }
 
 Type *type_array_of(Allocator *alc, Build *b, Type *type, int size) {
@@ -575,6 +598,9 @@ void type_check(Fc *fc, Type *t1, Type *t2) {
 
 bool type_tracks_ownership(Type *type) {
     //
+    if (type->ptr_depth == 0) {
+        return false;
+    }
     if (type->borrow) {
         return false;
     }

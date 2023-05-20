@@ -1,4 +1,6 @@
 
+header "sys" as sys;
+
 use io;
 use net;
 use utils;
@@ -229,8 +231,14 @@ class Connection {
 		let pos = this.out_pos;
 		let bytes = out.length - pos;
 		if bytes > 0 {
+    		#if OS == win
+			let wbytes = sys.send(this.fd, out.data + pos, bytes @as i32, 0);
+			if wbytes < 0 : wbytes = 0;
+			this.out_pos += wbytes @as uxx;
+			#else
 			let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) !? 0;
 			this.out_pos += wbytes;
+			#end
 		}
 	}
 

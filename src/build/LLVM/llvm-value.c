@@ -114,6 +114,11 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Value *val = v->item;
         return llvm_assign_value(b, scope, val);
     }
+    if (v->type == v_ptrval) {
+        Value *val = v->item;
+        char *lval = llvm_value(b, scope, val);
+        return llvm_ir_load(b, v->rett, lval);
+    }
     if (v->type == v_op) {
         VOp *vop = v->item;
         int op = vop->op;
@@ -301,7 +306,11 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
             char index[10];
             sprintf(index, "%d", prop->index);
             char bytes[10];
-            sprintf(bytes, "%d", type->bytes);
+            int abytes = type->bytes;
+            if (abytes > b->fc->b->ptr_size) {
+                abytes = b->fc->b->ptr_size;
+            }
+            sprintf(bytes, "%d", abytes);
 
             llvm_check_defined(b, class);
 
@@ -660,7 +669,11 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         }
 
         char bytes[10];
-        sprintf(bytes, "%d", v->rett->bytes);
+        int abytes = v->rett->bytes;
+        if (abytes > b->fc->b->ptr_size) {
+            abytes = b->fc->b->ptr_size;
+        }
+        sprintf(bytes, "%d", abytes);
 
         str_append_chars(ir, ltype);
         str_append_chars(ir, "* ");

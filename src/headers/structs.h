@@ -397,6 +397,7 @@ struct Trait {
 struct Alias {
     Chunk *chunk;
     char *name;
+    int type;
 };
 
 #endif

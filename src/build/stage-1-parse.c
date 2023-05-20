@@ -9,7 +9,7 @@ void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
 void stage_1_link(Fc *fc, int link_type);
 void stage_1_global(Fc *fc, bool shared);
-void stage_1_alias(Fc *fc);
+void stage_1_alias(Fc *fc, int alias_type);
 
 void stage_1(Fc *fc) {
     //
@@ -81,7 +81,11 @@ void stage_1(Fc *fc) {
             continue;
         }
         if (strcmp(token, "alias") == 0) {
-            stage_1_alias(fc);
+            stage_1_alias(fc, alias_id);
+            continue;
+        }
+        if (strcmp(token, "type_alias") == 0) {
+            stage_1_alias(fc, alias_type);
             continue;
         }
 
@@ -640,10 +644,11 @@ void stage_1_global(Fc *fc, bool shared) {
     }
 }
 
-void stage_1_alias(Fc *fc) {
+void stage_1_alias(Fc *fc, int alias_type) {
     //
     Alias *a = malloc(sizeof(Alias));
     a->chunk = chunk_clone(fc->alc, fc->chunk);
+    a->type = alias_type;
 
     skip_type(fc);
 

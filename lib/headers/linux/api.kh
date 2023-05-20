@@ -22,7 +22,7 @@ func stat(path: cstring, stat_buf: *cstruct_stat) i32;
 func fstat(fd: i32, stat_buf: *cstruct_stat) i32;
 func lstat(path: cstring, stat_buf: *cstruct_stat) i32;
 
-func poll(fds: inline cstruct_pollfd[unsafe], nfds: u32, timeout: i32) i32;
+func poll(fds: .cstruct_pollfd[unsafe], nfds: u32, timeout: i32) i32;
 
 func pipe(pipefd: i32[2]) i32;
 //int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict exceptfds, struct timeval *restrict timeout);

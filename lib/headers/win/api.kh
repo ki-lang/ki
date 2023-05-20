@@ -6,8 +6,10 @@ shared stdout : i32;
 
 // HANDLE : ptr
 // DWORD : u32
+// ULONG : u32
 
 alias ptr as HANDLE;
+alias uxx as SOCKET;
 
 alias _read as read;
 alias _write as write;
@@ -33,6 +35,13 @@ func fstat(fd: i32, stat_buf: *cstruct_stat) i32;
 func lstat(path: cstring, stat_buf: *cstruct_stat) i32;
 
 func WSAPoll(fds: ptr, nfds: u32, timeout: i32) i32;
+func WSAGetLastError() i32;
+func WSAStartup(wVersionRequired: u16, lpWSAData: WSADATA) i32;
+func closesocket(fd: SOCKET) i32;
+//func WSPStartup(wVersionRequested: u16, lpWSPData: WSPDATA, lpProtocolInfo: WSAPROTOCOL_INFOA, UpcallTable: .WSPUPCALLTABLE, lpProcTable: WSPPROC_TABLE) i32;
+
+func recv(fd: SOCKET, buf: ptr, len: i32, flags: i32) i32;
+func send(fd: SOCKET, buf: ptr, len: i32, flags: i32) i32;
 
 func pipe(pipefd: i32[2]) i32;
 //int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict exceptfds, struct timeval *restrict timeout);
@@ -41,16 +50,16 @@ func dup2(old_fd: i32, new_fd: i32) i32;
 
 func Sleep(ms: u32) void;
 
-func socket(domain: i32, type: i32, protocol: i32) i32;
-func connect(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32) i32;
-func accept(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1]) i32;
+func socket(domain: i32, type: i32, protocol: i32) SOCKET;
+//func connect(sockfd: SOCKET, addr: *cstruct_sockaddr, addrlen: u32) i32;
+func accept(sockfd: SOCKET, addr: *?cstruct_sockaddr, addrlen: ?u32[1]) i32;
 //func accept4(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1], flags: i32) i32;
-func shutdown(sockfd: i32, how: i32) i32;
-func bind(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32) i32;
-func listen(sockfd: i32, backlog: i32) i32;
+func shutdown(sockfd: SOCKET, how: i32) i32;
+func bind(sockfd: SOCKET, addr: *cstruct_sockaddr, addrlen: i32) i32;
+func listen(sockfd: SOCKET, backlog: i32) i32;
 
-func getsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
-func setsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
+func getsockopt(sockfd: SOCKET, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
+func setsockopt(sockfd: SOCKET, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
 func getaddrinfo(host: cstring, port: cstring, hints: *cstruct_addrinfo, res: (?cstruct_addrinfo)[1]) i32;
 func freeaddrinfo(info: cstruct_addrinfo) i32;
 
