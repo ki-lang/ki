@@ -137,7 +137,7 @@ class Poll {
             this.lsn_by_fd_size = new_size;
             this.lsn_by_fd = new_list;
         }
-        println("SET index " + lsn.poll_index.str() + " | fd: " + fd.str());
+        //println("SET index " + lsn.poll_index.str() + " | fd: " + fd.str());
         let events = this.results;
         let event = (events + @sizeof_class(sys.cstruct_pollfd) * lsn.poll_index) @as sys.cstruct_pollfd;
         event.fd = fd;
@@ -192,18 +192,13 @@ class Poll {
             ei.listener = e.data @as PollListener;
         }
         #else
-        print("wait\n");
-        println("lookcount: " + this.poll_index.str());
-        os:sleep_ms(1000);
         if this.poll_index == 0 {
             return 0;
         }
         let events = this.results;
         let event_count = sys.poll(events, this.poll_index @as u32, timeout);
-        println("count: " + event_count.str());
         if event_count < 0 {
-			println("WSA socket error: " + sys.WSAGetLastError().str());
-            if true : exit(1);
+			//println("WSA socket error: " + sys.WSAGetLastError().str());
             this.resultc = 0;
             return 0;
         }

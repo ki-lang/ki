@@ -121,7 +121,7 @@ class Server {
                 let lsn = event.listener;
                 let fd = lsn.fd;
 
-                println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
+                //println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
 
                 if fd == sock_fd {
                     // New connection

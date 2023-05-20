@@ -56,14 +56,16 @@ class SocketTCP async {
 			throw get_addr_info;
 		};
 
+        #if OS == win
     	err = sys.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen @as i32);
-		println("bind-err: " + err.str());
+		#else
+    	err = sys.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen);
+		#end
 		if err != 0 {
 			throw bind;
 		}
 
     	err = sys.listen(fd, 2000000);
-		println("listen-err: " + err.str());
 		if err != 0 {
 			throw listen;
 		}
