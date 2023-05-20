@@ -19,8 +19,8 @@ class SocketTCP async {
 		#else
     	let fd = sys.socket(sys.OS.AF_INET, sys.OS.SOCK_STREAM, 0);
         #if OS == macos
-		let flags = sys.fcntl(fd, sys.F_GETFL, 0);
-		if flags >= 0 : sys.fcntl(fd, sys.F_SETFL, flags | sys.O_NONBLOCK);
+		let flags = sys.fcntl(fd, sys.OS.F_GETFL, 0);
+		if flags >= 0 : sys.fcntl(fd, sys.OS.F_SETFL, flags | sys.OS.O_NONBLOCK);
 		#end
         #if OS == win
 		rep fd = os:WSA_unix_fd(fd);
@@ -84,8 +84,8 @@ class SocketTCP async {
 		#else
 		let fd = sys.accept(this.fd, null, null);
         #if OS == macos
-		let flags = sys.fcntl(fd, sys.F_GETFL, 0);
-		if flags >= 0 : sys.fcntl(fd, sys.F_SETFL, flags | sys.O_NONBLOCK);
+		let flags = sys.fcntl(fd, sys.OS.F_GETFL, 0);
+		if flags >= 0 : sys.fcntl(fd, sys.OS.F_SETFL, flags | sys.OS.O_NONBLOCK);
 		#end
         #if OS == win
 		rep fd = os:WSA_unix_fd(fd);
