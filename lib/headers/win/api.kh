@@ -31,7 +31,7 @@ func pipe(pipefd: i32[2]) i32;
 func dup(old_fd: i32) i32;
 func dup2(old_fd: i32, new_fd: i32) i32;
 
-func nanosleep(req: *cstruct_timespec, rem: *cstruct_timespec) i32;
+func Sleep(ms: u32) void;
 
 func socket(domain: i32, type: i32, protocol: i32) i32;
 func connect(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32) i32;

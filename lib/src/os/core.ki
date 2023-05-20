@@ -2,19 +2,27 @@
 header "sys" as sys;
 
 func sleep_ms(ms: uxx) void {
+	#if OS == win
+	sys.Sleep(ms @as u32);
+	#else
 	let msec = ms @as ixx;
 	let ts = @stack_object(sys.cstruct_timespec);
     ts.tv_sec = msec / 1000;
     ts.tv_nsec = (msec % 1000) * 1000000;
     sys.nanosleep(ts, ts);
+	#end
 }
 
 func sleep_ns(ns: uxx) void {
+	#if OS == win
+	sys.Sleep(1);
+	#else
 	let nsec = ns @as ixx;
 	let ts = @stack_object(sys.cstruct_timespec);
     ts.tv_sec = nsec / 1000000000;
     ts.tv_nsec = (nsec % 1000000000);
     sys.nanosleep(ts, ts);
+	#end
 }
 
 func !panic(msg: *String) void {
