@@ -359,7 +359,7 @@ struct PollEvent {
         #if OS == linux
         return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0;
         #elif OS == macos
-        return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0;
+        return (evs & sys.OS.POLLRDHUP) > 0 || (evs & sys.OS.POLLHUP) > 0 || (evs & sys.OS.POLLERR) > 0;
         #else
         return (evs & sys.OS.POLLHUP) > 0 || (evs & sys.OS.POLLERR) > 0;
         #end

@@ -18,6 +18,8 @@ func write(fd: i32, buf: cstring, size: uxx) ixx;
 func open(path: cstring, flags: i32) i32;
 func close(fd: i32) i32;
 
+func fcntl(fd: i32, action: i32, value: i32) i32;
+
 func stat(path: cstring, stat_buf: *cstruct_stat) i32;
 func fstat(fd: i32, stat_buf: *cstruct_stat) i32;
 func lstat(path: cstring, stat_buf: *cstruct_stat) i32;
