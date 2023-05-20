@@ -2,7 +2,11 @@
 header "sys" as sys;
 
 func write(fd: i32, str: *String) uxx !failed !again {
+	#if OS == win
+	let c = sys._write(fd, str.data(), str.bytes());
+	#else
 	let c = sys.write(fd, str.data(), str.bytes());
+	#end
 	if c == -2 {
 		throw again;
 	}
@@ -13,7 +17,11 @@ func write(fd: i32, str: *String) uxx !failed !again {
 }
 
 func write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
+	#if OS == win
+	let c = sys._write(fd, data, length);
+	#else
 	let c = sys.write(fd, data, length);
+	#end
 	if c == -2 {
 		throw again;
 	}

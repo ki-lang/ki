@@ -3,6 +3,13 @@
 
 enum OS {
 
+	POLLIN: 1,
+	POLLOUT: 4,
+	POLLERR: 8,
+	POLLHUP: 16,
+	POLLRDHUP: 0x2000,
+    PATHMAX: 4096,
+
 	AF_INET: 2,
 	AF_UNIX: 1,
 	AF_UNSPEC: 0,
@@ -52,15 +59,6 @@ enum OS {
     AI_PASSIVE: 1,
     AI_CANONNAME: 2,
     AI_NUMERICHOST: 4,
-
-	POLLIN: 1,
-	POLLOUT: 4,
-	POLLERR: 8,
-	POLLHUP: 16,
-	POLLRDHUP: 0x2000,
-    PATHMAX: 4096,
-
-    ///////////
 
     LOG_ALERT: 1,
     LOG_AUTH: 32,

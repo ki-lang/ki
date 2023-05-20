@@ -256,12 +256,18 @@ struct PollListener {
         this.update_event(v, ev);
     }
     public func stopped_reading(v: bool) void {
+        #if OS == win
+        return;
+        #else
+
         #if OS == linux
         let ev : u32 = sys.OS.EPOLLRDHUP;
         #else
         let ev : u32 = sys.OS.POLLRDHUP;
         #end
         this.update_event(v, ev);
+
+        #end
     }
     private func update_event(v: bool, ev: u32) void {
         if(v) {
@@ -307,21 +313,30 @@ struct PollEvent {
         #end
         return (this.events & ev) > 0;
     }
+
     public func is_stopped_reading() bool %inline {
+        #if OS == win
+        return false;
+        #else
+
         #if OS == linux
         let ev : u32 = sys.OS.EPOLLRDHUP;
         #else
         let ev : u32 = sys.OS.POLLRDHUP;
         #end
         return (this.events & ev) > 0;
+
+        #end
     }
 
     public func wants_to_close() bool %inline {
         let evs = this.events;
         #if OS == linux
         return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0;
+        #elif OS == macos
+        return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0;
         #else
-        return (evs & sys.OS.POLLRDHUP) > 0 || (evs & sys.OS.POLLHUP) > 0 || (evs & sys.OS.POLLERR) > 0;
+        return (evs & sys.OS.POLLHUP) > 0 || (evs & sys.OS.POLLERR) > 0;
         #end
     }
 }
