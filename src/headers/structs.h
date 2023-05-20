@@ -28,6 +28,7 @@ typedef struct Arg Arg;
 typedef struct UsageLine UsageLine;
 typedef struct Global Global;
 typedef struct Trait Trait;
+typedef struct Alias Alias;
 
 #include "token.h"
 #include "value.h"
@@ -156,6 +157,7 @@ struct Fc {
     Array *funcs;
     Array *classes;
     Array *globals;
+    Array *aliasses;
     Array *class_size_checks;
     Array *type_size_checks;
     //
@@ -390,6 +392,11 @@ struct Trait {
     char *dname;
     Fc *fc;
     Chunk *chunk;
+};
+
+struct Alias {
+    Chunk *chunk;
+    char *name;
 };
 
 #endif

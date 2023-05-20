@@ -57,9 +57,15 @@ func exe_path() &String {
 	let path = EXE_PATH ?! {
 		let str = String.make_empty(sys.OS.PATHMAX);
 		let data = str.data();
+
+		#if OS == win
+    	let len = sys.GetModuleFileNameA(null, data, sys.OS.PATHMAX);
+		#else
 		let link = "/proc/self/exe".to_cstring();
     	let len = sys.readlink(link, data, sys.OS.PATHMAX);
 		mem:free(link);
+		#end
+
 		let ref = &str;
 		EXE_PATH = str;
 		return ref;

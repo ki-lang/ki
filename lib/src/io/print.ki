@@ -4,11 +4,7 @@ header "sys" as sys;
 use mem;
 
 func print(str: *String) void {
-	#if OS == win
-    let byte_count = sys._write(1, str.data(), str.bytes());
-	#else
     let byte_count = sys.write(1, str.data(), str.bytes());
-	#end
     //if (byte_count < 0 && (sys.errno == EAGAIN || sys.errno == EWOULDBLOCK)) {
 	//    throw err
     //}

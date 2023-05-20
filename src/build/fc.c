@@ -61,6 +61,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->funcs = array_make(alc, 20);
     fc->classes = array_make(alc, 4);
     fc->globals = array_make(alc, 4);
+    fc->aliasses = array_make(alc, 4);
     fc->class_size_checks = array_make(alc, 4);
     fc->type_size_checks = array_make(alc, 20);
 

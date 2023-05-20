@@ -17,6 +17,19 @@ void stage_2(Fc *fc) {
 
     b->core_types_scanned = true;
 
+    for (int i = 0; i < fc->aliasses->length; i++) {
+        Alias *a = array_get_index(fc->aliasses, i);
+        fc->chunk = a->chunk;
+        Id *id = read_id(fc, true, true, true);
+        Idf *idf = idf_by_id(fc, fc->scope, id, true);
+        Idf *idf_a = idf_init(fc->alc, idf->type);
+        idf_a->item = idf->item;
+        map_set(fc->nsc->scope->identifiers, a->name, idf_a);
+        if (fc->is_header) {
+            map_set(fc->scope->identifiers, a->name, idf_a);
+        }
+    }
+
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)

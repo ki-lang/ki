@@ -9,6 +9,7 @@ void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
 void stage_1_link(Fc *fc, int link_type);
 void stage_1_global(Fc *fc, bool shared);
+void stage_1_alias(Fc *fc);
 
 void stage_1(Fc *fc) {
     //
@@ -77,6 +78,10 @@ void stage_1(Fc *fc) {
         }
         if (strcmp(token, "shared") == 0) {
             stage_1_global(fc, true);
+            continue;
+        }
+        if (strcmp(token, "alias") == 0) {
+            stage_1_alias(fc);
             continue;
         }
 
@@ -633,4 +638,29 @@ void stage_1_global(Fc *fc, bool shared) {
     if (fc->is_header) {
         map_set(fc->scope->identifiers, name, idf);
     }
+}
+
+void stage_1_alias(Fc *fc) {
+    //
+    Alias *a = malloc(sizeof(Alias));
+    a->chunk = chunk_clone(fc->alc, fc->chunk);
+
+    skip_type(fc);
+
+    tok_expect(fc, "as", true, true);
+
+    char *token = fc->token;
+    tok(fc, token, true, true);
+
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid global name syntax '%s'", token);
+        fc_error(fc);
+    }
+    name_taken_check(fc, fc->nsc->scope, token);
+
+    a->name = dups(fc->alc, token);
+
+    tok_expect(fc, ";", true, true);
+
+    array_push(fc->aliasses, a);
 }

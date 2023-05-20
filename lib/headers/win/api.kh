@@ -4,6 +4,14 @@ shared stderr : i32;
 shared stdin : i32;
 shared stdout : i32;
 
+alias _read as read;
+alias _write as write;
+alias _open as open;
+alias _close as close;
+
+alias _mkdir as mkdir;
+alias _unlink as unlink;
+
 func malloc(size: uxx) ptr;
 func free(adr: ptr) void;
 
@@ -59,12 +67,12 @@ func getcwd(buf: cstring, size: uxx) cstring;
 //int fchdir(int fd);
 
 func rename(oldpath: cstring, newpath: cstring) i32;
-func mkdir(pathname: cstring, mode: u32) i32;
+func _mkdir(pathname: cstring, mode: u32) i32;
 func rmdir(pathname: cstring) i32;
 func link(oldpath: cstring, newpath: cstring) i32;
-func unlink(pathname: cstring) i32;
+func _unlink(pathname: cstring) i32;
 func symlink(target: cstring, linkpath: cstring) i32;
-func readlink(pathname: cstring, buf: cstring, bufsiz: uxx) ixx;
+func GetModuleFileNameA(hmodule: ?ptr, buf: ptr, len: u32) u32;
 
 func chmod(pathname: cstring, mode: u32) i32;
 func fchmod(fd: i32, mode: u32) i32;
