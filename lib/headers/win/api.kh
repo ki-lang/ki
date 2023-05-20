@@ -4,6 +4,11 @@ shared stderr : i32;
 shared stdin : i32;
 shared stdout : i32;
 
+// HANDLE : ptr
+// DWORD : u32
+
+alias ptr as HANDLE;
+
 alias _read as read;
 alias _write as write;
 alias _open as open;
@@ -97,3 +102,6 @@ func exit(status: i32) void;
 func signal(signum: i32, handler: ?fn(i32)(void)) void;
 func raise(sig: i32) i32;
 
+func CreateThread(lpThreadAttributes: ?ptr, dwStackSize: uxx, lpStartAddress: ptr, lpParameter: ?ptr, dwCreationFlags: u32, lpThreadId: ?u32[1]) ?HANDLE;
+func WaitForSingleObject(handle: HANDLE, timeout_ms: u32) u32;
+func CloseHandle(handle: HANDLE) bool;
