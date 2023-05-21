@@ -16,77 +16,78 @@ void cmd_build(int argc, char *argv[]) {
     Map *options = map_make(alc);
     Array *has_value = array_make(alc, 8);
     array_push(has_value, "-o");
-    array_push(has_value, "--arch");
-    array_push(has_value, "--os");
+    array_push(has_value, "--target");
 
     parse_argv(argv, argc, has_value, args, options);
+
+    // Args
+    char argbuf[256];
+    for (int i = 0; i < args->length; i++) {
+        char *arg = array_get_index(args, i);
+        if (arg[0] != '-')
+            continue;
+        sprintf(argbuf, ".%s.", arg);
+        if (!strstr(".--options.-O.--debug.-d.--test.--clear.-c.--static.-s.--run.-r.-h.--help.-v.-vv.-vvv.", argbuf)) {
+            sprintf(argbuf, "❓ Unknown option '%s'", arg);
+            die(argbuf);
+        }
+    }
 
     bool run_code = strcmp(argv[1], "run") == 0 || array_contains(args, "--run", arr_find_str) || array_contains(args, "-r", arr_find_str);
 
     // Check options
     char *path_out = map_get(options, "-o");
-    if (array_contains(args, "-h", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0)) {
+    if (array_contains(args, "-h", arr_find_str) || array_contains(args, "--help", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0)) {
         cmd_build_help(run_code);
     }
 
-    char *os = map_get(options, "--os");
-    char *arch = map_get(options, "--arch");
-
-    int target_os = -1;
-    int target_arch = -1;
     int host_os = default_os();
     int host_arch = default_arch();
+    int target_os = host_os;
+    int target_arch = host_arch;
 
-    if (os) {
-        if (strcmp(os, "linux") == 0) {
+    char *target = map_get(options, "--target");
+
+    if (target) {
+        if (strcmp(target, "linux-x64") == 0) {
             target_os = os_linux;
-        } else if (strcmp(os, "macos") == 0) {
-            target_os = os_macos;
-        } else if (strcmp(os, "win") == 0) {
-            target_os = os_win;
-        } else {
-            char err[256];
-            sprintf(err, "Unsupported target os: '%s'", os);
-            die(err);
-        }
-    }
-    if (arch) {
-        if (strcmp(os, "x64") == 0) {
             target_arch = arch_x64;
-        } else if (strcmp(os, "arm64") == 0) {
+        } else if (strcmp(target, "linux-arm64") == 0) {
+            target_os = os_linux;
+            target_arch = arch_arm64;
+        } else if (strcmp(target, "macos-x64") == 0) {
+            target_os = os_macos;
+            target_arch = arch_x64;
+        } else if (strcmp(target, "macos-arm64") == 0) {
+            target_os = os_macos;
+            target_arch = arch_arm64;
+        } else if (strcmp(target, "win-x64") == 0) {
+            target_os = os_win;
+            target_arch = arch_x64;
+        } else if (strcmp(target, "win-arm64") == 0) {
+            target_os = os_win;
             target_arch = arch_arm64;
         } else {
             char err[256];
-            sprintf(err, "Unsupported target arch: '%s'", arch);
+            sprintf(err, "Unsupported target: '%s' | options:\n - linux-x64\n - linux-arm64\n - macos-x64\n - macos-arm64\n - win-x64\n - win-arm64\n\n", target);
             die(err);
         }
     }
 
-    if (target_os == -1) {
-        target_os = host_os;
-        if (host_os == os_linux) {
-            os = "linux";
-        } else if (host_os == os_macos) {
-            os = "macos";
-        } else if (host_os == os_win) {
-            os = "win";
-        }
-    }
-    if (target_arch == -1) {
-        target_arch = host_arch;
-        if (host_arch == arch_x64) {
-            arch = "x64";
-        } else if (host_arch == arch_arm64) {
-            arch = "arm64";
-        }
-    }
+    char *os = NULL;
+    char *arch = NULL;
 
-    if (target_os == os_linux && (target_arch == arch_x64 || target_arch == arch_arm64)) {
-    } else if (target_os == os_macos && (target_arch == arch_x64 || target_arch == arch_arm64)) {
-    } else if (target_os == os_win && (target_arch == arch_x64 || target_arch == arch_arm64)) {
-    } else {
-        die("❌ Invalid os/arch compile target. Use the --os (linux,macos,win) and the --arch (x64,arm64) arguments to set the correct target.");
-    }
+    if (target_os == os_linux)
+        os = "linux";
+    else if (target_os == os_macos)
+        os = "macos";
+    else if (target_os == os_win)
+        os = "win";
+
+    if (target_arch == arch_x64)
+        arch = "x64";
+    else if (target_arch == arch_arm64)
+        arch = "arm64";
 
     int ptr_size = 8;
     int verbose = 0;
