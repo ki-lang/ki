@@ -297,7 +297,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     rtok(fc);
     //
     if (sub_type && type->type != type_arr) {
-        sprintf(fc->sbuf, "You can only use '(type)' sub-type brackets when creating an static-array type. e.g. (String) is wrong, but (String)[1] is allowed.");
+        sprintf(fc->sbuf, "You can only use '(type)' sub-type brackets when creating an static-array type. e.g. (String) is wrong, but (String)[1] is allowed");
         fc_error(fc);
     }
 
@@ -320,7 +320,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     //
     if (nullable) {
         if (type->ptr_depth == 0) {
-            sprintf(fc->sbuf, "Only pointer types can be nullable.");
+            sprintf(fc->sbuf, "Only pointer types can be nullable");
             fc_error(fc);
         }
         type->nullable = nullable;
@@ -688,5 +688,74 @@ void type_allowed_async_error(Fc *fc, Type *type, Str *chain) {
             str_append_chars(chain, " -> ");
             type_allowed_async_error(fc, prop->type, chain);
         }
+    }
+}
+
+TypeCheck *type_gen_type_check(Allocator *alc, Type *type) {
+    //
+    TypeCheck *tc = malloc(sizeof(TypeCheck));
+    tc->type = type->type;
+    tc->class = type->class;
+    tc->borrow = type->borrow;
+    tc->ref = type->ref;
+    tc->array_of = type->array_of ? type_gen_type_check(alc, type->array_of) : NULL;
+    tc->array_size = type->array_size;
+    return tc;
+}
+
+void type_validate(Fc *fc, TypeCheck *tc, Type *type, char *msg) {
+    //
+    char *reason = NULL;
+    if (tc->class && tc->class != type->class) {
+        reason = "Different class/struct";
+    } else if (tc->type > -1 && tc->type != type->type) {
+        reason = "Different kind of type";
+    } else if (tc->array_size > -1 && tc->array_size != type->array_size) {
+        reason = "Different array size";
+    } else if (tc->array_of && type->type != type_arr) {
+        reason = "Must be an array";
+    } else if (tc->borrow != type->borrow) {
+        reason = tc->borrow ? "Must be a borrow type" : "Cannot be a borrow type";
+    } else if (tc->ref != type->ref) {
+        reason = tc->ref ? "Must be a reference type" : "Cannot be a reference type";
+    }
+    if (tc->array_of) {
+        type_validate(fc, tc->array_of, type->array_of, msg);
+    }
+    if (reason) {
+        char str[256];
+        strcpy(str, "");
+        type_check_to_str(tc, str);
+        sprintf(fc->sbuf, "%s : Expected type: %s | Reason: %s", msg, str, reason);
+        fc_error(fc);
+    }
+}
+
+void type_check_to_str(TypeCheck *tc, char *buf) {
+    //
+    if (tc->borrow) {
+        strcat(buf, "*");
+    }
+    if (tc->ref) {
+        strcat(buf, "&");
+    }
+    if (tc->array_of) {
+        strcat(buf, "(");
+    }
+    if (tc->array_of) {
+        type_check_to_str(tc->array_of, buf);
+    } else {
+        strcat(buf, tc->class ? tc->class->dname : "{ANY}");
+    }
+    if (tc->array_of) {
+        strcat(buf, ")[");
+        if (tc->array_size > -1) {
+            char nr[10];
+            sprintf(nr, "%d", tc->array_size);
+            strcat(buf, nr);
+        } else {
+            strcat(buf, "*");
+        }
+        strcat(buf, "]");
     }
 }

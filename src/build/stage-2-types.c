@@ -6,7 +6,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait);
 void stage_2_func(Fc *fc, Func *func);
 void stage_2_class_defaults(Fc *fc, Class *class);
 void stage_2_class_type_checks(Fc *fc, Class *class);
-void stage_2_class_type_check(Fc *fc, Func *func, Type *args[], int argc, Type *rett, bool can_error);
+void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *args[], int argc, TypeCheck *tc_rett, bool can_error);
 
 void stage_2(Fc *fc) {
     //
@@ -518,53 +518,69 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
     Func *func;
     Allocator *alc = fc->alc;
 
-    Type *args[10];
+    TypeCheck tc_this;
+    tc_this.class = class;
+    tc_this.borrow = true;
+    tc_this.ref = false;
+    tc_this.array_of = NULL;
+    tc_this.type = -1;
+    tc_this.array_size = 0;
 
-    args[0] = type_gen_class(alc, class);
-    args[0]->borrow = true;
-    args[0]->ref = true;
+    TypeCheck *checks[10];
+    checks[0] = &tc_this;
+
+    TypeCheck tc_void;
+    tc_void.class = NULL;
+    tc_void.borrow = false;
+    tc_void.ref = false;
+    tc_void.array_of = NULL;
+    tc_void.type = type_void;
+    tc_void.array_size = 0;
 
     func = map_get(class->funcs, "__ref");
     if (func)
-        stage_2_class_type_check(fc, func, args, 1, type_gen_void(alc), false);
+        stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
     func = map_get(class->funcs, "__deref");
     if (func)
-        stage_2_class_type_check(fc, func, args, 1, type_gen_void(alc), false);
+        stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
     func = map_get(class->funcs, "__free");
     if (func)
-        stage_2_class_type_check(fc, func, args, 1, type_gen_void(alc), false);
+        stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
     func = map_get(class->funcs, "__before_free");
     if (func)
-        stage_2_class_type_check(fc, func, args, 1, type_gen_void(alc), false);
+        stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
 
     // Iter
-    Func *func_iter = map_get(class->funcs, "__each_init");
-    if (func_iter) {
-        if (type_is_void(func_iter->rett)) {
-            fc->chunk = func_iter->chunk_args;
+    Func *func_init = map_get(class->funcs, "__each_init");
+    func = map_get(class->funcs, "__each");
+    if (func_init && func) {
+        if (type_is_void(func_init->rett)) {
+            fc->chunk = func_init->chunk_args;
             sprintf(fc->sbuf, "__each_init can have any return type except 'void'");
             fc_error(fc);
         }
-        stage_2_class_type_check(fc, func_iter, args, 1, NULL, false);
-        Type *key_type = type_clone(alc, func_iter->rett);
-        key_type = type_array_of(alc, fc->b, key_type, 1);
-        key_type->borrow = true;
-        key_type->strict_ownership = false;
+        stage_2_class_type_check(fc, func_init, checks, 1, NULL, false);
 
-        args[1] = key_type;
-        func = map_get(class->funcs, "__each");
-        if (func) {
-            if (type_is_void(func->rett)) {
-                fc->chunk = func->chunk_args;
-                sprintf(fc->sbuf, "__each can have any return type except 'void'");
-                fc_error(fc);
-            }
-            stage_2_class_type_check(fc, func, args, 2, NULL, true);
-            class->can_iter = true;
+        TypeCheck tc_key;
+        tc_key.class = NULL;
+        tc_key.borrow = type_tracks_ownership(func_init->rett);
+        tc_key.ref = false;
+        tc_key.array_of = type_gen_type_check(alc, func_init->rett);
+        tc_key.type = -1;
+        tc_key.array_size = 1;
+
+        checks[1] = &tc_key;
+
+        if (type_is_void(func->rett)) {
+            fc->chunk = func->chunk_args;
+            sprintf(fc->sbuf, "__each can have any return type except 'void'");
+            fc_error(fc);
         }
+        stage_2_class_type_check(fc, func, checks, 2, NULL, true);
+        class->can_iter = true;
     }
 }
-void stage_2_class_type_check(Fc *fc, Func *func, Type *args[], int argc, Type *rett, bool can_error) {
+void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *checks[], int argc, TypeCheck *tc_rett, bool can_error) {
     //
     if (!func->chunk_args) {
         // Generated func
@@ -572,60 +588,69 @@ void stage_2_class_type_check(Fc *fc, Func *func, Type *args[], int argc, Type *
     }
 
     Chunk *chunk = fc->chunk;
-    bool equal = func->args->length == argc;
-
-    if (equal) {
-        int i = 0;
-        while (i < argc) {
-            Type *type = args[i];
-            Arg *arg = array_get_index(func->args, i);
-            i++;
-            if (!type_compat(type, arg->type, NULL)) {
-                if (arg->type_chunk) {
-                    chunk = arg->type_chunk;
-                }
-                equal = false;
-                break;
-            }
-        }
-    }
-    if (equal && rett && !type_compat(rett, func->rett, NULL)) {
-        equal = false;
-    }
-    if (equal && func->can_error != can_error) {
-        equal = false;
-    }
-
-    if (!equal) {
-        char buf[256];
-        char expected[256];
-        strcpy(expected, "fn(");
-        int i = 0;
-        while (i < argc) {
-            if (i > 0) {
-                strcat(expected, ", ");
-            }
-            Type *type = args[i];
-            i++;
-            type_to_str(type, buf);
-            strcat(expected, buf);
-        }
-        strcat(expected, ")(");
-        if (rett) {
-            type_to_str(rett, buf);
-            strcat(expected, buf);
-        } else {
-            strcat(expected, "{ANY}");
-        }
-        strcat(expected, ")");
-        if (can_error) {
-            strcat(expected, "!");
-        }
-        //
-        type_to_str(type_gen_fptr(fc->alc, func), buf);
-        //
-        fc->chunk = chunk;
-        sprintf(fc->sbuf, "Expected type for '%s' should be '%s', but was '%s'", func->dname, expected, buf);
+    if (func->args->length > argc) {
+        fc->chunk = func->chunk_args;
+        sprintf(fc->sbuf, "Too many arguments. Expected %d argument(s). But found: %d", argc, func->args->length);
         fc_error(fc);
     }
+    if (func->args->length < argc) {
+        fc->chunk = func->chunk_args;
+        sprintf(fc->sbuf, "Missing arguments. Expected %d argument(s). But found: %d", argc, func->args->length);
+        fc_error(fc);
+    }
+
+    int i = 0;
+    char buf[200];
+    while (i < argc) {
+        TypeCheck *tc = checks[i];
+        Arg *arg = array_get_index(func->args, i);
+        i++;
+
+        fc->chunk = arg->type_chunk;
+        sprintf(buf, "Incorrect type for argument '%s'", arg->name);
+        type_validate(fc, tc, arg->type, buf);
+    }
+
+    if (tc_rett) {
+        fc->chunk = func->chunk_args;
+        type_validate(fc, tc_rett, func->rett, "Incorrect function return type");
+    }
+
+    if (func->can_error != can_error) {
+        sprintf(fc->sbuf, can_error ? "This function should atleast have 1 error defined" : "This function should not be able to return errors");
+        fc_error(fc);
+    }
+
+    // if (!equal) {
+    //     char buf[256];
+    //     char expected[256];
+    //     strcpy(expected, "fn(");
+    //     int i = 0;
+    //     while (i < argc) {
+    //         if (i > 0) {
+    //             strcat(expected, ", ");
+    //         }
+    //         Type *type = args[i];
+    //         i++;
+    //         type_to_str(type, buf);
+    //         strcat(expected, buf);
+    //     }
+    //     strcat(expected, ")(");
+    //     if (rett) {
+    //         type_to_str(rett, buf);
+    //         strcat(expected, buf);
+    //     } else {
+    //         strcat(expected, "{ANY}");
+    //     }
+    //     strcat(expected, ")");
+    //     if (can_error) {
+    //         strcat(expected, "!");
+    //     }
+    //     //
+    //     type_to_str(type_gen_fptr(fc->alc, func), buf);
+    //     //
+    //     fc->chunk = chunk;
+    //     sprintf(fc->sbuf, "Expected type for '%s' should be '%s', but was '%s'", func->dname, expected, buf);
+    //     fc_error(fc);
+    // }
 }

@@ -29,6 +29,7 @@ typedef struct UsageLine UsageLine;
 typedef struct Global Global;
 typedef struct Trait Trait;
 typedef struct Alias Alias;
+typedef struct TypeCheck TypeCheck;
 
 #include "token.h"
 #include "value.h"
@@ -398,6 +399,15 @@ struct Alias {
     Chunk *chunk;
     char *name;
     int type;
+};
+
+struct TypeCheck {
+    Class *class;
+    TypeCheck *array_of;
+    int array_size;
+    int type;
+    bool borrow;
+    bool ref;
 };
 
 #endif

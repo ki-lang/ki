@@ -28,7 +28,7 @@ class Map[T] {
 		return 0;
 	}
 
-	func __each_(key_index_ref: uxx[1], key_value_ref: *(&String)[1]) &T !end {
+	func __each(key_index_ref: *uxx[1], key_value_ref: *(&String)[1]) &T !end {
 		let key_i = key_index_ref[0];
 		let key_v = this._keys.get(key_i) !! throw end;;
 		let value = this._values.get(key_i) !! throw end;;
