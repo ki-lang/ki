@@ -58,7 +58,7 @@ char *nsc_gname(Nsc *nsc, char *name);
 char *nsc_dname(Nsc *nsc, char *name);
 
 // Fc
-Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool generated);
+Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated);
 void fc_error(Fc *fc);
 void fc_update_cahce(Fc *fc);
 
@@ -102,6 +102,7 @@ MacroScope *init_macro_scope(Allocator *alc);
 void read_macro(Fc *fc, Allocator *alc, Scope *scope);
 bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc);
 char *macro_get_var(MacroScope *mc, char *key);
+Str *macro_replace_str_vars(Allocator *alc, Fc *fc, Str *str);
 
 // Id
 Id *id_init(Allocator *alc);
@@ -109,6 +110,7 @@ Idf *idf_init(Allocator *alc, int type);
 Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash);
 Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail);
 Idf *ki_lib_get(Build *b, char *ns, char *name);
+Idf *idf_get_from_header(Fc *hfc, char *name, int depth);
 
 // Scope
 Scope *scope_init(Allocator *alc, int type, Scope *parent, bool has_ast);
@@ -155,6 +157,7 @@ void type_check(Fc *fc, Type *t1, Type *t2);
 Type *type_clone(Allocator *alc, Type *type);
 bool type_tracks_ownership(Type *type);
 bool type_allowed_async(Type *type, bool recursive);
+Type *type_get_inline(Allocator *alc, Type *type);
 
 // Var
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_arg);

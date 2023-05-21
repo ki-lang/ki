@@ -11,6 +11,8 @@ LDFLAGS=
 
 ifeq ($(UNAME), Darwin)
 # From macos
+CC=clang
+LCC=clang
 CFLAGS:=$(CFLAGS) -I/usr/local/opt/llvm@15/include
 LDFLAGS:=$(LDFLAGS) -L/usr/local/opt/llvm@15/lib `/usr/local/opt/llvm@15/bin/llvm-config --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf`
 LLVMCF=`/usr/loca/opt/llvm@15/bin/llvm-config --cflags`
@@ -33,9 +35,6 @@ SRC := $(filter-out src/build/stage-8-link.c, $(SRC))
 OBJECTS=$(patsubst %.c, debug/build/%.o, $(SRC))
 TARGET=ki
 
-os_linux=./lib/libs/linux-x64/libki_os.a
-os_macos=./lib/libs/macos-x64/libki_os.a
-
 ki: $(OBJECTS) debug/build/link.o
 	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) debug/build/link.o $(LDFLAGS)
 
@@ -46,31 +45,12 @@ $(OBJECTS): debug/build/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(os_linux): ./src/os/linux.c
-	mkdir -p ./lib/libs/linux-x64/
-	gcc -g -O2 -c "./src/os/linux.c" -o /tmp/libki_os.o
-	ar rcs $(os_linux) /tmp/libki_os.o
-
-$(os_macos): ./src/os/macos.c
-ifeq ($(UNAME), Linux)
-	mkdir -p ./lib/libs/macos-x64/
-	clang -g -O2 -c "./src/os/macos.c" -o /tmp/libki_os.o $(CROSS_OSX_FROM_LINUX)
-	ar rcs $(os_macos) /tmp/libki_os.o
-else
-	mkdir -p ./lib/libs/macos-x64/
-	gcc -g -O2 -c "./src/os/macos.c" -o /tmp/libki_os.o
-	ar rcs $(os_macos) /tmp/libki_os.o
-endif
-
 clean:
 	rm -f ki $(OBJECTS) debug/build/link.o
 
-linux: ki $(os_linux)
-macos: ki $(os_macos)
-
 # STATIC DIST BULDS
 
-linux_dist_from_linux: $(OBJECTS) $(os_linux) debug/build/link.o
+linux_dist_from_linux: $(OBJECTS) debug/build/link.o
 	mkdir -p dist/linux-x64/lib
 	rm -rf dist/linux-x64/lib
 	cp -r lib dist/linux-x64/
@@ -79,7 +59,7 @@ linux_dist_from_linux: $(OBJECTS) $(os_linux) debug/build/link.o
 	$(LCC) -o dist/linux-x64/ki $(OBJECTS) debug/build/link.o $(LDFLAGS_DIST)
 	cd dist/linux-x64 && tar -czf ../ki-$(VERSION)-linux-x64.tar.gz ki lib install.sh
 
-macos_dist_from_linux: $(os_macos) debug/build/link.o
+macos_dist_from_linux: debug/build/link.o
 	mkdir -p dist/macos-x64/lib
 	rm -rf dist/macos-x64/lib
 	cp -r lib dist/macos-x64/

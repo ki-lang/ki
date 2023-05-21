@@ -101,6 +101,7 @@ enum VALUETYPE {
     v_isset,
     v_ref,
     v_swap,
+    v_ptrval,
 };
 
 enum OPTYPE {
@@ -133,4 +134,25 @@ enum READTYPECTX {
     rtc_ptrv,
     rtc_decl,
     rtc_prop_type,
+};
+
+enum LINKTYPE {
+    link_default = 1,
+    link_dynamic = 2,
+    link_static = 4,
+};
+
+enum TARGET_OS {
+    os_linux,
+    os_macos,
+    os_win,
+};
+enum TARGET_ARCH {
+    arch_x64,
+    arch_arm64,
+};
+
+enum ALIAS {
+    alias_id,
+    alias_type,
 };

@@ -9,6 +9,7 @@ Str *llvm_b_ir(LB *b) {
 void llvm_build_ir(LB *b) {
     //
     Str *ir = b->ir_final;
+    Build *bld = b->fc->b;
 
     llvm_gen_global_ir(b);
     llvm_gen_func_ir(b);
@@ -22,7 +23,28 @@ void llvm_build_ir(LB *b) {
     str_append_chars(ir, "\"\n");
 
     str_append_chars(ir, "target datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"\n");
-    str_append_chars(ir, "target triple = \"x86_64-pc-linux-gnu\"\n\n");
+
+    if (strcmp(bld->os, "linux") == 0) {
+        if (strcmp(bld->arch, "x64") == 0) {
+            str_append_chars(ir, "target triple = \"x86_64-pc-linux-gnu\"");
+        } else if (strcmp(bld->arch, "arm64") == 0) {
+            str_append_chars(ir, "target triple = \"aarch64-unknown-linux-gnu\"");
+        }
+    } else if (strcmp(bld->os, "macos") == 0) {
+        if (strcmp(bld->arch, "x64") == 0) {
+            str_append_chars(ir, "target triple = \"x86_64-apple-darwin\"");
+        } else if (strcmp(bld->arch, "arm64") == 0) {
+            str_append_chars(ir, "target triple = \"aarch64-apple-darwin\"");
+        }
+    } else if (strcmp(bld->os, "win") == 0) {
+        if (strcmp(bld->arch, "x64") == 0) {
+            str_append_chars(ir, "target triple = \"x86_64-pc-windows-msvc\"");
+        } else if (strcmp(bld->arch, "arm64") == 0) {
+            str_append_chars(ir, "target triple = \"aarch64-pc-windows-msvc\"");
+        }
+    }
+
+    str_append_chars(ir, "\n\n");
 
     str_append(ir, b->ir_struct);
     str_append_chars(ir, "\n");
@@ -92,7 +114,11 @@ void llvm_gen_global_ir(LB *b) {
         }
 
         char bytes[20];
-        sprintf(bytes, "%d", type->bytes);
+        int abytes = type->bytes;
+        if (abytes > b->fc->b->ptr_size) {
+            abytes = b->fc->b->ptr_size;
+        }
+        sprintf(bytes, "%d", abytes);
 
         str_append_chars(ir, ", align ");
         str_append_chars(ir, bytes);
@@ -124,7 +150,11 @@ char *llvm_alloca(LB *b, Type *type) {
     Str *ir = block->ir;
 
     char bytes[20];
-    sprintf(bytes, "%d", type->bytes);
+    int abytes = type->bytes;
+    if (abytes > b->fc->b->ptr_size) {
+        abytes = b->fc->b->ptr_size;
+    }
+    sprintf(bytes, "%d", abytes);
 
     char *var = llvm_var(b);
     str_append_chars(ir, "  ");
@@ -150,7 +180,11 @@ char *llvm_get_global(LB *b, char *name, Type *type) {
     char *ltype = llvm_type(b, type);
 
     char bytes[20];
-    sprintf(bytes, "%d", type->bytes);
+    int abytes = type->bytes;
+    if (abytes > b->fc->b->ptr_size) {
+        abytes = b->fc->b->ptr_size;
+    }
+    sprintf(bytes, "%d", abytes);
 
     str_append_chars(ir, "@");
     str_append_chars(ir, name);

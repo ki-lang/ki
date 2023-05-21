@@ -86,7 +86,11 @@ void llvm_ir_store(LB *b, Type *type, char *var, char *val) {
     char *ltype = llvm_type(b, type);
 
     char bytes[20];
-    sprintf(bytes, "%d", type->bytes);
+    int abytes = type->bytes;
+    if (abytes > b->fc->b->ptr_size) {
+        abytes = b->fc->b->ptr_size;
+    }
+    sprintf(bytes, "%d", abytes);
 
     str_append_chars(ir, "  store ");
     str_append_chars(ir, ltype);
@@ -105,7 +109,11 @@ char *llvm_ir_load(LB *b, Type *type, char *var) {
     char *ltype = llvm_type(b, type);
 
     char bytes[20];
-    sprintf(bytes, "%d", type->bytes);
+    int abytes = type->bytes;
+    if (abytes > b->fc->b->ptr_size) {
+        abytes = b->fc->b->ptr_size;
+    }
+    sprintf(bytes, "%d", abytes);
 
     str_append_chars(ir, "  ");
     str_append_chars(ir, var_result);

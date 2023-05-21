@@ -11,7 +11,8 @@ void llvm_check_defined(LB *b, Class *class) {
 
         Str *ir = str_make(b->alc, 1000);
         str_append_chars(ir, name);
-        str_append_chars(ir, " = type { ");
+        str_append_chars(ir, " = type ");
+        str_append_chars(ir, class->packed ? "<{ " : "{ ");
 
         for (int i = 0; i < class->props->keys->length; i++) {
             ClassProp *prop = array_get_index(class->props->values, i);
@@ -20,7 +21,7 @@ void llvm_check_defined(LB *b, Class *class) {
             }
             str_append_chars(ir, llvm_type(b, prop->type));
         }
-        str_append_chars(ir, " }\n");
+        str_append_chars(ir, class->packed ? " }>\n" : " }\n");
 
         str_append(b->ir_struct, ir);
     }

@@ -1,146 +1,369 @@
 
-header "ki_os" as kos;
+header "sys" as sys;
 
 use mem;
 use utils;
+use os;
 
 class Poll {
-	readonly os_poll: ptr;
-	private pool: utils:Pool[PollListener];
-	private listeners: Array[PollListener] = Array[PollListener].init();
-	readonly max_connections: uxx;
+    #if OS == linux
+    private fd: i32;
+    #else
+    private poll_size: uxx;
+    private poll_index: uxx = 0;
+    private lsn_by_fd: ptr;
+    private lsn_by_fd_size: uxx = 20;
+    #end
 
-	public static func init(max_connections: uxx) Poll {
-		let p = kos.ki_os__poll_init();
-		let x = Poll {
-			os_poll: p,
-			pool: utils:Pool[PollListener].init(max_connections),
-			max_connections: max_connections,
-		};
-		return x;
-	}
+    private resultc: uxx = 0;
+    readonly results: ptr;
+    private results_int: ptr;
+    //
+    private pool: utils:Pool[PollListener];
+    private listeners: Array[PollListener] = Array[PollListener].init();
+    readonly max_connections: uxx;
 
-	public func listener(fd: i32, key: uxx = 0) PollListener {
+    public static func init(max_connections: uxx) Poll {
 
-		let pool = this.pool;
-		let listeners = this.listeners;
+        #if OS == win
+		os:WSA_init();
+		#end
 
-		let lsn = pool.pop() !? @vs : PollListener {
-			let new = PollListener {
-				os_poll: this.os_poll,
-				fd: fd,
-				key: key,
-			};
-			//listeners.push(new);
-			return new;
-		};
+        #if OS == linux
+        let fd = sys.epoll_create(1);
+        let results = mem:calloc(@sizeof_class(sys.cstruct_epoll_event) * 20);
+        #else
+        let results = mem:calloc(@sizeof_class(sys.cstruct_pollfd) * 20);
+        let lsn_by_fd = mem:calloc(@sizeof(ptr) * 20);
+        CLASS.disable_poll_fds(results, 0, 20);
+        #end
 
-		lsn.fd = fd;
-		lsn.key = key;
+        let results_int = mem:calloc(@sizeof_class(PollEvent) * 20);
 
-		kos.ki_os__poll_new_fd(this.os_poll, lsn);
+        #if OS == linux
+        return Poll {
+            fd: fd,
+            results: results,
+            results_int: results_int,
+            pool: utils:Pool[PollListener].init(max_connections),
+            max_connections: max_connections,
+        };
+        #else
+        return Poll {
+            poll_size: 20,
+            lsn_by_fd: lsn_by_fd,
+            lsn_by_fd_size: 20,
+            results: results,
+            results_int: results_int,
+            pool: utils:Pool[PollListener].init(max_connections),
+            max_connections: max_connections,
+        };
+        #end
+    }
 
-		return lsn;
-	}
+    #if OS != linux
+    private static func disable_poll_fds(list: ptr, start_index: uxx, count: uxx) void {
+        let i = start_index;
+        let last = i + count;
+        while i < last {
+            let event = (list + @sizeof_class(sys.cstruct_pollfd) * i) @as sys.cstruct_pollfd;
+            #if OS == win
+            event.fd = 0^-1;
+            #else
+            event.fd = -1;
+            #end
+            event.events = 0;
+            event.revents = 0;
+            i++;
+        }
+    }
+    #end
 
-	public func remove(listener: PollListener) void {
-		kos.ki_os__poll_remove_fd(this.os_poll, listener);
-		this.pool.add(listener)!;
-	}
+    public func listener(fd: i32, key: uxx = 0) PollListener {
 
-	public func wait(timeout: i32 = -1) PollResult {
-		return kos.ki_os__poll_wait(this.os_poll, timeout);
-	}
+        let pool = this.pool;
+        let listeners = this.listeners;
 
-	public func __before_free() void {
+        let lsn = pool.pop() !? @vs : PollListener {
+            #if OS == linux
+            let new = PollListener {
+                poll_fd: this.fd,
+                fd: fd,
+                key: key,
+            };
+            #else
+            let new = PollListener {
+                poll: this @as ptr,
+                poll_index: this.poll_index++,
+                fd: fd,
+                key: key,
+            };
+            #end
+            //listeners.push(new);
+            return new;
+        };
 
-		while true {
-			let item = this.listeners.pop() !! break;;
-			item.__free();
-		}
-		//each this.listeners as li {
-		//	li.__free();
-		//}
+        lsn.fd = fd;
+        lsn.key = key;
 
-		kos.ki_os__poll_free(this.os_poll);
-	}
+        #if OS == linux
+        let ev = @stack_object(sys.cstruct_epoll_event);
+        ev.events = 0;
+        ev.data = lsn @as ptr;
+        let res = sys.epoll_ctl(this.fd, sys.OS.EPOLL_CTL_ADD, fd, ev);
+        if res != 0 {
+            //println("> Failed to add epoll listener");
+        }
+        #else
+        if lsn.poll_index >= this.poll_size {
+            let old_size = this.poll_size;
+            let new_size = old_size * 2;
+            let new_results = mem:calloc(@sizeof_class(sys.cstruct_pollfd) * new_size);
+            mem:copy(this.results, new_results, @sizeof_class(sys.cstruct_pollfd) * old_size);
+            mem:free(this.results);
+            CLASS.disable_poll_fds(new_results, old_size, old_size);
+            this.poll_size = new_size;
+            this.results = new_results;
+            //
+            mem:free(this.results_int);
+            this.results_int = mem:calloc(@sizeof_class(PollEvent) * new_size);
+        }
+        if fd @as uxx >= this.lsn_by_fd_size {
+            let old_size = this.lsn_by_fd_size;
+            let new_size = old_size * 2;
+            while fd @as uxx >= new_size {
+                new_size *= 2;
+            }
+            let new_list = mem:calloc(@sizeof_class(ptr) * new_size);
+            mem:copy(this.lsn_by_fd, new_list, @sizeof(ptr) * old_size);
+            mem:free(this.lsn_by_fd);
+            this.lsn_by_fd_size = new_size;
+            this.lsn_by_fd = new_list;
+        }
+        let events = this.results;
+        let event = (events + @sizeof_class(sys.cstruct_pollfd) * lsn.poll_index) @as sys.cstruct_pollfd;
+        event.fd = fd;
+        event.events = 0;
+        let lsn_by_fd = this.lsn_by_fd;
+        @ptrv(lsn_by_fd, PollListener, fd) = lsn;
+        #end
+
+        return lsn;
+    }
+
+    public func remove(listener: PollListener) void {
+
+        #if OS == linux
+        let ev = @stack_object(sys.cstruct_epoll_event);
+        ev.events = 0;
+        let res = sys.epoll_ctl(this.fd, sys.OS.EPOLL_CTL_DEL, listener.fd, ev);
+        #else
+        let events = this.results;
+        let event = (events + @sizeof_class(sys.cstruct_pollfd) * listener.poll_index) @as sys.cstruct_pollfd;
+        #if OS == win
+        event.fd = 0^-1;
+        #else
+        event.fd = -1;
+        #end
+        event.events = 0;
+        #end
+
+        this.pool.add(listener)!;
+    }
+
+    public func wait(timeout: i32 = -1) uxx {
+
+        let results = this.results;
+
+        #if OS == linux
+        let event_count = sys.epoll_wait(this.fd, results, 10, timeout);
+        if event_count < 0 {
+            this.resultc = 0;
+            return 0;
+        }
+        rep event_count = event_count @as uxx;
+        this.resultc = event_count;
+        let results_int = this.results_int;
+
+        let i : uxx = 0;
+        while i < event_count {
+            let e = (results + (i * @sizeof_class(sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event;
+            let ei = (results_int + (i * @sizeof_class(PollEvent))) @as PollEvent;
+            i++;
+            ei.events = e.events;
+            ei.listener = e.data @as PollListener;
+        }
+        #else
+        if this.poll_index == 0 {
+            return 0;
+        }
+        let events = this.results;
+        let event_count = sys.poll(events, this.poll_index @as u32, timeout);
+        if event_count < 0 {
+            this.resultc = 0;
+            return 0;
+        }
+        rep event_count = event_count @as uxx;
+        this.resultc = event_count;
+        let results_int = this.results_int;
+        let lsn_by_fd = this.lsn_by_fd;
+
+        #if OS == win
+        let invalid : uxx = 0^-1;
+        #else
+        let invalid : i32 = -1;
+        #end
+
+        let i : uxx = 0;
+        let ri : uxx = 0;
+        let last = this.poll_index;
+        while i < last {
+            let event = (events + @sizeof_class(sys.cstruct_pollfd) * i) @as sys.cstruct_pollfd;
+            i++;
+            if event.fd == invalid : continue;
+            if event.revents == 0 : continue;
+
+            let ei = (results_int + (ri * @sizeof_class(PollEvent))) @as PollEvent;
+            ri++;
+            ei.events = event.revents @as u32;
+            ei.listener = @ptrv(lsn_by_fd, PollListener, event.fd);
+        }
+        #end
+
+        return event_count;
+    }
+
+    public func get_event(index: uxx) &PollEvent !invalid_index {
+        if(index >= this.resultc) {
+            throw invalid_index;
+        }
+        let results_int = this.results_int;
+        return (results_int + (index * @sizeof_class(PollEvent))) @as PollEvent;
+    }
+
+    public func __before_free() void {
+
+        while true {
+            let item = this.listeners.pop() !! break;;
+            item.__free();
+        }
+
+        mem:free(this.results);
+        mem:free(this.results_int);
+    }
 }
 
 struct PollListener {
-	private os_poll: ptr;
+    #if OS == linux
+    private poll_fd: i32;
+    #else
+    private poll: ptr;
+    readonly poll_index: uxx;
+    #end
     readonly key: uxx = 0;
-	readonly fd : i32 = -1;
-    private state: u32 = 0;
+    readonly fd : i32 = 0;
+    private detect_events: u32 = 0;
 
-	public func read(v: bool) void {
-		if(v) {
-			this.state = this.state | 0x1;
-		} else if (this.state & 0x1) > 0 {
-			this.state = this.state ^ 0x1;
-		}
-		kos.ki_os__poll_update_fd(this.os_poll, this);
-	}
-	public func write(v: bool) void {
-		if(v) {
-			this.state = this.state | 0x2;
-		} else if (this.state & 0x2) > 0 {
-			this.state = this.state ^ 0x2;
-		}
-		kos.ki_os__poll_update_fd(this.os_poll, this);
-	}
-	public func stopped_reading(v: bool) void {
-		if(v) {
-			this.state = this.state | 0x10;
-		} else if (this.state & 0x10) > 0 {
-			this.state = this.state ^ 0x10;
-		}
-		kos.ki_os__poll_update_fd(this.os_poll, this);
-	}
-}
+    public func read(v: bool) void {
+        #if OS == linux
+        let ev : u32 = sys.OS.EPOLLIN;
+        #else
+        let ev : u32 = sys.OS.POLLIN;
+        #end
+        this.update_event(v, ev);
+    }
+    public func write(v: bool) void {
+        #if OS == linux
+        let ev : u32 = sys.OS.EPOLLOUT;
+        #else
+        let ev : u32 = sys.OS.POLLOUT;
+        #end
+        this.update_event(v, ev);
+    }
+    public func stopped_reading(v: bool) void {
+        #if OS == win
+        return;
+        #else
 
-struct PollResult {
-	private events: ptr;
-	readonly count: u32;
+        #if OS == linux
+        let ev : u32 = sys.OS.EPOLLRDHUP;
+        #else
+        let ev : u32 = sys.OS.POLLRDHUP;
+        #end
+        this.update_event(v, ev);
 
-	public func get(index: u32) ?PollEvent {
-		if(index >= this.count) {
-			return null;
-		}
-		let adr : ptr = this.events + (index * @sizeof_class(PollEvent));
-		return adr @as PollEvent;
-	}
+        #end
+    }
+    private func update_event(v: bool, ev: u32) void {
+        if(v) {
+            this.detect_events = this.detect_events | ev;
+        } else if (this.detect_events & ev) > 0 {
+            this.detect_events = this.detect_events ^ ev;
+        }
+
+        #if OS == linux
+        let evo = @stack_object(sys.cstruct_epoll_event);
+        evo.events = this.detect_events;
+        evo.data = this @as ptr;
+        let res = sys.epoll_ctl(this.poll_fd, sys.OS.EPOLL_CTL_MOD, this.fd, evo);
+        if res != 0 {
+            //println("> Failed to update epoll events");
+        }
+        #else
+        let p = this.poll @as *Poll;
+        let events = p.results;
+        let event = (events + @sizeof_class(sys.cstruct_pollfd) * this.poll_index) @as sys.cstruct_pollfd;
+        event.events = this.detect_events @as i16;
+        #end
+    }
 }
 
 struct PollEvent {
     readonly listener: PollListener;
-    readonly state: u32;
-	// States
-    // 0x1  : in
-    // 0x2  : out
-    // 0x4  : err
-    // 0x8  : closed
-    // 0x10 : stopped_reading
+    readonly events: u32;
 
-	public func is_readable() bool %inline {
-		return (this.state & 0x1) > 0;
-	}
-	public func is_writable() bool %inline {
-		return (this.state & 0x2) > 0;
-	}
+    public func is_readable() bool %inline {
+        #if OS == linux
+        let ev : u32 = sys.OS.EPOLLIN;
+        #else
+        let ev : u32 = sys.OS.POLLIN;
+        #end
+        return (this.events & ev) > 0;
+    }
+    public func is_writable() bool %inline {
+        #if OS == linux
+        let ev : u32 = sys.OS.EPOLLOUT;
+        #else
+        let ev : u32 = sys.OS.POLLOUT;
+        #end
+        return (this.events & ev) > 0;
+    }
 
-	public func is_error() bool %inline {
-		return (this.state & 0x4) > 0;
-	}
-	public func is_closed() bool %inline {
-		return (this.state & 0x8) > 0;
-	}
-	public func is_stopped_reading() bool %inline {
-		return (this.state & 0x10) > 0;
-	}
+    public func is_stopped_reading() bool %inline {
+        #if OS == win
+        return false;
+        #else
 
-	public func wants_to_close() bool %inline {
-		return (this.state & 0x4) > 0 || (this.state & 0x8) > 0 || (this.state & 0x10) > 0;
-	}
+        #if OS == linux
+        let ev : u32 = sys.OS.EPOLLRDHUP;
+        #else
+        let ev : u32 = sys.OS.POLLRDHUP;
+        #end
+        return (this.events & ev) > 0;
+
+        #end
+    }
+
+    public func wants_to_close() bool %inline {
+        let evs = this.events;
+        #if OS == linux
+        return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0;
+        #elif OS == macos
+        return (evs & sys.OS.POLLRDHUP) > 0 || (evs & sys.OS.POLLHUP) > 0 || (evs & sys.OS.POLLERR) > 0;
+        #else
+        return (evs & sys.OS.POLLHUP) > 0 || (evs & sys.OS.POLLERR) > 0;
+        #end
+    }
 }
 
 

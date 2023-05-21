@@ -1,0 +1,31 @@
+
+#if OS == linux
+
+link_dynamic "pthread";
+link_dynamic "c";
+link_dynamic ":libc_nonshared.a";
+link_dynamic ":ld-linux-x86-64.so.2";
+
+header "linux/structs";
+header "linux/api";
+header "linux-[ARCH]/enum";
+
+#elif OS == macos
+
+link_dynamic "System";
+header "macos/structs";
+header "macos/api";
+header "macos-[ARCH]/enum";
+
+#elif OS == win
+
+link_dynamic "kernel32";
+link_dynamic "libucrt";
+link_dynamic "WS2_32";
+link_dynamic "msvcrt";
+link_dynamic "libvcruntime";
+header "win/structs";
+header "win/api";
+header "win-[ARCH]/enum";
+
+#end

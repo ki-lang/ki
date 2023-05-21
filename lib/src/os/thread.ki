@@ -1,5 +1,9 @@
 
-header "ki_os" as kos;
+#if OS == win
+header "sys" as sys;
+#else
+header "pthread" as pt;
+#end
 
 use ki:mem;
 
@@ -10,7 +14,11 @@ struct ThreadEntry[F, T] {
 
 class Thread[T] {
 
-	private os_thread: ptr;
+	#if OS == win
+	private os_handle: sys.HANDLE;
+	#else
+	private os_thread: pt.pthread_t;
+	#end
 
 	private static func entry(data: ptr) void {
 		let entry = data @as ThreadEntry[fn(T)(void), T];
@@ -18,13 +26,27 @@ class Thread[T] {
 		mem:free(entry @as ptr);
 	}
 
-	static func start(start_func: fn(T)(void), data: async T) CLASS {
+	static func start(start_func: fn(T)(void), data: async T) CLASS !fail {
 
-		let entry = ThreadEntry[fn(T)(void), T]{ start_func: start_func, data: data };
-		let os_thread = kos.ki_os__thread_create(CLASS.entry, entry @as ptr);
-		let t = CLASS{ os_thread: os_thread };
+		let entry_data = ThreadEntry[fn(T)(void), T]{
+			start_func: start_func,
+			data: data
+		};
 
-		return t;
+		#if OS == win
+		let thr = sys.CreateThread(null, 0, CLASS.entry @as ptr, entry_data @as ptr, 0, null);
+		rep thr = thr ?! throw fail;;
+		let t = CLASS{ os_handle: thr };
+		#else
+    	let thr = mem:alloc(@sizeof_class(pt.pthread_t)) @as pt.pthread_t;
+    	let err = pt.pthread_create(thr, null, CLASS.entry, entry_data @as ptr);
+    	if err != 0 {
+			throw fail;
+    	}
+		let t = CLASS{ os_thread: thr };
+		#end
+
+    	return t;
 	}
 }
 

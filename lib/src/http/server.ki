@@ -1,5 +1,5 @@
 
-header "ki_os" as kos;
+header "sys" as sys;
 
 use os;
 use net;
@@ -69,16 +69,19 @@ class Server {
         if worker_count > 128 {
             worker_count = 128;
         }
-        //worker_count = 1;
 
         println("[+] Running http server on port " + this.port.str());
         println("[+] Worker count: " + worker_count.str());
 
         worker_count--;
         while worker_count > 0 {
-            worker_count--;
             let copy = this.server_data();
-            let thread = os:Thread[ServerData].start(Server.worker, copy);
+            let thread = os:Thread[ServerData].start(Server.worker, copy) !! {
+                println("[x] Failed to start new thread, retrying");
+                os:sleep_ms(1000);
+                continue;
+            };
+            worker_count--;
         }
 
         let copy = this.server_data();
@@ -107,12 +110,11 @@ class Server {
         sock_lsn.read(true);
 
         while true {
-            let result = poll.wait();
-            let result_count = result.count;
-            let i : u32 = 0;
+            let result_count = poll.wait();
+            let i : uxx = 0;
 
             while i < result_count {
-                let event = result.get(i) ?! break;;
+                let event = poll.get_event(i) !! break;;
                 i++;
 
                 let lsn = event.listener;
@@ -141,7 +143,7 @@ class Server {
                     } else {
                         // Clear existing connection io buffers
                         let http_con = cons.get(index) !! {
-                            io:close(fd);
+                            net:Socket.close(fd);
                             println("[+] Max connections reached, closing connection");
                             continue;
                         };
@@ -167,7 +169,7 @@ class Server {
                 let index = lsn.key;
                 let http_con = cons.get(index) !! {
                     println("❓ Missing http connection : " + nr.str());
-                    io:close(fd);
+                    net:Socket.close(fd);
                     poll.remove(lsn);
                     index_pool.add(index)!;
                     continue;
@@ -175,7 +177,7 @@ class Server {
 
                 if http_con.fd != fd {
                     println("❗ fd changed : " + nr.str() + " | " + http_con.fd.str() + " -> " + fd.str() + " | key: " + lsn.key.str());
-                    io:close(fd);
+                    net:Socket.close(fd);
                     poll.remove(lsn);
                     index_pool.add(index)!;
                     continue;
@@ -186,7 +188,7 @@ class Server {
                     if data.show_info {
                         println("[+] Close connection: " + fd.str());
                     }
-                    io:close(fd);
+                    net:Socket.close(fd);
                     poll.remove(lsn);
                     index_pool.add(index)!;
                     continue;
@@ -208,7 +210,7 @@ class Server {
                         if data.show_info {
                             println("[+] Invalid request: " + fd.str());
                         }
-                        io:close(fd);
+                        net:Socket.close(fd);
                         poll.remove(lsn);
                         index_pool.add(index)!;
                         continue;
@@ -234,10 +236,11 @@ class Server {
         let read_buf = http_con.read_buf;
         read_buf.minimum_free_space(buf_size);
         while true {
-            //let rcvd = io:read(http_con.fd, read_buf.data + read_buf.length, buf_size) !! {
-            //};
-
-            let rcvd = kos.ki_os__fd_read(http_con.fd, read_buf.data + read_buf.length, buf_size);
+            #if OS == win
+            let rcvd = sys.recv(http_con.fd, read_buf.data + read_buf.length, buf_size, 0);
+            #else
+            let rcvd = sys.read(http_con.fd, read_buf.data + read_buf.length, buf_size);
+            #end
             if (rcvd == -2){
                 // EAGAIN
                 return;

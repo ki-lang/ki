@@ -76,6 +76,8 @@ bool class_check_size(Class *class) {
             if (next_size == 0) {
                 return false;
             }
+            if (next_size > b->ptr_size)
+                next_size = b->ptr_size;
             int rem = size % next_size;
             if (rem > 0) {
                 // Add padding
@@ -84,8 +86,10 @@ bool class_check_size(Class *class) {
         }
     }
     if (!class->packed) {
-        int remain = size % largest;
-        size += remain;
+        if (largest > b->ptr_size)
+            largest = b->ptr_size;
+        int rem = size % largest;
+        size += rem;
     }
 
     class->size = size;
@@ -386,7 +390,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
         gclass->dname = dname;
         gclass->gname = gname;
 
-        Fc *new_fc = fc_init(b, gname, fc->nsc, true);
+        Fc *new_fc = fc_init(b, gname, fc->nsc, fc->nsc->pkc, true);
         new_fc->chunk = chunk_clone(alc, fc->chunk);
         new_fc->scope->identifiers = fc->scope->identifiers;
 

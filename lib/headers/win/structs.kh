@@ -1,0 +1,188 @@
+
+alias uxx as SOCKET;
+
+struct cstruct_stat {
+    st_dev: uxx;
+    st_ino: uxx;
+    st_nlink: uxx;
+    st_mode: u32;
+    st_uid: u32;
+    st_gid: u32;
+    __pad0: u32;
+    st_rdev: uxx;
+    st_size: ixx;
+    st_blksize: ixx;
+    st_blocks: ixx; // Number 512-byte blocks allocated
+    st_atime: uxx;
+    st_atime_nsec: uxx;
+    st_mtime: uxx;
+    st_mtime_nsec: uxx;
+    st_ctime: uxx;
+    st_ctime_nsec: uxx;
+    __unused_1: ixx;
+    __unused_2: ixx;
+    __unused_3: ixx;
+}
+
+struct cstruct_timespec {
+    tv_sec: ixx; // seconds
+    tv_nsec: ixx; // nanoseconds
+}
+
+struct cstruct_timeval {
+    tv_sec: ixx; // seconds
+    tv_usec: ixx; // microseconds
+}
+
+struct cstruct_pollfd {
+    fd: SOCKET;
+    events: i16;  // detect events
+    revents: i16; // detected events
+}
+
+struct cstruct_addrinfo {
+    ai_flags: i32;
+    ai_family: i32;
+    ai_socktype: i32;
+    ai_protocol: i32;
+    ai_addrlen: uxx;
+    ai_canonname: cstring;
+    ai_addr: cstruct_sockaddr;
+    ai_next: ?cstruct_addrinfo;
+}
+
+struct cstruct_sockaddr {
+    sa_family: u16;
+    sa_data_1: u32;
+    sa_data_2: u32;
+    sa_data_3: u32;
+    sa_data_4: u16;
+}
+
+struct cstruct_sockaddr_in {
+    sin_family: i16;
+    sin_port: u16;
+    sin_addr: .cstruct_in_addr;
+    sin_zero: .u8[8];
+}
+
+struct cstruct_in_addr {
+    S_addr: u32;
+}
+
+struct WSADATA {
+    wVersion: u16;
+    wHighVersion: u16;
+
+    // 64-bit fields
+    iMaxSockets: u16;
+    iMaxUdpDg: u16;
+    lpVendorInfo: cstring;
+    szDescription: .u8[257]; // WSADESCRIPTION_LEN + 1
+    szSystemStatus: .u8[257];
+
+    // 32-bit fields
+    //szDescription: u8[257];
+    //szSystemStatus: u8[257];
+    //iMaxSockets: u16;
+    //iMaxUdpDg: u16;
+    //lpVendorInfo: cstring;
+}
+
+struct cstruct_timezone {
+    tz_minuteswest: i32; // Minutes west of GMT
+    tz_dsttime: i32; // Nonzero if DST is ever in effect
+}
+
+
+struct WSPUPCALLTABLE {
+    lpWPUCloseEvent: ptr;
+    lpWPUCloseSocketHandle: ptr;
+    lpWPUCreateEvent: ptr;
+    lpWPUCreateSocketHandle: ptr;
+    lpWPUFDIsSet: ptr;
+    lpWPUGetProviderPath: ptr;
+    lpWPUModifyIFSHandle: ptr;
+    lpWPUPostMessage: ptr;
+    lpWPUQueryBlockingCallback: ptr;
+    lpWPUQuerySocketHandleContext: ptr;
+    lpWPUQueueApc: ptr;
+    lpWPUResetEvent: ptr;
+    lpWPUSetEvent: ptr;
+    lpWPUOpenCurrentThread: ptr;
+    lpWPUCloseThread: ptr;
+}
+
+struct WSPPROC_TABLE {
+    lpWSPAccept: ptr;
+    lpWSPAddressToString: ptr;
+    lpWSPAsyncSelect: ptr;
+    lpWSPBind: ptr;
+    lpWSPCancelBlockingCall: ptr;
+    lpWSPCleanup: ptr;
+    lpWSPCloseSocket: ptr;
+    lpWSPConnect: ptr;
+    lpWSPDuplicateSocket: ptr;
+    lpWSPEnumNetworkEvents: ptr;
+    lpWSPEventSelect: ptr;
+    lpWSPGetOverlappedResult: ptr;
+    lpWSPGetPeerName: ptr;
+    lpWSPGetSockName: ptr;
+    lpWSPGetSockOpt: ptr;
+    lpWSPGetQOSByName: ptr;
+    lpWSPIoctl: ptr;
+    lpWSPJoinLeaf: ptr;
+    lpWSPListen: ptr;
+    lpWSPRecv: ptr;
+    lpWSPRecvDisconnect: ptr;
+    lpWSPRecvFrom: ptr;
+    lpWSPSelect: ptr;
+    lpWSPSend: ptr;
+    lpWSPSendDisconnect: ptr;
+    lpWSPSendTo: ptr;
+    lpWSPSetSockOpt: ptr;
+    lpWSPShutdown: ptr;
+    lpWSPSocket: ptr;
+    lpWSPStringToAddress: ptr;
+}
+
+struct _GUID {
+  Data1: u32;
+  Data2: u16;
+  Data3: u16;
+  Data4: u64; // or .u8[8]
+}
+
+struct WSAPROTOCOLCHAIN {
+  ChainLen: i32;
+  ChainEntries: .u32[7]; //DWORD ChainEntries[MAX_PROTOCOL_CHAIN];
+}
+
+struct WSAPROTOCOL_INFOA {
+  dwServiceFlags1: u32;
+  dwServiceFlags2: u32;
+  dwServiceFlags3: u32;
+  dwServiceFlags4: u32;
+  dwProviderFlags: u32;
+  ProviderId: ._GUID;
+  dwCatalogEntryId: u32;
+  ProtocolChain: .WSAPROTOCOLCHAIN;
+  iVersion: i32;
+  iAddressFamily: i32;
+  iMaxSockAddr: i32;
+  iMinSockAddr: i32;
+  iSocketType: i32;
+  iProtocol: i32;
+  iProtocolMaxOffset: i32;
+  iNetworkByteOrder: i32;
+  iSecurityScheme: i32;
+  dwMessageSize: u32;
+  dwProviderReserved: u32;
+  szProtocol: .u8[256]; //CHAR szProtocol[WSAPROTOCOL_LEN + 1];
+}
+
+struct WSPDATA {
+  wVersion: u16;
+  wHighVersion: u16;
+  szDescription: .u16[256]; //WCHAR szDescription[WSPDESCRIPTION_LEN + 1];
+}

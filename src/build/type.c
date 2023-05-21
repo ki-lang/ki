@@ -36,6 +36,8 @@ int type_get_size(Build *b, Type *type) {
     int size = 0;
     if (type->ptr_depth > 0) {
         size = b->ptr_size;
+    } else if (type->type == type_arr) {
+        size = type->array_of->bytes * type->array_size;
     } else if (type->class) {
         size = type->class->size;
     }
@@ -130,12 +132,17 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     bool borrow = false;
     bool ref = false;
+    bool inline_ = false;
 
     tok(fc, token, sameline, allow_space);
 
     if (strcmp(token, "async") == 0) {
         async = true;
         tok(fc, token, true, true);
+    }
+    if (strcmp(token, ".") == 0) {
+        inline_ = true;
+        tok(fc, token, true, false);
     }
 
     if (context == rtc_prop_type || context == rtc_func_arg || context == rtc_ptrv) {
@@ -149,14 +156,21 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
             tok(fc, token, true, false);
         }
     }
-
     if (strcmp(token, "?") == 0) {
         nullable = true;
         tok(fc, token, true, false);
     }
 
+    if (inline_ && (borrow || ref || nullable)) {
+        sprintf(fc->sbuf, "You cannot use &/*/? on inline types '.'");
+        fc_error(fc);
+    }
+
     Type *type = NULL;
-    if (strcmp(token, "void") == 0) {
+    if (strcmp(token, "(") == 0) {
+        type = read_type(fc, alc, scope, true, true, context);
+        tok_expect(fc, ")", true, true);
+    } else if (strcmp(token, "void") == 0) {
         type = type_init(alc);
         type->type = type_void;
         return type;
@@ -263,19 +277,13 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         type->borrow = borrow;
     }
 
-    if (async) {
-        if (!type_allowed_async(type, true)) {
-            Str *chain = str_make(alc, 500);
-            type_allowed_async_error(fc, type, chain);
-        }
-    }
-
     tok(fc, token, true, false);
     while (strcmp(token, "[") == 0) {
         tok(fc, token, true, true);
         int count = -1;
         if (is_valid_number(token)) {
             count = atoi(token);
+        } else if (strcmp(token, "unsafe") == 0) {
         } else {
             sprintf(fc->sbuf, "Invalid array size number (0-9 characters only)");
             fc_error(fc);
@@ -288,6 +296,18 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
     rtok(fc);
+    //
+
+    if (inline_ && type->ptr_depth > 0) {
+        type = type_get_inline(alc, type);
+    }
+
+    if (async) {
+        if (!type_allowed_async(type, true)) {
+            Str *chain = str_make(alc, 500);
+            type_allowed_async_error(fc, type, chain);
+        }
+    }
 
     //
     if (nullable) {
@@ -303,6 +323,25 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     return type;
+}
+
+Type *type_get_inline(Allocator *alc, Type *type) {
+    //
+    if (type->ptr_depth == 0) {
+        return type;
+    }
+    Type *rett = type_clone(alc, type);
+    rett->ptr_depth--;
+    if (rett->ptr_depth == 0) {
+        rett->borrow = false;
+        rett->ref = false;
+        if (rett->type == type_arr) {
+            rett->bytes = rett->array_of->bytes * rett->array_size;
+        } else {
+            rett->bytes = rett->class->size;
+        }
+    }
+    return rett;
 }
 
 Type *type_array_of(Allocator *alc, Build *b, Type *type, int size) {
@@ -526,8 +565,9 @@ char *type_to_str(Type *t, char *res) {
         }
     } else if (t->type == type_arr) {
         char sub_str[256];
+        strcat(res, "(");
         strcat(res, type_to_str(t->array_of, sub_str));
-        strcat(res, "[");
+        strcat(res, ")[");
         char nr[10];
         sprintf(nr, "%d", t->array_size);
         strcat(res, t->array_size == -1 ? "" : nr);
@@ -558,6 +598,9 @@ void type_check(Fc *fc, Type *t1, Type *t2) {
 
 bool type_tracks_ownership(Type *type) {
     //
+    if (type->ptr_depth == 0) {
+        return false;
+    }
     if (type->borrow) {
         return false;
     }

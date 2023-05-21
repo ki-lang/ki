@@ -80,7 +80,7 @@ Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc) {
                     strcat(path, "/");
                     strcat(path, fn);
                     if (ends_with(path, ".ki")) {
-                        fc_init(b, path, nsc, false);
+                        fc_init(b, path, nsc, nsc->pkc, false);
                     }
                 }
 

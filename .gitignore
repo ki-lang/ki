@@ -3,17 +3,12 @@ ki
 ki-old
 debug
 .vscode
+.DS_Store
 callgrind.*
 profile.sh
 
 # Prerequisites
 *.d
-
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
 
 # Linker output
 *.ilk
@@ -23,18 +18,6 @@ profile.sh
 # Precompiled Headers
 *.gch
 *.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
 
 # Executables
 *.exe

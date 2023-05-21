@@ -1,0 +1,65 @@
+
+struct cstruct_stat {
+    st_dev: uxx;
+    st_ino: uxx;
+    st_nlink: uxx;
+    st_mode: u32;
+    st_uid: u32;
+    st_gid: u32;
+    __pad0: u32;
+    st_rdev: uxx;
+    st_size: ixx;
+    st_blksize: ixx;
+    st_blocks: ixx; // Number 512-byte blocks allocated
+    st_atime: uxx;
+    st_atime_nsec: uxx;
+    st_mtime: uxx;
+    st_mtime_nsec: uxx;
+    st_ctime: uxx;
+    st_ctime_nsec: uxx;
+    __unused_1: ixx;
+    __unused_2: ixx;
+    __unused_3: ixx;
+}
+
+struct cstruct_timespec {
+	tv_sec: ixx; // seconds
+	tv_nsec: ixx; // nanoseconds
+}
+
+struct cstruct_timeval {
+	tv_sec: ixx; // seconds
+	tv_usec: ixx; // microseconds
+}
+
+struct cstruct_pollfd {
+	fd: i32;
+	events: i16;  // detect events
+	revents: i16; // detected events
+}
+
+struct cstruct_addrinfo {
+    ai_flags: i32;
+    ai_family: i32;
+    ai_socktype: i32;
+    ai_protocol: i32;
+    ai_addrlen: u32;
+    ai_canonname: cstring;
+    ai_addr: cstruct_sockaddr;
+    ai_next: ?cstruct_addrinfo;
+}
+
+struct cstruct_sockaddr {
+	sa_family: u16;
+	sa_data_1: u32;
+	sa_data_2: u32;
+	sa_data_3: u32;
+	sa_data_4: u16;
+}
+
+struct cstruct_timezone {
+	tz_minuteswest: i32; // Minutes west of GMT
+	tz_dsttime: i32; // Nonzero if DST is ever in effect
+}
+
+

@@ -7,8 +7,9 @@ void stage_1_trait(Fc *fc);
 void stage_1_enum(Fc *fc);
 void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
-void stage_1_link(Fc *fc);
-void stage_1_global(Fc *fc);
+void stage_1_link(Fc *fc, int link_type);
+void stage_1_global(Fc *fc, bool shared);
+void stage_1_alias(Fc *fc, int alias_type);
 
 void stage_1(Fc *fc) {
     //
@@ -60,11 +61,31 @@ void stage_1(Fc *fc) {
             continue;
         }
         if (strcmp(token, "link") == 0) {
-            stage_1_link(fc);
+            stage_1_link(fc, link_default);
+            continue;
+        }
+        if (strcmp(token, "link_dynamic") == 0) {
+            stage_1_link(fc, link_dynamic);
+            continue;
+        }
+        if (strcmp(token, "link_static") == 0) {
+            stage_1_link(fc, link_static);
             continue;
         }
         if (strcmp(token, "global") == 0) {
-            stage_1_global(fc);
+            stage_1_global(fc, false);
+            continue;
+        }
+        if (strcmp(token, "shared") == 0) {
+            stage_1_global(fc, true);
+            continue;
+        }
+        if (strcmp(token, "alias") == 0) {
+            stage_1_alias(fc, alias_id);
+            continue;
+        }
+        if (strcmp(token, "type_alias") == 0) {
+            stage_1_alias(fc, alias_type);
             continue;
         }
 
@@ -113,10 +134,9 @@ void stage_1_func(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_func);
     idf->item = func;
 
+    map_set(fc->nsc->scope->identifiers, name, idf);
     if (fc->is_header) {
         map_set(fc->scope->identifiers, name, idf);
-    } else {
-        map_set(fc->nsc->scope->identifiers, name, idf);
     }
 
     if (strcmp(func->gname, "main") == 0) {
@@ -170,10 +190,9 @@ void stage_1_class(Fc *fc, bool is_struct) {
     Idf *idf = idf_init(fc->alc, idf_class);
     idf->item = class;
 
+    map_set(fc->nsc->scope->identifiers, name, idf);
     if (fc->is_header) {
         map_set(fc->scope->identifiers, name, idf);
-    } else {
-        map_set(fc->nsc->scope->identifiers, name, idf);
     }
 
     map_set(class->scope->identifiers, "CLASS", idf);
@@ -322,6 +341,10 @@ void stage_1_trait(Fc *fc) {
     char *token = fc->token;
     tok(fc, token, true, true);
 
+    if (fc->is_header) {
+        sprintf(fc->sbuf, "You cannot use 'trait' inside a header file");
+        fc_error(fc);
+    }
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid trait name syntax '%s'", token);
         fc_error(fc);
@@ -343,11 +366,7 @@ void stage_1_trait(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_trait);
     idf->item = tr;
 
-    if (fc->is_header) {
-        map_set(fc->scope->identifiers, name, idf);
-    } else {
-        map_set(fc->nsc->scope->identifiers, name, idf);
-    }
+    map_set(fc->nsc->scope->identifiers, name, idf);
 
     tr->chunk = chunk_clone(fc->alc, fc->chunk);
 
@@ -391,6 +410,11 @@ void stage_1_enum(Fc *fc) {
         tok(fc, token, false, true);
         if (strcmp(token, ":") == 0) {
             tok(fc, token, false, true);
+            bool negative = false;
+            if (strcmp(token, "-") == 0) {
+                negative = true;
+                tok(fc, token, true, false);
+            }
             if (is_valid_number(token)) {
                 int value = 0;
                 if (strcmp(token, "0") == 0 && get_char(fc, 0) == 'x') {
@@ -402,15 +426,14 @@ void stage_1_enum(Fc *fc) {
                     // Number
                     value = atoi(token);
                 }
-                if (array_contains(values->values, (void *)(intptr_t)value, arr_find_adr)) {
-                    sprintf(fc->sbuf, "Duplicate value: '%s'", token);
-                    fc_error(fc);
-                }
+                if (negative)
+                    value = value * -1;
 
                 map_set(values, name, (void *)(intptr_t)value);
 
                 tok(fc, token, false, true);
                 if (strcmp(token, ",") == 0) {
+                    tok(fc, token, false, true);
                     continue;
                 } else if (strcmp(token, "}") == 0) {
                     break;
@@ -420,7 +443,7 @@ void stage_1_enum(Fc *fc) {
                 }
 
             } else {
-                sprintf(fc->sbuf, "Invalid enum property name '%s'", token);
+                sprintf(fc->sbuf, "Invalid enum property value '%s'", token);
                 fc_error(fc);
             }
             continue;
@@ -445,10 +468,9 @@ void stage_1_enum(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_enum);
     idf->item = enu;
 
+    map_set(fc->nsc->scope->identifiers, name, idf);
     if (fc->is_header) {
         map_set(fc->scope->identifiers, name, idf);
-    } else {
-        map_set(fc->nsc->scope->identifiers, name, idf);
     }
 }
 
@@ -457,9 +479,11 @@ void stage_1_header(Fc *fc) {
     tok_expect(fc, "\"", true, true);
 
     Str *buf = read_string(fc);
-    char *fn = str_to_chars(fc->alc, buf);
+    Str *fnstr = macro_replace_str_vars(fc->alc, fc, buf);
+    char *fn = str_to_chars(fc->alc, fnstr);
+    Nsc *nsc_main = fc->b->nsc_main;
 
-    Array *dirs = fc->nsc->pkc->header_dirs;
+    Array *dirs = fc->pkc_config->header_dirs;
     bool found = false;
     for (int i = 0; i < dirs->length; i++) {
         char *dir = array_get_index(dirs, i);
@@ -467,29 +491,33 @@ void stage_1_header(Fc *fc) {
 
         if (file_exists(fc->sbuf)) {
             char *path = dups(fc->alc, fc->sbuf);
-            Fc *hfc = fc_init(fc->b, path, fc->b->nsc_main, false);
+            Fc *hfc = fc_init(fc->b, path, nsc_main, fc->nsc->pkc, false);
 
             //
-            tok_expect(fc, "as", true, true);
+            if (fc->is_header) {
+                array_push(fc->sub_headers, hfc);
+            } else {
+                tok_expect(fc, "as", true, true);
 
-            char *token = fc->token;
-            tok(fc, token, true, true);
+                char *token = fc->token;
+                tok(fc, token, true, true);
 
-            if (!is_valid_varname_char(token[0])) {
-                sprintf(fc->sbuf, "Invalid variable name syntax: '%s'", token);
-                fc_error(fc);
+                if (!is_valid_varname_char(token[0])) {
+                    sprintf(fc->sbuf, "Invalid variable name syntax: '%s'", token);
+                    fc_error(fc);
+                }
+                name_taken_check(fc, fc->scope, token);
+
+                char *as = dups(fc->alc, token);
+
+                //
+                Idf *idf = idf_init(fc->alc, idf_fc);
+                idf->item = hfc;
+
+                map_set(fc->scope->identifiers, as, idf);
             }
-            name_taken_check(fc, fc->scope, token);
-
-            char *as = dups(fc->alc, token);
 
             tok_expect(fc, ";", true, true);
-
-            //
-            Idf *idf = idf_init(fc->alc, idf_fc);
-            idf->item = hfc;
-
-            map_set(fc->scope->identifiers, as, idf);
 
             found = true;
             break;
@@ -503,19 +531,32 @@ void stage_1_header(Fc *fc) {
             printf("Lookup: %s\n", fc->sbuf);
         }
 
-        sprintf(fc->sbuf, "Header not found: '%s'\n", fn);
+        sprintf(fc->sbuf, "Header not found: '%s.kh'\n", fn);
         fc_error(fc);
     }
 }
 
-void stage_1_link(Fc *fc) {
+void stage_1_link(Fc *fc, int link_type) {
     //
     tok_expect(fc, "\"", true, true);
 
     Str *buf = read_string(fc);
-    char *fn = str_to_chars(fc->alc, buf);
+    Str *fnstr = macro_replace_str_vars(fc->alc, fc, buf);
+    char *fn = str_to_chars(fc->alc, fnstr);
 
-    array_push(fc->b->link_libs, fn);
+    if (link_type == link_default) {
+        link_type = fc->b->link_static ? link_static : link_dynamic;
+    }
+
+    Link *link = map_get(fc->b->link_libs, fn);
+    if (!link) {
+        link = malloc(sizeof(Link));
+        link->type = link_type;
+        map_set(fc->b->link_libs, fn, link);
+    }
+    if (link_type == link_dynamic && link->type != link_dynamic) {
+        link->type = link_dynamic;
+    }
 
     tok_expect(fc, ";", true, true);
 }
@@ -561,7 +602,7 @@ void stage_1_use(Fc *fc) {
     tok_expect(fc, ";", true, true);
 }
 
-void stage_1_global(Fc *fc) {
+void stage_1_global(Fc *fc, bool shared) {
     //
     char *token = fc->token;
     tok(fc, token, true, true);
@@ -581,7 +622,7 @@ void stage_1_global(Fc *fc) {
     g->name = name;
     g->gname = gname;
     g->dname = dname;
-    g->shared = false;
+    g->shared = shared;
     g->type = NULL;
 
     array_push(fc->globals, g);
@@ -597,9 +638,34 @@ void stage_1_global(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_global);
     idf->item = g;
 
+    map_set(fc->nsc->scope->identifiers, name, idf);
     if (fc->is_header) {
         map_set(fc->scope->identifiers, name, idf);
-    } else {
-        map_set(fc->nsc->scope->identifiers, name, idf);
     }
+}
+
+void stage_1_alias(Fc *fc, int alias_type) {
+    //
+    Alias *a = malloc(sizeof(Alias));
+    a->chunk = chunk_clone(fc->alc, fc->chunk);
+    a->type = alias_type;
+
+    skip_type(fc);
+
+    tok_expect(fc, "as", true, true);
+
+    char *token = fc->token;
+    tok(fc, token, true, true);
+
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid global name syntax '%s'", token);
+        fc_error(fc);
+    }
+    name_taken_check(fc, fc->nsc->scope, token);
+
+    a->name = dups(fc->alc, token);
+
+    tok_expect(fc, ";", true, true);
+
+    array_push(fc->aliasses, a);
 }

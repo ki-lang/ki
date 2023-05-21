@@ -9,6 +9,7 @@ typedef struct Fc Fc;
 typedef struct Nsc Nsc;
 typedef struct Pkc Pkc;
 typedef struct Config Config;
+typedef struct Link Link;
 typedef struct Chunk Chunk;
 typedef struct Scope Scope;
 typedef struct VScope VScope;
@@ -27,6 +28,7 @@ typedef struct Arg Arg;
 typedef struct UsageLine UsageLine;
 typedef struct Global Global;
 typedef struct Trait Trait;
+typedef struct Alias Alias;
 
 #include "token.h"
 #include "value.h"
@@ -57,8 +59,14 @@ struct ChainItem {
 };
 
 struct Build {
+    int host_os;
+    int host_arch;
+    int target_os;
+    int target_arch;
+    //
     char *os;
     char *arch;
+    //
     char *path_out;
     char *cache_dir;
     char *token;
@@ -74,10 +82,13 @@ struct Build {
     Nsc *nsc_type;
     Nsc *nsc_io;
     //
+    MacroScope *mc;
+    //
     Array *packages;
     Array *all_ki_files;
     Array *link_dirs;
-    Array *link_libs;
+    Map *link_libs;
+    Map *all_fcs;
     Str *str_buf;
     Str *str_buf_io;
     //
@@ -130,9 +141,11 @@ struct Fc {
     char *ir_hash;
     Id *id_buf;
     Nsc *nsc;
+    Pkc *pkc_config;
     Allocator *alc;
     Allocator *alc_ast;
     Array *deps;
+    Array *sub_headers;
     Chunk *chunk;
     Chunk *chunk_prev;
     Scope *scope;
@@ -144,6 +157,7 @@ struct Fc {
     Array *funcs;
     Array *classes;
     Array *globals;
+    Array *aliasses;
     Array *class_size_checks;
     Array *type_size_checks;
     //
@@ -177,6 +191,10 @@ struct Config {
     char *path;
     char *content;
     cJSON *json;
+};
+
+struct Link {
+    int type;
 };
 
 struct Chunk {
@@ -374,6 +392,12 @@ struct Trait {
     char *dname;
     Fc *fc;
     Chunk *chunk;
+};
+
+struct Alias {
+    Chunk *chunk;
+    char *name;
+    int type;
 };
 
 #endif

@@ -149,12 +149,14 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
         v = vgen_swap(alc, var, with);
 
-    } else if (strcmp(token, "@getptr") == 0) {
+    } else if (strcmp(token, "@ptr_of") == 0) {
+        tok_expect(fc, "(", true, false);
         Value *on = read_value(fc, alc, scope, false, 0, false);
         if (!value_is_assignable(on)) {
-            sprintf(fc->sbuf, "Value used in '@getptr' must be assignable");
+            sprintf(fc->sbuf, "Value used in '@ptr_of' must be assignable");
             fc_error(fc);
         }
+        tok_expect(fc, ")", false, true);
         if (on->type == v_decl) {
             Decl *decl = on->item;
             if (!decl->is_mut) {
@@ -162,7 +164,40 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             }
         }
         v = value_init(alc, v_getptr, on, type_gen(b, alc, "ptr"));
+
+    } else if (strcmp(token, "@array_of") == 0) {
+        tok_expect(fc, "(", true, false);
+        Value *on = read_value(fc, alc, scope, false, 0, false);
+        if (!value_is_assignable(on)) {
+            sprintf(fc->sbuf, "Value used in '@array_of' must be assignable");
+            fc_error(fc);
+        }
+        tok_expect(fc, ")", false, true);
+        if (on->type == v_decl) {
+            Decl *decl = on->item;
+            if (!decl->is_mut) {
+                decl->is_mut = true;
+            }
+        }
+        v = value_init(alc, v_getptr, on, type_array_of(alc, b, on->rett, 1));
         //
+
+    } else if (strcmp(token, "@ptr_val") == 0) {
+        tok_expect(fc, "(", true, false);
+        Value *on = read_value(fc, alc, scope, false, 0, false);
+        Type *rett = on->rett;
+        if (rett->ptr_depth == 0 || (!rett->class && !rett->array_of)) {
+            sprintf(fc->sbuf, "Value used in '@ptr_val' must be a pointer value and the sub-type must be known (so 'ptr' also does not work)");
+            fc_error(fc);
+        }
+        tok_expect(fc, ")", false, true);
+        if (rett->ptr_depth == 1 && rett->type == type_arr) {
+            rett = rett->array_of;
+        } else {
+            rett = type_get_inline(alc, rett);
+        }
+        v = value_init(alc, v_ptrval, on, rett);
+
     } else if (strcmp(token, "@stack_alloc") == 0) {
 
         Scope *fscope = scope_find(scope, sct_func);
@@ -184,6 +219,31 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
         tok_expect(fc, ")", false, true);
         v = value_init(alc, v_stack_alloc, val, type_gen(b, alc, "ptr"));
+
+    } else if (strcmp(token, "@stack_object") == 0) {
+
+        Scope *fscope = scope_find(scope, sct_func);
+        if (!fscope) {
+            sprintf(fc->sbuf, "You cannot use stack_alloc outside a function");
+            fc_error(fc);
+        }
+
+        Func *func = fscope->func;
+        func->uses_stack_alloc = true;
+
+        tok_expect(fc, "(", true, false);
+        Type *type = read_type(fc, alc, scope, false, true, rtc_default);
+        if (!type->class) {
+            sprintf(fc->sbuf, "@stack_make type must have a class");
+            fc_error(fc);
+        }
+        Class *class = type->class;
+
+        tok_expect(fc, ")", false, true);
+
+        Type *rett = type_gen_class(alc, class);
+        rett->borrow = true;
+        v = value_init(alc, v_stack_alloc, vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false), rett);
 
     } else if (strcmp(token, "@atomic_op") == 0) {
 
@@ -531,7 +591,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 usage_merge_ancestors(alc, scope, ancestors);
 
                 if (v->rett->borrow != right->rett->borrow) {
-                    sprintf(fc->sbuf, "One side of '??' has a borrowed value and the other does not");
+                    sprintf(fc->sbuf, "One side of '\?\?' has a borrowed value and the other does not");
                     fc_error(fc);
                 }
 
@@ -828,6 +888,10 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         tok_expect(fc, ".", true, false);
 
         tok(fc, token, true, false);
+        if (!map_contains(enu->values, token)) {
+            sprintf(fc->sbuf, "Enum property does not exist '%s'", token);
+            fc_error(fc);
+        }
         int value = (int)(intptr_t)map_get(enu->values, token);
 
         return vgen_vint(alc, value, type_gen(fc->b, alc, "i32"), false);
@@ -839,7 +903,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         tok_expect(fc, ".", true, false);
         tok(fc, token, true, false);
 
-        Idf *idf_ = map_get(rfc->scope->identifiers, token);
+        Idf *idf_ = idf_get_from_header(rfc, token, 0);
         if (!idf_) {
             sprintf(fc->sbuf, "Unknown property: '%s'", token);
             fc_error(fc);
@@ -850,6 +914,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     sprintf(fc->sbuf, "Cannot convert identifier to a value: '%s'", id->name);
     fc_error(fc);
+    return NULL;
 }
 
 Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op) {
@@ -861,10 +926,20 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
             // If both are number literals
             if (op == op_add) {
                 lint->value += rint->value;
+                return left;
             } else if (op == op_sub) {
                 lint->value -= rint->value;
+                return left;
+            } else if (op == op_mul) {
+                lint->value *= rint->value;
+                return left;
+            } else if (op == op_div) {
+                lint->value /= rint->value;
+                return left;
+            } else if (op == op_mod) {
+                lint->value %= rint->value;
+                return left;
             }
-            return left;
         }
     }
 

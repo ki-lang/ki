@@ -1,27 +1,54 @@
 
-header "ki_os" as kos;
+header "sys" as sys;
 
 use utils;
+use mem;
 
+func stat(path: *String, buf: *sys.cstruct_stat) void !failed {
+	let plen = path.bytes();
+	let cstr_ptr = @stack_alloc(plen + 1);
+	mem:copy(path.data(), cstr_ptr, plen);
+	@ptrv(cstr_ptr, u8, plen) = '\0';
+	let cstr = cstr_ptr @as cstring;
+	let res = sys.stat(cstr, buf);
+	if res == -1 : throw failed;
+}
 func size(path: *String) uxx {
-	let buf = @stack_alloc(@sizeof_class(kos.ki_file_stats)) @as kos.ki_file_stats;
-	let stat = kos.ki_os__file_stats(path.data(), path.bytes() @as i32, buf);
-	rep stat = stat ?! return 0;;
-	return stat.size;
+	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
+	stat(path, buf) !! return 0;;
+	return buf.st_size @as uxx;
 }
 
-func read(path: *String) String !open !read !close {
-	let fd = kos.ki_os__file_open(path.data(), path.bytes() @as i32, true, false);
+func open_fd(path: *String, read: bool, write: bool) i32 !open {
+
+	let plen = path.bytes();
+	let cstr_ptr = @stack_alloc(plen + 1);
+	mem:copy(path.data(), cstr_ptr, plen);
+	@ptrv(cstr_ptr, u8, plen) = '\0';
+	let cstr = cstr_ptr @as cstring;
+
+	let fd = sys.open(cstr, 0);
 	if fd == -1 {
 		throw open;
 	}
-	let len : uxx = 0;
+	return fd;
+}
+func fd_close(fd: i32) void !close {
+	let check = sys.close(fd);
+	if(check != 0){
+		throw close;
+	}
+}
+
+func read(path: *String) String !open !read !close {
+
+	let fd = open_fd(path, true, false) !! throw open;;
 
 	let res = utils:ByteBuffer.init(4096);
 	let buf = @stack_alloc(4096);
 	let readcount_ : ixx = 4096;
 	while true {
-		let readcount = kos.ki_os__fd_read(fd, buf, 4096);
+		let readcount = sys.read(fd, buf, 4096);
 		if(readcount < 0){
 			throw read;
 		}
@@ -31,7 +58,7 @@ func read(path: *String) String !open !read !close {
 		}
 	}
 
-	let check = kos.ki_os__fd_close(fd);
+	let check = sys.close(fd);
 	if(check != 0){
 		//throw close;
 	}
@@ -40,20 +67,45 @@ func read(path: *String) String !open !read !close {
 }
 
 func exists(path: *String) bool {
-	let fd = kos.ki_os__file_open(path.data(), path.bytes() @as i32, true, false);
-	if(fd == -1) {
-		return false;
-	}
-	let check = kos.ki_os__fd_close(fd);
+	let fd = open_fd(path, true, false) !! return false;;
+	fd_close(fd)!;
 	return true;
 }
 func delete(path: *String) void !failed {
-	if !kos.ki_os__file_delete(path.data(), path.bytes() @as i32) {
+
+	let plen = path.bytes();
+	let cstr_ptr = @stack_alloc(plen + 1);
+	mem:copy(path.data(), cstr_ptr, plen);
+	@ptrv(cstr_ptr, u8, plen) = '\0';
+	let cstr = cstr_ptr @as cstring;
+
+	let res = sys.unlink(cstr);
+	if res == -1 {
 		throw failed;
 	}
 }
 func mkdir(path: *String) void !failed {
-	if !kos.ki_os__file_mkdir(path.data(), path.bytes() @as i32) {
+
+	let plen = path.bytes();
+	let cstr_ptr = @stack_alloc(plen + 1);
+	mem:copy(path.data(), cstr_ptr, plen);
+	@ptrv(cstr_ptr, u8, plen) = '\0';
+	let cstr = cstr_ptr @as cstring;
+
+	let res = sys.mkdir(cstr, 448); // 0700
+	if res == -1 {
 		throw failed;
 	}
 }
+
+func is_file(path: *String) bool {
+	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
+	stat(path, buf) !! return false;;
+	return (buf.st_mode & sys.OS.S_IFMT) == sys.OS.S_IFREG;
+}
+func is_dir(path: *String) bool {
+	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
+	stat(path, buf) !! return false;;
+	return (buf.st_mode & sys.OS.S_IFMT) == sys.OS.S_IFDIR;
+}
+

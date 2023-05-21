@@ -1,29 +1,61 @@
 
-header "ki_os" as kos;
+header "sys" as sys;
 
 func signal(sig: i32, handler: fn(i32)(void)) void {
-	kos.ki_os__signal(sig, handler);
+    sys.signal(sig, handler);
 }
 
 func signal_ignore(sig: i32) void {
-	kos.ki_os__signal(sig, null);
+	sys.signal(sig, null);
 }
 
 func raise(sig: i32) void {
-	kos.ki_os__raise(sig);
+	sys.raise(sig);
 }
 
+#if OS == linux
+enum SIG {
+    hup: 1,
+    interrupt: 2,
+    quit: 3,
+    //ILL: 4,
+    //TRAP: 5,
+    abort: 6,
+    //IOT: 6,
+    bus: 7,
+    //FPE: 8,
+    kill: 9,
+    //USR1: 10,
+    segv: 11,
+    //USR2: 12,
+    pipe: 13,
+    //ALRM: 14,
+    //term: 15,
+    //STKFLT: 16,
+    //CHLD: 17,
+    //CONT: 18,
+    //STOP: 19,
+    //TSTP: 20,
+    //TTIN: 21,
+    //TTOU: 22,
+    //URG: 23,
+    //XCPU: 24,
+    //XFSZ: 25,
+    //VTALRM: 26,
+    //PROF: 27,
+    //WINCH: 28,
+    //IO: 29,
+    //POLL: 29,
+}
+#else
 enum SIG {
     hup,
-    int,
+    interrupt,
     quit,
     abort,
+    bus,
     kill,
     segv,
     pipe,
-    term,
-    stop,
-    continue,
-    child,
-    io,
 }
+#end

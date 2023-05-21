@@ -100,7 +100,11 @@ void llvm_gen_func_ir(LB *b) {
             arg->decl->llvm_val = var;
 
             char bytes[20];
-            sprintf(bytes, "%d", type->bytes);
+            int abytes = type->bytes;
+            if (abytes > b->fc->b->ptr_size) {
+                abytes = b->fc->b->ptr_size;
+            }
+            sprintf(bytes, "%d", abytes);
 
             str_append_chars(cir, "  store ");
             str_append_chars(cir, ltype);
