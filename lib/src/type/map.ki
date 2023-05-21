@@ -24,4 +24,18 @@ class Map[T] {
 		return this._values.get(index) !! throw not_found;;
 	}
 
+	func __each_init() uxx {
+		return 0;
+	}
+
+	func __each_(key_index_ref: uxx[1], key_value_ref: *(&String)[1]) &T !end {
+		let key_i = key_index_ref[0];
+		let key_v = this._keys.get(key_i) !! throw end;;
+		let value = this._values.get(key_i) !! throw end;;
+
+		key_index_ref[0] = key_i + 1;
+		key_value_ref[0] = key_v;
+
+		return value;
+	}
 }

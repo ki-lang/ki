@@ -145,17 +145,19 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
 
-    if (context == rtc_prop_type || context == rtc_func_arg || context == rtc_ptrv) {
-        if (strcmp(token, "*") == 0) {
-            borrow = true;
-            tok(fc, token, true, false);
-        }
-    } else if (context == rtc_func_rett) {
-        if (strcmp(token, "&") == 0) {
-            ref = true;
-            tok(fc, token, true, false);
-        }
+    if (strcmp(token, "*") == 0) {
+        borrow = true;
+        tok(fc, token, true, false);
     }
+    if (strcmp(token, "&") == 0) {
+        ref = true;
+        tok(fc, token, true, false);
+    }
+    if (borrow && ref) {
+        sprintf(fc->sbuf, "You cannot use both * and & in the same type");
+        fc_error(fc);
+    }
+
     if (strcmp(token, "?") == 0) {
         nullable = true;
         tok(fc, token, true, false);
@@ -166,9 +168,11 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         fc_error(fc);
     }
 
+    bool sub_type = false;
     Type *type = NULL;
     if (strcmp(token, "(") == 0) {
-        type = read_type(fc, alc, scope, true, true, context);
+        sub_type = true;
+        type = read_type(fc, alc, scope, true, true, rtc_sub_type);
         tok_expect(fc, ")", true, true);
     } else if (strcmp(token, "void") == 0) {
         type = type_init(alc);
@@ -272,11 +276,6 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         }
     }
 
-    if (type_tracks_ownership(type)) {
-        type->ref = ref;
-        type->borrow = borrow;
-    }
-
     tok(fc, token, true, false);
     while (strcmp(token, "[") == 0) {
         tok(fc, token, true, true);
@@ -297,6 +296,15 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
     rtok(fc);
     //
+    if (sub_type && type->type != type_arr) {
+        sprintf(fc->sbuf, "You can only use '(type)' sub-type brackets when creating an static-array type. e.g. (String) is wrong, but (String)[1] is allowed.");
+        fc_error(fc);
+    }
+
+    if (type_tracks_ownership(type)) {
+        type->ref = ref;
+        type->borrow = borrow;
+    }
 
     if (inline_ && type->ptr_depth > 0) {
         type = type_get_inline(alc, type);
@@ -316,6 +324,15 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
             fc_error(fc);
         }
         type->nullable = nullable;
+    }
+
+    if (borrow && context != rtc_prop_type && context != rtc_func_arg && context != rtc_ptrv && context != rtc_sub_type) {
+        sprintf(fc->sbuf, "You can only use '*' borrow types for function arguments or object property types");
+        fc_error(fc);
+    }
+    if (ref && context != rtc_func_rett && context != rtc_sub_type) {
+        sprintf(fc->sbuf, "You can only use '&' reference types for function return types");
+        fc_error(fc);
     }
 
     if (type->bytes == 0) {
@@ -603,6 +620,9 @@ bool type_tracks_ownership(Type *type) {
     }
     if (type->borrow) {
         return false;
+    }
+    if (type->array_of) {
+        return type_tracks_ownership(type->array_of);
     }
     Class *class = type->class;
     if (!class) {

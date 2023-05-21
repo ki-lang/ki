@@ -41,14 +41,14 @@ func listen(sockfd: i32, backlog: i32) i32;
 
 func getsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
 func setsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
-func getaddrinfo(host: cstring, port: cstring, hints: *cstruct_addrinfo, res: (?cstruct_addrinfo)[1]) i32;
+func getaddrinfo(host: cstring, port: cstring, hints: *cstruct_addrinfo, res: *(?cstruct_addrinfo)[1]) i32;
 func freeaddrinfo(info: cstruct_addrinfo) i32;
 
 //int clone(int (*fn)(void *), void *stack, int flags, void *arg, .../* pid_t *parent_tid, void *tls, pid_t *child_tid */ );
 func fork() i32;
 func vfork() i32;
 
-func execve(pathname: cstring, argv: cstring[unsafe], envp: cstring[unsafe]) i32;
+func execve(pathname: cstring, argv: *cstring[unsafe], envp: *cstring[unsafe]) i32;
 
 //func wait3(wstatus: i32[1], options: i32, struct rusage *rusage) i32;
 //func wait4(pid: i32, wstatus: i32[1], options: i32, struct rusage *rusage) i32;

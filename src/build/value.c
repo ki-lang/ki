@@ -179,7 +179,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 decl->is_mut = true;
             }
         }
-        v = value_init(alc, v_getptr, on, type_array_of(alc, b, on->rett, 1));
+        Type *rett = type_array_of(alc, b, on->rett, 1);
+        rett->borrow = true;
+        v = value_init(alc, v_getptr, on, rett);
         //
 
     } else if (strcmp(token, "@ptr_val") == 0) {

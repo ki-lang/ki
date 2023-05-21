@@ -121,22 +121,6 @@ class Array[T] {
 		return 0;
 	}
 
-	//#if IS_STRICT_TYPE T
-	//func __each(key_ref: uxx[1]) imut T !end {
-	//	let key = key_ref[0];
-	//	if key >= this.length {
-	//		throw end;
-	//	}
-	//	key_ref[0] = key + 1;
-
-	//	let result = @ptrv(this.data, >imut T, key);
-	//	@ref result;
-
-	//	return result;
-	//}
-
-	//#else
-
 	func __each(key_ref: uxx[1]) &T !end {
 		let key = key_ref[0];
 		if key >= this.length {
@@ -145,7 +129,6 @@ class Array[T] {
 		key_ref[0] = key + 1;
 		return this.get(key) !! throw end;;
 	}
-	//#end
 
 	func __before_free() void {
 		// Deref items
