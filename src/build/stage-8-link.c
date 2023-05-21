@@ -314,15 +314,29 @@ void llvm_init(Build *b, struct Target *t) {
 void stage_8_link_libs(Str *cmd, Build *b, int type) {
     //
     bool is_win = b->target_os == os_win;
+    bool is_static = type == link_static;
+
+    char *prefix = "";
+    char *suffix = "";
+    if (!is_win) {
+        prefix = "-l";
+        if (is_static) {
+            prefix = "-l:lib";
+            suffix = ".a";
+        }
+    } else {
+        suffix = ".lib";
+    }
 
     for (int i = 0; i < b->link_libs->values->length; i++) {
         char *name = array_get_index(b->link_libs->keys, i);
         Link *link = array_get_index(b->link_libs->values, i);
         if (link->type != type)
             continue;
-        str_append_chars(cmd, is_win ? "" : "-l");
+        str_append_chars(cmd, prefix);
         str_append_chars(cmd, name);
-        str_append_chars(cmd, is_win ? ".lib " : " ");
+        str_append_chars(cmd, suffix);
+        str_append_chars(cmd, " ");
     }
 }
 void stage_8_link(Build *b, Array *o_files) {
@@ -437,8 +451,7 @@ void stage_8_link(Build *b, Array *o_files) {
 
     // Link libs
     stage_8_link_libs(cmd, b, link_dynamic);
-    // str_append_chars(cmd, "-Bstatic ");
-    // stage_8_link_libs(cmd, b, link_static);
+    stage_8_link_libs(cmd, b, link_static);
 
     // End
     if (is_linux) {
