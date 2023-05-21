@@ -7,11 +7,11 @@
 
 # Ki
 
-[Website](https://ki-lang.dev) | [Documentation](https://ki-lang.dev/docs)
+[Website](https://ki-lang.dev) | [Documentation](https://ki-lang.dev/docs) | [Discord](https://discord.gg/T7pR6fm6SC)
 
-(We are still in alpha, some things might change)
+(We are still in alpha, the standard lib still needs alot of work)
 
-ki is a programming language designed to be super fast and easy to use. You can choose between manual memory management (structs) or reference counted objects (classes (no OOP)). The compiler keeps track of ownership and uses reference counting as a fallback. Meaning if you write your code like rust, it runs like rust. But if you want to use an object twice, just do it and it will work. We also offer strict ownership which prevent you from doing this.
+ki is a type safe compiled language designed to be fast and easy to use. It does not have any garbage collection and instead uses ownership combined with minimal ref counting to manage memory. Alternatively you can manage your own memory using 'struct' instead of 'class'. We also allow you to compile from any platform to any platform out-of-the-box. We have generics. We have 'null' but runtime null errors do not exist. We have an awesome way to return/handle errors. Our compile times are much faster than other language (and we havent optimized it yet). We use LLVM as a back-end, so all your release code will be super optimized. We are also working on a fast/simple/versioned package manager.
 
 Goals: fast run time, fast compile times, simplicity and great package management.
 
@@ -38,7 +38,7 @@ Linux: install `llvm-15`, Ubuntu/debian see: [apt.llvm.org](https://apt.llvm.org
 ```bash
 git clone git@github.com:ki-lang/ki.git
 cd ki
-make {linux|macos}
+make
 ```
 
 ## Build from source (Windows)

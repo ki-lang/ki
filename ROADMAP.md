@@ -6,7 +6,6 @@ Feature todo list in order:
 - unions
 - compare errors
 - package manager
-- 'each' declarations in structs/classes, 'each chars: each_chars_init, each_chars;' | usage: 'each mystr.chars as char {...}'
 - debug info
 
 - testing features
@@ -20,6 +19,7 @@ Feature todo list in order:
 - vscode extension
 - closure functions
 - async library
+- multiple iterators
 - calling functions using named arguments
 - implement IO URing where useful
 - replace malloc with something better
