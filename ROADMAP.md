@@ -19,7 +19,6 @@ Feature todo list in order:
 - --watch param to watch for file changes and trigger a build
 - vscode extension
 - closure functions
-- cross compiling
 - async library
 - calling functions using named arguments
 - implement IO URing where useful
@@ -33,6 +32,7 @@ Feature todo list in order:
 
 ## Done
 
+- cross compiling
 - swap token
 - Rework type system, ownership by default, & for references and * for borrows
 - use ':' for single line scopes for if/else/while/each
