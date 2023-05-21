@@ -7,6 +7,7 @@ Feature todo list in order:
 - compare errors
 - package manager
 - debug info
+- main argv/argc
 
 - testing features
 - install global packages + "bin" setting in ki.json to place binaries in ~/.ki/bin
