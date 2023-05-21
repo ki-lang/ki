@@ -6,7 +6,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait);
 void stage_2_func(Fc *fc, Func *func);
 void stage_2_class_defaults(Fc *fc, Class *class);
 void stage_2_class_type_checks(Fc *fc, Class *class);
-void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *args[], int argc, TypeCheck *tc_rett, bool can_error);
+void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *args[], int argc_ex, TypeCheck *tc_rett, bool can_error);
 
 void stage_2(Fc *fc) {
     //
@@ -571,16 +571,30 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
 
         checks[1] = &tc_key;
 
+        int argc = 2;
+        // if (func->args->length > 2) {
+        //     argc++;
+        //     Arg *arg = array_get_index(func->args, 2);
+        //     TypeCheck *tc = malloc(sizeof(TypeCheck));
+        //     tc->class = NULL;
+        //     tc->array_of = NULL;
+        //     tc->borrow = true;
+        //     tc->ref = false;
+        //     tc->type = type_arr;
+        //     tc->array_size = 1;
+        //     checks[2] = tc;
+        // }
+
         if (type_is_void(func->rett)) {
             fc->chunk = func->chunk_args;
             sprintf(fc->sbuf, "__each can have any return type except 'void'");
             fc_error(fc);
         }
-        stage_2_class_type_check(fc, func, checks, 2, NULL, true);
+        stage_2_class_type_check(fc, func, checks, argc, NULL, true);
         class->can_iter = true;
     }
 }
-void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *checks[], int argc, TypeCheck *tc_rett, bool can_error) {
+void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *checks[], int argc_ex, TypeCheck *tc_rett, bool can_error) {
     //
     if (!func->chunk_args) {
         // Generated func
@@ -588,14 +602,15 @@ void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *checks[], int argc,
     }
 
     Chunk *chunk = fc->chunk;
-    if (func->args->length > argc) {
+    int argc = func->args->length;
+    if (argc > argc_ex) {
         fc->chunk = func->chunk_args;
-        sprintf(fc->sbuf, "Too many arguments. Expected %d argument(s). But found: %d", argc, func->args->length);
+        sprintf(fc->sbuf, "Too many arguments. Expected %d argument(s). But found: %d", argc_ex, argc);
         fc_error(fc);
     }
-    if (func->args->length < argc) {
+    if (argc < argc_ex) {
         fc->chunk = func->chunk_args;
-        sprintf(fc->sbuf, "Missing arguments. Expected %d argument(s). But found: %d", argc, func->args->length);
+        sprintf(fc->sbuf, "Missing arguments. Expected %d argument(s). But found: %d", argc_ex, argc);
         fc_error(fc);
     }
 

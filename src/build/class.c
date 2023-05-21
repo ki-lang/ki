@@ -433,6 +433,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
             }
             stage_2_func(new_fc, func);
         }
+        stage_2_class_type_checks(new_fc, gclass);
         stage_5(new_fc);
     }
 
