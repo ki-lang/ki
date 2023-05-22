@@ -17,6 +17,13 @@ ki is a type safe compiled language designed to be fast and easy to use. It does
 
 Goals: fast run / compile times ⚡ simplicity and great package management 📦
 
+## Compatibility
+
+|  | macos | linux | windows |
+|--|--|--|--|
+| x86_64 | ✔ | ✔ | soon |
+| arm64 | ✔ | WIP | WIP |
+
 ## How to install
 
 ```
