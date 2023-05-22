@@ -72,7 +72,7 @@ void usage_line_incr_moves(UsageLine *ul, int amount) {
 Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
     Chunk *chunk = fc->chunk;
     //
-    if (val->rett->borrow) {
+    if (val->rett->borrow || val->rett->weak_ptr) {
         return val;
     }
 
@@ -326,7 +326,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
     Decl *decl = ul->decl;
     Type *type = decl->type;
 
-    if (type->borrow) {
+    if (type->borrow || type->weak_ptr) {
         return;
     }
 

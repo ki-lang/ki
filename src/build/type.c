@@ -19,6 +19,7 @@ Type *type_init(Allocator *alc) {
     type->strict_ownership = true;
     type->borrow = false;
     type->ref = false;
+    type->weak_ptr = false;
     //
     type->func_args = NULL;
     type->func_rett = NULL;
@@ -132,7 +133,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     bool borrow = false;
     bool ref = false;
-    bool weak_ref = false;
+    bool weak_ptr = false;
     bool inline_ = false;
 
     tok(fc, token, sameline, allow_space);
@@ -146,24 +147,29 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
 
+    if (strcmp(token, "@weak") == 0) {
+        weak_ptr = true;
+        tok(fc, token, true, true);
+    }
     if (strcmp(token, "*") == 0) {
+        if (weak_ptr) {
+            sprintf(fc->sbuf, "You cannot use both @weak and * in the same type");
+            fc_error(fc);
+        }
         borrow = true;
         tok(fc, token, true, false);
     }
     if (strcmp(token, "&") == 0) {
+        if (weak_ptr) {
+            sprintf(fc->sbuf, "You cannot use both @weak and & in the same type");
+            fc_error(fc);
+        }
         if (borrow) {
             sprintf(fc->sbuf, "You cannot use both * and & in the same type");
             fc_error(fc);
         }
         ref = true;
         tok(fc, token, true, false);
-    } else if (strcmp(token, "UNSAFE_WEAK_REF") == 0) {
-        if (borrow) {
-            sprintf(fc->sbuf, "You cannot use both UNSAFE_WEAK_REF and & in the same type");
-            fc_error(fc);
-        }
-        weak_ref = true;
-        tok(fc, token, true, true);
     }
 
     if (strcmp(token, "?") == 0) {
@@ -171,7 +177,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
 
-    if (inline_ && (borrow || ref || weak_ref || nullable)) {
+    if (inline_ && (borrow || ref || weak_ptr || nullable)) {
         sprintf(fc->sbuf, "You cannot use &/*/? on inline types '.'");
         fc_error(fc);
     }
@@ -310,8 +316,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     if (type_tracks_ownership(type)) {
-        type->ref = ref || weak_ref;
+        type->ref = ref;
         type->borrow = borrow;
+        type->weak_ptr = weak_ptr;
     }
 
     if (inline_ && type->ptr_depth > 0) {
@@ -342,11 +349,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         sprintf(fc->sbuf, "You can only use '&' reference types for function return types");
         fc_error(fc);
     }
-    if (weak_ref && context != rtc_prop_type) {
-        sprintf(fc->sbuf, "You can only use 'UNSAFE_WEAK_REF' types for object property types");
+    if (weak_ptr && context != rtc_prop_type) {
+        sprintf(fc->sbuf, "You can only use '@weak' types for object property types");
         fc_error(fc);
     }
-
     if (type->bytes == 0) {
         array_push(fc->type_size_checks, type);
     }
@@ -631,6 +637,9 @@ bool type_tracks_ownership(Type *type) {
         return false;
     }
     if (type->borrow) {
+        return false;
+    }
+    if (type->weak_ptr) {
         return false;
     }
     if (type->array_of) {

@@ -93,7 +93,7 @@ class Poll {
             };
             #else
             let new = PollListener {
-                poll: &this,
+                poll: this,
                 poll_index: this.poll_index++,
                 fd: fd,
                 key: key,
@@ -257,7 +257,7 @@ struct PollListener {
     #if OS == linux
     private poll_fd: i32;
     #else
-    private poll: UNSAFE_WEAK_REF Poll;
+    private poll: @weak Poll;
     readonly poll_index: uxx;
     #end
     readonly key: uxx = 0;

@@ -256,6 +256,7 @@ struct Type {
     bool strict_ownership;
     bool borrow;
     bool ref;
+    bool weak_ptr;
 };
 
 struct Class {
