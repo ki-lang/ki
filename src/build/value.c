@@ -108,14 +108,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         v = vgen_compare(alc, b, on, vgen_vint(alc, 0, type_gen(b, alc, "bool"), true), op_eq);
     } else if (strcmp(token, "&") == 0) {
         Value *on = read_value(fc, alc, scope, false, 8, false);
-        if (!on->rett->strict_ownership) {
-            sprintf(fc->sbuf, "You can only create reference from values with ownership");
-            fc_error(fc);
-        }
         if (on->rett->strict_ownership) {
             Type *rett = type_clone(alc, on->rett);
             rett->strict_ownership = false;
             rett->ref = true;
+            rett->borrow = false;
             on->rett = rett;
         }
         v = value_init(alc, v_ref, on, on->rett);

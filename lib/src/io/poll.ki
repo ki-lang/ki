@@ -93,7 +93,7 @@ class Poll {
             };
             #else
             let new = PollListener {
-                poll: this @as ptr,
+                poll: &this,
                 poll_index: this.poll_index++,
                 fd: fd,
                 key: key,
@@ -257,7 +257,7 @@ struct PollListener {
     #if OS == linux
     private poll_fd: i32;
     #else
-    private poll: ptr;
+    private poll: UNSAFE_WEAK_REF Poll;
     readonly poll_index: uxx;
     #end
     readonly key: uxx = 0;
@@ -310,7 +310,7 @@ struct PollListener {
             //println("> Failed to update epoll events");
         }
         #else
-        let p = this.poll @as *Poll;
+        let p = this.poll;
         let events = p.results;
         let event = (events + @sizeof_class(sys.cstruct_pollfd) * this.poll_index) @as sys.cstruct_pollfd;
         event.events = this.detect_events @as i16;

@@ -132,6 +132,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     bool borrow = false;
     bool ref = false;
+    bool weak_ref = false;
     bool inline_ = false;
 
     tok(fc, token, sameline, allow_space);
@@ -150,12 +151,19 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
     if (strcmp(token, "&") == 0) {
+        if (borrow) {
+            sprintf(fc->sbuf, "You cannot use both * and & in the same type");
+            fc_error(fc);
+        }
         ref = true;
         tok(fc, token, true, false);
-    }
-    if (borrow && ref) {
-        sprintf(fc->sbuf, "You cannot use both * and & in the same type");
-        fc_error(fc);
+    } else if (strcmp(token, "UNSAFE_WEAK_REF") == 0) {
+        if (borrow) {
+            sprintf(fc->sbuf, "You cannot use both UNSAFE_WEAK_REF and & in the same type");
+            fc_error(fc);
+        }
+        weak_ref = true;
+        tok(fc, token, true, true);
     }
 
     if (strcmp(token, "?") == 0) {
@@ -163,7 +171,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
 
-    if (inline_ && (borrow || ref || nullable)) {
+    if (inline_ && (borrow || ref || weak_ref || nullable)) {
         sprintf(fc->sbuf, "You cannot use &/*/? on inline types '.'");
         fc_error(fc);
     }
@@ -302,7 +310,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     if (type_tracks_ownership(type)) {
-        type->ref = ref;
+        type->ref = ref || weak_ref;
         type->borrow = borrow;
     }
 
@@ -332,6 +340,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
     if (ref && context != rtc_func_rett && context != rtc_sub_type) {
         sprintf(fc->sbuf, "You can only use '&' reference types for function return types");
+        fc_error(fc);
+    }
+    if (weak_ref && context != rtc_prop_type) {
+        sprintf(fc->sbuf, "You can only use 'UNSAFE_WEAK_REF' types for object property types");
         fc_error(fc);
     }
 
