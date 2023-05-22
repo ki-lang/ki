@@ -13,13 +13,12 @@ ifeq ($(UNAME), Darwin)
 # From macos
 CC=clang
 LCC=clang
-CFLAGS:=$(CFLAGS) -I/usr/local/opt/llvm@15/include
-LDFLAGS:=$(LDFLAGS) -L/usr/local/opt/llvm@15/lib `/usr/local/opt/llvm@15/bin/llvm-config --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf`
-LLVMCF=`/usr/loca/opt/llvm@15/bin/llvm-config --cflags`
+CFLAGS:=$(CFLAGS) `llvm-config --cflags`
+LDFLAGS:=$(LDFLAGS) `llvm-config --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf`
 else
 # From linux
+CFLAGS:=$(CFLAGS) `llvm-config-15 --cflags`
 LDFLAGS:=$(LDFLAGS) `llvm-config-15 --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf`
-LLVMCF=`llvm-config-15 --cflags`
 endif
 
 LDFLAGS:=$(LDFLAGS) -lcurl -lm -lz -lstdc++
@@ -39,7 +38,7 @@ ki: $(OBJECTS) debug/build/link.o
 	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) debug/build/link.o $(LDFLAGS)
 
 debug/build/link.o: src/build/stage-8-link.c
-	$(CC) $(CFLAGS) $(LLVMCF) -o debug/build/link.o -c src/build/stage-8-link.c
+	$(CC) $(CFLAGS) -o debug/build/link.o -c src/build/stage-8-link.c
 
 $(OBJECTS): debug/build/%.o: %.c
 	@mkdir -p $(@D)
