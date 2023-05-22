@@ -70,6 +70,7 @@ macos_dist_from_linux: debug/build/link.o
 	$(LCC) $(CFLAGS) --target=x86_64-apple-darwin-macho $(CROSS_OSX_FROM_LINUX) -o dist/macos-x64/ki $(SRC) src/build/stage-8-link.c -lm -lz -lcurses -lcurl -lpthread -pthread -lc++ -Wl,-platform_version,macos,11.6.0,11.3 $(LDFLAGS_OSX_DIST)
 	cd dist/macos-x64 && tar -czf ../ki-$(VERSION)-macos-x64.tar.gz ki lib install.sh
 
+dists_from_linux: linux_dist_from_linux macos_dist_from_linux
 #
 
 .PHONY: clean linux macos linux_dist
