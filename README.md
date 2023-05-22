@@ -33,7 +33,7 @@ ki build src/*.ki -o hello
 
 ## Build from source (Linux / macOS / WSL)
 
-macOS: `brew install llvm@15 && brew link --force llvm@15`
+macOS: `brew install llvm@15 && brew link llvm@15`
 
 Linux: install `llvm-15`, Ubuntu/debian see: [apt.llvm.org](https://apt.llvm.org/)
 
