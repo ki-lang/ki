@@ -221,7 +221,7 @@ class Connection {
 
 		// Check file stream
 		let file = this.out_file;
-		if @isset(file) {
+		if @isset(file) && this.out_pos >= this.out_buf.length {
 			if file.reading {
 				let part = file.read(65535) !? "";
 				out.append_str(part);
