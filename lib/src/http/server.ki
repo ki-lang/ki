@@ -197,6 +197,10 @@ class Server {
                 if event.is_writable() {
                     //println("[+] Continue sending response: " + fd.str());
 
+                    if http_con.can_clear_out() {
+                        http_con.reset_out();
+                    }
+
                     http_con.send_response_bytes();
 
                     if !http_con.has_data_to_send() {

@@ -201,6 +201,10 @@ class Connection {
 		this.send_response_bytes();
 	}
 
+	func can_clear_out() bool {
+		return this.out_pos >= this.out_buf.length;
+	}
+
 	func has_data_to_send() bool {
 		if this.out_pos < this.out_buf.length {
 			return true;
@@ -221,7 +225,7 @@ class Connection {
 
 		// Check file stream
 		let file = this.out_file;
-		if @isset(file) && this.out_pos >= this.out_buf.length {
+		if @isset(file) && this.can_clear_out() {
 			if file.reading {
 				let part = file.read(65535) !? "";
 				out.append_str(part);
