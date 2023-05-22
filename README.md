@@ -38,6 +38,14 @@ ki build src/*.ki -o hello
 ./hello
 ```
 
+## Example code
+
+```js
+func main() void {
+    println("Hello world!");
+}
+```
+
 ## Build from source (Linux / macOS / WSL)
 
 macOS: `brew install llvm@15 && brew link llvm@15`
