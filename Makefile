@@ -1,29 +1,23 @@
 
-CC=clang-15
-LCC=clang-15
-
 VERSION=dev
 UNAME=$(shell uname)
-
-CFLAGS=-g -O2 -pthread 
-
-LDFLAGS=
 
 ifeq ($(UNAME), Darwin)
 # From macos
 CC=clang
 LCC=clang
-CFLAGS:=$(CFLAGS) `llvm-config --cflags`
-LDFLAGS:=$(LDFLAGS) `llvm-config --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf`
+LLVM_CFG=llvm-config
 else
 # From linux
-CFLAGS:=$(CFLAGS) `llvm-config-15 --cflags`
-LDFLAGS:=$(LDFLAGS) `llvm-config-15 --ldflags --system-libs --libs all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf`
+CC=clang-15
+LCC=clang-15
+LLVM_CFG=llvm-config-15
 endif
 
-LDFLAGS:=$(LDFLAGS) -lcurl -lm -lz -lstdc++
+CFLAGS:=-g -O2 -pthread `$(LLVM_CFG) --cflags`
 
-LDFLAGS_DIST=`llvm-config-15 --ldflags --system-libs --libs --link-static all-targets analysis bitreader bitwriter core codegen executionengine instrumentation interpreter ipo irreader linker mc mcjit objcarcopts option profiledata scalaropts support target object transformutils debuginfodwarf` `curl-config --static-libs` -lm -lz -lstdc++ -ldl -lpthread
+LINK_DYNAMIC=`$(LLVM_CFG) --ldflags --system-libs --libs` `curl-config --static-libs` -lcurl -lm -lz -lstdc++ -ldl -lpthread
+LINK_STATIC=`$(LLVM_CFG) --ldflags --system-libs --libs --link-static all-targets` `curl-config --static-libs` -lm -lz -lstdc++ -ldl -lpthread
 
 LDFLAGS_OSX_DIST=-lLLVMOption -lLLVMObjCARCOpts -lLLVMMCJIT -lLLVMInterpreter -lLLVMExecutionEngine -lLLVMRuntimeDyld -lLLVMXCoreDisassembler -lLLVMXCoreCodeGen -lLLVMXCoreDesc -lLLVMXCoreInfo -lLLVMX86Disassembler -lLLVMX86AsmParser -lLLVMX86CodeGen -lLLVMX86Desc -lLLVMX86Info -lLLVMWebAssemblyDisassembler -lLLVMWebAssemblyCodeGen -lLLVMWebAssemblyDesc -lLLVMWebAssemblyAsmParser -lLLVMWebAssemblyInfo -lLLVMWebAssemblyUtils -lLLVMSystemZDisassembler -lLLVMSystemZCodeGen -lLLVMSystemZAsmParser -lLLVMSystemZDesc -lLLVMSystemZInfo -lLLVMSparcDisassembler -lLLVMSparcCodeGen -lLLVMSparcAsmParser -lLLVMSparcDesc -lLLVMSparcInfo -lLLVMRISCVDisassembler -lLLVMRISCVCodeGen -lLLVMRISCVAsmParser -lLLVMRISCVDesc -lLLVMRISCVInfo -lLLVMPowerPCDisassembler -lLLVMPowerPCCodeGen -lLLVMPowerPCAsmParser -lLLVMPowerPCDesc -lLLVMPowerPCInfo -lLLVMNVPTXCodeGen -lLLVMNVPTXDesc -lLLVMNVPTXInfo -lLLVMMSP430Disassembler -lLLVMMSP430CodeGen -lLLVMMSP430AsmParser -lLLVMMSP430Desc -lLLVMMSP430Info -lLLVMMipsDisassembler -lLLVMMipsCodeGen -lLLVMMipsAsmParser -lLLVMMipsDesc -lLLVMMipsInfo -lLLVMLanaiDisassembler -lLLVMLanaiCodeGen -lLLVMLanaiAsmParser -lLLVMLanaiDesc -lLLVMLanaiInfo -lLLVMHexagonDisassembler -lLLVMHexagonCodeGen -lLLVMHexagonAsmParser -lLLVMHexagonDesc -lLLVMHexagonInfo -lLLVMBPFDisassembler -lLLVMBPFCodeGen -lLLVMBPFAsmParser -lLLVMBPFDesc -lLLVMBPFInfo -lLLVMAVRDisassembler -lLLVMAVRCodeGen -lLLVMAVRAsmParser -lLLVMAVRDesc -lLLVMAVRInfo -lLLVMARMDisassembler -lLLVMARMCodeGen -lLLVMARMAsmParser -lLLVMARMDesc -lLLVMARMUtils -lLLVMARMInfo -lLLVMAMDGPUDisassembler -lLLVMAMDGPUCodeGen -lLLVMMIRParser -lLLVMipo -lLLVMInstrumentation -lLLVMVectorize -lLLVMLinker -lLLVMIRReader -lLLVMAsmParser -lLLVMFrontendOpenMP -lLLVMAMDGPUAsmParser -lLLVMAMDGPUDesc -lLLVMAMDGPUUtils -lLLVMAMDGPUInfo -lLLVMAArch64Disassembler -lLLVMMCDisassembler -lLLVMAArch64CodeGen -lLLVMCFGuard -lLLVMGlobalISel -lLLVMSelectionDAG -lLLVMAsmPrinter -lLLVMDebugInfoDWARF -lLLVMCodeGen -lLLVMTarget -lLLVMScalarOpts -lLLVMInstCombine -lLLVMAggressiveInstCombine -lLLVMTransformUtils -lLLVMBitWriter -lLLVMAnalysis -lLLVMProfileData -lLLVMObject -lLLVMTextAPI -lLLVMBitReader -lLLVMCore -lLLVMRemarks -lLLVMBitstreamReader -lLLVMAArch64AsmParser -lLLVMMCParser -lLLVMAArch64Desc -lLLVMMC -lLLVMDebugInfoCodeView -lLLVMDebugInfoMSF -lLLVMBinaryFormat -lLLVMAArch64Utils -lLLVMAArch64Info -lLLVMSupport -lLLVMDemangle -lLLVMPasses -lLLVMCoroutines -lLLVMVECodeGen -lLLVMVEAsmParser -lLLVMVEDesc -lLLVMVEDisassembler -lLLVMVEInfo
 
@@ -32,7 +26,7 @@ OBJECTS=$(patsubst %.c, debug/build/%.o, $(SRC))
 TARGET=ki
 
 ki: $(OBJECTS)
-	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) $(LDFLAGS)
+	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) $(LINK_DYNAMIC)
 
 $(OBJECTS): debug/build/%.o: %.c
 	@mkdir -p $(@D)
@@ -49,7 +43,7 @@ linux_dist_from_linux:
 	cp -r lib dist/linux-x64/
 	cp -r src/scripts/install.sh dist/linux-x64/
 	sed -i 's/__VERSION__/$(VERSION)/' dist/linux-x64/install.sh
-	$(LCC) $(CFLAGS) -o dist/linux-x64/ki $(SRC) $(LDFLAGS_DIST)
+	$(LCC) $(CFLAGS) -o dist/linux-x64/ki $(SRC) $(LINK_STATIC)
 	cd dist/linux-x64 && tar -czf ../ki-$(VERSION)-linux-x64.tar.gz ki lib install.sh
 
 linux_arm_dist_from_linux:
@@ -58,7 +52,7 @@ linux_arm_dist_from_linux:
 	cp -r lib dist/linux-arm64/
 	cp -r src/scripts/install.sh dist/linux-arm64/
 	sed -i 's/__VERSION__/$(VERSION)/' dist/linux-arm64/install.sh
-	aarch64-linux-gnu-gcc $(CFLAGS) -o dist/linux-arm64/ki $(SRC) $(LDFLAGS_DIST)
+	aarch64-linux-gnu-gcc $(CFLAGS) -o dist/linux-arm64/ki $(SRC) $(LINK_STATIC)
 	cd dist/linux-arm64 && tar -czf ../ki-$(VERSION)-linux-arm64.tar.gz ki lib install.sh
 
 macos_dist_from_linux:
