@@ -267,16 +267,6 @@ class String type:ptr track {
 		return buf.to_str();
 	}
 
-	public func append_byte(byte: u8) String {
-		let this_len = this.bytes();
-		let len = this_len + 1;
-		let str = String.make_empty(len);
-		let res_data = str.data();
-		mem:copy(this.data(), res_data, this_len);
-		@ptrv(res_data, u8, this_len) = byte;
-		return str;
-	}
-
 	/////////////////////
 	// Index
 	/////////////////////
