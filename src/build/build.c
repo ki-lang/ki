@@ -368,15 +368,13 @@ void cmd_build_help(bool run_code) {
     printf(" --optimize -O       apply code optimizations\n");
     printf(" --clear -c          clear cache\n");
     printf(" --debug -d          generate debug info\n");
-    printf(" --test              run _test_{...} functions\n");
+    // printf(" --test              run _test_{...} functions\n");
     printf(" --run -r            run code after compiling\n");
+    printf(" --target            compile for a specific os/arch\n");
+    printf("                     linux-x64, macos-x64, win-x64\n");
     printf("\n");
 
     printf(" -v -vv -vvv         show compile info\n");
-    printf("\n");
-
-    printf(" --os                compile for target OS: linux, macos\n");
-    printf(" --arch              compile for target arch: x64\n");
     printf("\n");
 
     exit(1);

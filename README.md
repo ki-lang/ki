@@ -11,6 +11,8 @@
 
 (We are still in alpha, the standard lib still needs alot of work)
 
+NOTE: We currently only support x64 and we dont have a build for windows. Use WSL instead. You can however build .exe's from inside WSL using --target win-x64
+
 ki is a type safe compiled language designed to be fast and easy to use. It does not have any garbage collection and instead uses ownership combined with minimal ref counting to manage memory. Alternatively you can manage your own memory using 'struct' instead of 'class'. We also allow you to compile from any platform to any platform out-of-the-box. We have generics. We have 'null' but runtime null errors do not exist. We have an awesome way to return/handle errors. Our compile times are much faster than other language (and we havent optimized it yet). We use LLVM as a back-end, so all your release code will be super optimized. We are also working on a fast/simple/versioned package manager.
 
 Goals: fast run / compile times ⚡ simplicity and great package management 📦
