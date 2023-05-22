@@ -53,3 +53,8 @@ pacman -S mingw-w64-x86_64-llvm
 pacman -S mingw-w64-x86_64-clang
 make
 ```
+
+## Known issues
+
+- Compiling for macos from linux works but seems to crash sometimes with illegal hardware instruction
+
