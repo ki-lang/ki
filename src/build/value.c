@@ -1147,7 +1147,7 @@ Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type) {
                 if (bytes >= 4) {
                     bits = 4 * 8 - 1;
                 }
-                long int max = ((long int)1) << bits;
+                long int max = INT_MAX;
                 long int min = 0;
                 if (to_type->is_signed) {
                     min = max * -1;
