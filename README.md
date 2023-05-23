@@ -21,7 +21,7 @@ Goals: fast run / compile times ⚡ simplicity and great package management 📦
 
 |  | macos | linux | windows |
 |--|--|--|--|
-| x86_64 | ✔ | ✔ | soon |
+| x86_64 | ✔ | ✔ | ✔ |
 | arm64 | ✔ | WIP | WIP |
 
 ## How to install

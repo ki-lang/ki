@@ -60,15 +60,15 @@ win_dist_from_linux:
 	mkdir -p dist/win-x64/lib
 	rm -rf dist/win-x64/lib
 	cp -r lib dist/win-x64/
-	cp -r src/scripts/install.sh dist/win-x64/
-	sed -i 's/__VERSION__/$(VERSION)/' dist/win-x64/install.sh
+	cp -r src/scripts/install.bat dist/win-x64/
+	sed -i 's/__VERSION__/$(VERSION)/' dist/win-x64/install.bat
 	#-I$(CURDIR)/dist/win-sdk-x64/curl/include -L$(CURDIR)/dist/win-sdk-x64/curl/lib \
 	/mnt/c/msys64/mingw64/bin/clang.exe -g -O2 -pthread -static -o dist/win-x64/ki \
 	`/mnt/c/msys64/mingw64/bin/llvm-config.exe --cflags` \
 	$(SRC) \
 	`/mnt/c/msys64/mingw64/bin/llvm-config.exe --ldflags --system-libs --libs --link-static all-targets` \
  	-lcurl -lm -lz -lstdc++ -lpthread
-	cd dist/win-x64 && tar -czf ../ki-$(VERSION)-win-x64.tar.gz ki.exe lib install.sh
+	cd dist/win-x64 && tar -czf ../ki-$(VERSION)-win-x64.tar.gz ki.exe lib install.bat
 
 macos_dist_from_linux:
 	mkdir -p dist/macos-x64/lib

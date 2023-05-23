@@ -193,7 +193,7 @@ class Connection {
 				this.respond(Response.error(404));
 				return;
             };
-            this.send_file(stream, null);
+            this.send_file(stream, resp.filename);
 			return;
 		}
 

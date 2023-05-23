@@ -5,6 +5,7 @@ class Response {
 	public status: u32 = 200;
 	public body: String = "";
 	public filepath: ?String = null;
+	public filename: ?String = null;
 	public content_type: String = "text/plain";
 	public headers: ?Map[String] = null;
 
@@ -32,8 +33,8 @@ class Response {
 	public static func error(code: u32) Response {
 		return Response{ status: code };
 	}
-	public static func file(path: *String) Response {
-		return Response{ filepath: path + "" };
+	public static func file(path: *String, filename: ?String  = null) Response {
+		return Response{ filepath: path + "", filename: filename };
 	}
 
 	public func compile(buf: *utils:ByteBuffer) void {
