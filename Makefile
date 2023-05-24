@@ -80,7 +80,7 @@ dist_win_x64: $(OBJECTS_WIN_X64)
 	cp -r dist/libraries/win-llvm-15-x64/lld.exe dist/dists/win-x64/lld-link.exe
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/win-x64/install.bat
 
-	$(LCC) --target=x86_64-pc-windows-msvc -fuse-ld=lld \
+	$(LCC) --target=x86_64-pc-windows-msvc -fuse-ld=lld -static \
 	-L$(CURDIR)/dist/toolchains/win-sdk/Lib/10.0.22621.0/ucrt/x64 \
 	-L$(CURDIR)/dist/toolchains/win-sdk/Lib/10.0.22621.0/um/x64 \
 	-I$(CURDIR)/dist/toolchains/win-sdk/Include/10.0.22621.0/shared \
@@ -111,7 +111,7 @@ dist_linux_x64: $(OBJECTS_LINUX_X64)
 	cp -r src/scripts/install.sh dist/dists/linux-x64/
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/linux-x64/install.sh
 
-	$(LCC) --target=x86_64-unknown-linux-gnu -fuse-ld=lld \
+	$(LCC) --target=x86_64-unknown-linux-gnu -fuse-ld=lld -static \
 	--sysroot=$(CURDIR)/dist/toolchains/linux-x64/x86_64-buildroot-linux-gnu/sysroot \
 	-L$(CURDIR)/dist/toolchains/linux-x64/lib \
 	-L$(CURDIR)/dist/libraries/linux-llvm-15-x64/lib \
@@ -136,7 +136,7 @@ dist_linux_arm64: $(OBJECTS_LINUX_ARM64)
 	cp -r src/scripts/install.sh dist/dists/linux-arm64/
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/linux-arm64/install.sh
 
-	$(LCC) --target=aarch64-unknown-linux-gnu -fuse-ld=lld \
+	$(LCC) --target=aarch64-unknown-linux-gnu -fuse-ld=lld -static \
 	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64/aarch64-buildroot-linux-gnu/sysroot \
 	-L$(CURDIR)/dist/libraries/linux-llvm-15-arm64/lib \
 	-o dist/dists/linux-arm64/ki \
