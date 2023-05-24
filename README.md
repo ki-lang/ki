@@ -1,7 +1,7 @@
 
 <div align="center">
 <p>
-    <img width="120" src="https://raw.githubusercontent.com/ki-lang/ki/master/misc/logo-edges.png">
+    <img width="120" src="https://raw.githubusercontent.com/ki-lang/ki/master/misc/ki-logo-circle.png">
 </p>
 </div>
 
