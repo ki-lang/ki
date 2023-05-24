@@ -9,15 +9,15 @@ LIN_ARM64="$TC_DIR/linux-arm64"
 MAC_ANY="$TC_DIR/macos-11-3"
 WIN_ANY="$TC_DIR/win-sdk"
 
+LLVM_LIN_X64="$LIB_DIR/linux-llvm-15-x64"
 LLVM_WIN_X64="$LIB_DIR/win-llvm-15-x64"
 
 if [ ! -d "$LIN_X64" ]; then
 	echo "Download linux-x64 toolchain"
 	cd $TC_DIR
-	wget "https://toolchains.bootlin.com/downloads/releases/toolchains/x86-64/tarballs/x86-64--glibc--stable-2022.08-1.tar.bz2"
-	tar -xf "x86-64--glibc--stable-2022.08-1.tar.bz2" --checkpoint=.100
-	rm "x86-64--glibc--stable-2022.08-1.tar.bz2"
-	mv "x86-64--glibc--stable-2022.08-1" "linux-x64" 
+	wget "https://archive.ki-lang.dev/linux-x64.tar.gz"
+	tar -xf "linux-x64.tar.gz" --checkpoint=.100
+	rm "linux-x64.tar.gz"
 fi
 
 if [ ! -d "$LIN_ARM64" ]; then
@@ -44,6 +44,14 @@ if [ ! -d "$WIN_ANY" ]; then
 	wget "https://archive.ki-lang.dev/win-sdk.tar.gz"
 	tar -xf "win-sdk.tar.gz" --checkpoint=.100
 	rm "win-sdk.tar.gz"
+fi
+
+if [ ! -d "$LLVM_LIN_X64" ]; then
+	echo "Download LLVM linux x64"
+	cd $LIB_DIR
+	wget "https://archive.ki-lang.dev/linux-llvm-15-x64.tar.gz"
+	tar -xf "linux-llvm-15-x64.tar.gz" --checkpoint=.100
+	rm "linux-llvm-15-x64.tar.gz"
 fi
 
 if [ ! -d "$LLVM_WIN_X64" ]; then
