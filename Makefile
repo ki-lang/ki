@@ -30,6 +30,7 @@ SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/build/*.c) $(wil
 OBJECTS=$(patsubst %.c, debug/build/%.o, $(SRC))
 OBJECTS_WIN_X64=$(patsubst %.c, debug/build-win-x64/%.o, $(SRC))
 OBJECTS_LINUX_X64=$(patsubst %.c, debug/build-linux-x64/%.o, $(SRC))
+OBJECTS_LINUX_ARM64=$(patsubst %.c, debug/build-linux-arm64/%.o, $(SRC))
 TARGET=ki
 
 ki: $(OBJECTS)
@@ -40,7 +41,7 @@ $(OBJECTS): debug/build/%.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
-	rm -f ki $(OBJECTS) $(OBJECTS_WIN_X64)
+	rm -f ki $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64)
 
 # STATIC DIST BULDS
 
@@ -164,6 +165,8 @@ dist_linux_x64: $(OBJECTS_LINUX_X64)
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/linux-x64/install.sh
 
 	$(LCC) -arch=x86_64 --target=x86_64-unknown-linux-gnu -fuse-ld=lld \
+	--sysroot=$(CURDIR)/dist/toolchains/linux-x64/x86_64-buildroot-linux-gnu/sysroot \
+	-L$(CURDIR)/dist/toolchains/linux-x64/lib \
 	-L$(CURDIR)/dist/libraries/linux-llvm-15-x64/lib \
 	-o dist/dists/linux-x64/ki \
 	$(OBJECTS_LINUX_X64) \
@@ -172,4 +175,27 @@ dist_linux_x64: $(OBJECTS_LINUX_X64)
 	cd dist/dists/linux-x64 && rm -f ../ki-$(VERSION)-linux-x64.tar.gz && tar -czf ../ki-$(VERSION)-linux-x64.tar.gz ki lib install.sh
 
 
-.PHONY: clean dist_setup dist_win_x64 dist_linux_x64
+$(OBJECTS_LINUX_ARM64): debug/build-linux-arm64/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) -g -O2 -arch=aarch64 --target=aarch64-unknown-linux-gnu \
+	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64/aarch64-buildroot-linux-gnu/sysroot \
+	-I$(CURDIR)/dist/libraries/linux-llvm-15-arm64/include \
+	-o $@ -c $<
+
+dist_linux_arm64: $(OBJECTS_LINUX_ARM64)
+	mkdir -p dist/dists/linux-arm64
+	rm -rf dist/dists/linux-arm64/*
+	cp -r lib dist/dists/linux-arm64/
+	cp -r src/scripts/install.sh dist/dists/linux-arm64/
+	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/linux-arm64/install.sh
+
+	$(LCC) -arch=aarch64 --target=aarch64-unknown-linux-gnu -fuse-ld=lld \
+	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64/aarch64-buildroot-linux-gnu/sysroot \
+	-L$(CURDIR)/dist/libraries/linux-llvm-15-arm64/lib \
+	-o dist/dists/linux-arm64/ki \
+	$(OBJECTS_LINUX_ARM64) \
+	$(LLVM_LIBS_LINUX) -lc -lstdc++ -lrt -ldl -lpthread -lm -lz -ltinfo -lxml2
+
+	cd dist/dists/linux-arm64 && rm -f ../ki-$(VERSION)-linux-arm64.tar.gz && tar -czf ../ki-$(VERSION)-linux-arm64.tar.gz ki lib install.sh
+
+.PHONY: clean dist_setup dist_win_x64 dist_linux_x64 dist_linux_arm64
