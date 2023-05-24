@@ -10,7 +10,13 @@ MAC_ANY="$TC_DIR/macos-11-3"
 WIN_ANY="$TC_DIR/win-sdk"
 
 LLVM_LIN_X64="$LIB_DIR/linux-llvm-15-x64"
+LLVM_MAC_X64="$LIB_DIR/macos-llvm-15-x64"
+LLVM_MAC_ARM64="$LIB_DIR/macos-llvm-15-arm64"
 LLVM_WIN_X64="$LIB_DIR/win-llvm-15-x64"
+
+##############
+# Toolchains
+##############
 
 if [ ! -d "$LIN_X64" ]; then
 	echo "Download linux-x64 toolchain"
@@ -46,12 +52,32 @@ if [ ! -d "$WIN_ANY" ]; then
 	rm "win-sdk.tar.gz"
 fi
 
+#########
+# LLVM
+#########
+
 if [ ! -d "$LLVM_LIN_X64" ]; then
 	echo "Download LLVM linux x64"
 	cd $LIB_DIR
 	wget "https://archive.ki-lang.dev/linux-llvm-15-x64.tar.gz"
 	tar -xf "linux-llvm-15-x64.tar.gz" --checkpoint=.100
 	rm "linux-llvm-15-x64.tar.gz"
+fi
+
+if [ ! -d "$LLVM_MAC_X64" ]; then
+	echo "Download LLVM macos x64"
+	cd $LIB_DIR
+	wget "https://archive.ki-lang.dev/macos-llvm-15-x64.tar.gz"
+	tar -xf "macos-llvm-15-x64.tar.gz" --checkpoint=.100
+	rm "macos-llvm-15-x64.tar.gz"
+fi
+
+if [ ! -d "$LLVM_MAC_ARM64" ]; then
+	echo "Download LLVM macos arm64"
+	cd $LIB_DIR
+	wget "https://archive.ki-lang.dev/macos-llvm-15-arm64.tar.gz"
+	tar -xf "macos-llvm-15-arm64.tar.gz" --checkpoint=.100
+	rm "macos-llvm-15-arm64.tar.gz"
 fi
 
 if [ ! -d "$LLVM_WIN_X64" ]; then
