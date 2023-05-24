@@ -2,3 +2,7 @@
 *
 !.gitignore
 !README.md
+!toolchains
+!deps
+!libraries
+!dists

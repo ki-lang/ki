@@ -39,67 +39,68 @@ clean:
 # STATIC DIST BULDS
 
 linux_dist_from_linux:
-	mkdir -p dist/linux-x64/lib
-	rm -rf dist/linux-x64/lib
-	cp -r lib dist/linux-x64/
-	cp -r src/scripts/install.sh dist/linux-x64/
-	sed -i 's/__VERSION__/$(VERSION)/' dist/linux-x64/install.sh
-	$(LCC) $(CFLAGS) -o dist/linux-x64/ki $(SRC) $(LINK_STATIC)
-	cd dist/linux-x64 && tar -czf ../ki-$(VERSION)-linux-x64.tar.gz ki lib install.sh
+	mkdir -p dist/dists/linux-x64/lib
+	rm -rf dist/dists/linux-x64/lib
+	cp -r lib dist/dists/linux-x64/
+	cp -r src/scripts/install.sh dist/dists/linux-x64/
+	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/linux-x64/install.sh
+	$(LCC) $(CFLAGS) -o dist/dists/linux-x64/ki $(SRC) $(LINK_STATIC)
+	cd dist/dists/linux-x64 && tar -czf ../ki-$(VERSION)-linux-x64.tar.gz ki lib install.sh
 
 linux_arm_dist_from_linux:
-	mkdir -p dist/linux-arm64/lib
-	rm -rf dist/linux-arm64/lib
-	cp -r lib dist/linux-arm64/
-	cp -r src/scripts/install.sh dist/linux-arm64/
-	sed -i 's/__VERSION__/$(VERSION)/' dist/linux-arm64/install.sh
-	aarch64-linux-gnu-gcc $(CFLAGS) -o dist/linux-arm64/ki $(SRC) $(LINK_STATIC)
-	cd dist/linux-arm64 && tar -czf ../ki-$(VERSION)-linux-arm64.tar.gz ki lib install.sh
+	mkdir -p dist/dists/linux-arm64/lib
+	rm -rf dist/dists/linux-arm64/lib
+	cp -r lib dist/dists/linux-arm64/
+	cp -r src/scripts/install.sh dist/dists/linux-arm64/
+	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/linux-arm64/install.sh
+	aarch64-linux-gnu-gcc $(CFLAGS) -o dist/dists/linux-arm64/ki $(SRC) $(LINK_STATIC)
+	cd dist/dists/linux-arm64 && tar -czf ../ki-$(VERSION)-linux-arm64.tar.gz ki lib install.sh
 
 win_dist_from_linux:
-	mkdir -p dist/win-x64/lib
-	rm -rf dist/win-x64/lib
-	cp -r lib dist/win-x64/
-	cp -r src/scripts/install.bat dist/win-x64/
-	sed -i 's/__VERSION__/$(VERSION)/' dist/win-x64/install.bat
-	#-I$(CURDIR)/dist/win-sdk-x64/curl/include -L$(CURDIR)/dist/win-sdk-x64/curl/lib \
-	/mnt/c/msys64/mingw64/bin/clang.exe -g -O2 -pthread -static -o dist/win-x64/ki \
+	mkdir -p dist/dists/win-x64/lib
+	rm -rf dist/dists/win-x64/lib
+	cp -r lib dist/dists/win-x64/
+	cp -r src/scripts/install.bat dist/dists/win-x64/
+	cp -r dist/deps/lld.exe dist/dists/win-x64/lld-link.exe
+	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/win-x64/install.bat
+	/mnt/c/msys64/mingw64/bin/clang.exe -g -O2 -pthread -static -o dist/dists/win-x64/ki \
 	`/mnt/c/msys64/mingw64/bin/llvm-config.exe --cflags` \
 	$(SRC) \
 	`/mnt/c/msys64/mingw64/bin/llvm-config.exe --ldflags --system-libs --libs --link-static all-targets` \
  	-lcurl -lm -lz -lstdc++ -lpthread
-	cd dist/win-x64 && tar -czf ../ki-$(VERSION)-win-x64.tar.gz ki.exe lib install.bat
+	cd dist/dists/win-x64 && zip -r ../ki-$(VERSION)-win-x64.zip ki.exe lib install.bat lld-link.exe
 
 macos_dist_from_linux:
-	mkdir -p dist/macos-x64/lib
-	rm -rf dist/macos-x64/lib
-	cp -r lib dist/macos-x64/
-	cp -r src/scripts/install.sh dist/macos-x64/
-	sed -i 's/__VERSION__/$(VERSION)/' dist/macos-x64/install.sh
-	export SDKROOT=$(CURDIR)/dist/macos-sdk-11-3 && \
+	mkdir -p dist/dists/macos-x64/lib
+	rm -rf dist/dists/macos-x64/lib
+	cp -r lib dist/dists/macos-x64/
+	cp -r src/scripts/install.sh dist/dists/macos-x64/
+	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/macos-x64/install.sh
+	export SDKROOT=$(CURDIR)/dist/toolchains/macos-sdk-11-3 && \
 	export MACOSX_DEPLOYMENT_TARGET=11.6 && \
 	$(LCC) -g -O2 -pthread -arch=x86_64 --target=x86_64-apple-darwin-macho \
-	--sysroot=$(CURDIR)/dist/macos-sdk-11-3 -fuse-ld=lld \
-	-I$(CURDIR)/dist/macos-llvm-15-x64/include -L$(CURDIR)/dist/macos-llvm-15-x64/lib \
-	-o dist/macos-x64/ki $(SRC) -Wl,-platform_version,macos,11.6.0,11.3 \
+	--sysroot=$(CURDIR)/dist/toolchains/macos-sdk-11-3 -fuse-ld=lld \
+	-I$(CURDIR)/dist/libraries/macos-llvm-15-x64/include -L$(CURDIR)/dist/libraries/macos-llvm-15-x64/lib \
+	-o dist/dists/macos-x64/ki $(SRC) -Wl,-platform_version,macos,11.6.0,11.3 \
 	$(LINK_LIBS) -lcurses -lc++
-	cd dist/macos-x64 && tar -czf ../ki-$(VERSION)-macos-x64.tar.gz ki lib install.sh
+	cd dist/dists/macos-x64 && tar -czf ../ki-$(VERSION)-macos-x64.tar.gz ki lib install.sh
 
 macos_arm_dist_from_linux: 
-	mkdir -p dist/macos-arm64/lib
-	rm -rf dist/macos-arm64/lib
-	cp -r lib dist/macos-arm64/
-	cp -r src/scripts/install.sh dist/macos-arm64/
-	sed -i 's/__VERSION__/$(VERSION)/' dist/macos-arm64/install.sh
-	export SDKROOT=$(CURDIR)/dist/macos-sdk-11-3 && \
+	mkdir -p dist/dists/macos-arm64/lib
+	rm -rf dist/dists/macos-arm64/lib
+	cp -r lib dist/dists/macos-arm64/
+	cp -r src/scripts/install.sh dist/dists/macos-arm64/
+	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/macos-arm64/install.sh
+	export SDKROOT=$(CURDIR)/dist/toolchains/macos-sdk-11-3 && \
 	export MACOSX_DEPLOYMENT_TARGET=11.6 && \
 	$(LCC) -g -O2 -pthread -arch arm64 --target=arm64-apple-darwin-macho \
-	--sysroot=$(CURDIR)/dist/macos-sdk-11-3 -fuse-ld=lld -I$(CURDIR)/dist/macos-llvm-15-arm64/include -L$(CURDIR)/dist/macos-llvm-15-arm64/lib \
-	-o dist/macos-arm64/ki $(SRC) -Wl,-platform_version,macos,11.6.0,11.3 \
+	--sysroot=$(CURDIR)/dist/toolchains/macos-sdk-11-3 -fuse-ld=lld \
+	-I$(CURDIR)/dist/libraries/macos-llvm-15-arm64/include -L$(CURDIR)/dist/libraries/macos-llvm-15-arm64/lib \
+	-o dist/dists/macos-arm64/ki $(SRC) -Wl,-platform_version,macos,11.6.0,11.3 \
 	$(LINK_LIBS) -lcurses -lc++
-	cd dist/macos-arm64 && tar -czf ../ki-$(VERSION)-macos-arm64.tar.gz ki lib install.sh
+	cd dist/dists/macos-arm64 && tar -czf ../ki-$(VERSION)-macos-arm64.tar.gz ki lib install.sh
 
-dists_from_linux: linux_dist_from_linux macos_dist_from_linux macos_arm_dist_from_linux
+dists_from_linux: linux_dist_from_linux win_dist_from_linux macos_dist_from_linux macos_arm_dist_from_linux
 #
 
 .PHONY: clean linux macos linux_dist
