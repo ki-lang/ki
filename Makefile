@@ -23,8 +23,6 @@ LLVM_LIBS=-lLLVMOption -lLLVMObjCARCOpts -lLLVMMCJIT -lLLVMInterpreter -lLLVMExe
 
 LLVM_LIBS_LINUX=-lLLVMM68kDisassembler -lLLVMM68kAsmParser -lLLVMM68kCodeGen -lLLVMM68kDesc -lLLVMM68kInfo -lLLVMXCoreDisassembler -lLLVMXCoreCodeGen -lLLVMXCoreDesc -lLLVMXCoreInfo -lLLVMX86TargetMCA -lLLVMX86Disassembler -lLLVMX86AsmParser -lLLVMX86CodeGen -lLLVMX86Desc -lLLVMX86Info -lLLVMWebAssemblyDisassembler -lLLVMWebAssemblyAsmParser -lLLVMWebAssemblyCodeGen -lLLVMWebAssemblyDesc -lLLVMWebAssemblyUtils -lLLVMWebAssemblyInfo -lLLVMVEDisassembler -lLLVMVEAsmParser -lLLVMVECodeGen -lLLVMVEDesc -lLLVMVEInfo -lLLVMSystemZDisassembler -lLLVMSystemZAsmParser -lLLVMSystemZCodeGen -lLLVMSystemZDesc -lLLVMSystemZInfo -lLLVMSparcDisassembler -lLLVMSparcAsmParser -lLLVMSparcCodeGen -lLLVMSparcDesc -lLLVMSparcInfo -lLLVMRISCVDisassembler -lLLVMRISCVAsmParser -lLLVMRISCVCodeGen -lLLVMRISCVDesc -lLLVMRISCVInfo -lLLVMPowerPCDisassembler -lLLVMPowerPCAsmParser -lLLVMPowerPCCodeGen -lLLVMPowerPCDesc -lLLVMPowerPCInfo -lLLVMNVPTXCodeGen -lLLVMNVPTXDesc -lLLVMNVPTXInfo -lLLVMMSP430Disassembler -lLLVMMSP430AsmParser -lLLVMMSP430CodeGen -lLLVMMSP430Desc -lLLVMMSP430Info -lLLVMMipsDisassembler -lLLVMMipsAsmParser -lLLVMMipsCodeGen -lLLVMMipsDesc -lLLVMMipsInfo -lLLVMLanaiDisassembler -lLLVMLanaiCodeGen -lLLVMLanaiAsmParser -lLLVMLanaiDesc -lLLVMLanaiInfo -lLLVMHexagonDisassembler -lLLVMHexagonCodeGen -lLLVMHexagonAsmParser -lLLVMHexagonDesc -lLLVMHexagonInfo -lLLVMBPFDisassembler -lLLVMBPFAsmParser -lLLVMBPFCodeGen -lLLVMBPFDesc -lLLVMBPFInfo -lLLVMAVRDisassembler -lLLVMAVRAsmParser -lLLVMAVRCodeGen -lLLVMAVRDesc -lLLVMAVRInfo -lLLVMARMDisassembler -lLLVMARMAsmParser -lLLVMARMCodeGen -lLLVMARMDesc -lLLVMARMUtils -lLLVMARMInfo -lLLVMAMDGPUTargetMCA -lLLVMMCA -lLLVMAMDGPUDisassembler -lLLVMAMDGPUAsmParser -lLLVMAMDGPUCodeGen -lLLVMMIRParser -lLLVMAMDGPUDesc -lLLVMAMDGPUUtils -lLLVMAMDGPUInfo -lLLVMPasses -lLLVMObjCARCOpts -lLLVMCoroutines -lLLVMipo -lLLVMInstrumentation -lLLVMVectorize -lLLVMLinker -lLLVMIRReader -lLLVMAsmParser -lLLVMFrontendOpenMP -lLLVMAArch64Disassembler -lLLVMMCDisassembler -lLLVMAArch64AsmParser -lLLVMAArch64CodeGen -lLLVMCFGuard -lLLVMGlobalISel -lLLVMSelectionDAG -lLLVMAsmPrinter -lLLVMCodeGen -lLLVMTarget -lLLVMScalarOpts -lLLVMInstCombine -lLLVMAggressiveInstCombine -lLLVMTransformUtils -lLLVMBitWriter -lLLVMAnalysis -lLLVMProfileData -lLLVMSymbolize -lLLVMDebugInfoPDB -lLLVMDebugInfoMSF -lLLVMDebugInfoDWARF -lLLVMObject -lLLVMTextAPI -lLLVMMCParser -lLLVMBitReader -lLLVMCore -lLLVMRemarks -lLLVMBitstreamReader -lLLVMAArch64Desc -lLLVMAArch64Utils -lLLVMAArch64Info -lLLVMMC -lLLVMDebugInfoCodeView -lLLVMBinaryFormat -lLLVMSupport -lLLVMDemangle
 
-LINK_LIBS=$(LLVM_LIBS) -lm -lz -lpthread
-
 SRC=$(wildcard src/*.c) $(wildcard src/libs/*.c) $(wildcard src/build/*.c) $(wildcard src/build/LLVM/*.c)
 OBJECTS=$(patsubst %.c, debug/build/%.o, $(SRC))
 OBJECTS_WIN_X64=$(patsubst %.c, debug/build-win-x64/%.o, $(SRC))
@@ -52,7 +50,7 @@ clean:
 dist_setup:
 	dist/toolchains.sh
 
-dist_all: dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos_arm64
+dist_all: dist_win_x64 dist_linux_x64 dist_macos_x64 dist_macos_arm64
 
 ##############
 # WINDOWS
@@ -60,7 +58,7 @@ dist_all: dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos
 
 $(OBJECTS_WIN_X64): debug/build-win-x64/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) -g -O2 -arch=x86_64 --target=x86_64-pc-windows-msvc \
+	$(CC) -g -O2 --target=x86_64-pc-windows-msvc \
 	-fms-compatibility-version=19 -fms-extensions -fdelayed-template-parsing -fexceptions -fno-threadsafe-statics \
 	-mthread-model posix -Wno-msvc-not-found \
 	-DWIN32 -D_WIN32 -D_MT -D_DLL \
@@ -82,7 +80,7 @@ dist_win_x64: $(OBJECTS_WIN_X64)
 	cp -r dist/libraries/win-llvm-15-x64/lld.exe dist/dists/win-x64/lld-link.exe
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/win-x64/install.bat
 
-	$(LCC) -arch=x86_64 --target=x86_64-pc-windows-msvc -fuse-ld=lld \
+	$(LCC) --target=x86_64-pc-windows-msvc -fuse-ld=lld \
 	-L$(CURDIR)/dist/toolchains/win-sdk/Lib/10.0.22621.0/ucrt/x64 \
 	-L$(CURDIR)/dist/toolchains/win-sdk/Lib/10.0.22621.0/um/x64 \
 	-I$(CURDIR)/dist/toolchains/win-sdk/Include/10.0.22621.0/shared \
@@ -101,7 +99,7 @@ dist_win_x64: $(OBJECTS_WIN_X64)
 
 $(OBJECTS_LINUX_X64): debug/build-linux-x64/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) -g -O2 -arch=x86_64 --target=x86_64-unknown-linux-gnu \
+	$(CC) -g -O2 --target=x86_64-unknown-linux-gnu \
 	--sysroot=$(CURDIR)/dist/toolchains/linux-x64/x86_64-buildroot-linux-gnu/sysroot \
 	-I$(CURDIR)/dist/libraries/linux-llvm-15-x64/include \
 	-o $@ -c $<
@@ -113,7 +111,7 @@ dist_linux_x64: $(OBJECTS_LINUX_X64)
 	cp -r src/scripts/install.sh dist/dists/linux-x64/
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/linux-x64/install.sh
 
-	$(LCC) -arch=x86_64 --target=x86_64-unknown-linux-gnu -fuse-ld=lld \
+	$(LCC) --target=x86_64-unknown-linux-gnu -fuse-ld=lld \
 	--sysroot=$(CURDIR)/dist/toolchains/linux-x64/x86_64-buildroot-linux-gnu/sysroot \
 	-L$(CURDIR)/dist/toolchains/linux-x64/lib \
 	-L$(CURDIR)/dist/libraries/linux-llvm-15-x64/lib \
@@ -126,7 +124,7 @@ dist_linux_x64: $(OBJECTS_LINUX_X64)
 
 $(OBJECTS_LINUX_ARM64): debug/build-linux-arm64/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) -g -O2 -arch=aarch64 --target=aarch64-unknown-linux-gnu \
+	$(CC) -g -O2 --target=aarch64-unknown-linux-gnu \
 	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64/aarch64-buildroot-linux-gnu/sysroot \
 	-I$(CURDIR)/dist/libraries/linux-llvm-15-arm64/include \
 	-o $@ -c $<
@@ -138,7 +136,7 @@ dist_linux_arm64: $(OBJECTS_LINUX_ARM64)
 	cp -r src/scripts/install.sh dist/dists/linux-arm64/
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/linux-arm64/install.sh
 
-	$(LCC) -arch=aarch64 --target=aarch64-unknown-linux-gnu -fuse-ld=lld \
+	$(LCC) --target=aarch64-unknown-linux-gnu -fuse-ld=lld \
 	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64/aarch64-buildroot-linux-gnu/sysroot \
 	-L$(CURDIR)/dist/libraries/linux-llvm-15-arm64/lib \
 	-o dist/dists/linux-arm64/ki \
