@@ -52,6 +52,12 @@ clean:
 dist_setup:
 	dist/toolchains.sh
 
+dist_all: dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos_arm64
+
+##############
+# WINDOWS
+##############
+
 $(OBJECTS_WIN_X64): debug/build-win-x64/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) -g -O2 -arch=x86_64 --target=x86_64-pc-windows-msvc \
@@ -88,6 +94,10 @@ dist_win_x64: $(OBJECTS_WIN_X64)
 	$(LLVM_LIBS) -nostdlib -lmsvcrt -Wno-msvc-not-found
 
 	cd dist/dists/win-x64 && rm -f ../ki-$(VERSION)-win-x64.zip && zip -r ../ki-$(VERSION)-win-x64.zip ki.exe lib install.bat lld-link.exe
+
+##############
+# LINUX
+##############
 
 $(OBJECTS_LINUX_X64): debug/build-linux-x64/%.o: %.c
 	@mkdir -p $(@D)
@@ -137,6 +147,9 @@ dist_linux_arm64: $(OBJECTS_LINUX_ARM64)
 
 	cd dist/dists/linux-arm64 && rm -f ../ki-$(VERSION)-linux-arm64.tar.gz && tar -czf ../ki-$(VERSION)-linux-arm64.tar.gz ki lib install.sh
 
+##############
+# MACOS
+##############
 
 $(OBJECTS_MACOS_X64): debug/build-macos-x64/%.o: %.c
 	@mkdir -p $(@D)
@@ -191,6 +204,6 @@ dist_macos_arm64: $(OBJECTS_MACOS_ARM64)
 
 	cd dist/dists/macos-arm64 && rm -f ../ki-$(VERSION)-macos-arm64.tar.gz && tar -czf ../ki-$(VERSION)-macos-arm64.tar.gz ki lib install.sh
 
-dist_all: dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos_arm64
+##############
 
 .PHONY: clean dist_setup dist_all dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos_arm64
