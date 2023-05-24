@@ -37,6 +37,7 @@ char *rand_string(char *str, int size) {
     return str;
 }
 
+#ifndef WIN32
 int atoi(const char *str) {
     int num = 0;
     int i = 0;
@@ -53,6 +54,7 @@ int atoi(const char *str) {
         num = -1 * num;
     return num;
 }
+#endif
 
 int hex2int(char *hex) {
     int val = 0;
@@ -73,6 +75,12 @@ int hex2int(char *hex) {
 }
 
 void sleep_ns(unsigned int ns) {
+#ifdef WIN32
+    unsigned int ms = ns / 1000;
+    if (ms == 0)
+        ms = 1;
+    Sleep(ms);
+#else
     //
     struct timespec ts;
     int res;
@@ -83,6 +91,7 @@ void sleep_ns(unsigned int ns) {
     do {
         res = nanosleep(&ts, &ts);
     } while (res && errno == EINTR);
+#endif
 }
 
 void simple_hash(char *content_, char *buf_) {

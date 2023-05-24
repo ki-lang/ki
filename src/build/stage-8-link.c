@@ -44,8 +44,16 @@ void stage_8(Build *b) {
     Array *o_files = array_make(b->alc, 20);
     Array *threads = array_make(b->alc, 20);
 
+#ifdef WIN32
+    LARGE_INTEGER frequency;
+    LARGE_INTEGER start;
+    LARGE_INTEGER end;
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&start);
+#else
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
+#endif
 
     for (int i = 0; i < b->packages->length; i++) {
         Pkc *pkc = array_get_index(b->packages, i);
@@ -76,7 +84,6 @@ void stage_8(Build *b) {
                     printf("⚙ Compile o file: %s\n", nsc->path_o);
                 }
 
-                pthread_t *thr = al(b->alc, sizeof(pthread_t));
                 struct CompileData *data = al(b->alc, sizeof(struct CompileData));
                 data->b = b;
                 data->ir_files = ir_files;
@@ -85,13 +92,24 @@ void stage_8(Build *b) {
                 llvm_init(b, data->target);
                 // stage_8_compile_o((void *)data);
 
+#ifdef WIN32
+                if (threads->length >= 16) {
+                    // Wait for the first thread
+                    void *thr = array_pop_first(threads);
+                    WaitForSingleObject(thr, INFINITE);
+                }
+
+                void *thr = CreateThread(NULL, 0, stage_8_compile_o, (void *)data, 0, NULL);
+#else
                 if (threads->length >= 16) {
                     // Wait for the first thread
                     pthread_t *thr = array_pop_first(threads);
                     pthread_join(*thr, NULL);
                 }
 
+                pthread_t *thr = al(b->alc, sizeof(pthread_t));
                 pthread_create(thr, NULL, stage_8_compile_o, (void *)data);
+#endif
 
                 array_push(threads, thr);
             }
@@ -101,13 +119,24 @@ void stage_8(Build *b) {
     }
 
     for (int i = 0; i < threads->length; i++) {
+#ifdef WIN32
+        void *thr = array_get_index(threads, i);
+        WaitForSingleObject(thr, INFINITE);
+#else
         pthread_t *thr = array_get_index(threads, i);
         pthread_join(*thr, NULL);
+#endif
     }
 
+#ifdef WIN32
+    QueryPerformanceCounter(&end);
+    double time_llvm = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
+    QueryPerformanceCounter(&start);
+#else
     gettimeofday(&end, NULL);
     double time_llvm = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
     gettimeofday(&begin, NULL);
+#endif
 
     if (b->verbose > 0) {
         printf("⌚ LLVM build o: %.3fs\n", time_llvm);
@@ -121,8 +150,13 @@ void stage_8(Build *b) {
         stage_8_link(b, o_files);
     }
 
+#ifdef WIN32
+    QueryPerformanceCounter(&end);
+    double time_link = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
+#else
     gettimeofday(&end, NULL);
     double time_link = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
+#endif
 
     if (b->verbose > 0) {
         printf("⌚ Link: %.3fs\n", time_link);
@@ -210,7 +244,10 @@ void *stage_8_compile_o(void *data_) {
     // LLVMStopMultithreaded();
 
     // return NULL;
+
+#ifndef WIN32
     pthread_exit(NULL);
+#endif
 }
 
 void stage_8_optimize(LLVMModuleRef mod) {

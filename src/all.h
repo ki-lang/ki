@@ -9,14 +9,15 @@
 #include <sys/stat.h> // might be linux only?
 #include <sys/time.h>
 // #include <sys/wait.h>
+#include <dirent.h>
+#include <pthread.h>
+#include <unistd.h>
 #endif
 
-#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <math.h>
-#include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -24,7 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "libs/cJSON.h"
 

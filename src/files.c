@@ -203,6 +203,28 @@ char *get_storage_path() {
 
 Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
     Array *result = array_make(alc, 2);
+
+#ifdef WIN32
+    char pattern[KI_PATH_MAX];
+    strcpy(pattern, dir);
+    strcat(pattern, "/*");
+    WIN32_FIND_DATA data;
+    HANDLE hFind = FindFirstFile(pattern, &data); // DIRECTORY
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            bool is_dir = data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+            bool is_file = !is_dir;
+            if (dirs && is_dir) {
+                array_push(result, dups(alc, data.cFileName));
+            } else if (files && is_file) {
+                array_push(result, dups(alc, data.cFileName));
+            }
+        } while (FindNextFile(hFind, &data));
+        FindClose(hFind);
+    } else {
+        printf("Cant read files from dir: %s\n", dir);
+    }
+#else
     DIR *d;
     struct dirent *ent;
     if ((d = opendir(dir)) != NULL) {
@@ -244,6 +266,8 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
         // could not open directory
         printf("Cant read files from dir: %s\n", dir);
     }
+#endif
+
     return result;
 }
 

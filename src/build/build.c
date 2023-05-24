@@ -253,8 +253,16 @@ void cmd_build(int argc, char *argv[]) {
     b->link_static = link_static;
     //
 
+#ifdef WIN32
+    LARGE_INTEGER frequency;
+    LARGE_INTEGER start;
+    LARGE_INTEGER end;
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&start);
+#else
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
+#endif
 
     Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));
     Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
@@ -276,8 +284,12 @@ void cmd_build(int argc, char *argv[]) {
     pkc_load_nsc(pkc_ki, "os", NULL);
 
     //
+#ifdef WIN32
+    void *thr = CreateThread(NULL, 0, io_loop, (void *)b, 0, NULL);
+#else
     pthread_t thr;
     pthread_create(&thr, NULL, io_loop, (void *)b);
+#endif
 
     // Compile ki lib
     compile_loop(b, 5);
@@ -297,8 +309,15 @@ void cmd_build(int argc, char *argv[]) {
         }
     }
 
+#ifdef WIN32
+    QueryPerformanceCounter(&end);
+    double time_ast = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
+    QueryPerformanceCounter(&start);
+#else
     gettimeofday(&end, NULL);
     double time_ast = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
+    gettimeofday(&begin, NULL);
+#endif
 
     if (verbose > 0) {
         printf("⌚ Parse + IR gen: %.3fs\n", time_ast);
@@ -306,8 +325,13 @@ void cmd_build(int argc, char *argv[]) {
 
     stage_8(b);
 
+#ifdef WIN32
+    QueryPerformanceCounter(&end);
+    double time_all = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
+#else
     gettimeofday(&end, NULL);
     double time_all = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
+#endif
 
     if (!run_code || b->verbose > 0) {
         printf("✅ Compiled in: %.3fs\n", time_all);
