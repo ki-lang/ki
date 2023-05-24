@@ -76,10 +76,10 @@ macos_dist_from_linux:
 	cp -r lib dist/dists/macos-x64/
 	cp -r src/scripts/install.sh dist/dists/macos-x64/
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/macos-x64/install.sh
-	export SDKROOT=$(CURDIR)/dist/toolchains/macos-sdk-11-3 && \
+	export SDKROOT=$(CURDIR)/dist/toolchains/macos-11-3 && \
 	export MACOSX_DEPLOYMENT_TARGET=11.6 && \
 	$(LCC) -g -O2 -pthread -arch=x86_64 --target=x86_64-apple-darwin-macho \
-	--sysroot=$(CURDIR)/dist/toolchains/macos-sdk-11-3 -fuse-ld=lld \
+	--sysroot=$(CURDIR)/dist/toolchains/macos-11-3 -fuse-ld=lld \
 	-I$(CURDIR)/dist/libraries/macos-llvm-15-x64/include -L$(CURDIR)/dist/libraries/macos-llvm-15-x64/lib \
 	-o dist/dists/macos-x64/ki $(SRC) -Wl,-platform_version,macos,11.6.0,11.3 \
 	$(LINK_LIBS) -lcurses -lc++
@@ -91,10 +91,10 @@ macos_arm_dist_from_linux:
 	cp -r lib dist/dists/macos-arm64/
 	cp -r src/scripts/install.sh dist/dists/macos-arm64/
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/macos-arm64/install.sh
-	export SDKROOT=$(CURDIR)/dist/toolchains/macos-sdk-11-3 && \
+	export SDKROOT=$(CURDIR)/dist/toolchains/macos-11-3 && \
 	export MACOSX_DEPLOYMENT_TARGET=11.6 && \
 	$(LCC) -g -O2 -pthread -arch arm64 --target=arm64-apple-darwin-macho \
-	--sysroot=$(CURDIR)/dist/toolchains/macos-sdk-11-3 -fuse-ld=lld \
+	--sysroot=$(CURDIR)/dist/toolchains/macos-11-3 -fuse-ld=lld \
 	-I$(CURDIR)/dist/libraries/macos-llvm-15-arm64/include -L$(CURDIR)/dist/libraries/macos-llvm-15-arm64/lib \
 	-o dist/dists/macos-arm64/ki $(SRC) -Wl,-platform_version,macos,11.6.0,11.3 \
 	$(LINK_LIBS) -lcurses -lc++
@@ -102,5 +102,8 @@ macos_arm_dist_from_linux:
 
 dists_from_linux: linux_dist_from_linux win_dist_from_linux macos_dist_from_linux macos_arm_dist_from_linux
 #
+
+dists:
+	dist/toolchains.sh
 
 .PHONY: clean linux macos linux_dist

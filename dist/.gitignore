@@ -6,3 +6,5 @@
 !deps
 !libraries
 !dists
+!toolchains.sh
+
