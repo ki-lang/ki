@@ -37,7 +37,7 @@ $(OBJECTS): debug/build/%.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
-	rm -f ki $(OBJECTS)
+	rm -f ki $(OBJECTS) $(OBJECTS_WIN_X64)
 
 # STATIC DIST BULDS
 
@@ -64,7 +64,7 @@ win_dist_from_linux:
 	rm -rf dist/dists/win-x64/lib
 	cp -r lib dist/dists/win-x64/
 	cp -r src/scripts/install.bat dist/dists/win-x64/
-	cp -r dist/deps/lld.exe dist/dists/win-x64/lld-link.exe
+	cp -r dist/libraries/win-llvm-15-x64/lld.exe dist/dists/win-x64/lld-link.exe
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/win-x64/install.bat
 	/mnt/c/msys64/mingw64/bin/clang.exe -g -O2 -pthread -static -o dist/dists/win-x64/ki \
 	`/mnt/c/msys64/mingw64/bin/llvm-config.exe --cflags` \
@@ -106,12 +106,12 @@ macos_arm_dist_from_linux:
 dists_from_linux: linux_dist_from_linux win_dist_from_linux macos_dist_from_linux macos_arm_dist_from_linux
 #
 
-dists:
+dist_setup:
 	dist/toolchains.sh
 
 $(OBJECTS_WIN_X64): debug/build-win-x64/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) -g -O2 -pthread -arch=x86_64 --target=x86_64-pc-windows-msvc \
+	$(CC) -g -O2 -arch=x86_64 --target=x86_64-pc-windows-msvc \
 	-fms-compatibility-version=19 -fms-extensions -fdelayed-template-parsing -fexceptions -fno-threadsafe-statics \
 	-mthread-model posix -Wno-msvc-not-found \
 	-DWIN32 -D_WIN32 -D_MT -D_DLL \
@@ -125,26 +125,26 @@ $(OBJECTS_WIN_X64): debug/build-win-x64/%.o: %.c
 	-I$(CURDIR)/dist/libraries/win-llvm-15-x64/include \
 	-o $@ -c $<
 
-dist_win: $(OBJECTS_WIN_X64)
-	mkdir -p dist/dists/win-x64/lib
-	rm -rf dist/dists/win-x64/lib
+dist_win_x64: $(OBJECTS_WIN_X64)
+	mkdir -p dist/dists/win-x64
+	rm -rf dist/dists/win-x64/*
 	cp -r lib dist/dists/win-x64/
 	cp -r src/scripts/install.bat dist/dists/win-x64/
-	cp -r dist/deps/lld.exe dist/dists/win-x64/lld-link.exe
+	cp -r dist/libraries/win-llvm-15-x64/lld.exe dist/dists/win-x64/lld-link.exe
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/win-x64/install.bat
 
-	$(LCC) -g -O2 -pthread -arch=x86_64 --target=x86_64-pc-windows-msvc -fuse-ld=lld \
-	-I$(CURDIR)/dist/toolchains/win-sdk/Include/10.0.22621.0/ucrt -L$(CURDIR)/dist/toolchains/win-sdk/Lib/10.0.22621.0/ucrt/x64 \
-	-I$(CURDIR)/dist/toolchains/win-sdk/Include/10.0.22621.0/um -L$(CURDIR)/dist/toolchains/win-sdk/Lib/10.0.22621.0/um/x64 \
+	$(LCC) -arch=x86_64 --target=x86_64-pc-windows-msvc -fuse-ld=lld \
+	-L$(CURDIR)/dist/toolchains/win-sdk/Lib/10.0.22621.0/ucrt/x64 \
+	-L$(CURDIR)/dist/toolchains/win-sdk/Lib/10.0.22621.0/um/x64 \
 	-I$(CURDIR)/dist/toolchains/win-sdk/Include/10.0.22621.0/shared \
-	-I$(CURDIR)/dist/toolchains/win-sdk/MSVC/14.36.32532/include -L$(CURDIR)/dist/toolchains/win-sdk/MSVC/14.36.32532/lib/x64 \
-	-I$(CURDIR)/dist/libraries/win-llvm-15-x64/include -L$(CURDIR)/dist/libraries/win-llvm-15-x64/lib \
+	-L$(CURDIR)/dist/toolchains/win-sdk/MSVC/14.36.32532/lib/x64 \
+	-L$(CURDIR)/dist/libraries/win-llvm-15-x64/lib \
 	-Wl,-machine:x64 \
 	-o dist/dists/win-x64/ki.exe \
 	$(OBJECTS_WIN_X64) \
 	$(LLVM_LIBS) -nostdlib -lmsvcrt -Wno-msvc-not-found  \
 
-	cd dist/dists/win-x64 && zip -r ../ki-$(VERSION)-win-x64.zip ki.exe lib install.bat lld-link.exe
+	cd dist/dists/win-x64 && rm -f ../ki-$(VERSION)-win-x64.zip && zip -r ../ki-$(VERSION)-win-x64.zip ki.exe lib install.bat lld-link.exe
 
 
-.PHONY: clean linux macos linux_dist
+.PHONY: clean dist_setup dist_win_x64
