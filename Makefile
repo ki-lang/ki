@@ -198,4 +198,7 @@ dist_linux_arm64: $(OBJECTS_LINUX_ARM64)
 
 	cd dist/dists/linux-arm64 && rm -f ../ki-$(VERSION)-linux-arm64.tar.gz && tar -czf ../ki-$(VERSION)-linux-arm64.tar.gz ki lib install.sh
 
-.PHONY: clean dist_setup dist_win_x64 dist_linux_x64 dist_linux_arm64
+
+dist_all: dist_win_x64 dist_linux_x64 dist_linux_arm64
+
+.PHONY: clean dist_setup dist_all dist_win_x64 dist_linux_x64 dist_linux_arm64
