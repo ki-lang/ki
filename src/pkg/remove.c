@@ -6,7 +6,7 @@ void pkg_remove(PkgCmd *pc, char *name) {
     Allocator *alc = pc->alc;
     char *cbuf = pc->char_buf;
 
-    char cwd[PATH_MAX];
+    char cwd[KI_PATH_MAX];
     getcwd(cwd, sizeof(cwd));
     Config *cfg = cfg_load(alc, pc->str_buf, cwd);
     if (cfg == NULL) {

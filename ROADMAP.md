@@ -3,7 +3,7 @@
 
 Feature todo list in order:
 
-- package manager
+- package manager | check name,version in package config + test 'use'
 - main argv/argc
 - testing features
 - debug info
