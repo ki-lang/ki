@@ -312,11 +312,9 @@ void cmd_build(int argc, char *argv[]) {
 #ifdef WIN32
     QueryPerformanceCounter(&end);
     double time_ast = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
-    QueryPerformanceCounter(&start);
 #else
     gettimeofday(&end, NULL);
     double time_ast = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
-    gettimeofday(&begin, NULL);
 #endif
 
     if (verbose > 0) {
