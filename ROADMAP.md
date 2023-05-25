@@ -27,6 +27,7 @@ Feature todo list in order:
 
 ## Maybe
 
+- make ';' optional
 - custom allocators | MyClass{...} @my_alloc
 - defer token
 - interfaces | useful, but we'll have to introduce virtual functions which we try to avoid

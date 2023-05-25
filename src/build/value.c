@@ -913,7 +913,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_err_code) {
         Decl *decl = idf->item;
-        if (get_char(fc, 0) == ':') {
+        if (get_char(fc, 0) == '#') {
             chunk_move(fc->chunk, 1);
             tok(fc, token, true, false);
             Array *errors = decl->type->func_errors;
@@ -1351,6 +1351,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                     char *msg_name = NULL;
 
                     tok_expect(fc, "|", true, true);
+                    tok(fc, token, false, true);
                     // tok(fc, token, false, true);
                     // if (strcmp(token, ",") == 0) {
                     //     tok(fc, token, true, true);
