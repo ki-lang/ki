@@ -913,6 +913,17 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_err_code) {
         Decl *decl = idf->item;
+        if (get_char(fc, 0) == '!') {
+            chunk_move(fc->chunk, 1);
+            tok(fc, token, true, false);
+            Array *errors = decl->type->func_errors;
+            int index = array_find(errors, token, arr_find_str);
+            if (index < 0) {
+                sprintf(fc->sbuf, "The function has no error named '%s'", token);
+                fc_error(fc);
+            }
+            return vgen_vint(alc, index + 1, type_gen(fc->b, alc, "i32"), false);
+        }
         return value_init(alc, v_decl, decl, decl->type);
     }
 
@@ -1338,22 +1349,24 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                     }
                     char *err_name = dups(alc, token);
                     char *msg_name = NULL;
-                    tok(fc, token, false, true);
-                    if (strcmp(token, ",") == 0) {
-                        tok(fc, token, true, true);
-                        if (!is_valid_varname(token)) {
-                            sprintf(fc->sbuf, "Invalid variable name '%s'", token);
-                            fc_error(fc);
-                        }
-                        msg_name = dups(alc, token);
-                        tok_expect(fc, "|", true, true);
-                        tok(fc, token, false, true);
-                    } else if (strcmp(token, "|") == 0) {
-                        tok(fc, token, false, true);
-                    } else {
-                        sprintf(fc->sbuf, "Expected '|' or ',' but found: '%s'", token);
-                        fc_error(fc);
-                    }
+
+                    tok_expect(fc, "|", true, true);
+                    // tok(fc, token, false, true);
+                    // if (strcmp(token, ",") == 0) {
+                    //     tok(fc, token, true, true);
+                    //     if (!is_valid_varname(token)) {
+                    //         sprintf(fc->sbuf, "Invalid variable name '%s'", token);
+                    //         fc_error(fc);
+                    //     }
+                    //     msg_name = dups(alc, token);
+                    //     tok_expect(fc, "|", true, true);
+                    //     tok(fc, token, false, true);
+                    // } else if (strcmp(token, "|") == 0) {
+                    //     tok(fc, token, false, true);
+                    // } else {
+                    //     sprintf(fc->sbuf, "Expected '|' or ',' but found: '%s'", token);
+                    //     fc_error(fc);
+                    // }
 
                     Type *code_type = type_gen(fc->b, alc, "i32");
                     code_type->func_errors = errors;

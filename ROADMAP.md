@@ -3,13 +3,13 @@
 
 Feature todo list in order:
 
-- compare errors
 - package manager
 - debug info
 - main argv/argc
 - testing features
 
 - unions
+- add a message to your errors
 - install global packages + "bin" setting in ki.json to place binaries in ~/.ki/bin
 - access type 'namespace'
 - declare functions for classes/structs from other libraries
@@ -33,6 +33,7 @@ Feature todo list in order:
 
 ## Done
 
+- compare errors
 - cross compiling
 - swap token
 - Rework type system, ownership by default, & for references and * for borrows
