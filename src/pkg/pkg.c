@@ -39,10 +39,14 @@ void cmd_pkg(int argc, char *argv[]) {
             alias = array_get_index(args, 5);
         }
 
-        printf("Adding package: %s\n", name);
         pkg_add(pc, name, version, alias);
 
     } else if (strcmp(action, "remove") == 0) {
+        if (args->length < 4) {
+            die("Missing package name");
+        }
+        char *name = array_get_index(args, 3);
+        pkg_remove(pc, name);
     } else if (strcmp(action, "install") == 0) {
         pkg_install(pc);
     } else {

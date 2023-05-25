@@ -98,5 +98,7 @@ void pkg_add(PkgCmd *pc, char *name, char *version, char *alias) {
     cJSON_AddItemToObject(pkgs, alias, pkgob);
     cfg_save(cfg);
 
+    printf("[+] Package added '%s'\n", name);
+
     pkg_install_package(cfg->dir, name, version, cloneurl, hash);
 }

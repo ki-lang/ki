@@ -30,7 +30,7 @@ void help() {
 
     printf(" ki build -h       Build ki code to an executable\n");
     printf(" ki run -h         Build and run ki code\n");
-    // printf(" ki pkg -h         Manage packages\n");
+    printf(" ki pkg -h         Manage packages\n");
 
     printf("\n");
     exit(1);

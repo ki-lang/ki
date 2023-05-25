@@ -42,6 +42,7 @@ Func *ki_get_func(Build *b, char *ns, char *name);
 // Pkg
 void cmd_pkg(int argc, char *argv[]);
 void pkg_add(PkgCmd *pc, char *name, char *version, char *alias);
+void pkg_remove(PkgCmd *pc, char *name);
 void pkg_install_package(char *dir, char *name, char *version, char *clone_url, char *hash);
 void pkg_install(PkgCmd *pc);
 
