@@ -913,7 +913,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_err_code) {
         Decl *decl = idf->item;
-        if (get_char(fc, 0) == '!') {
+        if (get_char(fc, 0) == ':') {
             chunk_move(fc->chunk, 1);
             tok(fc, token, true, false);
             Array *errors = decl->type->func_errors;
