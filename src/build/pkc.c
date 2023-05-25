@@ -101,32 +101,15 @@ Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc) {
 
 void pkc_load_config(Pkc *pkc) {
 
+    Build *b = pkc->b;
+    Allocator *alc = b->alc;
     char *dir = pkc->dir;
-    char path[strlen(dir) + 20];
-    strcpy(path, dir);
-    strcat(path, "/ki.json");
 
-    if (!file_exists(path)) {
+    Config *cfg = cfg_load(alc, b->str_buf, dir);
+    if (!cfg)
         return;
-    }
-
-    Allocator *alc = pkc->b->alc;
-    char *cpath = dups(alc, path);
-
-    Str *buf = pkc->b->str_buf;
-    file_get_contents(buf, cpath);
-    char *content = str_to_chars(alc, buf);
-
-    cJSON *json = cJSON_ParseWithLength(content, buf->length);
-
-    Config *cfg = malloc(sizeof(Config));
-    cfg->path = cpath;
-    cfg->content = content;
-    cfg->json = json;
 
     pkc->config = cfg;
-
-    Build *b = pkc->b;
 
     cJSON *headers = cJSON_GetObjectItemCaseSensitive(cfg->json, "headers");
     if (headers) {
@@ -179,13 +162,6 @@ void pkc_load_config(Pkc *pkc) {
             }
         }
     }
-}
-
-void pkc_cfg_save(Config *cfg) {
-    //
-    char *content = cJSON_Print(cfg->json);
-    write_file(cfg->path, content, false);
-    free(content);
 }
 
 Pkc *pkc_get_sub_package(Pkc *pkc, char *name) {

@@ -20,7 +20,8 @@ void cmd_pkg(int argc, char *argv[]) {
     char *action = array_get_index(args, 2);
     PkgCmd *pc = al(alc, sizeof(PkgCmd));
     pc->alc = alc;
-    pc->sbuf = al(alc, 2000);
+    pc->char_buf = al(alc, 2000);
+    pc->str_buf = str_make(alc, 2000);
 
     if (strcmp(action, "add") == 0) {
         if (args->length < 4) {
@@ -32,14 +33,18 @@ void cmd_pkg(int argc, char *argv[]) {
 
         char *name = array_get_index(args, 3);
         char *version = array_get_index(args, 4);
-        char *local_name = NULL;
+        char *alias = NULL;
 
         if (args->length > 5) {
-            local_name = array_get_index(args, 5);
+            alias = array_get_index(args, 5);
         }
+
+        printf("Adding package: %s\n", name);
+        pkg_add(pc, name, version, alias);
 
     } else if (strcmp(action, "remove") == 0) {
     } else if (strcmp(action, "install") == 0) {
+        pkg_install(pc);
     } else {
         cmd_pkg_help();
     }

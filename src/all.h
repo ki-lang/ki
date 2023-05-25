@@ -14,6 +14,7 @@
 #include <unistd.h>
 #endif
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>

@@ -6,6 +6,8 @@ debug
 .DS_Store
 callgrind.*
 profile.sh
+/ki.json
+/packages
 
 # Prerequisites
 *.d

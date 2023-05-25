@@ -127,7 +127,7 @@ char *github_find_version_hash(GithubPkg *ghub, char *version) {
                 die(msg);
             }
         } else {
-            // Check if head syntax
+            // Check if commit syntax
             if (is_valid_varname(version)) {
                 hash = github_full_commit_hash(ghub, version);
             } else {

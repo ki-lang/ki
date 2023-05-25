@@ -8,6 +8,8 @@ int hex2int(char *hex);
 void sleep_ns(unsigned int ns);
 void simple_hash(char *content, char *buf);
 Array *explode(Allocator *alc, char *part, char *content);
+int system_silent(char *cmd);
+char *strreplace(char *s, const char *s1, const char *s2);
 
 // Syntax
 bool is_alpha_char(char c);
@@ -39,6 +41,14 @@ Func *ki_get_func(Build *b, char *ns, char *name);
 
 // Pkg
 void cmd_pkg(int argc, char *argv[]);
+void pkg_add(PkgCmd *pc, char *name, char *version, char *alias);
+void pkg_install_package(char *dir, char *name, char *version, char *clone_url, char *hash);
+void pkg_install(PkgCmd *pc);
+
+// Config
+Config *cfg_load(Allocator *alc, Str *buf, char *dir);
+bool cfg_has_package(Config *cfg, char *name);
+void cfg_save(Config *cfg);
 
 // Version
 PkgVersion *extract_version(char *content);
@@ -46,6 +56,7 @@ bool is_higher_version_than(PkgVersion *new, PkgVersion *than);
 bool is_same_version(PkgVersion *a, PkgVersion *b);
 
 // Github
+bool pkg_is_github_url(char *name);
 char *github_find_version_hash(GithubPkg *ghub, char *version);
 GithubPkg *github_parse_url(Allocator *alc, char *name);
 char *github_full_commit_hash(GithubPkg *ghub, char *shash);
@@ -63,7 +74,6 @@ void compile_loop(Build *b, int max_stage);
 Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir);
 Nsc *pkc_get_nsc(Pkc *pkc, char *name);
 Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc);
-void pkc_cfg_save(Config *cfg);
 Pkc *pkc_get_sub_package(Pkc *pkc, char *name);
 
 // Nsc

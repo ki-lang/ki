@@ -195,6 +195,7 @@ struct Pkc {
 };
 struct Config {
     char *path;
+    char *dir;
     char *content;
     cJSON *json;
 };
@@ -419,7 +420,8 @@ struct TypeCheck {
 // Pkg
 struct PkgCmd {
     Allocator *alc;
-    char *sbuf;
+    char *char_buf;
+    Str *str_buf;
 };
 
 struct GithubPkg {
