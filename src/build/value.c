@@ -911,6 +911,11 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         return value_handle_idf(fc, alc, scope, id, idf_);
     }
 
+    if (idf->type == idf_err_code) {
+        Decl *decl = idf->item;
+        return value_init(alc, v_decl, decl, decl->type);
+    }
+
     sprintf(fc->sbuf, "Cannot convert identifier to a value: '%s'", id->name);
     fc_error(fc);
     return NULL;
@@ -1318,10 +1323,48 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
             or->else_scope = else_scope;
             or->deref_scope = deref_scope;
             or->value = NULL;
+            or->err_code_decl = NULL;
+            or->err_msg_decl = NULL;
 
             if (strcmp(token, "!!") == 0) {
                 // !!
                 tok(fc, token, false, true);
+
+                if (strcmp(token, "|") == 0) {
+                    tok(fc, token, true, true);
+                    if (!is_valid_varname(token)) {
+                        sprintf(fc->sbuf, "Invalid variable name '%s'", token);
+                        fc_error(fc);
+                    }
+                    char *err_name = dups(alc, token);
+                    char *msg_name = NULL;
+                    tok(fc, token, false, true);
+                    if (strcmp(token, ",") == 0) {
+                        tok(fc, token, true, true);
+                        if (!is_valid_varname(token)) {
+                            sprintf(fc->sbuf, "Invalid variable name '%s'", token);
+                            fc_error(fc);
+                        }
+                        msg_name = dups(alc, token);
+                        tok_expect(fc, "|", true, true);
+                        tok(fc, token, false, true);
+                    } else if (strcmp(token, "|") == 0) {
+                        tok(fc, token, false, true);
+                    } else {
+                        sprintf(fc->sbuf, "Expected '|' or ',' but found: '%s'", token);
+                        fc_error(fc);
+                    }
+
+                    Type *code_type = type_gen(fc->b, alc, "i32");
+                    code_type->func_errors = errors;
+                    Decl *code_decl = decl_init(alc, usage_scope, err_name, code_type, NULL, false);
+                    or->err_code_decl = code_decl;
+                    Idf *idf = idf_init(alc, idf_err_code);
+                    idf->item = code_decl;
+
+                    map_set(usage_scope->identifiers, err_name, idf);
+                }
+
                 bool single_line = strcmp(token, "{") != 0;
                 if (single_line)
                     rtok(fc);

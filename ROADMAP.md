@@ -3,13 +3,13 @@
 
 Feature todo list in order:
 
-- unions
 - compare errors
 - package manager
 - debug info
 - main argv/argc
-
 - testing features
+
+- unions
 - install global packages + "bin" setting in ki.json to place binaries in ~/.ki/bin
 - access type 'namespace'
 - declare functions for classes/structs from other libraries

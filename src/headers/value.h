@@ -132,6 +132,8 @@ struct FCallOr {
     Scope *else_scope;
     Scope *deref_scope;
     Value *value;
+    Decl *err_code_decl;
+    Decl *err_msg_decl;
 };
 struct VFString {
     Array *parts;
