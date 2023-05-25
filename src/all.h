@@ -27,6 +27,7 @@
 #include <time.h>
 
 #include "libs/cJSON.h"
+#include "libs/httpclient.h"
 
 #define KI_PATH_MAX 4096
 #define KI_TOKEN_MAX 256

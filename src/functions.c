@@ -140,3 +140,14 @@ void simple_hash(char *content_, char *buf_) {
     }
     buf[hash_len] = '\0';
 }
+
+Array *explode(Allocator *alc, char *part, char *content) {
+    char *copy = strdup(content);
+    Array *res = array_make(alc, 2);
+    char *token = strtok(copy, part);
+    while (token != NULL) {
+        array_push(res, token);
+        token = strtok(NULL, part);
+    }
+    return res;
+}

@@ -14,6 +14,9 @@ LLVM_MAC_X64="$LIB_DIR/macos-llvm-15-x64"
 LLVM_MAC_ARM64="$LIB_DIR/macos-llvm-15-arm64"
 LLVM_WIN_X64="$LIB_DIR/win-llvm-15-x64"
 
+CURL_LIN_X64="$LIB_DIR/linux-curl-x64"
+CURL_WIN_X64="$LIB_DIR/win-curl-x64"
+
 ##############
 # Toolchains
 ##############
@@ -87,3 +90,29 @@ if [ ! -d "$LLVM_WIN_X64" ]; then
 	tar -xf "win-llvm-15-x64.tar.gz" --checkpoint=.100
 	rm "win-llvm-15-x64.tar.gz"
 fi
+
+
+#########
+# Curl
+#########
+
+if [ ! -d "$CURL_LIN_X64" ]; then
+	echo "Download Curl linux x64"
+	cd $LIB_DIR
+	wget "https://archive.ki-lang.dev/linux-curl-x64.tar.gz"
+	tar -xf "linux-curl-x64.tar.gz" --checkpoint=.100
+	rm "linux-curl-x64.tar.gz"
+fi
+
+if [ ! -d "$CURL_WIN_X64" ]; then
+	echo "Download Curl windows x64"
+	cd $LIB_DIR
+	wget "https://archive.ki-lang.dev/win-curl-x64.tar.gz"
+	tar -xf "win-curl-x64.tar.gz" --checkpoint=.100
+	rm "win-curl-x64.tar.gz"
+fi
+
+
+##############
+
+echo "# All toolchains & libraries are ready"

@@ -15,6 +15,8 @@ int main(int argc, char *argv[]) {
         cmd_build(argc, argv);
     } else if (strcmp(cmd, "run") == 0) {
         cmd_build(argc, argv);
+    } else if (strcmp(cmd, "pkg") == 0) {
+        cmd_pkg(argc, argv);
     } else {
         help();
     }
@@ -28,6 +30,7 @@ void help() {
 
     printf(" ki build -h       Build ki code to an executable\n");
     printf(" ki run -h         Build and run ki code\n");
+    // printf(" ki pkg -h         Manage packages\n");
 
     printf("\n");
     exit(1);

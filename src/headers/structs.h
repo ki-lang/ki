@@ -31,6 +31,11 @@ typedef struct Trait Trait;
 typedef struct Alias Alias;
 typedef struct TypeCheck TypeCheck;
 
+// Pkg
+typedef struct PkgCmd PkgCmd;
+typedef struct GithubPkg GithubPkg;
+typedef struct PkgVersion PkgVersion;
+
 #include "token.h"
 #include "value.h"
 
@@ -409,6 +414,24 @@ struct TypeCheck {
     int type;
     bool borrow;
     bool ref;
+};
+
+// Pkg
+struct PkgCmd {
+    Allocator *alc;
+    char *sbuf;
+};
+
+struct GithubPkg {
+    char *url;
+    char *username;
+    char *pkgname;
+};
+
+struct PkgVersion {
+    int v1;
+    int v2;
+    int v3;
 };
 
 #endif

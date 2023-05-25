@@ -7,6 +7,7 @@ int atoi(const char *str);
 int hex2int(char *hex);
 void sleep_ns(unsigned int ns);
 void simple_hash(char *content, char *buf);
+Array *explode(Allocator *alc, char *part, char *content);
 
 // Syntax
 bool is_alpha_char(char c);
@@ -35,6 +36,19 @@ char *dups(Allocator *alc, char *str);
 void cmd_build(int argc, char **argv);
 Class *ki_get_class(Build *b, char *ns, char *name);
 Func *ki_get_func(Build *b, char *ns, char *name);
+
+// Pkg
+void cmd_pkg(int argc, char *argv[]);
+
+// Version
+PkgVersion *extract_version(char *content);
+bool is_higher_version_than(PkgVersion *new, PkgVersion *than);
+bool is_same_version(PkgVersion *a, PkgVersion *b);
+
+// Github
+char *github_find_version_hash(GithubPkg *ghub, char *version);
+GithubPkg *github_parse_url(Allocator *alc, char *name);
+char *github_full_commit_hash(GithubPkg *ghub, char *shash);
 
 // Chain
 Chain *chain_make(Allocator *alc);

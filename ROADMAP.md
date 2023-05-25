@@ -4,9 +4,12 @@
 Feature todo list in order:
 
 - package manager
-- debug info
 - main argv/argc
 - testing features
+- debug info
+
+- array/map shortcuts
+- closure functions
 
 - unions
 - add a message to your errors
@@ -18,7 +21,6 @@ Feature todo list in order:
 - inline if ... ? ... : ...
 - --watch param to watch for file changes and trigger a build
 - vscode extension
-- closure functions
 - async library
 - multiple iterators
 - calling functions using named arguments
