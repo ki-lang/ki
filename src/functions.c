@@ -161,7 +161,7 @@ int system_silent(char *cmd) {
 #else
     strcat(scmd, " > /dev/null");
 #endif
-    return system(cmd);
+    return system(scmd);
 }
 
 char *strreplace(char *s, const char *s1, const char *s2) {

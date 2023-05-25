@@ -40,8 +40,7 @@ char *github_full_commit_hash(struct GithubPkg *ghub, char *shash) {
     }
     cJSON *sha = cJSON_GetObjectItemCaseSensitive(json, "sha");
     if (sha == NULL) {
-        sprintf(msg, "Full hash not found for: '%s'", shash);
-        die(msg);
+        return NULL;
     }
     char *hash = sha->valuestring;
     return strdup(hash);
@@ -130,6 +129,10 @@ char *github_find_version_hash(GithubPkg *ghub, char *version) {
             // Check if commit syntax
             if (is_valid_varname(version)) {
                 hash = github_full_commit_hash(ghub, version);
+                if (!hash) {
+                    sprintf(msg, "Package version/git-hash not found: '%s'", version);
+                    die(msg);
+                }
             } else {
                 // Invalid syntax
                 sprintf(msg, "Invalid/unknown version syntax '%s'", version);

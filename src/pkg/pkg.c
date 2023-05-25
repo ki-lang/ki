@@ -23,6 +23,11 @@ void cmd_pkg(int argc, char *argv[]) {
     pc->char_buf = al(alc, 2000);
     pc->str_buf = str_make(alc, 2000);
 
+    if (system_silent("git --version") != 0) {
+        sprintf(pc->char_buf, "Is 'git' installed correctly? Could not execute 'git --version'");
+        die(pc->char_buf);
+    }
+
     if (strcmp(action, "add") == 0) {
         if (args->length < 4) {
             die("Missing package name/url");
