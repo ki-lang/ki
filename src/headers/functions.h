@@ -46,6 +46,7 @@ void pkg_add(PkgCmd *pc, char *name, char *version, char *alias);
 void pkg_remove(PkgCmd *pc, char *name);
 bool pkg_install_package(PkgCmd *pc, char *dir, char *name, char *version, char *clone_url, char *hash);
 void pkg_install(PkgCmd *pc);
+void pkg_get_dir(char *packages_dir, char *name, char *buf);
 
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);

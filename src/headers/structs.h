@@ -75,6 +75,7 @@ struct Build {
     //
     char *path_out;
     char *cache_dir;
+    char *pkg_dir;
     char *token;
     char *sbuf;
     //
@@ -91,6 +92,7 @@ struct Build {
     MacroScope *mc;
     //
     Array *packages;
+    Map *packages_by_dir;
     Array *all_ki_files;
     Array *link_dirs;
     Map *link_libs;

@@ -213,6 +213,7 @@ void cmd_build(int argc, char *argv[]) {
     b->verbose = verbose;
     //
     b->packages = array_make(alc, 100);
+    b->packages_by_dir = map_make(alc);
     b->all_ki_files = array_make(alc, 1000);
     b->link_libs = map_make(alc);
     b->link_dirs = array_make(alc, 40);
@@ -266,6 +267,11 @@ void cmd_build(int argc, char *argv[]) {
 
     Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));
     Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
+
+    char *pkg_dir = al(alc, KI_PATH_MAX);
+    strcpy(pkg_dir, pkc_main->dir);
+    strcat(pkg_dir, "/packages");
+    b->pkg_dir = pkg_dir;
 
     char *ki_dir = al(alc, KI_PATH_MAX);
     strcpy(ki_dir, get_binary_dir());

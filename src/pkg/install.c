@@ -52,8 +52,8 @@ void pkg_install(PkgCmd *pc) {
     }
 }
 
-bool pkg_install_package(PkgCmd *pc, char *dir, char *name, char *version, char *clone_url, char *hash) {
-    // Download files
+void pkg_get_dir(char *packages_dir, char *name, char *buf) {
+    //
     char dirname[256];
     strcpy(dirname, name);
     // replace slashes
@@ -67,18 +67,24 @@ bool pkg_install_package(PkgCmd *pc, char *dir, char *name, char *version, char 
         i++;
     }
     strreplace(dirname, "github.com", "github");
+    strcpy(buf, packages_dir);
+    strcat(buf, "/");
+    strcat(buf, dirname);
+}
 
+bool pkg_install_package(PkgCmd *pc, char *dir, char *name, char *version, char *clone_url, char *hash) {
+    // Download files
+    char pkgdir[KI_PATH_MAX];
     char pkgpath[KI_PATH_MAX];
     char versionpath[KI_PATH_MAX];
-    strcpy(pkgpath, dir);
-    strcat(pkgpath, "/packages");
+    strcpy(pkgdir, dir);
+    strcat(pkgdir, "/packages");
 
-    if (!file_exists(pkgpath)) {
-        makedir(pkgpath, 0755);
+    if (!file_exists(pkgdir)) {
+        makedir(pkgdir, 0755);
     }
 
-    strcat(pkgpath, "/");
-    strcat(pkgpath, dirname);
+    pkg_get_dir(pkgdir, name, pkgpath);
 
     if (!file_exists(pkgpath)) {
         makedir(pkgpath, 0755);

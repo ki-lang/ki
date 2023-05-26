@@ -6,7 +6,7 @@ void pkc_load_config(Pkc *pkc);
 Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
     //
     if (!file_exists(dir)) {
-        sprintf(b->sbuf, "Package directory for '%s' not found: '%s'", name, dir);
+        sprintf(b->sbuf, "Package directory for '%s' not found. Directory: '%s'", name, dir);
         die(b->sbuf);
     }
 
@@ -23,6 +23,19 @@ Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
     simple_hash(dir, pkc->hash);
 
     pkc_load_config(pkc);
+
+    if (!name) {
+        // Load name from package config
+        if (pkc->config) {
+            cJSON *json = pkc->config->json;
+            const cJSON *jname = cJSON_GetObjectItemCaseSensitive(json, "name");
+            pkc->name = dups(alc, jname->valuestring);
+        }
+        if (!pkc->name) {
+            sprintf(b->sbuf, "Package in directory '%s' has no name defined", dir);
+            die(b->sbuf);
+        }
+    }
 
     return pkc;
 }
@@ -90,10 +103,10 @@ Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc) {
     }
 
     if (parsing_fc) {
-        sprintf(parsing_fc->sbuf, "Cannot find namespace '%s'", name);
+        sprintf(parsing_fc->sbuf, "Cannot find namespace '%s' in package '%s'", name, pkc->name);
         fc_error(parsing_fc);
     } else {
-        sprintf(pkc->b->sbuf, "Cannot find namespace '%s'", name);
+        sprintf(pkc->b->sbuf, "Cannot find namespace '%s' in package '%s'", name, pkc->name);
         die(pkc->b->sbuf);
     }
     return NULL;
@@ -175,8 +188,44 @@ Pkc *pkc_get_sub_package(Pkc *pkc, char *name) {
         return res;
     }
 
+    char msg[256];
+    Build *b = pkc->b;
+
     // Load from config
-    // TODO
+    Config *cfg = pkc->config;
+    if (!cfg)
+        return NULL;
+    cJSON *json = cfg->json;
+    if (cfg_has_package(cfg, name)) {
+        const cJSON *pkgs = cJSON_GetObjectItemCaseSensitive(json, "packages");
+        const cJSON *item = cJSON_GetObjectItemCaseSensitive(pkgs, name);
+        const cJSON *jname = cJSON_GetObjectItemCaseSensitive(item, "name");
+        const cJSON *jversion = cJSON_GetObjectItemCaseSensitive(item, "version");
+
+        if (!jname || !jname->valuestring || !jversion || !jversion->valuestring) {
+            sprintf(msg, "Package '%s' has no name/version defined in: %s", name, cfg->path);
+            die(msg);
+        }
+
+        char pkgpath[KI_PATH_MAX];
+        char versionpath[KI_PATH_MAX];
+
+        pkg_get_dir(b->pkg_dir, jname->valuestring, pkgpath);
+
+        strcpy(versionpath, pkgpath);
+        strcat(versionpath, "/");
+        strcat(versionpath, jversion->valuestring);
+
+        Pkc *sub = map_get(b->packages_by_dir, versionpath);
+        if (!sub) {
+            sub = pkc_init(b->alc, b, NULL, versionpath);
+        }
+
+        map_set(pkc->sub_packages, name, sub);
+        array_push(b->packages, sub);
+
+        return sub;
+    }
 
     return NULL;
 }
