@@ -81,7 +81,14 @@ void pkg_add(PkgCmd *pc, char *name, char *version, char *alias) {
         sprintf(cbuf, "There is already a package using the name: '%s', consider using an alias", alias);
         die(cbuf);
     }
-    //
+
+    bool installed = pkg_install_package(pc, cfg->dir, name, version, cloneurl, hash);
+
+    if (!installed) {
+        sprintf(cbuf, "[+] Package could not be added: '%s'", name);
+        die(cbuf);
+    }
+
     cJSON *pkgs = cJSON_GetObjectItemCaseSensitive(cfg->json, "packages");
     if (pkgs == NULL) {
         pkgs = cJSON_CreateObject();
@@ -98,7 +105,5 @@ void pkg_add(PkgCmd *pc, char *name, char *version, char *alias) {
     cJSON_AddItemToObject(pkgs, alias, pkgob);
     cfg_save(cfg);
 
-    printf("[+] Package added '%s'\n", name);
-
-    pkg_install_package(cfg->dir, name, version, cloneurl, hash);
+    printf("[+] Package added: '%s'\n", name);
 }

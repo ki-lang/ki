@@ -68,3 +68,8 @@ int extract_version_next_nr(char *content, int *index, int len) {
     *index = end;
     return atoi(nr);
 }
+
+void version_to_str(PkgVersion *v, char *buf) {
+    //
+    sprintf(buf, "%d.%d.%d", v->v1, v->v2, v->v3);
+}

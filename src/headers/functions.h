@@ -19,6 +19,7 @@ bool is_hex_char(char c);
 bool is_whitespace(char c);
 bool is_newline(char c);
 bool is_valid_varname(char *name);
+bool is_valid_varname_all(char *name);
 bool is_valid_number(char *str);
 bool is_valid_hex_number(char *str);
 bool is_valid_macro_number(char *str);
@@ -43,7 +44,7 @@ Func *ki_get_func(Build *b, char *ns, char *name);
 void cmd_pkg(int argc, char *argv[]);
 void pkg_add(PkgCmd *pc, char *name, char *version, char *alias);
 void pkg_remove(PkgCmd *pc, char *name);
-void pkg_install_package(char *dir, char *name, char *version, char *clone_url, char *hash);
+bool pkg_install_package(PkgCmd *pc, char *dir, char *name, char *version, char *clone_url, char *hash);
 void pkg_install(PkgCmd *pc);
 
 // Config
@@ -55,6 +56,7 @@ void cfg_save(Config *cfg);
 PkgVersion *extract_version(char *content);
 bool is_higher_version_than(PkgVersion *new, PkgVersion *than);
 bool is_same_version(PkgVersion *a, PkgVersion *b);
+void version_to_str(PkgVersion *v, char *buf);
 
 // Github
 bool pkg_is_github_url(char *name);

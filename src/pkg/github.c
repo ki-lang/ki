@@ -80,13 +80,16 @@ char *github_find_version_hash(GithubPkg *ghub, char *version) {
                 continue;
             char *vname = name->valuestring;
             PkgVersion *ex_version = extract_version(vname);
+            if (!ex_version)
+                continue;
             if (highest == NULL || is_higher_version_than(ex_version, highest)) {
-                highest = ex_version;
                 cJSON *commit = cJSON_GetObjectItemCaseSensitive(item, "commit");
                 if (commit) {
                     cJSON *sha = cJSON_GetObjectItemCaseSensitive(commit, "sha");
                     if (sha) {
                         hash = strdup(sha->valuestring);
+                        highest = ex_version;
+                        continue;
                     }
                 }
             }
@@ -96,6 +99,7 @@ char *github_find_version_hash(GithubPkg *ghub, char *version) {
             sprintf(msg, "No valid tags/versions found (format:x.x.x) for '%s'", ghub->url);
             die(msg);
         }
+        free(highest);
     } else {
         PkgVersion *fversion = extract_version(version);
         if (fversion) {

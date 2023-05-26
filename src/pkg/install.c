@@ -46,13 +46,13 @@ void pkg_install(PkgCmd *pc) {
             die(cbuf);
         }
 
-        pkg_install_package(cfg->dir, name, version, clone_url, hash);
+        pkg_install_package(pc, cfg->dir, name, version, clone_url, hash);
 
         pkg = pkg->next;
     }
 }
 
-void pkg_install_package(char *dir, char *name, char *version, char *clone_url, char *hash) {
+bool pkg_install_package(PkgCmd *pc, char *dir, char *name, char *version, char *clone_url, char *hash) {
     // Download files
     char dirname[256];
     strcpy(dirname, name);
@@ -106,12 +106,50 @@ void pkg_install_package(char *dir, char *name, char *version, char *clone_url, 
 
     strcpy(cmd, "cd ");
     strcat(cmd, versionpath);
-    strcat(cmd, " && git checkout ");
+    strcat(cmd, " && git fetch --quiet && git checkout ");
     strcat(cmd, hash);
     strcat(cmd, " --quiet");
 
     system_silent(cmd);
 
-    //
+    // Validate package
+    char *cbuf = pc->char_buf;
+    Config *cfg = cfg_load(pc->alc, pc->str_buf, versionpath);
+    if (cfg == NULL) {
+        printf("Package has no 'ki.json' configuration file: '%s'\n", name);
+        return false;
+    }
+    cJSON *json = cfg->json;
+    bool fail = false;
+    cJSON *jname = cJSON_GetObjectItemCaseSensitive(json, "name");
+    if (jname == NULL) {
+        printf("Missing 'name' property in: '%s'\n", cfg->path);
+        fail = true;
+    } else {
+        char *_name = jname->valuestring;
+        if (!is_valid_varname_all(_name)) {
+            printf("Invalid package name syntax in: '%s'\nMame was '%s', allowed characters [a-zA-Z0-9_] and first character cannot be a number.\n", cfg->path, _name);
+            fail = true;
+        }
+    }
+    cJSON *jversion = cJSON_GetObjectItemCaseSensitive(json, "version");
+    if (jversion == NULL) {
+        printf("Missing 'version' property in: '%s'\n", cfg->path);
+        fail = true;
+    } else {
+        char *_version = jversion->valuestring;
+        PkgVersion *v = extract_version(_version);
+        if (!v) {
+            printf("Invalid package version syntax in: '%s'\nVersion was '%s', format must be: [0-9].[0-9].[0-9]\n", cfg->path, _version);
+            fail = true;
+        }
+    }
+    if (fail) {
+        printf("Package '%s' was not correctly configured\n", name);
+        return false;
+    }
+
     printf("[+] Installed '%s' (%s)\n", name, hash);
+
+    return true;
 }
