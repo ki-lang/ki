@@ -17,10 +17,10 @@ Goals: fast run / compile times ⚡ simplicity and great package management 📦
 
 ## Compatibility
 
-|  | macos | linux | windows |
-|--|--|--|--|
-| x86_64 | ✔ | ✔ | ✔ |
-| arm64 | ✔ | WIP | WIP |
+|        | macos | linux | windows |
+| ------ | ----- | ----- | ------- |
+| x86_64 | ✔     | ✔     | ✔       |
+| arm64  | ✔     | WIP   | WIP     |
 
 ## How to install
 
@@ -66,10 +66,11 @@ install msys2 & open the terminal
 
 ```bash
 pacman -S --needed git wget mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake make mingw-w64-x86_64-python3 autoconf libtool
+pacman -S lld
 pacman -S mingw-w64-x86_64-llvm
 pacman -S mingw-w64-x86_64-clang
 
-git clone git@github.com:ki-lang/ki.git
+git clone https://github.com/ki-lang/ki.git
 cd ki
 make
 ```

@@ -8,11 +8,16 @@ ifeq ($(UNAME), Darwin)
 CC=clang
 LCC=clang
 LLVM_CFG=llvm-config
-else
+else ifeq ($(UNAME), Linux)
 # From linux
 CC=clang-15
 LCC=clang-15
 LLVM_CFG=llvm-config-15
+else
+# From Windows
+CC=clang
+LCC=clang
+LLVM_CFG=llvm-config
 endif
 
 CFLAGS:=-g -O2 -pthread `$(LLVM_CFG) --cflags`
