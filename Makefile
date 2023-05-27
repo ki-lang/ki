@@ -3,16 +3,16 @@ VERSION=dev
 UNAME=$(shell uname)
 UNAMEO=$(shell uname -o)
 
-ifeq ($(UNAME), Darwin)
-# From macos
-CC=clang
-LCC=clang
-LLVM_CFG=llvm-config
-else
+ifeq ($(UNAME), Linux)
 # From linux
 CC=clang-15
 LCC=clang-15
 LLVM_CFG=llvm-config-15
+else
+# From Windows and MacOS
+CC=clang
+LCC=clang
+LLVM_CFG=llvm-config
 endif
 
 CFLAGS:=-g -O2 -pthread `$(LLVM_CFG) --cflags`
