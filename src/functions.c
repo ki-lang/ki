@@ -41,16 +41,16 @@ char *rand_string(char *str, int size) {
 int atoi(const char *str) {
     int num = 0;
     int i = 0;
-    bool isNegetive = false;
+    bool isNegative = false;
     if (str[i] == '-') {
-        isNegetive = true;
+        isNegative = true;
         i++;
     }
     while (str[i] && (str[i] >= '0' && str[i] <= '9')) {
         num = num * 10 + (str[i] - '0');
         i++;
     }
-    if (isNegetive)
+    if (isNegative)
         num = -1 * num;
     return num;
 }
@@ -164,7 +164,7 @@ int system_silent(char *cmd) {
     return system(scmd);
 }
 
-char *strreplace(char *s, const char *s1, const char *s2) {
+char *str_replace(char *s, const char *s1, const char *s2) {
     char *p = strstr(s, s1);
     if (p != NULL) {
         size_t len1 = strlen(s1);

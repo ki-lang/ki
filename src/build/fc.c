@@ -228,7 +228,7 @@ void fc_error(Fc *fc) {
     exit(1);
 }
 
-void fc_update_cahce(Fc *fc) {
+void fc_update_cache(Fc *fc) {
     //
     bool save = false;
     cJSON *cache = fc->cache;

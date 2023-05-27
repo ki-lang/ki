@@ -9,7 +9,7 @@ void sleep_ns(unsigned int ns);
 void simple_hash(char *content, char *buf);
 Array *explode(Allocator *alc, char *part, char *content);
 int system_silent(char *cmd);
-char *strreplace(char *s, const char *s1, const char *s2);
+char *str_replace(char *s, const char *s1, const char *s2);
 
 // Syntax
 bool is_alpha_char(char c);
@@ -88,7 +88,7 @@ char *nsc_dname(Nsc *nsc, char *name);
 // Fc
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated);
 void fc_error(Fc *fc);
-void fc_update_cahce(Fc *fc);
+void fc_update_cache(Fc *fc);
 
 //
 void stage_1(Fc *);
