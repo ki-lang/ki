@@ -6,7 +6,7 @@
 #include <windows.h>
 #else
 // #include <sys/resource.h>
-#include <sys/stat.h> // might be linux only?
+#include <sys/stat.h>
 #include <sys/time.h>
 // #include <sys/wait.h>
 #include <dirent.h>

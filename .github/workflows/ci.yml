@@ -1,0 +1,98 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - "**.md"
+      - "README.md"
+      - "LICENSE"
+      - ".gitignore"
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - "**.md"
+      - "README.md"
+      - "LICENSE"
+      - ".gitignore"
+
+jobs:
+  linux:
+    name: "build on ubuntu-latest"
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Install LLVM/Clang 15
+      run: sudo apt-get install llvm-15 clang-15
+
+    - name: Install lld
+      run: sudo apt-get install lld
+
+    - name: Install libcurl4-openssl-dev
+      run: sudo apt-get install libcurl4-openssl-dev
+      
+    - run: make
+
+    - name: Build test
+      run: ./ki build ./test/test.ki -o _test
+
+    - name: Run test
+      run: ./_test
+    
+  macos:
+    name: "build on macos-latest"
+    strategy:
+      fail-fast: false
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - run: brew install llvm@15 && brew link llvm@15
+
+    - run: make
+
+    - name: Build test
+      run: ./ki build ./test/test.ki -o _test
+
+    - name: Run test
+      run: ./_test
+
+  windows:
+    name: "build on windows-latest(MSYS2)"
+    strategy:
+      fail-fast: false
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >-
+          wget
+          curl
+          git
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-cmake
+          make mingw-w64-x86_64-python3
+          autoconf
+          libtool
+          mingw-w64-x86_64-llvm
+          mingw-w64-x86_64-lld
+          mingw-w64-x86_64-clang
+    - uses: actions/checkout@v3
+
+    - run: make
+    
+    - name: Build test
+      run: ./ki build ./test/test.ki -o _test.exe
+
+    - name: Run test
+      run: ./_test.exe
+

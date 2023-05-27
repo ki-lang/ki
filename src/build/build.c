@@ -291,7 +291,7 @@ void cmd_build(int argc, char *argv[]) {
 
     //
 #ifdef WIN32
-    void *thr = CreateThread(NULL, 0, io_loop, (void *)b, 0, NULL);
+    void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))io_loop, (void *)b, 0, NULL);
 #else
     pthread_t thr;
     pthread_create(&thr, NULL, io_loop, (void *)b);
