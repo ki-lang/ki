@@ -26,8 +26,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Install LLVM/Clang 15
-      run: sudo apt-get install llvm-15 clang-15
+    - name: Install LLVM 15
+      run: sudo apt-get install llvm-15
 
     - name: Install lld
       run: sudo apt-get install lld
