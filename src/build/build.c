@@ -27,23 +27,17 @@ void cmd_build(int argc, char *argv[]) {
         if (arg[0] != '-')
             continue;
         sprintf(argbuf, ".%s.", arg);
-        if (!strstr(".--options.-O.--debug.-d.--test.--clear.-c.--static.-s.--"
-                    "run.-r.-h.--help.-v.-vv.-vvv.",
-                    argbuf)) {
+        if (!strstr(".--options.-O.--debug.-d.--test.--clear.-c.--static.-s.--run.-r.-h.--help.-v.-vv.-vvv.", argbuf)) {
             sprintf(argbuf, "❓ Unknown option '%s'", arg);
             die(argbuf);
         }
     }
 
-    bool run_code = strcmp(argv[1], "run") == 0 ||
-                    array_contains(args, "--run", arr_find_str) ||
-                    array_contains(args, "-r", arr_find_str);
+    bool run_code = strcmp(argv[1], "run") == 0 || array_contains(args, "--run", arr_find_str) || array_contains(args, "-r", arr_find_str);
 
     // Check options
     char *path_out = map_get(options, "-o");
-    if (array_contains(args, "-h", arr_find_str) ||
-        array_contains(args, "--help", arr_find_str) ||
-        (!run_code && !path_out) || (path_out && strlen(path_out) == 0)) {
+    if (array_contains(args, "-h", arr_find_str) || array_contains(args, "--help", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0)) {
         cmd_build_help(run_code);
     }
 
@@ -75,11 +69,7 @@ void cmd_build(int argc, char *argv[]) {
             target_arch = arch_arm64;
         } else {
             char err[256];
-            sprintf(err,
-                    "Unsupported target: '%s' | options:\n - linux-x64\n - "
-                    "linux-arm64\n - macos-x64\n - macos-arm64\n - win-x64\n - "
-                    "win-arm64\n\n",
-                    target);
+            sprintf(err, "Unsupported target: '%s' | options:\n - linux-x64\n - linux-arm64\n - macos-x64\n - macos-arm64\n - win-x64\n - win-arm64\n\n", target);
             die(err);
         }
     }
@@ -112,15 +102,11 @@ void cmd_build(int argc, char *argv[]) {
         verbose = 3;
     }
 
-    bool optimize = array_contains(args, "--optimize", arr_find_str) ||
-                    array_contains(args, "-O", arr_find_str);
-    bool debug = array_contains(args, "--debug", arr_find_str) ||
-                 array_contains(args, "-d", arr_find_str);
+    bool optimize = array_contains(args, "--optimize", arr_find_str) || array_contains(args, "-O", arr_find_str);
+    bool debug = array_contains(args, "--debug", arr_find_str) || array_contains(args, "-d", arr_find_str);
     bool test = array_contains(args, "--test", arr_find_str);
-    bool clear_cache = array_contains(args, "--clear", arr_find_str) ||
-                       array_contains(args, "-c", arr_find_str);
-    bool link_static = array_contains(args, "--static", arr_find_str) ||
-                       array_contains(args, "-s", arr_find_str);
+    bool clear_cache = array_contains(args, "--clear", arr_find_str) || array_contains(args, "-c", arr_find_str);
+    bool link_static = array_contains(args, "--static", arr_find_str) || array_contains(args, "-s", arr_find_str);
 
     //
     Build *b = al(alc, sizeof(Build));
@@ -305,8 +291,7 @@ void cmd_build(int argc, char *argv[]) {
 
     //
 #ifdef WIN32
-    void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))io_loop,
-                             (void *)b, 0, NULL);
+    void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))io_loop, (void *)b, 0, NULL);
 #else
     pthread_t thr;
     pthread_create(&thr, NULL, io_loop, (void *)b);
@@ -332,12 +317,10 @@ void cmd_build(int argc, char *argv[]) {
 
 #ifdef WIN32
     QueryPerformanceCounter(&end);
-    double time_ast =
-        (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
+    double time_ast = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
 #else
     gettimeofday(&end, NULL);
-    double time_ast = (double)(end.tv_usec - begin.tv_usec) / 1000000 +
-                      (double)(end.tv_sec - begin.tv_sec);
+    double time_ast = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
 #endif
 
     if (verbose > 0) {
@@ -348,12 +331,10 @@ void cmd_build(int argc, char *argv[]) {
 
 #ifdef WIN32
     QueryPerformanceCounter(&end);
-    double time_all =
-        (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
+    double time_all = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
 #else
     gettimeofday(&end, NULL);
-    double time_all = (double)(end.tv_usec - begin.tv_usec) / 1000000 +
-                      (double)(end.tv_sec - begin.tv_sec);
+    double time_all = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
 #endif
 
     if (!run_code || b->verbose > 0) {
@@ -396,14 +377,12 @@ int default_arch() {
 //
 #if defined(__x86_64__) || defined(_M_X64)
     return arch_x64;
-// #elif defined(i386) || defined(__i386__) || defined(__i386) ||
-// defined(_M_IX86)
+// #elif defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
 //     return "x86";
 #elif defined(__aarch64__) || defined(_M_ARM64)
     return arch_arm64;
 #endif
-    die("Cannot determine default target 'arch', use --arch to specify "
-        "manually");
+    die("Cannot determine default target 'arch', use --arch to specify manually");
 }
 
 void cmd_build_help(bool run_code) {
