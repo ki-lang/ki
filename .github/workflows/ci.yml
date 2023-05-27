@@ -32,6 +32,7 @@ jobs:
         version: "15.0"
 
     - run: llvm-config --version
+    - run: ./tool/config_llvm_pkg.sh
     - run: sudo apt-get install libcurl4-openssl-dev
     - run: make
     
