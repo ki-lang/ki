@@ -51,7 +51,7 @@ jobs:
     - run: make
 
   windows:
-    name: "build on windows-latest"
+    name: "build on windows-latest(MSYS2)"
     strategy:
       fail-fast: false
     runs-on: windows-latest
