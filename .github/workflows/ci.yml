@@ -18,7 +18,7 @@ on:
 
 jobs:
   linux:
-    name: "build on ubuntu-latest"
+    name: "test on ubuntu-latest"
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
@@ -44,7 +44,7 @@ jobs:
       run: ./_test
     
   macos:
-    name: "build on macos-latest"
+    name: "test on macos-latest"
     strategy:
       fail-fast: false
     runs-on: macos-latest
@@ -63,7 +63,7 @@ jobs:
       run: ./_test
 
   windows:
-    name: "build on windows-latest(MSYS2)"
+    name: "test on windows-latest(MSYS2)"
     strategy:
       fail-fast: false
     runs-on: windows-latest
