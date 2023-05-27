@@ -3,6 +3,7 @@
 #define _H_ALL
 
 #ifdef WIN32
+#include <ctype.h>
 #include <windows.h>
 #endif
 
@@ -19,12 +20,12 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 // #include <sys/wait.h>
+#include <ctype.h>
 #include <dirent.h>
 #include <pthread.h>
 #include <unistd.h>
 #endif
 
-#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>

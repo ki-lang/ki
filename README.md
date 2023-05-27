@@ -17,10 +17,10 @@ Goals: fast run / compile times ⚡ simplicity and great package management 📦
 
 ## Compatibility
 
-|  | macos | linux | windows |
-|--|--|--|--|
-| x86_64 | ✔ | ✔ | ✔ |
-| arm64 | ✔ | WIP | WIP |
+|        | macos | linux | windows |
+| ------ | ----- | ----- | ------- |
+| x86_64 | ✔     | ✔     | ✔       |
+| arm64  | ✔     | WIP   | WIP     |
 
 ## How to install
 
@@ -50,7 +50,7 @@ func main() void {
 
 macOS: `brew install llvm@15 && brew link llvm@15`
 
-Linux: install `llvm-15`, Ubuntu/debian see: [apt.llvm.org](https://apt.llvm.org/)
+Linux: install `llvm-15` and `libcurl4-openssl-dev`, Ubuntu/debian see: [apt.llvm.org](https://apt.llvm.org/)
 
 ```bash
 git clone git@github.com:ki-lang/ki.git
