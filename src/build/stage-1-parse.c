@@ -101,6 +101,7 @@ void stage_1(Fc *fc) {
 
 void stage_1_func(Fc *fc) {
     //
+    Build *b = fc->b;
     char *token = fc->token;
     tok(fc, token, true, true);
 
@@ -116,11 +117,17 @@ void stage_1_func(Fc *fc) {
     }
     name_taken_check(fc, fc->nsc->scope, token);
 
+    Func *func = func_init(fc->alc);
+
+    if (fc->nsc == b->nsc_main && strcmp(token, "main") == 0) {
+        strcpy(token, "ki__main__");
+        b->main_func = func;
+    }
+
     char *name = dups(fc->alc, token);
     char *gname = nsc_gname(fc->nsc, name);
     char *dname = nsc_dname(fc->nsc, name);
 
-    Func *func = func_init(fc->alc);
     func->fc = fc;
     func->name = name;
     func->gname = gname;
@@ -134,13 +141,12 @@ void stage_1_func(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_func);
     idf->item = func;
 
+    if (b->main_func == func)
+        name = "main";
+
     map_set(fc->nsc->scope->identifiers, name, idf);
     if (fc->is_header) {
         map_set(fc->scope->identifiers, name, idf);
-    }
-
-    if (strcmp(func->gname, "main") == 0) {
-        fc->b->main_func = func;
     }
 
     tok_expect(fc, "(", true, true);

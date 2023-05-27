@@ -3,8 +3,6 @@
 
 Feature todo list in order:
 
-- package manager | check name,version in package config + test 'use'
-- main argv/argc
 - testing features
 - debug info
 
@@ -36,6 +34,8 @@ Feature todo list in order:
 
 ## Done
 
+- main argv/argc
+- package manager | check name,version in package config + test 'use'
 - compare errors
 - cross compiling
 - swap token
