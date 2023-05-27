@@ -66,7 +66,7 @@ void pkg_get_dir(char *packages_dir, char *name, char *buf) {
             dirname[i] = '_';
         i++;
     }
-    strreplace(dirname, "github.com", "github");
+    str_replace(dirname, "github.com", "github");
     strcpy(buf, packages_dir);
     strcat(buf, "/");
     strcat(buf, dirname);

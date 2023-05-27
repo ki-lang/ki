@@ -70,7 +70,7 @@ void stage_8(Build *b) {
                     continue;
                 }
                 if (fc->ir_changed) {
-                    fc_update_cahce(fc);
+                    fc_update_cache(fc);
                     compile = true;
                 }
 
