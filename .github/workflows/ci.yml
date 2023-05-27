@@ -26,14 +26,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Install LLVM 15
-      run: sudo apt-get install libllvm15 llvm-15 llvm-15-dev llvm-15-runtime
+    - name: Install LLVM/Clang 15
+      run: sudo apt-get install llvm-15 clang-15
 
     - name: Install lld
       run: sudo apt-get install lld
-    
-    - name: Install Clang 15
-      run: sudo apt-get install clang-15 clang-tools-15 libclang-common-15-dev libclang-15-dev libclang1-15 
 
     - name: Install libcurl4-openssl-dev
       run: sudo apt-get install libcurl4-openssl-dev
