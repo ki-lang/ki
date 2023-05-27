@@ -53,7 +53,7 @@ macOS: `brew install llvm@15 && brew link llvm@15`
 Linux: install `llvm-15`, Ubuntu/debian see: [apt.llvm.org](https://apt.llvm.org/)
 
 ```bash
-git clone git@github.com:ki-lang/ki.git
+git clone https://github.com/ki-lang/ki.git
 cd ki
 make
 ```
