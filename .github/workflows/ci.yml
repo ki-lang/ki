@@ -17,13 +17,29 @@ on:
       - ".gitignore"
 
 jobs:
-  build:
-    name: "build on ${{ matrix.host.os }}"
+  build-linux:
+    name: "build on ubuntu-latest"
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup LLVM
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: "15.0"
+
+    - run: llvm-config --version
+    - run: sudo apt-get install  libcurl4-openssl-dev
+    - run: make
+    
+  build-macos:
+    name: "build on macos-latest"
+    strategy:
+      fail-fast: false
+    runs-on: macos-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3
