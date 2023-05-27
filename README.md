@@ -53,7 +53,7 @@ macOS: `brew install llvm@15 && brew link llvm@15`
 Linux: install `llvm-15` and `libcurl4-openssl-dev`, Ubuntu/debian see: [apt.llvm.org](https://apt.llvm.org/)
 
 ```bash
-git clone git@github.com:ki-lang/ki.git
+git clone https://github.com/ki-lang/ki.git
 cd ki
 make
 ```
@@ -67,9 +67,10 @@ install msys2 & open the terminal
 ```bash
 pacman -S --needed git wget mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake make mingw-w64-x86_64-python3 autoconf libtool
 pacman -S mingw-w64-x86_64-llvm
+pacman -S mingw-w64-x86_64-lld
 pacman -S mingw-w64-x86_64-clang
 
-git clone git@github.com:ki-lang/ki.git
+git clone https://github.com/ki-lang/ki.git
 cd ki
 make
 ```

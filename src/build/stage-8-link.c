@@ -84,7 +84,8 @@ void stage_8(Build *b) {
                     printf("⚙ Compile o file: %s\n", nsc->path_o);
                 }
 
-                struct CompileData *data = al(b->alc, sizeof(struct CompileData));
+                struct CompileData *data =
+                    al(b->alc, sizeof(struct CompileData));
                 data->b = b;
                 data->ir_files = ir_files;
                 data->path_o = nsc->path_o;
@@ -99,7 +100,9 @@ void stage_8(Build *b) {
                     WaitForSingleObject(thr, INFINITE);
                 }
 
-                void *thr = CreateThread(NULL, 0, stage_8_compile_o, (void *)data, 0, NULL);
+                void *thr = CreateThread(
+                    NULL, 0, (unsigned long (*)(void *))stage_8_compile_o,
+                    (void *)data, 0, NULL);
 #else
                 if (threads->length >= 16) {
                     // Wait for the first thread
@@ -130,11 +133,13 @@ void stage_8(Build *b) {
 
 #ifdef WIN32
     QueryPerformanceCounter(&end);
-    double time_llvm = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
+    double time_llvm =
+        (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
     QueryPerformanceCounter(&start);
 #else
     gettimeofday(&end, NULL);
-    double time_llvm = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
+    double time_llvm = (double)(end.tv_usec - begin.tv_usec) / 1000000 +
+                       (double)(end.tv_sec - begin.tv_sec);
     gettimeofday(&begin, NULL);
 #endif
 
@@ -152,10 +157,12 @@ void stage_8(Build *b) {
 
 #ifdef WIN32
     QueryPerformanceCounter(&end);
-    double time_link = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
+    double time_link =
+        (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
 #else
     gettimeofday(&end, NULL);
-    double time_link = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
+    double time_link = (double)(end.tv_usec - begin.tv_usec) / 1000000 +
+                       (double)(end.tv_sec - begin.tv_sec);
 #endif
 
     if (b->verbose > 0) {
@@ -190,7 +197,8 @@ void *stage_8_compile_o(void *data_) {
         LLVMMemoryBufferRef buf = NULL;
         char *msg = NULL;
 
-        LLVMBool check = LLVMCreateMemoryBufferWithContentsOfFile(ir_path, &buf, &msg);
+        LLVMBool check =
+            LLVMCreateMemoryBufferWithContentsOfFile(ir_path, &buf, &msg);
         if (msg) {
             printf("LLVM load IR error: %s\n", msg);
             printf("Path: %s\n", ir_path);
@@ -225,7 +233,8 @@ void *stage_8_compile_o(void *data_) {
         stage_8_optimize(nsc_mod);
     }
 
-    if (LLVMTargetMachineEmitToFile(target->target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
+    if (LLVMTargetMachineEmitToFile(target->target_machine, nsc_mod, path_o,
+                                    LLVMObjectFile, &error) != 0) {
         fprintf(stderr, "Failed to emit machine code!\n");
         fprintf(stderr, "Error: %s\n", error);
         LLVMDisposeMessage(error);
@@ -238,8 +247,9 @@ void *stage_8_compile_o(void *data_) {
     LLVMDisposeModule(nsc_mod);
 
     // gettimeofday(&end, NULL);
-    // double time_o = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
-    // printf("⌚ %.3fs | %s\n", time_o, path_o);
+    // double time_o = (double)(end.tv_usec - begin.tv_usec) / 1000000 +
+    // (double)(end.tv_sec - begin.tv_sec); printf("⌚ %.3fs | %s\n", time_o,
+    // path_o);
 
     // LLVMStopMultithreaded();
 
@@ -259,7 +269,8 @@ void stage_8_optimize(LLVMModuleRef mod) {
     LLVMPassManagerBuilderSetSizeLevel(passBuilder, 0);
     LLVMPassManagerBuilderUseInlinerWithThreshold(passBuilder, 50);
 
-    LLVMPassManagerRef func_passes = LLVMCreateFunctionPassManagerForModule(mod);
+    LLVMPassManagerRef func_passes =
+        LLVMCreateFunctionPassManagerForModule(mod);
     LLVMPassManagerRef mod_passes = LLVMCreatePassManager();
 
     LLVMPassManagerBuilderPopulateFunctionPassManager(passBuilder, func_passes);
@@ -277,7 +288,8 @@ void stage_8_optimize(LLVMModuleRef mod) {
     LLVMPassManagerBuilderDispose(passBuilder);
     LLVMInitializeFunctionPassManager(func_passes);
 
-    for (LLVMValueRef func = LLVMGetFirstFunction(mod); func; func = LLVMGetNextFunction(func)) {
+    for (LLVMValueRef func = LLVMGetFirstFunction(mod); func;
+         func = LLVMGetNextFunction(func)) {
         LLVMRunFunctionPassManager(func_passes, func);
     }
 
@@ -333,7 +345,9 @@ void llvm_init(Build *b, struct Target *t) {
         exit(1);
     }
 
-    LLVMTargetMachineRef machine = LLVMCreateTargetMachine(target, triple, cpu, LLVMGetHostCPUFeatures(), LLVMCodeGenLevelDefault, LLVMRelocPIC, LLVMCodeModelDefault);
+    LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
+        target, triple, cpu, LLVMGetHostCPUFeatures(), LLVMCodeGenLevelDefault,
+        LLVMRelocPIC, LLVMCodeModelDefault);
     LLVMTargetDataRef datalayout = LLVMCreateTargetDataLayout(machine);
     char *datalayout_str = LLVMCopyStringRepOfTargetData(datalayout);
 
@@ -342,10 +356,11 @@ void llvm_init(Build *b, struct Target *t) {
     t->llvm_triple = triple;
     t->llvm_data_layout = datalayout_str;
 
-    // printf("target: %s, [%s], %d, %d\n", LLVMGetTargetName(target), LLVMGetTargetDescription(target), LLVMTargetHasJIT(target), LLVMTargetHasTargetMachine(target));
-    // printf("triple: %s\n", LLVMGetDefaultTargetTriple());
-    // printf("features: %s\n", LLVMGetHostCPUFeatures());
-    // printf("datalayout: %s\n", datalayout_str);
+    // printf("target: %s, [%s], %d, %d\n", LLVMGetTargetName(target),
+    // LLVMGetTargetDescription(target), LLVMTargetHasJIT(target),
+    // LLVMTargetHasTargetMachine(target)); printf("triple: %s\n",
+    // LLVMGetDefaultTargetTriple()); printf("features: %s\n",
+    // LLVMGetHostCPUFeatures()); printf("datalayout: %s\n", datalayout_str);
 }
 
 void stage_8_link_libs(Str *cmd, Build *b, int type) {
@@ -410,7 +425,8 @@ void stage_8_link(Build *b, Array *o_files) {
     }
 
     if (!linker) {
-        die("❌ Could not figure out which linker to use for your host os / target os.");
+        die("❌ Could not figure out which linker to use for your host os / "
+            "target os.");
     }
 
     //
@@ -447,10 +463,12 @@ void stage_8_link(Build *b, Array *o_files) {
 
         if (is_x64) {
             str_append_chars(cmd, "-m elf_x86_64 ");
-            str_append_chars(cmd, "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
+            str_append_chars(cmd,
+                             "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
         } else if (is_arm64) {
             str_append_chars(cmd, "-m aarch64linux ");
-            str_append_chars(cmd, "--dynamic-linker /lib/ld-linux-aarch64.so.1 ");
+            str_append_chars(cmd,
+                             "--dynamic-linker /lib/ld-linux-aarch64.so.1 ");
         }
 
         str_append_chars(cmd, "-l:Scrt1.o ");
