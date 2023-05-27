@@ -30,7 +30,7 @@ jobs:
       run: sudo apt-get install libllvm15 llvm-15 llvm-15-dev llvm-15-runtime
 
     - name: Install lld
-      run: sudo apt-get lld
+      run: sudo apt-get install lld
     
     - name: Install Clang 15
       run: sudo apt-get install clang-15 clang-tools-15 libclang-common-15-dev libclang-15-dev libclang1-15 
