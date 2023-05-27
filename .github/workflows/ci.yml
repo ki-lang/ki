@@ -25,13 +25,22 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
+    - run: apt-get install libllvm15 llvm-15 llvm-15-dev llvm-15-doc llvm-15-examples llvm-15-runtime
+    - run: apt-get install clang-15 clang-tools-15 clang-15-doc libclang-common-15-dev libclang-15-dev libclang1-15 clang-format-15 python3-clang-15 clangd-15 clang-tidy-15 libclang-rt-15-dev
+    - run: llvm-config --version
+    - run: sudo apt-get install libcurl4-openssl-dev
+    - run: make
+    
+  build-macos:
+    name: "build on macos-latest"
+    strategy:
+      fail-fast: false
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
 
-    - name: Setup LLVM
-      uses: KyleMayes/install-llvm-action@v1
-      with:
-        version: "15.0"
+    - run: brew install llvm@15 && brew link llvm@15
 
     - run: llvm-config --version
-    - run: sudo ./tool/config_llvm_pkg.sh /usr/local/lib/pkgconfig/llvm.pc
-    - run: sudo apt-get install libcurl4-openssl-dev
     - run: make
