@@ -66,8 +66,8 @@ install msys2 & open the terminal
 
 ```bash
 pacman -S --needed git wget mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake make mingw-w64-x86_64-python3 autoconf libtool
-pacman -S lld
 pacman -S mingw-w64-x86_64-llvm
+pacman -S mingw-w64-x86_64-lld
 pacman -S mingw-w64-x86_64-clang
 
 git clone https://github.com/ki-lang/ki.git
