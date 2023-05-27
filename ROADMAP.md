@@ -3,8 +3,6 @@
 
 Feature todo list in order:
 
-- package manager | check name,version in package config + test 'use'
-- main argv/argc
 - testing features
 - debug info
 
@@ -12,11 +10,14 @@ Feature todo list in order:
 - closure functions
 
 - unions
-- add a message to your errors
-- install global packages + "bin" setting in ki.json to place binaries in ~/.ki/bin
-- access type 'namespace'
 - declare functions for classes/structs from other libraries
-- trait sub-types (same syntax as generics)
+- install global packages that compile the code to a binary in ~/.ki/bin | ki pkg global add {url} | ki pkg global install
+- add a message to your errors
+
+- trait generic types
+- function generic types
+
+- access type 'namespace'
 - multi-threaded AST parsing + IR gen
 - inline if ... ? ... : ...
 - --watch param to watch for file changes and trigger a build
@@ -36,6 +37,8 @@ Feature todo list in order:
 
 ## Done
 
+- main argv/argc
+- package manager | check name,version in package config + test 'use'
 - compare errors
 - cross compiling
 - swap token

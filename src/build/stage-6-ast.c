@@ -2,6 +2,7 @@
 #include "../all.h"
 
 void stage_6_func(Fc *fc, Func *func);
+void stage_6_gen_main(Fc *fc);
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
@@ -18,6 +19,10 @@ void stage_6(Fc *fc) {
     Build *b = fc->b;
     if (b->verbose > 2) {
         printf("# Stage 6 : AST : %s\n", fc->path_ki);
+    }
+
+    if (fc == b->main_func->fc) {
+        stage_6_gen_main(fc);
     }
 
     for (int i = 0; i < fc->funcs->length; i++) {
@@ -685,4 +690,83 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     usage_merge_ancestors(alc, scope, ancestors);
 
     array_push(scope->ast, tgen_each(alc, on, sub, decl_k, decl_v));
+}
+
+void stage_6_gen_main(Fc *fc) {
+    //
+    Build *b = fc->b;
+    Allocator *alc = fc->alc;
+
+    Func *mfunc = b->main_func;
+    fc->chunk = mfunc->chunk_args;
+    if (mfunc->args->length > 1) {
+        sprintf(fc->sbuf, "Function 'main' has too many arguments");
+        fc_error(fc);
+    }
+
+    Chunk *chunk = chunk_init(alc, fc);
+    if (mfunc->args->length > 0) {
+        Arg *arg = array_get_index(mfunc->args, 0);
+        chunk->content = "*Array[String]";
+        fc->chunk = chunk;
+
+        Type *type = read_type(fc, alc, fc->scope, true, true, rtc_func_arg);
+        TypeCheck *tc = type_gen_type_check(alc, type);
+
+        fc->chunk = arg->type_chunk;
+        type_validate(fc, tc, arg->type, "First argument of 'main' should be different");
+    }
+
+    Func *func = func_init(fc->alc);
+    func->fc = fc;
+    func->name = "main";
+    func->gname = "main";
+    func->dname = "main";
+    func->scope = scope_init(fc->alc, sct_func, fc->scope, true);
+    func->scope->func = func;
+    func->will_exit = false;
+    func->rett = type_gen(b, alc, "i32");
+
+    array_push(fc->funcs, func);
+
+    // Args
+    Arg *arg = arg_init(alc, "argc", type_gen(b, alc, "i32"));
+    arg->value_chunk = NULL;
+    arg->type_chunk = NULL;
+    array_push(func->args, arg);
+    map_set(func->args_by_name, "argc", arg);
+
+    arg = arg_init(alc, "argv", type_gen(b, alc, "ptr"));
+    arg->value_chunk = NULL;
+    arg->type_chunk = NULL;
+    array_push(func->args, arg);
+    map_set(func->args_by_name, "argv", arg);
+
+    func_make_arg_decls(func);
+
+    // Ast
+    Scope *scope = func->scope;
+
+    char *run = ((mfunc->args->length > 0) ? "return main(arr);" : "return main();");
+
+    char *code = "let arr = Array[String].init();\n"
+                 "let i = 0;\n"
+                 "while i < argc {\n"
+                 "let cstr = @ptrv(argv, cstring, i);\n"
+                 "arr.push(cstr.to_str());\n"
+                 "i++;\n"
+                 "}\n"
+                 "%s\n"
+                 "}\n";
+
+    char content[512];
+    sprintf(content, code, run);
+
+    chunk->content = content;
+    chunk->i = 0;
+    chunk->line = 1;
+
+    fc->chunk = chunk;
+
+    read_ast(fc, scope, false);
 }

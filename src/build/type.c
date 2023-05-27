@@ -744,10 +744,13 @@ void type_validate(Fc *fc, TypeCheck *tc, Type *type, char *msg) {
         type_validate(fc, tc->array_of, type->array_of, msg);
     }
     if (reason) {
-        char str[256];
-        strcpy(str, "");
-        type_check_to_str(tc, str);
-        sprintf(fc->sbuf, "%s : Expected type: %s | Reason: %s", msg, str, reason);
+        char t1[256];
+        char t2[256];
+        strcpy(t1, "");
+        strcpy(t2, "");
+        type_check_to_str(tc, t1);
+        type_to_str(type, t2);
+        sprintf(fc->sbuf, "%s\nExpected type: %s\nReceived type: %s\nReason: %s", msg, t1, t2, reason);
         fc_error(fc);
     }
 }
