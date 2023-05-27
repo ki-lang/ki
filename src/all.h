@@ -4,9 +4,19 @@
 
 #ifdef WIN32
 #include <windows.h>
-#else
+#endif
+
+#ifdef __macos__
+#include <dirent.h>
+#include <pthread.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
+#ifdef __linux__
 // #include <sys/resource.h>
-#include <sys/stat.h> // might be linux only?
+#include <sys/stat.h>
 #include <sys/time.h>
 // #include <sys/wait.h>
 #include <dirent.h>
