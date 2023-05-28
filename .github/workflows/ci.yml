@@ -30,7 +30,7 @@ jobs:
       run: sudo apt-get install llvm-15 clang-15
 
     - name: Install lld
-      run: sudo apt-get install lld
+      run: sudo apt-get install lld-15
 
     - name: Install libcurl4-openssl-dev
       run: sudo apt-get install libcurl4-openssl-dev
@@ -104,8 +104,8 @@ jobs:
           autoconf
           libtool
           mingw-w64-x86_64-llvm
-          mingw-w64-x86_64-lld
           mingw-w64-x86_64-clang
+          mingw-w64-x86_64-lld
     - uses: actions/checkout@v3
 
     - run: make

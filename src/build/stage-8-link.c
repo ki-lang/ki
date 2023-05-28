@@ -401,7 +401,7 @@ void stage_8_link(Build *b, Array *o_files) {
         }
     } else {
         if (is_linux) {
-            linker = "ld.lld";
+            linker = "ld.lld-15";
         } else if (is_macos) {
             linker = "ld64.lld";
         } else if (is_win) {
