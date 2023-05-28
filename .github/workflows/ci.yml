@@ -37,11 +37,26 @@ jobs:
       
     - run: make
 
-    - name: Build test
+    - name: Build test(linux-x64)
       run: ./ki build ./test/test.ki -o _test
 
     - name: Run test
       run: ./_test
+
+    - name: Build test(cross compiling) for linux-arm64
+      run: ./ki build ./test/test.ki -o _test --target linux-arm64
+
+    - name: Build test(cross compiling) for macos-x64
+      run: ./ki build ./test/test.ki -o _test --target  macos-x64
+    
+    - name: Build test(cross compiling) for macos-arm64
+      run: ./ki build ./test/test.ki -o _test --target macos-arm64
+    
+    - name: Build test(cross compiling) for win-x64
+      run: ./ki build ./test/test.ki -o _test.exe --target win-x64
+
+    - name: Build test(cross compiling) win-arm64
+      run: ./ki build ./test/test.ki -o _test.exe --target win-arm64
     
   macos:
     name: "test on macos-latest"
@@ -56,11 +71,26 @@ jobs:
 
     - run: make
 
-    - name: Build test
+    - name: Build test(macos-x64)
       run: ./ki build ./test/test.ki -o _test
 
     - name: Run test
       run: ./_test
+
+    - name: Build test(cross compiling) for linux-x64
+      run: ./ki build ./test/test.ki -o _test --target linux-x64
+      
+    - name: Build test(cross compiling) for linux-arm64
+      run: ./ki build ./test/test.ki -o _test --target linux-arm64
+    
+    - name: Build test(cross compiling) for macos-arm64
+      run: ./ki build ./test/test.ki -o _test --target macos-arm64
+    
+    - name: Build test(cross compiling) for win-x64
+      run: ./ki build ./test/test.ki -o _test.exe --target win-x64
+
+    - name: Build test(cross compiling) win-arm64
+      run: ./ki build ./test/test.ki -o _test.exe --target win-arm64
 
   windows:
     name: "test on windows-latest(MSYS2)"
@@ -90,9 +120,23 @@ jobs:
 
     - run: make
     
-    - name: Build test
+    - name: Build test(win-x64)
       run: ./ki build ./test/test.ki -o _test.exe
 
     - name: Run test
       run: ./_test.exe
 
+    - name: Build test(cross compiling) for linux-x64
+      run: ./ki build ./test/test.ki -o _test --target linux-x64
+      
+    - name: Build test(cross compiling) for linux-arm64
+      run: ./ki build ./test/test.ki -o _test --target linux-arm64
+
+    - name: Build test(cross compiling) for macos-x64
+      run: ./ki build ./test/test.ki -o _test --target  macos-x64
+    
+    - name: Build test(cross compiling) for macos-arm64
+      run: ./ki build ./test/test.ki -o _test --target macos-arm64
+
+    - name: Build test(cross compiling) win-arm64
+      run: ./ki build ./test/test.ki -o _test.exe --target win-arm64
