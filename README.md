@@ -15,6 +15,13 @@ ki is a type safe compiled language designed to be fast and easy to use. It does
 
 Goals: fast run / compile times ⚡ simplicity and great package management 📦
 
+## Compatibility
+
+|        | MacOS | Linux | Windows |
+| ------ | ----- | ----- | ------- |
+| x86_64 | ✔     | ✔    | ✔       |
+| arm64  | ✔     | WIP   | WIP     |
+
 ## How to install
 
 ```
@@ -39,12 +46,20 @@ func main() void {
 }
 ```
 
-## Compatibility
+## Cross compiling
 
-|        | MacOS | Linux | Windows |
-| ------ | ----- | ----- | ------- |
-| x86_64 | ✔     | ✔    | ✔       |
-| arm64  | ✔     | WIP   | WIP     |
+| Building for     | From macOS x86_64  | From macOS arm64     | From Linux x86_64  | From Linux aarch64  | From Windows x86_64 | From Windows aarch64 |
+| ---------------- | ------------------ | -------------------- | ------------------ | ------------------- | ------------------- | -------------------- |
+| macOS x86_64     | ✅                 | ✔️                   | ✅                 |🏃                  |✅                   | 🏃                  |
+| macOS arm64      | ✅                 | ✔️                   | ✅                 |🏃                  |✅                   | 🏃                  |
+| Linux x86_64     | ✅                 | ✔️                   | ✅                 |🏃                  |✅                   | 🏃                  |
+| Linux aarch64    | 🏃                 | 🏃                   | 🏃                 |🏃                  |🏃                   | 🏃                  |
+| Windows x86_64   | ✅                 | ✔️                   | ✅                 |🏃                  |✅                   | 🏃                  |
+| Windows aarch64  | 🏃                 | 🏃                   | 🏃                 |🏃                  |🏃                   | 🏃                  |
+
+- ✅ Tested and verified via CI(All cross-compilations do not verify by CI that they can run in target system, only that they can build).
+- ✔️ Should work, but not tested in CI.
+- 🏃 WIP
 
 ## Build from source (Linux / macOS / WSL)
 
