@@ -39,7 +39,7 @@ jobs:
       run: make
 
     - name: Test(linux-x64)
-      run: ./ki build ./test/test.ki --test -r
+      run: ./ki build test/*.ki -o _test --test -r
 
     - run: sudo ln -s /usr/bin/lld /usr/bin/ld64.lld
 
@@ -67,7 +67,7 @@ jobs:
       run: make
 
     - name: Test(macos-x64)
-      run: ./ki build ./test/test.ki --test -r
+      run: ./ki build test/*.ki -o _test --test -r
 
     - name: Build test(cross compiling) for linux-x64
       run: ./ki build ./test/test.ki -o _test --target linux-x64
@@ -108,7 +108,7 @@ jobs:
       run: make
     
     - name: Build test(win-x64)
-      run: ./ki build ./test/test.ki -o _test.exe
+      run: ./ki build test/*.ki -o _test.exe --test -r
 
     - name: Test(win-x64)
       run: ./ki build ./test/test.ki --test -r
