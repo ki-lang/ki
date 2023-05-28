@@ -722,6 +722,11 @@ void stage_1_test(Fc *fc) {
     }
     chu->i = i;
 
+    if (str->length > 128) {
+        sprintf(fc->sbuf, "Test name too long");
+        fc_error(fc);
+    }
+
     char *body = str_to_chars(alc, str);
 
     tok_expect(fc, "{", false, true);
