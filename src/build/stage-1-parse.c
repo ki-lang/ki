@@ -711,17 +711,23 @@ void stage_1_test(Fc *fc) {
         func->dname = dname;
         func->scope = scope_init(fc->alc, sct_func, fc->scope, true);
         func->scope->func = func;
-        func->rett = type_gen_void(alc);
         func->is_test = true;
 
         Test *test = al(alc, sizeof(Test));
         test->name = body;
         test->func = func;
 
+        Chunk *chunk = chunk_init(alc, fc);
+        chunk->fc = fc;
+        chunk->content = "ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {";
+        chunk->i = 0;
+        chunk->line = 1;
+
+        func->chunk_args = chunk;
+        func->chunk_body = chunk_clone(fc->alc, fc->chunk);
+
         array_push(fc->funcs, func);
         array_push(b->tests, test);
-
-        func->chunk_body = chunk_clone(fc->alc, fc->chunk);
     }
 
     skip_body(fc, '}');

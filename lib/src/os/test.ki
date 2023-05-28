@@ -1,0 +1,5 @@
+
+func test_report(total: u32, success: u32, fail: u32, expect_total: u32, expect_success: u32, expect_fail: u32) void {
+	println("Report");
+	exit(1);
+}

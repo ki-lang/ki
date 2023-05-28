@@ -782,6 +782,7 @@ void stage_6_gen_test_main(Fc *fc) {
     //
     Allocator *alc = fc->alc_ast;
     Func *func = func_init(alc);
+    Build *b = fc->b;
 
     char *name = "ki__test__main";
 
@@ -796,20 +797,48 @@ void stage_6_gen_test_main(Fc *fc) {
     func->scope->func = func;
     func->rett = type_gen_void(alc);
 
-    Array *tests = fc->b->tests;
-    Array *args = array_make(alc, 2);
-    for (int i = 0; i < tests->length; i++) {
-        Test *test = array_get_index(tests, i);
-        Value *fptr = vgen_fptr(alc, test->func, NULL);
-        Value *fcall = vgen_fcall(alc, func->scope, fptr, args, type_gen_void(alc), NULL);
-        Token *t = token_init(alc, tkn_statement, fcall);
-        array_push(func->scope->ast, t);
-    }
+    Idf *idf = idf_init(fc->alc, idf_func);
+    idf->item = func;
+    map_set(fc->nsc->scope->identifiers, func->name, idf);
 
     array_push(fc->funcs, func);
 
-    Idf *idf = idf_init(fc->alc, idf_func);
-    idf->item = func;
+    Scope *scope = func->scope;
+    Array *tests = fc->b->tests;
 
-    map_set(fc->nsc->scope->identifiers, name, idf);
+    Str *code = str_make(alc, 5000);
+    str_append_chars(code, "let test_success : u32 = 0;\n");
+    str_append_chars(code, "let test_fail : u32 = 0;\n");
+    str_append_chars(code, "let expect_total : u32 = 0;\n");
+    str_append_chars(code, "let expect_success : u32 = 0;\n");
+    str_append_chars(code, "let expect_fail : u32 = 0;\n");
+
+    str_append_chars(code, "let expect_total_ref = @array_of(expect_total);\n");
+    str_append_chars(code, "let expect_fail_ref = @array_of(expect_fail);\n");
+    str_append_chars(code, "let expect_success_ref = @array_of(expect_success);\n");
+
+    for (int i = 0; i < tests->length; i++) {
+        Test *test = array_get_index(tests, i);
+        map_set(scope->identifiers, test->func->gname, idf_init_item(fc->alc_ast, idf_func, test->func));
+        str_append_chars(code, test->func->gname);
+        str_append_chars(code, "(expect_total_ref, expect_success_ref, expect_fail_ref);\n");
+    }
+
+    char nr[10];
+    sprintf(nr, "%d", tests->length);
+
+    map_set(scope->identifiers, "os_test_report", ki_lib_get(b, "os", "test_report"));
+    str_append_chars(code, "os_test_report(");
+    str_append_chars(code, nr);
+    str_append_chars(code, ", test_success, test_fail, expect_total, expect_success, expect_fail);\n");
+
+    str_append_chars(code, "}\n");
+
+    Chunk *chunk = chunk_init(alc, fc);
+    chunk->fc = fc;
+    chunk->content = str_to_chars(alc, code);
+    chunk->i = 0;
+    chunk->line = 1;
+
+    func->chunk_body = chunk;
 }

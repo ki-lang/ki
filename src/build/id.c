@@ -15,6 +15,12 @@ Idf *idf_init(Allocator *alc, int type) {
     idf->item = NULL;
     return idf;
 }
+Idf *idf_init_item(Allocator *alc, int type, void *item) {
+    Idf *idf = al(alc, sizeof(Idf));
+    idf->type = type;
+    idf->item = item;
+    return idf;
+}
 
 Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
     //
