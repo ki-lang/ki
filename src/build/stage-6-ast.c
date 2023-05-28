@@ -202,9 +202,6 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             }
 
             Array *args = array_make(alc, 4);
-            Type *rett = type_gen(fc->b, alc, "String");
-            rett->strict_ownership = true;
-            array_push(args, value_init(alc, v_string, func->test->name, rett));
             array_push(args, val);
             Arg *pass = array_get_index(func->args, 1);
             array_push(args, value_init(alc, v_decl, pass->decl, pass->type));
@@ -850,6 +847,8 @@ void stage_6_gen_test_main(Fc *fc) {
     Array *tests = fc->b->tests;
 
     char line[256];
+    map_set(scope->identifiers, "os_test_print_name", ki_lib_get(b, "os", "test_print_name"));
+    map_set(scope->identifiers, "os_test_report", ki_lib_get(b, "os", "test_report"));
 
     Str *code = str_make(alc, 5000);
     str_append_chars(code, "let test_success : u32 = 0;\n");
@@ -874,6 +873,8 @@ void stage_6_gen_test_main(Fc *fc) {
         sprintf(line, "%s(@array_of(expect_count_%d), @array_of(expect_success_%d), @array_of(expect_fail_%d));\n", test->func->gname, i, i, i);
         str_append_chars(code, line);
         // Check result
+        sprintf(line, "os_test_print_name(\"%s\", expect_fail_%d == 0);\n", test->name, i);
+        str_append_chars(code, line);
         sprintf(line, "if expect_fail_%d == 0 : test_success++; else: test_fail++;\n", i);
         str_append_chars(code, line);
         sprintf(line, "expect_total += expect_count_%d;\n", i);
@@ -887,7 +888,6 @@ void stage_6_gen_test_main(Fc *fc) {
     char nr[10];
     sprintf(nr, "%d", tests->length);
 
-    map_set(scope->identifiers, "os_test_report", ki_lib_get(b, "os", "test_report"));
     str_append_chars(code, "os_test_report(");
     str_append_chars(code, nr);
     str_append_chars(code, ", test_success, test_fail, expect_total, expect_success, expect_fail);\n");

@@ -1,5 +1,13 @@
 
-func test_expect(name: *String, value: bool, expect_success: u32[1], expect_fail: u32[1]) void {
+func test_expect(passed: bool, expect_success: u32[1], expect_fail: u32[1]) void {
+	if passed {
+		expect_success[0]++;
+	}else{
+		expect_fail[0]++;
+	}
+}
+
+func test_print_name(name: *String, passed: bool) void {
 	let msg = "> %"{ name };
 	let len = msg.bytes();
 	let chars : u32 = 48;
@@ -16,10 +24,7 @@ func test_expect(name: *String, value: bool, expect_success: u32[1], expect_fail
 		len+= 2;
 	}
 	let status = "OK";
-	if value {
-		expect_success[0]++;
-	}else{
-		expect_fail[0]++;
+	if !passed {
 		status = "FAIL";
 	}
 	print("% %\n"{ msg, status });

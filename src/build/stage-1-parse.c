@@ -689,7 +689,37 @@ void stage_1_test(Fc *fc) {
     Build *b = fc->b;
 
     tok_expect(fc, "\"", true, true);
-    Str *str = read_string(fc);
+
+    Chunk *chu = fc->chunk;
+    char *content = chu->content;
+    int i = chu->i;
+    Str *str = str_make(alc, 64);
+
+    bool found = false;
+    char ch = content[i];
+    while (ch != '\0') {
+        ch = content[i];
+        i++;
+        if (ch == '\n')
+            break;
+        if (ch == '\\') {
+            str_append_char(str, '\\');
+            str_append_char(str, ch);
+            i++;
+            continue;
+        }
+        if (ch == '"') {
+            found = true;
+            break;
+        }
+        str_append_char(str, ch);
+    }
+    if (!found) {
+        sprintf(fc->sbuf, "Missing end of string");
+        fc_error(fc);
+    }
+    chu->i = i;
+
     char *body = str_to_chars(alc, str);
 
     tok_expect(fc, "{", false, true);
