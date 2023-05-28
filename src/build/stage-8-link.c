@@ -312,7 +312,7 @@ void llvm_init(Build *b, struct Target *t) {
         if (b->target_arch == arch_x64) {
             triple = "x86_64-apple-darwin";
         } else if (b->target_arch == arch_arm64) {
-            triple = "aarch64-apple-darwin";
+            triple = "arm64-apple-darwin";
         }
     } else if (b->target_os == os_win) {
         if (b->target_arch == arch_x64) {
