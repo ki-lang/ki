@@ -13,6 +13,7 @@ Func *func_init(Allocator *alc) {
 
     func->is_static = false;
     func->is_generated = false;
+    func->is_test = false;
     func->only_returns_strict = true;
     func->will_exit = false;
     func->uses_stack_alloc = false;

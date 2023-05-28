@@ -70,6 +70,12 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->ir_changed = false;
     fc->generated = generated;
 
+    char *hash = al(alc, 64);
+    simple_hash(path_ki, hash);
+    fc->path_hash = hash;
+
+    fc->test_counter = 0;
+
     Str *buf = str_make(alc, 500);
     if (file_exists(path_cache)) {
         file_get_contents(buf, path_cache);

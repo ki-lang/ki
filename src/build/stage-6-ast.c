@@ -3,6 +3,7 @@
 
 void stage_6_func(Fc *fc, Func *func);
 void stage_6_gen_main(Fc *fc);
+void stage_6_gen_test_main(Fc *fc);
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
@@ -22,6 +23,9 @@ void stage_6(Fc *fc) {
     }
 
     if (fc == b->main_func->fc) {
+        if (b->test) {
+            stage_6_gen_test_main(fc);
+        }
         stage_6_gen_main(fc);
     }
 
@@ -748,6 +752,9 @@ void stage_6_gen_main(Fc *fc) {
     Scope *scope = func->scope;
 
     char *run = ((mfunc->args->length > 0) ? "return main(arr);" : "return main();");
+    if (b->test) {
+        run = "ki__test__main(); return 0;";
+    }
 
     char *code = "let arr = Array[String].init();\n"
                  "let i = 0;\n"
@@ -769,4 +776,40 @@ void stage_6_gen_main(Fc *fc) {
     fc->chunk = chunk;
 
     read_ast(fc, scope, false);
+}
+
+void stage_6_gen_test_main(Fc *fc) {
+    //
+    Allocator *alc = fc->alc_ast;
+    Func *func = func_init(alc);
+
+    char *name = "ki__test__main";
+
+    char *gname = name;
+    char *dname = "ki:test:main";
+
+    func->fc = fc;
+    func->name = name;
+    func->gname = gname;
+    func->dname = dname;
+    func->scope = scope_init(alc, sct_func, fc->scope, true);
+    func->scope->func = func;
+    func->rett = type_gen_void(alc);
+
+    Array *tests = fc->b->tests;
+    Array *args = array_make(alc, 2);
+    for (int i = 0; i < tests->length; i++) {
+        Test *test = array_get_index(tests, i);
+        Value *fptr = vgen_fptr(alc, test->func, NULL);
+        Value *fcall = vgen_fcall(alc, func->scope, fptr, args, type_gen_void(alc), NULL);
+        Token *t = token_init(alc, tkn_statement, fcall);
+        array_push(func->scope->ast, t);
+    }
+
+    array_push(fc->funcs, func);
+
+    Idf *idf = idf_init(fc->alc, idf_func);
+    idf->item = func;
+
+    map_set(fc->nsc->scope->identifiers, name, idf);
 }

@@ -27,7 +27,7 @@ void cmd_build(int argc, char *argv[]) {
         if (arg[0] != '-')
             continue;
         sprintf(argbuf, ".%s.", arg);
-        if (!strstr(".--options.-O.--debug.-d.--test.--clear.-c.--static.-s.--run.-r.-h.--help.-v.-vv.-vvv.", argbuf)) {
+        if (!strstr(".--options.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.-h.--help.-v.-vv.-vvv.", argbuf)) {
             sprintf(argbuf, "❓ Unknown option '%s'", arg);
             die(argbuf);
         }
@@ -105,7 +105,7 @@ void cmd_build(int argc, char *argv[]) {
     bool optimize = array_contains(args, "--optimize", arr_find_str) || array_contains(args, "-O", arr_find_str);
     bool debug = array_contains(args, "--debug", arr_find_str) || array_contains(args, "-d", arr_find_str);
     bool test = array_contains(args, "--test", arr_find_str);
-    bool clear_cache = array_contains(args, "--clear", arr_find_str) || array_contains(args, "-c", arr_find_str);
+    bool clear_cache = array_contains(args, "--clean", arr_find_str) || array_contains(args, "-c", arr_find_str);
     bool link_static = array_contains(args, "--static", arr_find_str) || array_contains(args, "-s", arr_find_str);
 
     //
@@ -221,6 +221,7 @@ void cmd_build(int argc, char *argv[]) {
     b->main_func = NULL;
     b->str_buf = str_make(alc, 5000);
     b->str_buf_io = str_make(alc_io, 10000);
+    b->tests = array_make(alc, 20);
     //
     b->read_ki_file = chain_make(alc);
     b->write_ir = chain_make(alc);
@@ -394,10 +395,10 @@ void cmd_build_help(bool run_code) {
     printf("\n");
 
     printf(" --optimize -O       apply code optimizations\n");
-    printf(" --clear -c          clear cache\n");
+    printf(" --clean -c          clear cache\n");
     printf(" --debug -d          generate debug info\n");
-    // printf(" --test              run _test_{...} functions\n");
     printf(" --run -r            run code after compiling\n");
+    printf(" --test              generate a 'main' that runs all tests\n");
     printf(" --target            compile for a specific os/arch\n");
     printf("                     linux-x64, macos-x64, win-x64\n");
     printf("\n");

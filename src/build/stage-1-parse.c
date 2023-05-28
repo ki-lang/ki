@@ -10,6 +10,7 @@ void stage_1_header(Fc *fc);
 void stage_1_link(Fc *fc, int link_type);
 void stage_1_global(Fc *fc, bool shared);
 void stage_1_alias(Fc *fc, int alias_type);
+void stage_1_test(Fc *fc);
 
 void stage_1(Fc *fc) {
     //
@@ -88,6 +89,10 @@ void stage_1(Fc *fc) {
             stage_1_alias(fc, alias_type);
             continue;
         }
+        if (strcmp(token, "test") == 0) {
+            stage_1_test(fc);
+            continue;
+        }
 
         sprintf(fc->sbuf, "Unexpected token '%s'", token);
         fc_error(fc);
@@ -141,8 +146,9 @@ void stage_1_func(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_func);
     idf->item = func;
 
-    if (b->main_func == func)
+    if (b->main_func == func) {
         name = "main";
+    }
 
     map_set(fc->nsc->scope->identifiers, name, idf);
     if (fc->is_header) {
@@ -674,4 +680,49 @@ void stage_1_alias(Fc *fc, int alias_type) {
     tok_expect(fc, ";", true, true);
 
     array_push(fc->aliasses, a);
+}
+
+void stage_1_test(Fc *fc) {
+    //
+    char *token = fc->token;
+    Allocator *alc = fc->alc;
+    Build *b = fc->b;
+
+    tok_expect(fc, "\"", true, true);
+    Str *str = read_string(fc);
+    char *body = str_to_chars(alc, str);
+
+    tok_expect(fc, "{", false, true);
+
+    // If tests enabled && is main package
+    if (b->test && fc->nsc->pkc == b->nsc_main->pkc) {
+
+        Func *func = func_init(fc->alc);
+
+        sprintf(token, "ki__TEST_%d__%s", ++fc->test_counter, fc->path_hash);
+
+        char *name = dups(fc->alc, token);
+        char *gname = nsc_gname(fc->nsc, name);
+        char *dname = nsc_dname(fc->nsc, name);
+
+        func->fc = fc;
+        func->name = name;
+        func->gname = gname;
+        func->dname = dname;
+        func->scope = scope_init(fc->alc, sct_func, fc->scope, true);
+        func->scope->func = func;
+        func->rett = type_gen_void(alc);
+        func->is_test = true;
+
+        Test *test = al(alc, sizeof(Test));
+        test->name = body;
+        test->func = func;
+
+        array_push(fc->funcs, func);
+        array_push(b->tests, test);
+
+        func->chunk_body = chunk_clone(fc->alc, fc->chunk);
+    }
+
+    skip_body(fc, '}');
 }
