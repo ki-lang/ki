@@ -74,7 +74,3 @@ git clone https://github.com/ki-lang/ki.git
 cd ki
 make
 ```
-
-## Known issues
-
-- Compiling to macos-arm from an arbitrary system seems works, but we are not sure, because there is no official complete test and it seems to have some illegal hardware instructions.
