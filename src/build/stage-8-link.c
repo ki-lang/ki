@@ -142,7 +142,7 @@ void stage_8(Build *b) {
         printf("⌚ LLVM build o: %.3fs\n", time_llvm);
     }
 
-    if (!b->main_func) {
+    if (!b->main_func && !b->test) {
         die("❌ Missing 'main' function");
     }
 

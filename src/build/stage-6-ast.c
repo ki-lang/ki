@@ -22,7 +22,8 @@ void stage_6(Fc *fc) {
         printf("# Stage 6 : AST : %s\n", fc->path_ki);
     }
 
-    if (b->main_func && fc == b->main_func->fc) {
+    if ((b->main_func && fc == b->main_func->fc) || (!b->main_func && !b->main_fc && fc->nsc == b->nsc_main)) {
+        b->main_fc = fc;
         if (b->test) {
             stage_6_gen_test_main(fc);
         }
@@ -740,24 +741,28 @@ void stage_6_gen_main(Fc *fc) {
     Build *b = fc->b;
     Allocator *alc = fc->alc;
 
-    Func *mfunc = b->main_func;
-    fc->chunk = mfunc->chunk_args;
-    if (mfunc->args->length > 1) {
-        sprintf(fc->sbuf, "Function 'main' has too many arguments");
-        fc_error(fc);
-    }
-
     Chunk *chunk = chunk_init(alc, fc);
-    if (mfunc->args->length > 0) {
-        Arg *arg = array_get_index(mfunc->args, 0);
-        chunk->content = "*Array[String]";
-        fc->chunk = chunk;
+    Func *mfunc = b->main_func;
+    if (mfunc) {
+        // Validate main
+        fc->chunk = mfunc->chunk_args;
+        if (mfunc->args->length > 1) {
+            sprintf(fc->sbuf, "Function 'main' has too many arguments");
+            fc_error(fc);
+        }
 
-        Type *type = read_type(fc, alc, fc->scope, true, true, rtc_func_arg);
-        TypeCheck *tc = type_gen_type_check(alc, type);
+        if (mfunc->args->length > 0) {
+            Arg *arg = array_get_index(mfunc->args, 0);
+            chunk->content = "*Array[String]";
+            chunk->length = 100;
+            fc->chunk = chunk;
 
-        fc->chunk = arg->type_chunk;
-        type_validate(fc, tc, arg->type, "First argument of 'main' should be different");
+            Type *type = read_type(fc, alc, fc->scope, true, true, rtc_func_arg);
+            TypeCheck *tc = type_gen_type_check(alc, type);
+
+            fc->chunk = arg->type_chunk;
+            type_validate(fc, tc, arg->type, "First argument of 'main' should be different");
+        }
     }
 
     Func *func = func_init(fc->alc);
@@ -790,8 +795,8 @@ void stage_6_gen_main(Fc *fc) {
     // Ast
     Scope *scope = func->scope;
 
-    bool main_has_return = !type_is_void(mfunc->rett);
-    bool main_has_arg = mfunc->args->length > 0;
+    bool main_has_return = mfunc && !type_is_void(mfunc->rett);
+    bool main_has_arg = mfunc && mfunc->args->length > 0;
 
     Str *code = str_make(alc, 1000);
     str_append_chars(code, "let arr = Array[String].init();\n");
@@ -806,13 +811,15 @@ void stage_6_gen_main(Fc *fc) {
         str_append_chars(code, "ki__test__main();\n");
         str_append_chars(code, "return 0;\n");
     } else {
-        if (main_has_return)
-            str_append_chars(code, "return ");
-        str_append_chars(code, "main(");
-        if (main_has_arg) {
-            str_append_chars(code, "arr");
+        if (b->main_func) {
+            if (main_has_return)
+                str_append_chars(code, "return ");
+            str_append_chars(code, "main(");
+            if (main_has_arg) {
+                str_append_chars(code, "arr");
+            }
+            str_append_chars(code, ");\n");
         }
-        str_append_chars(code, ");\n");
         if (!main_has_return)
             str_append_chars(code, "return 0;");
     }
@@ -836,7 +843,6 @@ void stage_6_gen_test_main(Fc *fc) {
     Build *b = fc->b;
 
     char *name = "ki__test__main";
-
     char *gname = name;
     char *dname = "ki:test:main";
 

@@ -87,6 +87,7 @@ struct Build {
     Nsc *nsc_main;
     Pkc *pkc_ki;
     Func *main_func;
+    Fc *main_fc;
     Nsc *nsc_type;
     Nsc *nsc_io;
     //

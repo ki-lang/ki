@@ -77,7 +77,7 @@ void llvm_gen_global_ir(LB *b) {
     Scope *scope = fc->scope;
     Str *ir = b->ir_global;
 
-    bool is_main_fc = fc->b->main_func && fc->b->main_func->fc == fc;
+    bool is_main_fc = fc->b->main_fc == fc;
 
     char bytes[20];
     sprintf(bytes, "%d", fc->b->ptr_size);
