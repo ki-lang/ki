@@ -61,7 +61,7 @@ void stage_6_func(Fc *fc, Func *func) {
         Value *right = vgen_vint(alc, 0, type_gen(b, alc, "u32"), false);
         func->test->expects = right->item;
         Arg *arg = array_get_index(func->args, 0);
-        Value *argv = vgen_array_item(alc, fscope, value_init(alc, v_decl, arg->decl, arg->type), 0);
+        Value *argv = vgen_array_item(alc, fscope, value_init(alc, v_decl, arg->decl, arg->type), vgen_vint(alc, 0, type_gen(b, alc, "u32"), false));
         array_push(fscope->ast, tgen_assign(alc, argv, right));
     }
 
@@ -857,7 +857,6 @@ void stage_6_gen_test_main(Fc *fc) {
     str_append_chars(code, "let expect_total : u32 = 0;\n");
     str_append_chars(code, "let expect_success : u32 = 0;\n");
     str_append_chars(code, "let expect_fail : u32 = 0;\n");
-    str_append_chars(code, "let expect_total_ref = @array_of(expect_total);\n");
 
     str_append_chars(code, "print(\"\\n\");\n");
 
@@ -865,15 +864,19 @@ void stage_6_gen_test_main(Fc *fc) {
         Test *test = array_get_index(tests, i);
         map_set(scope->identifiers, test->func->gname, idf_init_item(fc->alc_ast, idf_func, test->func));
 
+        sprintf(line, "let expect_count_%d : u32 = 0;\n", i);
+        str_append_chars(code, line);
         sprintf(line, "let expect_success_%d : u32 = 0;\n", i);
         str_append_chars(code, line);
         sprintf(line, "let expect_fail_%d : u32 = 0;\n", i);
         str_append_chars(code, line);
         // Call test
-        sprintf(line, "%s(expect_total_ref, @array_of(expect_success_%d), @array_of(expect_fail_%d));\n", test->func->gname, i, i);
+        sprintf(line, "%s(@array_of(expect_count_%d), @array_of(expect_success_%d), @array_of(expect_fail_%d));\n", test->func->gname, i, i, i);
         str_append_chars(code, line);
         // Check result
         sprintf(line, "if expect_fail_%d == 0 : test_success++; else: test_fail++;\n", i);
+        str_append_chars(code, line);
+        sprintf(line, "expect_total += expect_count_%d;\n", i);
         str_append_chars(code, line);
         sprintf(line, "expect_success += expect_success_%d;\n", i);
         str_append_chars(code, line);
