@@ -77,5 +77,4 @@ make
 
 ## Known issues
 
-- Compiling for macos from linux works but seems to crash sometimes with illegal hardware instruction
-
+- Compiling to macos-arm from an arbitrary system seems works, but we are not sure, because there is no official complete test and it seems to have some illegal hardware instructions.
