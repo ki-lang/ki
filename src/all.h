@@ -2,11 +2,11 @@
 #ifndef _H_ALL
 #define _H_ALL
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 // #include <sys/resource.h>
-#include <sys/stat.h> // might be linux only?
+#include <sys/stat.h>
 #include <sys/time.h>
 // #include <sys/wait.h>
 #include <dirent.h>
