@@ -716,10 +716,13 @@ void stage_1_test(Fc *fc) {
         Test *test = al(alc, sizeof(Test));
         test->name = body;
         test->func = func;
+        func->test = test;
+        test->expects = NULL;
 
         Chunk *chunk = chunk_init(alc, fc);
         chunk->fc = fc;
         chunk->content = "ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {";
+        chunk->length = strlen(chunk->content);
         chunk->i = 0;
         chunk->line = 1;
 

@@ -326,6 +326,7 @@ struct Func {
     Array *args;
     Map *args_by_name;
     Array *errors;
+    Test *test;
     //
     int act; // Access type for class functions
     //
@@ -428,6 +429,7 @@ struct TypeCheck {
 struct Test {
     char *name;
     Func *func;
+    VInt *expects;
 };
 
 // Pkg

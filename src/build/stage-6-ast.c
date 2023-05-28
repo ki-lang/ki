@@ -55,6 +55,16 @@ void stage_6_func(Fc *fc, Func *func) {
     Chunk *chunk = func->chunk_body;
     fc->chunk = chunk;
 
+    if (func->is_test) {
+        Allocator *alc = fc->alc_ast;
+        Build *b = fc->b;
+        Value *right = vgen_vint(alc, 0, type_gen(b, alc, "u32"), false);
+        func->test->expects = right->item;
+        Arg *arg = array_get_index(func->args, 0);
+        Value *argv = vgen_array_item(alc, fscope, value_init(alc, v_decl, arg->decl, arg->type), 0);
+        array_push(fscope->ast, tgen_assign(alc, argv, right));
+    }
+
     read_ast(fc, func->scope, false);
 
     if (!type_is_void(func->rett) && !fscope->did_return) {
@@ -176,6 +186,38 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         if (strcmp(token, "while") == 0) {
             token_while(alc, fc, scope);
+            continue;
+        }
+
+        if (strcmp(token, "@expect") == 0) {
+            Func *func = scope->func;
+            if (!func->is_test) {
+                sprintf(fc->sbuf, "You can only use @expect in a 'test'");
+                fc_error(fc);
+            }
+            Value *val = read_value(fc, alc, scope, false, 0, false);
+            if (!type_is_bool(val->rett, fc->b)) {
+                sprintf(fc->sbuf, "@expect value must return a bool type");
+                fc_error(fc);
+            }
+
+            Array *args = array_make(alc, 4);
+            Type *rett = type_gen(fc->b, alc, "String");
+            rett->strict_ownership = true;
+            array_push(args, value_init(alc, v_string, func->test->name, rett));
+            array_push(args, val);
+            Arg *pass = array_get_index(func->args, 1);
+            array_push(args, value_init(alc, v_decl, pass->decl, pass->type));
+            Arg *fail = array_get_index(func->args, 2);
+            array_push(args, value_init(alc, v_decl, fail->decl, fail->type));
+
+            Func *log = ki_get_func(fc->b, "os", "test_expect");
+            Value *fptr = vgen_fptr(alc, log, NULL);
+            Value *fcall = vgen_fcall(alc, scope, fptr, args, log->rett, NULL);
+            array_push(scope->ast, token_init(alc, tkn_statement, fcall));
+
+            tok_expect(fc, ";", false, true);
+            scope->func->test->expects->value++;
             continue;
         }
         if (strcmp(token, "@move") == 0) {
@@ -770,6 +812,7 @@ void stage_6_gen_main(Fc *fc) {
     sprintf(content, code, run);
 
     chunk->content = content;
+    chunk->length = strlen(content);
     chunk->i = 0;
     chunk->line = 1;
 
@@ -816,6 +859,8 @@ void stage_6_gen_test_main(Fc *fc) {
     str_append_chars(code, "let expect_fail : u32 = 0;\n");
     str_append_chars(code, "let expect_total_ref = @array_of(expect_total);\n");
 
+    str_append_chars(code, "print(\"\\n\");\n");
+
     for (int i = 0; i < tests->length; i++) {
         Test *test = array_get_index(tests, i);
         map_set(scope->identifiers, test->func->gname, idf_init_item(fc->alc_ast, idf_func, test->func));
@@ -830,6 +875,10 @@ void stage_6_gen_test_main(Fc *fc) {
         // Check result
         sprintf(line, "if expect_fail_%d == 0 : test_success++; else: test_fail++;\n", i);
         str_append_chars(code, line);
+        sprintf(line, "expect_success += expect_success_%d;\n", i);
+        str_append_chars(code, line);
+        sprintf(line, "expect_fail += expect_fail_%d;\n", i);
+        str_append_chars(code, line);
     }
 
     char nr[10];
@@ -843,10 +892,8 @@ void stage_6_gen_test_main(Fc *fc) {
     str_append_chars(code, "}\n");
 
     Chunk *chunk = chunk_init(alc, fc);
-    chunk->fc = fc;
     chunk->content = str_to_chars(alc, code);
-    chunk->i = 0;
-    chunk->line = 1;
+    chunk->length = code->length;
 
     func->chunk_body = chunk;
 }
