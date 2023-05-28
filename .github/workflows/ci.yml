@@ -43,7 +43,7 @@ jobs:
     - name: Run test
       run: ./_test
 
-    - run: ln -s /usr/bin/lld /usr/bin/ld64.lld
+    - run: sudo ln -s /usr/bin/lld /usr/bin/ld64.lld
 
     - name: Build test(cross compiling) for macos-x64
       run: ./ki build ./test/test.ki -o _test --target macos-x64
