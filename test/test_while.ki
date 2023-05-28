@@ -1,0 +1,9 @@
+test "while" {
+    let i = 0;
+    let s = 0;
+    while i < 10 {
+        s += i;
+        i += 1;
+    }
+    @expect s == 45;
+}
