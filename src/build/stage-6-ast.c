@@ -22,7 +22,7 @@ void stage_6(Fc *fc) {
         printf("# Stage 6 : AST : %s\n", fc->path_ki);
     }
 
-    if (fc == b->main_func->fc) {
+    if (b->main_func && fc == b->main_func->fc) {
         if (b->test) {
             stage_6_gen_test_main(fc);
         }
