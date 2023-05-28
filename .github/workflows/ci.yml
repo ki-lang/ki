@@ -44,7 +44,7 @@ jobs:
       run: ./_test
 
     - name: Build test(cross compiling) for macos-x64
-      run: ./ki build ./test/test.ki -o _test --target  macos-x64
+      run: ./ki build ./test/test.ki -o _test --target macos-x64
     
     - name: Build test(cross compiling) for macos-arm64
       run: ./ki build ./test/test.ki -o _test --target macos-arm64
