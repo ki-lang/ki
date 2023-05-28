@@ -99,7 +99,7 @@ void stage_8(Build *b) {
                     WaitForSingleObject(thr, INFINITE);
                 }
 
-                void *thr = CreateThread(NULL, 0, stage_8_compile_o, (void *)data, 0, NULL);
+                void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))stage_8_compile_o, (void *)data, 0, NULL);
 #else
                 if (threads->length >= 16) {
                     // Wait for the first thread

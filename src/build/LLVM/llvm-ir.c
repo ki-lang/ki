@@ -403,7 +403,7 @@ char *llvm_ir_string(LB *b, char *body) {
     // Bytes
     // Len bytes
     size_t len_buf = len;
-    char *len_ptr = (unsigned char *)&len_buf;
+    unsigned char *len_ptr = (unsigned char *)&len_buf;
     int c = 0;
     while (c < ptr_size) {
         unsigned char ch = *(len_ptr + c);
