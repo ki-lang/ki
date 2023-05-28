@@ -60,4 +60,4 @@ test "`!`" {
     @expect !false;
 }
 
-func main() void {}
+func main() i32 { return 0; }
