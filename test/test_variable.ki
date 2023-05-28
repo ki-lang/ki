@@ -1,0 +1,14 @@
+test "num" {
+    let a = 5;
+    let b = 5#u8;
+    let c : u8 = 5;
+    @expect a == b;
+    @expect b == c;
+}
+
+test "string" {
+    let a = "1";
+    let b = 2;
+    let s = a + ", " + b.str();
+    @expect s == "1, 2";
+}
