@@ -35,7 +35,7 @@ void llvm_build_ir(LB *b) {
         if (strcmp(bld->arch, "x64") == 0) {
             str_append_chars(ir, "target triple = \"x86_64-apple-darwin\"");
         } else if (strcmp(bld->arch, "arm64") == 0) {
-            str_append_chars(ir, "target triple = \"aarch64-apple-darwin\"");
+            str_append_chars(ir, "target triple = \"arm64-apple-darwin\"");
         }
     } else if (strcmp(bld->os, "win") == 0) {
         if (strcmp(bld->arch, "x64") == 0) {

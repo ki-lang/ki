@@ -2,7 +2,7 @@
 #ifndef _H_ALL
 #define _H_ALL
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 // #include <sys/resource.h>
