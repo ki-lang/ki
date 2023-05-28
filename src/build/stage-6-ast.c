@@ -819,27 +819,6 @@ void stage_6_gen_main(Fc *fc) {
 
     str_append_chars(code, "}\n");
 
-    // char *arg = main_has_arg ? "arr" : "";
-    // char *run = main_has_return ? "main(arr);" : "return main();";
-    // char *ret = main_has_return ? "0" : "";
-
-    // if (b->test) {
-    //     run = "ki__test__main(); return 0;";
-    // }
-
-    // char *code = "let arr = Array[String].init();\n"
-    //              "let i = 0;\n"
-    //              "while i < argc {\n"
-    //              "let cstr = @ptrv(argv, cstring, i);\n"
-    //              "arr.push(cstr.to_str());\n"
-    //              "i++;\n"
-    //              "}\n"
-    //              "%s\n"
-    //              "}\n";
-
-    // char content[512];
-    // sprintf(content, code, run);
-
     chunk->content = str_to_chars(alc, code);
     chunk->length = code->length;
     chunk->i = 0;
