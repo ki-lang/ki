@@ -3,6 +3,7 @@
 
 void stage_6_func(Fc *fc, Func *func);
 void stage_6_gen_main(Fc *fc);
+void stage_6_gen_test_main(Fc *fc);
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
@@ -22,6 +23,9 @@ void stage_6(Fc *fc) {
     }
 
     if (fc == b->main_func->fc) {
+        if (b->test) {
+            stage_6_gen_test_main(fc);
+        }
         stage_6_gen_main(fc);
     }
 
@@ -50,6 +54,16 @@ void stage_6_func(Fc *fc, Func *func) {
     Scope *fscope = func->scope;
     Chunk *chunk = func->chunk_body;
     fc->chunk = chunk;
+
+    if (func->is_test) {
+        Allocator *alc = fc->alc_ast;
+        Build *b = fc->b;
+        Value *right = vgen_vint(alc, 0, type_gen(b, alc, "u32"), false);
+        func->test->expects = right->item;
+        Arg *arg = array_get_index(func->args, 0);
+        Value *argv = vgen_array_item(alc, fscope, value_init(alc, v_decl, arg->decl, arg->type), vgen_vint(alc, 0, type_gen(b, alc, "u32"), false));
+        array_push(fscope->ast, tgen_assign(alc, argv, right));
+    }
 
     read_ast(fc, func->scope, false);
 
@@ -172,6 +186,35 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         if (strcmp(token, "while") == 0) {
             token_while(alc, fc, scope);
+            continue;
+        }
+
+        if (strcmp(token, "@expect") == 0) {
+            Func *func = scope->func;
+            if (!func->is_test) {
+                sprintf(fc->sbuf, "You can only use @expect in a 'test'");
+                fc_error(fc);
+            }
+            Value *val = read_value(fc, alc, scope, false, 0, false);
+            if (!type_is_bool(val->rett, fc->b)) {
+                sprintf(fc->sbuf, "@expect value must return a bool type");
+                fc_error(fc);
+            }
+
+            Array *args = array_make(alc, 4);
+            array_push(args, val);
+            Arg *pass = array_get_index(func->args, 1);
+            array_push(args, value_init(alc, v_decl, pass->decl, pass->type));
+            Arg *fail = array_get_index(func->args, 2);
+            array_push(args, value_init(alc, v_decl, fail->decl, fail->type));
+
+            Func *log = ki_get_func(fc->b, "os", "test_expect");
+            Value *fptr = vgen_fptr(alc, log, NULL);
+            Value *fcall = vgen_fcall(alc, scope, fptr, args, log->rett, NULL);
+            array_push(scope->ast, token_init(alc, tkn_statement, fcall));
+
+            tok_expect(fc, ";", false, true);
+            scope->func->test->expects->value++;
             continue;
         }
         if (strcmp(token, "@move") == 0) {
@@ -748,6 +791,9 @@ void stage_6_gen_main(Fc *fc) {
     Scope *scope = func->scope;
 
     char *run = ((mfunc->args->length > 0) ? "return main(arr);" : "return main();");
+    if (b->test) {
+        run = "ki__test__main(); return 0;";
+    }
 
     char *code = "let arr = Array[String].init();\n"
                  "let i = 0;\n"
@@ -763,10 +809,94 @@ void stage_6_gen_main(Fc *fc) {
     sprintf(content, code, run);
 
     chunk->content = content;
+    chunk->length = strlen(content);
     chunk->i = 0;
     chunk->line = 1;
 
     fc->chunk = chunk;
 
     read_ast(fc, scope, false);
+}
+
+void stage_6_gen_test_main(Fc *fc) {
+    //
+    Allocator *alc = fc->alc_ast;
+    Func *func = func_init(alc);
+    Build *b = fc->b;
+
+    char *name = "ki__test__main";
+
+    char *gname = name;
+    char *dname = "ki:test:main";
+
+    func->fc = fc;
+    func->name = name;
+    func->gname = gname;
+    func->dname = dname;
+    func->scope = scope_init(alc, sct_func, fc->scope, true);
+    func->scope->func = func;
+    func->rett = type_gen_void(alc);
+
+    Idf *idf = idf_init(fc->alc, idf_func);
+    idf->item = func;
+    map_set(fc->nsc->scope->identifiers, func->name, idf);
+
+    array_push(fc->funcs, func);
+
+    Scope *scope = func->scope;
+    Array *tests = fc->b->tests;
+
+    char line[256];
+    map_set(scope->identifiers, "os_test_print_name", ki_lib_get(b, "os", "test_print_name"));
+    map_set(scope->identifiers, "os_test_report", ki_lib_get(b, "os", "test_report"));
+
+    Str *code = str_make(alc, 5000);
+    str_append_chars(code, "let test_success : u32 = 0;\n");
+    str_append_chars(code, "let test_fail : u32 = 0;\n");
+    str_append_chars(code, "let expect_total : u32 = 0;\n");
+    str_append_chars(code, "let expect_success : u32 = 0;\n");
+    str_append_chars(code, "let expect_fail : u32 = 0;\n");
+
+    str_append_chars(code, "print(\"\\n\");\n");
+
+    for (int i = 0; i < tests->length; i++) {
+        Test *test = array_get_index(tests, i);
+        map_set(scope->identifiers, test->func->gname, idf_init_item(fc->alc_ast, idf_func, test->func));
+
+        sprintf(line, "let expect_count_%d : u32 = 0;\n", i);
+        str_append_chars(code, line);
+        sprintf(line, "let expect_success_%d : u32 = 0;\n", i);
+        str_append_chars(code, line);
+        sprintf(line, "let expect_fail_%d : u32 = 0;\n", i);
+        str_append_chars(code, line);
+        // Call test
+        sprintf(line, "%s(@array_of(expect_count_%d), @array_of(expect_success_%d), @array_of(expect_fail_%d));\n", test->func->gname, i, i, i);
+        str_append_chars(code, line);
+        // Check result
+        sprintf(line, "os_test_print_name(\"%s\", expect_fail_%d == 0);\n", test->name, i);
+        str_append_chars(code, line);
+        sprintf(line, "if expect_fail_%d == 0 : test_success++; else: test_fail++;\n", i);
+        str_append_chars(code, line);
+        sprintf(line, "expect_total += expect_count_%d;\n", i);
+        str_append_chars(code, line);
+        sprintf(line, "expect_success += expect_success_%d;\n", i);
+        str_append_chars(code, line);
+        sprintf(line, "expect_fail += expect_fail_%d;\n", i);
+        str_append_chars(code, line);
+    }
+
+    char nr[10];
+    sprintf(nr, "%d", tests->length);
+
+    str_append_chars(code, "os_test_report(");
+    str_append_chars(code, nr);
+    str_append_chars(code, ", test_success, test_fail, expect_total, expect_success, expect_fail);\n");
+
+    str_append_chars(code, "}\n");
+
+    Chunk *chunk = chunk_init(alc, fc);
+    chunk->content = str_to_chars(alc, code);
+    chunk->length = code->length;
+
+    func->chunk_body = chunk;
 }

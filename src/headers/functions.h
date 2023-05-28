@@ -136,6 +136,7 @@ Str *macro_replace_str_vars(Allocator *alc, Fc *fc, Str *str);
 // Id
 Id *id_init(Allocator *alc);
 Idf *idf_init(Allocator *alc, int type);
+Idf *idf_init_item(Allocator *alc, int type, void *item);
 Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash);
 Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail);
 Idf *ki_lib_get(Build *b, char *ns, char *name);

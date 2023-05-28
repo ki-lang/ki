@@ -22,6 +22,7 @@ void llvm_build_ir(LB *b) {
     str_append_chars(ir, b->fc->path_ki);
     str_append_chars(ir, "\"\n");
 
+    // str_append_chars(ir, "target datalayout = \"e-m:o-i64:64-i128:128-n32:64-S128\"\n");
     str_append_chars(ir, "target datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"\n");
 
     if (strcmp(bld->os, "linux") == 0) {

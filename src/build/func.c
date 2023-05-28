@@ -10,9 +10,11 @@ Func *func_init(Allocator *alc) {
     func->act = 0;
     func->chunk_args = NULL;
     func->chunk_body = NULL;
+    func->test = NULL;
 
     func->is_static = false;
     func->is_generated = false;
+    func->is_test = false;
     func->only_returns_strict = true;
     func->will_exit = false;
     func->uses_stack_alloc = false;
