@@ -1,0 +1,8 @@
+test "array" {
+    let arr = Array[String].init();
+    arr.push("Hello");
+    arr.push("World");
+    @expect (arr.get(0) !? "not found") == "Hello";
+    @expect (arr.get(1) !? "not found") == "World";
+    @expect (arr.get(2) !? "not found") == "not found";
+}
