@@ -36,7 +36,13 @@ void llvm_gen_func_ir(LB *b) {
             str_append_chars(ir, llvm_type(b, arg->type));
             str_append_chars(ir, " noundef ");
             if (arg->type->ptr_depth > 0 && !arg->type->nullable)
-                str_append_chars(ir, " nonnull");
+                str_append_chars(ir, " nonnull ");
+            // if (arg->type->borrow)
+            //     str_append_chars(ir, " nofree readnone ");
+            // if (arg->type->ptr_depth > 0)
+            //     str_append_chars(ir, " nocapture ");
+            // if (!arg->is_mut)
+            //     str_append_chars(ir, " inreg ");
 
             char *v = llvm_var(b);
             str_append_chars(ir, v);

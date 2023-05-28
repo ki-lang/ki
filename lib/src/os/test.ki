@@ -1,0 +1,44 @@
+
+func test_expect(passed: bool, expect_success: u32[1], expect_fail: u32[1]) void {
+	if passed {
+		expect_success[0]++;
+	}else{
+		expect_fail[0]++;
+	}
+}
+
+func test_print_name(name: *String, passed: bool) void {
+	let msg = "> %"{ name };
+	let len = msg.bytes();
+	let chars : u32 = 48;
+	if len > chars {
+		msg = msg.sub_str_bytes(0, chars);
+		len = chars;
+	}
+	if len % 2 != 0 {
+		msg += ".";
+		len++;
+	}
+	while len < chars {
+		msg += "..";
+		len+= 2;
+	}
+	let status = "OK";
+	if !passed {
+		status = "FAIL";
+	}
+	print("% %\n"{ msg, status });
+}
+
+func test_report(total: u32, success: u32, fail: u32, expect_total: u32, expect_success: u32, expect_fail: u32) void {
+	print("\n");
+	print("-----------------------------------------\n");
+	print("Tests: %, Passed: %, Failed: %\n"{ total.str(), success.str(), fail.str() });
+	print("Expects: %, Correct: %, Wrong: %\n"{ expect_total.str(), expect_success.str(), expect_fail.str() });
+	print("-----------------------------------------\n");
+	if fail == 0: print("Tests: PASSED\n");
+	else: print("Tests: FAILED\n");
+	print("\n");
+	if fail == 0: exit(1);
+	exit(0);
+}

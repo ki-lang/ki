@@ -1286,7 +1286,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                     continue;
                 }
                 if (strcmp(token, ")") != 0) {
-                    sprintf(fc->sbuf, "Expected ',' or ')'");
+                    sprintf(fc->sbuf, "Expected ',' or ')' instead of '%s'", token);
                     fc_error(fc);
                 }
                 break;

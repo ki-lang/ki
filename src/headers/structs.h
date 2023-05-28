@@ -30,6 +30,7 @@ typedef struct Global Global;
 typedef struct Trait Trait;
 typedef struct Alias Alias;
 typedef struct TypeCheck TypeCheck;
+typedef struct Test Test;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -99,6 +100,7 @@ struct Build {
     Map *all_fcs;
     Str *str_buf;
     Str *str_buf_io;
+    Array *tests;
     //
     Chain *read_ki_file;
     Chain *write_ir;
@@ -143,6 +145,7 @@ struct Fc {
     char *path_ki;
     char *path_ir;
     char *path_cache;
+    char *path_hash;
     char *token;
     char *sbuf;
     char *ir;
@@ -170,6 +173,8 @@ struct Fc {
     Array *type_size_checks;
     //
     cJSON *cache;
+    //
+    int test_counter;
     //
     bool is_header;
     bool ir_changed;
@@ -321,11 +326,13 @@ struct Func {
     Array *args;
     Map *args_by_name;
     Array *errors;
+    Test *test;
     //
     int act; // Access type for class functions
     //
     bool is_static;
     bool is_generated;
+    bool is_test;
     bool can_error;
     bool only_returns_strict;
     bool will_exit;
@@ -417,6 +424,12 @@ struct TypeCheck {
     int type;
     bool borrow;
     bool ref;
+};
+
+struct Test {
+    char *name;
+    Func *func;
+    VInt *expects;
 };
 
 // Pkg

@@ -333,7 +333,8 @@ void llvm_init(Build *b, struct Target *t) {
         exit(1);
     }
 
-    LLVMTargetMachineRef machine = LLVMCreateTargetMachine(target, triple,cpu, NULL, LLVMCodeGenLevelDefault, LLVMRelocPIC, LLVMCodeModelDefault);
+    LLVMTargetMachineRef machine = LLVMCreateTargetMachine(target, triple, cpu, NULL, LLVMCodeGenLevelDefault, LLVMRelocPIC, LLVMCodeModelDefault);
+
     LLVMTargetDataRef datalayout = LLVMCreateTargetDataLayout(machine);
     char *datalayout_str = LLVMCopyStringRepOfTargetData(datalayout);
 

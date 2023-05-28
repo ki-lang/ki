@@ -1,4 +1,6 @@
 
+use mem;
+
 class ptr type:ptr math async {
 
 	func str() String {
@@ -21,5 +23,10 @@ class ptr type:ptr math async {
             print(b.str_base(16));
             i++;
         }
+    }
+
+    static func write_string_bytes(adr: ptr, str: *String) void {
+        let data = str.data();
+        mem:copy(data, adr, str.bytes());
     }
 }
