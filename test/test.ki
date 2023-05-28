@@ -1,9 +1,4 @@
-func main() i32 {
-    hello_world();
-    return 0;
-}
-
-func hello_world() i32 {
+test "hello_world" {
     println("Hello world!");
-    return 0;
+    @expect true;
 }
