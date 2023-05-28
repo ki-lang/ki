@@ -790,26 +790,58 @@ void stage_6_gen_main(Fc *fc) {
     // Ast
     Scope *scope = func->scope;
 
-    char *run = ((mfunc->args->length > 0) ? "return main(arr);" : "return main();");
+    bool main_has_return = !type_is_void(mfunc->rett);
+    bool main_has_arg = mfunc->args->length > 0;
+
+    Str *code = str_make(alc, 1000);
+    str_append_chars(code, "let arr = Array[String].init();\n");
+    str_append_chars(code, "let i = 0;\n");
+    str_append_chars(code, "while i < argc {\n");
+    str_append_chars(code, "let cstr = @ptrv(argv, cstring, i);\n");
+    str_append_chars(code, "arr.push(cstr.to_str());\n");
+    str_append_chars(code, "i++;\n");
+    str_append_chars(code, "}\n");
+
     if (b->test) {
-        run = "ki__test__main(); return 0;";
+        str_append_chars(code, "ki__test__main();\n");
+        str_append_chars(code, "return 0;\n");
+    } else {
+        if (main_has_return)
+            str_append_chars(code, "return ");
+        str_append_chars(code, "main(");
+        if (main_has_arg) {
+            str_append_chars(code, "arr");
+        }
+        str_append_chars(code, ");\n");
+        if (!main_has_return)
+            str_append_chars(code, "return 0;");
     }
 
-    char *code = "let arr = Array[String].init();\n"
-                 "let i = 0;\n"
-                 "while i < argc {\n"
-                 "let cstr = @ptrv(argv, cstring, i);\n"
-                 "arr.push(cstr.to_str());\n"
-                 "i++;\n"
-                 "}\n"
-                 "%s\n"
-                 "}\n";
+    str_append_chars(code, "}\n");
 
-    char content[512];
-    sprintf(content, code, run);
+    // char *arg = main_has_arg ? "arr" : "";
+    // char *run = main_has_return ? "main(arr);" : "return main();";
+    // char *ret = main_has_return ? "0" : "";
 
-    chunk->content = content;
-    chunk->length = strlen(content);
+    // if (b->test) {
+    //     run = "ki__test__main(); return 0;";
+    // }
+
+    // char *code = "let arr = Array[String].init();\n"
+    //              "let i = 0;\n"
+    //              "while i < argc {\n"
+    //              "let cstr = @ptrv(argv, cstring, i);\n"
+    //              "arr.push(cstr.to_str());\n"
+    //              "i++;\n"
+    //              "}\n"
+    //              "%s\n"
+    //              "}\n";
+
+    // char content[512];
+    // sprintf(content, code, run);
+
+    chunk->content = str_to_chars(alc, code);
+    chunk->length = code->length;
     chunk->i = 0;
     chunk->line = 1;
 
