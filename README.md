@@ -50,7 +50,7 @@ func main() void {
 
 macOS: `brew install llvm@15 && brew link llvm@15`
 
-Ubuntu(Debian): `sudo apt-get install llvm-15 clang-15 lld-15 libcurl4-openssl-dev`
+Ubuntu(Debian): `sudo apt-get install llvm-15 clang-15 lld libcurl4-openssl-dev`
 
 ```bash
 git clone https://github.com/ki-lang/ki.git
