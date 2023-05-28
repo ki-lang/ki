@@ -1,5 +1,14 @@
 
+func test_expect(value: bool, expect_success: u32[1], expect_fail: u32[1]) void {
+}
+
 func test_report(total: u32, success: u32, fail: u32, expect_total: u32, expect_success: u32, expect_fail: u32) void {
-	println("Report");
-	exit(1);
+	print("\n");
+	print("-----------------------------------------\n");
+	print("Tests: %, Passed: %, Failed: %\n"{ total.str(), success.str(), fail.str() });
+	print("Expects: %, Correct: %, Wrong: %\n"{ expect_total.str(), expect_success.str(), expect_fail.str() });
+	print("-----------------------------------------\n");
+	if fail == 0: print("Tests: PASSED\n");
+	else: print("Tests: FAILED\n");
+	print("\n");
 }

@@ -806,22 +806,30 @@ void stage_6_gen_test_main(Fc *fc) {
     Scope *scope = func->scope;
     Array *tests = fc->b->tests;
 
+    char line[256];
+
     Str *code = str_make(alc, 5000);
     str_append_chars(code, "let test_success : u32 = 0;\n");
     str_append_chars(code, "let test_fail : u32 = 0;\n");
     str_append_chars(code, "let expect_total : u32 = 0;\n");
     str_append_chars(code, "let expect_success : u32 = 0;\n");
     str_append_chars(code, "let expect_fail : u32 = 0;\n");
-
     str_append_chars(code, "let expect_total_ref = @array_of(expect_total);\n");
-    str_append_chars(code, "let expect_fail_ref = @array_of(expect_fail);\n");
-    str_append_chars(code, "let expect_success_ref = @array_of(expect_success);\n");
 
     for (int i = 0; i < tests->length; i++) {
         Test *test = array_get_index(tests, i);
         map_set(scope->identifiers, test->func->gname, idf_init_item(fc->alc_ast, idf_func, test->func));
-        str_append_chars(code, test->func->gname);
-        str_append_chars(code, "(expect_total_ref, expect_success_ref, expect_fail_ref);\n");
+
+        sprintf(line, "let expect_success_%d : u32 = 0;\n", i);
+        str_append_chars(code, line);
+        sprintf(line, "let expect_fail_%d : u32 = 0;\n", i);
+        str_append_chars(code, line);
+        // Call test
+        sprintf(line, "%s(expect_total_ref, @array_of(expect_success_%d), @array_of(expect_fail_%d));\n", test->func->gname, i, i);
+        str_append_chars(code, line);
+        // Check result
+        sprintf(line, "if expect_fail_%d == 0 : test_success++; else: test_fail++;\n", i);
+        str_append_chars(code, line);
     }
 
     char nr[10];
