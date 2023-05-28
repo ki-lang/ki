@@ -863,7 +863,7 @@ void stage_6_gen_test_main(Fc *fc) {
     Scope *scope = func->scope;
     Array *tests = fc->b->tests;
 
-    char line[256];
+    char line[1024];
     map_set(scope->identifiers, "os_test_print_name", ki_lib_get(b, "os", "test_print_name"));
     map_set(scope->identifiers, "os_test_report", ki_lib_get(b, "os", "test_report"));
 
