@@ -1,9 +1,0 @@
-func main() i32 {
-    hello_world();
-    return 0;
-}
-
-func hello_world() i32 {
-    println("Hello world!");
-    return 0;
-}

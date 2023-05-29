@@ -1,0 +1,13 @@
+test "rep" {
+    let a = 5;
+    rep a = 6#u8;
+    @expect a == 6;
+}
+
+test "let" {
+    let a = 5;
+    let b = 5#u8;
+    let c : u8 = 5;
+    @expect a == b;
+    @expect b == c;
+}

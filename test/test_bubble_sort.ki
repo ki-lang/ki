@@ -1,0 +1,38 @@
+test "bubble_sort_dynamic array" {
+    let arr: Array[i32] = Array[i32].init();
+    arr.push(4);
+    arr.push(3);
+    arr.push(1);
+    arr.push(6);
+    arr.push(7);
+    arr.push(9);
+    arr.push(5);
+    arr.push(8);
+    arr.push(0);
+    arr.push(2);
+
+    let i = 0;
+    while (i < 10) {
+        let j = 0;
+        while (j < 9 - i) {
+            if (arr.get(j) !? -1) > (arr.get(j + 1) !? -1) {
+                let tmp = arr.get(j) !? -1;
+                arr.set(j, arr.get(j + 1) !? -1)!;
+                arr.set(j + 1, tmp)!;
+            }
+            j++;
+        }
+        i++;
+    }
+
+    @expect (arr.get(0) !? -1) == 0;
+    @expect (arr.get(1) !? -1) == 1;
+    @expect (arr.get(2) !? -1) == 2;
+    @expect (arr.get(3) !? -1) == 3;
+    @expect (arr.get(4) !? -1) == 4;
+    @expect (arr.get(5) !? -1) == 5;
+    @expect (arr.get(6) !? -1) == 6;
+    @expect (arr.get(7) !? -1) == 7;
+    @expect (arr.get(8) !? -1) == 8;
+    @expect (arr.get(9) !? -1) == 9;
+}

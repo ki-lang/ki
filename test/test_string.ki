@@ -1,0 +1,6 @@
+test "string" {
+    let a = "1";
+    let b = 2;
+    let s = a + ", " + b.str();
+    @expect s == "1, 2";
+}

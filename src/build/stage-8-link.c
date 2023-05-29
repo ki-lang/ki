@@ -38,7 +38,6 @@ void stage_8_optimize(LLVMModuleRef mod);
 void stage_8_link(Build *b, Array *o_files);
 
 void stage_8(Build *b) {
-    //
 
     bool compiled_any = false;
     Array *o_files = array_make(b->alc, 20);
@@ -50,9 +49,11 @@ void stage_8(Build *b) {
     LARGE_INTEGER end;
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&start);
+    _flushall();
 #else
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
+    sync();
 #endif
 
     for (int i = 0; i < b->packages->length; i++) {
@@ -146,9 +147,7 @@ void stage_8(Build *b) {
         die("❌ Missing 'main' function");
     }
 
-    if (compiled_any || !file_exists(b->path_out)) {
-        stage_8_link(b, o_files);
-    }
+    stage_8_link(b, o_files);
 
 #ifdef WIN32
     QueryPerformanceCounter(&end);
@@ -420,13 +419,13 @@ void stage_8_link(Build *b, Array *o_files) {
     str_append_chars(cmd, linker);
     str_append_chars(cmd, " ");
     if (is_win) {
-        str_append_chars(cmd, "/out:");
+        str_append_chars(cmd, "/out:\"");
     } else {
         str_append_chars(cmd, "-pie ");
-        str_append_chars(cmd, "-o ");
+        str_append_chars(cmd, "-o \"");
     }
     str_append_chars(cmd, b->path_out);
-    str_append_chars(cmd, " ");
+    str_append_chars(cmd, "\" ");
 
     // Link dirs
     for (int i = 0; i < b->link_dirs->length; i++) {
