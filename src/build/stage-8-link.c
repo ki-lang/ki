@@ -422,10 +422,10 @@ void stage_8_link(Build *b, Array *o_files) {
         str_append_chars(cmd, "/out:");
     } else {
         str_append_chars(cmd, "-pie ");
-        str_append_chars(cmd, "-o ");
+        str_append_chars(cmd, "-o \"");
     }
     str_append_chars(cmd, b->path_out);
-    str_append_chars(cmd, " ");
+    str_append_chars(cmd, "\" ");
 
     // Link dirs
     for (int i = 0; i < b->link_dirs->length; i++) {

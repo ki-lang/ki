@@ -21,7 +21,7 @@ void cmd_build(int argc, char *argv[]) {
     parse_argv(argv, argc, has_value, args, options);
 
     // Args
-    char argbuf[256];
+    char argbuf[KI_PATH_MAX];
     for (int i = 0; i < args->length; i++) {
         char *arg = array_get_index(args, i);
         if (arg[0] != '-')
@@ -37,6 +37,11 @@ void cmd_build(int argc, char *argv[]) {
 
     // Check options
     char *path_out = map_get(options, "-o");
+    if (path_out[0] == '-') {
+        sprintf(argbuf, "Invalid value for -o, first character cannot be '-' | Value: '%s'", path_out);
+        die(argbuf);
+    }
+
     if (array_contains(args, "-h", arr_find_str) || array_contains(args, "--help", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0)) {
         cmd_build_help(run_code);
     }
@@ -356,7 +361,11 @@ void cmd_build(int argc, char *argv[]) {
     }
 
     if (run_code) {
-        system(b->path_out);
+        char cmd[KI_PATH_MAX];
+        strcpy(cmd, "\"");
+        strcat(cmd, b->path_out);
+        strcat(cmd, "\"");
+        system(cmd);
     }
 }
 
