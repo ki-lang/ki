@@ -6,6 +6,7 @@ char *rand_string(char *str, int size);
 int atoi(const char *str);
 int hex2int(char *hex);
 void sleep_ns(unsigned int ns);
+void sleep_ms(unsigned int ms);
 void simple_hash(char *content, char *buf);
 Array *explode(Allocator *alc, char *part, char *content);
 int system_silent(char *cmd);

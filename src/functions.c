@@ -74,6 +74,23 @@ int hex2int(char *hex) {
     return val;
 }
 
+void sleep_ms(unsigned int ms) {
+#ifdef WIN32
+    Sleep(ms);
+#else
+    //
+    struct timespec ts;
+    int res;
+
+    ts.tv_sec = ms / 1000;
+    ts.tv_nsec = (ms % 1000) * 1000000;
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+#endif
+}
+
 void sleep_ns(unsigned int ns) {
 #ifdef WIN32
     unsigned int ms = ns / 1000;
@@ -85,8 +102,8 @@ void sleep_ns(unsigned int ns) {
     struct timespec ts;
     int res;
 
-    ts.tv_sec = 0;
-    ts.tv_nsec = ns;
+    ts.tv_sec = ns / 1000000000;
+    ts.tv_nsec = (ns % 1000000000);
 
     do {
         res = nanosleep(&ts, &ts);
