@@ -37,7 +37,7 @@ void cmd_build(int argc, char *argv[]) {
 
     // Check options
     char *path_out = map_get(options, "-o");
-    if (path_out[0] == '-') {
+    if (path_out && path_out[0] == '-') {
         sprintf(argbuf, "Invalid value for -o, first character cannot be '-' | Value: '%s'", path_out);
         die(argbuf);
     }
