@@ -419,7 +419,7 @@ void stage_8_link(Build *b, Array *o_files) {
     str_append_chars(cmd, linker);
     str_append_chars(cmd, " ");
     if (is_win) {
-        str_append_chars(cmd, "/out:");
+        str_append_chars(cmd, "/out:\"");
     } else {
         str_append_chars(cmd, "-pie ");
         str_append_chars(cmd, "-o \"");
