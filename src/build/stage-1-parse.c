@@ -124,7 +124,8 @@ void stage_1_func(Fc *fc) {
 
     Func *func = func_init(fc->alc);
 
-    if (fc->nsc == b->nsc_main && strcmp(token, "main") == 0) {
+    bool is_main = fc->nsc == b->nsc_main && strcmp(token, "main") == 0;
+    if (is_main) {
         strcpy(token, "ki__main__");
         b->main_func = func;
     }
@@ -146,8 +147,9 @@ void stage_1_func(Fc *fc) {
     Idf *idf = idf_init(fc->alc, idf_func);
     idf->item = func;
 
-    if (b->main_func == func) {
+    if (is_main) {
         name = "main";
+        func->dname = "main";
     }
 
     map_set(fc->nsc->scope->identifiers, name, idf);
@@ -719,6 +721,11 @@ void stage_1_test(Fc *fc) {
         fc_error(fc);
     }
     chu->i = i;
+
+    if (str->length > 128) {
+        sprintf(fc->sbuf, "Test name too long");
+        fc_error(fc);
+    }
 
     char *body = str_to_chars(alc, str);
 
