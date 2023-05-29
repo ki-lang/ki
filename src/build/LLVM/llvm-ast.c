@@ -110,7 +110,9 @@ void llvm_write_ast(LB *b, Scope *scope) {
             str_append_chars(ir_a, loop_attr);
             str_append_chars(ir_a, " = distinct !{");
             str_append_chars(ir_a, loop_attr);
-            str_append_chars(ir_a, ", !0}\n");
+            str_append_chars(ir_a, ", ");
+            str_append_chars(ir_a, b->loop_attr_root);
+            str_append_chars(ir_a, "}\n");
 
             LLVMBlock *b_cond = llvm_block_init_auto(b);
             LLVMBlock *b_code = llvm_block_init_auto(b);
@@ -176,7 +178,9 @@ void llvm_write_ast(LB *b, Scope *scope) {
             str_append_chars(ir_a, loop_attr);
             str_append_chars(ir_a, " = distinct !{");
             str_append_chars(ir_a, loop_attr);
-            str_append_chars(ir_a, ", !0}\n");
+            str_append_chars(ir_a, ", ");
+            str_append_chars(ir_a, b->loop_attr_root);
+            str_append_chars(ir_a, "}\n");
             char *prev_attr = b->loop_attr;
 
             LLVMBlock *b_cond = llvm_block_init_auto(b);
@@ -200,7 +204,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
             }
             llvm_write_ast(b, upref_init_0);
             // Call func
-            char *next_key_val = llvm_ir_func_call(b, lf_init, key_init_args, key_ltype, NULL);
+            char *next_key_val = llvm_ir_func_call(b, lf_init, key_init_args, key_ltype, NULL, item->line, item->col);
             llvm_ir_store(b, f_init->rett, next_key_var, next_key_val);
             //
             llvm_ir_jump(llvm_b_ir(b), b_cond);
@@ -220,7 +224,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
             Array *get_args = array_make(alc, 2);
             array_push(get_args, llvm_ir_fcall_arg(b, lon, lon_type));
             array_push(get_args, llvm_ir_fcall_arg(b, next_key_var, key_ltype_pointer));
-            char *lval = llvm_ir_func_call(b, lf_get, get_args, value_ltype, NULL);
+            char *lval = llvm_ir_func_call(b, lf_get, get_args, value_ltype, NULL, item->line, item->col);
             // Check error
             Type *err_code_type = type_gen(b->fc->b, b->alc, "i32");
             char *load_err = llvm_ir_load(b, err_code_type, "@ki_err_code_buffer");

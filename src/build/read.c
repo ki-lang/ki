@@ -7,6 +7,7 @@ Chunk *chunk_init(Allocator *alc, Fc *fc) {
     ch->content = NULL;
     ch->i = 0;
     ch->line = 1;
+    ch->col = 1;
 }
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk) {
     //
@@ -17,6 +18,20 @@ Chunk *chunk_clone(Allocator *alc, Chunk *chunk) {
 void chunk_move(Chunk *chunk, int pos) {
     //
     chunk->i += pos;
+}
+void chunk_update_col(Chunk *chunk) {
+    //
+    int col = 1;
+    int i = chunk->i;
+    char *content = chunk->content;
+    while (i > 0) {
+        i--;
+        col++;
+        char ch = content[i];
+        if (ch == '\n')
+            break;
+    }
+    chunk->col = col;
 }
 
 void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
@@ -47,6 +62,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
                 if (sameline) {
                     token[0] = '\0';
                     chunk->i = i;
+                    chunk_update_col(chunk);
                     return;
                 }
             }
@@ -56,6 +72,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             if (ch == '\0') {
                 token[0] = '\0';
                 chunk->i = i;
+                chunk_update_col(chunk);
                 return;
             }
         }
@@ -67,6 +84,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
                 if (ch == '\0') {
                     token[0] = '\0';
                     chunk->i = i;
+                    chunk_update_col(chunk);
                     return;
                 }
                 i++;
@@ -148,6 +166,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
     // printf("tok: '%s'\n", token);
 
     chunk->i = i;
+    chunk_update_col(chunk);
 }
 
 void rtok(Fc *fc) { *fc->chunk = *fc->chunk_prev; }
@@ -185,6 +204,7 @@ void read_hex(Fc *fc, char *token) {
     }
     token[pos] = '\0';
     chunk->i = i;
+    chunk_update_col(chunk);
 }
 
 Str *read_string(Fc *fc) {
@@ -245,6 +265,7 @@ Str *read_string(Fc *fc) {
 
     chunk->i = i;
     chunk->line = line;
+    chunk_update_col(chunk);
 
     return buf;
 }
@@ -316,6 +337,7 @@ Array *read_string_chunks(Allocator *alc, Fc *fc) {
 
     chunk->i = i;
     chunk->line = line;
+    chunk_update_col(chunk);
 
     return result;
 }

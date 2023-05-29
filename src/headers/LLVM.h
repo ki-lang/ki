@@ -49,7 +49,7 @@ char *llvm_ir_bool_i1(LB *b, Str *ir, char *val);
 char *llvm_ir_class_prop_access(LB *b, Class *class, char *on, ClassProp *prop);
 Array *llvm_ir_fcall_args(LB *b, Scope *scope, Array *values);
 char *llvm_ir_fcall_arg(LB *b, char *lval, char *ltype);
-char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr * or);
+char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr * or, int line, int col);
 char *llvm_ir_func_ptr(LB *b, Func *func);
 char *llvm_ir_cast(LB *b, char *lval, Type *from_type, Type *to_type);
 char *llvm_ir_string(LB *b, char *body);
@@ -71,13 +71,19 @@ struct LB {
     Str *ir_attr;
     LLVMBlock *while_cond;
     LLVMBlock *while_after;
-    char *loop_attr;
     Str *str_buf;
     char *char_buf;
     int strc;
     int attrc;
     bool use_stack_save;
+    // Attributes
+    char *loop_attr;
+    char *loop_attr_root;
+    Array *attrs;
+    // Debug info
     bool debug;
+    char *di_cu; // Compile unit
+    char *di_file;
 };
 
 struct LLVMBlock {

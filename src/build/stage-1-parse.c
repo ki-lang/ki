@@ -760,8 +760,6 @@ void stage_1_test(Fc *fc) {
         chunk->fc = fc;
         chunk->content = "ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {";
         chunk->length = strlen(chunk->content);
-        chunk->i = 0;
-        chunk->line = 1;
 
         func->chunk_args = chunk;
         func->chunk_body = chunk_clone(fc->alc, fc->chunk);

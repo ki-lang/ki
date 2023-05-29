@@ -60,6 +60,8 @@ struct VFcall {
     Array *args;
     FCallOr * or ;
     UsageLine *ul;
+    int line;
+    int col;
 };
 struct VFuncPtr {
     Func *func;
@@ -138,6 +140,8 @@ struct FCallOr {
 struct VFString {
     Array *parts;
     Array *values;
+    int line;
+    int col;
 };
 
 #endif

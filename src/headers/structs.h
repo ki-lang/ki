@@ -218,6 +218,7 @@ struct Chunk {
     int length;
     int i;
     int line;
+    int col;
 };
 struct Scope {
     int type;

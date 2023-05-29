@@ -70,6 +70,7 @@ void skip_string(Fc *fc, char end_char) {
     }
 
     chunk->i = i;
+    chunk_update_col(chunk);
 
     if (chunk->i == chunk->length) {
         sprintf(fc->sbuf, "Unexpected end of code, string not closed");
@@ -99,6 +100,7 @@ void skip_until_char(Fc *fc, char *find) {
                 char fch = find[o];
                 if (ch == fch) {
                     chunk->i = i;
+                    chunk_update_col(chunk);
                     return;
                 }
             }
@@ -114,6 +116,7 @@ void skip_until_char(Fc *fc, char *find) {
         }
     }
     chunk->i = i;
+    chunk_update_col(chunk);
 }
 
 void skip_whitespace(Fc *fc) {
@@ -134,6 +137,7 @@ void skip_whitespace(Fc *fc) {
         i++;
     }
     chunk->i = i;
+    chunk_update_col(chunk);
 }
 
 void skip_macro_if(Fc *fc) {
@@ -276,12 +280,14 @@ void skip_type(Fc *fc) {
         }
         if (ch == '(') {
             chunk->i = i;
+            chunk_update_col(chunk);
             skip_body(fc, ')');
             i = chunk->i;
             continue;
         }
         if (ch == '[') {
             chunk->i = i;
+            chunk_update_col(chunk);
             skip_body(fc, ']');
             i = chunk->i;
             continue;
@@ -295,4 +301,5 @@ void skip_type(Fc *fc) {
     }
 
     chunk->i = i;
+    chunk_update_col(chunk);
 }

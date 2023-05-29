@@ -191,7 +191,7 @@ void class_generate_free(Class *class) {
         Value *on = vgen_fptr(alc, class->func_before_free, NULL);
         Array *values = array_make(alc, 2);
         array_push(values, this);
-        Value *fcall = vgen_fcall(alc, NULL, on, values, type_gen_void(alc), NULL);
+        Value *fcall = vgen_fcall(alc, NULL, on, values, type_gen_void(alc), NULL, 1, 1);
         array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
     }
 
@@ -200,7 +200,7 @@ void class_generate_free(Class *class) {
         Value *on = vgen_fptr(alc, class->func_deref_props, NULL);
         Array *values = array_make(alc, 2);
         array_push(values, this);
-        Value *fcall = vgen_fcall(alc, NULL, on, values, type_gen_void(alc), NULL);
+        Value *fcall = vgen_fcall(alc, NULL, on, values, type_gen_void(alc), NULL, 1, 1);
         array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
     }
 
@@ -210,7 +210,7 @@ void class_generate_free(Class *class) {
     Value *on = vgen_fptr(alc, ff, NULL);
     Array *values = array_make(alc, 2);
     array_push(values, this_ptr);
-    Value *fcall = vgen_fcall(alc, NULL, on, values, type_gen_void(alc), NULL);
+    Value *fcall = vgen_fcall(alc, NULL, on, values, type_gen_void(alc), NULL, 1, 1);
 
     array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
 }
@@ -247,7 +247,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
         Value *fptr = vgen_fptr(alc, class->func_deref, NULL);
         Array *values = array_make(alc, 2);
         array_push(values, on);
-        Value *fcall = vgen_fcall(alc, NULL, fptr, values, type_gen_void(alc), NULL);
+        Value *fcall = vgen_fcall(alc, NULL, fptr, values, type_gen_void(alc), NULL, 1, 1);
         array_push(scope->ast, token_init(alc, tkn_statement, fcall));
 
     } else if (amount > 0 && class->func_ref) {
@@ -256,7 +256,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
         Value *fptr = vgen_fptr(alc, class->func_ref, NULL);
         Array *values = array_make(alc, 2);
         array_push(values, on);
-        Value *fcall = vgen_fcall(alc, NULL, fptr, values, type_gen_void(alc), NULL);
+        Value *fcall = vgen_fcall(alc, NULL, fptr, values, type_gen_void(alc), NULL, 1, 1);
         array_push(scope->ast, token_init(alc, tkn_statement, fcall));
 
     } else if (class->is_rc) {
@@ -307,7 +307,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
             Value *fptr = vgen_fptr(alc, class->func_free, NULL);
             Array *values = array_make(alc, 2);
             array_push(values, ir_on);
-            Value *fcall = vgen_fcall(alc, NULL, fptr, values, type_gen_void(alc), NULL);
+            Value *fcall = vgen_fcall(alc, NULL, fptr, values, type_gen_void(alc), NULL, 1, 1);
             array_push(code->ast, token_init(alc, tkn_statement, fcall));
 
             // != 0 : else update _RC
@@ -343,7 +343,7 @@ void class_free_value(Allocator *alc, Scope *scope, Value *value) {
     Value *fptr = vgen_fptr(alc, class->func_free, NULL);
     Array *values = array_make(alc, 2);
     array_push(values, value);
-    Value *fcall = vgen_fcall(alc, NULL, fptr, values, type_gen_void(alc), NULL);
+    Value *fcall = vgen_fcall(alc, NULL, fptr, values, type_gen_void(alc), NULL, 1, 1);
     array_push(scope->ast, token_init(alc, tkn_statement, fcall));
 }
 

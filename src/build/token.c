@@ -56,13 +56,15 @@ Token *tgen_exec(Allocator *alc, Scope *scope, bool enable) {
     return token_init(alc, tkn_exec, item);
 }
 
-Token *tgen_each(Allocator *alc, Value *value, Scope *scope, Decl *decl_key, Decl *decl_value) {
+Token *tgen_each(Allocator *alc, Value *value, Scope *scope, Decl *decl_key, Decl *decl_value, int line, int col) {
     //
     TEach *item = al(alc, sizeof(TEach));
     item->value = value;
     item->scope = scope;
     item->decl_key = decl_key;
     item->decl_value = decl_value;
+    item->line = line;
+    item->col = col;
     return token_init(alc, tkn_each, item);
 }
 

@@ -47,29 +47,8 @@ void llvm_gen_func_ir(LB *b) {
             char *v = llvm_var(b);
             str_append_chars(ir, v);
 
-            // if func.can_error && i == (argc - 2) {
-            //	b.func_arg_err = v;
-            // }
-            // if func.can_error && i == (argc - 1) {
-            //	b.func_arg_msg = v;
-            // }
-
             arg->decl->llvm_val = v;
         }
-        // if (func->can_error) {
-        //     if (argc > 0) {
-        //         str_append_chars(ir, ", ");
-        //     }
-        //     char *err_var = llvm_var(b);
-        //     char *err_msg_var = llvm_var(b);
-        //     str_append_chars(ir, "i32* noundef ");
-        //     str_append_chars(ir, err_var);
-        //     str_append_chars(ir, ", i8** noundef ");
-        //     str_append_chars(ir, err_msg_var);
-
-        //     // b.func_arg_err = var_err;
-        //     // b.func_arg_msg = var_msg;
-        // }
         str_append_chars(ir, ")");
 
         if (func->opt_hot) {
@@ -79,13 +58,8 @@ void llvm_gen_func_ir(LB *b) {
             str_append_chars(ir, " alwaysinline");
         }
 
+        // Body
         str_append_chars(ir, " {\n");
-
-        // Error buffers
-        // if (func->scope->create_error_buffers) {
-        //     b.func_buf_err = b.alloca(type_gen(b.fc.b, "i32"));
-        //     b.func_buf_msg = b.alloca(type_gen(b.fc.b, "String"));
-        // }
 
         // Store mutable args in variables
         Str *cir = llvm_b_ir(b);

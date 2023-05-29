@@ -11,6 +11,20 @@ void llvm_build_ir(LB *b) {
     Str *ir = b->ir_final;
     Build *bld = b->fc->b;
 
+    // Setup debug info
+    char *di_cu = NULL;
+    char *di_file = NULL;
+    if (b->debug) {
+        di_cu = llvm_attr(b);
+        di_file = llvm_attr(b);
+        b->di_cu = di_cu;
+        b->di_file = di_file;
+    }
+
+    // Attributes
+    b->loop_attr_root = llvm_attr(b);
+
+    //
     llvm_gen_global_ir(b);
     llvm_gen_func_ir(b);
 
@@ -67,28 +81,25 @@ void llvm_build_ir(LB *b) {
     }
 
     Array *flags = array_make(b->alc, 10);
-    char *cu = NULL;
     if (b->debug) {
-        cu = llvm_attr(b);
         str_append_chars(ir, "!llvm.dbg.cu = !{");
-        str_append_chars(ir, cu);
+        str_append_chars(ir, di_cu);
         str_append_chars(ir, "}\n");
     }
 
-    str_append_chars(ir, "!0 = !{!\"llvm.loop.mustprogress\"}\n");
+    str_append_chars(ir, b->loop_attr_root);
+    str_append_chars(ir, " = !{!\"llvm.loop.mustprogress\"}\n");
 
-    if (cu) {
-        // Debug info
-        char *file = llvm_attr(b);
+    if (di_cu) {
         // Compile unit
-        str_append_chars(ir, cu);
+        str_append_chars(ir, di_cu);
         str_append_chars(ir, " = distinct !DICompileUnit(language: DW_LANG_C99, file: ");
-        str_append_chars(ir, file);
+        str_append_chars(ir, di_file);
         str_append_chars(ir, ", producer: \"ki lang compiler\", isOptimized: ");
         str_append_chars(ir, b->fc->b->optimize ? "true" : "false");
         str_append_chars(ir, ", runtimeVersion: 0, emissionKind: FullDebug, splitDebugInlining: false, nameTableKind: None)\n");
         // File
-        str_append_chars(ir, file);
+        str_append_chars(ir, di_file);
         str_append_chars(ir, " = !DIFile(filename: \"");
         str_append_chars(ir, b->fc->path_ki);
         str_append_chars(ir, "\", directory: \"");

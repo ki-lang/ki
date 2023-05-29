@@ -34,8 +34,14 @@ void stage_7(Fc *fc) {
     lb->while_cond = NULL;
     lb->while_after = NULL;
 
+    lb->loop_attr = NULL;
+    lb->loop_attr_root = NULL;
+    lb->attrs = array_make(alc, 10);
+
     lb->use_stack_save = false;
     lb->debug = b->debug;
+    lb->di_cu = NULL;
+    lb->di_file = NULL;
 
     llvm_build_ir(lb);
 
