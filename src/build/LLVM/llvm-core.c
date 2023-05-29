@@ -92,7 +92,7 @@ void llvm_build_ir(LB *b) {
         str_append_chars(ir, " = !DIFile(filename: \"");
         str_append_chars(ir, b->fc->path_ki);
         str_append_chars(ir, "\", directory: \"");
-        str_append_chars(ir, b->fc->nsc->pkc->dir);
+        // str_append_chars(ir, b->fc->nsc->pkc->dir);
         str_append_chars(ir, "\")\n");
         // Flags
         char *dw_version = llvm_attr(b);
