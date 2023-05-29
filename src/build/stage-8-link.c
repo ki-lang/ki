@@ -146,9 +146,7 @@ void stage_8(Build *b) {
         die("❌ Missing 'main' function");
     }
 
-    if (compiled_any || !file_exists(b->path_out)) {
-        stage_8_link(b, o_files);
-    }
+    stage_8_link(b, o_files);
 
 #ifdef WIN32
     QueryPerformanceCounter(&end);
