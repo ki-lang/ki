@@ -80,10 +80,7 @@ You can build it natively, but you need the LLVM modules which LLVM does not pro
 install msys2 & open the terminal
 
 ```bash
-pacman -S --needed git wget mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake make mingw-w64-x86_64-python3 autoconf libtool
-pacman -S mingw-w64-x86_64-llvm
-pacman -S mingw-w64-x86_64-lld
-pacman -S mingw-w64-x86_64-clang
+pacman -S make libcurl mingw-w64-x86_64-llvm mingw-w64-x86_64-clang mingw-w64-x86_64-lld
 
 git clone https://github.com/ki-lang/ki.git
 cd ki
