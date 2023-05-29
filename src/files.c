@@ -159,11 +159,12 @@ char *get_storage_path() {
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     homedir = getenv("USERPROFILE");
+    const char *kidir = "\\.ki";
 #else
     homedir = getenv("HOME");
+    const char *kidir = "/.ki";
 #endif
 
-    const char *kidir = "/.ki";
     strcpy(g_storage_path, homedir);
     strcat(g_storage_path, kidir);
 

@@ -1,0 +1,75 @@
+test "`=`" {
+    @expect 1 == 1;
+
+    @expect 0 == 0;
+
+    @expect -1 == -1;
+}
+
+test "`+`" {
+    @expect 1 + 2 == 3;
+
+    @expect -21 + 2 == -19;
+
+    @expect -5 + 10 == 5;
+
+    @expect 2948563 + 8729018 == 11677581;
+}
+
+test "`++`" {
+    let a = 0;
+    a++;
+    @expect a == 1;
+}
+
+test "`-`" {
+    @expect 3 - 6 == -3;
+
+    @expect 9 - 2 == 7;
+
+    @expect 10 - 10 == 0;
+
+    @expect 389129 - 389917 == -788;
+}
+
+test "`--`" {
+    let a = 0;
+    a--;
+    @expect a == -1;
+}
+
+test "`*`" {
+    @expect 2 * 9 == 18;
+
+    @expect -2 * 9 == -18;
+
+    @expect -2 * -9 == 18;
+
+    @expect -23213 * 42 == -974946;
+}
+
+test "`/`" {
+    @expect 10 / 2 == 5;
+
+    @expect -10 / 2 == -5;
+
+    @expect -10 / -2 == 5;
+
+    @expect -405654 / -123 == 3298;
+}
+
+test "`<` and `>`" {
+    @expect 5 < 10;
+
+    @expect !(5 >= 10);
+
+    @expect !(5 <= -10);
+
+    @expect 5 > -10;
+}
+
+test "`!`" {
+    @expect !false;
+}
+
+func main() i32 { return 0; }
