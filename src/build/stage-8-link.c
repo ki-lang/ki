@@ -49,7 +49,7 @@ void stage_8(Build *b) {
     LARGE_INTEGER end;
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&start);
-    flushall();
+    _flushall();
 #else
     struct timeval begin, end;
     gettimeofday(&begin, NULL);

@@ -343,7 +343,7 @@ void cmd_build(int argc, char *argv[]) {
     }
 
 #ifdef WIN32
-    flushall();
+    _flushall();
 #else
     sync();
 #endif
