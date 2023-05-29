@@ -49,18 +49,22 @@ void skip_string(Fc *fc, char end_char) {
     Chunk *chunk = fc->chunk;
     char ch;
     int i = chunk->i;
+    int col = chunk->col;
     const char *content = chunk->content;
     while (chunk->i < chunk->length) {
         //
         ch = chunk->content[i];
         i++;
+        col++;
 
         if (is_newline(ch)) {
             chunk->line++;
+            col = 1;
         }
 
         if (ch == '\\') {
             i++;
+            col++;
             continue;
         }
 
@@ -70,7 +74,7 @@ void skip_string(Fc *fc, char end_char) {
     }
 
     chunk->i = i;
-    chunk_update_col(chunk);
+    chunk->col = col;
 
     if (chunk->i == chunk->length) {
         sprintf(fc->sbuf, "Unexpected end of code, string not closed");
@@ -85,14 +89,17 @@ void skip_until_char(Fc *fc, char *find) {
     int len = strlen(find);
     char ch;
     int i = chunk->i;
+    int col = chunk->col;
     const char *content = chunk->content;
     while (chunk->i < chunk->length) {
         //
         ch = chunk->content[i];
         i++;
+        col++;
 
         if (is_newline(ch)) {
             chunk->line++;
+            col = 1;
         }
 
         if (depth == 0) {
@@ -100,7 +107,7 @@ void skip_until_char(Fc *fc, char *find) {
                 char fch = find[o];
                 if (ch == fch) {
                     chunk->i = i;
-                    chunk_update_col(chunk);
+                    chunk->col = col;
                     return;
                 }
             }
@@ -116,7 +123,7 @@ void skip_until_char(Fc *fc, char *find) {
         }
     }
     chunk->i = i;
-    chunk_update_col(chunk);
+    chunk->col = col;
 }
 
 void skip_whitespace(Fc *fc) {
@@ -124,6 +131,7 @@ void skip_whitespace(Fc *fc) {
     Chunk *chunk = fc->chunk;
     char ch;
     int i = chunk->i;
+    int col = chunk->col;
     const char *content = chunk->content;
     while (chunk->i < chunk->length) {
         //
@@ -133,11 +141,13 @@ void skip_whitespace(Fc *fc) {
         }
         if (is_newline(ch)) {
             chunk->line++;
+            col = 0;
         }
         i++;
+        col++;
     }
     chunk->i = i;
-    chunk_update_col(chunk);
+    chunk->col = col;
 }
 
 void skip_macro_if(Fc *fc) {
@@ -260,11 +270,13 @@ void skip_type(Fc *fc) {
     Chunk *chunk = fc->chunk;
     char ch;
     int i = chunk->i;
+    int col = chunk->col;
     const char *content = chunk->content;
     while (chunk->i < chunk->length) {
         //
         ch = chunk->content[i];
         i++;
+        col++;
 
         if (ch == '?') {
             continue;
@@ -280,14 +292,14 @@ void skip_type(Fc *fc) {
         }
         if (ch == '(') {
             chunk->i = i;
-            chunk_update_col(chunk);
+            chunk->col = col;
             skip_body(fc, ')');
             i = chunk->i;
             continue;
         }
         if (ch == '[') {
             chunk->i = i;
-            chunk_update_col(chunk);
+            chunk->col = col;
             skip_body(fc, ']');
             i = chunk->i;
             continue;
@@ -297,9 +309,10 @@ void skip_type(Fc *fc) {
         }
 
         i--;
+        col--;
         break;
     }
 
     chunk->i = i;
-    chunk_update_col(chunk);
+    chunk->col = col;
 }

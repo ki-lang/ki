@@ -40,6 +40,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
     *fc->chunk_prev = *chunk;
 
     int i = chunk->i;
+    int col = chunk->col;
     const char *content = chunk->content;
     char ch = content[i];
 
@@ -59,40 +60,46 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             //
             if (is_newline(ch)) {
                 chunk->line++;
+                col = 1;
                 if (sameline) {
                     token[0] = '\0';
                     chunk->i = i;
-                    chunk_update_col(chunk);
+                    chunk->col = col;
                     return;
                 }
             }
             //
             i++;
+            col++;
             ch = content[i];
             if (ch == '\0') {
                 token[0] = '\0';
                 chunk->i = i;
-                chunk_update_col(chunk);
+                chunk->col = col;
                 return;
             }
         }
         // Skip comment
         if (!sameline && ch == '/' && content[i + 1] == '/') {
             i += 2;
+            col += 2;
             ch = content[i];
             while (!is_newline(ch)) {
                 if (ch == '\0') {
                     token[0] = '\0';
                     chunk->i = i;
-                    chunk_update_col(chunk);
+                    chunk->col = col;
                     return;
                 }
                 i++;
+                col++;
                 ch = content[i];
             }
             i++;
+            col++;
             ch = content[i];
             chunk->line++;
+            chunk->col = 1;
         } else {
             break;
         }
@@ -101,6 +108,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
     int pos = 1;
     token[0] = ch;
     i++;
+    col++;
 
     if (is_number(ch)) {
         // Read number
@@ -108,6 +116,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
         while (is_number(ch)) {
             token[pos] = ch;
             i++;
+            col++;
             pos++;
             ch = content[i];
         }
@@ -118,6 +127,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             token[pos] = ch;
             i++;
             pos++;
+            col++;
             ch = content[i];
         }
     } else {
@@ -125,38 +135,47 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
         char nch = content[i];
         if ((nch == '=' && (ch == '+' || ch == '-' || ch == '*' || ch == '/'))) {
             i++;
+            col++;
             token[pos] = nch;
             pos++;
         } else if ((ch == '&' && nch == '&') || (ch == '|' && nch == '|')) {
             i++;
+            col++;
             token[pos] = nch;
             pos++;
         } else if ((ch == '=' && nch == '=') || (ch == '!' && nch == '=') || (ch == '<' && nch == '=') || (ch == '>' && nch == '=')) {
             i++;
+            col++;
             token[pos] = nch;
             pos++;
         } else if ((ch == '<' && nch == '<') || (ch == '>' && nch == '>')) {
             i++;
+            col++;
             token[pos] = nch;
             pos++;
         } else if ((ch == '+' && nch == '+') || (ch == '-' && nch == '-')) {
             i++;
+            col++;
             token[pos] = nch;
             pos++;
         } else if ((ch == '-' && nch == '>')) {
             i++;
+            col++;
             token[pos] = nch;
             pos++;
         } else if ((ch == '?' && nch == '?') || (ch == '?' && nch == '!')) {
             i++;
+            col++;
             token[pos] = nch;
             pos++;
         } else if ((ch == '!' && nch == '!') || (ch == '!' && nch == '?')) {
             i++;
+            col++;
             token[pos] = nch;
             pos++;
         } else if ((ch == '*' && nch == '*')) {
             i++;
+            col++;
             token[pos] = nch;
             pos++;
         }
@@ -166,7 +185,7 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
     // printf("tok: '%s'\n", token);
 
     chunk->i = i;
-    chunk_update_col(chunk);
+    chunk->col = col;
 }
 
 void rtok(Fc *fc) { *fc->chunk = *fc->chunk_prev; }
@@ -191,6 +210,7 @@ void read_hex(Fc *fc, char *token) {
     Chunk *chunk = fc->chunk;
     char *data = chunk->content;
     int i = chunk->i;
+    int col = chunk->col;
     int len = chunk->length;
     int pos = 0;
     while (i < len) {
@@ -200,11 +220,12 @@ void read_hex(Fc *fc, char *token) {
         }
         token[pos] = ch;
         i++;
+        col++;
         pos++;
     }
     token[pos] = '\0';
     chunk->i = i;
-    chunk_update_col(chunk);
+    chunk->col = col;
 }
 
 Str *read_string(Fc *fc) {
@@ -215,6 +236,7 @@ Str *read_string(Fc *fc) {
     Chunk *chunk = fc->chunk;
     char *data = chunk->content;
     int i = chunk->i;
+    int col = chunk->col;
     int line = chunk->line;
     int len = chunk->length;
     while (i < len) {
@@ -244,6 +266,7 @@ Str *read_string(Fc *fc) {
                 add = '\a';
             }
             i++;
+            col++;
 
             str_append_char(buf, add);
             continue;
@@ -253,8 +276,10 @@ Str *read_string(Fc *fc) {
             break;
         }
 
-        if (is_newline(ch))
+        if (is_newline(ch)) {
             line++;
+            col = 1;
+        }
         str_append_char(buf, ch);
     }
 
@@ -264,8 +289,8 @@ Str *read_string(Fc *fc) {
     }
 
     chunk->i = i;
+    chunk->col = col;
     chunk->line = line;
-    chunk_update_col(chunk);
 
     return buf;
 }
@@ -279,11 +304,13 @@ Array *read_string_chunks(Allocator *alc, Fc *fc) {
     Chunk *chunk = fc->chunk;
     char *data = chunk->content;
     int i = chunk->i;
+    int col = chunk->col;
     int line = chunk->line;
     int len = chunk->length;
     while (i < len) {
         char ch = *(data + i);
         i++;
+        col++;
 
         if (ch == '\\') {
             if (i == len) {
@@ -308,6 +335,7 @@ Array *read_string_chunks(Allocator *alc, Fc *fc) {
                 add = '\a';
             }
             i++;
+            col++;
 
             str_append_char(buf, add);
             continue;
@@ -325,8 +353,10 @@ Array *read_string_chunks(Allocator *alc, Fc *fc) {
             continue;
         }
 
-        if (is_newline(ch))
+        if (is_newline(ch)) {
             line++;
+            col = 1;
+        }
         str_append_char(buf, ch);
     }
 
@@ -336,8 +366,8 @@ Array *read_string_chunks(Allocator *alc, Fc *fc) {
     }
 
     chunk->i = i;
+    chunk->col = col;
     chunk->line = line;
-    chunk_update_col(chunk);
 
     return result;
 }
