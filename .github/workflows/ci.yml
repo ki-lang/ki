@@ -39,7 +39,7 @@ jobs:
       run: make
 
     - name: Test(linux-x64)
-      run: ./ki build ./test/*.ki -o ./_test --test -r
+      run: ./ki build ./test/*.ki -o --test -r
 
     - run: sudo ln -s /usr/bin/lld /usr/bin/ld64.lld
 
@@ -67,7 +67,7 @@ jobs:
       run: make
 
     - name: Test(macos-x64)
-      run: ./ki build ./test/*.ki -o ./_test --test -r
+      run: ./ki build ./test/*.ki --test -r
 
     - name: Build test(cross compiling) for linux-x64
       run: ./ki build ./test/*.ki -o _test --target linux-x64
@@ -92,7 +92,7 @@ jobs:
         update: true
         install: >-
           make
-          libcurl
+          mingw-w64-x86_64-cmake
           mingw-w64-x86_64-llvm
           mingw-w64-x86_64-clang
           mingw-w64-x86_64-lld
@@ -102,7 +102,7 @@ jobs:
       run: make
     
     - name: Test(win-x64)
-      run: ./ki build ./test/*.ki -o _test.exe --test -r
+      run: ./ki build ./test/*.ki --test -r
 
     - name: Build test(cross compiling) for linux-x64
       run: ./ki build ./test/*.ki -o _test --target linux-x64
