@@ -35,6 +35,7 @@ void stage_7(Fc *fc) {
     lb->while_after = NULL;
 
     lb->use_stack_save = false;
+    lb->debug = b->debug;
 
     llvm_build_ir(lb);
 

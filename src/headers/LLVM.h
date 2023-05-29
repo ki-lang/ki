@@ -77,6 +77,7 @@ struct LB {
     int strc;
     int attrc;
     bool use_stack_save;
+    bool debug;
 };
 
 struct LLVMBlock {
