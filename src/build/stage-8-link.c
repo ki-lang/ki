@@ -38,7 +38,6 @@ void stage_8_optimize(LLVMModuleRef mod);
 void stage_8_link(Build *b, Array *o_files);
 
 void stage_8(Build *b) {
-    //
 
     bool compiled_any = false;
     Array *o_files = array_make(b->alc, 20);
@@ -50,9 +49,11 @@ void stage_8(Build *b) {
     LARGE_INTEGER end;
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&start);
+    flushall();
 #else
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
+    sync();
 #endif
 
     for (int i = 0; i < b->packages->length; i++) {

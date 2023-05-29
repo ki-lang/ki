@@ -342,6 +342,19 @@ void cmd_build(int argc, char *argv[]) {
         printf("✅ Compiled in: %.3fs\n", time_all);
     }
 
+#ifdef WIN32
+    flushall();
+#else
+    sync();
+#endif
+    int i = 0;
+    while (!file_exists(b->path_out)) {
+        sleep_ms(10);
+        i++;
+        if (i == 100)
+            break;
+    }
+
     if (run_code) {
         system(b->path_out);
     }
