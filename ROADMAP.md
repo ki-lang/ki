@@ -3,6 +3,7 @@
 
 Feature todo list in order:
 
+```
 - array/map shortcuts
 - closure functions
 
@@ -25,16 +26,20 @@ Feature todo list in order:
 - calling functions using named arguments
 - implement IO URing where useful
 - replace malloc with something better
+```
 
 ## Maybe
 
+```
 - make ';' optional
 - custom allocators | MyClass{...} @my_alloc
 - defer token
 - interfaces | useful, but we'll have to introduce virtual functions which we try to avoid
+```
 
 ## Done
 
+```
 - basic debug info
 - testing features
 - main argv/argc
@@ -62,3 +67,4 @@ Feature todo list in order:
 - generics
 - traits
 - ?? | ?!
+```
