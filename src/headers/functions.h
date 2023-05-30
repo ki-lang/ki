@@ -162,7 +162,7 @@ void func_make_arg_decls(Func *func);
 Class *class_init(Allocator *alc);
 ClassProp *class_prop_init(Allocator *alc, Class *class, Type *type);
 bool class_check_size(Class *class);
-Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name, Array *args, Type *rett);
+Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name, Array *args, Type *rett, int line);
 void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount);
 void class_free_value(Allocator *alc, Scope *scope, Value *value);
 void class_generate_generic_hash(Class *class, Array *types, char *buf);

@@ -58,7 +58,7 @@ char *llvm_type(LB *b, Type *type) {
         return "ptr";
     }
 
-    Str *result = str_make(b->alc, 100);
+    Str *result = str_make(b->alc, 50);
     Class *class = type->class;
 
     if (type_is_void(type)) {
@@ -109,6 +109,93 @@ char *llvm_type(LB *b, Type *type) {
     }
     //
     return str_to_chars(b->alc, result);
+}
+
+char *llvm_di_type(LB *b, Type *type) {
+    //
+    if (type_is_void(type)) {
+        return "null";
+    }
+
+    // Number
+    // !13 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+
+    // Pointer
+    // !13 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+
+    // Struct
+    // !13 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !14, size: 64)
+    // !14 = distinct !DICompositeType(tag: DW_TAG_structure_type, name: "A", file: !1, line: 12, size: 128, elements: !15)
+    // !15 = !{!16, !18}
+    // !16 = !DIDerivedType(tag: DW_TAG_member, name: "v", scope: !14, file: !1, line: 13, baseType: !17, size: 32)
+    // !17 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+    // !18 = !DIDerivedType(tag: DW_TAG_member, name: "b", scope: !14, file: !1, line: 14, baseType: !19, size: 64, offset: 64)
+    // !19 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !20, size: 64)
+    // !20 = distinct !DICompositeType(tag: DW_TAG_structure_type, name: "B", file: !1, line: 16, size: 32, elements: !21)
+    // !21 = !{!22}
+    // !22 = !DIDerivedType(tag: DW_TAG_member, name: "v", scope: !20, file: !1, line: 17, baseType: !17, size: 32)
+
+    // Function pointer
+    // !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !24, size: 64)
+    // !24 = !DISubroutineType(types: !25)
+    // !25 = !{!17, !26, !26}
+    // !26 = !DIDerivedType(tag: DW_TAG_const_type, baseType: !17)
+
+    if (type->ptr_depth > 0) {
+        if (!b->di_type_ptr) {
+            char size[10];
+            sprintf(size, "%d", b->fc->b->ptr_size * 8);
+            char *attr = llvm_attr(b);
+            Str *buf = str_make(b->alc, 80);
+            str_append_chars(buf, attr);
+            str_append_chars(buf, " = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: ");
+            str_append_chars(buf, size);
+            str_append_chars(buf, ")");
+            array_push(b->attrs, str_to_chars(b->alc, buf));
+            b->di_type_ptr = attr;
+        }
+        return b->di_type_ptr;
+    }
+
+    Class *class = type->class;
+    if (class) {
+        // if (class->di_attr) {
+        //     return class->di_attr;
+        // }
+        char *attr = llvm_attr(b);
+        Str *buf = str_make(b->alc, 80);
+        str_append_chars(buf, attr);
+        str_append_chars(buf, " = ");
+        char size[10];
+
+        if (class->type == ct_int) {
+            sprintf(size, "%d", type->bytes * 8);
+            str_append_chars(buf, "!DIBasicType(name: \"");
+            str_append_chars(buf, "\", size: ");
+            str_append_chars(buf, size);
+            str_append_chars(buf, ", encoding: ");
+            str_append_chars(buf, class->is_signed ? "DW_ATE_signed" : "DW_ATE_unsigned");
+            str_append_chars(buf, ")");
+
+            array_push(b->attrs, str_to_chars(b->alc, buf));
+            // class->di_attr = attr;
+            return attr;
+        }
+        if (class->type == ct_float) {
+            sprintf(size, "%d", type->bytes * 8);
+            str_append_chars(buf, "!DIBasicType(name: \"");
+            str_append_chars(buf, "\", size: ");
+            str_append_chars(buf, size);
+            str_append_chars(buf, ", encoding: DW_ATE_float)");
+
+            array_push(b->attrs, str_to_chars(b->alc, buf));
+            // class->di_attr = attr;
+            return attr;
+        }
+    }
+
+    sprintf(b->fc->sbuf, "LLVM: Cannot generate debug type");
+    die(b->fc->sbuf);
 }
 
 char *llvm_type_int(LB *b, int bytes) {

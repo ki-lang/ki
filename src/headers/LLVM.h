@@ -31,6 +31,7 @@ char *llvm_type(LB *b, Type *type);
 char *llvm_type_real(LB *b, Type *type);
 char *llvm_type_int(LB *b, int bytes);
 char *llvm_type_ixx(LB *b);
+char *llvm_di_type(LB *b, Type *type);
 
 // Ast
 void llvm_write_ast(LB *b, Scope *scope);
@@ -71,11 +72,13 @@ struct LB {
     Str *ir_attr;
     LLVMBlock *while_cond;
     LLVMBlock *while_after;
-    Str *str_buf;
     char *char_buf;
     int strc;
     int attrc;
     bool use_stack_save;
+    // Buffers
+    Str *str_buf;
+    Str *str_buf_di_type;
     // Attributes
     char *loop_attr;
     char *loop_attr_root;
@@ -84,6 +87,9 @@ struct LB {
     bool debug;
     char *di_cu; // Compile unit
     char *di_file;
+    char *di_retained_nodes;
+    // Debug info types
+    char *di_type_ptr;
 };
 
 struct LLVMBlock {
@@ -101,4 +107,6 @@ struct LLVMFunc {
     LLVMBlock *block_code;
     int varc;
     int blockc;
+    // Debug info
+    char *di_scope;
 };

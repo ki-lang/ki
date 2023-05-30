@@ -234,7 +234,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
                 fc_error(fc);
             }
 
-            Func *func = class_define_func(fc, class, is_static, token, NULL, NULL);
+            Func *func = class_define_func(fc, class, is_static, token, NULL, NULL, fc->chunk->line);
             func->act = act;
             func->will_exit = will_exit;
 
@@ -502,14 +502,14 @@ void stage_2_class_defaults(Fc *fc, Class *class) {
                 ClassProp *prop = array_get_index(props, i);
                 Class *pclass = prop->type->class;
                 if (pclass && pclass->must_deref) {
-                    class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, type_gen_void(b->alc));
+                    class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, type_gen_void(b->alc), 0);
                     break;
                 }
             }
         }
         // Define __free
         if (!class->func_free)
-            class->func_free = class_define_func(fc, class, false, "__free", NULL, type_gen_void(b->alc));
+            class->func_free = class_define_func(fc, class, false, "__free", NULL, type_gen_void(b->alc), 0);
     }
 }
 

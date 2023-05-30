@@ -12,13 +12,10 @@ void llvm_build_ir(LB *b) {
     Build *bld = b->fc->b;
 
     // Setup debug info
-    char *di_cu = NULL;
-    char *di_file = NULL;
     if (b->debug) {
-        di_cu = llvm_attr(b);
-        di_file = llvm_attr(b);
-        b->di_cu = di_cu;
-        b->di_file = di_file;
+        b->di_cu = llvm_attr(b);
+        b->di_file = llvm_attr(b);
+        b->di_retained_nodes = llvm_attr(b);
     }
 
     // Attributes
@@ -80,11 +77,16 @@ void llvm_build_ir(LB *b) {
         str_append_chars(ir, "declare void @llvm.stackrestore(i8*)\n\n");
     }
 
+    // Debug info & attributes
     Array *flags = array_make(b->alc, 10);
+    char *di_cu = b->di_cu;
+    char *di_file = b->di_file;
     if (b->debug) {
         str_append_chars(ir, "!llvm.dbg.cu = !{");
         str_append_chars(ir, di_cu);
         str_append_chars(ir, "}\n");
+        str_append_chars(ir, b->di_retained_nodes);
+        str_append_chars(ir, " = !{}\n");
     }
 
     str_append_chars(ir, b->loop_attr_root);
@@ -126,6 +128,11 @@ void llvm_build_ir(LB *b) {
             str_append_chars(ir, array_get_index(flags, i));
         }
         str_append_chars(ir, "}\n");
+    }
+    Array *attrs = b->attrs;
+    for (int i = 0; i < attrs->length; i++) {
+        str_append_chars(ir, array_get_index(attrs, i));
+        str_append_chars(ir, "\n");
     }
 
     str_append(ir, b->ir_attr);

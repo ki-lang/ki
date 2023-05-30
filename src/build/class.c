@@ -98,7 +98,7 @@ bool class_check_size(Class *class) {
     return true;
 }
 
-Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name_, Array *args, Type *rett) {
+Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name_, Array *args, Type *rett, int line) {
     //
     if (map_get(class->funcs, name_)) {
         return NULL;
@@ -112,6 +112,7 @@ Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name_, Array
     sprintf(dname, "%s.%s", class->dname, name);
 
     Func *func = func_init(fc->alc);
+    func->line = line;
     func->fc = fc;
     func->name = name;
     func->gname = gname;

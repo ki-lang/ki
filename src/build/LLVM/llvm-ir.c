@@ -207,11 +207,11 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
     }
     str_append_chars(ir, ")");
     if (b->debug) {
-        // char *loc = llvm_attr(b);
-        // str_append_chars(ir, " !dbg ");
-        // str_append_chars(ir, loc);
-        // sprintf(b->char_buf, "%s = !DILocation(line: %d, column: %d, scope: %s)", loc, line, col, );
-        // array_push(b->attrs, dups(b->alc, b->char_buf));
+        char *loc = llvm_attr(b);
+        str_append_chars(ir, ", !dbg ");
+        str_append_chars(ir, loc);
+        sprintf(b->char_buf, "%s = !DILocation(line: %d, column: %d, scope: %s)", loc, line, col, b->lfunc->di_scope);
+        array_push(b->attrs, dups(b->alc, b->char_buf));
     }
     str_append_chars(ir, "\n");
 
