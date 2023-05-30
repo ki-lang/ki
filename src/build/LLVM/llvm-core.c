@@ -11,6 +11,17 @@ void llvm_build_ir(LB *b) {
     Str *ir = b->ir_final;
     Build *bld = b->fc->b;
 
+    // Setup debug info
+    if (b->debug) {
+        b->di_cu = llvm_attr(b);
+        b->di_file = llvm_attr(b);
+        b->di_retained_nodes = llvm_attr(b);
+    }
+
+    // Attributes
+    b->loop_attr_root = llvm_attr(b);
+
+    //
     llvm_gen_global_ir(b);
     llvm_gen_func_ir(b);
 
@@ -66,7 +77,64 @@ void llvm_build_ir(LB *b) {
         str_append_chars(ir, "declare void @llvm.stackrestore(i8*)\n\n");
     }
 
-    str_append_chars(ir, "!0 = !{!\"llvm.loop.mustprogress\"}\n");
+    // Debug info & attributes
+    Array *flags = array_make(b->alc, 10);
+    char *di_cu = b->di_cu;
+    char *di_file = b->di_file;
+    if (b->debug) {
+        str_append_chars(ir, "!llvm.dbg.cu = !{");
+        str_append_chars(ir, di_cu);
+        str_append_chars(ir, "}\n");
+        str_append_chars(ir, b->di_retained_nodes);
+        str_append_chars(ir, " = !{}\n");
+    }
+
+    str_append_chars(ir, b->loop_attr_root);
+    str_append_chars(ir, " = !{!\"llvm.loop.mustprogress\"}\n");
+
+    if (di_cu) {
+        // Compile unit
+        str_append_chars(ir, di_cu);
+        str_append_chars(ir, " = distinct !DICompileUnit(language: DW_LANG_C99, file: ");
+        str_append_chars(ir, di_file);
+        str_append_chars(ir, ", producer: \"ki lang compiler\", isOptimized: ");
+        str_append_chars(ir, b->fc->b->optimize ? "true" : "false");
+        str_append_chars(ir, ", runtimeVersion: 0, emissionKind: FullDebug, splitDebugInlining: false, nameTableKind: None)\n");
+        // File
+        str_append_chars(ir, di_file);
+        str_append_chars(ir, " = !DIFile(filename: \"");
+        str_append_chars(ir, b->fc->path_ki);
+        str_append_chars(ir, "\", directory: \"");
+        // str_append_chars(ir, b->fc->nsc->pkc->dir);
+        str_append_chars(ir, "\")\n");
+        // Flags
+        char *dw_version = llvm_attr(b);
+        char *di_version = llvm_attr(b);
+        array_push(flags, dw_version);
+        array_push(flags, di_version);
+
+        str_append_chars(ir, dw_version);
+        str_append_chars(ir, " = !{i32 7, !\"Dwarf Version\", i32 5}\n");
+        str_append_chars(ir, di_version);
+        str_append_chars(ir, " = !{i32 2, !\"Debug Info Version\", i32 3}\n");
+    }
+
+    if (flags->length > 0) {
+        str_append_chars(ir, "!llvm.module.flags = !{");
+        for (int i = 0; i < flags->length; i++) {
+            if (i > 0) {
+                str_append_chars(ir, ", ");
+            }
+            str_append_chars(ir, array_get_index(flags, i));
+        }
+        str_append_chars(ir, "}\n");
+    }
+    Array *attrs = b->attrs;
+    for (int i = 0; i < attrs->length; i++) {
+        str_append_chars(ir, array_get_index(attrs, i));
+        str_append_chars(ir, "\n");
+    }
+
     str_append(ir, b->ir_attr);
     str_append_chars(ir, "\n");
 }

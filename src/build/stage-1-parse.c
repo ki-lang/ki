@@ -123,6 +123,7 @@ void stage_1_func(Fc *fc) {
     name_taken_check(fc, fc->nsc->scope, token);
 
     Func *func = func_init(fc->alc);
+    func->line = fc->chunk->line;
 
     bool is_main = fc->nsc == b->nsc_main && strcmp(token, "main") == 0;
     if (is_main) {
@@ -686,6 +687,7 @@ void stage_1_alias(Fc *fc, int alias_type) {
 
 void stage_1_test(Fc *fc) {
     //
+    int line = fc->chunk->line;
     char *token = fc->token;
     Allocator *alc = fc->alc;
     Build *b = fc->b;
@@ -735,6 +737,7 @@ void stage_1_test(Fc *fc) {
     if (b->test && fc->nsc->pkc == b->nsc_main->pkc) {
 
         Func *func = func_init(fc->alc);
+        func->line = line;
 
         sprintf(token, "ki__TEST_%d__%s", ++fc->test_counter, fc->path_hash);
 
@@ -760,8 +763,6 @@ void stage_1_test(Fc *fc) {
         chunk->fc = fc;
         chunk->content = "ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {";
         chunk->length = strlen(chunk->content);
-        chunk->i = 0;
-        chunk->line = 1;
 
         func->chunk_args = chunk;
         func->chunk_body = chunk_clone(fc->alc, fc->chunk);

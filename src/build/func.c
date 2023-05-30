@@ -8,6 +8,7 @@ Func *func_init(Allocator *alc) {
     func->args = array_make(alc, 8);
     func->args_by_name = map_make(alc);
     func->act = 0;
+    func->line = 0;
     func->chunk_args = NULL;
     func->chunk_body = NULL;
     func->test = NULL;

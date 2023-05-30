@@ -218,6 +218,7 @@ struct Chunk {
     int length;
     int i;
     int line;
+    int col;
 };
 struct Scope {
     int type;
@@ -330,6 +331,7 @@ struct Func {
     Test *test;
     //
     int act; // Access type for class functions
+    int line;
     //
     bool is_static;
     bool is_generated;
