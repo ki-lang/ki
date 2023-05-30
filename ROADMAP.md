@@ -3,9 +3,6 @@
 
 Feature todo list in order:
 
-- testing features
-- debug info
-
 - array/map shortcuts
 - closure functions
 
@@ -24,6 +21,7 @@ Feature todo list in order:
 - vscode extension
 - async library
 - multiple iterators
+- complete debug info
 - calling functions using named arguments
 - implement IO URing where useful
 - replace malloc with something better
@@ -37,6 +35,8 @@ Feature todo list in order:
 
 ## Done
 
+- basic debug info
+- testing features
 - main argv/argc
 - package manager | check name,version in package config + test 'use'
 - compare errors
