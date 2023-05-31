@@ -398,8 +398,12 @@ void stage_8_link(Build *b, Array *o_files) {
         } else if (is_macos) {
             linker = "ld";
         } else if (is_win) {
+#ifdef __MINGW32__
+            linker = "lld-link";
+#else
             sprintf(linker_buf, "%s\\lld-link.exe", get_binary_dir());
             linker = linker_buf;
+#endif
         }
     } else {
         if (is_linux) {
