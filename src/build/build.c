@@ -259,6 +259,7 @@ void cmd_build(int argc, char *argv[]) {
     b->LOC = 0;
     b->link_static = link_static;
     //
+    b->type_void = type_gen_void(alc);
 
 #ifdef WIN32
     LARGE_INTEGER frequency;

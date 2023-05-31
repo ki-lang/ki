@@ -377,16 +377,19 @@ void stage_2_func(Fc *fc, Func *func) {
     }
 
     // Return type
-    func->rett = read_type(fc, alc, func->scope->parent, true, true, rtc_func_rett);
+    tok(fc, token, false, true);
+    if (strcmp(token, "!") != 0 && strcmp(token, "%") != 0 && strcmp(token, "{") != 0) {
+        rtok(fc);
+        func->rett = read_type(fc, alc, func->scope->parent, true, true, rtc_func_rett);
+        tok(fc, token, false, true);
+    }
 
     if (func->will_exit && !type_is_void(func->rett)) {
-        sprintf(fc->sbuf, "Using '!' before the function name tells the compiler this function will exit the program. Therefore the return type must be void.", token);
+        sprintf(fc->sbuf, "Using '!' before the function name tells the compiler this function will exit the program. Therefore the return type must be void.");
         fc_error(fc);
     }
 
     Array *errors = NULL;
-
-    tok(fc, token, false, true);
 
     while (strcmp(token, "!") == 0) {
         if (!errors) {
@@ -502,14 +505,14 @@ void stage_2_class_defaults(Fc *fc, Class *class) {
                 ClassProp *prop = array_get_index(props, i);
                 Class *pclass = prop->type->class;
                 if (pclass && pclass->must_deref) {
-                    class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, type_gen_void(b->alc), 0);
+                    class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, b->type_void, 0);
                     break;
                 }
             }
         }
         // Define __free
         if (!class->func_free)
-            class->func_free = class_define_func(fc, class, false, "__free", NULL, type_gen_void(b->alc), 0);
+            class->func_free = class_define_func(fc, class, false, "__free", NULL, b->type_void, 0);
     }
 }
 

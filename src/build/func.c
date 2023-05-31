@@ -1,10 +1,10 @@
 
 #include "../all.h"
 
-Func *func_init(Allocator *alc) {
+Func *func_init(Allocator *alc, Build* b) {
     //
     Func *func = al(alc, sizeof(Func));
-    func->rett = NULL;
+    func->rett = b->type_void;
     func->args = array_make(alc, 8);
     func->args_by_name = map_make(alc);
     func->act = 0;

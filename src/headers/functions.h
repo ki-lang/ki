@@ -154,7 +154,7 @@ void scope_apply_issets(Allocator *alc, Scope *scope, Array *issets);
 void scope_add_defer_token(Allocator *alc, Scope *scope, Token *token);
 
 // Func
-Func *func_init(Allocator *alc);
+Func *func_init(Allocator *alc, Build *b);
 void fcall_type_check(Fc *fc, Value *on, Array *values);
 void func_make_arg_decls(Func *func);
 

@@ -771,7 +771,7 @@ void stage_6_gen_main(Fc *fc) {
         }
     }
 
-    Func *func = func_init(fc->alc);
+    Func *func = func_init(fc->alc, fc->b);
     func->fc = fc;
     func->name = "main";
     func->gname = "main";
@@ -846,7 +846,7 @@ void stage_6_gen_main(Fc *fc) {
 void stage_6_gen_test_main(Fc *fc) {
     //
     Allocator *alc = fc->alc_ast;
-    Func *func = func_init(alc);
+    Func *func = func_init(alc, fc->b);
     Build *b = fc->b;
 
     char *name = "ki__test__main";
@@ -859,7 +859,7 @@ void stage_6_gen_test_main(Fc *fc) {
     func->dname = dname;
     func->scope = scope_init(alc, sct_func, fc->scope, true);
     func->scope->func = func;
-    func->rett = type_gen_void(alc);
+    func->rett = b->type_void;
 
     Idf *idf = idf_init(fc->alc, idf_func);
     idf->item = func;

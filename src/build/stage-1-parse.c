@@ -122,7 +122,7 @@ void stage_1_func(Fc *fc) {
     }
     name_taken_check(fc, fc->nsc->scope, token);
 
-    Func *func = func_init(fc->alc);
+    Func *func = func_init(fc->alc, fc->b);
     func->line = fc->chunk->line;
 
     bool is_main = fc->nsc == b->nsc_main && strcmp(token, "main") == 0;
@@ -736,7 +736,7 @@ void stage_1_test(Fc *fc) {
     // If tests enabled && is main package
     if (b->test && fc->nsc->pkc == b->nsc_main->pkc) {
 
-        Func *func = func_init(fc->alc);
+        Func *func = func_init(fc->alc, fc->b);
         func->line = line;
 
         sprintf(token, "ki__TEST_%d__%s", ++fc->test_counter, fc->path_hash);

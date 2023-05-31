@@ -125,6 +125,8 @@ struct Build {
     Class *class_array;
     Class *class_map;
     //
+    Type *type_void;
+    //
     int event_count;
     int events_done;
     int ptr_size;
