@@ -472,7 +472,7 @@ void stage_8_link(Build *b, Array *o_files) {
         // -macosx_version_min 11.1.0 -sdk_version 11.1.0
     } else if (is_win) {
         // /winsysroot:<value>
-        str_append_chars(cmd, "/nodefaultlib ");
+        str_append_chars(cmd, "/nodefaultlib /guard:ehcont ");
         // str_append_chars(cmd, "/force:unresolved ");
         if (is_x64) {
             str_append_chars(cmd, "/machine:x64 ");
