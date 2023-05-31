@@ -391,13 +391,15 @@ void stage_8_link(Build *b, Array *o_files) {
     bool host_system_is_target = host_os_is_target && host_arch_is_target;
 
     char *linker = NULL;
+    char linker_buf[KI_PATH_MAX];
     if (host_system_is_target) {
         if (is_linux) {
             linker = "ld";
         } else if (is_macos) {
             linker = "ld";
         } else if (is_win) {
-            linker = "lld-link";
+            sprintf(linker_buf, "%s\\lld-link.exe", get_binary_dir());
+            linker = linker_buf;
         }
     } else {
         if (is_linux) {
