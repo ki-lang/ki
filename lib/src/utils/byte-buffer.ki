@@ -1,146 +1,21 @@
 
 use mem;
-use os;
 
 class ByteBuffer {
-	data: ptr;
-	size: uxx;
-	length: uxx = 0;
 
-	static func init(start_size: uxx) ByteBuffer {
-		if start_size < 10 {
-			start_size = 10;
-		}
-		return ByteBuffer {
-			data: mem:alloc(start_size),
-			size: start_size,
-		};
-	}
-
-	func clear() void %inline {
-		this.length = 0;
-	}
-
-	// Appending
-
-	func append(buffer: *ByteBuffer) void {
-		this.append_from_ptr(buffer.data, buffer.length);
-	}
-
-	func append_from_ptr(data: ptr, length: uxx) void {
-		if(length == 0) {
-			return;
-		}
-		let bytes : uxx = this.length;
-		let new_bytes : uxx = bytes + length;
-		this.minimum_size(new_bytes);
-		let to : ptr = this.data + bytes;
-		mem:copy(data, to, length);
-		this.length = new_bytes;
-	}
-
-	func append_byte(byte: u8) void {
-		let bytes : uxx = this.length;
-		let new_bytes : uxx = bytes + 1;
-		if(new_bytes > this.size){
-			this.minimum_size(new_bytes);
-		}
-		let to : ptr = this.data + bytes;
-		@ptrv(to, u8, 0) = byte;
-		this.length = new_bytes;
-	}
-
-	func append_str(str: *String) void {
-		this.append_from_ptr(str.data(), str.bytes());
-	}
-
-	// Compare
-
-	func eq_str(str: *String) bool {
-		let str_len = str.bytes();
-		let len = this.length;
-		if str_len != len {
-			return false;
-		}
-		return mem:equal(this.data, str.data(), len);
-	}
-
-	// Find
-
-	func index_of_byte(byte: u8, start_index: uxx = 0) uxx !not_found {
-		let index = start_index;
-		let len = this.length;
-		let data = this.data;
-		while index < len {
-			let ch = @ptrv(data, u8, index);
-			if ch == byte {
-				return index;
-			}
-			index++;
-		}
-		throw not_found;
-	}
-
-	func index_where_byte_is_not(byte: u8, start_index: uxx = 0) uxx !not_found {
-		let index = start_index;
-		let len = this.length;
-		let data = this.data;
-		while index < len {
-			let ch = @ptrv(data, u8, index);
-			if ch != byte {
-				return index;
-			}
-			index++;
-		}
-		throw not_found;
-	}
-
-	// String functions
-
-	func to_str() String {
-		if(this.length == 0){
-			return "";
-		}
-		let str = String.make_empty(this.length);
-		mem:copy(this.data, str.data(), this.length);
-		return str;
-	}
-
-	func sub_str(start_index: uxx, length: uxx) String {
-		let len = this.length;
-		if length == 0 || start_index >= len {
-			return "";
-		}
-		if start_index + length > len {
-			length = len - start_index;
-		}
-		let str = String.make_empty(length);
-		mem:copy(this.data + start_index, str.data(), length);
-		return str;
-	}
-
-	// 
-	func minimum_free_space(length: uxx) void {
-		this.minimum_size(this.length + length);
-	}
-	func minimum_size(minimum_size: uxx) void {
-		let size : uxx = this.size;
-		let new_size : uxx = size;
-		while new_size < minimum_size {
-			new_size *= 2;
-		}
-		if(new_size != size){
-			let adr : ptr = mem:alloc(new_size);
-			mem:copy(this.data, adr, this.length);
-			mem:free(this.data);
-			this.size = new_size;
-			this.data = adr;
-		}
-	}
-
-	// Internals
+	trait ByteBufferTrait;
 
 	func __before_free() void {
 		mem:free(this.data);
+	}
+}
+
+struct ByteBufferStruct {
+
+	trait ByteBufferTrait;
+
+	func free() void {
+		mem:free(this.data);
+		mem:free(this @as ptr);
 	}
 }

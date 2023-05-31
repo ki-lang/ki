@@ -430,13 +430,13 @@ void stage_8_link(Build *b, Array *o_files) {
     // Link dirs
     for (int i = 0; i < b->link_dirs->length; i++) {
         char *path = array_get_index(b->link_dirs, i);
-        str_append_chars(cmd, is_win ? "/libpath:" : "-L");
+        str_append_chars(cmd, is_win ? "/libpath:\"" : "-L");
         str_append_chars(cmd, path);
         str_append_chars(cmd, "/");
         str_append_chars(cmd, b->os);
         str_append_chars(cmd, "-");
         str_append_chars(cmd, b->arch);
-        str_append_chars(cmd, " ");
+        str_append_chars(cmd, "\" ");
     }
 
     // Details

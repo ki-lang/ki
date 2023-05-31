@@ -305,12 +305,17 @@ void cmd_build(int argc, char *argv[]) {
 #endif
 
     // Compile ki lib
-    compile_loop(b, 5);
+    compile_loop(b, 1);
 
     // Compile CLI files
     build_add_files(b, files);
-    compile_loop(b, 5); // Get everything to stage 5 first
-    compile_loop(b, 6); // Parse AST & generate IR
+    compile_loop(b, 1);
+
+    // All packages & namespaces are loaded now
+    build_and_load_macros(b);
+
+    // Compile AST & IR
+    compile_loop(b, 6);
 
     b->ir_ready = true;
 

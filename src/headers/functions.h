@@ -40,6 +40,7 @@ char *dups(Allocator *alc, char *str);
 void cmd_build(int argc, char **argv);
 Class *ki_get_class(Build *b, char *ns, char *name);
 Func *ki_get_func(Build *b, char *ns, char *name);
+void build_and_load_macros(Build *b);
 
 // Pkg
 void cmd_pkg(int argc, char *argv[]);
