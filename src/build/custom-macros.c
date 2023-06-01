@@ -14,6 +14,10 @@ void build_and_load_macros(Build *b) {
     gettimeofday(&begin, NULL);
 #endif
 
+    bool is_linux = b->host_os == os_linux;
+    bool is_macos = b->host_os == os_macos;
+    bool is_win = b->host_os == os_win;
+
     Str *buf = b->str_buf;
     for (int i = 0; i < b->packages->length; i++) {
         Pkc *pkc = array_get_index(b->packages, i);
@@ -35,11 +39,18 @@ void build_and_load_macros(Build *b) {
             strcpy(lib_path, b->cache_dir);
             strcat(lib_path, "/macro-");
             strcat(lib_path, path_hash);
+            if (is_win) {
+                strcat(lib_path, ".dll");
+            } else if (is_linux) {
+                strcat(lib_path, ".so");
+            } else if (is_macos) {
+                strcat(lib_path, ".dylib");
+            }
 
             strcpy(header_path, b->cache_dir);
             strcat(header_path, "/macro-");
             strcat(header_path, path_hash);
-            strcat(header_path, ".kh");
+            strcat(header_path, ".txt");
 
             str_clear(buf);
             file_get_contents(buf, pkc->macro_file);

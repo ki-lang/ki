@@ -392,6 +392,14 @@ void cmd_build(int argc, char *argv[]) {
         strcat(cmd, "\"");
         system(cmd);
     }
+
+    // Clear mem
+    // for (int i = 0; i < b->all_fcs->values->length; i++) {
+    //     Fc *fc = array_get_index(b->all_fcs->values, i);
+    //     alc_delete(fc->alc_ast);
+    // }
+    alc_delete(b->alc_ast);
+    alc_delete(b->alc);
 }
 
 void build_add_files(Build *b, Array *files) {
