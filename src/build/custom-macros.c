@@ -35,7 +35,6 @@ void build_and_load_macros(Build *b) {
             strcpy(lib_path, b->cache_dir);
             strcat(lib_path, "/macro-");
             strcat(lib_path, path_hash);
-            strcat(lib_path, ".so");
 
             strcpy(header_path, b->cache_dir);
             strcat(header_path, "/macro-");
@@ -57,10 +56,13 @@ void build_and_load_macros(Build *b) {
                     compile = false;
                 }
             }
-            if (compile || !file_exists(header_path)) {
+            // if (compile || !file_exists(header_path)) {
+            if (compile) {
                 // Compile macro shared lib
                 int argc = 7;
-                char *argv[7];
+                if (b->verbose > 1)
+                    argc++;
+                char *argv[argc];
 
                 argv[0] = "./ki-macro";
                 argv[1] = "build";
@@ -70,8 +72,22 @@ void build_and_load_macros(Build *b) {
                 argv[5] = "--build-macro-file";
                 argv[6] = pkc->macro_file;
 
-                printf("Build macro: %s\n", pkc->macro_file);
+                int pos = 7;
+                if (b->verbose > 2)
+                    argv[pos++] = "-vv";
+                else if (b->verbose > 1)
+                    argv[pos++] = "-v";
+
+                if (b->verbose > 1) {
+                    printf("> Build macro: %s\n", pkc->macro_file);
+                    printf("-----------------------------\n");
+                }
                 cmd_build(argc, argv);
+                if (b->verbose > 1) {
+                    printf("-----------------------------\n");
+                }
+
+                write_file(c_path, content_hash, false);
             }
         }
     }
