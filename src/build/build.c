@@ -17,10 +17,9 @@ void cmd_build(int argc, char *argv[]) {
     Array *has_value = array_make(alc, 8);
     array_push(has_value, "-o");
     array_push(has_value, "--target");
-    array_push(has_value, "--lib");
 
     char *err = NULL;
-    parse_argv(argv, argc, has_value, args, options, err);
+    parse_argv(argv, argc, has_value, args, options, &err);
     if (err) {
         die(err);
     }
@@ -32,7 +31,7 @@ void cmd_build(int argc, char *argv[]) {
         if (arg[0] != '-')
             continue;
         sprintf(argbuf, ".%s.", arg);
-        if (!strstr(".--options.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.-h.--help.-v.-vv.-vvv.--build-macros.", argbuf)) {
+        if (!strstr(".--options.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.-h.--help.-v.-vv.-vvv.--lib.--build-macros.", argbuf)) {
             sprintf(argbuf, "❓ Unknown option '%s'", arg);
             die(argbuf);
         }
@@ -51,17 +50,9 @@ void cmd_build(int argc, char *argv[]) {
         cmd_build_help(run_code);
     }
 
-    int lib_type = libt_none;
-    char *lib = map_get(options, "--lib");
-    if (lib) {
-        if (strcmp(lib, "shared") == 0) {
-            lib_type = libt_shared;
-        } else if (strcmp(lib, "static") == 0) {
-            lib_type = libt_static;
-        } else {
-            sprintf(argbuf, "Invalid value for option '--lib' (value: '%s'), allowed: 'shared' or 'static'", lib);
-            die(argbuf);
-        }
+    int lib_type = libt_exe;
+    if (array_contains(args, "--lib", arr_find_str)) {
+        lib_type = libt_shared;
     }
 
     int host_os = default_os();

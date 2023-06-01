@@ -431,6 +431,13 @@ void stage_8_link(Build *b, Array *o_files) {
         str_append_chars(cmd, "-o \"");
     }
     str_append_chars(cmd, b->path_out);
+    if (b->lib_type == libt_exe) {
+        if (os_win && !ends_with(b->path_out, ".exe")) {
+            str_append_chars(cmd, ".exe");
+        }
+    } else if (b->lib_type == libt_shared) {
+    }
+
     str_append_chars(cmd, "\" ");
 
     // Link dirs
@@ -459,8 +466,12 @@ void stage_8_link(Build *b, Array *o_files) {
             str_append_chars(cmd, "--dynamic-linker /lib/ld-linux-aarch64.so.1 ");
         }
 
-        str_append_chars(cmd, "-l:Scrt1.o ");
-        str_append_chars(cmd, "-l:crti.o ");
+        if (b->lib_type == libt_exe) {
+            str_append_chars(cmd, "-l:Scrt1.o ");
+            str_append_chars(cmd, "-l:crti.o ");
+        } else if (b->lib_type == libt_shared) {
+            str_append_chars(cmd, "--shared ");
+        }
 
     } else if (is_macos) {
         str_append_chars(cmd, "-syslibroot ");
@@ -476,12 +487,18 @@ void stage_8_link(Build *b, Array *o_files) {
         str_append_chars(cmd, "-platform_version macos 10.13 11.1 ");
         // str_append_chars(cmd, "-sdk_version 11.1 ");
         // -macosx_version_min 11.1.0 -sdk_version 11.1.0
+        if (b->lib_type == libt_shared) {
+            str_append_chars(cmd, "-dylib ");
+        }
     } else if (is_win) {
         // /winsysroot:<value>
         str_append_chars(cmd, "/nodefaultlib /guard:ehcont ");
         // str_append_chars(cmd, "/force:unresolved ");
         if (is_x64) {
             str_append_chars(cmd, "/machine:x64 ");
+        }
+        if (b->lib_type == libt_shared) {
+            str_append_chars(cmd, "/dll ");
         }
     }
 

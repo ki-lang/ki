@@ -12,7 +12,7 @@ void cmd_pkg(int argc, char *argv[]) {
     Array *has_value = array_make(alc, 8);
 
     char *err = NULL;
-    parse_argv(argv, argc, has_value, args, options, err);
+    parse_argv(argv, argc, has_value, args, options, &err);
     if (err) {
         die(err);
     }

@@ -160,7 +160,7 @@ enum ALIAS {
 };
 
 enum LIBTYPE {
-    libt_none,
+    libt_exe,
     libt_shared,
     libt_static,
 };
