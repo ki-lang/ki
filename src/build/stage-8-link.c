@@ -432,10 +432,17 @@ void stage_8_link(Build *b, Array *o_files) {
     }
     str_append_chars(cmd, b->path_out);
     if (b->lib_type == libt_exe) {
-        if (os_win && !ends_with(b->path_out, ".exe")) {
+        if (is_win && !ends_with(b->path_out, ".exe")) {
             str_append_chars(cmd, ".exe");
         }
     } else if (b->lib_type == libt_shared) {
+        if (is_win && !ends_with(b->path_out, ".dll")) {
+            str_append_chars(cmd, ".dll");
+        } else if (is_linux && !ends_with(b->path_out, ".so")) {
+            str_append_chars(cmd, ".so");
+        } else if (is_macos && !ends_with(b->path_out, ".dylib")) {
+            str_append_chars(cmd, ".dylib");
+        }
     }
 
     str_append_chars(cmd, "\" ");
