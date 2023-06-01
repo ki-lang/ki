@@ -143,7 +143,7 @@ void stage_8(Build *b) {
         printf("⌚ LLVM build o: %.3fs\n", time_llvm);
     }
 
-    if (!b->main_func && !b->test) {
+    if (!b->main_func && !b->test && !b->build_macro) {
         die("❌ Missing 'main' function");
     }
 
@@ -444,7 +444,6 @@ void stage_8_link(Build *b, Array *o_files) {
             str_append_chars(cmd, ".dylib");
         }
     }
-
     str_append_chars(cmd, "\" ");
 
     // Link dirs

@@ -3,19 +3,18 @@ header "sys" as sys;
 
 use io;
 use net;
-use utils;
 use fs;
 
 class Connection {
 	netcon: net:Connection;
 	fd: i32;
 	uploads: ?Array[String] = null;
-	read_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
+	read_buf: ByteBuffer = ByteBuffer.init(500);
 
 	// Parsing
 	phase: uxx = 0;
 	parse_pos: uxx = 0;
-	line: utils:ByteBuffer = utils:ByteBuffer.init(200);
+	line: ByteBuffer = ByteBuffer.init(200);
 	headers: Map[String] = Map[String].init();
 	request_method: String = "GET";
 	request_path: String = "/";
@@ -28,7 +27,7 @@ class Connection {
 
 	// Response
 	out_file: ?fs:FileStream = null;
-	out_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
+	out_buf: ByteBuffer = ByteBuffer.init(500);
 	out_pos: uxx = 0;
 
 	func reset_parser() void {

@@ -31,6 +31,7 @@ typedef struct Trait Trait;
 typedef struct Alias Alias;
 typedef struct TypeCheck TypeCheck;
 typedef struct Test Test;
+typedef struct Macro Macro;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -142,6 +143,7 @@ struct Build {
     bool run_code;
     bool core_types_scanned;
     bool link_static;
+    bool build_macro;
 };
 
 struct Fc {
@@ -173,6 +175,7 @@ struct Fc {
     Array *classes;
     Array *globals;
     Array *aliasses;
+    Array *macros;
     Array *class_size_checks;
     Array *type_size_checks;
     //
@@ -199,6 +202,7 @@ struct Pkc {
     char *name;
     char *dir;
     char *hash;
+    char *macro_file;
     Map *sub_packages;
     Map *namespaces;
     Config *config;
@@ -436,6 +440,13 @@ struct Test {
     char *name;
     Func *func;
     VInt *expects;
+};
+
+struct Macro {
+    Func *func;
+    char *pattern;
+    char *var_code;
+    char *var_result;
 };
 
 // Pkg

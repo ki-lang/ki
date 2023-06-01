@@ -2,6 +2,7 @@
 #include "../all.h"
 
 void pkc_load_config(Pkc *pkc);
+void pkc_load_macros(Pkc *pkc);
 
 Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
     //
@@ -17,11 +18,13 @@ Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
     pkc->name = name;
     pkc->dir = dir;
     pkc->hash = al(alc, 64);
+    pkc->macro_file = NULL;
     pkc->config = NULL;
     pkc->header_dirs = array_make(alc, 10);
 
     simple_hash(dir, pkc->hash);
 
+    pkc_load_macros(pkc);
     pkc_load_config(pkc);
 
     if (!name) {
@@ -110,6 +113,16 @@ Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc) {
         die(pkc->b->sbuf);
     }
     return NULL;
+}
+
+void pkc_load_macros(Pkc *pkc) {
+    //
+    char path[KI_PATH_MAX];
+    strcpy(path, pkc->dir);
+    strcat(path, "/macro.ki");
+    if (file_exists(path)) {
+        pkc->macro_file = dups(pkc->b->alc, path);
+    }
 }
 
 void pkc_load_config(Pkc *pkc) {

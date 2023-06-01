@@ -176,32 +176,6 @@ char *get_storage_path() {
     return g_storage_path;
 }
 
-// char *g_cache_path = NULL;
-// char *get_cache_dir() {
-//     if (g_cache_path != NULL) {
-//         return g_cache_path;
-//     }
-//     g_cache_path = malloc(KI_PATH_MAX);
-//     char *storage_dir = get_storage_path();
-//     strcpy(g_cache_path, storage_dir);
-//     strcat(g_cache_path, "/cache");
-
-//     if (!file_exists(g_cache_path)) {
-//         makedir(g_cache_path, 0750);
-//         printf("Create cache directory: %s\n", g_cache_path);
-//     }
-
-//     strcat(g_cache_path, "/");
-//     strcat(g_cache_path, g_cache_hash);
-
-//     if (!file_exists(g_cache_path)) {
-//         makedir(g_cache_path, 0750);
-//         printf("Create cache project directory: %s\n", g_cache_path);
-//     }
-
-//     return g_cache_path;
-// }
-
 Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
     Array *result = array_make(alc, 2);
 

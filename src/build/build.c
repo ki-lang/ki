@@ -17,6 +17,7 @@ void cmd_build(int argc, char *argv[]) {
     Array *has_value = array_make(alc, 8);
     array_push(has_value, "-o");
     array_push(has_value, "--target");
+    array_push(has_value, "--root");
 
     char *err = NULL;
     parse_argv(argv, argc, has_value, args, options, &err);
@@ -31,7 +32,7 @@ void cmd_build(int argc, char *argv[]) {
         if (arg[0] != '-')
             continue;
         sprintf(argbuf, ".%s.", arg);
-        if (!strstr(".--options.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.-h.--help.-v.-vv.-vvv.--lib.--build-macros.", argbuf)) {
+        if (!strstr(".--options.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.-h.--help.-v.-vv.-vvv.--lib.--build-macro-file.", argbuf)) {
             sprintf(argbuf, "❓ Unknown option '%s'", arg);
             die(argbuf);
         }
@@ -165,11 +166,16 @@ void cmd_build(int argc, char *argv[]) {
         die(b->sbuf);
     }
 
+    char *root_dir = map_get(options, "--root");
+    if (!root_dir) {
+        root_dir = find_config_dir(alc, first_file);
+    }
+
     // Cache dir
     char *cache_buf = malloc(1000);
     char *cache_hash = malloc(64);
     char *cache_dir = al(alc, KI_PATH_MAX);
-    get_dir_from_path(first_file, cache_buf);
+    strcpy(cache_buf, root_dir);
     strcat(cache_buf, "||");
     strcat(cache_buf, os);
     strcat(cache_buf, arch);
@@ -268,6 +274,7 @@ void cmd_build(int argc, char *argv[]) {
     b->run_code = run_code;
     b->LOC = 0;
     b->link_static = link_static;
+    b->build_macro = array_contains(args, "--build-macro-file", arr_find_str);
     //
     b->type_void = type_gen_void(alc);
 
@@ -282,7 +289,7 @@ void cmd_build(int argc, char *argv[]) {
     gettimeofday(&begin, NULL);
 #endif
 
-    Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));
+    Pkc *pkc_main = pkc_init(alc, b, "main", root_dir);
     Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
 
     char *pkg_dir = al(alc, KI_PATH_MAX);
@@ -322,7 +329,9 @@ void cmd_build(int argc, char *argv[]) {
     compile_loop(b, 1);
 
     // All packages & namespaces are loaded now
-    build_and_load_macros(b);
+    if (!b->build_macro) {
+        build_and_load_macros(b);
+    }
 
     // Compile AST & IR
     compile_loop(b, 6);
@@ -359,7 +368,7 @@ void cmd_build(int argc, char *argv[]) {
     double time_all = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
 #endif
 
-    if (!run_code || b->verbose > 0) {
+    if (!b->build_macro && (!run_code || b->verbose > 0)) {
         printf("✅ Compiled in: %.3fs\n", time_all);
     }
 

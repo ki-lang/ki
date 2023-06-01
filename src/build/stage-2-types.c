@@ -7,6 +7,7 @@ void stage_2_func(Fc *fc, Func *func);
 void stage_2_class_defaults(Fc *fc, Class *class);
 void stage_2_class_type_checks(Fc *fc, Class *class);
 void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *args[], int argc_ex, TypeCheck *tc_rett, bool can_error);
+void stage_2_macro_args(Fc *fc, Macro *mac);
 
 void stage_2(Fc *fc) {
     //
@@ -38,6 +39,12 @@ void stage_2(Fc *fc) {
         }
     }
 
+    if (fc->macros) {
+        for (int i = 0; i < fc->macros->length; i++) {
+            Macro *mac = array_get_index(fc->macros, i);
+            stage_2_macro_args(fc, mac);
+        }
+    }
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
@@ -671,4 +678,27 @@ void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *checks[], int argc_
     //     sprintf(fc->sbuf, "Expected type for '%s' should be '%s', but was '%s'", func->dname, expected, buf);
     //     fc_error(fc);
     // }
+}
+
+void stage_2_macro_args(Fc *fc, Macro *mac) {
+    //
+    Build *b = fc->b;
+    Allocator *alc = fc->alc;
+    Func *func = mac->func;
+
+    Type *type_code = type_gen(b, alc, "String");
+    Type *type_result = type_gen(b, alc, "ByteBuffer");
+
+    type_code->borrow = true;
+    type_result->borrow = true;
+
+    Arg *arg_code = arg_init(alc, mac->var_code, type_code);
+    Arg *arg_result = arg_init(alc, mac->var_result, type_result);
+
+    array_push(func->args, arg_code);
+    map_set(func->args_by_name, arg_code->name, arg_code);
+    array_push(func->args, arg_result);
+    map_set(func->args_by_name, arg_result->name, arg_result);
+
+    func_make_arg_decls(func);
 }

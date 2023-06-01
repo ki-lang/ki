@@ -4,7 +4,6 @@
 
 use mem;
 use os;
-use utils;
 
 class String type:ptr track {
 
@@ -76,7 +75,7 @@ class String type:ptr track {
 		let bytes_left = bytes;
 		let bytes_on = on.bytes();
 
-		let part = utils:ByteBuffer.init(100);
+		let part = ByteBuffer.init(100);
 		while pos < bytes {
 			if(bytes_on > bytes_left){
 				break;
@@ -192,7 +191,7 @@ class String type:ptr track {
 		if bytes_find == 0 {
 			return this + "";
 		}
-		let buf = utils:ByteBuffer.init(bytes);
+		let buf = ByteBuffer.init(bytes);
 		while(pos < bytes){
 			if(bytes_find > bytes_left){
 				break;
@@ -253,7 +252,7 @@ class String type:ptr track {
 			return this + "";
 		}
 		let adr = this.data();
-		let buf = utils:ByteBuffer.init(len);
+		let buf = ByteBuffer.init(len);
 		let i : u32 = 0;
 		while i < len {
 			let ch = @ptrv(adr, u8, i);

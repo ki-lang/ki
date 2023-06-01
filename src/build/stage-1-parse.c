@@ -11,6 +11,7 @@ void stage_1_link(Fc *fc, int link_type);
 void stage_1_global(Fc *fc, bool shared);
 void stage_1_alias(Fc *fc, int alias_type);
 void stage_1_test(Fc *fc);
+void stage_1_macro(Fc *fc);
 
 void stage_1(Fc *fc) {
     //
@@ -93,6 +94,10 @@ void stage_1(Fc *fc) {
             stage_1_test(fc);
             continue;
         }
+        if (strcmp(token, "macro") == 0) {
+            stage_1_macro(fc);
+            continue;
+        }
 
         sprintf(fc->sbuf, "Unexpected token '%s'", token);
         fc_error(fc);
@@ -128,7 +133,9 @@ void stage_1_func(Fc *fc) {
     bool is_main = fc->nsc == b->nsc_main && strcmp(token, "main") == 0;
     if (is_main) {
         strcpy(token, "ki__main__");
-        b->main_func = func;
+        if (b->lib_type == libt_exe) {
+            b->main_func = func;
+        }
     }
 
     char *name = dups(fc->alc, token);
@@ -143,7 +150,8 @@ void stage_1_func(Fc *fc) {
     func->scope->func = func;
     func->will_exit = will_exit;
 
-    array_push(fc->funcs, func);
+    if (!is_main || b->lib_type == libt_exe)
+        array_push(fc->funcs, func);
 
     Idf *idf = idf_init(fc->alc, idf_func);
     idf->item = func;
@@ -771,5 +779,102 @@ void stage_1_test(Fc *fc) {
         array_push(b->tests, test);
     }
 
+    skip_body(fc, '}');
+}
+
+void stage_1_macro(Fc *fc) {
+    //
+    Build *b = fc->b;
+    Allocator *alc = fc->alc;
+    if (!b->build_macro) {
+        sprintf(fc->sbuf, "Macros must be defined in 'macro.ki' located in the root of your project.");
+        fc_error(fc);
+    }
+    if (!fc->macros)
+        fc->macros = array_make(alc, 20);
+
+    char *token = fc->token;
+    tok(fc, token, true, true);
+
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid macro name syntax '%s'", token);
+        fc_error(fc);
+    }
+    name_taken_check(fc, fc->nsc->scope, token);
+
+    char *name = dups(alc, token);
+    int len = strlen(name);
+    char *dname = al(alc, len + 12);
+    char *gname = al(alc, len + 12);
+    sprintf(dname, "MACRO:%s", name);
+    sprintf(gname, "KI__MACRO__%s", name);
+
+    ///////////
+
+    Macro *mac = al(alc, sizeof(Macro));
+
+    Func *func = func_init(alc, fc->b);
+    func->line = fc->chunk->line;
+    func->fc = fc;
+    func->name = name;
+    func->gname = gname;
+    func->dname = dname;
+    func->scope = scope_init(alc, sct_func, fc->scope, true);
+    func->scope->func = func;
+
+    mac->func = func;
+
+    array_push(fc->funcs, func);
+    array_push(fc->macros, mac);
+
+    Idf *idf = idf_init(alc, idf_func);
+    idf->item = func;
+
+    map_set(fc->nsc->scope->identifiers, name, idf);
+    if (fc->is_header) {
+        map_set(fc->scope->identifiers, name, idf);
+    }
+
+    ///////////
+
+    tok_expect(fc, "\"", true, true);
+    Str *buf = read_string(fc);
+    char *pattern = str_to_chars(alc, buf);
+    if (strcmp(pattern, "[]") == 0) {
+    } else if (strcmp(pattern, "{}") == 0) {
+    } else if (strcmp(pattern, "()") == 0) {
+    } else {
+        sprintf(fc->sbuf, "Invalid macro pattern: '%s'", pattern);
+        fc_error(fc);
+    }
+
+    tok(fc, token, true, true);
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid variable name: '%s'", token);
+        fc_error(fc);
+    }
+    char *var_code = dups(alc, token);
+
+    tok_expect(fc, ",", true, true);
+
+    tok(fc, token, true, true);
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid variable name: '%s'", token);
+        fc_error(fc);
+    }
+    char *var_result = dups(alc, token);
+
+    if (strcmp(var_code, var_result) == 0) {
+        sprintf(fc->sbuf, "Variable names must be different: '%s' == '%s'", var_code, var_result);
+        fc_error(fc);
+    }
+
+    mac->var_code = var_code;
+    mac->var_result = var_result;
+
+    ///////////
+
+    tok_expect(fc, "{", false, true);
+    func->chunk_body = chunk_clone(fc->alc, fc->chunk);
     skip_body(fc, '}');
 }

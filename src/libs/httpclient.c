@@ -44,8 +44,9 @@ char *request(char *method, char *host, char *path) {
 
         struct curlres cres;
         cres.len = 0;
-        cres.ptr = malloc(1);
-        cres.ptr[0] = '\0';
+        cres.ptr = "";
+        // cres.ptr = malloc(1);
+        // cres.ptr[0] = '\0';
 
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cres);
