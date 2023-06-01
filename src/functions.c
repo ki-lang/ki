@@ -6,7 +6,7 @@ void die(char *msg) {
     exit(1);
 }
 
-void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *options) {
+void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *options, char **err) {
     //
     for (int i = 0; i < argc; i++) {
         char *arg = argv[i];
@@ -17,9 +17,16 @@ void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *optio
         }
         i++;
         if (i == argc) {
+            err = malloc(256);
+            sprintf(err, "You forgot to add a value for argument '%s'", arg);
             break;
         }
         char *value = argv[i];
+        if (value[0] == '-') {
+            err = malloc(256);
+            sprintf(err, "You forgot to add a value for argument '%s'", arg);
+            break;
+        }
         map_set(options, arg, value);
     }
 }

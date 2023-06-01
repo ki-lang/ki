@@ -1,7 +1,7 @@
 
 // General
 void die(char *msg);
-void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *options);
+void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *options, char **err);
 char *rand_string(char *str, int size);
 int atoi(const char *str);
 int hex2int(char *hex);

@@ -158,3 +158,9 @@ enum ALIAS {
     alias_id,
     alias_type,
 };
+
+enum LIBTYPE {
+    libt_none,
+    libt_shared,
+    libt_static,
+};

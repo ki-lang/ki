@@ -70,6 +70,7 @@ struct Build {
     int host_arch;
     int target_os;
     int target_arch;
+    int lib_type;
     //
     char *os;
     char *arch;
