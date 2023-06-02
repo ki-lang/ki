@@ -23,5 +23,5 @@ or you can build individual distributions
 make dist_linux_x64
 make dist_macos_x64
 make dist_macos_arm64
-make dist_win_win64
+make dist_win_x64
 ```
