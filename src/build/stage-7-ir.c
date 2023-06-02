@@ -22,6 +22,7 @@ void stage_7(Fc *fc) {
 
     lb->char_buf = al(alc, 100);
     lb->str_buf = str_make(alc, 1000);
+    lb->str_buf_di_type = str_make(alc, 256);
 
     lb->ir_final = str_make(alc, 10000);
     lb->ir_struct = str_make(alc, 2000);
@@ -34,7 +35,16 @@ void stage_7(Fc *fc) {
     lb->while_cond = NULL;
     lb->while_after = NULL;
 
+    lb->loop_attr = NULL;
+    lb->loop_attr_root = NULL;
+    lb->attrs = array_make(alc, 10);
+
     lb->use_stack_save = false;
+    lb->debug = b->debug;
+    lb->di_cu = NULL;
+    lb->di_file = NULL;
+    lb->di_retained_nodes = NULL;
+    lb->di_type_ptr = NULL;
 
     llvm_build_ir(lb);
 

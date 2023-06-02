@@ -8,6 +8,8 @@ void llvm_gen_func_ir(LB *b) {
 
     for (int i = 0; i < fc->funcs->length; i++) {
         Func *func = array_get_index(fc->funcs, i);
+        Array *args = func->args;
+        int argc = args->length;
 
         Scope *fscope = func->scope;
 
@@ -27,9 +29,8 @@ void llvm_gen_func_ir(LB *b) {
         str_append_chars(ir, func->gname);
         str_append_chars(ir, "(");
 
-        int argc = func->args->length;
         for (int o = 0; o < argc; o++) {
-            Arg *arg = array_get_index(func->args, o);
+            Arg *arg = array_get_index(args, o);
             if (o > 0) {
                 str_append_chars(ir, ", ");
             }
@@ -47,29 +48,8 @@ void llvm_gen_func_ir(LB *b) {
             char *v = llvm_var(b);
             str_append_chars(ir, v);
 
-            // if func.can_error && i == (argc - 2) {
-            //	b.func_arg_err = v;
-            // }
-            // if func.can_error && i == (argc - 1) {
-            //	b.func_arg_msg = v;
-            // }
-
             arg->decl->llvm_val = v;
         }
-        // if (func->can_error) {
-        //     if (argc > 0) {
-        //         str_append_chars(ir, ", ");
-        //     }
-        //     char *err_var = llvm_var(b);
-        //     char *err_msg_var = llvm_var(b);
-        //     str_append_chars(ir, "i32* noundef ");
-        //     str_append_chars(ir, err_var);
-        //     str_append_chars(ir, ", i8** noundef ");
-        //     str_append_chars(ir, err_msg_var);
-
-        //     // b.func_arg_err = var_err;
-        //     // b.func_arg_msg = var_msg;
-        // }
         str_append_chars(ir, ")");
 
         if (func->opt_hot) {
@@ -79,13 +59,68 @@ void llvm_gen_func_ir(LB *b) {
             str_append_chars(ir, " alwaysinline");
         }
 
-        str_append_chars(ir, " {\n");
+        // Debug info
+        if (b->debug) {
+            char *di_scope = llvm_attr(b);
+            lfunc->di_scope = di_scope;
+            str_append_chars(ir, " !dbg ");
+            str_append_chars(ir, di_scope);
 
-        // Error buffers
-        // if (func->scope->create_error_buffers) {
-        //     b.func_buf_err = b.alloca(type_gen(b.fc.b, "i32"));
-        //     b.func_buf_msg = b.alloca(type_gen(b.fc.b, "String"));
-        // }
+            char *di_func_type = llvm_attr(b);
+            char *di_args = llvm_attr(b);
+
+            char line[10];
+            sprintf(line, "%d", func->line);
+
+            Str *buf = b->str_buf;
+            str_clear(buf);
+            str_append_chars(buf, di_scope);
+            str_append_chars(buf, " = distinct !DISubprogram(name: \"");
+            str_append_chars(buf, func->gname);
+            str_append_chars(buf, "\", scope: ");
+            str_append_chars(buf, b->di_file);
+            str_append_chars(buf, ", file: ");
+            str_append_chars(buf, b->di_file);
+            str_append_chars(buf, ", line: ");
+            str_append_chars(buf, line);
+            str_append_chars(buf, ", type: ");
+            str_append_chars(buf, di_func_type);
+            str_append_chars(buf, ", scopeLine: ");
+            str_append_chars(buf, line);
+            str_append_chars(buf, ", spFlags: DISPFlagDefinition, unit: ");
+            str_append_chars(buf, b->di_cu);
+            str_append_chars(buf, ", retainedNodes: ");
+            str_append_chars(buf, b->di_retained_nodes);
+            str_append_chars(buf, ")");
+
+            array_push(b->attrs, str_to_chars(alc, buf));
+
+            str_clear(buf);
+            str_append_chars(buf, di_func_type);
+            str_append_chars(buf, " = !DISubroutineType(types: ");
+            str_append_chars(buf, di_args);
+            str_append_chars(buf, ")");
+
+            array_push(b->attrs, str_to_chars(alc, buf));
+
+            str_clear(buf);
+            str_append_chars(buf, di_args);
+            str_append_chars(buf, " = !{");
+
+            str_append_chars(buf, llvm_di_type(b, func->rett));
+
+            for (int i = 0; i < argc; i++) {
+                Arg *arg = array_get_index(args, i);
+                str_append_chars(buf, ", ");
+                str_append_chars(buf, llvm_di_type(b, arg->type));
+            }
+
+            str_append_chars(buf, " }");
+            array_push(b->attrs, str_to_chars(alc, buf));
+        }
+
+        // Body
+        str_append_chars(ir, " {\n");
 
         // Store mutable args in variables
         Str *cir = llvm_b_ir(b);

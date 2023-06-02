@@ -50,13 +50,15 @@ Value *vgen_compare(Allocator *alc, Build *b, Value *left, Value *right, int op)
     return value_init(alc, v_compare, item, type_gen(b, alc, "bool"));
 }
 
-Value *vgen_fcall(Allocator *alc, Scope *scope, Value *on, Array *values, Type *rett, FCallOr * or) {
+Value *vgen_fcall(Allocator *alc, Scope *scope, Value *on, Array *values, Type *rett, FCallOr * or, int line, int col) {
     //
     VFcall *item = al(alc, sizeof(VFcall));
     item->on = on;
     item->args = values;
     item->or = or ;
     item->ul = NULL;
+    item->line = line;
+    item->col = col;
 
     if (scope && type_tracks_ownership(rett)) {
         Decl *decl = decl_init(alc, scope, "KI_GENERATED_TEMP_VAR", rett, NULL, false);

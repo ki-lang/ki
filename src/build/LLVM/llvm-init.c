@@ -40,6 +40,8 @@ LLVMFunc *llvm_func_init(LB *b, Func *func, LLVMBlock *entry, LLVMBlock *code) {
     lfunc->blockc = 2;
     lfunc->stack_save_vn = NULL;
 
+    lfunc->di_scope = NULL;
+
     array_push(lfunc->blocks, entry);
     array_push(lfunc->blocks, code);
 

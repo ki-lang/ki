@@ -41,6 +41,8 @@ struct TEach {
     Scope *scope;
     Decl *decl_key;
     Decl *decl_value;
+    int line;
+    int col;
 };
 struct TReturnVscope {
     Value *value;

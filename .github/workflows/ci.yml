@@ -34,14 +34,14 @@ jobs:
 
     - name: Install libcurl4-openssl-dev
       run: sudo apt-get install libcurl4-openssl-dev
+
+    - run: sudo ln -s /usr/bin/lld /usr/bin/ld64.lld
       
     - name: Build Ki
       run: make
 
     - name: Test(linux-x64)
-      run: ./ki build ./test/*.ki -o --test -r
-
-    - run: sudo ln -s /usr/bin/lld /usr/bin/ld64.lld
+      run: ./ki build ./test/*.ki --test -r
 
     - name: Build test(cross compiling) for macos-x64
       run: ./ki build ./test/*.ki -o _test --target macos-x64

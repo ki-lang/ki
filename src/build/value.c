@@ -59,6 +59,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             VFString *vfs = al(alc, sizeof(VFString));
             vfs->parts = parts;
             vfs->values = values;
+            vfs->line = before_str->line;
+            vfs->col = before_str->col;
             Type *rett = type_gen(fc->b, alc, "String");
             rett->strict_ownership = true;
             v = value_init(alc, v_fstring, vfs, rett);
@@ -663,6 +665,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 op = op_gte;
             }
 
+            int line = fc->chunk->line;
+            int col = fc->chunk->col;
+
             Value *right = read_value(fc, alc, scope, false, 30, false);
 
             bool magic = false;
@@ -677,7 +682,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                         array_push(values, right);
                         Value *on = vgen_fptr(alc, func, NULL);
                         fcall_type_check(fc, on, values);
-                        v = vgen_fcall(alc, scope, on, values, func->rett, NULL);
+                        v = vgen_fcall(alc, scope, on, values, func->rett, NULL, line, col);
                         if (op == op_ne) {
                             v = vgen_compare(alc, b, v, vgen_vint(alc, 0, type_gen(b, alc, "bool"), true), op_eq);
                         }
@@ -934,6 +939,9 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
 Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right, int op) {
 
+    int line = fc->chunk->line;
+    int col = fc->chunk->col;
+
     if (left->type == v_vint && right->type == v_vint) {
         VInt *lint = left->item;
         VInt *rint = right->item;
@@ -968,7 +976,7 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
                 array_push(values, right);
                 Value *on = vgen_fptr(alc, func, NULL);
                 fcall_type_check(fc, on, values);
-                return vgen_fcall(alc, scope, on, values, func->rett, NULL);
+                return vgen_fcall(alc, scope, on, values, func->rett, NULL, line, col);
             }
         }
     }
@@ -1210,6 +1218,9 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     Type *ont = on->rett;
     int ontt = ont->type;
 
+    int line = fc->chunk->line;
+    int col = fc->chunk->col;
+
     if (ontt != type_func_ptr) {
         sprintf(fc->sbuf, "Function call on non-function value");
         fc_error(fc);
@@ -1422,7 +1433,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    return vgen_fcall(alc, scope, on, values, rett, or);
+    return vgen_fcall(alc, scope, on, values, rett, or, line, col);
 }
 
 bool value_is_assignable(Value *v) {

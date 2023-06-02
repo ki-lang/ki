@@ -391,13 +391,19 @@ void stage_8_link(Build *b, Array *o_files) {
     bool host_system_is_target = host_os_is_target && host_arch_is_target;
 
     char *linker = NULL;
+    char linker_buf[KI_PATH_MAX];
     if (host_system_is_target) {
         if (is_linux) {
             linker = "ld";
         } else if (is_macos) {
             linker = "ld";
         } else if (is_win) {
+#ifdef __MINGW32__
             linker = "lld-link";
+#else
+            sprintf(linker_buf, "%s\\lld-link.exe", get_binary_dir());
+            linker = linker_buf;
+#endif
         }
     } else {
         if (is_linux) {
@@ -419,13 +425,13 @@ void stage_8_link(Build *b, Array *o_files) {
     str_append_chars(cmd, linker);
     str_append_chars(cmd, " ");
     if (is_win) {
-        str_append_chars(cmd, "/out:");
+        str_append_chars(cmd, "/out:\"");
     } else {
         str_append_chars(cmd, "-pie ");
-        str_append_chars(cmd, "-o ");
+        str_append_chars(cmd, "-o \"");
     }
     str_append_chars(cmd, b->path_out);
-    str_append_chars(cmd, " ");
+    str_append_chars(cmd, "\" ");
 
     // Link dirs
     for (int i = 0; i < b->link_dirs->length; i++) {
@@ -472,7 +478,7 @@ void stage_8_link(Build *b, Array *o_files) {
         // -macosx_version_min 11.1.0 -sdk_version 11.1.0
     } else if (is_win) {
         // /winsysroot:<value>
-        str_append_chars(cmd, "/nodefaultlib ");
+        str_append_chars(cmd, "/nodefaultlib /guard:ehcont ");
         // str_append_chars(cmd, "/force:unresolved ");
         if (is_x64) {
             str_append_chars(cmd, "/machine:x64 ");

@@ -191,6 +191,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
 
         if (strcmp(token, "@expect") == 0) {
+            int line = fc->chunk->line;
+            int col = fc->chunk->col;
+
             Func *func = scope->func;
             if (!func->is_test) {
                 sprintf(fc->sbuf, "You can only use @expect in a 'test'");
@@ -211,7 +214,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
             Func *log = ki_get_func(fc->b, "os", "test_expect");
             Value *fptr = vgen_fptr(alc, log, NULL);
-            Value *fcall = vgen_fcall(alc, scope, fptr, args, log->rett, NULL);
+            Value *fcall = vgen_fcall(alc, scope, fptr, args, log->rett, NULL, line, col);
             array_push(scope->ast, token_init(alc, tkn_statement, fcall));
 
             tok_expect(fc, ";", false, true);
@@ -638,6 +641,9 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
 
 void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     //
+    int col = fc->chunk->col;
+    int line = fc->chunk->line;
+
     char *token = fc->token;
     Value *value = read_value(fc, alc, scope, true, 0, false);
     Value *on = vgen_ir_val(alc, value, value->rett);
@@ -733,7 +739,7 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     array_push(ancestors, sub);
     usage_merge_ancestors(alc, scope, ancestors);
 
-    array_push(scope->ast, tgen_each(alc, on, sub, decl_k, decl_v));
+    array_push(scope->ast, tgen_each(alc, on, sub, decl_k, decl_v, line, col));
 }
 
 void stage_6_gen_main(Fc *fc) {
@@ -765,7 +771,7 @@ void stage_6_gen_main(Fc *fc) {
         }
     }
 
-    Func *func = func_init(fc->alc);
+    Func *func = func_init(fc->alc, fc->b);
     func->fc = fc;
     func->name = "main";
     func->gname = "main";
@@ -830,6 +836,7 @@ void stage_6_gen_main(Fc *fc) {
     chunk->length = code->length;
     chunk->i = 0;
     chunk->line = 1;
+    chunk->col = 1;
 
     fc->chunk = chunk;
 
@@ -839,7 +846,7 @@ void stage_6_gen_main(Fc *fc) {
 void stage_6_gen_test_main(Fc *fc) {
     //
     Allocator *alc = fc->alc_ast;
-    Func *func = func_init(alc);
+    Func *func = func_init(alc, fc->b);
     Build *b = fc->b;
 
     char *name = "ki__test__main";
@@ -852,7 +859,7 @@ void stage_6_gen_test_main(Fc *fc) {
     func->dname = dname;
     func->scope = scope_init(alc, sct_func, fc->scope, true);
     func->scope->func = func;
-    func->rett = type_gen_void(alc);
+    func->rett = b->type_void;
 
     Idf *idf = idf_init(fc->alc, idf_func);
     idf->item = func;
