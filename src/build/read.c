@@ -7,6 +7,7 @@ Chunk *chunk_init(Allocator *alc, Fc *fc) {
     ch->content = NULL;
     ch->i = 0;
     ch->line = 1;
+    return NULL;
 }
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk) {
     //

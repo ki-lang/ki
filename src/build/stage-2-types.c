@@ -380,7 +380,7 @@ void stage_2_func(Fc *fc, Func *func) {
     func->rett = read_type(fc, alc, func->scope->parent, true, true, rtc_func_rett);
 
     if (func->will_exit && !type_is_void(func->rett)) {
-        sprintf(fc->sbuf, "Using '!' before the function name tells the compiler this function will exit the program. Therefore the return type must be void.", token);
+        sprintf(fc->sbuf, "Using '!' before the function name tells the compiler this function will exit the program. Therefore the return type must be void.");
         fc_error(fc);
     }
 

@@ -110,6 +110,7 @@ Chain *chain_make(Allocator *alc) {
     chain->first = NULL;
     chain->last = NULL;
     chain->current = NULL;
+    return NULL;
 }
 Fc *chain_get(Chain *chain) {
     //
