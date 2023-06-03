@@ -70,7 +70,7 @@ void build_and_load_macros(Build *b) {
                 }
             }
             // if (compile || !file_exists(header_path)) {
-            if (compile) {
+            if (compile || b->clear_cache) {
                 // Compile macro shared lib
                 int argc = 8;
                 if (b->verbose > 1)

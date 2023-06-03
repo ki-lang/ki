@@ -1,4 +1,5 @@
 
 macro array "[]" code, result {
+	result.append_str("println(\"Hello\");\n");
 }
 

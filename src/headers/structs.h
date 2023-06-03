@@ -224,6 +224,7 @@ struct Link {
 
 struct Chunk {
     Fc *fc;
+    Chunk *parent;
     char *content;
     int length;
     int i;

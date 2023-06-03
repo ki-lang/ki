@@ -4,7 +4,9 @@
 Chunk *chunk_init(Allocator *alc, Fc *fc) {
     Chunk *ch = al(alc, sizeof(Chunk));
     ch->fc = fc;
+    ch->parent = NULL;
     ch->content = NULL;
+    ch->length = 0;
     ch->i = 0;
     ch->line = 1;
     ch->col = 1;
@@ -73,6 +75,19 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             col++;
             ch = content[i];
             if (ch == '\0') {
+                if (chunk->parent) {
+                    chunk->i = i;
+                    chunk->col = col;
+                    chunk = chunk->parent;
+                    fc->chunk = chunk;
+                    i = chunk->i;
+                    col = chunk->col;
+                    content = chunk->content;
+                    ch = content[i];
+                    if (ch != '\0') {
+                        continue;
+                    }
+                }
                 token[0] = '\0';
                 chunk->i = i;
                 chunk->col = col;

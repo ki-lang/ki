@@ -107,6 +107,9 @@ Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail) {
                     // if (strstr(".Task.", fc->sbuf)) {
                     //     return ki_lib_get("async", name);
                     // }
+                    idf = map_get(fc->b->macros, name);
+                    if (idf)
+                        return idf;
                 }
 
                 if (!fail) {

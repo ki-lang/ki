@@ -932,6 +932,44 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         return value_init(alc, v_decl, decl, decl->type);
     }
 
+    if (idf->type == idf_macro) {
+        MacroPattern *pat = idf->item;
+        char start[2];
+        start[0] = pat->pattern[0];
+        start[1] = '\0';
+
+        tok_expect(fc, start, true, false);
+
+        int start_i = fc->chunk->i;
+        skip_body(fc, pat->pattern[1]);
+        int end_i = fc->chunk->i - 1;
+
+        char *content = fc->chunk->content;
+        // Str *code = fc->b->str_buf;
+        Str *code = str_make(alc, 100);
+        str_clear(code);
+        while (start_i < end_i) {
+            char ch = content[start_i];
+            start_i++;
+            str_append_char(code, ch);
+        }
+
+        void *ki_string = ki_string_create(alc, code->data, code->length);
+        KiByteBuffer *ki_buf = ki_bytebuffer_create(alc);
+
+        pat->func(ki_string, ki_buf);
+
+        char *result = ki_bytebuffer_to_chars(alc, ki_buf);
+        Chunk *chunk = chunk_init(alc, fc);
+        chunk->parent = fc->chunk;
+        chunk->content = result;
+        chunk->length = ki_buf->length;
+
+        fc->chunk = chunk;
+
+        return read_value(fc, alc, scope, false, 0, false);
+    }
+
     sprintf(fc->sbuf, "Cannot convert identifier to a value: '%s'", id->name);
     fc_error(fc);
     return NULL;

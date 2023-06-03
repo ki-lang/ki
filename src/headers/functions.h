@@ -262,3 +262,7 @@ Token *tgen_while(Allocator *alc, Value *cond, Scope *scope);
 Token *tgen_exec(Allocator *alc, Scope *scope, bool enable);
 Token *tgen_ref_change_exec(Allocator *alc, Scope *scope, Value *on, int amount);
 Token *tgen_each(Allocator *alc, Value *value, Scope *scope, Decl *decl_key, Decl *decl_value, int line, int col);
+
+KiByteBuffer *ki_bytebuffer_create(Allocator *alc);
+char *ki_bytebuffer_to_chars(Allocator *alc, KiByteBuffer *buf);
+void *ki_string_create(Allocator *alc, char *content, int len);
