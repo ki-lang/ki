@@ -431,18 +431,31 @@ void stage_8_link(Build *b, Array *o_files) {
         str_append_chars(cmd, "-o \"");
     }
     str_append_chars(cmd, b->path_out);
+    if (b->type == build_t_exe) {
+        if (is_win && !ends_with(b->path_out, ".exe")) {
+            str_append_chars(cmd, ".exe");
+        }
+    } else if (b->type == build_t_shared_lib) {
+        if (is_win && !ends_with(b->path_out, ".dll")) {
+            str_append_chars(cmd, ".dll");
+        } else if (is_linux && !ends_with(b->path_out, ".so")) {
+            str_append_chars(cmd, ".so");
+        } else if (is_macos && !ends_with(b->path_out, ".dylib")) {
+            str_append_chars(cmd, ".dylib");
+        }
+    }
     str_append_chars(cmd, "\" ");
 
     // Link dirs
     for (int i = 0; i < b->link_dirs->length; i++) {
         char *path = array_get_index(b->link_dirs, i);
-        str_append_chars(cmd, is_win ? "/libpath:" : "-L");
+        str_append_chars(cmd, is_win ? "/libpath:\"" : "-L\"");
         str_append_chars(cmd, path);
         str_append_chars(cmd, "/");
         str_append_chars(cmd, b->os);
         str_append_chars(cmd, "-");
         str_append_chars(cmd, b->arch);
-        str_append_chars(cmd, " ");
+        str_append_chars(cmd, "\" ");
     }
 
     // Details
@@ -459,8 +472,12 @@ void stage_8_link(Build *b, Array *o_files) {
             str_append_chars(cmd, "--dynamic-linker /lib/ld-linux-aarch64.so.1 ");
         }
 
-        str_append_chars(cmd, "-l:Scrt1.o ");
-        str_append_chars(cmd, "-l:crti.o ");
+        if (b->type == build_t_exe) {
+            str_append_chars(cmd, "-l:Scrt1.o ");
+            str_append_chars(cmd, "-l:crti.o ");
+        } else if (b->type == build_t_shared_lib) {
+            str_append_chars(cmd, "--shared ");
+        }
 
     } else if (is_macos) {
         str_append_chars(cmd, "-syslibroot ");
@@ -476,12 +493,18 @@ void stage_8_link(Build *b, Array *o_files) {
         str_append_chars(cmd, "-platform_version macos 10.13 11.1 ");
         // str_append_chars(cmd, "-sdk_version 11.1 ");
         // -macosx_version_min 11.1.0 -sdk_version 11.1.0
+        if (b->type == build_t_shared_lib) {
+            str_append_chars(cmd, "-dylib ");
+        }
     } else if (is_win) {
         // /winsysroot:<value>
         str_append_chars(cmd, "/nodefaultlib /guard:ehcont ");
         // str_append_chars(cmd, "/force:unresolved ");
         if (is_x64) {
             str_append_chars(cmd, "/machine:x64 ");
+        }
+        if (b->type == build_t_shared_lib) {
+            str_append_chars(cmd, "/dll ");
         }
     }
 

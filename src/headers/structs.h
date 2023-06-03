@@ -66,6 +66,7 @@ struct ChainItem {
 };
 
 struct Build {
+    int type;
     int host_os;
     int host_arch;
     int target_os;

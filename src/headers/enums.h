@@ -1,4 +1,9 @@
 
+enum BUILD_TYPES {
+    build_t_exe,
+    build_t_shared_lib,
+};
+
 enum TYPES {
     type_void,
     type_ptr,
