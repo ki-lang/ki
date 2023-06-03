@@ -86,7 +86,7 @@ void free_block(AllocatorBlock *block) {
         prev->next_block = next;
     }
     if (next) {
-        prev->prev_block = prev;
+        next->prev_block = prev;
     }
     free(block->start_adr);
     free(block);
@@ -98,4 +98,14 @@ char *dups(Allocator *alc, char *str) {
     void *new = al(alc, len);
     memcpy(new, str, len);
     return new;
+}
+
+void alc_delete(Allocator *alc) {
+    AllocatorBlock *block = alc->first_block;
+    while (block) {
+        AllocatorBlock *next = block->next_block;
+        free_block(block);
+        block = next;
+    }
+    free(alc);
 }

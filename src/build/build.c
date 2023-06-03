@@ -369,6 +369,10 @@ void cmd_build(int argc, char *argv[]) {
         strcat(cmd, "\"");
         system(cmd);
     }
+
+    // Free memory
+    alc_delete(b->alc_ast);
+    alc_delete(b->alc);
 }
 
 void build_add_files(Build *b, Array *files) {
