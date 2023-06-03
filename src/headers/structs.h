@@ -32,6 +32,8 @@ typedef struct Alias Alias;
 typedef struct TypeCheck TypeCheck;
 typedef struct Test Test;
 typedef struct Macro Macro;
+typedef struct MacroPattern MacroPattern;
+typedef struct KiByteBuffer KiByteBuffer;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -81,6 +83,7 @@ struct Build {
     char *pkg_dir;
     char *token;
     char *sbuf;
+    char *macro_header_path;
     //
     Allocator *alc;
     Allocator *alc_io;
@@ -104,6 +107,7 @@ struct Build {
     Str *str_buf;
     Str *str_buf_io;
     Array *tests;
+    Map *macros;
     //
     Chain *read_ki_file;
     Chain *write_ir;
@@ -143,7 +147,6 @@ struct Build {
     bool run_code;
     bool core_types_scanned;
     bool link_static;
-    bool build_macro;
 };
 
 struct Fc {
@@ -448,6 +451,10 @@ struct Macro {
     char *var_code;
     char *var_result;
 };
+struct MacroPattern {
+    void (*func)(void *, KiByteBuffer *);
+    char *pattern;
+};
 
 // Pkg
 struct PkgCmd {
@@ -466,6 +473,12 @@ struct PkgVersion {
     int v1;
     int v2;
     int v3;
+};
+
+struct KiByteBuffer {
+    void *data;
+    size_t size;
+    size_t length;
 };
 
 #endif

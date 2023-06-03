@@ -22,6 +22,7 @@ enum IDFOR {
     idf_type,
     idf_decl_type_overwrite,
     idf_err_code,
+    idf_macro,
 };
 
 enum SCOPETYPE {

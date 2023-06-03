@@ -687,7 +687,7 @@ void stage_2_macro_args(Fc *fc, Macro *mac) {
     Func *func = mac->func;
 
     Type *type_code = type_gen(b, alc, "String");
-    Type *type_result = type_gen(b, alc, "ByteBuffer");
+    Type *type_result = type_gen(b, alc, "ByteBufferStruct");
 
     type_code->borrow = true;
     type_result->borrow = true;

@@ -18,6 +18,8 @@ void build_and_load_macros(Build *b) {
     bool is_macos = b->host_os == os_macos;
     bool is_win = b->host_os == os_win;
 
+    Array *parts = array_make(b->alc, 10);
+
     Str *buf = b->str_buf;
     for (int i = 0; i < b->packages->length; i++) {
         Pkc *pkc = array_get_index(b->packages, i);
@@ -70,7 +72,7 @@ void build_and_load_macros(Build *b) {
             // if (compile || !file_exists(header_path)) {
             if (compile) {
                 // Compile macro shared lib
-                int argc = 7;
+                int argc = 8;
                 if (b->verbose > 1)
                     argc++;
                 char *argv[argc];
@@ -81,9 +83,10 @@ void build_and_load_macros(Build *b) {
                 argv[3] = lib_path;
                 argv[4] = "--lib";
                 argv[5] = "--build-macro-file";
-                argv[6] = pkc->macro_file;
+                argv[6] = header_path;
+                argv[7] = pkc->macro_file;
 
-                int pos = 7;
+                int pos = 8;
                 if (b->verbose > 2)
                     argv[pos++] = "-vv";
                 else if (b->verbose > 1)
@@ -99,6 +102,62 @@ void build_and_load_macros(Build *b) {
                 }
 
                 write_file(c_path, content_hash, false);
+            }
+
+            //////////////////
+            // Load macro
+            //////////////////
+
+            if (b->verbose > 1) {
+                printf("> Load macro: %s\n", lib_path);
+            }
+            void *lib = dlopen(lib_path, RTLD_NOW);
+
+            str_clear(buf);
+            file_get_contents(buf, header_path);
+
+            int i = 0;
+            char *hcontent = buf->data;
+            char part[128];
+            int pi = 0;
+            while (i < buf->length) {
+                char ch = hcontent[i];
+                i++;
+                if (ch == ',' || ch == '\n') {
+                    part[pi] = '\0';
+                    pi = 0;
+                    array_push(parts, dups(b->alc, part));
+                    if (ch == ',')
+                        continue;
+                }
+                if (ch == '\n') {
+                    if (parts->length != 3) {
+                        break;
+                    }
+                    char *pattern = array_get_index(parts, 0);
+                    char *alias = array_get_index(parts, 1);
+                    char *func_name = array_get_index(parts, 2);
+                    //
+
+                    void *func = dlsym(lib, func_name);
+
+                    MacroPattern *pat = al(b->alc, sizeof(MacroPattern));
+                    pat->func = func;
+                    pat->pattern = pattern;
+
+                    Idf *idf = idf_init_item(b->alc, idf_macro, pat);
+                    map_set(b->macros, alias, idf);
+
+                    //
+                    parts->length = 0;
+                    continue;
+                }
+                part[pi] = ch;
+                pi++;
+            }
+
+            if (b->verbose > 1) {
+                printf("> Loaded macro: %s\n", lib_path);
             }
         }
     }

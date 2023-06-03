@@ -6,6 +6,7 @@ int default_arch();
 void cmd_build_help(bool run_code);
 void build_add_files(Build *b, Array *files);
 char *find_config_dir(Allocator *alc, char *ki_path);
+void build_write_macro_header(Build *b);
 
 void cmd_build(int argc, char *argv[]) {
     //
@@ -18,6 +19,7 @@ void cmd_build(int argc, char *argv[]) {
     array_push(has_value, "-o");
     array_push(has_value, "--target");
     array_push(has_value, "--root");
+    array_push(has_value, "--build-macro-file");
 
     char *err = NULL;
     parse_argv(argv, argc, has_value, args, options, &err);
@@ -32,7 +34,7 @@ void cmd_build(int argc, char *argv[]) {
         if (arg[0] != '-')
             continue;
         sprintf(argbuf, ".%s.", arg);
-        if (!strstr(".--options.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.-h.--help.-v.-vv.-vvv.--lib.--build-macro-file.", argbuf)) {
+        if (!strstr(".-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.-h.--help.-v.-vv.-vvv.--lib.", argbuf)) {
             sprintf(argbuf, "❓ Unknown option '%s'", arg);
             die(argbuf);
         }
@@ -228,6 +230,7 @@ void cmd_build(int argc, char *argv[]) {
     b->alc_io = alc_io;
     b->alc_ast = alc_make();
     b->cache_dir = cache_dir;
+    b->macro_header_path = map_get(options, "--build-macro-file");
     //
     b->event_count = 0;
     b->events_done = 0;
@@ -243,6 +246,7 @@ void cmd_build(int argc, char *argv[]) {
     b->str_buf = str_make(alc, 5000);
     b->str_buf_io = str_make(alc_io, 10000);
     b->tests = array_make(alc, 20);
+    b->macros = map_make(alc);
     //
     b->read_ki_file = chain_make(alc);
     b->write_ir = chain_make(alc);
@@ -274,7 +278,6 @@ void cmd_build(int argc, char *argv[]) {
     b->run_code = run_code;
     b->LOC = 0;
     b->link_static = link_static;
-    b->build_macro = array_contains(args, "--build-macro-file", arr_find_str);
     //
     b->type_void = type_gen_void(alc);
 
@@ -329,7 +332,7 @@ void cmd_build(int argc, char *argv[]) {
     compile_loop(b, 1);
 
     // All packages & namespaces are loaded now
-    if (!b->build_macro) {
+    if (!b->macro_header_path) {
         build_and_load_macros(b);
     }
 
@@ -360,6 +363,10 @@ void cmd_build(int argc, char *argv[]) {
 
     stage_8(b);
 
+    if (b->macro_header_path) {
+        build_write_macro_header(b);
+    }
+
 #ifdef WIN32
     QueryPerformanceCounter(&end);
     double time_all = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
@@ -368,7 +375,7 @@ void cmd_build(int argc, char *argv[]) {
     double time_all = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
 #endif
 
-    if (!b->build_macro && (!run_code || b->verbose > 0)) {
+    if (!b->macro_header_path && (!run_code || b->verbose > 0)) {
         printf("✅ Compiled in: %.3fs\n", time_all);
     }
 
@@ -514,4 +521,33 @@ Func *ki_get_func(Build *b, char *ns, char *name) {
     }
 
     return idf->item;
+}
+
+void build_write_macro_header(Build *b) {
+    //
+    Str *buf = str_make(b->alc, 500);
+    for (int i = 0; i < b->packages->length; i++) {
+        Pkc *pkc = array_get_index(b->packages, i);
+        for (int o = 0; o < pkc->namespaces->values->length; o++) {
+            Nsc *nsc = array_get_index(pkc->namespaces->values, o);
+            for (int u = 0; u < nsc->fcs->length; u++) {
+                Fc *fc = array_get_index(nsc->fcs, u);
+                if (!fc->macros)
+                    continue;
+                for (int x = 0; x < fc->macros->length; x++) {
+                    Macro *mac = array_get_index(fc->macros, x);
+                    Func *func = mac->func;
+                    str_append_chars(buf, mac->pattern);
+                    str_append_chars(buf, ",");
+                    str_append_chars(buf, func->name);
+                    str_append_chars(buf, ",");
+                    str_append_chars(buf, func->gname);
+                    str_append_chars(buf, "\n");
+                }
+            }
+        }
+    }
+
+    char *content = str_to_chars(b->alc, buf);
+    write_file(b->macro_header_path, content, false);
 }

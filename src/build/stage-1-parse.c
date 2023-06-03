@@ -786,7 +786,7 @@ void stage_1_macro(Fc *fc) {
     //
     Build *b = fc->b;
     Allocator *alc = fc->alc;
-    if (!b->build_macro) {
+    if (!b->macro_header_path) {
         sprintf(fc->sbuf, "Macros must be defined in 'macro.ki' located in the root of your project.");
         fc_error(fc);
     }
@@ -871,6 +871,7 @@ void stage_1_macro(Fc *fc) {
 
     mac->var_code = var_code;
     mac->var_result = var_result;
+    mac->pattern = pattern;
 
     ///////////
 

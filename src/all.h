@@ -10,6 +10,7 @@
 #include <sys/time.h>
 // #include <sys/wait.h>
 #include <dirent.h>
+#include <dlfcn.h>
 #include <pthread.h>
 #include <unistd.h>
 #endif
