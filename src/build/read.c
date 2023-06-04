@@ -3,8 +3,10 @@
 
 Chunk *chunk_init(Allocator *alc, Fc *fc) {
     Chunk *ch = al(alc, sizeof(Chunk));
+    ch->parent = NULL;
     ch->fc = fc;
     ch->content = NULL;
+    ch->length = 0;
     ch->i = 0;
     ch->line = 1;
     ch->col = 1;
@@ -73,6 +75,20 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
             col++;
             ch = content[i];
             if (ch == '\0') {
+                if (chunk->parent) {
+                    chunk->i = i;
+                    chunk->col = col;
+                    chunk = chunk->parent;
+                    fc->chunk = chunk;
+                    *fc->chunk_prev = *chunk;
+                    i = chunk->i;
+                    col = chunk->col;
+                    content = chunk->content;
+                    ch = content[i];
+                    if (ch != '\0') {
+                        continue;
+                    }
+                }
                 token[0] = '\0';
                 chunk->i = i;
                 chunk->col = col;
@@ -375,6 +391,7 @@ Array *read_string_chunks(Allocator *alc, Fc *fc) {
 char *read_part(Allocator *alc, Fc *fc, int i, int len) {
     //
     Str *buf = fc->str_buf;
+    str_clear(buf);
     Chunk *chunk = fc->chunk;
     char *data = chunk->content;
     int until = i + len;

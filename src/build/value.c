@@ -442,7 +442,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         Idf *idf = idf_by_id(fc, scope, id, true);
         v = value_handle_idf(fc, alc, scope, id, idf);
     } else {
-        sprintf(fc->sbuf, "Unknown value: '%s' | %d", token, prio);
+        sprintf(fc->sbuf, "Unknown value: '%s'", token);
         fc_error(fc);
     }
 
@@ -1028,11 +1028,19 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
                     }
                 }
             }
-            str_append_chars(buf, "\n");
         }
 
         char *content = str_to_chars(alc, buf);
-        printf(">>>%s<<<", content);
+
+        Chunk *chunk = chunk_init(alc, fc);
+        chunk->parent = fc->chunk;
+        chunk->content = content;
+        chunk->length = buf->length;
+
+        // printf(">>>%s<<<", content);
+        fc->chunk = chunk;
+
+        return read_value(fc, alc, scope, false, 0, false);
     }
 
     sprintf(fc->sbuf, "Cannot convert identifier to a value: '%s'", id->name);

@@ -964,9 +964,9 @@ void stage_1_macro(Fc *fc) {
 
                     char *var = str_to_chars(alc, buf);
                     str_clear(buf);
-                    int index = array_contains(mac->inputs, var, arr_find_str);
+                    int index = array_find(mac->inputs, var, arr_find_str);
                     if (index == -1) {
-                        sprintf(fc->sbuf, "Unknown macro input: '%s'", token);
+                        sprintf(fc->sbuf, "Unknown macro input: '%s'", var);
                         fc_error(fc);
                     }
                     if (infinite && index == mac->inputs->length - 1) {
