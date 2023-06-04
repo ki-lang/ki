@@ -1032,7 +1032,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
         char *content = str_to_chars(alc, buf);
 
-        Chunk *chunk = chunk_init(alc, fc);
+        Chunk *chunk = chunk_init(alc, NULL);
         chunk->parent = fc->chunk;
         chunk->content = content;
         chunk->length = buf->length;
