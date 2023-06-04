@@ -258,11 +258,14 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
                 class->func_before_free = func;
             }
 
-            tok_expect(fc, "(", true, true);
+            tok(fc, token, true, true);
+            if (strcmp(token, "(") == 0) {
+                func->chunk_args = chunk_clone(fc->alc, fc->chunk);
+                skip_body(fc, ')');
+            } else {
+                rtok(fc);
+            }
 
-            func->chunk_args = chunk_clone(fc->alc, fc->chunk);
-
-            skip_body(fc, ')');
             skip_until_char(fc, "{");
             func->chunk_body = chunk_clone(fc->alc, fc->chunk);
             skip_body(fc, '}');

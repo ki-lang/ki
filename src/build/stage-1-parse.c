@@ -163,11 +163,13 @@ void stage_1_func(Fc *fc) {
         map_set(fc->scope->identifiers, name, idf);
     }
 
-    tok_expect(fc, "(", true, true);
-
-    func->chunk_args = chunk_clone(fc->alc, fc->chunk);
-
-    skip_body(fc, ')');
+    tok(fc, token, true, true);
+    if (strcmp(token, "(") == 0) {
+        func->chunk_args = chunk_clone(fc->alc, fc->chunk);
+        skip_body(fc, ')');
+    } else {
+        rtok(fc);
+    }
 
     if (fc->is_header) {
         skip_until_char(fc, ";");
