@@ -157,6 +157,7 @@ struct Fc {
     char *ir;
     char *ir_hash;
     Id *id_buf;
+    Str *str_buf;
     Nsc *nsc;
     Pkc *pkc_config;
     Allocator *alc;

@@ -371,3 +371,17 @@ Array *read_string_chunks(Allocator *alc, Fc *fc) {
 
     return result;
 }
+
+char *read_part(Allocator *alc, Fc *fc, int i, int len) {
+    //
+    Str *buf = fc->str_buf;
+    Chunk *chunk = fc->chunk;
+    char *data = chunk->content;
+    int until = i + len;
+    while (i < until) {
+        char ch = data[i];
+        i++;
+        str_append_char(buf, ch);
+    }
+    return str_to_chars(alc, buf);
+}

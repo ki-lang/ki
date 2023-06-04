@@ -959,6 +959,7 @@ void stage_1_macro(Fc *fc) {
                         i++;
                         col++;
                         str_append_char(buf, ch);
+                        ch = content[i];
                     }
 
                     char *var = str_to_chars(alc, buf);

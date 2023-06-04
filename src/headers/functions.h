@@ -118,6 +118,7 @@ char get_char(Fc *fc, int index);
 void read_hex(Fc *fc, char *token);
 Str *read_string(Fc *fc);
 Array *read_string_chunks(Allocator *alc, Fc *fc);
+char *read_part(Allocator *alc, Fc *fc, int i, int len);
 
 // Skips
 void skip_body(Fc *fc, char until_ch);

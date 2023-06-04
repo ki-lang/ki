@@ -51,6 +51,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->chunk = chunk_init(alc, fc);
     fc->chunk_prev = chunk_init(alc, fc);
     fc->id_buf = id_init(alc);
+    fc->str_buf = str_make(alc, 100);
 
     fc->scope = scope_init(alc, sct_fc, nsc->scope, false);
     fc->current_macro_scope = b->mc;

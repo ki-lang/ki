@@ -932,6 +932,109 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         return value_init(alc, v_decl, decl, decl->type);
     }
 
+    if (idf->type == idf_macro) {
+        Macro *mac = idf->item;
+        bool inf = mac->infinite;
+
+        Map *values = map_make(alc);
+        Array *inf_values = array_make(alc, 8);
+        Array *inf_values_empty = array_make(alc, 8);
+        array_push(inf_values_empty, NULL);
+
+        Array *parts = mac->parts;
+        Array *input_names = mac->inputs;
+        int input_count = input_names->length - (inf ? 1 : 0);
+        char *inf_name = inf ? array_get_index(input_names, input_names->length - 1) : NULL;
+
+        tok_expect(fc, mac->start, true, false);
+
+        int count = 0;
+        tok(fc, token, false, true);
+        if (strcmp(token, mac->end) == 0) {
+        } else {
+            rtok(fc);
+            while (true) {
+                skip_whitespace(fc);
+
+                int v_start = fc->chunk->i;
+                Chunk *v_startc = fc->chunk;
+                skip_value(fc);
+                int v_end = fc->chunk->i;
+                Chunk *v_endc = fc->chunk;
+
+                if (v_startc != v_endc) {
+                    sprintf(fc->sbuf, "Invalid macro input (mixed macros)");
+                    fc_error(fc);
+                }
+
+                char *value = read_part(alc, fc, v_start, v_end - v_start);
+                if (count >= input_count) {
+                    array_push(inf_values, value);
+                } else {
+                    char *name = array_get_index(input_names, count);
+                    map_set(values, name, value);
+                }
+                count++;
+
+                tok(fc, token, false, true);
+                if (strcmp(token, mac->end) == 0) {
+                    break;
+                } else if (strcmp(token, ",") == 0) {
+                    continue;
+                } else {
+                    sprintf(fc->sbuf, "Expected ',' or '%s', found: '%s'", mac->end, token);
+                    fc_error(fc);
+                }
+            }
+        }
+
+        if (count < input_count) {
+            sprintf(fc->sbuf, "Missing macro inputs. Expected%s '%d', found '%d'", inf ? " a minimum of" : "", input_count, count);
+            fc_error(fc);
+        }
+        if (!inf && count > input_count) {
+            sprintf(fc->sbuf, "Too many macro inputs. Expected '%d', found '%d'", input_count, count);
+            fc_error(fc);
+        }
+
+        Str *buf = fc->str_buf;
+        str_clear(buf);
+        for (int i = 0; i < parts->length; i++) {
+            //
+            MacroPart *part = array_get_index(parts, i);
+            Array *sub_parts = part->sub_parts;
+
+            Array *loop_values = part->loop ? inf_values : inf_values_empty;
+            //
+            for (int o = 0; o < loop_values->length; o++) {
+                char *inf_value = array_get_index(loop_values, o);
+                for (int u = 0; u < sub_parts->length; u++) {
+                    char *spart = array_get_index(sub_parts, u);
+                    if (u % 2 == 0) {
+                        // String part
+                        str_append_chars(buf, spart);
+                    } else {
+                        // Input
+                        if (inf_value && strcmp(spart, inf_name) == 0) {
+                            str_append_chars(buf, inf_value);
+                            continue;
+                        }
+                        char *input = map_get(values, spart);
+                        if (!input) {
+                            sprintf(fc->sbuf, "Cannot find macro input by name: '%s' (compiler bug)", spart);
+                            fc_error(fc);
+                        }
+                        str_append_chars(buf, input);
+                    }
+                }
+            }
+            str_append_chars(buf, "\n");
+        }
+
+        char *content = str_to_chars(alc, buf);
+        printf(">>>%s<<<", content);
+    }
+
     sprintf(fc->sbuf, "Cannot convert identifier to a value: '%s'", id->name);
     fc_error(fc);
     return NULL;
