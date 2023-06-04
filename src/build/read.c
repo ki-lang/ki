@@ -10,6 +10,8 @@ Chunk *chunk_init(Allocator *alc, Fc *fc) {
     ch->i = 0;
     ch->line = 1;
     ch->col = 1;
+
+    return ch;
 }
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk) {
     //
@@ -46,7 +48,17 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
     const char *content = chunk->content;
     char ch = content[i];
 
-    if (ch == '\0') {
+    while (ch == '\0') {
+        if (chunk->parent) {
+            chunk = chunk->parent;
+            fc->chunk = chunk;
+            *fc->chunk_prev = *chunk;
+            i = chunk->i;
+            col = chunk->col;
+            content = chunk->content;
+            ch = content[i];
+            continue;
+        }
         token[0] = '\0';
         return;
     }

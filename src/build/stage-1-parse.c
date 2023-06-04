@@ -801,7 +801,7 @@ void stage_1_macro(Fc *fc) {
     Macro *mac = al(alc, sizeof(Macro));
     mac->name = name;
     mac->dname = dname;
-    mac->inputs = array_make(alc, 8);
+    mac->inputs = map_make(alc);
     mac->parts = array_make(alc, 8);
 
     Idf *idf = idf_init(alc, idf_macro);
@@ -834,11 +834,11 @@ void stage_1_macro(Fc *fc) {
 
     tok_expect(fc, "{", false, true);
 
-    bool infinite = false;
+    bool repeat = false;
     while (true) {
 
-        if (infinite) {
-            sprintf(fc->sbuf, "You cannot add more inputs after defining a infinite input '*'");
+        if (repeat) {
+            sprintf(fc->sbuf, "You cannot add more inputs after defining a repeating input '*'");
             fc_error(fc);
         }
 
@@ -867,16 +867,47 @@ void stage_1_macro(Fc *fc) {
             sprintf(fc->sbuf, "Invalid input name syntax '%s'", token);
             fc_error(fc);
         }
-        if (array_contains(mac->inputs, token, arr_find_str)) {
+        if (map_contains(mac->inputs, token)) {
             sprintf(fc->sbuf, "Duplicate input name '%s'", token);
             fc_error(fc);
         }
-        array_push(mac->inputs, dups(alc, token));
 
-        tok(fc, token, false, true);
-        if (strcmp(token, "*") == 0) {
-            infinite = true;
+        MacroInput *mi = malloc(sizeof(MacroInput));
+        mi->name = dups(alc, token);
+        mi->replaces = array_make(alc, 4);
+        mi->repeat = false;
+
+        map_set(mac->inputs, mi->name, mi);
+
+        while (true) {
             tok(fc, token, false, true);
+
+            if (strcmp(token, "@repeat") == 0) {
+                repeat = true;
+                mi->repeat = true;
+                continue;
+            } else if (strcmp(token, "@replace") == 0) {
+                tok_expect(fc, "(", true, false);
+                tok_expect(fc, "\"", true, true);
+
+                Str *buf = read_string(fc);
+                char *find = str_to_chars(alc, buf);
+                tok_expect(fc, ",", true, true);
+                tok_expect(fc, "\"", true, true);
+                buf = read_string(fc);
+                char *with = str_to_chars(alc, buf);
+
+                tok_expect(fc, ")", true, true);
+
+                MacroReplace *rep = malloc(sizeof(MacroReplace));
+                rep->find = find;
+                rep->with = with;
+
+                array_push(mi->replaces, rep);
+                continue;
+            } else {
+                break;
+            }
         }
         if (strcmp(token, ",") == 0) {
             continue;
@@ -888,7 +919,7 @@ void stage_1_macro(Fc *fc) {
         }
     }
 
-    mac->infinite = infinite;
+    mac->repeat_last_input = repeat;
 
     Chunk *chunk = fc->chunk;
     int i = chunk->i;
@@ -966,12 +997,12 @@ void stage_1_macro(Fc *fc) {
 
                     char *var = str_to_chars(alc, buf);
                     str_clear(buf);
-                    int index = array_find(mac->inputs, var, arr_find_str);
-                    if (index == -1) {
+                    MacroInput *mi = map_get(mac->inputs, var);
+                    if (!mi) {
                         sprintf(fc->sbuf, "Unknown macro input: '%s'", var);
                         fc_error(fc);
                     }
-                    if (infinite && index == mac->inputs->length - 1) {
+                    if (repeat && mi->repeat) {
                         loop = true;
                     }
                     array_push(sub_parts, var);

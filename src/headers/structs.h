@@ -33,6 +33,8 @@ typedef struct TypeCheck TypeCheck;
 typedef struct Test Test;
 typedef struct Macro Macro;
 typedef struct MacroPart MacroPart;
+typedef struct MacroInput MacroInput;
+typedef struct MacroReplace MacroReplace;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -444,11 +446,20 @@ struct Test {
 struct Macro {
     char *name;
     char *dname;
-    Array *inputs;
+    Map *inputs;
     Array *parts;
     char *start;
     char *end;
-    bool infinite;
+    bool repeat_last_input;
+};
+struct MacroInput {
+    char *name;
+    Array *replaces;
+    bool repeat;
+};
+struct MacroReplace {
+    char *find;
+    char *with;
 };
 struct MacroPart {
     Array *sub_parts;
