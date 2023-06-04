@@ -31,6 +31,8 @@ typedef struct Trait Trait;
 typedef struct Alias Alias;
 typedef struct TypeCheck TypeCheck;
 typedef struct Test Test;
+typedef struct Macro Macro;
+typedef struct MacroPart MacroPart;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -436,6 +438,19 @@ struct Test {
     char *name;
     Func *func;
     VInt *expects;
+};
+struct Macro {
+    char *name;
+    char *dname;
+    Array *inputs;
+    Array *parts;
+    char *start;
+    char *end;
+    bool infinite;
+};
+struct MacroPart {
+    Array *sub_parts;
+    bool loop;
 };
 
 // Pkg

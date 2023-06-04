@@ -11,6 +11,7 @@ void stage_1_link(Fc *fc, int link_type);
 void stage_1_global(Fc *fc, bool shared);
 void stage_1_alias(Fc *fc, int alias_type);
 void stage_1_test(Fc *fc);
+void stage_1_macro(Fc *fc);
 
 void stage_1(Fc *fc) {
     //
@@ -91,6 +92,10 @@ void stage_1(Fc *fc) {
         }
         if (strcmp(token, "test") == 0) {
             stage_1_test(fc);
+            continue;
+        }
+        if (strcmp(token, "macro") == 0) {
+            stage_1_macro(fc);
             continue;
         }
 
@@ -772,4 +777,224 @@ void stage_1_test(Fc *fc) {
     }
 
     skip_body(fc, '}');
+}
+
+void stage_1_macro(Fc *fc) {
+    //
+    Build *b = fc->b;
+    Allocator *alc = fc->alc;
+
+    char *token = fc->token;
+    tok(fc, token, true, true);
+
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid macro name syntax '%s'", token);
+        fc_error(fc);
+    }
+    name_taken_check(fc, fc->nsc->scope, token);
+
+    char *name = dups(fc->alc, token);
+    char *dname = nsc_dname(fc->nsc, name);
+
+    Macro *mac = al(alc, sizeof(Macro));
+    mac->name = name;
+    mac->dname = dname;
+    mac->inputs = array_make(alc, 8);
+    mac->parts = array_make(alc, 8);
+
+    Idf *idf = idf_init(alc, idf_macro);
+    idf->item = mac;
+
+    map_set(fc->nsc->scope->identifiers, name, idf);
+    if (fc->is_header) {
+        map_set(fc->scope->identifiers, name, idf);
+    }
+
+    ///////////
+
+    tok_expect(fc, "\"", true, true);
+    Str *pat = read_string(fc);
+    char *pattern = str_to_chars(alc, pat);
+    if (strcmp(pattern, "[]") == 0) {
+    } else if (strcmp(pattern, "{}") == 0) {
+    } else if (strcmp(pattern, "()") == 0) {
+    } else {
+        sprintf(fc->sbuf, "Invalid macro pattern: '%s'", pattern);
+        fc_error(fc);
+    }
+
+    char sign[2];
+    sign[0] = pattern[0];
+    sign[1] = '\0';
+    mac->start = dups(alc, sign);
+    sign[0] = pattern[1];
+    mac->end = dups(alc, sign);
+
+    tok_expect(fc, "{", false, true);
+
+    bool infinite = false;
+    while (true) {
+
+        if (infinite) {
+            sprintf(fc->sbuf, "You cannot add more inputs after defining a infinite input '*'");
+            fc_error(fc);
+        }
+
+        // int type;
+        // tok(fc, token, false, true);
+        // if (strcmp(token, "T") == 0) {
+        //     type = macro_part_type;
+        // } else if (strcmp(token, "V") == 0) {
+        //     type = macro_part_type;
+        // } else {
+        //     sprintf(fc->sbuf, "Expected 'T' or 'V' here, found: '%s'", pattern);
+        //     fc_error(fc);
+        // }
+
+        // tok(fc, token, true, false);
+        // if (strcmp(token, "*") == 0) {
+        //     infinite = true;
+        //     tok(fc, token, true, false);
+        // }
+        // if (strcmp(token, ":") != 0) {
+        //     sprintf(fc->sbuf, "Expected ':', found: '%s'", pattern);
+        //     fc_error(fc);
+        // }
+        tok(fc, token, false, true);
+        if (!is_valid_varname(token)) {
+            sprintf(fc->sbuf, "Invalid input name syntax '%s'", token);
+            fc_error(fc);
+        }
+        if (array_contains(mac->inputs, token, arr_find_str)) {
+            sprintf(fc->sbuf, "Duplicate input name '%s'", token);
+            fc_error(fc);
+        }
+        array_push(mac->inputs, dups(alc, token));
+
+        tok(fc, token, false, true);
+        if (strcmp(token, "*") == 0) {
+            infinite = true;
+            tok(fc, token, false, true);
+        }
+        if (strcmp(token, ",") == 0) {
+            continue;
+        } else if (strcmp(token, ";") == 0) {
+            break;
+        } else {
+            sprintf(fc->sbuf, "Expected ',' or ';', found: '%s'", token);
+            fc_error(fc);
+        }
+    }
+
+    mac->infinite = infinite;
+
+    Chunk *chunk = fc->chunk;
+    int i = chunk->i;
+    int col = chunk->col;
+    int line = chunk->line;
+    char *content = chunk->content;
+    int len = chunk->length;
+
+    Str *buf = fc->b->str_buf;
+    while (i < len) {
+        char ch = content[i];
+        i++;
+        col++;
+        if (is_whitespace(ch))
+            continue;
+        if (ch == '}') {
+            break;
+        } else if (ch == '"') {
+
+            bool loop = false;
+            Array *sub_parts = array_make(alc, 4);
+            str_clear(buf);
+
+            // String
+            while (i < len) {
+                char ch = content[i];
+                i++;
+                col++;
+
+                if (ch == '\\') {
+                    if (i == len) {
+                        break;
+                    }
+                    char add = content[i];
+                    if (add == 'n') {
+                        add = '\n';
+                    } else if (add == 'r') {
+                        add = '\r';
+                    } else if (add == 't') {
+                        add = '\t';
+                    } else if (add == 'f') {
+                        add = '\f';
+                    } else if (add == 'b') {
+                        add = '\b';
+                    } else if (add == 'v') {
+                        add = '\v';
+                    } else if (add == 'f') {
+                        add = '\f';
+                    } else if (add == 'a') {
+                        add = '\a';
+                    }
+                    i++;
+                    col++;
+
+                    str_append_char(buf, add);
+                    continue;
+                }
+
+                if (ch == '"') {
+                    array_push(sub_parts, str_to_chars(alc, buf));
+                    str_clear(buf);
+                    break;
+                }
+
+                if (ch == '%') {
+                    array_push(sub_parts, str_to_chars(alc, buf));
+                    str_clear(buf);
+                    ch = content[i];
+                    while (is_valid_varname_char(ch)) {
+                        i++;
+                        col++;
+                        str_append_char(buf, ch);
+                    }
+
+                    char *var = str_to_chars(alc, buf);
+                    str_clear(buf);
+                    int index = array_contains(mac->inputs, var, arr_find_str);
+                    if (index == -1) {
+                        sprintf(fc->sbuf, "Unknown macro input: '%s'", token);
+                        fc_error(fc);
+                    }
+                    if (infinite && index == mac->inputs->length - 1) {
+                        loop = true;
+                    }
+                    array_push(sub_parts, var);
+                    continue;
+                }
+
+                if (is_newline(ch)) {
+                    line++;
+                    col = 1;
+                }
+                str_append_char(buf, ch);
+            }
+
+            MacroPart *part = al(alc, sizeof(MacroPart));
+            part->loop = loop;
+            part->sub_parts = sub_parts;
+
+            array_push(mac->parts, part);
+
+        } else {
+            sprintf(fc->sbuf, "Expected '\"' or '}', found: '%c'", ch);
+            fc_error(fc);
+        }
+    }
+
+    chunk->i = i;
+    chunk->col = col;
+    chunk->line = line;
 }
