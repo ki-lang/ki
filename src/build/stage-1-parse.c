@@ -34,7 +34,7 @@ void stage_1(Fc *fc) {
             continue;
         }
 
-        if (strcmp(token, "func") == 0) {
+        if (strcmp(token, "fn") == 0) {
             stage_1_func(fc);
             continue;
         }

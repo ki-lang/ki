@@ -25,7 +25,7 @@ class Server {
     static_dirs: Array[String] = Array[String].new();
     show_info: bool = false;
 
-    static func new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error {
+    static fn new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error {
 
         let max_connections : uxx = 10000;
         let socket = net:Socket.new_tcp(host, port) !! throw socket_init_error;;
@@ -39,7 +39,7 @@ class Server {
         };
     }
 
-    private func server_data() ServerData {
+    private fn server_data() ServerData {
 
         let dirs = Array[String].new();
         each this.static_dirs as dir {
@@ -56,7 +56,7 @@ class Server {
         };
     }
 
-    func start(worker_count: i32 = 16) void {
+    fn start(worker_count: i32 = 16) void {
 
         // SIGINT
         os:signal(os:SIG.hup, interrupt);
@@ -89,7 +89,7 @@ class Server {
         os:sleep_ms(200);
     }
 
-    private static func worker(data_: ServerData) void {
+    private static fn worker(data_: ServerData) void {
 
         let data = data_;
 
@@ -234,7 +234,7 @@ class Server {
         }
     }
 
-    private static func respond(data: *ServerData, http_con: *Connection, handler: fn(*Request)(Response)) void !read_error !sent_error {
+    private static fn respond(data: *ServerData, http_con: *Connection, handler: fn(*Request)(Response)) void !read_error !sent_error {
 
         let buf_size : i32 = 65535;
         let read_buf = http_con.read_buf;
@@ -295,7 +295,7 @@ class Server {
         }
     }
 
-    func add_static_dir(path: *String) void {
+    fn add_static_dir(path: *String) void {
         let full = fs:exe_dir() + "/" + path.trim("/") + "/";
         println("[+] Add static dir: " + full);
         this.static_dirs.push(full);
@@ -303,7 +303,7 @@ class Server {
 }
 
 global interrupted : bool;
-func interrupt(sig: i32) void {
+fn interrupt(sig: i32) void {
     if(interrupted){
         os:exit(1);
     }

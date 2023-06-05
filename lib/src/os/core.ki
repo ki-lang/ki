@@ -1,7 +1,7 @@
 
 header "sys" as sys;
 
-func sleep_ms(ms: uxx) void {
+fn sleep_ms(ms: uxx) void {
 	#if OS == win
 	sys.Sleep(ms @as u32);
 	#else
@@ -13,7 +13,7 @@ func sleep_ms(ms: uxx) void {
 	#end
 }
 
-func sleep_ns(ns: uxx) void {
+fn sleep_ns(ns: uxx) void {
 	#if OS == win
 	sys.Sleep(1);
 	#else
@@ -25,18 +25,18 @@ func sleep_ns(ns: uxx) void {
 	#end
 }
 
-func !panic(msg: *String) void {
+fn !panic(msg: *String) void {
 	print("PANIC ERROR : ");
 	print(msg);
 	print("\n");
 	exit(1);
 }
 
-func !exit(code: i32) void {
+fn !exit(code: i32) void {
 	sys.exit(code);
 }
 
-//func parse_args(i32 argc, ptr argv) Array<String> {
+//fn parse_args(i32 argc, ptr argv) Array<String> {
 //	let res = Array[String].make(argc);
 //	while(argc > 0) {
 //		argc--;

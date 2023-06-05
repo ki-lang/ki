@@ -30,7 +30,7 @@ class Connection {
 	out_buf: ByteBuffer = ByteBuffer.new(500);
 	out_pos: uxx = 0;
 
-	func reset_parser() void {
+	fn reset_parser() void {
 
         let read_buf = this.read_buf;
         if this.parse_pos == read_buf.length {
@@ -40,12 +40,12 @@ class Connection {
         this.line.clear();
 	}
 
-	func reset_out() void {
+	fn reset_out() void {
         this.out_buf.clear();
         this.out_pos = 0;
 	}
 
-	func reset_request_data() void {
+	fn reset_request_data() void {
         this.uploads = null;
         this.phase = 0;
         this.headers = Map[String].new();
@@ -57,7 +57,7 @@ class Connection {
 		this.content_end_pos = 0;
 	}
 
-	func parse() void !sent_error {
+	fn parse() void !sent_error {
 		if this.headers_parsed {
 			this.parse_body();
 		} else {
@@ -68,13 +68,13 @@ class Connection {
 		}
 	}
 
-	private func parse_body() void {
+	private fn parse_body() void {
 		if this.read_buf.length >= this.content_end_pos {
 			this.body_parsed = true;
 		}
 	}
 
-	private func parse_headers() void !sent_error {
+	private fn parse_headers() void !sent_error {
 
 		let phase = this.phase;
 		let pos = this.parse_pos;
@@ -164,7 +164,7 @@ class Connection {
 		this.parse_pos = pos;
 	}
 
-	func send_file(stream: fs:FileStream, filename: *?String) void {
+	fn send_file(stream: fs:FileStream, filename: *?String) void {
 
 		let out = this.out_buf;
 		let path = stream.path;
@@ -185,7 +185,7 @@ class Connection {
 		this.send_response_bytes();
 	}
 
-	func respond(resp: *Response) void {
+	fn respond(resp: *Response) void {
 		let filepath = resp.filepath;
 		if @isset(filepath) {
 			let stream = fs:open(filepath + "", true, false) !! {
@@ -200,11 +200,11 @@ class Connection {
 		this.send_response_bytes();
 	}
 
-	func can_clear_out() bool {
+	fn can_clear_out() bool {
 		return this.out_pos >= this.out_buf.length;
 	}
 
-	func has_data_to_send() bool {
+	fn has_data_to_send() bool {
 		if this.out_pos < this.out_buf.length {
 			return true;
 		}
@@ -218,7 +218,7 @@ class Connection {
 	}
 
 	// Returns 'true' if all bytes were sent
-	func send_response_bytes() void {
+	fn send_response_bytes() void {
 
 		let out = this.out_buf;
 

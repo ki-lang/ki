@@ -3,19 +3,19 @@ use io;
 
 trait Number {
 
-	func str() String {
+	fn str() String {
         return this.str_base(10);
     }
 
-    func __string() String {
+    fn __string() String {
         return this.str_base(10);
     }
 
-    func hex() String {
+    fn hex() String {
         return this.str_base(16);
     }
 
-	func str_base(base: u8) String {
+	fn str_base(base: u8) String {
 
 		let negative = false;
         let num = this;
@@ -71,11 +71,11 @@ trait Number {
         return str;
     }
 
-	func debug() void {
+	fn debug() void {
         this.debug_base(10);
     }
 
-	func debug_base(base: u8) void {
+	fn debug_base(base: u8) void {
 
 		let negative = false;
         let num = this;

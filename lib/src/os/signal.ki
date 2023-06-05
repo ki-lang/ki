@@ -1,15 +1,15 @@
 
 header "sys" as sys;
 
-func signal(sig: i32, handler: fn(i32)(void)) void {
+fn signal(sig: i32, handler: fn(i32)(void)) void {
     sys.signal(sig, handler);
 }
 
-func signal_ignore(sig: i32) void {
+fn signal_ignore(sig: i32) void {
 	sys.signal(sig, null);
 }
 
-func raise(sig: i32) void {
+fn raise(sig: i32) void {
 	sys.raise(sig);
 }
 

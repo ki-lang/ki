@@ -3,7 +3,7 @@ header "sys" as sys;
 
 use mem;
 
-func stat(path: *String, buf: *sys.cstruct_stat) void !failed {
+fn stat(path: *String, buf: *sys.cstruct_stat) void !failed {
 	let plen = path.bytes();
 	let cstr_ptr = @stack_alloc(plen + 1);
 	mem:copy(path.data(), cstr_ptr, plen);
@@ -12,13 +12,13 @@ func stat(path: *String, buf: *sys.cstruct_stat) void !failed {
 	let res = sys.stat(cstr, buf);
 	if res == -1 : throw failed;
 }
-func size(path: *String) uxx {
+fn size(path: *String) uxx {
 	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
 	stat(path, buf) !! return 0;;
 	return buf.st_size @as uxx;
 }
 
-func open_fd(path: *String, read: bool, write: bool) i32 !open {
+fn open_fd(path: *String, read: bool, write: bool) i32 !open {
 
 	let plen = path.bytes();
 	let cstr_ptr = @stack_alloc(plen + 1);
@@ -32,14 +32,14 @@ func open_fd(path: *String, read: bool, write: bool) i32 !open {
 	}
 	return fd;
 }
-func fd_close(fd: i32) void !close {
+fn fd_close(fd: i32) void !close {
 	let check = sys.close(fd);
 	if(check != 0){
 		throw close;
 	}
 }
 
-func read(path: *String) String !open !read !close {
+fn read(path: *String) String !open !read !close {
 
 	let fd = open_fd(path, true, false) !! throw open;;
 
@@ -65,12 +65,12 @@ func read(path: *String) String !open !read !close {
 	return res.to_str();
 }
 
-func exists(path: *String) bool {
+fn exists(path: *String) bool {
 	let fd = open_fd(path, true, false) !! return false;;
 	fd_close(fd)!;
 	return true;
 }
-func delete(path: *String) void !failed {
+fn delete(path: *String) void !failed {
 
 	let plen = path.bytes();
 	let cstr_ptr = @stack_alloc(plen + 1);
@@ -83,7 +83,7 @@ func delete(path: *String) void !failed {
 		throw failed;
 	}
 }
-func mkdir(path: *String) void !failed {
+fn mkdir(path: *String) void !failed {
 
 	let plen = path.bytes();
 	let cstr_ptr = @stack_alloc(plen + 1);
@@ -97,12 +97,12 @@ func mkdir(path: *String) void !failed {
 	}
 }
 
-func is_file(path: *String) bool {
+fn is_file(path: *String) bool {
 	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
 	stat(path, buf) !! return false;;
 	return (buf.st_mode & sys.OS.S_IFMT) == sys.OS.S_IFREG;
 }
-func is_dir(path: *String) bool {
+fn is_dir(path: *String) bool {
 	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
 	stat(path, buf) !! return false;;
 	return (buf.st_mode & sys.OS.S_IFMT) == sys.OS.S_IFDIR;

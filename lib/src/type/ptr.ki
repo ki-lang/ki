@@ -3,17 +3,17 @@ use mem;
 
 class ptr type:ptr math async {
 
-	func str() String {
+	fn str() String {
         let num = this @as uxx;
         return num.str_base(16);
     }
 
-    func debug() void {
+    fn debug() void {
         let num = this @as uxx;
         num.debug_base(16);
     }
 
-    func print_bytes(count: uxx) void {
+    fn print_bytes(count: uxx) void {
         let i : uxx = 0;
         while i < count {
             if i > 0 {
@@ -25,7 +25,7 @@ class ptr type:ptr math async {
         }
     }
 
-    static func write_string_bytes(adr: ptr, str: *String) void {
+    static fn write_string_bytes(adr: ptr, str: *String) void {
         let data = str.data();
         mem:copy(data, adr, str.bytes());
     }

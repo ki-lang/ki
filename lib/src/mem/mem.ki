@@ -1,26 +1,26 @@
 
 header "sys" as sys;
 
-func alloc(size: uxx) ptr {
+fn alloc(size: uxx) ptr {
 	return sys.malloc(size);
 }
-func free(adr: ptr) void {
+fn free(adr: ptr) void {
 	sys.free(adr);
 }
-func calloc(size: uxx) ptr {
+fn calloc(size: uxx) ptr {
 	let res = alloc(size);
 	clear(res, size);
 	return res;
 }
 
-func sys_alloc(size: uxx) ptr {
+fn sys_alloc(size: uxx) ptr {
 	return sys.malloc(size);
 }
-func sys_free(adr: ptr) void {
+fn sys_free(adr: ptr) void {
 	sys.free(adr);
 }
 
-func clear(adrc: ptr, length: uxx) void {
+fn clear(adrc: ptr, length: uxx) void {
 	let chunks = length / @sizeof(ptr);
 	let i : uxx = chunks;
 	while i > 0 {
@@ -35,7 +35,7 @@ func clear(adrc: ptr, length: uxx) void {
 	}
 }
 
-func copy(from: ptr, to: ptr, length: uxx) void {
+fn copy(from: ptr, to: ptr, length: uxx) void {
 
 	let chunks = length / @sizeof(ptr);
 	let i : uxx = chunks;
@@ -52,7 +52,7 @@ func copy(from: ptr, to: ptr, length: uxx) void {
 	}
 }
 
-func equal(a: ptr, b: ptr, length: uxx) bool {
+fn equal(a: ptr, b: ptr, length: uxx) bool {
 	let chunks = length / @sizeof(ptr);
 	let i : uxx = chunks;
 	while i > 0 {

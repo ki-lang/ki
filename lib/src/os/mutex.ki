@@ -11,17 +11,17 @@ class Mutex[T] async {
 
 	// VOID
 
-	public static func new() CLASS { 
+	public static fn new() CLASS { 
 		let mut = mem:calloc(pt.CONST.mutex_size);
 		pt.pthread_mutex_init(mut);
 		return CLASS { mutex: mut };
 	}
 
-	public func lock() void {
+	public fn lock() void {
 		pt.pthread_mutex_lock(this.mutex);
 	}
 
-	public func unlock() void {
+	public fn unlock() void {
 		pt.pthread_mutex_unlock(this.mutex);
 	}
 
@@ -31,25 +31,25 @@ class Mutex[T] async {
 
 	private value: ?T;
 
-	public static func new(value: T) CLASS { 
+	public static fn new(value: T) CLASS { 
 		let mut = mem:calloc(pt.CONST.mutex_size);
 		pt.pthread_mutex_init(mut);
 		return CLASS { mutex: mut, value: value };
 	}
 
-	public func lock() T {
+	public fn lock() T {
 		pt.pthread_mutex_lock(this.mutex);
 		return swap this.value with null;
 	}
 
-	public func unlock(value: T) void {
+	public fn unlock(value: T) void {
 		pt.pthread_mutex_unlock(this.mutex);
 		this.value = value;
 	}
 
 	#end
 
-	public func __before_free() void {
+	public fn __before_free() void {
 		pt.pthread_mutex_destroy(this.mutex);
 		mem:free(this.mutex);
 	}

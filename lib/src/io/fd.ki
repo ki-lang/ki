@@ -1,7 +1,7 @@
 
 header "sys" as sys;
 
-func write(fd: i32, str: *String) uxx !failed !again {
+fn write(fd: i32, str: *String) uxx !failed !again {
 	let c = sys.write(fd, str.data(), str.bytes());
 	if c == -2 {
 		throw again;
@@ -12,7 +12,7 @@ func write(fd: i32, str: *String) uxx !failed !again {
 	return c @as uxx;
 }
 
-func write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
+fn write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
 	let c = sys.write(fd, data, length);
 	if c == -2 {
 		throw again;
@@ -23,7 +23,7 @@ func write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
 	return c @as uxx;
 }
 
-func read(fd: i32, buffer: ptr, buffer_size: uxx) uxx !failed !again {
+fn read(fd: i32, buffer: ptr, buffer_size: uxx) uxx !failed !again {
 	let rcvd = sys.read(fd, buffer, buffer_size);
 	if rcvd == -2 {
 		throw again;
@@ -34,6 +34,6 @@ func read(fd: i32, buffer: ptr, buffer_size: uxx) uxx !failed !again {
 	return rcvd @as uxx;
 }
 
-func close(fd: i32) void %inline {
+fn close(fd: i32) void %inline {
 	let c = sys.close(fd);
 }

@@ -7,7 +7,7 @@ class Pool[T] {
 	head: uxx = 0;
 	tail: uxx = 0;
 
-	static func new(max_items: uxx) CLASS {
+	static fn new(max_items: uxx) CLASS {
 		if max_items < 2{
 			max_items = 2;
 		}
@@ -17,7 +17,7 @@ class Pool[T] {
 		};
 	}
 
-	func pop() T !empty {
+	fn pop() T !empty {
 		let head = this.head;
 		let tail = this.tail;
 		if tail == head {
@@ -35,7 +35,7 @@ class Pool[T] {
 		return result;
 	}
 
-	func add(item: T) void !full {
+	fn add(item: T) void !full {
 		let size = this.size;
 		let head = this.head;
 		let next_head = head + 1;
@@ -57,7 +57,7 @@ class Pool[T] {
 		this.head = next_head;
 	}
 
-	func __before_free() void {
+	fn __before_free() void {
 		// Deref items 
 		while true {
 			let item = this.pop() !! break;;

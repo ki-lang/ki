@@ -7,7 +7,7 @@ use mem;
 
 global WSA_INITED : bool;
 
-func WSA_init() void {
+fn WSA_init() void {
     if WSA_INITED == false {
         WSA_INITED = true;
 
@@ -25,7 +25,7 @@ func WSA_init() void {
     }
 }
 
-func WSA_unix_fd(fd: uxx) i32 {
+fn WSA_unix_fd(fd: uxx) i32 {
     if fd == (0^-1) @as uxx {
         return -1;
     }

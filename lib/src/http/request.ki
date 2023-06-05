@@ -5,7 +5,7 @@ class Request {
 	method: *String;
 	path: *String;
 
-	func body() String {
+	fn body() String {
 		let buf = this.http_con.read_buf;
 		let pos = this.http_con.parse_pos;
 		return buf.sub_str(pos, buf.length - pos);

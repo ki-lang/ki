@@ -11,22 +11,22 @@ class String type:ptr track {
 	// Core
 	/////////////////////
 
-	func is_const() bool %inline {
+	fn is_const() bool %inline {
 		return @ptrv(this @as ptr + @sizeof(uxx), u8, 0) == 1#u8;
 	}
 
-	func bytes() uxx %inline {
+	fn bytes() uxx %inline {
 		return @ptrv(this @as ptr, uxx, 0);
 	}
 
-	func rc() u32 %inline {
+	fn rc() u32 %inline {
 		if(this.is_const()) { return 420; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 420.
 		let adr = this @as ptr;
 		adr += @sizeof(uxx) + 4;
 		return @ptrv(adr, u32, 0);
 	}
 
-	func data() ptr %inline {
+	fn data() ptr %inline {
 		let adr = this @as ptr;
 		if(this.is_const()){
 			adr += @sizeof(uxx) + 1;
@@ -40,11 +40,11 @@ class String type:ptr track {
 	// Read
 	/////////////////////
 
-	func byte(index: uxx) u8 %inline {
+	fn byte(index: uxx) u8 %inline {
 		return @ptrv(this.data(), u8, index);
 	}
 
-	func sub_str_bytes(start_index: uxx, length: uxx) String {
+	fn sub_str_bytes(start_index: uxx, length: uxx) String {
 		let this_bytes = this.bytes();
 		if(start_index > this_bytes){
 			return "";
@@ -65,7 +65,7 @@ class String type:ptr track {
 	// Split / Merge
 	/////////////////////
 
-	func split(on: *String) Array[String] {
+	fn split(on: *String) Array[String] {
 		let result = Array[String].new();
 
 		let pos : uxx = 0;
@@ -143,12 +143,12 @@ class String type:ptr track {
 	// Adjustments
 	/////////////////////
 
-	func trim(part: *String) String {
+	fn trim(part: *String) String {
 		let res = this.ltrim(part);
 		return res.rtrim(part);
 	}
 
-	func rtrim(part: *String) String {
+	fn rtrim(part: *String) String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -165,7 +165,7 @@ class String type:ptr track {
 		return result;
 	}
 
-	func ltrim(part: *String) String {
+	fn ltrim(part: *String) String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -181,7 +181,7 @@ class String type:ptr track {
 		return result;
 	}
 
-	public func replace(find: *String, with: *String) String {
+	public fn replace(find: *String, with: *String) String {
 		let pos : uxx = 0;
 		let adr = this.data();
 		let adr_find = find.data();
@@ -245,7 +245,7 @@ class String type:ptr track {
 		return buf.to_str();
 	}
 
-	func replace_bytes(find: u8, with: *String) String {
+	fn replace_bytes(find: u8, with: *String) String {
 		let len = this.bytes();
 		let len_with = with.bytes();
 		if len == 0 {
@@ -270,7 +270,7 @@ class String type:ptr track {
 	// Index
 	/////////////////////
 
-	public func index_of_byte(fch: u8, start_index: uxx = 0) uxx !not_found !invalid_utf8 {
+	public fn index_of_byte(fch: u8, start_index: uxx = 0) uxx !not_found !invalid_utf8 {
 		let bytes = this.bytes();
 		let pos = start_index;
 		let adr = this.data();
@@ -304,7 +304,7 @@ class String type:ptr track {
 	// Converts
 	/////////////////////
 
-	func to_lower() String {
+	fn to_lower() String {
 		let bytes = this.bytes();
 		let data = this.data();
 		let new_str = String.make_empty(bytes);
@@ -324,7 +324,7 @@ class String type:ptr track {
 		return new_str;
 	}
 
-	func to_cstring() cstring {
+	fn to_cstring() cstring {
 		let len = this.bytes();
 		let bytes = len + 1;
 		let adr = mem:alloc(bytes);
@@ -333,7 +333,7 @@ class String type:ptr track {
 		return adr @as cstring;
 	}
 
-	func to_uxx() uxx !invalid_syntax {
+	fn to_uxx() uxx !invalid_syntax {
 		let i = this.bytes();
 		let result : uxx = 0;
 		let mult : uxx = 1;
@@ -353,18 +353,18 @@ class String type:ptr track {
 	// Internals
 	/////////////////////
 
-	func copy() String {
+	fn copy() String {
 		@ref this;
 		return this @as String;
 	}
 
-	func __ref() void {
+	fn __ref() void {
 		if this.is_const() { return; }
 		let adr = (this @as ptr) + @sizeof(uxx) + 4;
 		let rc = @ptrv(adr, u32, 0) + 1;
 		@ptrv(adr, u32, 0) = rc;
 	}
-	func __deref() void {
+	fn __deref() void {
 		if this.is_const() { return; }
 		let adr = (this @as ptr) + @sizeof(uxx) + 4;
 		let rc = @ptrv(adr, u32, 0) - 1;
@@ -374,12 +374,12 @@ class String type:ptr track {
 			@ptrv(adr, u32, 0) = rc;
 		}
 	}
-	func __free() void {
+	fn __free() void {
 		if this.is_const() { return; }
 		mem:free(this @as ptr);
 	}
 
-	func __add(str: *String) String {
+	fn __add(str: *String) String {
 		let this_len = this.bytes();
 		let str_len = str.bytes();
 		if str_len == 0 {
@@ -398,7 +398,7 @@ class String type:ptr track {
 		return new_str;
 	}
 
-	public func __eq(b: *String) bool {
+	public fn __eq(b: *String) bool {
 		let a_ptr = this @as ptr;
 		let b_ptr = b @as ptr;
 		if(a_ptr == b_ptr) {
@@ -411,10 +411,10 @@ class String type:ptr track {
 		return mem:equal(this.data(), b.data(), bytes);
 	}
 
-	func __each_init() uxx {
+	fn __each_init() uxx {
 		return 0;
 	}
-	func __each(key_ref: uxx[1]) u8 !end {
+	fn __each(key_ref: uxx[1]) u8 !end {
 		let key = key_ref[0];
 		if key == this.bytes() {
 			throw end;
@@ -428,7 +428,7 @@ class String type:ptr track {
 	// Other
 	/////////////////////
 
-	static func make_empty(size: uxx) String {
+	static fn make_empty(size: uxx) String {
 		let adr = mem:alloc(size + 8 + @sizeof(uxx));
 		let adr_ = adr;
 		@ptrv(adr, uxx, 0) = size;
@@ -440,7 +440,7 @@ class String type:ptr track {
 		return res;
 	}
 
-	static func format(baselen: uxx, parts: ptr, partc: uxx, values: ptr) String {
+	static fn format(baselen: uxx, parts: ptr, partc: uxx, values: ptr) String {
 		let bytes = baselen;
 		let valuec = partc - 1;
 		let i : uxx = 0;

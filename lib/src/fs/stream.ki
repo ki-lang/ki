@@ -3,7 +3,7 @@ header "sys" as sys;
 
 use mem;
 
-func open(path: String, read: bool, write: bool) FileStream !open {
+fn open(path: String, read: bool, write: bool) FileStream !open {
     let fd = open_fd(path, read, write) !! throw open;;
     return FileStream{ path: path, fd: fd, can_read: read, can_write: write };
 }
@@ -15,7 +15,7 @@ class FileStream {
     private can_write: bool;
     readonly reading: bool = true;
 
-    func read(bytes: uxx = 10240) String !read_err {
+    fn read(bytes: uxx = 10240) String !read_err {
         if(this.can_read == false){
             return "";
         }
@@ -40,13 +40,13 @@ class FileStream {
         return str;
     }
 
-    func close() void {
+    fn close() void {
         if(this.reading) {
             let check = sys.close(this.fd);
         }
     }
 
-    func __before_free() void {
+    fn __before_free() void {
         this.close();
     }
 }

@@ -3,14 +3,14 @@ header "sys" as sys;
 
 use mem;
 
-func print(str: *String) void {
+fn print(str: *String) void {
     let byte_count = sys.write(1, str.data(), str.bytes());
     //if (byte_count < 0 && (sys.errno == EAGAIN || sys.errno == EWOULDBLOCK)) {
 	//    throw err
     //}
 }
 
-func println(str: *String) void {
+fn println(str: *String) void {
 	let size = str.bytes();
 	let rsize = size + 1;
 	let adr = @stack_alloc(rsize + 8 + @sizeof(uxx));

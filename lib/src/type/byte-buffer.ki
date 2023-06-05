@@ -6,7 +6,7 @@ class ByteBuffer {
 	trait ByteBufferTrait;
 
 	// Internals
-	func __before_free() void {
+	fn __before_free() void {
 		mem:free(this.data);
 	}
 }
@@ -16,7 +16,7 @@ struct ByteBufferStruct {
 	trait ByteBufferTrait;
 
 	// Internals
-	func free() void {
+	fn free() void {
 		mem:free(this.data);
 		mem:free(this @as ptr);
 	}

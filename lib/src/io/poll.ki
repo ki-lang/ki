@@ -23,7 +23,7 @@ class Poll {
     private listeners: Array[PollListener] = Array[PollListener].new();
     readonly max_connections: uxx;
 
-    public static func new(max_connections: uxx) Poll {
+    public static fn new(max_connections: uxx) Poll {
 
         #if OS == win
 		os:WSA_init();
@@ -62,7 +62,7 @@ class Poll {
     }
 
     #if OS != linux
-    private static func disable_poll_fds(list: ptr, start_index: uxx, count: uxx) void {
+    private static fn disable_poll_fds(list: ptr, start_index: uxx, count: uxx) void {
         let i = start_index;
         let last = i + count;
         while i < last {
@@ -79,7 +79,7 @@ class Poll {
     }
     #end
 
-    public func listener(fd: i32, key: uxx = 0) PollListener {
+    public fn listener(fd: i32, key: uxx = 0) PollListener {
 
         let pool = this.pool;
         let listeners = this.listeners;
@@ -151,7 +151,7 @@ class Poll {
         return lsn;
     }
 
-    public func remove(listener: PollListener) void {
+    public fn remove(listener: PollListener) void {
 
         #if OS == linux
         let ev = @stack_object(sys.cstruct_epoll_event);
@@ -171,7 +171,7 @@ class Poll {
         this.pool.add(listener)!;
     }
 
-    public func wait(timeout: i32 = -1) uxx {
+    public fn wait(timeout: i32 = -1) uxx {
 
         let results = this.results;
 
@@ -233,7 +233,7 @@ class Poll {
         return event_count;
     }
 
-    public func get_event(index: uxx) &PollEvent !invalid_index {
+    public fn get_event(index: uxx) &PollEvent !invalid_index {
         if(index >= this.resultc) {
             throw invalid_index;
         }
@@ -241,7 +241,7 @@ class Poll {
         return (results_int + (index * @sizeof_class(PollEvent))) @as PollEvent;
     }
 
-    public func __before_free() void {
+    public fn __before_free() void {
 
         while true {
             let item = this.listeners.pop() !! break;;
@@ -264,7 +264,7 @@ struct PollListener {
     readonly fd : i32 = 0;
     private detect_events: u32 = 0;
 
-    public func read(v: bool) void {
+    public fn read(v: bool) void {
         #if OS == linux
         let ev : u32 = sys.OS.EPOLLIN;
         #else
@@ -272,7 +272,7 @@ struct PollListener {
         #end
         this.update_event(v, ev);
     }
-    public func write(v: bool) void {
+    public fn write(v: bool) void {
         #if OS == linux
         let ev : u32 = sys.OS.EPOLLOUT;
         #else
@@ -280,7 +280,7 @@ struct PollListener {
         #end
         this.update_event(v, ev);
     }
-    public func stopped_reading(v: bool) void {
+    public fn stopped_reading(v: bool) void {
         #if OS == win
         return;
         #else
@@ -294,7 +294,7 @@ struct PollListener {
 
         #end
     }
-    private func update_event(v: bool, ev: u32) void {
+    private fn update_event(v: bool, ev: u32) void {
         if(v) {
             this.detect_events = this.detect_events | ev;
         } else if (this.detect_events & ev) > 0 {
@@ -322,7 +322,7 @@ struct PollEvent {
     readonly listener: PollListener;
     readonly events: u32;
 
-    public func is_readable() bool %inline {
+    public fn is_readable() bool %inline {
         #if OS == linux
         let ev : u32 = sys.OS.EPOLLIN;
         #else
@@ -330,7 +330,7 @@ struct PollEvent {
         #end
         return (this.events & ev) > 0;
     }
-    public func is_writable() bool %inline {
+    public fn is_writable() bool %inline {
         #if OS == linux
         let ev : u32 = sys.OS.EPOLLOUT;
         #else
@@ -339,7 +339,7 @@ struct PollEvent {
         return (this.events & ev) > 0;
     }
 
-    public func is_stopped_reading() bool %inline {
+    public fn is_stopped_reading() bool %inline {
         #if OS == win
         return false;
         #else
@@ -354,7 +354,7 @@ struct PollEvent {
         #end
     }
 
-    public func wants_to_close() bool %inline {
+    public fn wants_to_close() bool %inline {
         let evs = this.events;
         #if OS == linux
         return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0;

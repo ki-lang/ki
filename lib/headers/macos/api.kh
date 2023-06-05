@@ -10,89 +10,89 @@ shared stdout : i32;
 // uid_t = u32
 // gid_t = u32
 
-func malloc(size: uxx) ptr;
-func free(adr: ptr) void;
+fn malloc(size: uxx) ptr;
+fn free(adr: ptr) void;
 
-func read(fd: i32, buf: cstring, size: uxx) ixx;
-func write(fd: i32, buf: cstring, size: uxx) ixx;
-func open(path: cstring, flags: i32) i32;
-func close(fd: i32) i32;
+fn read(fd: i32, buf: cstring, size: uxx) ixx;
+fn write(fd: i32, buf: cstring, size: uxx) ixx;
+fn open(path: cstring, flags: i32) i32;
+fn close(fd: i32) i32;
 
-func fcntl(fd: i32, action: i32, value: i32) i32;
+fn fcntl(fd: i32, action: i32, value: i32) i32;
 
-func stat(path: cstring, stat_buf: *cstruct_stat) i32;
-func fstat(fd: i32, stat_buf: *cstruct_stat) i32;
-func lstat(path: cstring, stat_buf: *cstruct_stat) i32;
+fn stat(path: cstring, stat_buf: *cstruct_stat) i32;
+fn fstat(fd: i32, stat_buf: *cstruct_stat) i32;
+fn lstat(path: cstring, stat_buf: *cstruct_stat) i32;
 
-func poll(fds: ptr, nfds: u32, timeout: i32) i32;
+fn poll(fds: ptr, nfds: u32, timeout: i32) i32;
 
-func pipe(pipefd: i32[2]) i32;
+fn pipe(pipefd: i32[2]) i32;
 //int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict exceptfds, struct timeval *restrict timeout);
-func dup(old_fd: i32) i32;
-func dup2(old_fd: i32, new_fd: i32) i32;
+fn dup(old_fd: i32) i32;
+fn dup2(old_fd: i32, new_fd: i32) i32;
 
-func nanosleep(req: *cstruct_timespec, rem: *cstruct_timespec) i32;
+fn nanosleep(req: *cstruct_timespec, rem: *cstruct_timespec) i32;
 
-func socket(domain: i32, type: i32, protocol: i32) i32;
-func connect(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32) i32;
-func accept(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1]) i32;
-//func accept4(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1], flags: i32) i32;
-func shutdown(sockfd: i32, how: i32) i32;
-func bind(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32) i32;
-func listen(sockfd: i32, backlog: i32) i32;
+fn socket(domain: i32, type: i32, protocol: i32) i32;
+fn connect(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32) i32;
+fn accept(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1]) i32;
+//fn accept4(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1], flags: i32) i32;
+fn shutdown(sockfd: i32, how: i32) i32;
+fn bind(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32) i32;
+fn listen(sockfd: i32, backlog: i32) i32;
 
-func getsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
-func setsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
-func getaddrinfo(host: cstring, port: cstring, hints: *cstruct_addrinfo, res: *(?cstruct_addrinfo)[1]) i32;
-func freeaddrinfo(info: cstruct_addrinfo) i32;
+fn getsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
+fn setsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
+fn getaddrinfo(host: cstring, port: cstring, hints: *cstruct_addrinfo, res: *(?cstruct_addrinfo)[1]) i32;
+fn freeaddrinfo(info: cstruct_addrinfo) i32;
 
 //int clone(int (*fn)(void *), void *stack, int flags, void *arg, .../* pid_t *parent_tid, void *tls, pid_t *child_tid */ );
-func fork() i32;
-func vfork() i32;
+fn fork() i32;
+fn vfork() i32;
 
-func execve(pathname: cstring, argv: *cstring[unsafe], envp: *cstring[unsafe]) i32;
+fn execve(pathname: cstring, argv: *cstring[unsafe], envp: *cstring[unsafe]) i32;
 
-//func wait3(wstatus: i32[1], options: i32, struct rusage *rusage) i32;
-//func wait4(pid: i32, wstatus: i32[1], options: i32, struct rusage *rusage) i32;
+//fn wait3(wstatus: i32[1], options: i32, struct rusage *rusage) i32;
+//fn wait4(pid: i32, wstatus: i32[1], options: i32, struct rusage *rusage) i32;
 
-func kill(pid: i32, sig: i32) i32;
-//func uname(struct utsname *buf) i32;
+fn kill(pid: i32, sig: i32) i32;
+//fn uname(struct utsname *buf) i32;
 
 //int fcntl(int fd, int cmd, ... /* arg */ );
 
-func getcwd(buf: cstring, size: uxx) cstring;
+fn getcwd(buf: cstring, size: uxx) cstring;
 //char *getwd(char *buf);
 //char *get_current_dir_name();
 //int chdir(path: cstring);
 //int fchdir(int fd);
 
-func rename(oldpath: cstring, newpath: cstring) i32;
-func mkdir(pathname: cstring, mode: u32) i32;
-func rmdir(pathname: cstring) i32;
-func link(oldpath: cstring, newpath: cstring) i32;
-func unlink(pathname: cstring) i32;
-func symlink(target: cstring, linkpath: cstring) i32;
-func readlink(pathname: cstring, buf: cstring, bufsiz: uxx) ixx;
+fn rename(oldpath: cstring, newpath: cstring) i32;
+fn mkdir(pathname: cstring, mode: u32) i32;
+fn rmdir(pathname: cstring) i32;
+fn link(oldpath: cstring, newpath: cstring) i32;
+fn unlink(pathname: cstring) i32;
+fn symlink(target: cstring, linkpath: cstring) i32;
+fn readlink(pathname: cstring, buf: cstring, bufsiz: uxx) ixx;
 
-func chmod(pathname: cstring, mode: u32) i32;
-func fchmod(fd: i32, mode: u32) i32;
-func chown(pathname: cstring, owner: u32, group: u32) i32;
-func fchown(fd: i32, owner: u32, group: u32) i32;
-func lchown(pathname: cstring, owner: u32, group: u32) i32;
+fn chmod(pathname: cstring, mode: u32) i32;
+fn fchmod(fd: i32, mode: u32) i32;
+fn chown(pathname: cstring, owner: u32, group: u32) i32;
+fn fchown(fd: i32, owner: u32, group: u32) i32;
+fn lchown(pathname: cstring, owner: u32, group: u32) i32;
 
-func umask(mask: u32) u32;
+fn umask(mask: u32) u32;
 
-func gettimeofday(tv: *cstruct_timeval, tz: *cstruct_timezone) i32;
-func settimeofday(tv: *cstruct_timeval, tz: *cstruct_timezone) i32;
+fn gettimeofday(tv: *cstruct_timeval, tz: *cstruct_timezone) i32;
+fn settimeofday(tv: *cstruct_timeval, tz: *cstruct_timezone) i32;
 //time_t time(time_t *tloc);
 
 //int sysinfo(struct sysinfo *info);
 
-func sync() void;
+fn sync() void;
 
-func gettid() i32;
+fn gettid() i32;
 
-func exit(status: i32) void;
-func signal(signum: i32, handler: ?fn(i32)(void)) void;
-func raise(sig: i32) i32;
+fn exit(status: i32) void;
+fn signal(signum: i32, handler: ?fn(i32)(void)) void;
+fn raise(sig: i32) i32;
 

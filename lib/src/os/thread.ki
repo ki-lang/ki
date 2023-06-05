@@ -20,13 +20,13 @@ class Thread[T] {
 	private os_thread: pt.pthread_t;
 	#end
 
-	private static func entry(data: ptr) void {
+	private static fn entry(data: ptr) void {
 		let entry = data @as ThreadEntry[fn(T)(void), T];
 		entry.start_func(entry.data @as T);
 		mem:free(entry @as ptr);
 	}
 
-	static func start(start_func: fn(T)(void), data: async T) CLASS !fail {
+	static fn start(start_func: fn(T)(void), data: async T) CLASS !fail {
 
 		let entry_data = ThreadEntry[fn(T)(void), T]{
 			start_func: start_func,

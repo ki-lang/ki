@@ -3,35 +3,35 @@ class u8 type:int:1:false {
 
 	trait Number;
 
-	func str_char() String {
+	fn str_char() String {
 		let str = String.make_empty(1);
 		let data = str.data();
 		@ptrv(data, u8, 0) = this;
 		return str;
 	}
 
-	public func is_ascii() bool {
+	public fn is_ascii() bool {
 		return this < 128;
 	}
-	public func is_hex() bool {
+	public fn is_hex() bool {
 		if ( ( this >= '0' && this <= '9') || ( this >= 'a' && this <= 'f') || ( this >= 'A' && this <= 'F') ) {
         	return true;
 		}
     	return false;
 	}
-	public func is_number() bool {
+	public fn is_number() bool {
 		return this >= '0' && this <= '9';
 	}
-	public func is_lower() bool {
+	public fn is_lower() bool {
 		return this >= 'a' && this <= 'z';
 	}
-	public func is_upper() bool {
+	public fn is_upper() bool {
 		return this >= 'A' && this <= 'Z';
 	}
-	public func is_whitespace() bool {
+	public fn is_whitespace() bool {
 		return (this == '\t' || this == '\n' || this == '\v' || this == '\f' || this == '\r' || this == ' ');
 	}
-	public func is_newline() bool {
+	public fn is_newline() bool {
 		return this == '\n' || this == '\r';
 	}
 }

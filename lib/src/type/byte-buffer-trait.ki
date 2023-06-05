@@ -6,7 +6,7 @@ trait ByteBufferTrait {
 	size: uxx;
 	length: uxx = 0;
 
-	static func new(start_size: uxx) CLASS {
+	static fn new(start_size: uxx) CLASS {
 		if start_size < 10 {
 			start_size = 10;
 		}
@@ -16,17 +16,17 @@ trait ByteBufferTrait {
 		};
 	}
 
-	func clear() void %inline {
+	fn clear() void %inline {
 		this.length = 0;
 	}
 
 	// Appending
 
-	func append(buffer: *CLASS) void {
+	fn append(buffer: *CLASS) void {
 		this.append_from_ptr(buffer.data, buffer.length);
 	}
 
-	func append_from_ptr(data: ptr, length: uxx) void {
+	fn append_from_ptr(data: ptr, length: uxx) void {
 		if(length == 0) {
 			return;
 		}
@@ -38,7 +38,7 @@ trait ByteBufferTrait {
 		this.length = new_bytes;
 	}
 
-	func append_byte(byte: u8) void {
+	fn append_byte(byte: u8) void {
 		let bytes : uxx = this.length;
 		let new_bytes : uxx = bytes + 1;
 		if(new_bytes > this.size){
@@ -49,13 +49,13 @@ trait ByteBufferTrait {
 		this.length = new_bytes;
 	}
 
-	func append_str(str: *String) void {
+	fn append_str(str: *String) void {
 		this.append_from_ptr(str.data(), str.bytes());
 	}
 
 	// Compare
 
-	func eq_str(str: *String) bool {
+	fn eq_str(str: *String) bool {
 		let str_len = str.bytes();
 		let len = this.length;
 		if str_len != len {
@@ -66,7 +66,7 @@ trait ByteBufferTrait {
 
 	// Find
 
-	func index_of_byte(byte: u8, start_index: uxx = 0) uxx !not_found {
+	fn index_of_byte(byte: u8, start_index: uxx = 0) uxx !not_found {
 		let index = start_index;
 		let len = this.length;
 		let data = this.data;
@@ -80,7 +80,7 @@ trait ByteBufferTrait {
 		throw not_found;
 	}
 
-	func index_where_byte_is_not(byte: u8, start_index: uxx = 0) uxx !not_found {
+	fn index_where_byte_is_not(byte: u8, start_index: uxx = 0) uxx !not_found {
 		let index = start_index;
 		let len = this.length;
 		let data = this.data;
@@ -96,7 +96,7 @@ trait ByteBufferTrait {
 
 	// String functions
 
-	func to_str() String {
+	fn to_str() String {
 		if(this.length == 0){
 			return "";
 		}
@@ -105,7 +105,7 @@ trait ByteBufferTrait {
 		return str;
 	}
 
-	func sub_str(start_index: uxx, length: uxx) String {
+	fn sub_str(start_index: uxx, length: uxx) String {
 		let len = this.length;
 		if length == 0 || start_index >= len {
 			return "";
@@ -119,10 +119,10 @@ trait ByteBufferTrait {
 	}
 
 	// 
-	func minimum_free_space(length: uxx) void {
+	fn minimum_free_space(length: uxx) void {
 		this.minimum_size(this.length + length);
 	}
-	func minimum_size(minimum_size: uxx) void {
+	fn minimum_size(minimum_size: uxx) void {
 		let size : uxx = this.size;
 		let new_size : uxx = size;
 		while new_size < minimum_size {

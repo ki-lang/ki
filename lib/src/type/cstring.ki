@@ -3,7 +3,7 @@ use mem;
 
 class cstring type:ptr {
 
-	func to_str() String {
+	fn to_str() String {
 		let len = this.length();
 		let str = String.make_empty(len);
 		let from = this @as ptr;
@@ -11,7 +11,7 @@ class cstring type:ptr {
 		return str;
 	}
 
-	func length() uxx {
+	fn length() uxx {
 		let i = 0;
 		let adr = this @as ptr;
 		while @ptrv(adr, u8, i) != '\0' {

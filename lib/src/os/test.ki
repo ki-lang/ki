@@ -1,5 +1,5 @@
 
-func test_expect(passed: bool, expect_success: u32[1], expect_fail: u32[1]) void {
+fn test_expect(passed: bool, expect_success: u32[1], expect_fail: u32[1]) void {
 	if passed {
 		expect_success[0]++;
 	}else{
@@ -7,7 +7,7 @@ func test_expect(passed: bool, expect_success: u32[1], expect_fail: u32[1]) void
 	}
 }
 
-func test_print_name(name: *String, passed: bool) void {
+fn test_print_name(name: *String, passed: bool) void {
 	let msg = "> %"{ name };
 	let len = msg.bytes();
 	let chars : u32 = 48;
@@ -30,7 +30,7 @@ func test_print_name(name: *String, passed: bool) void {
 	print("% %\n"{ msg, status });
 }
 
-func test_report(total: u32, success: u32, fail: u32, expect_total: u32, expect_success: u32, expect_fail: u32) void {
+fn test_report(total: u32, success: u32, fail: u32, expect_total: u32, expect_success: u32, expect_fail: u32) void {
 	print("\n");
 	print("-----------------------------------------\n");
 	print("Tests: %, Passed: %, Failed: %\n"{ total.str(), success.str(), fail.str() });

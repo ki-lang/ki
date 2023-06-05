@@ -6,7 +6,7 @@ class AsyncArray[T] async {
 	readonly length: uxx;
 	readonly data: ptr;
 
-	static func new(start_size: uxx = 2) CLASS {
+	static fn new(start_size: uxx = 2) CLASS {
 		if start_size < 2 {
 			start_size = 2;
 		}
@@ -17,7 +17,7 @@ class AsyncArray[T] async {
 		};
 	}
 
-	func push(value: +T) uxx {
+	fn push(value: +T) uxx {
 		let size = this.size;
 		let length = this.length;
 		let data = this.data;
@@ -38,7 +38,7 @@ class AsyncArray[T] async {
 		return length;
 	}
 
-	func get(index: uxx) T !not_found {
+	fn get(index: uxx) T !not_found {
 		if index >= this.length {
 			throw not_found;
 		}
@@ -46,7 +46,7 @@ class AsyncArray[T] async {
 		return @ptrv(data, T, 0);
 	}
 
-	func set(index: uxx, value: +T) void !out_of_range {
+	fn set(index: uxx, value: +T) void !out_of_range {
 		if index >= this.length {
 			throw out_of_range;
 		}
@@ -54,10 +54,10 @@ class AsyncArray[T] async {
 		@ptrv(data, T, 0) = value;
 	}
 
-	func __each_init() uxx {
+	fn __each_init() uxx {
 		return 0;
 	}
-	func __each(key_ref: uxx[1]) T !end {
+	fn __each(key_ref: uxx[1]) T !end {
 		let key = key_ref[0];
 		if key == this.length {
 			throw end;

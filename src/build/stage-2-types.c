@@ -205,7 +205,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             tok(fc, token, true, true);
         }
 
-        if (strcmp(token, "func") == 0) {
+        if (strcmp(token, "fn") == 0) {
             // Function
             tok(fc, token, true, true);
 

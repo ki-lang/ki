@@ -20,7 +20,7 @@ class Array[T] {
 	readonly length: uxx = 0;
 	readonly data: ptr;
 
-	static func new(start_size: uxx = 2) CLASS {
+	static fn new(start_size: uxx = 2) CLASS {
 		if start_size < 2 {
 			start_size = 2;
 		}
@@ -30,7 +30,7 @@ class Array[T] {
 		};
 	}
 
-	func push(item: T) uxx {
+	fn push(item: T) uxx {
 		let size = this.size;
 		let length = this.length;
 		let data = this.data;
@@ -52,7 +52,7 @@ class Array[T] {
 		return length;
 	}
 
-	public func prepend(item: T) void {
+	public fn prepend(item: T) void {
 
 		let size = this.size;
 		let length = this.length;
@@ -79,7 +79,7 @@ class Array[T] {
 		@move item;
 	}
 
-	func get(index: uxx) &T !not_found {
+	fn get(index: uxx) &T !not_found {
 		if index >= this.length {
 			throw not_found;
 		}
@@ -90,7 +90,7 @@ class Array[T] {
 		return value;
 	}
 
-	func set(index: uxx, value: T) void !out_of_range {
+	fn set(index: uxx, value: T) void !out_of_range {
 		if index >= this.length {
 			throw out_of_range;
 		}
@@ -101,14 +101,14 @@ class Array[T] {
 		@move value;
 	}
 
-	func remove(index: uxx) void {
+	fn remove(index: uxx) void {
 		println(index.str());
 		if index == this.length - 1 {
 			this.length--;
 		}
 		println("remove: " + (this.length).str());
 	}
-	func pop() T !empty {
+	fn pop() T !empty {
 		if this.length > 0 {
 			let value = @ptrv(this.data, T, this.length - 1);
 			return value;
@@ -116,7 +116,7 @@ class Array[T] {
 		throw empty;
 	}
 
-	func index_of(item: *T) uxx !not_found {
+	fn index_of(item: *T) uxx !not_found {
 		let index : uxx = 0;
 		let adr = this.data;
 		let len = this.length;
@@ -131,11 +131,11 @@ class Array[T] {
 	}
 
 	// Internals
-	func __each_init() uxx {
+	fn __each_init() uxx {
 		return 0;
 	}
 
-	func __each(key_ref: uxx[1]) &T !end {
+	fn __each(key_ref: uxx[1]) &T !end {
 		let key = key_ref[0];
 		if key >= this.length {
 			throw end;
@@ -144,7 +144,7 @@ class Array[T] {
 		return this.get(key) !! throw end;;
 	}
 
-	func __before_free() void {
+	fn __before_free() void {
 		// Deref items
 		let index = 0#uxx;
 		let length = this.length;

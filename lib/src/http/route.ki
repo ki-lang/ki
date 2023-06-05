@@ -3,7 +3,7 @@ class Route[T] {
 	public handler: T;
 	public args: Array[RouteArg];
 
-	public func params(path: *String) Map[String] {
+	public fn params(path: *String) Map[String] {
 		let result = Map[String]{};
 		let parts = path.split("/"); 
 		each this.args as arg {

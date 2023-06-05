@@ -8,7 +8,7 @@ class SocketTCP async {
 	readonly fd: i32;
 	readonly port: u16;
 
-	static func new(host: *String, port: u16) SocketTCP !os_socket_create !get_addr_info !bind !listen {
+	static fn new(host: *String, port: u16) SocketTCP !os_socket_create !get_addr_info !bind !listen {
 
         #if OS == win
 		os:WSA_init();
@@ -78,7 +78,7 @@ class SocketTCP async {
 		};
 	}
 
-	func accept() Connection !error {
+	fn accept() Connection !error {
         #if OS == linux
 		let fd = sys.accept4(this.fd, null, null, sys.OS.SOCK_NONBLOCK);
 		#else
@@ -99,7 +99,7 @@ class SocketTCP async {
 		};
 	}
 
-	func clone() CLASS {
+	fn clone() CLASS {
 		return CLASS {
 			fd: this.fd,
 			port: this.port,
