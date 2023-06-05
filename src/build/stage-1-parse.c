@@ -801,7 +801,8 @@ void stage_1_macro(Fc *fc) {
     Macro *mac = al(alc, sizeof(Macro));
     mac->name = name;
     mac->dname = dname;
-    mac->inputs = map_make(alc);
+    mac->vars = map_make(alc);
+    mac->groups = array_make(alc, 2);
     mac->parts = array_make(alc, 8);
 
     Idf *idf = idf_init(alc, idf_macro);
@@ -814,112 +815,140 @@ void stage_1_macro(Fc *fc) {
 
     ///////////
 
-    tok_expect(fc, "\"", true, true);
-    Str *pat = read_string(fc);
-    char *pattern = str_to_chars(alc, pat);
-    if (strcmp(pattern, "[]") == 0) {
-    } else if (strcmp(pattern, "{}") == 0) {
-    } else if (strcmp(pattern, "()") == 0) {
-    } else {
-        sprintf(fc->sbuf, "Invalid macro pattern: '%s'", pattern);
+    tok_expect(fc, "{", false, true);
+    tok_expect(fc, "input", false, true);
+    tok_expect(fc, "{", false, true);
+
+    Map *vars = mac->vars;
+    bool repeat = false;
+
+    while (true) {
+        // Read input groups
+        tok(fc, token, false, true);
+        if (strcmp(token, "\"") == 0) {
+            // New group
+            MacroVarGroup *mvg = al(alc, sizeof(MacroVarGroup));
+            mvg->vars = array_make(alc, 4);
+
+            Str *pat = read_string(fc);
+            char *pattern = str_to_chars(alc, pat);
+            if (strcmp(pattern, "[]") == 0) {
+            } else if (strcmp(pattern, "{}") == 0) {
+            } else if (strcmp(pattern, "()") == 0) {
+            } else {
+                sprintf(fc->sbuf, "Invalid macro pattern: '%s'", pattern);
+                fc_error(fc);
+            }
+
+            char sign[2];
+            sign[0] = pattern[0];
+            sign[1] = '\0';
+            mvg->start = dups(alc, sign);
+            sign[0] = pattern[1];
+            mvg->end = dups(alc, sign);
+
+            while (true) {
+
+                if (repeat) {
+                    sprintf(fc->sbuf, "You cannot add more inputs after defining a repeating input '*'");
+                    fc_error(fc);
+                }
+
+                // int type;
+                // tok(fc, token, false, true);
+                // if (strcmp(token, "T") == 0) {
+                //     type = macro_part_type;
+                // } else if (strcmp(token, "V") == 0) {
+                //     type = macro_part_type;
+                // } else {
+                //     sprintf(fc->sbuf, "Expected 'T' or 'V' here, found: '%s'", pattern);
+                //     fc_error(fc);
+                // }
+
+                // tok(fc, token, true, false);
+                // if (strcmp(token, "*") == 0) {
+                //     infinite = true;
+                //     tok(fc, token, true, false);
+                // }
+                // if (strcmp(token, ":") != 0) {
+                //     sprintf(fc->sbuf, "Expected ':', found: '%s'", pattern);
+                //     fc_error(fc);
+                // }
+                tok(fc, token, false, true);
+                if (!is_valid_varname(token)) {
+                    sprintf(fc->sbuf, "Invalid input name syntax '%s'", token);
+                    fc_error(fc);
+                }
+                if (map_contains(vars, token)) {
+                    sprintf(fc->sbuf, "Duplicate input name '%s'", token);
+                    fc_error(fc);
+                }
+
+                MacroVar *mv = malloc(sizeof(MacroVar));
+                mv->name = dups(alc, token);
+                mv->replaces = array_make(alc, 4);
+                mv->repeat = false;
+
+                map_set(vars, mv->name, mv);
+                array_push(mvg->vars, mv);
+
+                while (true) {
+                    tok(fc, token, false, true);
+
+                    if (strcmp(token, "@repeat") == 0) {
+                        repeat = true;
+                        mv->repeat = true;
+                        continue;
+                    } else if (strcmp(token, "@replace") == 0) {
+                        tok_expect(fc, "(", true, false);
+                        tok_expect(fc, "\"", true, true);
+
+                        Str *buf = read_string(fc);
+                        char *find = str_to_chars(alc, buf);
+                        tok_expect(fc, ",", true, true);
+                        tok_expect(fc, "\"", true, true);
+                        buf = read_string(fc);
+                        char *with = str_to_chars(alc, buf);
+
+                        tok_expect(fc, ")", true, true);
+
+                        MacroReplace *rep = malloc(sizeof(MacroReplace));
+                        rep->find = find;
+                        rep->with = with;
+
+                        array_push(mv->replaces, rep);
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                if (strcmp(token, ",") == 0) {
+                    continue;
+                } else if (strcmp(token, ";") == 0) {
+                    break;
+                } else {
+                    sprintf(fc->sbuf, "Expected ',' or ';', found: '%s'", token);
+                    fc_error(fc);
+                }
+            }
+
+            mvg->repeat_last_input = repeat;
+            array_push(mac->groups, mvg);
+
+        } else if (strcmp(token, "}") == 0) {
+            break;
+        } else {
+            sprintf(fc->sbuf, "Expected '\"' or '}', found: '%s'", token);
+            fc_error(fc);
+        }
+    }
+    if (mac->groups->length == 0) {
+        sprintf(fc->sbuf, "No inputs defined");
         fc_error(fc);
     }
 
-    char sign[2];
-    sign[0] = pattern[0];
-    sign[1] = '\0';
-    mac->start = dups(alc, sign);
-    sign[0] = pattern[1];
-    mac->end = dups(alc, sign);
-
+    tok_expect(fc, "output", false, true);
     tok_expect(fc, "{", false, true);
-
-    bool repeat = false;
-    while (true) {
-
-        if (repeat) {
-            sprintf(fc->sbuf, "You cannot add more inputs after defining a repeating input '*'");
-            fc_error(fc);
-        }
-
-        // int type;
-        // tok(fc, token, false, true);
-        // if (strcmp(token, "T") == 0) {
-        //     type = macro_part_type;
-        // } else if (strcmp(token, "V") == 0) {
-        //     type = macro_part_type;
-        // } else {
-        //     sprintf(fc->sbuf, "Expected 'T' or 'V' here, found: '%s'", pattern);
-        //     fc_error(fc);
-        // }
-
-        // tok(fc, token, true, false);
-        // if (strcmp(token, "*") == 0) {
-        //     infinite = true;
-        //     tok(fc, token, true, false);
-        // }
-        // if (strcmp(token, ":") != 0) {
-        //     sprintf(fc->sbuf, "Expected ':', found: '%s'", pattern);
-        //     fc_error(fc);
-        // }
-        tok(fc, token, false, true);
-        if (!is_valid_varname(token)) {
-            sprintf(fc->sbuf, "Invalid input name syntax '%s'", token);
-            fc_error(fc);
-        }
-        if (map_contains(mac->inputs, token)) {
-            sprintf(fc->sbuf, "Duplicate input name '%s'", token);
-            fc_error(fc);
-        }
-
-        MacroInput *mi = malloc(sizeof(MacroInput));
-        mi->name = dups(alc, token);
-        mi->replaces = array_make(alc, 4);
-        mi->repeat = false;
-
-        map_set(mac->inputs, mi->name, mi);
-
-        while (true) {
-            tok(fc, token, false, true);
-
-            if (strcmp(token, "@repeat") == 0) {
-                repeat = true;
-                mi->repeat = true;
-                continue;
-            } else if (strcmp(token, "@replace") == 0) {
-                tok_expect(fc, "(", true, false);
-                tok_expect(fc, "\"", true, true);
-
-                Str *buf = read_string(fc);
-                char *find = str_to_chars(alc, buf);
-                tok_expect(fc, ",", true, true);
-                tok_expect(fc, "\"", true, true);
-                buf = read_string(fc);
-                char *with = str_to_chars(alc, buf);
-
-                tok_expect(fc, ")", true, true);
-
-                MacroReplace *rep = malloc(sizeof(MacroReplace));
-                rep->find = find;
-                rep->with = with;
-
-                array_push(mi->replaces, rep);
-                continue;
-            } else {
-                break;
-            }
-        }
-        if (strcmp(token, ",") == 0) {
-            continue;
-        } else if (strcmp(token, ";") == 0) {
-            break;
-        } else {
-            sprintf(fc->sbuf, "Expected ',' or ';', found: '%s'", token);
-            fc_error(fc);
-        }
-    }
-
-    mac->repeat_last_input = repeat;
 
     Chunk *chunk = fc->chunk;
     int i = chunk->i;
@@ -995,17 +1024,17 @@ void stage_1_macro(Fc *fc) {
                         ch = content[i];
                     }
 
-                    char *var = str_to_chars(alc, buf);
+                    char *var_name = str_to_chars(alc, buf);
                     str_clear(buf);
-                    MacroInput *mi = map_get(mac->inputs, var);
-                    if (!mi) {
-                        sprintf(fc->sbuf, "Unknown macro input: '%s'", var);
+                    MacroVar *mv = map_get(mac->vars, var_name);
+                    if (!mv) {
+                        sprintf(fc->sbuf, "Unknown macro input: '%s'", var_name);
                         fc_error(fc);
                     }
-                    if (repeat && mi->repeat) {
+                    if (repeat && mv->repeat) {
                         loop = true;
                     }
-                    array_push(sub_parts, var);
+                    array_push(sub_parts, var_name);
                     continue;
                 }
 
@@ -1031,4 +1060,6 @@ void stage_1_macro(Fc *fc) {
     chunk->i = i;
     chunk->col = col;
     chunk->line = line;
+
+    tok_expect(fc, "}", false, true);
 }

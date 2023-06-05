@@ -1,13 +1,18 @@
 
 use mem;
 
-macro array "[]" {
-	type, values @repeat;
-	"@vs : Array[%type] {\n"
-	"let array = Array[%type].init();\n"
-	"array.push(%values);\n"
-	"return array;\n"
-	"}"
+macro array {
+	input {
+		"[]" type;
+		"{}" values @repeat;
+	}
+	output {
+		"@vs : Array[%type] {\n"
+		"let array = Array[%type].init();\n"
+		"array.push(%values);\n"
+		"return array;\n"
+		"}"
+	}
 }
 
 class Array[T] {

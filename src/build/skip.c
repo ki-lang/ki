@@ -316,3 +316,42 @@ void skip_type(Fc *fc) {
     chunk->i = i;
     chunk->col = col;
 }
+
+void skip_macro_input(Fc *fc, char *end) {
+
+    char *token = fc->token;
+    while (true) {
+
+        tok(fc, token, false, true);
+
+        if (token[0] == '\0') {
+            sprintf(fc->sbuf, "Your macro is missing a closing tag, unexpected end of file");
+            fc_error(fc);
+        }
+
+        if (strcmp(token, "\"") == 0) {
+            skip_string(fc, '"');
+            continue;
+        }
+        if (strcmp(token, "'") == 0) {
+            skip_string(fc, '\'');
+            continue;
+        }
+        if (strcmp(token, "(") == 0) {
+            skip_until_char(fc, ")");
+            continue;
+        }
+        if (strcmp(token, "{") == 0) {
+            skip_until_char(fc, "}");
+            continue;
+        }
+        if (strcmp(token, "[") == 0) {
+            skip_until_char(fc, "]");
+            continue;
+        }
+        if (strcmp(token, end) == 0 || strcmp(token, ",") == 0) {
+            rtok(fc);
+            break;
+        }
+    }
+}

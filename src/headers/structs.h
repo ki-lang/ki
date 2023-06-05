@@ -33,7 +33,8 @@ typedef struct TypeCheck TypeCheck;
 typedef struct Test Test;
 typedef struct Macro Macro;
 typedef struct MacroPart MacroPart;
-typedef struct MacroInput MacroInput;
+typedef struct MacroVarGroup MacroVarGroup;
+typedef struct MacroVar MacroVar;
 typedef struct MacroReplace MacroReplace;
 
 // Pkg
@@ -446,13 +447,17 @@ struct Test {
 struct Macro {
     char *name;
     char *dname;
-    Map *inputs;
+    Map *vars;
+    Array *groups;
     Array *parts;
+};
+struct MacroVarGroup {
     char *start;
     char *end;
+    Array *vars;
     bool repeat_last_input;
 };
-struct MacroInput {
+struct MacroVar {
     char *name;
     Array *replaces;
     bool repeat;
