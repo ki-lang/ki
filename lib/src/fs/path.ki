@@ -61,7 +61,7 @@ fn exe_path() &String {
 		#if OS == win
     	let len = sys.GetModuleFileNameA(null, data, sys.OS.PATHMAX);
 		#else
-		let link = "/proc/self/exe".to_cstring();
+		let link = "/proc/self/exe".to_c_string();
     	let len = sys.readlink(link, data, sys.OS.PATHMAX);
 		mem:free(link);
 		#end

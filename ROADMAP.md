@@ -4,13 +4,12 @@
 Feature todo list in order:
 
 ```
-- array/map shortcuts
 - closure functions
 
-- unions
 - declare functions for classes/structs from other libraries
 - install global packages that compile the code to a binary in ~/.ki/bin | ki pkg global add {url} | ki pkg global install
 - add a message to your errors
+- union & c_union
 
 - trait generic types
 - function generic types
@@ -40,6 +39,8 @@ Feature todo list in order:
 ## Done
 
 ```
+- macros
+- array/map shortcuts
 - basic debug info
 - testing features
 - main argv/argc

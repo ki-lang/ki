@@ -44,7 +44,7 @@ struct cstruct_addrinfo {
     ai_socktype: i32;
     ai_protocol: i32;
     ai_addrlen: u32;
-    ai_canonname: cstring;
+    ai_canonname: c_string;
     ai_addr: cstruct_sockaddr;
     ai_next: ?cstruct_addrinfo;
 }

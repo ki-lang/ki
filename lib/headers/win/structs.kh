@@ -46,7 +46,7 @@ struct cstruct_addrinfo {
     ai_socktype: i32;
     ai_protocol: i32;
     ai_addrlen: uxx;
-    ai_canonname: cstring;
+    ai_canonname: c_string;
     ai_addr: cstruct_sockaddr;
     ai_next: ?cstruct_addrinfo;
 }
@@ -77,7 +77,7 @@ struct WSADATA {
     // 64-bit fields
     iMaxSockets: u16;
     iMaxUdpDg: u16;
-    lpVendorInfo: cstring;
+    lpVendorInfo: c_string;
     szDescription: .u8[257]; // WSADESCRIPTION_LEN + 1
     szSystemStatus: .u8[257];
 
@@ -86,7 +86,7 @@ struct WSADATA {
     //szSystemStatus: u8[257];
     //iMaxSockets: u16;
     //iMaxUdpDg: u16;
-    //lpVendorInfo: cstring;
+    //lpVendorInfo: c_string;
 }
 
 struct cstruct_timezone {

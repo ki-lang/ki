@@ -808,7 +808,7 @@ void stage_6_gen_main(Fc *fc) {
     str_append_chars(code, "let arr = Array[String].new();\n");
     str_append_chars(code, "let i = 0;\n");
     str_append_chars(code, "while i < argc {\n");
-    str_append_chars(code, "let cstr = @ptrv(argv, cstring, i);\n");
+    str_append_chars(code, "let cstr = @ptrv(argv, c_string, i);\n");
     str_append_chars(code, "arr.push(cstr.to_str());\n");
     str_append_chars(code, "i++;\n");
     str_append_chars(code, "}\n");

@@ -46,8 +46,8 @@ class SocketTCP async {
 		hints.ai_socktype = sys.OS.SOCK_STREAM;
 		hints.ai_flags = sys.OS.AI_PASSIVE;
 
-		let chost = host.to_cstring();
-		let cport = port.str().to_cstring();
+		let chost = host.to_c_string();
+		let cport = port.str().to_c_string();
     	let err = sys.getaddrinfo(chost, cport, hints, @array_of(addrinfo));
 		if err != 0 {
 			throw get_addr_info;

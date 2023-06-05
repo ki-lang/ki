@@ -1,7 +1,7 @@
 
 use mem;
 
-class cstring type:ptr {
+class c_string type:ptr {
 
 	fn to_str() String {
 		let len = this.length();

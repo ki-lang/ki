@@ -324,13 +324,13 @@ class String type:ptr track {
 		return new_str;
 	}
 
-	fn to_cstring() cstring {
+	fn to_c_string() c_string {
 		let len = this.bytes();
 		let bytes = len + 1;
 		let adr = mem:alloc(bytes);
 		mem:copy(this.data(), adr, len);
 		@ptrv(adr + len, u8, 0) = 0;
-		return adr @as cstring;
+		return adr @as c_string;
 	}
 
 	fn to_uxx() uxx !invalid_syntax {
