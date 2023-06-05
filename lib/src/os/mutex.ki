@@ -11,7 +11,7 @@ class Mutex[T] async {
 
 	// VOID
 
-	public static func init() CLASS { 
+	public static func new() CLASS { 
 		let mut = mem:calloc(pt.CONST.mutex_size);
 		pt.pthread_mutex_init(mut);
 		return CLASS { mutex: mut };
@@ -31,7 +31,7 @@ class Mutex[T] async {
 
 	private value: ?T;
 
-	public static func init(value: T) CLASS { 
+	public static func new(value: T) CLASS { 
 		let mut = mem:calloc(pt.CONST.mutex_size);
 		pt.pthread_mutex_init(mut);
 		return CLASS { mutex: mut, value: value };

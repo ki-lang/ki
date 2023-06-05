@@ -9,7 +9,7 @@ global EXE_DIR : ?String;
 class Path {
 	parts: Array[String];
 
-	static func init(path: *String) Path {
+	static func new(path: *String) Path {
 		return Path{
 			parts: path.split("/"),
 		};
@@ -21,12 +21,12 @@ class Path {
 		return path;
 	}
 	static func exe_path() Path {
-		return Path.init(exe_dir());
+		return Path.new(exe_dir());
 	}
 
 	func copy() Path {
 		let parts = this.parts;
-		let new = Array[String].init();
+		let new = Array[String].new();
 		each parts as part {
 			new.push(part + "");
 		}

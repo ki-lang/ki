@@ -7,7 +7,7 @@ class Pool[T] {
 	head: uxx = 0;
 	tail: uxx = 0;
 
-	static func init(max_items: uxx) CLASS {
+	static func new(max_items: uxx) CLASS {
 		if max_items < 2{
 			max_items = 2;
 		}

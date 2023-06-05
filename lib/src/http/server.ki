@@ -12,7 +12,7 @@ class ServerData {
     max_connections: uxx;
     thread_nr: uxx = 0;
     handler: fn(*Request)(Response);
-    static_dirs: Array[String] = Array[String].init();
+    static_dirs: Array[String] = Array[String].new();
     show_info: bool;
 }
 
@@ -22,13 +22,13 @@ class Server {
     socket: net:SocketTCP;
     max_connections: uxx;
     handler: fn(*Request)(Response);
-    static_dirs: Array[String] = Array[String].init();
+    static_dirs: Array[String] = Array[String].new();
     show_info: bool = false;
 
-    static func init(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error {
+    static func new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error {
 
         let max_connections : uxx = 10000;
-        let socket = net:Socket.init_tcp(host, port) !! throw socket_init_error;;
+        let socket = net:Socket.new_tcp(host, port) !! throw socket_init_error;;
 
         return Server{
             host: host,
@@ -41,7 +41,7 @@ class Server {
 
     private func server_data() ServerData {
 
-        let dirs = Array[String].init();
+        let dirs = Array[String].new();
         each this.static_dirs as dir {
             dirs.push(dir + "");
         }
@@ -96,8 +96,8 @@ class Server {
         let max_connections = data.max_connections;
         let handler = data.handler;
 
-        let cons = Array[Connection].init(50);
-        let index_pool = utils:Pool[uxx].init(max_connections);
+        let cons = Array[Connection].new(50);
+        let index_pool = utils:Pool[uxx].new(max_connections);
         let nr = @atomic_op data.thread_nr ADD 1;
 
         //println("[-] Start thread: " + nr.str());
@@ -105,7 +105,7 @@ class Server {
         let sock = data.socket;
         let sock_fd = sock.fd;
 
-        let poll = io:Poll.init(max_connections);
+        let poll = io:Poll.new(max_connections);
         let sock_lsn = poll.listener(sock_fd);
         sock_lsn.read(true);
 

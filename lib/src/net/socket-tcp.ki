@@ -8,7 +8,7 @@ class SocketTCP async {
 	readonly fd: i32;
 	readonly port: u16;
 
-	static func init(host: *String, port: u16) SocketTCP !os_socket_create !get_addr_info !bind !listen {
+	static func new(host: *String, port: u16) SocketTCP !os_socket_create !get_addr_info !bind !listen {
 
         #if OS == win
 		os:WSA_init();

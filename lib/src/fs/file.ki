@@ -44,7 +44,7 @@ func read(path: *String) String !open !read !close {
 
 	let fd = open_fd(path, true, false) !! throw open;;
 
-	let res = utils:ByteBuffer.init(4096);
+	let res = utils:ByteBuffer.new(4096);
 	let buf = @stack_alloc(4096);
 	let readcount_ : ixx = 4096;
 	while true {

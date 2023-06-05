@@ -805,7 +805,7 @@ void stage_6_gen_main(Fc *fc) {
     bool main_has_arg = mfunc && mfunc->args->length > 0;
 
     Str *code = str_make(alc, 1000);
-    str_append_chars(code, "let arr = Array[String].init();\n");
+    str_append_chars(code, "let arr = Array[String].new();\n");
     str_append_chars(code, "let i = 0;\n");
     str_append_chars(code, "while i < argc {\n");
     str_append_chars(code, "let cstr = @ptrv(argv, cstring, i);\n");

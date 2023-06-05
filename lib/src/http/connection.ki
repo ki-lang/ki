@@ -10,13 +10,13 @@ class Connection {
 	netcon: net:Connection;
 	fd: i32;
 	uploads: ?Array[String] = null;
-	read_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
+	read_buf: utils:ByteBuffer = utils:ByteBuffer.new(500);
 
 	// Parsing
 	phase: uxx = 0;
 	parse_pos: uxx = 0;
-	line: utils:ByteBuffer = utils:ByteBuffer.init(200);
-	headers: Map[String] = Map[String].init();
+	line: utils:ByteBuffer = utils:ByteBuffer.new(200);
+	headers: Map[String] = Map[String].new();
 	request_method: String = "GET";
 	request_path: String = "/";
 	request_protocol: String = "HTTP/1.1";
@@ -28,7 +28,7 @@ class Connection {
 
 	// Response
 	out_file: ?fs:FileStream = null;
-	out_buf: utils:ByteBuffer = utils:ByteBuffer.init(500);
+	out_buf: utils:ByteBuffer = utils:ByteBuffer.new(500);
 	out_pos: uxx = 0;
 
 	func reset_parser() void {
@@ -49,7 +49,7 @@ class Connection {
 	func reset_request_data() void {
         this.uploads = null;
         this.phase = 0;
-        this.headers = Map[String].init();
+        this.headers = Map[String].new();
         this.headers_parsed = false;
 		this.body_parsed = false;
 		this.content_length = 0;

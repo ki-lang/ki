@@ -1,5 +1,5 @@
 test "map" {
-    let m = Map[i32].init();
+    let m = Map[i32].new();
     m.set("test_id", 1000);
     @expect (m.get("test_id") !? 0) == 1000;
     @expect (m.get("runtime_id") !? 0) == 0;

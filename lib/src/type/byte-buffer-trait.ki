@@ -1,17 +1,16 @@
 
 use mem;
-use os;
 
-class ByteBuffer {
+trait ByteBufferTrait {
 	data: ptr;
 	size: uxx;
 	length: uxx = 0;
 
-	static func new(start_size: uxx) ByteBuffer {
+	static func new(start_size: uxx) CLASS {
 		if start_size < 10 {
 			start_size = 10;
 		}
-		return ByteBuffer {
+		return CLASS {
 			data: mem:alloc(start_size),
 			size: start_size,
 		};
@@ -23,7 +22,7 @@ class ByteBuffer {
 
 	// Appending
 
-	func append(buffer: *ByteBuffer) void {
+	func append(buffer: *CLASS) void {
 		this.append_from_ptr(buffer.data, buffer.length);
 	}
 
@@ -136,11 +135,5 @@ class ByteBuffer {
 			this.size = new_size;
 			this.data = adr;
 		}
-	}
-
-	// Internals
-
-	func __before_free() void {
-		mem:free(this.data);
 	}
 }

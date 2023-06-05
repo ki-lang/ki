@@ -14,7 +14,7 @@ class Router[T] {
 	private block: RouteBlock[T];
 	public inited: bool = false;
 
-	public static func init() CLASS {
+	public static func new() CLASS {
 		return CLASS {
 			block: RouteBlock[T] {
 				blocks: Map[RouteBlock[T]]{}
@@ -33,7 +33,7 @@ class Router[T] {
 		parts.prepend(method + "");
 
 		let block = this.block;
-		let args = Array[RouteArg].init(2);
+		let args = Array[RouteArg].new(2);
 		let wcard_index = -1#i32;
 
 		each parts as i, part {
@@ -78,7 +78,7 @@ class Router[T] {
 
 	public func find(method: *String, url: *String) &Route[T] !not_found {
 		let parts_ = url.split("/");
-		let parts = Array[String].init(2);
+		let parts = Array[String].new(2);
 		each parts_ as i, part {
 			if part.bytes() == 0 {
 				continue;

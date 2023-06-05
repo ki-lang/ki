@@ -6,7 +6,7 @@ macro map {
 	}
 	output {
 		"@vs : Map[%type] {\n"
-		"let map = Map[%type].init();\n"
+		"let map = Map[%type].new();\n"
 		"map.set(%values);\n"
 		"return map;\n"
 		"}"
@@ -15,10 +15,10 @@ macro map {
 
 // TODO : Use hash maps
 class Map[T] {
-	readonly _keys : Array[String] = Array[String].init();
-	readonly _values : Array[T] = Array[T].init();
+	readonly _keys : Array[String] = Array[String].new();
+	readonly _values : Array[T] = Array[T].new();
 
-	static func init() CLASS {
+	static func new() CLASS {
 		return CLASS{};
 	}
 
