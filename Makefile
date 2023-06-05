@@ -91,7 +91,7 @@ dist_win_x64: $(OBJECTS_WIN_X64)
 	-Wl,-machine:x64 \
 	-o dist/dists/win-x64/ki.exe \
 	$(OBJECTS_WIN_X64) \
-	$(LLVM_LIBS) -nostdlib -llibcurl -lCrypt32 -lWs2_32 -lzlib
+	$(LLVM_LIBS) -nostdlib -llibcurl -lcrypt32 -lws2_32 -lzlib
 
 	cd dist/dists/win-x64 && rm -f ../ki-$(VERSION)-win-x64.zip && zip -r ../ki-$(VERSION)-win-x64.zip ki.exe lib install.bat lld-link.exe
 
