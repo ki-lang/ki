@@ -306,12 +306,12 @@ void cmd_build(int argc, char *argv[]) {
 #endif
 
     // Compile ki lib
-    compile_loop(b, 5);
+    compile_loop(b, 1); // Scan identifiers
 
     // Compile CLI files
     build_add_files(b, files);
-    compile_loop(b, 5); // Get everything to stage 5 first
-    compile_loop(b, 6); // Parse AST & generate IR
+    compile_loop(b, 1); // Scan identifiers
+    compile_loop(b, 6); // Complete all other stages
 
     b->ir_ready = true;
 
@@ -335,6 +335,7 @@ void cmd_build(int argc, char *argv[]) {
         printf("⌚ Parse + IR gen: %.3fs\n", time_ast);
     }
 
+    // Linker stage
     stage_8(b);
 
 #ifdef WIN32
@@ -349,6 +350,7 @@ void cmd_build(int argc, char *argv[]) {
         printf("✅ Compiled in: %.3fs\n", time_all);
     }
 
+    // Flush all output
 #ifdef WIN32
     _flushall();
 #else

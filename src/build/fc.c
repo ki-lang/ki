@@ -51,6 +51,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->chunk = chunk_init(alc, fc);
     fc->chunk_prev = chunk_init(alc, fc);
     fc->id_buf = id_init(alc);
+    fc->str_buf = str_make(alc, 100);
 
     fc->scope = scope_init(alc, sct_fc, nsc->scope, false);
     fc->current_macro_scope = b->mc;
@@ -171,19 +172,21 @@ void fc_error(Fc *fc) {
     int start = i;
 
     printf("\n");
-    if (chunk->fc != fc) {
-        printf("File: %s\n", chunk->fc->path_ki);
-    } else {
-        printf("File: %s\n", fc->path_ki);
+    Chunk *parent = chunk->parent;
+    while (parent) {
+        printf("File: %s\n", parent->fc ? parent->fc->path_ki : "?");
+        printf("At: line:%d | col:%d\n", parent->line, parent->col);
+        printf("-------------------------------------\n");
+        parent = parent->parent;
     }
+    printf("File: %s\n", chunk->fc ? chunk->fc->path_ki : "?");
     if (fc->error_class_info) {
         printf("Class: %s\n", fc->error_class_info->dname);
     }
     if (fc->error_func_info) {
         printf("Function: %s\n", fc->error_func_info->dname);
     }
-    printf("Line: %d\n", line);
-    printf("Col: %d\n", col);
+    printf("At: line:%d | col:%d\n", chunk->line, chunk->col);
     printf("Error: %s\n", fc->sbuf);
     printf("\n");
 

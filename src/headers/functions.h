@@ -10,7 +10,8 @@ void sleep_ms(unsigned int ms);
 void simple_hash(char *content, char *buf);
 Array *explode(Allocator *alc, char *part, char *content);
 int system_silent(char *cmd);
-char *str_replace(char *s, const char *s1, const char *s2);
+char *str_replace_simple(char *s, const char *s1, const char *s2);
+char *str_replace(Allocator *alc, char *orig, char *rep, char *with);
 
 // Syntax
 bool is_alpha_char(char c);
@@ -118,6 +119,7 @@ char get_char(Fc *fc, int index);
 void read_hex(Fc *fc, char *token);
 Str *read_string(Fc *fc);
 Array *read_string_chunks(Allocator *alc, Fc *fc);
+char *read_part(Allocator *alc, Fc *fc, int i, int len);
 
 // Skips
 void skip_body(Fc *fc, char until_ch);
@@ -128,6 +130,7 @@ void skip_macro_if(Fc *fc);
 void skip_traits(Fc *fc);
 void skip_value(Fc *fc);
 void skip_type(Fc *fc);
+void skip_macro_input(Fc *fc, char *end);
 
 // Macro
 MacroScope *init_macro_scope(Allocator *alc);

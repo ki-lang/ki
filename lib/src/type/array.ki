@@ -1,6 +1,20 @@
 
 use mem;
 
+macro array {
+	input {
+		"[]" type;
+		"{}" values @repeat;
+	}
+	output {
+		"@vs : Array[%type] {\n"
+		"let array = Array[%type].init();\n"
+		"array.push(%values);\n"
+		"return array;\n"
+		"}"
+	}
+}
+
 class Array[T] {
 	readonly size: uxx;
 	readonly length: uxx = 0;

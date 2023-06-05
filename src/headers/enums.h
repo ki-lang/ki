@@ -27,6 +27,7 @@ enum IDFOR {
     idf_type,
     idf_decl_type_overwrite,
     idf_err_code,
+    idf_macro,
 };
 
 enum SCOPETYPE {
@@ -162,4 +163,9 @@ enum TARGET_ARCH {
 enum ALIAS {
     alias_id,
     alias_type,
+};
+
+enum MACRO_PART_TYPE {
+    macro_part_type,
+    macro_part_value,
 };

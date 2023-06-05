@@ -31,6 +31,11 @@ typedef struct Trait Trait;
 typedef struct Alias Alias;
 typedef struct TypeCheck TypeCheck;
 typedef struct Test Test;
+typedef struct Macro Macro;
+typedef struct MacroPart MacroPart;
+typedef struct MacroVarGroup MacroVarGroup;
+typedef struct MacroVar MacroVar;
+typedef struct MacroReplace MacroReplace;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -155,6 +160,7 @@ struct Fc {
     char *ir;
     char *ir_hash;
     Id *id_buf;
+    Str *str_buf;
     Nsc *nsc;
     Pkc *pkc_config;
     Allocator *alc;
@@ -217,6 +223,7 @@ struct Link {
 
 struct Chunk {
     Fc *fc;
+    Chunk *parent;
     char *content;
     int length;
     int i;
@@ -436,6 +443,32 @@ struct Test {
     char *name;
     Func *func;
     VInt *expects;
+};
+struct Macro {
+    char *name;
+    char *dname;
+    Map *vars;
+    Array *groups;
+    Array *parts;
+};
+struct MacroVarGroup {
+    char *start;
+    char *end;
+    Array *vars;
+    bool repeat_last_input;
+};
+struct MacroVar {
+    char *name;
+    Array *replaces;
+    bool repeat;
+};
+struct MacroReplace {
+    char *find;
+    char *with;
+};
+struct MacroPart {
+    Array *sub_parts;
+    bool loop;
 };
 
 // Pkg

@@ -1,4 +1,18 @@
 
+macro map {
+	input {
+		"[]" type;
+		"{}" values @repeat @replace("=>", ",");
+	}
+	output {
+		"@vs : Map[%type] {\n"
+		"let map = Map[%type].init();\n"
+		"map.set(%values);\n"
+		"return map;\n"
+		"}"
+	}
+}
+
 // TODO : Use hash maps
 class Map[T] {
 	readonly _keys : Array[String] = Array[String].init();
