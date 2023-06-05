@@ -1,6 +1,4 @@
 
-use utils;
-
 class Response {
 	public status: u32 = 200;
 	public body: String = "";
@@ -37,7 +35,7 @@ class Response {
 		return Response{ filepath: path + "", filename: filename };
 	}
 
-	public func compile(buf: *utils:ByteBuffer) void {
+	public func compile(buf: *ByteBuffer) void {
 
 		let len = this.body.bytes();
 
