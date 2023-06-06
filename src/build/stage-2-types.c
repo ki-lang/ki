@@ -190,12 +190,10 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
         int act = act_public;
 
-        if (strcmp(token, "public") == 0) {
-            tok(fc, token, true, true);
-        } else if (strcmp(token, "private") == 0) {
+        if (strcmp(token, "-") == 0) {
             act = act_private;
             tok(fc, token, true, true);
-        } else if (strcmp(token, "readonly") == 0) {
+        } else if (strcmp(token, "~") == 0) {
             act = act_readonly;
             tok(fc, token, true, true);
         }

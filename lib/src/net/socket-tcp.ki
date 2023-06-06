@@ -5,8 +5,8 @@ use mem;
 use os;
 
 class SocketTCP async {
-	readonly fd: i32;
-	readonly port: u16;
+	~fd: i32;
+	~port: u16;
 
 	static fn new(host: *String, port: u16) SocketTCP !os_socket_create !get_addr_info !bind !listen {
 

@@ -1,4 +1,4 @@
 
 class Connection {
-	readonly fd: i32;
+	~fd: i32;
 }

@@ -2,9 +2,9 @@
 use mem;
 
 class AsyncArray[T] async {
-	readonly size: uxx;
-	readonly length: uxx;
-	readonly data: ptr;
+	~size: uxx;
+	~length: uxx;
+	~data: ptr;
 
 	static fn new(start_size: uxx = 2) CLASS {
 		if start_size < 2 {

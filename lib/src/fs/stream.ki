@@ -9,11 +9,11 @@ fn open(path: String, read: bool, write: bool) FileStream !open {
 }
 
 class FileStream {
-    readonly path: String;
-    private fd: i32 ;
-    private can_read: bool;
-    private can_write: bool;
-    readonly reading: bool = true;
+    ~path: String;
+    -fd: i32 ;
+    -can_read: bool;
+    -can_write: bool;
+    ~reading: bool = true;
 
     fn read(bytes: uxx = 10240) String !read_err {
         if(this.can_read == false){

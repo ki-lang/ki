@@ -181,7 +181,7 @@ class String type:ptr track {
 		return result;
 	}
 
-	public fn replace(find: *String, with: *String) String {
+	fn replace(find: *String, with: *String) String {
 		let pos : uxx = 0;
 		let adr = this.data();
 		let adr_find = find.data();
@@ -270,7 +270,7 @@ class String type:ptr track {
 	// Index
 	/////////////////////
 
-	public fn index_of_byte(fch: u8, start_index: uxx = 0) uxx !not_found !invalid_utf8 {
+	fn index_of_byte(fch: u8, start_index: uxx = 0) uxx !not_found !invalid_utf8 {
 		let bytes = this.bytes();
 		let pos = start_index;
 		let adr = this.data();
@@ -398,7 +398,7 @@ class String type:ptr track {
 		return new_str;
 	}
 
-	public fn __eq(b: *String) bool {
+	fn __eq(b: *String) bool {
 		let a_ptr = this @as ptr;
 		let b_ptr = b @as ptr;
 		if(a_ptr == b_ptr) {

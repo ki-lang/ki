@@ -7,23 +7,23 @@ use os;
 
 class Poll {
     #if OS == linux
-    private fd: i32;
+    -fd: i32;
     #else
-    private poll_size: uxx;
-    private poll_index: uxx = 0;
-    private lsn_by_fd: ptr;
-    private lsn_by_fd_size: uxx = 20;
+    -poll_size: uxx;
+    -poll_index: uxx = 0;
+    -lsn_by_fd: ptr;
+    -lsn_by_fd_size: uxx = 20;
     #end
 
-    private resultc: uxx = 0;
-    readonly results: ptr;
-    private results_int: ptr;
+    -resultc: uxx = 0;
+    ~results: ptr;
+    -results_int: ptr;
     //
-    private pool: utils:Pool[PollListener];
-    private listeners: Array[PollListener] = Array[PollListener].new();
-    readonly max_connections: uxx;
+    -pool: utils:Pool[PollListener];
+    -listeners: Array[PollListener] = Array[PollListener].new();
+    ~max_connections: uxx;
 
-    public static fn new(max_connections: uxx) Poll {
+    static fn new(max_connections: uxx) Poll {
 
         #if OS == win
 		os:WSA_init();
@@ -62,7 +62,7 @@ class Poll {
     }
 
     #if OS != linux
-    private static fn disable_poll_fds(list: ptr, start_index: uxx, count: uxx) void {
+    -static fn disable_poll_fds(list: ptr, start_index: uxx, count: uxx) void {
         let i = start_index;
         let last = i + count;
         while i < last {
@@ -79,7 +79,7 @@ class Poll {
     }
     #end
 
-    public fn listener(fd: i32, key: uxx = 0) PollListener {
+    fn listener(fd: i32, key: uxx = 0) PollListener {
 
         let pool = this.pool;
         let listeners = this.listeners;
@@ -151,7 +151,7 @@ class Poll {
         return lsn;
     }
 
-    public fn remove(listener: PollListener) void {
+    fn remove(listener: PollListener) void {
 
         #if OS == linux
         let ev = @stack_object(sys.cstruct_epoll_event);
@@ -171,7 +171,7 @@ class Poll {
         this.pool.add(listener)!;
     }
 
-    public fn wait(timeout: i32 = -1) uxx {
+    fn wait(timeout: i32 = -1) uxx {
 
         let results = this.results;
 
@@ -233,7 +233,7 @@ class Poll {
         return event_count;
     }
 
-    public fn get_event(index: uxx) &PollEvent !invalid_index {
+    fn get_event(index: uxx) &PollEvent !invalid_index {
         if(index >= this.resultc) {
             throw invalid_index;
         }
@@ -241,7 +241,7 @@ class Poll {
         return (results_int + (index * @sizeof_class(PollEvent))) @as PollEvent;
     }
 
-    public fn __before_free() void {
+    fn __before_free() void {
 
         while true {
             let item = this.listeners.pop() !! break;;
@@ -255,16 +255,16 @@ class Poll {
 
 struct PollListener {
     #if OS == linux
-    private poll_fd: i32;
+    -poll_fd: i32;
     #else
-    private poll: @weak Poll;
-    readonly poll_index: uxx;
+    -poll: @weak Poll;
+    ~poll_index: uxx;
     #end
-    readonly key: uxx = 0;
-    readonly fd : i32 = 0;
-    private detect_events: u32 = 0;
+    ~key: uxx = 0;
+    ~fd : i32 = 0;
+    -detect_events: u32 = 0;
 
-    public fn read(v: bool) void {
+    fn read(v: bool) void {
         #if OS == linux
         let ev : u32 = sys.OS.EPOLLIN;
         #else
@@ -272,7 +272,7 @@ struct PollListener {
         #end
         this.update_event(v, ev);
     }
-    public fn write(v: bool) void {
+    fn write(v: bool) void {
         #if OS == linux
         let ev : u32 = sys.OS.EPOLLOUT;
         #else
@@ -280,7 +280,7 @@ struct PollListener {
         #end
         this.update_event(v, ev);
     }
-    public fn stopped_reading(v: bool) void {
+    fn stopped_reading(v: bool) void {
         #if OS == win
         return;
         #else
@@ -294,7 +294,7 @@ struct PollListener {
 
         #end
     }
-    private fn update_event(v: bool, ev: u32) void {
+    -fn update_event(v: bool, ev: u32) void {
         if(v) {
             this.detect_events = this.detect_events | ev;
         } else if (this.detect_events & ev) > 0 {
@@ -319,10 +319,10 @@ struct PollListener {
 }
 
 struct PollEvent {
-    readonly listener: PollListener;
-    readonly events: u32;
+    ~listener: PollListener;
+    ~events: u32;
 
-    public fn is_readable() bool %inline {
+    fn is_readable() bool %inline {
         #if OS == linux
         let ev : u32 = sys.OS.EPOLLIN;
         #else
@@ -330,7 +330,7 @@ struct PollEvent {
         #end
         return (this.events & ev) > 0;
     }
-    public fn is_writable() bool %inline {
+    fn is_writable() bool %inline {
         #if OS == linux
         let ev : u32 = sys.OS.EPOLLOUT;
         #else
@@ -339,7 +339,7 @@ struct PollEvent {
         return (this.events & ev) > 0;
     }
 
-    public fn is_stopped_reading() bool %inline {
+    fn is_stopped_reading() bool %inline {
         #if OS == win
         return false;
         #else
@@ -354,7 +354,7 @@ struct PollEvent {
         #end
     }
 
-    public fn wants_to_close() bool %inline {
+    fn wants_to_close() bool %inline {
         let evs = this.events;
         #if OS == linux
         return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0;

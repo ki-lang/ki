@@ -5,23 +5,23 @@ use mem;
 
 class Mutex[T] async {
 
-	readonly mutex: ptr;
+	~mutex: ptr;
 
 	#if TYPE_IS_VOID T
 
 	// VOID
 
-	public static fn new() CLASS { 
+	static fn new() CLASS { 
 		let mut = mem:calloc(pt.CONST.mutex_size);
 		pt.pthread_mutex_init(mut);
 		return CLASS { mutex: mut };
 	}
 
-	public fn lock() void {
+	fn lock() void {
 		pt.pthread_mutex_lock(this.mutex);
 	}
 
-	public fn unlock() void {
+	fn unlock() void {
 		pt.pthread_mutex_unlock(this.mutex);
 	}
 
@@ -29,27 +29,27 @@ class Mutex[T] async {
 
 	// NONE VOID
 
-	private value: ?T;
+	-value: ?T;
 
-	public static fn new(value: T) CLASS { 
+	static fn new(value: T) CLASS { 
 		let mut = mem:calloc(pt.CONST.mutex_size);
 		pt.pthread_mutex_init(mut);
 		return CLASS { mutex: mut, value: value };
 	}
 
-	public fn lock() T {
+	fn lock() T {
 		pt.pthread_mutex_lock(this.mutex);
 		return swap this.value with null;
 	}
 
-	public fn unlock(value: T) void {
+	fn unlock(value: T) void {
 		pt.pthread_mutex_unlock(this.mutex);
 		this.value = value;
 	}
 
 	#end
 
-	public fn __before_free() void {
+	fn __before_free() void {
 		pt.pthread_mutex_destroy(this.mutex);
 		mem:free(this.mutex);
 	}

@@ -16,9 +16,9 @@ macro array {
 }
 
 class Array[T] {
-	readonly size: uxx;
-	readonly length: uxx = 0;
-	readonly data: ptr;
+	~size: uxx;
+	~length: uxx = 0;
+	~data: ptr;
 
 	static fn new(start_size: uxx = 2) CLASS {
 		if start_size < 2 {
@@ -52,7 +52,7 @@ class Array[T] {
 		return length;
 	}
 
-	public fn prepend(item: T) void {
+	fn prepend(item: T) void {
 
 		let size = this.size;
 		let length = this.length;

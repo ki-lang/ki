@@ -1,41 +1,41 @@
 
 class Response {
-	public status: u32 = 200;
-	public body: String = "";
-	public filepath: ?String = null;
-	public filename: ?String = null;
-	public content_type: String = "text/plain";
-	public headers: ?Map[String] = null;
+	status: u32 = 200;
+	body: String = "";
+	filepath: ?String = null;
+	filename: ?String = null;
+	content_type: String = "text/plain";
+	headers: ?Map[String] = null;
 
-	//public static fn file(String path) Response or file_not_found {
+	//static fn file(String path) Response or file_not_found {
 	//	if(fs:exists(path) == false){
 	//		throw file_not_found;
 	//	}
 	//	let r = Response{ filepath: path };
 	//	return r;
 	//}
-	public static fn html(body: String, code: u32 = 200, headers: ?Map[String] = null) Response {
+	static fn html(body: String, code: u32 = 200, headers: ?Map[String] = null) Response {
 		return Response{ body: body, status: code, content_type: "text/html", headers: headers };
 	}
-	public static fn json(body: String, code: u32 = 200, headers: ?Map[String] = null) Response {
+	static fn json(body: String, code: u32 = 200, headers: ?Map[String] = null) Response {
 		return Response{ body: body, status: code, content_type: "application/json", headers: headers };
 	}
-	public static fn text(body: String, code: u32 = 200, content_type: String = "text/plain", headers: ?Map[String] = null) Response {
+	static fn text(body: String, code: u32 = 200, content_type: String = "text/plain", headers: ?Map[String] = null) Response {
 		return Response{ body: body, status: code, content_type: content_type, headers: headers };
 	}
-	public static fn redirect(location: String, code: u32  = 301, headers: ?Map[String] = null) Response {
+	static fn redirect(location: String, code: u32  = 301, headers: ?Map[String] = null) Response {
 		rep headers = headers ?? Map[String]{};
 		headers.set("Location", location);
 		return Response{ status: code, headers: headers };
 	}
-	public static fn error(code: u32) Response {
+	static fn error(code: u32) Response {
 		return Response{ status: code };
 	}
-	public static fn file(path: *String, filename: ?String  = null) Response {
+	static fn file(path: *String, filename: ?String  = null) Response {
 		return Response{ filepath: path + "", filename: filename };
 	}
 
-	public fn compile(buf: *ByteBuffer) void {
+	fn compile(buf: *ByteBuffer) void {
 
 		let len = this.body.bytes();
 

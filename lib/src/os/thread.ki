@@ -8,19 +8,19 @@ header "pthread" as pt;
 use ki:mem;
 
 struct ThreadEntry[F, T] {
-	public data: T;
+	data: T;
 	start_func: F;
 }
 
 class Thread[T] {
 
 	#if OS == win
-	private os_handle: sys.HANDLE;
+	-os_handle: sys.HANDLE;
 	#else
-	private os_thread: pt.pthread_t;
+	-os_thread: pt.pthread_t;
 	#end
 
-	private static fn entry(data: ptr) void {
+	-static fn entry(data: ptr) void {
 		let entry = data @as ThreadEntry[fn(T)(void), T];
 		entry.start_func(entry.data @as T);
 		mem:free(entry @as ptr);

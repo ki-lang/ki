@@ -15,8 +15,8 @@ macro map {
 
 // TODO : Use hash maps
 class Map[T] {
-	readonly _keys : Array[String] = Array[String].new();
-	readonly _values : Array[T] = Array[T].new();
+	~_keys : Array[String] = Array[String].new();
+	~_values : Array[T] = Array[T].new();
 
 	static fn new() CLASS {
 		return CLASS{};

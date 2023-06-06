@@ -1,20 +1,20 @@
 
 class RouteBlock[T] {
-	public route: ?Route[T] = null;
-	public blocks: Map[RouteBlock[T]];
+	route: ?Route[T] = null;
+	blocks: Map[RouteBlock[T]];
 }
 
 class RouteArg {
-	public name: String;
-	public i: i32;
+	name: String;
+	i: i32;
 }
 
 class Router[T] {
 
-	private block: RouteBlock[T];
-	public inited: bool = false;
+	-block: RouteBlock[T];
+	inited: bool = false;
 
-	public static fn new() CLASS {
+	static fn new() CLASS {
 		return CLASS {
 			block: RouteBlock[T] {
 				blocks: Map[RouteBlock[T]]{}
@@ -22,7 +22,7 @@ class Router[T] {
 		};
 	}
 
-	public fn add(method: *String, url: *String, handler: T) void !invalid_route {
+	fn add(method: *String, url: *String, handler: T) void !invalid_route {
 
 		if url.bytes() == 0 || url.byte(0) != '/' {
 			throw invalid_route;
@@ -76,7 +76,7 @@ class Router[T] {
 		block.route = Route[T]{ handler: handler, args: args };
 	}
 
-	public fn find(method: *String, url: *String) &Route[T] !not_found {
+	fn find(method: *String, url: *String) &Route[T] !not_found {
 		let parts_ = url.split("/");
 		let parts = Array[String].new(2);
 		each parts_ as i, part {
@@ -92,7 +92,7 @@ class Router[T] {
 		return Router[T].find_route(this.block, 0, arg_c @as u8, parts) ?! throw not_found;;
 	}
 
-	private static fn find_route(block: *RouteBlock[T], index: u8, arg_c: u8, parts: *Array[String]) &?Route[T] {
+	-static fn find_route(block: *RouteBlock[T], index: u8, arg_c: u8, parts: *Array[String]) &?Route[T] {
 
 		if index == arg_c {
 			return block.route;

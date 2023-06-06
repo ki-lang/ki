@@ -1,9 +1,9 @@
 
 class Route[T] {
-	public handler: T;
-	public args: Array[RouteArg];
+	handler: T;
+	args: Array[RouteArg];
 
-	public fn params(path: *String) Map[String] {
+	fn params(path: *String) Map[String] {
 		let result = Map[String]{};
 		let parts = path.split("/"); 
 		each this.args as arg {

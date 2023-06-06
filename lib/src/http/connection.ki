@@ -68,13 +68,13 @@ class Connection {
 		}
 	}
 
-	private fn parse_body() void {
+	-fn parse_body() void {
 		if this.read_buf.length >= this.content_end_pos {
 			this.body_parsed = true;
 		}
 	}
 
-	private fn parse_headers() void !sent_error {
+	-fn parse_headers() void !sent_error {
 
 		let phase = this.phase;
 		let pos = this.parse_pos;
