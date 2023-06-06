@@ -42,6 +42,9 @@ $(OBJECTS): debug/build/%.o: %.c
 clean:
 	rm -f ki $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
 
+test: ki
+	./ki run test/*.ki --test
+
 
 ##############
 # DIST BULDS
@@ -208,4 +211,4 @@ dist_macos_arm64: $(OBJECTS_MACOS_ARM64)
 
 ##############
 
-.PHONY: clean dist_setup dist_all dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos_arm64
+.PHONY: clean test dist_setup dist_all dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos_arm64
