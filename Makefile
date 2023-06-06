@@ -46,7 +46,7 @@ test: ki
 	@./ki run test/*.ki --test
 	@echo "--------------------------"
 	@echo "> Run fail tests:"
-	@./ki build test/should-not-compile/*.ki -o /tmp/ki-test | grep -q "Trying to access private property" && echo "> Private properties : OK"
+	@./ki build test/should-not-compile/test-class-private-props.ki -o /tmp/ki-test | grep -q "Trying to access private property" && echo "> Private properties : OK"
 	@echo "--------------------------"
 
 ##############
