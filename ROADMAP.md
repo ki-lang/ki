@@ -4,16 +4,17 @@
 Feature todo list in order:
 
 ```
-- closure functions
-
 - declare functions for classes/structs from other libraries
 - install global packages that compile the code to a binary in ~/.ki/bin | ki pkg global add {url} | ki pkg global install
 - add a message to your errors
-- union & c_union
 
 - trait generic types
 - function generic types
 
+- union & c_union
+- closure functions
+
+- break outer loops
 - access type 'namespace'
 - multi-threaded AST parsing + IR gen
 - inline if ... ? ... : ...
