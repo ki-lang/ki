@@ -5,27 +5,26 @@ Feature todo list in order:
 
 ```
 - declare functions for classes/structs from other libraries
-- install global packages that compile the code to a binary in ~/.ki/bin | ki pkg global add {url} | ki pkg global install
 - add a message to your errors
 
 - trait generic types
 - function generic types
+- inline if ... ? ... : ...
+- break outer loops
+- --watch param to watch for file changes and trigger a build
+- vscode extension
+- calling functions using named arguments
 
 - union & c_union
 - closure functions
 
-- break outer loops
-- access type 'namespace'
-- multi-threaded AST parsing + IR gen
-- inline if ... ? ... : ...
-- --watch param to watch for file changes and trigger a build
-- vscode extension
+- install global packages that compile the code to a binary in ~/.ki/bin | ki pkg global add {url} | ki pkg global install
 - async library
+
+- multi-threaded AST parsing + IR gen
 - multiple iterators
 - complete debug info
-- calling functions using named arguments
 - implement IO URing where useful
-- replace malloc with something better
 ```
 
 ## Maybe
