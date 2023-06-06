@@ -350,6 +350,7 @@ struct Func {
     bool only_returns_strict;
     bool will_exit;
     bool uses_stack_alloc;
+    bool parse_args;
     // Optimizations
     bool opt_hot;
     bool opt_inline;

@@ -169,6 +169,8 @@ void stage_1_func(Fc *fc) {
         skip_body(fc, ')');
     } else {
         rtok(fc);
+        func->parse_args = false;
+        func->chunk_args = chunk_clone(fc->alc, fc->chunk);
     }
 
     if (fc->is_header) {

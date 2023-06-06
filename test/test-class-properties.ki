@@ -1,0 +1,22 @@
+
+use ns;
+
+test "read/modify class properties" {
+
+	let x = ns:APublicClass{ public_prop: 111, readonly_prop: 333 };
+
+	// Test initial values
+	@expect x.public_prop == 111;
+	@expect x.readonly_prop == 333;
+
+
+	// Test changing values
+	x.public_prop = x.readonly_prop - x.public_prop;
+	x.change_read_only_prop(444);
+
+	@expect x.public_prop == 222;
+	@expect x.readonly_prop == 444;
+
+	// Test calling a public function
+	x.public_func();
+}

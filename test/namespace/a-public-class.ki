@@ -2,8 +2,12 @@
 class APublicClass {
 	public_prop: i32 = 1; 
 	-private_prop: i32 = 2; 
+	~readonly_prop: i32 = 3; 
 	fn public_func {
 	} 
 	-fn private_func {
+	} 
+	fn change_read_only_prop(v: i32) void {
+		this.readonly_prop = v;
 	} 
 }

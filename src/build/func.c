@@ -1,7 +1,7 @@
 
 #include "../all.h"
 
-Func *func_init(Allocator *alc, Build* b) {
+Func *func_init(Allocator *alc, Build *b) {
     //
     Func *func = al(alc, sizeof(Func));
     func->rett = b->type_void;
@@ -19,6 +19,7 @@ Func *func_init(Allocator *alc, Build* b) {
     func->only_returns_strict = true;
     func->will_exit = false;
     func->uses_stack_alloc = false;
+    func->parse_args = true;
 
     func->errors = NULL;
     func->can_error = false;

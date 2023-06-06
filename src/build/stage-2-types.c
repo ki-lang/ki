@@ -262,6 +262,8 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
                 skip_body(fc, ')');
             } else {
                 rtok(fc);
+                func->chunk_args = chunk_clone(fc->alc, fc->chunk);
+                func->parse_args = false;
             }
 
             skip_until_char(fc, "{");
@@ -327,54 +329,56 @@ void stage_2_func(Fc *fc, Func *func) {
     Func *prev_error_func_info = fc->error_func_info;
     fc->error_func_info = func;
     //
-    fc->chunk = func->chunk_args;
     char *token = fc->token;
     Allocator *alc = fc->alc;
 
     // Args
-    tok(fc, token, true, true);
-    while (strcmp(token, ")") != 0) {
-
-        if (!is_valid_varname(token)) {
-            sprintf(fc->sbuf, "Invalid argument name: '%s'", token);
-            fc_error(fc);
-        }
-        if (map_get(func->args_by_name, token)) {
-            sprintf(fc->sbuf, "Argument name already used: '%s'", token);
-            fc_error(fc);
-        }
-
-        char *name = dups(alc, token);
-
-        tok_expect(fc, ":", true, true);
-
-        Chunk *val_chunk = NULL;
-        Chunk *type_chunk = chunk_clone(alc, fc->chunk);
-
-        Type *type = read_type(fc, alc, func->scope->parent, true, true, rtc_func_arg);
-
+    fc->chunk = func->chunk_args;
+    if (func->parse_args) {
         tok(fc, token, true, true);
-        if (strcmp(token, "=") == 0) {
-            val_chunk = chunk_clone(alc, fc->chunk);
-            skip_value(fc);
-        } else {
-            rtok(fc);
-        }
+        while (strcmp(token, ")") != 0) {
 
-        tok(fc, token, false, true);
-        if (strcmp(token, ",") == 0) {
+            if (!is_valid_varname(token)) {
+                sprintf(fc->sbuf, "Invalid argument name: '%s'", token);
+                fc_error(fc);
+            }
+            if (map_get(func->args_by_name, token)) {
+                sprintf(fc->sbuf, "Argument name already used: '%s'", token);
+                fc_error(fc);
+            }
+
+            char *name = dups(alc, token);
+
+            tok_expect(fc, ":", true, true);
+
+            Chunk *val_chunk = NULL;
+            Chunk *type_chunk = chunk_clone(alc, fc->chunk);
+
+            Type *type = read_type(fc, alc, func->scope->parent, true, true, rtc_func_arg);
+
+            tok(fc, token, true, true);
+            if (strcmp(token, "=") == 0) {
+                val_chunk = chunk_clone(alc, fc->chunk);
+                skip_value(fc);
+            } else {
+                rtok(fc);
+            }
+
             tok(fc, token, false, true);
-        } else if (strcmp(token, ")") != 0) {
-            sprintf(fc->sbuf, "Unexpected token '%s'", token);
-            fc_error(fc);
+            if (strcmp(token, ",") == 0) {
+                tok(fc, token, false, true);
+            } else if (strcmp(token, ")") != 0) {
+                sprintf(fc->sbuf, "Unexpected token '%s'", token);
+                fc_error(fc);
+            }
+
+            Arg *arg = arg_init(alc, name, type);
+            arg->value_chunk = val_chunk;
+            arg->type_chunk = type_chunk;
+
+            array_push(func->args, arg);
+            map_set(func->args_by_name, name, arg);
         }
-
-        Arg *arg = arg_init(alc, name, type);
-        arg->value_chunk = val_chunk;
-        arg->type_chunk = type_chunk;
-
-        array_push(func->args, arg);
-        map_set(func->args_by_name, name, arg);
     }
 
     // Return type

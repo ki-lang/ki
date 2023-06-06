@@ -122,7 +122,8 @@ Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name_, Array
     func->is_static = is_static;
     if (args)
         func->args = args;
-    func->rett = rett;
+    if (rett)
+        func->rett = rett;
 
     array_push(fc->funcs, func);
     map_set(class->funcs, name, func);

@@ -1,0 +1,7 @@
+
+use ns;
+
+fn main {
+	let x = ns:APublicClass{};
+	x.readonly_prop = 5;
+}

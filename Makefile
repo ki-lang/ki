@@ -46,7 +46,8 @@ test: ki
 	@./ki run test/*.ki --test
 	@echo "--------------------------"
 	@echo "> Run fail tests:"
-	@./ki build test/should-not-compile/test-class-private-props.ki -o /tmp/ki-test | grep -q "Trying to access private property" && echo "> Private properties : OK"
+	@./ki build test/should-not-compile/test-class-private-props.ki -o /tmp/ki-test | grep -q "Trying to access a private property" && echo "> Private properties : OK"
+	@./ki build test/should-not-compile/test-class-readonly-props.ki -o /tmp/ki-test | grep -q "Trying to assign to a readonly property" && echo "> Readonly properties : OK"
 	@echo "--------------------------"
 
 ##############

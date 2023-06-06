@@ -268,6 +268,17 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                         decl->is_mut = true;
                     }
                 }
+                if (left->type == v_class_pa) {
+                    VClassPA *pa = left->item;
+                    if (pa->prop->act != act_public && pa->on->rett->class->fc->nsc != fc->nsc) {
+                        if (pa->prop->act == act_readonly) {
+                            sprintf(fc->sbuf, "Trying to assign to a readonly property from another namespace");
+                        } else {
+                            sprintf(fc->sbuf, "Trying to assign to a private property from another namespace");
+                        }
+                        fc_error(fc);
+                    }
+                }
 
                 value_disable_upref_deref(left);
 

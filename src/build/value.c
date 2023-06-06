@@ -474,8 +474,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             ClassProp *prop = map_get(class->props, token);
             if (prop) {
                 // Class prop
-                if (prop->act == act_private && !scope_contains(class->scope, scope)) {
-                    sprintf(fc->sbuf, "Trying to access private property outside the class");
+                if (prop->act == act_private && class->fc->nsc != fc->nsc) {
+                    sprintf(fc->sbuf, "Trying to access a private property from another namespace");
                     fc_error(fc);
                 }
 
@@ -1363,7 +1363,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     bool can_error = ont->func_can_error;
 
     if (!args || !rett) {
-        sprintf(fc->sbuf, "Function pointer value is missing function type information (compiler bug)");
+        sprintf(fc->sbuf, "Function pointer value is missing function type information (compiler bug) | args: %p | return-type: %p", args, rett);
         fc_error(fc);
     }
 
