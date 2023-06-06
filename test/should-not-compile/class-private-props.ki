@@ -1,0 +1,8 @@
+
+use ns;
+
+fn main {
+	let x = ns:APublicClass{};
+	let a = x.private_prop;
+	x.private_func();
+}

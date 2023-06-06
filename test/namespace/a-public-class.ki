@@ -1,0 +1,9 @@
+
+class APublicClass {
+	public_prop: i32 = 1; 
+	-private_prop: i32 = 2; 
+	fn public_func {
+	} 
+	-fn private_func {
+	} 
+}

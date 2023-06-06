@@ -43,8 +43,11 @@ clean:
 	rm -f ki $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
 
 test: ki
-	./ki run test/*.ki --test
-
+	@./ki run test/*.ki --test
+	@echo "--------------------------"
+	@echo "> Run fail tests:"
+	@./ki build test/should-not-compile/*.ki -o /tmp/ki-test | grep -q "Trying to access private property" && echo "> Private properties : OK"
+	@echo "--------------------------"
 
 ##############
 # DIST BULDS
