@@ -447,9 +447,29 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
         // Value scope
         Type *rett = vscope->vscope->rett;
         Value *val = read_value(fc, alc, scope, true, 0, false);
-        val = try_convert(fc, alc, val, rett);
+        if (type_is_void(val->rett)) {
+            sprintf(fc->sbuf, "You cannot return a void value inside a @value scope");
+            fc_error(fc);
+        }
+        if (rett) {
+            if (rett->nullable || val->rett->nullable) {
+                if (!rett->nullable) {
+                    rett = type_clone(alc, rett);
+                    rett->nullable = true;
+                    vscope->vscope->rett = rett;
+                }
+                if (!val->rett->nullable) {
+                    val->rett = type_clone(alc, val->rett);
+                    val->rett->nullable = true;
+                }
+            }
+            val = try_convert(fc, alc, val, rett);
 
-        type_check(fc, rett, val->rett);
+            type_check(fc, rett, val->rett);
+        } else {
+            rett = val->rett;
+            vscope->vscope->rett = rett;
+        }
 
         val = usage_move_value(alc, fc, scope, val);
 

@@ -84,7 +84,7 @@ class Poll {
         let pool = this.pool;
         let listeners = this.listeners;
 
-        let lsn = pool.pop() !? @vs : PollListener {
+        let lsn = pool.pop() !? @value {
             #if OS == linux
             let new = PollListener {
                 poll_fd: this.fd,

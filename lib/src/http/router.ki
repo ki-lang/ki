@@ -63,7 +63,7 @@ class Router[T] {
 				throw invalid_route;
 			}
 
-			let find = blocks.get(key) !? @vs : &RouteBlock[T] {
+			let find = blocks.get(key) !? @value {
 				let v = RouteBlock[T]{ blocks: Map[RouteBlock[T]]{} };
 				let ref = &v;
 				blocks.set(key.copy(), v);

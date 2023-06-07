@@ -2,7 +2,7 @@
 global g_mimes : ?Map[String];
 fn mime(extension_no_dot: *String) String {
 
-	let mimes = g_mimes ?? @vs : &Map[String] {
+	let mimes = g_mimes ?? @value {
 		let mimes = Map[String]{};
 
 		mimes.set("aac", "audio/aac");

@@ -323,28 +323,28 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false);
         //
-    } else if (strcmp(token, "@vs") == 0) {
+    } else if (strcmp(token, "@value") == 0) {
         // value scope
-        tok_expect(fc, ":", false, true);
-        Type *rett = read_type(fc, alc, scope, false, true, rtc_func_rett);
-        if (type_is_void(rett)) {
-            sprintf(fc->sbuf, "Value scope return type cannot be void");
-            fc_error(fc);
-        }
+        // tok_expect(fc, ":", false, true);
+        // Type *rett = read_type(fc, alc, scope, false, true, rtc_func_rett);
+        // if (type_is_void(rett)) {
+        //     sprintf(fc->sbuf, "Value scope return type cannot be void");
+        //     fc_error(fc);
+        // }
 
         tok_expect(fc, "{", false, true);
         Scope *sub = scope_init(alc, sct_vscope, scope, true);
         sub->vscope = al(alc, sizeof(VScope));
-        sub->vscope->rett = rett;
+        sub->vscope->rett = NULL;
         sub->vscope->lvar = NULL;
         read_ast(fc, sub, false);
 
-        if (!sub->did_return) {
-            sprintf(fc->sbuf, "Value scope did not return a value");
+        if (!sub->did_return || !sub->vscope->rett) {
+            sprintf(fc->sbuf, "@value scope did not return a value");
             fc_error(fc);
         }
 
-        v = value_init(alc, v_scope, sub, rett);
+        v = value_init(alc, v_scope, sub, sub->vscope->rett);
 
     } else if (strcmp(token, "@ptrv") == 0) {
         tok_expect(fc, "(", false, true);

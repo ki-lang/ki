@@ -7,7 +7,7 @@ macro array {
 		"{}" values @repeat;
 	}
 	output {
-		"@vs : Array[%type] {\n"
+		"@value {\n"
 		"let array = Array[%type].new();\n"
 		"array.push(%values);\n"
 		"return array;\n"
