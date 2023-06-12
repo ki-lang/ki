@@ -91,7 +91,6 @@ Value *vgen_class_pa(Allocator *alc, Scope *scope, Value *on, ClassProp *prop) {
 
     if (scope && type_tracks_ownership(prop_type)) {
         Type *rett = type_clone(alc, prop_type);
-        rett->ref = true;
         res->rett = rett;
 
         Value *from = vgen_ir_from(alc, res);
@@ -257,7 +256,6 @@ Value *vgen_array_item(Allocator *alc, Scope *scope, Value *on, Value *index) {
 
     if (scope && type_tracks_ownership(type)) {
         Type *rett = type_clone(alc, type);
-        rett->ref = true;
         res->rett = rett;
 
         Value *from = vgen_ir_from(alc, res);

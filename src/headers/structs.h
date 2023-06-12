@@ -280,7 +280,6 @@ struct Type {
     bool func_can_error;
     bool strict_ownership;
     bool borrow;
-    bool ref;
     bool weak_ptr;
 };
 
@@ -437,7 +436,6 @@ struct TypeCheck {
     int array_size;
     int type;
     bool borrow;
-    bool ref;
 };
 
 struct Test {

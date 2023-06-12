@@ -113,7 +113,6 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         if (on->rett->strict_ownership) {
             Type *rett = type_clone(alc, on->rett);
             rett->strict_ownership = false;
-            rett->ref = true;
             rett->borrow = false;
             on->rett = rett;
         }
@@ -793,7 +792,6 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
         if (scope && type_tracks_ownership(type)) {
             Type *rett = type_clone(alc, type);
-            rett->ref = true;
             res->rett = rett;
 
             Value *from = vgen_ir_from(alc, res);
