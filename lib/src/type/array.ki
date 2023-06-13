@@ -79,7 +79,7 @@ class Array[T] {
 		@move item;
 	}
 
-	fn get(index: uxx) &T !not_found {
+	fn get(index: uxx) T !not_found {
 		if index >= this.length {
 			throw not_found;
 		}
@@ -135,7 +135,7 @@ class Array[T] {
 		return 0;
 	}
 
-	fn __each(key_ref: uxx[1]) &T !end {
+	fn __each(key_ref: uxx[1]) T !end {
 		let key = key_ref[0];
 		if key >= this.length {
 			throw end;

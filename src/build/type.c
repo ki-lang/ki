@@ -131,7 +131,6 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     bool async = false;
 
     bool borrow = false;
-    bool ref = false;
     bool weak_ptr = false;
     bool inline_ = false;
 
@@ -158,25 +157,13 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         borrow = true;
         tok(fc, token, true, false);
     }
-    if (strcmp(token, "&") == 0) {
-        if (weak_ptr) {
-            sprintf(fc->sbuf, "You cannot use both @weak and & in the same type");
-            fc_error(fc);
-        }
-        if (borrow) {
-            sprintf(fc->sbuf, "You cannot use both * and & in the same type");
-            fc_error(fc);
-        }
-        ref = true;
-        tok(fc, token, true, false);
-    }
 
     if (strcmp(token, "?") == 0) {
         nullable = true;
         tok(fc, token, true, false);
     }
 
-    if (inline_ && (borrow || ref || weak_ptr || nullable)) {
+    if (inline_ && (borrow || weak_ptr || nullable)) {
         sprintf(fc->sbuf, "You cannot use &/*/? on inline types '.'");
         fc_error(fc);
     }
@@ -341,10 +328,6 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     if (borrow && context != rtc_prop_type && context != rtc_func_arg && context != rtc_ptrv && context != rtc_sub_type) {
         sprintf(fc->sbuf, "You can only use '*' borrow types for function arguments or object property types");
-        fc_error(fc);
-    }
-    if (ref && context != rtc_func_rett && context != rtc_sub_type) {
-        sprintf(fc->sbuf, "You can only use '&' reference types for function return types");
         fc_error(fc);
     }
     if (weak_ptr && context != rtc_prop_type) {

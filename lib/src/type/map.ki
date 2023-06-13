@@ -33,7 +33,7 @@ class Map[T] {
 		this._values.set(index, value) !! return;;
 	}
 
-	fn get(key: *String) &T !not_found {
+	fn get(key: *String) T !not_found {
 		let index = this._keys.index_of(key) !! throw not_found;;
 		return this._values.get(index) !! throw not_found;;
 	}
@@ -42,7 +42,7 @@ class Map[T] {
 		return 0;
 	}
 
-	fn __each(key_index_ref: *uxx[1]) &String !end {
+	fn __each(key_index_ref: *uxx[1]) String !end {
 		let key_i = key_index_ref[0];
 		let key_v = this._keys.get(key_i) !! throw end;;
 		key_index_ref[0] = key_i + 1;

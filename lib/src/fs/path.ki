@@ -44,7 +44,7 @@ class Path {
 	//}
 }
 
-fn exe_dir() &String {
+fn exe_dir() String {
 	let res = EXE_DIR ?! {
 		let dir = dir_of(exe_path());
 		EXE_DIR = dir;
@@ -53,7 +53,7 @@ fn exe_dir() &String {
 	return res;
 }
 
-fn exe_path() &String {
+fn exe_path() String {
 	let path = EXE_PATH ?! {
 		let str = String.make_empty(sys.OS.PATHMAX);
 		let data = str.data();

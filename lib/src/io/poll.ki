@@ -233,7 +233,7 @@ class Poll {
         return event_count;
     }
 
-    fn get_event(index: uxx) &PollEvent !invalid_index {
+    fn get_event(index: uxx) PollEvent !invalid_index {
         if(index >= this.resultc) {
             throw invalid_index;
         }

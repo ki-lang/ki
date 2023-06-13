@@ -76,7 +76,7 @@ class Router[T] {
 		block.route = Route[T]{ handler: handler, args: args };
 	}
 
-	fn find(method: *String, url: *String) &Route[T] !not_found {
+	fn find(method: *String, url: *String) Route[T] !not_found {
 		let parts_ = url.split("/");
 		let parts = Array[String].new(2);
 		each parts_ as i, part {
