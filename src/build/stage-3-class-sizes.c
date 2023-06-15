@@ -1,6 +1,8 @@
 
 #include "../all.h"
 
+void stage_3_circular(Class *class);
+
 void stage_3(Fc *fc) {
     //
     Build *b = fc->b;
@@ -56,8 +58,44 @@ void stage_3(Fc *fc) {
             sprintf(b->sbuf, "Missing class size: %s", class->dname);
             die(b->sbuf);
         }
+
+        // Detect if class is circular
+        stage_3_circular(class);
     }
 
     //
     chain_add(b->stage_4, fc);
+}
+
+bool stage_3_circular_find(Class *find, Class *in) {
+    //
+    if (in->circular_checked) {
+        return false;
+    }
+    in->circular_checked = true;
+    Map *props = in->props;
+    for (int i = 0; i < props->values->length; i++) {
+        ClassProp *prop = array_get_index(props->values, i);
+        Class *pclass = prop->type->class;
+        if (pclass && pclass->type == ct_struct && pclass->is_rc) {
+            if (pclass == find) {
+                in->circular_checked = false;
+                return true;
+            }
+            bool check = stage_3_circular_find(find, pclass);
+            if (check) {
+                in->circular_checked = false;
+                return true;
+            }
+        }
+    }
+    in->circular_checked = false;
+    return false;
+}
+
+void stage_3_circular(Class *class) {
+    //
+    if (class->type == ct_struct && class->is_rc) {
+        class->circular = stage_3_circular_find(class, class);
+    }
 }

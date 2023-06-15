@@ -24,6 +24,9 @@ Class *class_init(Allocator *alc) {
     class->can_iter = false;
     class->async = false;
 
+    class->circular = false;
+    class->circular_checked = false;
+
     class->func_ref = NULL;
     class->func_deref = NULL;
     class->func_deref_props = NULL;

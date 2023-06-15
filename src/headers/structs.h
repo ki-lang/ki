@@ -317,6 +317,8 @@ struct Class {
     bool can_iter;
     bool async;
     bool has_borrows;
+    bool circular;
+    bool circular_checked;
 };
 struct ClassProp {
     Type *type;
