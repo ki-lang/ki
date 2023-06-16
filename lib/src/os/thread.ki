@@ -7,7 +7,7 @@ header "pthread" as pt;
 
 use ki:mem;
 
-struct ThreadEntry[F, T] {
+class ThreadEntry[F, T] {
 	data: T;
 	start_func: F;
 }
@@ -23,7 +23,7 @@ class Thread[T] {
 	-static fn entry(data: ptr) void {
 		let entry = data @as ThreadEntry[fn(T)(void), T];
 		entry.start_func(entry.data @as T);
-		mem:free(entry @as ptr);
+		@deref entry;
 	}
 
 	static fn start(start_func: fn(T)(void), data: async T) CLASS !fail {
@@ -32,6 +32,7 @@ class Thread[T] {
 			start_func: start_func,
 			data: data
 		};
+		@ref entry_data;
 
 		#if OS == win
 		let thr = sys.CreateThread(null, 0, CLASS.entry @as ptr, entry_data @as ptr, 0, null);
