@@ -298,6 +298,15 @@ void cmd_build(int argc, char *argv[]) {
     pkc_load_nsc(pkc_ki, "os", NULL);
 
     //
+    b->gen_fc = fc_init(b, "ki_generated_compiler_code", b->nsc_main, b->nsc_main->pkc, true);
+    b->gen_fc->chunk = NULL;
+    b->unique_id = al(alc, 100);
+
+    chain_add(b->stage_6, b->gen_fc);
+
+    sprintf(b->unique_id, "%lu", (unsigned long)time(NULL));
+
+    // Start compiler
 #ifdef WIN32
     void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))io_loop, (void *)b, 0, NULL);
 #else

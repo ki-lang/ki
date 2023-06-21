@@ -80,6 +80,8 @@ struct Build {
     char *os;
     char *arch;
     //
+    char *unique_id;
+    //
     char *path_out;
     char *cache_dir;
     char *pkg_dir;
@@ -96,6 +98,7 @@ struct Build {
     Fc *main_fc;
     Nsc *nsc_type;
     Nsc *nsc_io;
+    Fc *gen_fc; // fc for generated code
     //
     MacroScope *mc;
     //

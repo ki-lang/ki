@@ -16,6 +16,7 @@ void stage_1_macro(Fc *fc);
 void stage_1(Fc *fc) {
     //
     Build *b = fc->b;
+
     if (b->verbose > 2) {
         printf("# Stage 1 : Parse : %s\n", fc->path_ki);
     }
