@@ -261,6 +261,9 @@ void cmd_build(int argc, char *argv[]) {
     b->link_static = link_static;
     //
     b->type_void = type_gen_void(alc);
+    // GC
+    b->gc_func = NULL;
+    b->gc_global = NULL;
 
 #ifdef WIN32
     LARGE_INTEGER frequency;
@@ -304,7 +307,8 @@ void cmd_build(int argc, char *argv[]) {
 
     chain_add(b->stage_6, b->gen_fc);
 
-    sprintf(b->unique_id, "%lu", (unsigned long)time(NULL));
+    char random_buf[20];
+    sprintf(b->unique_id, "%lu_%s", (unsigned long)time(NULL), rand_string(random_buf, 16));
 
     // Start compiler
 #ifdef WIN32

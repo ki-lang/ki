@@ -134,6 +134,9 @@ struct Build {
     Class *class_array;
     Class *class_map;
     //
+    Func *gc_func;
+    Func *gc_global;
+    //
     Type *type_void;
     //
     int event_count;
