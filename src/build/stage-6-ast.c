@@ -302,7 +302,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, left->rett);
                 type_check(fc, left->rett, right->rett);
 
-                if (left->type != v_ptrv) {
+                if (type_tracks_ownership(left->rett) && left->type != v_ptrv) {
                     right = usage_move_value(alc, fc, scope, right);
                 }
                 if (left->type == v_class_pa) {
