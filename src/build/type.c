@@ -145,13 +145,13 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
 
-    if (strcmp(token, "@weak") == 0) {
+    if (strcmp(token, "weak") == 0) {
         weak_ptr = true;
         tok(fc, token, true, true);
     }
     if (strcmp(token, "*") == 0) {
         if (weak_ptr) {
-            sprintf(fc->sbuf, "You cannot use both @weak and * in the same type");
+            sprintf(fc->sbuf, "You cannot use both 'weak' and '*' in the same type");
             fc_error(fc);
         }
         borrow = true;
@@ -301,10 +301,12 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         fc_error(fc);
     }
 
-    if (type_tracks_ownership(type)) {
-        type->borrow = borrow;
-        type->weak_ptr = weak_ptr;
+    if (!type_tracks_ownership(type)) {
+        borrow = false;
+        weak_ptr = false;
     }
+    type->borrow = borrow;
+    type->weak_ptr = weak_ptr;
 
     if (inline_ && type->ptr_depth > 0) {
         type = type_get_inline(alc, type);
@@ -331,7 +333,11 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         fc_error(fc);
     }
     if (weak_ptr && context != rtc_prop_type) {
-        sprintf(fc->sbuf, "You can only use '@weak' types for object property types");
+        sprintf(fc->sbuf, "You can only use 'weak' types for object property types");
+        fc_error(fc);
+    }
+    if (weak_ptr && !nullable) {
+        sprintf(fc->sbuf, "Weak pointers types must be nullable. Add a '?' to your type");
         fc_error(fc);
     }
     if (type->bytes == 0) {

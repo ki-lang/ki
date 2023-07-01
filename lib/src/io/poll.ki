@@ -257,7 +257,7 @@ struct PollListener {
     #if OS == linux
     -poll_fd: i32;
     #else
-    -poll: @weak Poll;
+    -poll: weak Poll;
     ~poll_index: uxx;
     #end
     ~key: uxx = 0;
