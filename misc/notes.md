@@ -35,3 +35,13 @@ Compiler:
 - generate init func:
 -- Initialize all the GC[CLASS] classes and store them in the globals
 
+
+## Circular refs Method 2
+
+Add all circular objects to a list (shared over threads) when allocating the object. Start a new thread at the start of the program that loops the list every x seconds.
+The loop:
+- disable free'ing of circular objects
+- sleep 1 ms
+- loop each object
+-- ref_check++ on each circular property recursively
+...
