@@ -259,7 +259,7 @@ void cmd_build(int argc, char *argv[]) {
     b->run_code = run_code;
     b->LOC = 0;
     b->link_static = link_static;
-    b->use_cc = !array_contains(args, "--no-cc");
+    b->use_cc = !array_contains(args, "--no-cc", arr_find_str);
     //
     b->type_void = type_gen_void(alc);
     // GC
