@@ -154,6 +154,7 @@ struct Build {
     bool core_types_scanned;
     bool link_static;
     bool use_cc; // cycle collection
+    bool allow_circular;
 };
 
 struct Fc {

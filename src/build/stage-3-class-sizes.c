@@ -106,7 +106,7 @@ void stage_3_circular(Build *b, Class *class) {
         Array *prop_names = array_make(b->alc, 10);
         bool circular = stage_3_circular_find(class, class, prop_names);
         class->circular = circular;
-        if (circular && !b->use_cc) {
+        if (circular && !b->allow_circular) {
             Str *list = str_make(b->alc, 500);
             for (int i = 0; i < prop_names->length; i++) {
                 if (i > 0) {

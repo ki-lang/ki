@@ -260,6 +260,7 @@ void cmd_build(int argc, char *argv[]) {
     b->LOC = 0;
     b->link_static = link_static;
     b->use_cc = !array_contains(args, "--no-cc", arr_find_str);
+    b->allow_circular = b->use_cc || array_contains(args, "--allow-circular", arr_find_str);
     //
     b->type_void = type_gen_void(alc);
     // GC
@@ -445,8 +446,12 @@ void cmd_build_help(bool run_code) {
     printf(" --test              generate a 'main' that runs all tests\n");
     printf(" --target            compile for a specific os/arch\n");
     printf("                     linux-x64, macos-x64, win-x64\n");
+    printf("\n");
     printf(" --no-cc             compile without a cycle collector\n");
     printf("                     compiler will not allow circular references\n");
+    printf(" --allow-circular    allow circular references while using --no-cc\n");
+    printf("                     if you create a circular reference, this will\n");
+    printf("                     result into a memory leak. use with caution.\n");
     printf("\n");
 
     printf(" -v -vv -vvv         show compile info\n");
