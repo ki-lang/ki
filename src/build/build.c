@@ -27,7 +27,7 @@ void cmd_build(int argc, char *argv[]) {
         if (arg[0] != '-')
             continue;
         sprintf(argbuf, ".%s.", arg);
-        if (!strstr(".--optimize.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.--help.-h.-v.-vv.-vvv.", argbuf)) {
+        if (!strstr(".--optimize.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.--help.-h.-v.-vv.-vvv.--no-cc.", argbuf)) {
             sprintf(argbuf, "❓ Unknown option '%s'", arg);
             die(argbuf);
         }
@@ -259,6 +259,7 @@ void cmd_build(int argc, char *argv[]) {
     b->run_code = run_code;
     b->LOC = 0;
     b->link_static = link_static;
+    b->use_cc = !array_contains(args, "--no-cc");
     //
     b->type_void = type_gen_void(alc);
     // GC
@@ -444,6 +445,8 @@ void cmd_build_help(bool run_code) {
     printf(" --test              generate a 'main' that runs all tests\n");
     printf(" --target            compile for a specific os/arch\n");
     printf("                     linux-x64, macos-x64, win-x64\n");
+    printf(" --no-cc             compile without a cycle collector\n");
+    printf("                     compiler will not allow circular references\n");
     printf("\n");
 
     printf(" -v -vv -vvv         show compile info\n");

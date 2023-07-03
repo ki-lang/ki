@@ -105,7 +105,8 @@ void stage_3_circular(Build *b, Class *class) {
     if (class->type == ct_struct && class->is_rc) {
         Array *prop_names = array_make(b->alc, 10);
         bool circular = stage_3_circular_find(class, class, prop_names);
-        if (circular) {
+        class->circular = circular;
+        if (circular && !b->use_cc) {
             Str *list = str_make(b->alc, 500);
             for (int i = 0; i < prop_names->length; i++) {
                 if (i > 0) {
@@ -114,7 +115,7 @@ void stage_3_circular(Build *b, Class *class) {
                 str_append_chars(list, array_get_index(prop_names, i));
             }
             char err[1024];
-            sprintf(err, "Circular references are not allowed, you should make atleast 1 of the properties a 'weak' references type\nLoop: %s -> %s (%s)", class->dname, str_to_chars(b->alc, list), class->dname);
+            sprintf(err, "Circular references are not allowed when using '--no-cc', you should make atleast 1 of the properties a 'weak' references type\nReference loop: %s -> %s (%s)", class->dname, str_to_chars(b->alc, list), class->dname);
             die(err);
         }
     }

@@ -153,6 +153,7 @@ struct Build {
     bool run_code;
     bool core_types_scanned;
     bool link_static;
+    bool use_cc; // cycle collection
 };
 
 struct Fc {
