@@ -1,6 +1,10 @@
 
 header "sys" as sys;
 
+fn !exit(code: i32) void {
+	sys.exit(code);
+}
+
 fn sleep_ms(ms: uxx) void {
 	#if OS == win
 	sys.Sleep(ms @as u32);
@@ -24,26 +28,3 @@ fn sleep_ns(ns: uxx) void {
     sys.nanosleep(ts, ts);
 	#end
 }
-
-fn !panic(msg: *String) void {
-	print("PANIC ERROR : ");
-	print(msg);
-	print("\n");
-	exit(1);
-}
-
-fn !exit(code: i32) void {
-	sys.exit(code);
-}
-
-//fn parse_args(i32 argc, ptr argv) Array<String> {
-//	let res = Array[String].make(argc);
-//	while(argc > 0) {
-//		argc--;
-//		let cstr = @ptrv(argv, c_string, 0);
-//		argv += @sizeof(ptr);
-//		res.push(cstr.str());
-//	}
-//	return res;
-//}
-

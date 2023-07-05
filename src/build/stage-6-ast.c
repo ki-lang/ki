@@ -212,7 +212,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             Arg *fail = array_get_index(func->args, 2);
             array_push(args, value_init(alc, v_decl, fail->decl, fail->type));
 
-            Func *log = ki_get_func(fc->b, "os", "test_expect");
+            Func *log = ki_get_func(fc->b, "core", "test_expect");
             Value *fptr = vgen_fptr(alc, log, NULL);
             Value *fcall = vgen_fcall(alc, scope, fptr, args, log->rett, NULL, line, col);
             array_push(scope->ast, token_init(alc, tkn_statement, fcall));
@@ -898,8 +898,8 @@ void stage_6_gen_test_main(Fc *fc) {
     Array *tests = fc->b->tests;
 
     char line[1024];
-    map_set(scope->identifiers, "os_test_print_name", ki_lib_get(b, "os", "test_print_name"));
-    map_set(scope->identifiers, "os_test_report", ki_lib_get(b, "os", "test_report"));
+    map_set(scope->identifiers, "os_test_print_name", ki_lib_get(b, "core", "test_print_name"));
+    map_set(scope->identifiers, "os_test_report", ki_lib_get(b, "core", "test_report"));
 
     Str *code = str_make(alc, 5000);
     str_append_chars(code, "let test_success : u32 = 0;\n");

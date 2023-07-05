@@ -1,0 +1,18 @@
+
+fn !panic(msg: *String) void {
+	print("PANIC ERROR : ");
+	print(msg);
+	print("\n");
+	exit(1);
+}
+
+//fn parse_args(i32 argc, ptr argv) Array<String> {
+//	let res = Array[String].make(argc);
+//	while(argc > 0) {
+//		argc--;
+//		let cstr = @ptrv(argv, c_string, 0);
+//		argv += @sizeof(ptr);
+//		res.push(cstr.str());
+//	}
+//	return res;
+//}
