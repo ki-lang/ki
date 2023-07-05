@@ -40,11 +40,13 @@ void stage_2_internals_gen(Fc *fc, Class *class) {
             weak_prop->value = vgen_vint(b->alc, 0, weak_type, false);
             map_set(class->props, "_RC_WEAK", weak_prop);
 
-            // Define _RC_CHECK
-            Type *rcc_type = type_gen(b, b->alc, "u32");
-            ClassProp *rcc_prop = class_prop_init(b->alc, class, rcc_type);
-            rcc_prop->value = vgen_vint(b->alc, 0, rcc_type, false);
-            map_set(class->props, "_RC_CHECK", rcc_prop);
+            if (class->circular) {
+                // Define _RC_CHECK
+                Type *rcc_type = type_gen(b, b->alc, "u32");
+                ClassProp *rcc_prop = class_prop_init(b->alc, class, rcc_type);
+                rcc_prop->value = vgen_vint(b->alc, 0, rcc_type, false);
+                map_set(class->props, "_RC_CHECK", rcc_prop);
+            }
         }
     }
 }
