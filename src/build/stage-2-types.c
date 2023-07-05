@@ -86,7 +86,7 @@ void stage_2(Fc *fc) {
     }
 
     //
-    chain_add(b->stage_3, fc);
+    chain_add(b->stage_2_internals, fc);
 }
 
 void stage_2_class(Fc *fc, Class *class) {
@@ -98,28 +98,14 @@ void stage_2_class(Fc *fc, Class *class) {
     fc->chunk = class->chunk_body;
     stage_2_class_props(fc, class, false);
 
-    // Generate __free / __deref / _RC
-    if (class->type == ct_struct) {
-        Build *b = fc->b;
-        if (class->is_rc) {
-            // Define _RC
-            Type *type = type_gen(b, b->alc, "u32");
-            ClassProp *prop = class_prop_init(b->alc, class, type);
-            prop->value = vgen_vint(b->alc, 1, type, false);
-            map_set(class->props, "_RC", prop);
-        }
-    }
-
     //
-    if (class->type == ct_struct && class->props->keys->length == 0) {
+    if (class->type == ct_struct && class->props->keys->length == 0 && !class->is_rc) {
         sprintf(fc->sbuf, "Class has no properties");
         fc_error(fc);
     }
 
     //
-    if (!class_check_size(class)) {
-        array_push(fc->class_size_checks, class);
-    }
+    array_push(fc->class_size_checks, class);
 
     fc->error_class_info = prev_error_class_info;
 }

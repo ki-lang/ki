@@ -233,6 +233,7 @@ void cmd_build(int argc, char *argv[]) {
     b->write_ir = chain_make(alc);
     b->stage_1 = chain_make(alc);
     b->stage_2 = chain_make(alc);
+    b->stage_2_internals = chain_make(alc);
     b->stage_3 = chain_make(alc);
     b->stage_4 = chain_make(alc);
     b->stage_5 = chain_make(alc);
@@ -442,11 +443,13 @@ void cmd_build_help(bool run_code) {
     printf(" --optimize -O       apply code optimizations\n");
     printf(" --clean -c          clear cache\n");
     printf(" --debug -d          generate debug info\n");
-    printf(" --run -r            run code after compiling\n");
+    if (!run_code)
+        printf(" --run -r            run code after compiling\n");
     printf(" --test              generate a 'main' that runs all tests\n");
     printf(" --target            compile for a specific os/arch\n");
     printf("                     linux-x64, macos-x64, win-x64\n");
     printf("\n");
+
     printf(" --no-cc             compile without a cycle collector\n");
     printf("                     compiler will not allow circular references\n");
     printf(" --allow-circular    allow circular references while using --no-cc\n");

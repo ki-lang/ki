@@ -116,6 +116,7 @@ struct Build {
     Chain *write_ir;
     Chain *stage_1;
     Chain *stage_2;
+    Chain *stage_2_internals;
     Chain *stage_3;
     Chain *stage_4;
     Chain *stage_5;

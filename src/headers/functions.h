@@ -96,10 +96,12 @@ void fc_update_cache(Fc *fc);
 //
 void stage_1(Fc *);
 void stage_2(Fc *);
+void stage_2_internals(Fc *);
 void stage_2_class(Fc *fc, Class *class);
 void stage_2_class_defaults(Fc *fc, Class *class);
 void stage_2_class_type_checks(Fc *fc, Class *class);
 void stage_2_func(Fc *fc, Func *func);
+void stage_2_internals_gen(Fc *fc, Class *class);
 void stage_3(Fc *);
 void stage_4(Fc *);
 void stage_5(Fc *);
