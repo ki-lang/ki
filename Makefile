@@ -5,8 +5,8 @@ UNAMEO=$(shell uname -o)
 
 ifeq ($(UNAME), Linux)
 # From linux
-CC=clang-15
-LCC=clang-15
+CC=gcc
+LCC=gcc
 LLVM_CFG=llvm-config-15
 else
 # From Windows and MacOS
@@ -15,7 +15,7 @@ LCC=clang
 LLVM_CFG=llvm-config
 endif
 
-CFLAGS:=-g -O2 -pthread `$(LLVM_CFG) --cflags`
+CFLAGS:=-g -O0 -pthread `$(LLVM_CFG) --cflags`
 
 LINK_DYNAMIC=`$(LLVM_CFG) --ldflags --system-libs --libs` -lcurl -lm -lz -lstdc++ -lpthread
 

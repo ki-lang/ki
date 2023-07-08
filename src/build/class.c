@@ -483,6 +483,8 @@ void class_generate_cc_check_props(Class *class) {
     if (func->chunk_body)
         return;
 
+    func_make_arg_decls(func);
+
     Build *b = class->fc->b;
     Allocator *alc = b->alc;
 
@@ -506,12 +508,12 @@ void class_generate_cc_check_props(Class *class) {
         if (!pclass || !pclass->circular)
             continue;
 
-        Value *on = vgen_class_pa(alc, NULL, ir_this, prop1);
-        Value *ir_on = vgen_ir_val(alc, on, on->rett);
-
         Scope *scope = fscope;
+
+        Value *ir_on = value_init(alc, v_ir_load, vgen_class_pa(alc, NULL, ir_this, prop1), prop1->type);
+
         if (prop1->type->nullable) {
-            Value *is_null = vgen_compare(alc, class->fc->b, on, vgen_null(alc, b), op_ne);
+            Value *is_null = vgen_compare(alc, class->fc->b, ir_on, vgen_null(alc, b), op_ne);
             Scope *sub = scope_init(alc, sct_default, scope, true);
             TIf *ift = tgen_tif(alc, is_null, sub, NULL, NULL);
             Token *t = token_init(alc, tkn_if, ift);
@@ -519,16 +521,17 @@ void class_generate_cc_check_props(Class *class) {
             scope = sub;
         }
 
-        ClassProp *prop = map_get(class->props, "_RC_CHECK");
+        ClassProp *prop = map_get(pclass->props, "_RC_CHECK");
+        if (!prop) {
+            die("Compiler bug, missing _RC_CHECK");
+        }
         Value *pa = vgen_class_pa(alc, NULL, ir_on, prop);
-
         Value *ir_pa = vgen_ir_assign_val(alc, pa, prop->type);
         array_push(scope->ast, token_init(alc, tkn_ir_assign_val, ir_pa->item));
 
-        //
         Value *ir_pa_load = value_init(alc, v_ir_load, ir_pa, prop->type);
-        Value *sub = vgen_op(alc, class->fc->b, ir_pa_load, vgen_vint(alc, 1, prop->type, false), op_add, false);
-        Value *ir_add = vgen_ir_val(alc, sub, prop->type);
+        Value *add = vgen_op(alc, class->fc->b, ir_pa_load, vgen_vint(alc, 1, prop->type, false), op_add, false);
+        Value *ir_add = vgen_ir_val(alc, add, prop->type);
         array_push(scope->ast, token_init(alc, tkn_ir_val, ir_add->item));
 
         Token *as = tgen_assign(alc, ir_pa, ir_add);
@@ -541,6 +544,8 @@ void class_generate_cc_keep(Class *class) {
     Func *func = class->func_cc_keep;
     if (func->chunk_body)
         return;
+
+    func_make_arg_decls(func);
 
     Build *b = class->fc->b;
     Allocator *alc = b->alc;
@@ -586,12 +591,11 @@ void class_generate_cc_keep(Class *class) {
         if (!pclass || !pclass->circular)
             continue;
 
-        Value *on = vgen_class_pa(alc, NULL, ir_this, prop);
-        Value *ir_on = vgen_ir_val(alc, on, on->rett);
+        Value *ir_on = value_init(alc, v_ir_load, vgen_class_pa(alc, NULL, ir_this, prop), prop->type);
 
         Scope *scope = fscope;
         if (prop->type->nullable) {
-            Value *is_null = vgen_compare(alc, class->fc->b, on, vgen_null(alc, b), op_ne);
+            Value *is_null = vgen_compare(alc, class->fc->b, ir_on, vgen_null(alc, b), op_ne);
             Scope *sub = scope_init(alc, sct_default, scope, true);
             TIf *ift = tgen_tif(alc, is_null, sub, NULL, NULL);
             Token *t = token_init(alc, tkn_if, ift);

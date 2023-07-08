@@ -48,6 +48,7 @@ void llvm_gen_func_ir(LB *b) {
             char *v = llvm_var(b);
             str_append_chars(ir, v);
 
+            printf("func: %s | arg:%s | %p\n", func->dname, arg->name, arg->decl);
             arg->decl->llvm_val = v;
         }
         str_append_chars(ir, ")");

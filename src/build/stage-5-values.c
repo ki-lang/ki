@@ -6,6 +6,8 @@ void stage_5_func(Fc *fc, Func *func);
 
 void class_generate_free(Class *class);
 void class_generate_deref_props(Class *class);
+void class_generate_cc_check_props(Class *class);
+void class_generate_cc_keep(Class *class);
 
 void stage_5(Fc *fc) {
     //
@@ -56,8 +58,15 @@ void stage_5_class(Fc *fc, Class *class) {
     }
 
     if (class->type == ct_struct) {
-        if (class->is_rc && class->func_deref_props) {
-            class_generate_deref_props(class);
+        if (class->is_rc) {
+            if (class->func_deref_props)
+                class_generate_deref_props(class);
+            if (class->circular) {
+                if (class->func_cc_check_props)
+                    class_generate_cc_check_props(class);
+                if (class->func_cc_keep)
+                    class_generate_cc_keep(class);
+            }
         }
         class_generate_free(class);
     }
