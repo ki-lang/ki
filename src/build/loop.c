@@ -37,6 +37,7 @@ void *io_loop(void *build) {
 
         sleep_ns(10000); // 10 micro seconds
     }
+    return NULL;
 }
 
 void compile_loop(Build *b, int max_stage) {

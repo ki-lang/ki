@@ -31,6 +31,8 @@ Class *class_init(Allocator *alc) {
     class->func_deref = NULL;
     class->func_deref_props = NULL;
     class->func_free = NULL;
+    class->func_cc_check_props = NULL;
+    class->func_cc_keep = NULL;
     class->func_iter_init = NULL;
     class->func_iter_get = NULL;
     class->func_before_free = NULL;
@@ -473,4 +475,114 @@ Array *read_generic_types(Fc *fc, Scope *scope, Class *class) {
         fc_error(fc);
     }
     return types;
+}
+
+void class_generate_cc_check_props(Class *class) {
+    //
+    Func *func = class->func_cc_check_props;
+    if (func->chunk_body)
+        return;
+
+    Build *b = class->fc->b;
+    Allocator *alc = b->alc;
+
+    Scope *fscope = func->scope;
+    Type *type_ptr = type_gen(b, alc, "ptr");
+    Type *type_class = type_gen_class(alc, class);
+
+    Arg *this_arg = array_get_index(func->args, 0);
+    Decl *this_decl = this_arg->decl;
+    Value *this = value_init(alc, v_decl, this_decl, type_class);
+
+    Value *ir_this = vgen_ir_val(alc, this, this->rett);
+    array_push(fscope->ast, token_init(alc, tkn_ir_val, ir_this->item));
+
+    Array *props = class->props->values;
+    for (int i = 0; i < props->length; i++) {
+        char *name = array_get_index(class->props->keys, i);
+        ClassProp *prop1 = array_get_index(props, i);
+        Class *pclass = prop1->type->class;
+
+        if (!pclass || !pclass->circular)
+            continue;
+
+        Value *on = vgen_class_pa(alc, NULL, ir_this, prop1);
+        Value *ir_on = vgen_ir_val(alc, on, on->rett);
+
+        Scope *scope = fscope;
+        if (prop1->type->nullable) {
+            Value *is_null = vgen_compare(alc, class->fc->b, on, vgen_null(alc, b), op_ne);
+            Scope *sub = scope_init(alc, sct_default, scope, true);
+            TIf *ift = tgen_tif(alc, is_null, sub, NULL, NULL);
+            Token *t = token_init(alc, tkn_if, ift);
+            array_push(scope->ast, t);
+            scope = sub;
+        }
+
+        ClassProp *prop = map_get(class->props, "_RC_CHECK");
+        Value *pa = vgen_class_pa(alc, NULL, ir_on, prop);
+
+        Value *ir_pa = vgen_ir_assign_val(alc, pa, prop->type);
+        array_push(scope->ast, token_init(alc, tkn_ir_assign_val, ir_pa->item));
+
+        //
+        Value *ir_pa_load = value_init(alc, v_ir_load, ir_pa, prop->type);
+        Value *sub = vgen_op(alc, class->fc->b, ir_pa_load, vgen_vint(alc, 1, prop->type, false), op_add, false);
+        Value *ir_add = vgen_ir_val(alc, sub, prop->type);
+        array_push(scope->ast, token_init(alc, tkn_ir_val, ir_add->item));
+
+        Token *as = tgen_assign(alc, ir_pa, ir_add);
+        array_push(scope->ast, as);
+    }
+}
+
+void class_generate_cc_keep(Class *class) {
+    //
+    Func *func = class->func_cc_keep;
+    if (func->chunk_body)
+        return;
+
+    Build *b = class->fc->b;
+    Allocator *alc = b->alc;
+
+    Scope *fscope = func->scope;
+    Type *type_ptr = type_gen(b, alc, "ptr");
+    Type *type_class = type_gen_class(alc, class);
+
+    Arg *this_arg = array_get_index(func->args, 0);
+    Decl *this_decl = this_arg->decl;
+    Value *this = value_init(alc, v_decl, this_decl, type_class);
+
+    Value *ir_this = vgen_ir_val(alc, this, this->rett);
+    array_push(fscope->ast, token_init(alc, tkn_ir_val, ir_this->item));
+
+    // if (this._CC_KEEP == 1) return;
+    ClassProp *prop = map_get(class->props, "_CC_KEEP");
+    Value *pa = vgen_class_pa(alc, NULL, ir_this, prop);
+
+    Scope *sub = scope_init(alc, sct_default, fscope, true);
+    array_push(sub->ast, tgen_return(alc, fscope, NULL));
+
+    Value *is_zero = vgen_compare(alc, class->fc->b, pa, vgen_vint(alc, 1, prop->type, false), op_eq);
+    TIf *ift = tgen_tif(alc, is_zero, sub, NULL, NULL);
+    Token *t = token_init(alc, tkn_if, ift);
+    array_push(fscope->ast, t);
+
+    // call __cc_keep() on circular props
+    Array *props = class->props->values;
+    for (int i = 0; i < props->length; i++) {
+        char *name = array_get_index(class->props->keys, i);
+        ClassProp *prop = array_get_index(props, i);
+        Class *pclass = prop->type->class;
+
+        if (!pclass || !pclass->circular)
+            continue;
+
+        Value *pa = vgen_class_pa(alc, NULL, ir_this, prop);
+        Value *fptr = vgen_fptr(alc, pclass->func_cc_keep, NULL);
+        Array *values = array_make(alc, 2);
+        array_push(values, pa);
+        Value *fcall = vgen_fcall(alc, NULL, fptr, values, b->type_void, NULL, 1, 1);
+        array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
+    }
 }

@@ -305,6 +305,8 @@ struct Class {
     Func *func_deref;
     Func *func_deref_props;
     Func *func_free;
+    Func *func_cc_check_props;
+    Func *func_cc_keep;
     Func *func_iter_init;
     Func *func_iter_get;
     Func *func_before_free;
