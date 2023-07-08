@@ -301,6 +301,7 @@ void cmd_build(int argc, char *argv[]) {
     b->nsc_type = pkc_load_nsc(pkc_ki, "type", NULL);
     b->nsc_io = pkc_load_nsc(pkc_ki, "io", NULL);
     pkc_load_nsc(pkc_ki, "mem", NULL);
+    pkc_load_nsc(pkc_ki, "core", NULL);
     pkc_load_nsc(pkc_ki, "os", NULL);
 
     //

@@ -3,17 +3,13 @@ header "pthread" as pt;
 
 use mem;
 
-class Mutex[T] async {
+class Mutex async {
 
 	~mutex: ptr;
 
-	#if TYPE_IS_VOID T
-
-	// VOID
-
 	static fn new() CLASS { 
 		let mut = mem:calloc(pt.CONST.mutex_size);
-		pt.pthread_mutex_init(mut);
+		pt.pthread_mutex_init(mut, null);
 		return CLASS { mutex: mut };
 	}
 
@@ -25,32 +21,4 @@ class Mutex[T] async {
 		pt.pthread_mutex_unlock(this.mutex);
 	}
 
-	#else
-
-	// NONE VOID
-
-	-value: ?T;
-
-	static fn new(value: T) CLASS { 
-		let mut = mem:calloc(pt.CONST.mutex_size);
-		pt.pthread_mutex_init(mut);
-		return CLASS { mutex: mut, value: value };
-	}
-
-	fn lock() T {
-		pt.pthread_mutex_lock(this.mutex);
-		return swap this.value with null;
-	}
-
-	fn unlock(value: T) void {
-		pt.pthread_mutex_unlock(this.mutex);
-		this.value = value;
-	}
-
-	#end
-
-	fn __before_free() void {
-		pt.pthread_mutex_destroy(this.mutex);
-		mem:free(this.mutex);
-	}
 }

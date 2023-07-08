@@ -1,0 +1,151 @@
+
+// ki cycle collector
+
+class CycleCollector[T] {
+
+	busy: bool = false;
+	block_cc: ptr;
+	block_cc_end: ptr;
+	block_alloc: ptr;
+	index_cc: uxx = 0;
+	index_cc_end: uxx = 0;
+	index_alloc: uxx = 0;
+	race: uxx = 0;
+	mut: os:Mutex = os:Mutex.new();
+
+	static fn create() CLASS {
+		let block = mem:calloc(1001 * @sizeof(ptr));
+		return CLASS {
+			block_cc: block,
+			block_alloc: block,
+		};
+	}
+
+	fn add_item(item: T) {
+		while true {
+			let index = atomic_op this.index_alloc ADD 1;
+			if index >= 1000 {
+				// Allocate more space
+				//while true {
+				//	if this.race == 0 {
+				//		let nr = atomic_op this.race ADD 1;
+				//		if nr == 0 {
+				//			break;
+				//		}
+				//	}
+				//	os:sleep_ms(1);
+				//}
+				this.mut.lock();
+				if this.index_alloc < 1000 {
+					this.mut.unlock();
+					continue;
+				}
+				// Alloc new block
+				let new_block = mem:calloc(1001 * @sizeof(ptr));
+				let block = this.block_alloc;
+				@setptrv(block, ptr, 0) = new_block;
+
+				this.block_alloc = new_block;
+				this.index_alloc = 0;
+				this.mut.unlock();
+				continue;
+			}
+
+			@setptrv(block, ptr, index + 1) = item @as ptr;
+			break;
+		}
+	}
+
+	fn start() {
+		this.block_cc_end = this.block_alloc;
+		this.index_cc_end = this.index_alloc;
+		if this.index_cc_end >= 1000 {
+			this.index_cc_end = 0;
+		}
+		this.busy = true;
+	}
+	fn rc_check_items() {
+		// _RC_CHECK + 1 on each circular property (non-recusrive)
+		let block = this.block_cc;
+		let block_items = block + sizeof(ptr);
+		let index = this.index_cc;
+		let block_end = this.block_cc_end;
+		let index_end = this.index_cc_end;
+		while block != block_end || index != index_end {
+			if index == 1000 {
+				block = @ptrv(block, ptr, 0);
+				block_items = block + sizeof(ptr);
+				index = 0;
+				continue;
+			}
+			let item = @ptrv(block_items, *T, index);
+			item.__cc_check_props();
+		}
+	}
+	fn mark_keep() {
+		// Set call __cc_keep() on each object where _rc != _rc_check or _cc_changed = 1
+		let block = this.block_cc;
+		let block_items = block + sizeof(ptr);
+		let index = this.index_cc;
+		let block_end = this.block_cc_end;
+		let index_end = this.index_cc_end;
+		while block != block_end || index != index_end {
+			if index == 1000 {
+				block = @ptrv(block, ptr, 0);
+				block_items = block + sizeof(ptr);
+				index = 0;
+				continue;
+			}
+			let item = @ptrv(block_items, *T, index);
+			if item._RC != item._RC_CHECK || item._CC_CHANGED {
+				if item._CC_KEEP == 0 {
+					item.__cc_keep();
+				}
+			}
+		}
+	}
+	fn deref_cycle_objects() {
+		// Deref objects where RC == RC_CHECK and _CC_KEEP == 0
+		let block = this.block_cc;
+		let block_items = block + sizeof(ptr);
+		let index = this.index_cc;
+		let block_end = this.block_cc_end;
+		let index_end = this.index_cc_end;
+		while block != block_end || index != index_end {
+			if index == 1000 {
+				block = @ptrv(block, ptr, 0);
+				block_items = block + sizeof(ptr);
+				index = 0;
+				continue;
+			}
+			let item = @ptrv(block_items, T, index);
+			if item._CC_KEEP == 1 {
+				@ref item;
+			}
+		}
+	}
+	fn free_unused() {
+		// Free objects where RC == 0 and RC_WEAK == 0
+		// Also re-add items and free blocks if you reached the end of it
+		let block = this.block_cc;
+		let block_items = block + sizeof(ptr);
+		let index = this.index_cc;
+		let block_end = this.block_cc_end;
+		let index_end = this.index_cc_end;
+		while block != block_end || index != index_end {
+			if index == 1000 {
+				block = @ptrv(block, ptr, 0);
+				block_items = block + sizeof(ptr);
+				index = 0;
+				continue;
+			}
+			let item = @ptrv(block_items, *T, index);
+			if item._RC == 0 && item._RC_WEAK == 0 {
+				mem:free(item @as ptr);
+			}
+		}
+	}
+	fn end() {
+		this.busy = false;
+	}
+}

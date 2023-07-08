@@ -46,6 +46,16 @@ void stage_2_internals_gen(Fc *fc, Class *class) {
                 ClassProp *rcc_prop = class_prop_init(b->alc, class, rcc_type);
                 rcc_prop->value = vgen_vint(b->alc, 0, rcc_type, false);
                 map_set(class->props, "_RC_CHECK", rcc_prop);
+                // CC generation
+                Type *gen_type = type_gen(b, b->alc, "u8");
+                ClassProp *gen_prop = class_prop_init(b->alc, class, gen_type);
+                gen_prop->value = vgen_vint(b->alc, 0, gen_type, false);
+                map_set(class->props, "_CC_KEEP", gen_prop);
+                // CC keep object
+                Type *keep_type = type_gen(b, b->alc, "u8");
+                ClassProp *keep_prop = class_prop_init(b->alc, class, keep_type);
+                keep_prop->value = vgen_vint(b->alc, 0, keep_type, false);
+                map_set(class->props, "_CC_CHANGED", keep_prop);
             }
         }
     }
