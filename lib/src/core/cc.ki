@@ -3,7 +3,6 @@
 
 class CycleCollector[T] {
 
-	busy: bool = false;
 	block_cc: ptr;
 	block_cc_end: ptr;
 	block_alloc: ptr;
@@ -62,7 +61,6 @@ class CycleCollector[T] {
 		if this.index_cc_end >= 1000 {
 			this.index_cc_end = 0;
 		}
-		this.busy = true;
 	}
 	fn rc_check_items() {
 		// _RC_CHECK + 1 on each circular property (non-recusrive)
@@ -134,7 +132,9 @@ class CycleCollector[T] {
 		let index_end = this.index_cc_end;
 		while block != block_end || index != index_end {
 			if index == 1000 {
-				block = @ptrv(block, ptr, 0);
+				let next_block = @ptrv(block, ptr, 0);
+				mem:free(block);
+				block = next_block;
 				block_items = block + sizeof(ptr);
 				index = 0;
 				continue;
@@ -144,8 +144,11 @@ class CycleCollector[T] {
 				mem:free(item @as ptr);
 			}
 		}
+
+		// Set next start position
+		this.block_cc = block;
+		this.index_cc = index;
 	}
 	fn end() {
-		this.busy = false;
 	}
 }
