@@ -556,17 +556,25 @@ void class_generate_cc_keep(Class *class) {
     Value *ir_this = vgen_ir_val(alc, this, this->rett);
     array_push(fscope->ast, token_init(alc, tkn_ir_val, ir_this->item));
 
-    // if (this._CC_KEEP == 1) return;
+    // this._CC_KEEP
     ClassProp *prop = map_get(class->props, "_CC_KEEP");
     Value *pa = vgen_class_pa(alc, NULL, ir_this, prop);
+    Value *ir_pa = vgen_ir_assign_val(alc, pa, prop->type);
+    array_push(fscope->ast, token_init(alc, tkn_ir_assign_val, ir_pa->item));
+    Value *ir_pa_load = value_init(alc, v_ir_load, ir_pa, prop->type);
 
+    // if (this._CC_KEEP == 1) return;
     Scope *sub = scope_init(alc, sct_default, fscope, true);
     array_push(sub->ast, tgen_return(alc, fscope, NULL));
 
-    Value *is_zero = vgen_compare(alc, class->fc->b, pa, vgen_vint(alc, 1, prop->type, false), op_eq);
-    TIf *ift = tgen_tif(alc, is_zero, sub, NULL, NULL);
+    Value *cmp = vgen_compare(alc, class->fc->b, ir_pa_load, vgen_vint(alc, 1, prop->type, false), op_eq);
+    TIf *ift = tgen_tif(alc, cmp, sub, NULL, NULL);
     Token *t = token_init(alc, tkn_if, ift);
     array_push(fscope->ast, t);
+
+    // Set __CC_KEEP to 1
+    Token *as = tgen_assign(alc, ir_pa, vgen_vint(alc, 1, prop->type, false));
+    array_push(fscope->ast, as);
 
     // call __cc_keep() on circular props
     Array *props = class->props->values;
