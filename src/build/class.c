@@ -578,11 +578,23 @@ void class_generate_cc_keep(Class *class) {
         if (!pclass || !pclass->circular)
             continue;
 
-        Value *pa = vgen_class_pa(alc, NULL, ir_this, prop);
+        Value *on = vgen_class_pa(alc, NULL, ir_this, prop);
+        Value *ir_on = vgen_ir_val(alc, on, on->rett);
+
+        Scope *scope = fscope;
+        if (prop->type->nullable) {
+            Value *is_null = vgen_compare(alc, class->fc->b, on, vgen_null(alc, b), op_ne);
+            Scope *sub = scope_init(alc, sct_default, scope, true);
+            TIf *ift = tgen_tif(alc, is_null, sub, NULL, NULL);
+            Token *t = token_init(alc, tkn_if, ift);
+            array_push(scope->ast, t);
+            scope = sub;
+        }
+
         Value *fptr = vgen_fptr(alc, pclass->func_cc_keep, NULL);
         Array *values = array_make(alc, 2);
-        array_push(values, pa);
+        array_push(values, ir_on);
         Value *fcall = vgen_fcall(alc, NULL, fptr, values, b->type_void, NULL, 1, 1);
-        array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
+        array_push(scope->ast, token_init(alc, tkn_statement, fcall));
     }
 }
