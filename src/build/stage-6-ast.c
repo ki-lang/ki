@@ -803,6 +803,13 @@ void stage_6_gen_main(Fc *fc) {
         }
     }
 
+    // Load 'core' namespace
+    Pkc *ki_pkc = b->pkc_ki;
+    Nsc *core = pkc_load_nsc(ki_pkc, "core", NULL);
+    Idf *idf = idf_init(fc->alc, idf_nsc);
+    idf->item = core;
+    map_set(fc->scope->identifiers, "core", idf);
+
     Func *func = func_init(fc->alc, fc->b);
     func->fc = fc;
     func->name = "main";
