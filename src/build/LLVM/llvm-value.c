@@ -340,6 +340,22 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
             ci->ul->decl->llvm_val = var_ob;
         }
 
+        // Add to cycle collector
+        if (class->cc_global) {
+            Global *g = class->cc_global;
+            Type *type = g->type;
+            Class *class = type->class;
+
+            Func *func = map_get(class->funcs, "add_item");
+            Value *fptr = vgen_fptr(alc, func, NULL);
+            Array *add_values = array_make(alc, func->args->length + 1);
+            array_push(add_values, vgen_global(alc, g));
+            array_push(add_values, value_init(alc, v_ir_raw_val, var_ob, type_gen_class(alc, class)));
+            Value *fcall = vgen_fcall(alc, NULL, fptr, add_values, func->rett, NULL, 1, 1);
+
+            char *call = llvm_value(b, scope, fcall);
+        }
+
         return var_ob;
     }
     if (v->type == v_cast) {

@@ -214,14 +214,16 @@ void class_generate_free(Class *class) {
     }
 
     // Free mem
-    Value *this_ptr = vgen_cast(alc, this, type_ptr);
-    Func *ff = ki_get_func(b, "mem", "free");
-    Value *on = vgen_fptr(alc, ff, NULL);
-    Array *values = array_make(alc, 2);
-    array_push(values, this_ptr);
-    Value *fcall = vgen_fcall(alc, NULL, on, values, b->type_void, NULL, 1, 1);
+    if (!class->circular) {
+        Value *this_ptr = vgen_cast(alc, this, type_ptr);
+        Func *ff = ki_get_func(b, "mem", "free");
+        Value *on = vgen_fptr(alc, ff, NULL);
+        Array *values = array_make(alc, 2);
+        array_push(values, this_ptr);
+        Value *fcall = vgen_fcall(alc, NULL, on, values, b->type_void, NULL, 1, 1);
 
-    array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
+        array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
+    }
 }
 
 void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
@@ -505,14 +507,16 @@ void class_generate_cc_check_props(Class *class) {
     for (int i = 0; i < props->length; i++) {
         char *name = array_get_index(class->props->keys, i);
         ClassProp *prop1 = array_get_index(props, i);
-        Class *pclass = prop1->type->class;
+        Type *type1 = prop1->type;
+        Class *pclass = type1->class;
 
-        if (!pclass || !pclass->circular)
+        if (!pclass || !pclass->circular || type1->weak_ptr)
             continue;
 
         Scope *scope = fscope;
 
-        Value *ir_on = value_init(alc, v_ir_load, vgen_class_pa(alc, NULL, ir_this, prop1), prop1->type);
+        Value *ir_on = vgen_ir_val(alc, vgen_class_pa(alc, NULL, ir_this, prop1), type1);
+        array_push(scope->ast, token_init(alc, tkn_ir_val, ir_on->item));
 
         if (prop1->type->nullable) {
             Value *is_null = vgen_compare(alc, class->fc->b, ir_on, vgen_null(alc, b), op_ne);
@@ -588,14 +592,17 @@ void class_generate_cc_keep(Class *class) {
     for (int i = 0; i < props->length; i++) {
         char *name = array_get_index(class->props->keys, i);
         ClassProp *prop = array_get_index(props, i);
-        Class *pclass = prop->type->class;
+        Type *type = prop->type;
+        Class *pclass = type->class;
 
         if (!pclass || !pclass->circular)
             continue;
 
-        Value *ir_on = value_init(alc, v_ir_load, vgen_class_pa(alc, NULL, ir_this, prop), prop->type);
-
         Scope *scope = fscope;
+
+        Value *ir_on = vgen_ir_val(alc, vgen_class_pa(alc, NULL, ir_this, prop), type);
+        array_push(scope->ast, token_init(alc, tkn_ir_val, ir_on->item));
+
         if (prop->type->nullable) {
             Value *is_null = vgen_compare(alc, class->fc->b, ir_on, vgen_null(alc, b), op_ne);
             Scope *sub = scope_init(alc, sct_default, scope, true);

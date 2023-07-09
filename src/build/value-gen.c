@@ -273,3 +273,15 @@ Value *vgen_swap(Allocator *alc, Value *var, Value *with) {
     item->right = with;
     return value_init(alc, v_swap, item, var->rett);
 }
+
+Value *vgen_global(Allocator *alc, Global *g) {
+    //
+    VGlobal *vg = al(alc, sizeof(VGlobal));
+    vg->g = g;
+    vg->llvm_val = NULL;
+    vg->deref_token = NULL;
+    vg->upref_token = NULL;
+
+    Type *type = g->type;
+    return value_init(alc, v_global, vg, type);
+}

@@ -14,7 +14,7 @@ fn cc_loop {
 	#end
 
 	while true {
-		os:sleep_ms(100);
+		os:sleep_ms(1000);
 
 		#each_class class
 		#if IS_CIRCULAR class

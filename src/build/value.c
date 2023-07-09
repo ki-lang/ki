@@ -781,14 +781,9 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
     if (idf->type == idf_global) {
         Global *g = idf->item;
-        VGlobal *vg = al(alc, sizeof(VGlobal));
-        vg->g = g;
-        vg->llvm_val = NULL;
-        vg->deref_token = NULL;
-        vg->upref_token = NULL;
-
         Type *type = g->type;
-        Value *res = value_init(alc, v_global, vg, type);
+        Value *res = vgen_global(alc, g);
+        VGlobal *vg = res->item;
 
         if (scope && type_tracks_ownership(type)) {
             Type *rett = type_clone(alc, type);

@@ -25,6 +25,7 @@ struct CycleCollector[T] {
 	}
 
 	fn add_item(item: *T) {
+		print("add: %\n"{ (item @as ptr).str() });
 		while true {
 			let block = this.block_alloc;
 			let index = @atomic_op this.index_alloc ADD 1;
@@ -65,9 +66,8 @@ struct CycleCollector[T] {
 		if this.index_cc_end >= 1000 {
 			this.index_cc_end = 0;
 		}
-	}
-	fn rc_check_items() {
-		// _RC_CHECK + 1 on each circular property (non-recusrive)
+
+		// Reset fields
 		let block = this.block_cc;
 		let block_items = block + @sizeof(ptr);
 		let index = this.index_cc;
@@ -81,7 +81,31 @@ struct CycleCollector[T] {
 				continue;
 			}
 			let item = @ptrv(block_items, *T, index);
+			item._RC_CHECK = 0;
+			item._CC_KEEP = 0;
+			item._CC_CHANGED = 0;
+			index++;
+		}
+	}
+	fn rc_check_items() {
+		// _RC_CHECK + 1 on each circular property (non-recusrive)
+		let block = this.block_cc;
+		let block_items = block + @sizeof(ptr);
+		let index = this.index_cc;
+		let block_end = this.block_cc_end;
+		let index_end = this.index_cc_end;
+		while block != block_end || index != index_end {
+			print("index: %\n"{ index.str() });
+			if index == 1000 {
+				block = @ptrv(block, ptr, 0);
+				block_items = block + @sizeof(ptr);
+				index = 0;
+				continue;
+			}
+			let item = @ptrv(block_items, *T, index);
+			print("%\n"{ (item @as ptr).str() });
 			item.__cc_check_props();
+			index++;
 		}
 	}
 	fn mark_keep() {
@@ -104,6 +128,7 @@ struct CycleCollector[T] {
 					item.__cc_keep();
 				}
 			}
+			index++;
 		}
 	}
 	fn deref_cycle_objects() {
@@ -120,10 +145,14 @@ struct CycleCollector[T] {
 				index = 0;
 				continue;
 			}
-			let item = @ptrv(block_items, T, index);
-			if item._CC_KEEP == 1 {
-				@ref item;
+			let item = @ptrv(block_items, *T, index);
+				print("RC: %\n"{ item._RC.str() });
+			if item._CC_KEEP != 1 {
+				print("deref\n");
+				@deref item;
 			}
+				print("RC: %\n"{ item._RC.str() });
+			index++;
 		}
 	}
 	fn free_unused() {
@@ -144,9 +173,13 @@ struct CycleCollector[T] {
 				continue;
 			}
 			let item = @ptrv(block_items, *T, index);
+				print("RC: %\n"{ item._RC.str() });
 			if item._RC == 0 && item._RC_WEAK == 0 {
 				mem:free(item @as ptr);
+			} else {
+				this.add_item(item);
 			}
+			index++;
 		}
 
 		// Set next start position
