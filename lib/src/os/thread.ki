@@ -20,6 +20,31 @@ class Thread[T] {
 	-os_thread: pt.pthread_t;
 	#end
 
+	#if TYPE_IS_VOID T
+
+	-static fn entry(start_func: ptr) void {
+		let func = start_func @as fn()(void);
+		func();
+	}
+
+	static fn start(start_func: fn()(void)) CLASS !fail {
+		#if OS == win
+		let thr = sys.CreateThread(null, 0, CLASS.entry @as ptr, start_func @as ptr, 0, null);
+		rep thr = thr ?! throw fail;;
+		let t = CLASS{ os_handle: thr };
+		#else
+    	let thr = mem:alloc(@sizeof_class(pt.pthread_t)) @as pt.pthread_t;
+    	let err = pt.pthread_create(thr, null, CLASS.entry, start_func @as ptr);
+    	if err != 0 {
+			throw fail;
+    	}
+		let t = CLASS{ os_thread: thr };
+		#end
+		return t;
+	}
+
+	#else
+
 	-static fn entry(data: ptr) void {
 		let entry = data @as ThreadEntry[fn(T)(void), T];
 		entry.start_func(entry.data @as T);
@@ -49,5 +74,6 @@ class Thread[T] {
 
     	return t;
 	}
+	#end
 }
 

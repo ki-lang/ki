@@ -4,7 +4,7 @@ use mem;
 
 // ki cycle collector
 
-class CycleCollector[T] {
+struct CycleCollector[T] {
 
 	block_cc: ptr;
 	block_cc_end: ptr;

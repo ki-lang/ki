@@ -122,6 +122,7 @@ void cmd_build(int argc, char *argv[]) {
     map_set(mc->identifiers, "OS", os);
     map_set(mc->identifiers, "ARCH", arch);
     b->mc = mc;
+    b->root_scope = scope_init(alc, sct_default, NULL, false);
 
     // Filter out files
     char *first_file = NULL;

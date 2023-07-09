@@ -1,11 +1,15 @@
 
 use os;
 
+fn cc_start {
+	let thr = os:Thread[void].start(cc_loop) !! panic("Failed to start cycle collector");;
+}
+
 fn cc_loop {
 
 	#each_class class
 	#if IS_CIRCULAR class
-	let cc_#{ CLASS_EXPORT_NAME class } = CycleCollector[class].create();
+	KI_CC_#{ CLASS_EXPORT_NAME class } = CycleCollector[class].create();
 	#end
 	#end
 
@@ -14,31 +18,31 @@ fn cc_loop {
 
 		#each_class class
 		#if IS_CIRCULAR class
-		cc_#{ CLASS_EXPORT_NAME class }.start();
+		KI_CC_#{ CLASS_EXPORT_NAME class }.start();
 		#end
 		#end
 
 		#each_class class
 		#if IS_CIRCULAR class
-		cc_#{ CLASS_EXPORT_NAME class }.rc_check_items();
+		KI_CC_#{ CLASS_EXPORT_NAME class }.rc_check_items();
 		#end
 		#end
 
 		#each_class class
 		#if IS_CIRCULAR class
-		cc_#{ CLASS_EXPORT_NAME class }.mark_keep();
+		KI_CC_#{ CLASS_EXPORT_NAME class }.mark_keep();
 		#end
 		#end
 
 		#each_class class
 		#if IS_CIRCULAR class
-		cc_#{ CLASS_EXPORT_NAME class }.deref_cycle_objects();
+		KI_CC_#{ CLASS_EXPORT_NAME class }.deref_cycle_objects();
 		#end
 		#end
 
 		#each_class class
 		#if IS_CIRCULAR class
-		cc_#{ CLASS_EXPORT_NAME class }.free_unused();
+		KI_CC_#{ CLASS_EXPORT_NAME class }.free_unused();
 		#end
 		#end
 	}

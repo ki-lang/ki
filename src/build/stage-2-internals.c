@@ -67,6 +67,42 @@ void stage_2_internals_gen(Fc *fc, Class *class) {
                     Arg *arg = array_get_index(class->func_cc_keep->args, 0);
                     arg->type->borrow = true;
                 }
+
+                // CC global
+                char *token = fc->token;
+                sprintf(token, "KI_CC_%s", class->gname);
+                char *name = dups(fc->alc, token);
+
+                Idf *cc_idf = ki_lib_get(fc->b, "core", "CycleCollector");
+                Class *cc_base = cc_idf->item;
+                Array *types = array_make(fc->alc, 1);
+                Type *class_type = type_gen_class(fc->alc, class);
+                if (class_type->bytes == 0) {
+                    array_push(fc->type_size_checks, class_type);
+                }
+                array_push(types, class_type);
+                Class *cc = class_get_generic_class(cc_base, types);
+                Type *cc_type = type_gen_class(fc->alc, cc);
+                if (cc_type->bytes == 0) {
+                    array_push(fc->type_size_checks, cc_type);
+                }
+
+                Global *g = al(fc->alc, sizeof(Global));
+                g->fc = fc;
+                g->name = name;
+                g->gname = name;
+                g->dname = name;
+                g->shared = true;
+                g->type = cc_type;
+
+                array_push(fc->globals, g);
+
+                class->cc_global = g;
+
+                Idf *idf = idf_init(fc->alc, idf_global);
+                idf->item = g;
+
+                map_set(fc->b->root_scope->identifiers, name, idf);
             }
         }
     }

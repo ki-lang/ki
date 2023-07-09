@@ -15,6 +15,8 @@ Class *class_init(Allocator *alc) {
     class->generic_names = NULL;
     class->generic_types = NULL;
     class->generics = NULL;
+    class->cc_global = NULL;
+
     class->chunk_body = NULL;
     class->props = map_make(alc);
     class->funcs = map_make(alc);

@@ -7,7 +7,7 @@ Nsc *nsc_init(Allocator *alc, Build *b, Pkc *pkc, char *name) {
     nsc->b = b;
     nsc->pkc = pkc;
     nsc->name = dups(alc, name);
-    nsc->scope = scope_init(alc, sct_default, NULL, false);
+    nsc->scope = scope_init(alc, sct_default, b->root_scope, false);
     nsc->fcs = array_make(alc, 40);
 
     //

@@ -102,6 +102,7 @@ struct Build {
     Fc *gen_fc; // fc for generated code
     //
     MacroScope *mc;
+    Scope* root_scope;
     //
     Array *packages;
     Map *packages_by_dir;
@@ -329,6 +330,7 @@ struct Class {
     Array *generic_names;
     Array *generic_types;
     Map *generics;
+    Global *cc_global;
     int type;
     int size;
     bool is_rc;
