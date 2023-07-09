@@ -140,6 +140,7 @@ void read_macro(Fc *fc, Allocator *alc, Scope *scope);
 bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc);
 char *macro_get_var(MacroScope *mc, char *key);
 Str *macro_replace_str_vars(Allocator *alc, Fc *fc, Str *str);
+char *macro_resolve_inline_token(Fc *fc, Scope *scope);
 
 // Id
 Id *id_init(Allocator *alc);

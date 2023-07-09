@@ -214,6 +214,24 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
 
     chunk->i = i;
     chunk->col = col;
+
+    if (ch == '#' && content[i + 1] == '{' && fc->stage > 1) {
+        // Macro token
+        chunk->i += 2;
+        if (token[0] == '#')
+            token[0] = '\0';
+
+        Chunk prev = *fc->chunk_prev;
+
+        Str *str = str_make(fc->alc, 60);
+        str_append_chars(str, token);
+        str_append_chars(str, macro_resolve_inline_token(fc, fc->current_scope));
+
+        tok_expect(fc, "}", true, true);
+
+        str_to_buf(str, token);
+        *fc->chunk_prev = prev;
+    }
 }
 
 void rtok(Fc *fc) { *fc->chunk = *fc->chunk_prev; }

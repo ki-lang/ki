@@ -16,6 +16,7 @@ void stage_1_macro(Fc *fc);
 void stage_1(Fc *fc) {
     //
     Build *b = fc->b;
+    fc->stage = 1;
 
     if (b->verbose > 2) {
         printf("# Stage 1 : Parse : %s\n", fc->path_ki);
@@ -211,6 +212,7 @@ void stage_1_class(Fc *fc, bool is_struct) {
     class->must_deref = !is_struct;
 
     array_push(fc->classes, class);
+    array_push(b->classes, class);
 
     Idf *idf = idf_init(fc->alc, idf_class);
     idf->item = class;

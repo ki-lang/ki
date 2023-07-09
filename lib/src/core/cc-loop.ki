@@ -1,0 +1,45 @@
+
+use os;
+
+fn cc_loop {
+
+	#each_class class
+	#if IS_CIRCULAR class
+	let cc_#{ CLASS_EXPORT_NAME class } = CycleCollector[class].create();
+	#end
+	#end
+
+	while true {
+		os:sleep_ms(100);
+
+		#each_class class
+		#if IS_CIRCULAR class
+		cc_#{ CLASS_EXPORT_NAME class }.start();
+		#end
+		#end
+
+		#each_class class
+		#if IS_CIRCULAR class
+		cc_#{ CLASS_EXPORT_NAME class }.rc_check_items();
+		#end
+		#end
+
+		#each_class class
+		#if IS_CIRCULAR class
+		cc_#{ CLASS_EXPORT_NAME class }.mark_keep();
+		#end
+		#end
+
+		#each_class class
+		#if IS_CIRCULAR class
+		cc_#{ CLASS_EXPORT_NAME class }.deref_cycle_objects();
+		#end
+		#end
+
+		#each_class class
+		#if IS_CIRCULAR class
+		cc_#{ CLASS_EXPORT_NAME class }.free_unused();
+		#end
+		#end
+	}
+}

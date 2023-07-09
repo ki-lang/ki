@@ -1,4 +1,7 @@
 
+use os;
+use mem;
+
 // ki cycle collector
 
 class CycleCollector[T] {
@@ -16,13 +19,15 @@ class CycleCollector[T] {
 		let block = mem:calloc(1001 * @sizeof(ptr));
 		return CLASS {
 			block_cc: block,
+			block_cc_end: block,
 			block_alloc: block,
 		};
 	}
 
-	fn add_item(item: T) {
+	fn add_item(item: *T) {
 		while true {
-			let index = atomic_op this.index_alloc ADD 1;
+			let block = this.block_alloc;
+			let index = @atomic_op this.index_alloc ADD 1;
 			if index >= 1000 {
 				// Allocate more space
 				//while true {
@@ -35,14 +40,13 @@ class CycleCollector[T] {
 				//	os:sleep_ms(1);
 				//}
 				this.mut.lock();
-				if this.index_alloc < 1000 {
+				if this.block_alloc != block {
 					this.mut.unlock();
 					continue;
 				}
 				// Alloc new block
 				let new_block = mem:calloc(1001 * @sizeof(ptr));
-				let block = this.block_alloc;
-				@setptrv(block, ptr, 0) = new_block;
+				@ptrv(block, ptr, 0) = new_block;
 
 				this.block_alloc = new_block;
 				this.index_alloc = 0;
@@ -50,7 +54,7 @@ class CycleCollector[T] {
 				continue;
 			}
 
-			@setptrv(block, ptr, index + 1) = item @as ptr;
+			@ptrv(block, ptr, index + 1) = item @as ptr;
 			break;
 		}
 	}
@@ -65,14 +69,14 @@ class CycleCollector[T] {
 	fn rc_check_items() {
 		// _RC_CHECK + 1 on each circular property (non-recusrive)
 		let block = this.block_cc;
-		let block_items = block + sizeof(ptr);
+		let block_items = block + @sizeof(ptr);
 		let index = this.index_cc;
 		let block_end = this.block_cc_end;
 		let index_end = this.index_cc_end;
 		while block != block_end || index != index_end {
 			if index == 1000 {
 				block = @ptrv(block, ptr, 0);
-				block_items = block + sizeof(ptr);
+				block_items = block + @sizeof(ptr);
 				index = 0;
 				continue;
 			}
@@ -83,14 +87,14 @@ class CycleCollector[T] {
 	fn mark_keep() {
 		// Set call __cc_keep() on each object where _rc != _rc_check or _cc_changed = 1
 		let block = this.block_cc;
-		let block_items = block + sizeof(ptr);
+		let block_items = block + @sizeof(ptr);
 		let index = this.index_cc;
 		let block_end = this.block_cc_end;
 		let index_end = this.index_cc_end;
 		while block != block_end || index != index_end {
 			if index == 1000 {
 				block = @ptrv(block, ptr, 0);
-				block_items = block + sizeof(ptr);
+				block_items = block + @sizeof(ptr);
 				index = 0;
 				continue;
 			}
@@ -105,14 +109,14 @@ class CycleCollector[T] {
 	fn deref_cycle_objects() {
 		// Deref objects where RC == RC_CHECK and _CC_KEEP == 0
 		let block = this.block_cc;
-		let block_items = block + sizeof(ptr);
+		let block_items = block + @sizeof(ptr);
 		let index = this.index_cc;
 		let block_end = this.block_cc_end;
 		let index_end = this.index_cc_end;
 		while block != block_end || index != index_end {
 			if index == 1000 {
 				block = @ptrv(block, ptr, 0);
-				block_items = block + sizeof(ptr);
+				block_items = block + @sizeof(ptr);
 				index = 0;
 				continue;
 			}
@@ -126,7 +130,7 @@ class CycleCollector[T] {
 		// Free objects where RC == 0 and RC_WEAK == 0
 		// Also re-add items and free blocks if you reached the end of it
 		let block = this.block_cc;
-		let block_items = block + sizeof(ptr);
+		let block_items = block + @sizeof(ptr);
 		let index = this.index_cc;
 		let block_end = this.block_cc_end;
 		let index_end = this.index_cc_end;
@@ -135,7 +139,7 @@ class CycleCollector[T] {
 				let next_block = @ptrv(block, ptr, 0);
 				mem:free(block);
 				block = next_block;
-				block_items = block + sizeof(ptr);
+				block_items = block + @sizeof(ptr);
 				index = 0;
 				continue;
 			}

@@ -94,6 +94,9 @@ void stage_6_func(Fc *fc, Func *func) {
 
 void read_ast(Fc *fc, Scope *scope, bool single_line) {
     //
+    Scope *prev_scope = fc->current_scope;
+    fc->current_scope = scope;
+
     char *token = fc->token;
     bool first_line = true;
     Allocator *alc = fc->alc_ast;
@@ -365,6 +368,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
     if (!scope->did_return) {
         deref_expired_decls(alc, scope, scope->ast);
     }
+
+    fc->current_scope = prev_scope;
 }
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
@@ -402,7 +407,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
     }
 
     if (strcmp(token, "=") != 0) {
-        sprintf(fc->sbuf, "Expected '='");
+        sprintf(fc->sbuf, "Expected '=', found: '%s'", token);
         fc_error(fc);
     }
 

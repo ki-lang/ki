@@ -11,6 +11,8 @@ void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *args[], int argc_ex
 void stage_2(Fc *fc) {
     //
     Build *b = fc->b;
+    fc->stage = 2;
+
     if (b->verbose > 2) {
         printf("# Stage 2 : Read types : %s\n", fc->path_ki);
     }

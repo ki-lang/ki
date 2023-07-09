@@ -87,6 +87,11 @@ char *str_to_chars(Allocator *alc, Str *str) {
     return res;
 }
 
+void str_to_buf(Str *str, char *res) {
+    memcpy(res, str->data, str->length);
+    res[str->length] = '\0';
+}
+
 void str_clear(Str *str) {
     //
     str->length = 0;

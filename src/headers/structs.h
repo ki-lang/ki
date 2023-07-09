@@ -14,6 +14,7 @@ typedef struct Chunk Chunk;
 typedef struct Scope Scope;
 typedef struct VScope VScope;
 typedef struct MacroScope MacroScope;
+typedef struct MacroClassLoop MacroClassLoop;
 typedef struct Id Id;
 typedef struct Idf Idf;
 typedef struct Type Type;
@@ -111,6 +112,7 @@ struct Build {
     Str *str_buf;
     Str *str_buf_io;
     Array *tests;
+    Array *classes;
     //
     Chain *read_ki_file;
     Chain *write_ir;
@@ -179,6 +181,7 @@ struct Fc {
     Chunk *chunk;
     Chunk *chunk_prev;
     Scope *scope;
+    Scope *current_scope;
     MacroScope *current_macro_scope;
     //
     Func *error_func_info;
@@ -194,6 +197,7 @@ struct Fc {
     cJSON *cache;
     //
     int test_counter;
+    int stage;
     //
     bool is_header;
     bool ir_changed;
@@ -262,6 +266,17 @@ struct VScope {
 struct MacroScope {
     Map *identifiers;
     MacroScope *parent;
+    MacroClassLoop *class_loop;
+};
+struct MacroClassLoop {
+    Array* classes;
+    int index;
+    int fc_i;
+    int fc_line;
+    char* id_name;
+    Scope* scope;
+    Idf* idf;
+    Idf* old_idf;
 };
 struct Id {
     char *nsc_name;

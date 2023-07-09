@@ -54,6 +54,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->str_buf = str_make(alc, 100);
 
     fc->scope = scope_init(alc, sct_fc, nsc->scope, false);
+    fc->current_scope = fc->scope;
     fc->current_macro_scope = b->mc;
 
     fc->error_func_info = NULL;
