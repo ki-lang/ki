@@ -498,6 +498,8 @@ void stage_2_class_defaults(Fc *fc, Class *class) {
                 Class *pclass = prop->type->class;
                 if (pclass && pclass->must_deref) {
                     class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, b->type_void, 0);
+                    Arg *arg = array_get_index(class->func_deref_props->args, 0);
+                    arg->type->borrow = true;
                     break;
                 }
             }

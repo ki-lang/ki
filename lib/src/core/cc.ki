@@ -25,7 +25,7 @@ struct CycleCollector[T] {
 	}
 
 	fn add_item(item: *T) {
-		print("add: %\n"{ (item @as ptr).str() });
+		//print("add: %\n"{ (item @as ptr).str() });
 		while true {
 			let block = this.block_alloc;
 			let index = @atomic_op this.index_alloc ADD 1;
@@ -81,9 +81,11 @@ struct CycleCollector[T] {
 				continue;
 			}
 			let item = @ptrv(block_items, *T, index);
-			item._RC_CHECK = 0;
-			item._CC_KEEP = 0;
-			item._CC_CHANGED = 0;
+			if item._RC > 0 {
+				item._RC_CHECK = 0;
+				item._CC_KEEP = 0;
+				item._CC_CHANGED = 0;
+			}
 			index++;
 		}
 	}
@@ -95,7 +97,7 @@ struct CycleCollector[T] {
 		let block_end = this.block_cc_end;
 		let index_end = this.index_cc_end;
 		while block != block_end || index != index_end {
-			print("index: %\n"{ index.str() });
+			//print("index: %\n"{ index.str() });
 			if index == 1000 {
 				block = @ptrv(block, ptr, 0);
 				block_items = block + @sizeof(ptr);
@@ -103,8 +105,10 @@ struct CycleCollector[T] {
 				continue;
 			}
 			let item = @ptrv(block_items, *T, index);
-			print("%\n"{ (item @as ptr).str() });
-			item.__cc_check_props();
+			//print("%\n"{ (item @as ptr).str() });
+			if item._RC > 0 {
+				item.__cc_check_props();
+			}
 			index++;
 		}
 	}
@@ -123,7 +127,7 @@ struct CycleCollector[T] {
 				continue;
 			}
 			let item = @ptrv(block_items, *T, index);
-			if item._RC != item._RC_CHECK || item._CC_CHANGED == 1 {
+			if item._RC > 0 && item._RC != item._RC_CHECK || item._CC_CHANGED == 1 {
 				if item._CC_KEEP == 0 {
 					item.__cc_keep();
 				}
@@ -146,12 +150,12 @@ struct CycleCollector[T] {
 				continue;
 			}
 			let item = @ptrv(block_items, *T, index);
-				print("RC: %\n"{ item._RC.str() });
-			if item._CC_KEEP != 1 {
-				print("deref\n");
-				@deref item;
+			if item._RC > 0 && item._CC_KEEP != 1 {
+				item._RC++;
+				//print("deref\n");
+				item.__deref_props();
+				item._RC--;
 			}
-				print("RC: %\n"{ item._RC.str() });
 			index++;
 		}
 	}
@@ -173,7 +177,6 @@ struct CycleCollector[T] {
 				continue;
 			}
 			let item = @ptrv(block_items, *T, index);
-				print("RC: %\n"{ item._RC.str() });
 			if item._RC == 0 && item._RC_WEAK == 0 {
 				mem:free(item @as ptr);
 			} else {
