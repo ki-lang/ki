@@ -99,7 +99,7 @@ class CycleCollector[T] {
 				continue;
 			}
 			let item = @ptrv(block_items, *T, index);
-			if item._RC != item._RC_CHECK || item._CC_CHANGED {
+			if item._RC != item._RC_CHECK || item._CC_CHANGED == 1 {
 				if item._CC_KEEP == 0 {
 					item.__cc_keep();
 				}

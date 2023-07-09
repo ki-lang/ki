@@ -57,10 +57,16 @@ void stage_2_internals_gen(Fc *fc, Class *class) {
                 keep_prop->value = vgen_vint(b->alc, 0, keep_type, false);
                 map_set(class->props, "_CC_CHANGED", keep_prop);
 
-                if (!class->func_cc_check_props)
+                if (!class->func_cc_check_props) {
                     class->func_cc_check_props = class_define_func(fc, class, false, "__cc_check_props", NULL, b->type_void, 0);
-                if (!class->func_cc_keep)
+                    Arg *arg = array_get_index(class->func_cc_check_props->args, 0);
+                    arg->type->borrow = true;
+                }
+                if (!class->func_cc_keep) {
                     class->func_cc_keep = class_define_func(fc, class, false, "__cc_keep", NULL, b->type_void, 0);
+                    Arg *arg = array_get_index(class->func_cc_keep->args, 0);
+                    arg->type->borrow = true;
+                }
             }
         }
     }
