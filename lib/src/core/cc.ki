@@ -16,7 +16,7 @@ struct CycleCollector[T] {
 	mut: os:Mutex = os:Mutex.new();
 
 	static fn create() CLASS {
-		let block = mem:calloc(1001 * @sizeof(ptr));
+		let block = mem:calloc(10001 * @sizeof(ptr));
 		let res = CLASS {
 			block_cc: block,
 			block_cc_end: block,
@@ -33,7 +33,7 @@ struct CycleCollector[T] {
 			let block = this.block_alloc;
 			let index = @atomic_op this.index_alloc ADD 1;
 			//print("i:%\n"{ index.str() });
-			if index >= 1000 {
+			if index >= 10000 {
 				// Allocate more space
 				//while true {
 				//	if this.race == 0 {
@@ -45,18 +45,20 @@ struct CycleCollector[T] {
 				//	os:sleep_ms(1);
 				//}
 				//print("nb\n");
-				os:sleep_ms(1);
+				//os:sleep_ms(1);
 				this.mut.lock();
 				if this.block_alloc != block {
 					this.mut.unlock();
+				//print("con\n");
 					continue;
 				}
 				// Alloc new block
-				let new_block = mem:calloc(1001 * @sizeof(ptr));
+				let new_block = mem:calloc(10001 * @sizeof(ptr));
 				@ptrv(block, ptr, 0) = new_block;
 
 				this.block_alloc = new_block;
 				this.index_alloc = 0;
+				//print("un\n");
 				this.mut.unlock();
 				continue;
 			}
@@ -67,12 +69,13 @@ struct CycleCollector[T] {
 	}
 
 	fn start() {
+		this.mut.lock();
 		this.block_cc_end = this.block_alloc;
 		this.index_cc_end = this.index_alloc;
-		while this.index_cc_end >= 1000 {
-			this.block_cc_end = this.block_alloc;
-			this.index_cc_end = this.index_alloc;
+		while this.index_cc_end >= 10000 {
+			this.index_cc_end = 9999;
 		}
+		this.mut.unlock();
 
 		// Reset fields
 		let block = this.block_cc;
@@ -81,7 +84,7 @@ struct CycleCollector[T] {
 		let block_end = this.block_cc_end;
 		let index_end = this.index_cc_end;
 		while block != block_end || index != index_end {
-			if index == 1000 {
+			if index == 10000 {
 				block = @ptrv(block, ptr, 0);
 				block_items = block + @sizeof(ptr);
 				index = 0;
@@ -105,7 +108,7 @@ struct CycleCollector[T] {
 		let index_end = this.index_cc_end;
 		while block != block_end || index != index_end {
 			//print("index: %\n"{ index.str() });
-			if index == 1000 {
+			if index == 10000 {
 				block = @ptrv(block, ptr, 0);
 				block_items = block + @sizeof(ptr);
 				index = 0;
@@ -127,7 +130,7 @@ struct CycleCollector[T] {
 		let block_end = this.block_cc_end;
 		let index_end = this.index_cc_end;
 		while block != block_end || index != index_end {
-			if index == 1000 {
+			if index == 10000 {
 				block = @ptrv(block, ptr, 0);
 				block_items = block + @sizeof(ptr);
 				index = 0;
@@ -150,7 +153,7 @@ struct CycleCollector[T] {
 		let block_end = this.block_cc_end;
 		let index_end = this.index_cc_end;
 		while block != block_end || index != index_end {
-			if index == 1000 {
+			if index == 10000 {
 				block = @ptrv(block, ptr, 0);
 				block_items = block + @sizeof(ptr);
 				index = 0;
@@ -175,7 +178,7 @@ struct CycleCollector[T] {
 		let block_end = this.block_cc_end;
 		let index_end = this.index_cc_end;
 		while block != block_end || index != index_end {
-			if index == 1000 {
+			if index == 10000 {
 				let next_block = @ptrv(block, ptr, 0);
 				mem:free(block);
 				block = next_block;
@@ -185,6 +188,7 @@ struct CycleCollector[T] {
 			}
 			let item = @ptrv(block_items, *T, index);
 			if item._RC == 0 && item._RC_WEAK == 0 {
+				//print("free\n");
 				mem:free(item @as ptr);
 			} else {
 				this.add_item(item);
