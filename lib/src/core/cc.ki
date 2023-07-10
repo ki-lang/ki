@@ -17,18 +17,22 @@ struct CycleCollector[T] {
 
 	static fn create() CLASS {
 		let block = mem:calloc(1001 * @sizeof(ptr));
-		return CLASS {
+		let res = CLASS {
 			block_cc: block,
 			block_cc_end: block,
 			block_alloc: block,
 		};
+		//print("create: %\n"{ (res @as ptr).str() });
+		return res;
 	}
 
 	fn add_item(item: *T) {
+		//print("this: %\n"{ (this @as ptr).str() });
 		//print("add: %\n"{ (item @as ptr).str() });
 		while true {
 			let block = this.block_alloc;
 			let index = @atomic_op this.index_alloc ADD 1;
+			//print("i:%\n"{ index.str() });
 			if index >= 1000 {
 				// Allocate more space
 				//while true {
@@ -40,6 +44,8 @@ struct CycleCollector[T] {
 				//	}
 				//	os:sleep_ms(1);
 				//}
+				//print("nb\n");
+				os:sleep_ms(1);
 				this.mut.lock();
 				if this.block_alloc != block {
 					this.mut.unlock();
@@ -63,8 +69,9 @@ struct CycleCollector[T] {
 	fn start() {
 		this.block_cc_end = this.block_alloc;
 		this.index_cc_end = this.index_alloc;
-		if this.index_cc_end >= 1000 {
-			this.index_cc_end = 0;
+		while this.index_cc_end >= 1000 {
+			this.block_cc_end = this.block_alloc;
+			this.index_cc_end = this.index_alloc;
 		}
 
 		// Reset fields

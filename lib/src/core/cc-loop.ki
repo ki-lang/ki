@@ -1,8 +1,13 @@
 
 use os;
 
+shared cc_ready : uxx;
+
 fn cc_start {
 	let thr = os:Thread[void].start(cc_loop) !! panic("Failed to start cycle collector");;
+	while cc_ready != 1 {
+		os:sleep_ms(1);
+	}
 }
 
 fn cc_loop {
@@ -12,6 +17,8 @@ fn cc_loop {
 	KI_CC_#{ CLASS_EXPORT_NAME class } = CycleCollector[class].create();
 	#end
 	#end
+
+	cc_ready = 1;
 
 	while true {
 		os:sleep_ms(1000);
