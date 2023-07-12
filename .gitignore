@@ -9,6 +9,7 @@ callgrind.*
 profile.sh
 /ki.json
 /packages
+.clang-format
 
 # Prerequisites
 *.d
