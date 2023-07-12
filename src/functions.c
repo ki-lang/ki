@@ -214,7 +214,13 @@ char *str_replace(Allocator *alc, char *orig, char *rep, char *with) {
 
     // count the number of replacements needed
     ins = orig;
-    for (count = 0; tmp = strstr(ins, rep); ++count) {
+    count = 0;
+    while (true) {
+        tmp = strstr(ins, rep);
+        if (tmp == NULL) {
+            break;
+        }
+        count++;
         ins = tmp + len_rep;
     }
 

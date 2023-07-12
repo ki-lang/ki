@@ -196,6 +196,7 @@ char *llvm_di_type(LB *b, Type *type) {
 
     sprintf(b->fc->sbuf, "LLVM: Cannot generate debug type");
     die(b->fc->sbuf);
+    return NULL;
 }
 
 char *llvm_type_int(LB *b, int bytes) {

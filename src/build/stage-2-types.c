@@ -107,6 +107,11 @@ void stage_2_class(Fc *fc, Class *class) {
             ClassProp *prop = class_prop_init(b->alc, class, type);
             prop->value = vgen_vint(b->alc, 1, type, false);
             map_set(class->props, "_RC", prop);
+
+            Type *type_weak = type_gen(b, b->alc, "u32");
+            ClassProp *prop_weak = class_prop_init(b->alc, class, type_weak);
+            prop_weak->value = vgen_vint(b->alc, 1, type_weak, false);
+            map_set(class->props, "_RC_WEAK", prop_weak);
         }
     }
 
