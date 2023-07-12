@@ -4,23 +4,31 @@ use mem;
 
 // ki cycle collector
 
+struct CCAlloc {
+	block: ptr;
+	index: uxx = 0;
+}
+
 struct CycleCollector[T] {
 
-	block_cc: ptr;
-	block_cc_end: ptr;
-	block_alloc: ptr;
-	index_cc: uxx = 0;
-	index_cc_end: uxx = 0;
-	index_alloc: uxx = 0;
+	alc_1: CCAlloc;
+	alc_2: CCAlloc;
+	block_start: ptr;
+	block_end: ptr;
+	index_start: uxx = 0;
+	index_end: uxx = 0;
 	race: uxx = 0;
 	mut: os:Mutex = os:Mutex.new();
 
 	static fn create() CLASS {
 		let block = mem:calloc(10001 * @sizeof(ptr));
+		let alc_1 = CCAlloc{ block: block };
+		let alc_2 = CCAlloc{ block: block };
 		let res = CLASS {
-			block_cc: block,
-			block_cc_end: block,
-			block_alloc: block,
+			alc_1: alc_1,
+			alc_2: alc_2,
+			block_start: block,
+			block_end: block,
 		};
 		//print("create: %\n"{ (res @as ptr).str() });
 		return res;
@@ -30,35 +38,28 @@ struct CycleCollector[T] {
 		//print("this: %\n"{ (this @as ptr).str() });
 		//print("add: %\n"{ (item @as ptr).str() });
 		while true {
-			let block = this.block_alloc;
-			let index = @atomic_op this.index_alloc ADD 1;
+			let alc_1 = this.alc_1;
+			let block = alc_1.block;
+			let index = @atomic_op alc_1.index ADD 1;
 			//print("i:%\n"{ index.str() });
 			if index >= 10000 {
 				// Allocate more space
-				//while true {
-				//	if this.race == 0 {
-				//		let nr = atomic_op this.race ADD 1;
-				//		if nr == 0 {
-				//			break;
-				//		}
-				//	}
-				//	os:sleep_ms(1);
-				//}
-				//print("nb\n");
-				//os:sleep_ms(1);
 				this.mut.lock();
-				if this.block_alloc != block {
+				if this.alc_1 != alc_1 {
 					this.mut.unlock();
-				//print("con\n");
 					continue;
 				}
 				// Alloc new block
 				let new_block = mem:calloc(10001 * @sizeof(ptr));
 				@ptrv(block, ptr, 0) = new_block;
 
-				this.block_alloc = new_block;
-				this.index_alloc = 0;
-				//print("un\n");
+				let alc_2 = this.alc_2;
+				alc_2.block = new_block;
+				alc_2.index = 0;
+
+				this.alc_1 = alc_2;
+				this.alc_2 = alc_1;
+
 				this.mut.unlock();
 				continue;
 			}
@@ -70,42 +71,44 @@ struct CycleCollector[T] {
 
 	fn start() {
 		this.mut.lock();
-		this.block_cc_end = this.block_alloc;
-		this.index_cc_end = this.index_alloc;
-		while this.index_cc_end >= 10000 {
-			this.index_cc_end = 9999;
+		let alc = this.alc_1;
+		this.block_end = alc.block;
+		this.index_end = alc.index;
+		while this.index_end >= 10000 {
+			this.index_end = 9999;
 		}
 		this.mut.unlock();
+		os:sleep_ms(1);
 
 		// Reset fields
-		let block = this.block_cc;
-		let block_items = block + @sizeof(ptr);
-		let index = this.index_cc;
-		let block_end = this.block_cc_end;
-		let index_end = this.index_cc_end;
-		while block != block_end || index != index_end {
-			if index == 10000 {
-				block = @ptrv(block, ptr, 0);
-				block_items = block + @sizeof(ptr);
-				index = 0;
-				continue;
-			}
-			let item = @ptrv(block_items, *T, index);
-			if item._RC > 0 {
-				item._RC_CHECK = 0;
-				item._CC_KEEP = 0;
-				item._CC_CHANGED = 0;
-			}
-			index++;
-		}
+		//let block = this.block_start;
+		//let block_items = block + @sizeof(ptr);
+		//let index = this.index_start;
+		//let block_end = this.block_end;
+		//let index_end = this.index_end;
+		//while block != block_end || index != index_end {
+		//	if index == 10000 {
+		//		block = @ptrv(block, ptr, 0);
+		//		block_items = block + @sizeof(ptr);
+		//		index = 0;
+		//		continue;
+		//	}
+		//	let item = @ptrv(block_items, *T, index);
+		//	if item._RC > 0 {
+		//		item._RC_CHECK = 0;
+		//		item._CC_KEEP = 0;
+		//		item._CC_CHANGED = 0;
+		//	}
+		//	index++;
+		//}
 	}
 	fn rc_check_items() {
 		// _RC_CHECK + 1 on each circular property (non-recusrive)
-		let block = this.block_cc;
+		let block = this.block_start;
 		let block_items = block + @sizeof(ptr);
-		let index = this.index_cc;
-		let block_end = this.block_cc_end;
-		let index_end = this.index_cc_end;
+		let index = this.index_start;
+		let block_end = this.block_end;
+		let index_end = this.index_end;
 		while block != block_end || index != index_end {
 			//print("index: %\n"{ index.str() });
 			if index == 10000 {
@@ -124,11 +127,11 @@ struct CycleCollector[T] {
 	}
 	fn mark_keep() {
 		// Set call __cc_keep() on each object where _rc != _rc_check or _cc_changed = 1
-		let block = this.block_cc;
+		let block = this.block_start;
 		let block_items = block + @sizeof(ptr);
-		let index = this.index_cc;
-		let block_end = this.block_cc_end;
-		let index_end = this.index_cc_end;
+		let index = this.index_start;
+		let block_end = this.block_end;
+		let index_end = this.index_end;
 		while block != block_end || index != index_end {
 			if index == 10000 {
 				block = @ptrv(block, ptr, 0);
@@ -147,11 +150,11 @@ struct CycleCollector[T] {
 	}
 	fn deref_cycle_objects() {
 		// Deref objects where RC == RC_CHECK and _CC_KEEP == 0
-		let block = this.block_cc;
+		let block = this.block_start;
 		let block_items = block + @sizeof(ptr);
-		let index = this.index_cc;
-		let block_end = this.block_cc_end;
-		let index_end = this.index_cc_end;
+		let index = this.index_start;
+		let block_end = this.block_end;
+		let index_end = this.index_end;
 		while block != block_end || index != index_end {
 			if index == 10000 {
 				block = @ptrv(block, ptr, 0);
@@ -172,11 +175,11 @@ struct CycleCollector[T] {
 	fn free_unused() {
 		// Free objects where RC == 0 and RC_WEAK == 0
 		// Also re-add items and free blocks if you reached the end of it
-		let block = this.block_cc;
+		let block = this.block_start;
 		let block_items = block + @sizeof(ptr);
-		let index = this.index_cc;
-		let block_end = this.block_cc_end;
-		let index_end = this.index_cc_end;
+		let index = this.index_start;
+		let block_end = this.block_end;
+		let index_end = this.index_end;
 		while block != block_end || index != index_end {
 			if index == 10000 {
 				let next_block = @ptrv(block, ptr, 0);
@@ -186,20 +189,17 @@ struct CycleCollector[T] {
 				index = 0;
 				continue;
 			}
-			let item = @ptrv(block_items, *T, index);
-			if item._RC == 0 && item._RC_WEAK == 0 {
-				//print("free\n");
-				mem:free(item @as ptr);
-			} else {
-				this.add_item(item);
-			}
+			//let item = @ptrv(block_items, *T, index);
+			//if item._RC == 0 && item._RC_WEAK == 0 {
+			//	mem:free(item @as ptr);
+			//} else {
+			//	this.add_item(item);
+			//}
 			index++;
 		}
 
 		// Set next start position
-		this.block_cc = block;
-		this.index_cc = index;
-	}
-	fn end() {
+		this.block_start = block;
+		this.index_start = index;
 	}
 }

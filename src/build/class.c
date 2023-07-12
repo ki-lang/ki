@@ -214,16 +214,23 @@ void class_generate_free(Class *class) {
     }
 
     // Free mem
-    if (!class->circular) {
-        Value *this_ptr = vgen_cast(alc, this, type_ptr);
-        Func *ff = ki_get_func(b, "mem", "free");
-        Value *on = vgen_fptr(alc, ff, NULL);
-        Array *values = array_make(alc, 2);
-        array_push(values, this_ptr);
-        Value *fcall = vgen_fcall(alc, NULL, on, values, b->type_void, NULL, 1, 1);
+    // Value *is_null = vgen_compare(alc, class->fc->b, on, vgen_null(alc, b), op_ne);
+    // Scope *sub = scope_init(alc, sct_default, scope, true);
+    // TIf *ift = tgen_tif(alc, is_null, sub, NULL, NULL);
+    // Token *t = token_init(alc, tkn_if, ift);
+    // array_push(scope->ast, t);
+    // scope = sub;
 
-        array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
-    }
+    // if (!class->circular) {
+    Value *this_ptr = vgen_cast(alc, this, type_ptr);
+    Func *ff = ki_get_func(b, "mem", "free");
+    Value *on = vgen_fptr(alc, ff, NULL);
+    Array *values = array_make(alc, 2);
+    array_push(values, this_ptr);
+    Value *fcall = vgen_fcall(alc, NULL, on, values, b->type_void, NULL, 1, 1);
+
+    array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
+    // }
 }
 
 void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {

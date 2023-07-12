@@ -353,7 +353,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
             array_push(add_values, value_init(alc, v_ir_raw_val, var_ob, type_gen_class(alc, class)));
             Value *fcall = vgen_fcall(alc, NULL, fptr, add_values, func->rett, NULL, 1, 1);
 
-            char *call = llvm_value(b, scope, fcall);
+            // char *call = llvm_value(b, scope, fcall);
         }
 
         return var_ob;

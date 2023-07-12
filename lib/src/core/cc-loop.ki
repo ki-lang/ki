@@ -2,6 +2,7 @@
 use os;
 
 shared cc_ready : uxx;
+shared cc_busy : uxx;
 
 fn cc_start {
 	let thr = os:Thread[void].start(cc_loop) !! panic("Failed to start cycle collector");;
@@ -21,7 +22,9 @@ fn cc_loop {
 	cc_ready = 1;
 
 	while true {
-		os:sleep_ms(1000);
+		os:sleep_ms(100);
+
+		cc_busy = 1;
 
 		#each_class class
 		#if IS_CIRCULAR class
@@ -31,19 +34,19 @@ fn cc_loop {
 
 		#each_class class
 		#if IS_CIRCULAR class
-		KI_CC_#{ CLASS_EXPORT_NAME class }.rc_check_items();
+		//KI_CC_#{ CLASS_EXPORT_NAME class }.rc_check_items();
 		#end
 		#end
 
 		#each_class class
 		#if IS_CIRCULAR class
-		KI_CC_#{ CLASS_EXPORT_NAME class }.mark_keep();
+		//KI_CC_#{ CLASS_EXPORT_NAME class }.mark_keep();
 		#end
 		#end
 
 		#each_class class
 		#if IS_CIRCULAR class
-		KI_CC_#{ CLASS_EXPORT_NAME class }.deref_cycle_objects();
+		//KI_CC_#{ CLASS_EXPORT_NAME class }.deref_cycle_objects();
 		#end
 		#end
 
@@ -52,5 +55,8 @@ fn cc_loop {
 		KI_CC_#{ CLASS_EXPORT_NAME class }.free_unused();
 		#end
 		#end
+
+		cc_busy = 0;
+		break;
 	}
 }
