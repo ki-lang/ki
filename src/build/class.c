@@ -303,25 +303,39 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
                 is_zero = vgen_compare(alc, class->fc->b, ir_sub, vgen_vint(alc, 0, prop->type, false), op_eq);
             }
 
-            Scope *code = scope_init(alc, sct_default, scope, true);
+            Scope *if_code = scope_init(alc, sct_default, scope, true);
             Scope *elif = scope_init(alc, sct_default, scope, true);
-            // == 0 : Call free
-            Value *fptr = vgen_fptr(alc, class->func_free, NULL);
-            Array *values = array_make(alc, 2);
-            array_push(values, ir_on);
-            Value *fcall = vgen_fcall(alc, NULL, fptr, values, b->type_void, NULL, 1, 1);
-            array_push(code->ast, token_init(alc, tkn_statement, fcall));
 
-            // != 0 : else update _RC
+            // if _RC == 0
+            TIf *ift = tgen_tif(alc, is_zero, if_code, elif, NULL);
+            Token *t = token_init(alc, tkn_if, ift);
+            array_push(scope->ast, t);
+
+            // _RC != 0 : update _RC
             if (!class->async) {
                 Token *as = tgen_assign(alc, ir_pa, ir_sub);
                 array_push(elif->ast, as);
             }
 
-            //
-            TIf *ift = tgen_tif(alc, is_zero, code, elif, NULL);
-            Token *t = token_init(alc, tkn_if, ift);
-            array_push(scope->ast, t);
+            Scope *free_code = scope_init(alc, sct_default, if_code, true);
+            // Scope *free_elif = scope_init(alc, sct_default, if_code, true);
+
+            // _RC_WEAK == 0
+            ClassProp *propw = map_get(class->props, "_RC_WEAK");
+            Value *paw = vgen_class_pa(alc, NULL, ir_on, propw);
+            // Value *ir_paw = vgen_ir_val(alc, paw, propw->type);
+            // array_push(if_code->ast, token_init(alc, tkn_ir_val, ir_paw->item));
+            Value *is_zerow = vgen_compare(alc, class->fc->b, paw, vgen_vint(alc, 0, propw->type, false), op_eq);
+            TIf *ift_weak = tgen_tif(alc, is_zerow, free_code, NULL, NULL);
+            Token *t_weak = token_init(alc, tkn_if, ift_weak);
+            array_push(if_code->ast, t_weak);
+
+            // == 0 : Call free
+            Value *fptr = vgen_fptr(alc, class->func_free, NULL);
+            Array *values = array_make(alc, 2);
+            array_push(values, ir_on);
+            Value *fcall = vgen_fcall(alc, NULL, fptr, values, b->type_void, NULL, 1, 1);
+            array_push(free_code->ast, token_init(alc, tkn_statement, fcall));
         }
     }
 }

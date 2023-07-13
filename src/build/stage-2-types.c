@@ -110,7 +110,7 @@ void stage_2_class(Fc *fc, Class *class) {
 
             Type *type_weak = type_gen(b, b->alc, "u32");
             ClassProp *prop_weak = class_prop_init(b->alc, class, type_weak);
-            prop_weak->value = vgen_vint(b->alc, 1, type_weak, false);
+            prop_weak->value = vgen_vint(b->alc, 0, type_weak, false);
             map_set(class->props, "_RC_WEAK", prop_weak);
         }
     }
