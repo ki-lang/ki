@@ -69,10 +69,10 @@ void usage_line_incr_moves(UsageLine *ul, int amount) {
     ul->moves_possible += amount;
 }
 
-Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
+Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val, Type *storage_type) {
     Chunk *chunk = fc->chunk;
     //
-    if (val->rett->borrow || val->rett->weak_ptr) {
+    if (storage_type->borrow || storage_type->weak_ptr || storage_type->raw_ptr) {
         return val;
     }
 
@@ -129,7 +129,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
 
     } else if (vt == v_ir_val) {
         IRVal *irv = val->item;
-        irv->value = usage_move_value(alc, fc, scope, irv->value);
+        irv->value = usage_move_value(alc, fc, scope, irv->value, storage_type);
     } else if (vt == v_class_pa) {
         VClassPA *pa = val->item;
         if (pa->deref_token) {
@@ -157,11 +157,11 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val) {
         val = value_init(alc, v_upref_value, val, val->rett);
     } else if (vt == v_or_break) {
         VOrBreak *vob = val->item;
-        vob->value = usage_move_value(alc, fc, scope, vob->value);
+        vob->value = usage_move_value(alc, fc, scope, vob->value, storage_type);
     } else if (vt == v_or_value) {
         VOrValue *vov = val->item;
-        vov->left = usage_move_value(alc, fc, scope, vov->left);
-        vov->right = usage_move_value(alc, fc, vov->value_scope, vov->right);
+        vov->left = usage_move_value(alc, fc, scope, vov->left, storage_type);
+        vov->right = usage_move_value(alc, fc, vov->value_scope, vov->right, storage_type);
     } else if (vt == v_fcall) {
         VFcall *fcall = val->item;
         UsageLine *ul = fcall->ul;
@@ -326,7 +326,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
     Decl *decl = ul->decl;
     Type *type = decl->type;
 
-    if (type->borrow || type->weak_ptr) {
+    if (type->borrow || type->weak_ptr || type->raw_ptr) {
         return;
     }
 

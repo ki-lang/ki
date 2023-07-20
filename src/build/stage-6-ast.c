@@ -223,7 +223,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
         if (strcmp(token, "@move") == 0) {
             Value *on = read_value(fc, alc, scope, true, 0, false);
-            on = usage_move_value(alc, fc, scope, on);
+            on = usage_move_value(alc, fc, scope, on, on->rett);
             array_push(scope->ast, token_init(alc, tkn_statement, on));
             tok_expect(fc, ";", false, true);
             continue;
@@ -307,7 +307,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     fc_error(fc);
                 }
                 if (left->type != v_ptrv) {
-                    right = usage_move_value(alc, fc, scope, right);
+                    right = usage_move_value(alc, fc, scope, right, left->rett);
                 }
                 if (left->type == v_class_pa) {
                     // Check if assigning to moved value
@@ -419,7 +419,7 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
         type = val->rett;
     }
 
-    val = usage_move_value(alc, fc, scope, val);
+    val = usage_move_value(alc, fc, scope, val, type);
 
     if (type_is_void(type)) {
         sprintf(fc->sbuf, "Variable declaration: Right side does not return a value");
@@ -471,7 +471,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
             vscope->vscope->rett = rett;
         }
 
-        val = usage_move_value(alc, fc, scope, val);
+        val = usage_move_value(alc, fc, scope, val, rett);
 
         IRVal *tvar = al(alc, sizeof(IRVal));
         tvar->value = val;
@@ -517,7 +517,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
 
         type_check(fc, frett, val->rett);
 
-        val = usage_move_value(alc, fc, scope, val);
+        val = usage_move_value(alc, fc, scope, val, frett);
 
         IRVal *tvar = al(alc, sizeof(IRVal));
         tvar->value = val;

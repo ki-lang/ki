@@ -282,6 +282,7 @@ struct Type {
     bool borrow;
     bool ref;
     bool weak_ptr;
+    bool raw_ptr;
 };
 
 struct Class {

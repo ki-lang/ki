@@ -20,6 +20,7 @@ Type *type_init(Allocator *alc) {
     type->borrow = false;
     type->ref = false;
     type->weak_ptr = false;
+    type->raw_ptr = false;
     //
     type->func_args = NULL;
     type->func_rett = NULL;
@@ -178,7 +179,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
 
-    if (inline_ && (borrow || ref || weak_ptr || nullable)) {
+    if (inline_ && (borrow || ref || raw_ptr || weak_ptr || nullable)) {
         sprintf(fc->sbuf, "You cannot use &/*/? on inline types '.'");
         fc_error(fc);
     }
@@ -320,6 +321,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         type->ref = ref;
         type->borrow = borrow;
         type->weak_ptr = weak_ptr;
+        type->raw_ptr = raw_ptr;
     }
 
     if (inline_ && type->ptr_depth > 0) {
@@ -633,6 +635,9 @@ bool type_tracks_ownership(Type *type) {
         return false;
     }
     if (type->weak_ptr) {
+        return false;
+    }
+    if (type->raw_ptr) {
         return false;
     }
     if (type->array_of) {

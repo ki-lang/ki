@@ -11,7 +11,7 @@ class ServerData {
     socket: net:SocketTCP;
     max_connections: uxx;
     thread_nr: uxx = 0;
-    handler: fn(*Request)(Response);
+    handler: fn(Request)(Response);
     static_dirs: Array[String] = Array[String].new();
     show_info: bool;
 }
@@ -21,11 +21,11 @@ class Server {
     port: u16;
     socket: net:SocketTCP;
     max_connections: uxx;
-    handler: fn(*Request)(Response);
+    handler: fn(Request)(Response);
     static_dirs: Array[String] = Array[String].new();
     show_info: bool = false;
 
-    static fn new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error {
+    static fn new(host: String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error {
 
         let max_connections : uxx = 10000;
         let socket = net:Socket.new_tcp(host, port) !! throw socket_init_error;;
@@ -234,7 +234,7 @@ class Server {
         }
     }
 
-    -static fn respond(data: *ServerData, http_con: *Connection, handler: fn(*Request)(Response)) void !read_error !sent_error {
+    -static fn respond(data: *ServerData, http_con: *Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
         let buf_size : i32 = 65535;
         let read_buf = http_con.read_buf;
