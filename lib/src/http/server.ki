@@ -277,12 +277,13 @@ class Server {
                         }
                     }
 
-                    let resp = handler(Request{
+                    let req = Request{
                         http_con: http_con,
                         headers: http_con.headers @as *Map[String],
                         method: http_con.request_method @as *String,
                         path: http_con.request_path @as *String,
-                    });
+                    };
+                    let resp = handler(req);
 
                     http_con.respond(resp);
                     http_con.reset_request_data();

@@ -133,6 +133,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
     bool borrow = false;
     bool ref = false;
+    bool raw_ptr = false;
     bool weak_ptr = false;
     bool inline_ = false;
 
@@ -147,29 +148,29 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
 
-    if (strcmp(token, "@weak") == 0) {
-        weak_ptr = true;
+    if (strcmp(token, "raw") == 0) {
+        raw_ptr = true;
         tok(fc, token, true, true);
     }
     if (strcmp(token, "*") == 0) {
-        if (weak_ptr) {
-            sprintf(fc->sbuf, "You cannot use both @weak and * in the same type");
-            fc_error(fc);
-        }
         borrow = true;
         tok(fc, token, true, false);
     }
     if (strcmp(token, "&") == 0) {
-        if (weak_ptr) {
-            sprintf(fc->sbuf, "You cannot use both @weak and & in the same type");
-            fc_error(fc);
-        }
         if (borrow) {
             sprintf(fc->sbuf, "You cannot use both * and & in the same type");
             fc_error(fc);
         }
-        ref = true;
+        if (context == rtc_prop_type) {
+            weak_ptr = true;
+        } else {
+            ref = true;
+        }
         tok(fc, token, true, false);
+        if (strcmp(token, "*") == 0) {
+            sprintf(fc->sbuf, "You cannot use both * and & in the same type");
+            fc_error(fc);
+        }
     }
 
     if (strcmp(token, "?") == 0) {
@@ -342,15 +343,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     if (borrow && context != rtc_prop_type && context != rtc_func_arg && context != rtc_ptrv && context != rtc_sub_type) {
-        sprintf(fc->sbuf, "You can only use '*' borrow types for function arguments or object property types");
-        fc_error(fc);
-    }
-    if (ref && context != rtc_func_rett && context != rtc_sub_type) {
-        sprintf(fc->sbuf, "You can only use '&' reference types for function return types");
-        fc_error(fc);
-    }
-    if (weak_ptr && context != rtc_prop_type) {
-        sprintf(fc->sbuf, "You can only use '@weak' types for object property types");
+        sprintf(fc->sbuf, "You can only use '*' (borrow type) for function arguments or object property types");
         fc_error(fc);
     }
     if (type->bytes == 0) {
