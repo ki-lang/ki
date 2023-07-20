@@ -165,7 +165,7 @@ void class_generate_deref_props(Class *class) {
             // if (!prop->type->borrow && pclass && pclass->must_deref) {
             Value *pa = vgen_class_pa(alc, NULL, this, prop);
             Scope *scope = fscope;
-            class_ref_change(b->alc, scope, pa, -1);
+            class_ref_change(b->alc, scope, pa, -1, false);
         }
     }
 }
@@ -217,7 +217,7 @@ void class_generate_free(Class *class) {
     array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
 }
 
-void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount) {
+void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool weak) {
     //
     if (amount == 0)
         return;

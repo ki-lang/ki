@@ -72,7 +72,10 @@ void usage_line_incr_moves(UsageLine *ul, int amount) {
 Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val, Type *storage_type) {
     Chunk *chunk = fc->chunk;
     //
-    if (storage_type->borrow || storage_type->weak_ptr || storage_type->raw_ptr) {
+    if (storage_type->weak_ptr) {
+    }
+
+    if (!type_tracks_ownership(storage_type)) {
         return val;
     }
 
@@ -117,7 +120,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val, Type *
                 Value *v = vgen_value_then_ir_value(alc, val);
 
                 Scope *sub = scope_init(alc, sct_default, scope, true);
-                class_ref_change(alc, sub, v, 1);
+                class_ref_change(alc, sub, v, 1, false);
 
                 val = vgen_value_and_exec(alc, v, sub, true, true);
 
@@ -386,7 +389,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
             if (class->must_deref) {
                 Scope *sub = scope_init(alc, sct_default, ul->scope, true);
                 Value *val = value_init(alc, v_decl, decl, type);
-                class_ref_change(alc, sub, val, -1);
+                class_ref_change(alc, sub, val, -1, false);
                 Token *t = tgen_exec(alc, sub, true);
                 array_push((ul->deref_scope ? ul->deref_scope->ast : ul->scope->ast), t);
                 ul->deref_token = t->item;

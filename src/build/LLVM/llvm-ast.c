@@ -200,7 +200,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
             // Referencing
             Scope *upref_init_0 = scope_init(alc, sct_default, scope, true);
             if (!f_init_0->type->borrow) {
-                class_ref_change(alc, upref_init_0, value_init(alc, v_ir_value, lon, on->rett), 1);
+                class_ref_change(alc, upref_init_0, value_init(alc, v_ir_value, lon, on->rett), 1, false);
             }
             llvm_write_ast(b, upref_init_0);
             // Call func
@@ -216,7 +216,7 @@ void llvm_write_ast(LB *b, Scope *scope) {
             // Referencing
             Scope *upref_get = scope_init(alc, sct_default, scope, true);
             if (!f_get_0->type->borrow) {
-                class_ref_change(alc, upref_get, value_init(alc, v_ir_value, lon, on->rett), 1);
+                class_ref_change(alc, upref_get, value_init(alc, v_ir_value, lon, on->rett), 1, false);
             }
             llvm_write_ast(b, upref_get);
 

@@ -528,7 +528,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_upref_value) {
         char *lval = llvm_value(b, scope, v->item);
         Scope *sub = scope_init(alc, sct_default, scope, true);
-        class_ref_change(alc, sub, value_init(alc, v_ir_value, lval, v->rett), 1);
+        class_ref_change(alc, sub, value_init(alc, v_ir_value, lval, v->rett), 1, false);
         llvm_write_ast(b, sub);
         return lval;
     }

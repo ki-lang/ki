@@ -232,7 +232,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             bool deref = strcmp(token, "@deref") == 0;
             Value *on = read_value(fc, alc, scope, true, 0, false);
             Type *rett = on->rett;
-            class_ref_change(alc, scope, on, deref ? -1 : 1);
+            class_ref_change(alc, scope, on, deref ? -1 : 1, false);
             tok_expect(fc, ";", false, true);
             continue;
         }
@@ -335,7 +335,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 } else if (left->type == v_class_pa || left->type == v_global) {
                     // Deref
                     Value *on = vgen_value_then_ir_value(alc, left);
-                    class_ref_change(alc, scope, on, -1);
+                    class_ref_change(alc, scope, on, -1, false);
                 }
 
                 array_push(scope->ast, tgen_assign(alc, left, ir_right));
@@ -417,6 +417,10 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
         type_check(fc, type, val->rett);
     } else {
         type = val->rett;
+        if (type->weak_ptr) {
+            type = type_clone(alc, type);
+            type->weak_ptr = false;
+        }
     }
 
     val = usage_move_value(alc, fc, scope, val, type);
