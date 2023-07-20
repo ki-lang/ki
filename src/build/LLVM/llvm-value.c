@@ -271,7 +271,8 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
         char *lval = llvm_assign_value(b, scope, v);
         char *res = llvm_ir_load(b, pa->prop->type, lval);
-        pa->llvm_val = res;
+        if (pa->cache_llvm_val)
+            pa->llvm_val = res;
 
         if (pa->upref_token) {
             Scope *sub = scope_init(alc, sct_default, scope, true);

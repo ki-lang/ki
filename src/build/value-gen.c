@@ -85,11 +85,15 @@ Value *vgen_class_pa(Allocator *alc, Scope *scope, Value *on, ClassProp *prop) {
     item->llvm_val = NULL;
     item->deref_token = NULL;
     item->upref_token = NULL;
+    item->cache_llvm_val = false;
 
     Type *prop_type = prop->type;
     Value *res = value_init(alc, v_class_pa, item, prop_type);
 
     if (scope && type_tracks_ownership(prop_type)) {
+
+        item->cache_llvm_val = true;
+
         Type *rett = type_clone(alc, prop_type);
         rett->ref = true;
         res->rett = rett;

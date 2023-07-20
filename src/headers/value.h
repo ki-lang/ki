@@ -74,6 +74,7 @@ struct VClassPA {
     char *llvm_val;
     Token *deref_token;
     Token *upref_token;
+    bool cache_llvm_val;
 };
 struct VClassInit {
     Class *class;
