@@ -279,9 +279,9 @@ class Server {
 
                     let req = Request{
                         http_con: http_con,
-                        headers: http_con.headers @as *Map[String],
-                        method: http_con.request_method @as *String,
-                        path: http_con.request_path @as *String,
+                        headers: http_con.headers,
+                        method: http_con.request_method,
+                        path: http_con.request_path,
                     };
                     let resp = handler(req);
 

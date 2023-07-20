@@ -1,9 +1,9 @@
 
 class Request {
-	~http_con: *Connection;
-	headers: *Map[String];
-	method: *String;
-	path: *String;
+	~http_con: &Connection;
+	headers: &Map[String];
+	method: &String;
+	path: &String;
 
 	fn body() String {
 		let buf = this.http_con.read_buf;
