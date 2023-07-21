@@ -335,7 +335,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 } else if (left->type == v_class_pa || left->type == v_global) {
                     // Deref
                     Value *on = vgen_value_then_ir_value(alc, left);
-                    class_ref_change(alc, scope, on, -1, false);
+                    class_ref_change(alc, scope, on, -1, left->rett->weak_ptr);
                 }
 
                 array_push(scope->ast, tgen_assign(alc, left, ir_right));

@@ -28,7 +28,7 @@ class String type:ptr track {
 	fn rc_weak() u32 %inline {
 		if(this.is_const()) { return 0; }
 		let adr = this @as ptr;
-		adr += @sizeof(uxx) + 6;
+		adr += @sizeof(uxx) + 4;
 		return @ptrv(adr, u32, 0);
 	}
 
@@ -385,7 +385,7 @@ class String type:ptr track {
 	}
 	fn __ref_weak() void {
 		if this.is_const() { return; }
-		let adr = (this @as ptr) + @sizeof(uxx) + 6;
+		let adr = (this @as ptr) + @sizeof(uxx) + 4;
 		let rcw = @ptrv(adr, u32, 0) + 1;
 		@ptrv(adr, u32, 0) = rcw;
 	}

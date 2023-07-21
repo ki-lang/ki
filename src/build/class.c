@@ -168,8 +168,9 @@ void class_generate_deref_props(Class *class) {
             class_ref_change(b->alc, fscope, pa, -1, false);
         }
         if (prop->type->weak_ptr) {
-            // Value *pa = vgen_class_pa(alc, NULL, this, prop);
-            // class_ref_change(b->alc, fscope, pa, -1, true);
+            printf("WEAK_2\n");
+            Value *pa = vgen_class_pa(alc, NULL, this, prop);
+            class_ref_change(b->alc, fscope, pa, -1, true);
         }
     }
 }
@@ -250,7 +251,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
         scope = sub;
     }
 
-    if (amount < 0 && (!weak && class->func_deref) || (weak && class->func_deref_weak)) {
+    if (amount < 0 && ((!weak && class->func_deref) || (weak && class->func_deref_weak))) {
 
         // Call __deref
         Value *fptr = vgen_fptr(alc, weak ? class->func_deref_weak : class->func_deref, NULL);
@@ -259,7 +260,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
         Value *fcall = vgen_fcall(alc, NULL, fptr, values, b->type_void, NULL, 1, 1);
         array_push(scope->ast, token_init(alc, tkn_statement, fcall));
 
-    } else if (amount > 0 && (!weak && class->func_ref) || (weak && class->func_ref_weak)) {
+    } else if (amount > 0 && ((!weak && class->func_ref) || (weak && class->func_ref_weak))) {
 
         // Call __ref
         Value *fptr = vgen_fptr(alc, weak ? class->func_ref_weak : class->func_ref, NULL);
@@ -325,7 +326,12 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
             }
 
             Scope *free_code = scope_init(alc, sct_default, if_code, true);
-            // Scope *free_elif = scope_init(alc, sct_default, if_code, true);
+            Scope *free_elif = scope_init(alc, sct_default, if_code, true);
+
+            if (!class->async) {
+                Token *as = tgen_assign(alc, ir_pa, ir_sub);
+                array_push(free_elif->ast, as);
+            }
 
             // _RC_WEAK == 0
             ClassProp *propw = map_get(class->props, weak ? "_RC" : "_RC_WEAK");
@@ -333,7 +339,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
             // Value *ir_paw = vgen_ir_val(alc, paw, propw->type);
             // array_push(if_code->ast, token_init(alc, tkn_ir_val, ir_paw->item));
             Value *is_zerow = vgen_compare(alc, class->fc->b, paw, vgen_vint(alc, 0, propw->type, false), op_eq);
-            TIf *ift_weak = tgen_tif(alc, is_zerow, free_code, NULL, NULL);
+            TIf *ift_weak = tgen_tif(alc, is_zerow, free_code, free_elif, NULL);
             Token *t_weak = token_init(alc, tkn_if, ift_weak);
             array_push(if_code->ast, t_weak);
 
