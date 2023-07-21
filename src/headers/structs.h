@@ -296,6 +296,8 @@ struct Class {
     Map *funcs;
     Func *func_ref;
     Func *func_deref;
+    Func *func_ref_weak;
+    Func *func_deref_weak;
     Func *func_deref_props;
     Func *func_free;
     Func *func_iter_init;
@@ -315,6 +317,8 @@ struct Class {
     bool track_ownership;
     bool must_ref;
     bool must_deref;
+    bool must_ref_weak;
+    bool must_deref_weak;
     bool is_struct;
     bool can_iter;
     bool async;

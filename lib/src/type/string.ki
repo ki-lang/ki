@@ -1,6 +1,6 @@
 
 // const:   {string_length:uxx}-1-{...string bytes...}
-// dynamic: {string_length:uxx}-0-{pad 3}-{ref_count:u32}-{...string bytes...}
+// dynamic: {string_length:uxx}-0-{pad 1}-{ref_count:u16}{ref_weak_count:u32}-{...string bytes...}
 
 use mem;
 use os;
@@ -22,7 +22,13 @@ class String type:ptr track {
 	fn rc() u32 %inline {
 		if(this.is_const()) { return 420; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 420.
 		let adr = this @as ptr;
-		adr += @sizeof(uxx) + 4;
+		adr += @sizeof(uxx) + 2;
+		return @ptrv(adr, u16, 0) @as u32;
+	}
+	fn rc_weak() u32 %inline {
+		if(this.is_const()) { return 0; }
+		let adr = this @as ptr;
+		adr += @sizeof(uxx) + 6;
 		return @ptrv(adr, u32, 0);
 	}
 
@@ -360,19 +366,42 @@ class String type:ptr track {
 
 	fn __ref() void {
 		if this.is_const() { return; }
-		let adr = (this @as ptr) + @sizeof(uxx) + 4;
-		let rc = @ptrv(adr, u32, 0) + 1;
-		@ptrv(adr, u32, 0) = rc;
+		let adr = (this @as ptr) + @sizeof(uxx) + 2;
+		let rc = @ptrv(adr, u16, 0) + 1;
+		@ptrv(adr, u16, 0) = rc;
 	}
 	fn __deref() void {
 		if this.is_const() { return; }
-		let adr = (this @as ptr) + @sizeof(uxx) + 4;
-		let rc = @ptrv(adr, u32, 0) - 1;
+		let adr = (this @as ptr) + @sizeof(uxx) + 2;
+		let rc = @ptrv(adr, u16, 0) - 1;
 		if rc == 0 {
-			this.__free();
-		} else {
-			@ptrv(adr, u32, 0) = rc;
+			let rcw = @ptrv(adr + 2, u32, 0);
+			if rcw == 0 {
+				this.__free();
+				return;
+			}
 		}
+		@ptrv(adr, u16, 0) = rc;
+	}
+	fn __ref_weak() void {
+		if this.is_const() { return; }
+		let adr = (this @as ptr) + @sizeof(uxx) + 6;
+		let rcw = @ptrv(adr, u32, 0) + 1;
+		@ptrv(adr, u32, 0) = rcw;
+	}
+	fn __deref_weak() void {
+		if this.is_const() { return; }
+		let adr = (this @as ptr) + @sizeof(uxx) + 2;
+		let adrw = adr + 2;
+		let rcw = @ptrv(adrw, u32, 0) - 1;
+		if rcw == 0 {
+			let rc = @ptrv(adr, u16, 0);
+			if rc == 0 {
+				this.__free();
+				return;
+			}
+		}
+		@ptrv(adrw, u32, 0) = rcw;
 	}
 	fn __free() void {
 		if this.is_const() { return; }
@@ -434,8 +463,10 @@ class String type:ptr track {
 		@ptrv(adr, uxx, 0) = size;
 		adr += @sizeof(uxx);
 		@ptrv(adr, u8, 0) = 0#u8;
-		adr += 4;
-		@ptrv(adr, u32, 0) = 1#u32;
+		adr += 2;
+		@ptrv(adr, u16, 0) = 1#u16;
+		adr += 2;
+		@ptrv(adr, u32, 0) = 0#u32;
 		let res = adr_ @as String;
 		return res;
 	}

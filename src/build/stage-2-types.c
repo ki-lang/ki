@@ -255,6 +255,12 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             } else if (strcmp(func->name, "__deref") == 0) {
                 class->func_deref = func;
                 class->must_deref = true;
+            } else if (strcmp(func->name, "__ref_weak") == 0) {
+                class->func_ref_weak = func;
+                class->must_ref_weak = true;
+            } else if (strcmp(func->name, "__deref_weak") == 0) {
+                class->func_deref_weak = func;
+                class->must_deref_weak = true;
             } else if (strcmp(func->name, "__free") == 0) {
                 class->func_free = func;
             } else if (strcmp(func->name, "__before_free") == 0) {
@@ -554,6 +560,12 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
     if (func)
         stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
     func = map_get(class->funcs, "__deref");
+    if (func)
+        stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
+    func = map_get(class->funcs, "__ref_weak");
+    if (func)
+        stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
+    func = map_get(class->funcs, "__deref_weak");
     if (func)
         stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
     func = map_get(class->funcs, "__free");
