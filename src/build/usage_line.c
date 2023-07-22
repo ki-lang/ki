@@ -75,7 +75,6 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val, Type *
     if (storage_type->weak_ptr) {
         Class *class = storage_type->class;
         if (class && class->must_ref) {
-            printf("WEAK_1\n");
             Value *v = vgen_value_then_ir_value(alc, val);
             Scope *sub = scope_init(alc, sct_default, scope, true);
             class_ref_change(alc, sub, v, 1, true);
