@@ -340,6 +340,11 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
 
             // _RC == 0
             if (!weak) {
+                if (!class->async) {
+                    Token *as = tgen_assign(alc, ir_pa, ir_sub);
+                    array_push(if_code->ast, as);
+                }
+
                 Value *fptr = vgen_fptr(alc, class->func_free, NULL);
                 Array *values = array_make(alc, 2);
                 array_push(values, ir_on);
