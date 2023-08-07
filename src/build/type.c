@@ -18,7 +18,7 @@ Type *type_init(Allocator *alc) {
     //
     type->strict_ownership = true;
     type->borrow = false;
-    type->ref = false;
+    type->shared_ref = false;
     type->weak_ptr = false;
     type->raw_ptr = false;
     //
@@ -309,7 +309,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     if (type_tracks_ownership(type)) {
-        type->ref = ref;
+        type->shared_ref = ref;
         type->borrow = borrow;
         type->weak_ptr = weak_ptr;
         type->raw_ptr = raw_ptr;
@@ -355,7 +355,7 @@ Type *type_get_inline(Allocator *alc, Type *type) {
     rett->ptr_depth--;
     if (rett->ptr_depth == 0) {
         rett->borrow = false;
-        rett->ref = false;
+        rett->shared_ref = false;
         if (rett->type == type_arr) {
             rett->bytes = rett->array_of->bytes * rett->array_size;
         } else {
@@ -468,7 +468,7 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
                 *reason = "Trying to pass a borrowed type to a type that requires ownership";
             return false;
         }
-        if (!t1->ref && !t1->borrow && t2->ref) {
+        if (!t1->shared_ref && !t1->borrow && t2->shared_ref) {
             if (reason)
                 *reason = "Trying to pass a reference type to a non-reference type";
             return false;
@@ -548,7 +548,7 @@ char *type_to_str(Type *t, char *res) {
     if (t->borrow) {
         strcat(res, "*");
     }
-    if (t->ref) {
+    if (t->shared_ref) {
         strcat(res, "&");
     }
     // }
@@ -707,7 +707,7 @@ TypeCheck *type_gen_type_check(Allocator *alc, Type *type) {
     tc->type = type->type;
     tc->class = type->class;
     tc->borrow = type->borrow;
-    tc->ref = type->ref;
+    tc->shared_ref = type->shared_ref;
     tc->array_of = type->array_of ? type_gen_type_check(alc, type->array_of) : NULL;
     tc->array_size = type->array_size;
     return tc;
@@ -726,8 +726,8 @@ void type_validate(Fc *fc, TypeCheck *tc, Type *type, char *msg) {
         reason = "Must be an array";
     } else if (tc->borrow != type->borrow) {
         reason = tc->borrow ? "Must be a borrow type" : "Cannot be a borrow type";
-    } else if (tc->ref != type->ref) {
-        reason = tc->ref ? "Must be a reference type" : "Cannot be a reference type";
+    } else if (tc->shared_ref != type->shared_ref) {
+        reason = tc->shared_ref ? "Must be a reference type" : "Cannot be a reference type";
     }
     if (tc->array_of) {
         type_validate(fc, tc->array_of, type->array_of, msg);
@@ -749,7 +749,7 @@ void type_check_to_str(TypeCheck *tc, char *buf) {
     if (tc->borrow) {
         strcat(buf, "*");
     }
-    if (tc->ref) {
+    if (tc->shared_ref) {
         strcat(buf, "&");
     }
     if (tc->array_of) {

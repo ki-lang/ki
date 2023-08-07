@@ -302,7 +302,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, left->rett);
                 type_check(fc, left->rett, right->rett);
 
-                if (right->rett->ref && (left->type == v_class_pa || left->type == v_global)) {
+                if (right->rett->shared_ref && (left->type == v_class_pa || left->type == v_global)) {
                     sprintf(fc->sbuf, "References can only be assigned to local variables");
                     fc_error(fc);
                 }

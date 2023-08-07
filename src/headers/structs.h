@@ -280,7 +280,7 @@ struct Type {
     bool func_can_error;
     bool strict_ownership;
     bool borrow;
-    bool ref;
+    bool shared_ref;
     bool weak_ptr;
     bool raw_ptr;
 };
@@ -323,6 +323,7 @@ struct Class {
     bool can_iter;
     bool async;
     bool has_borrows;
+    bool circular_checked;
 };
 struct ClassProp {
     Type *type;
@@ -442,7 +443,7 @@ struct TypeCheck {
     int array_size;
     int type;
     bool borrow;
-    bool ref;
+    bool shared_ref;
 };
 
 struct Test {

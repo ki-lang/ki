@@ -101,6 +101,7 @@ void stage_2_class_defaults(Fc *fc, Class *class);
 void stage_2_class_type_checks(Fc *fc, Class *class);
 void stage_2_func(Fc *fc, Func *func);
 void stage_3(Fc *);
+void stage_3_circular(Build *b, Class *class);
 void stage_4(Fc *);
 void stage_5(Fc *);
 void stage_6(Fc *);

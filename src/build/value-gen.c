@@ -99,7 +99,7 @@ Value *vgen_class_pa(Allocator *alc, Scope *scope, Value *on, ClassProp *prop) {
 
         item->cache_llvm_val = true;
 
-        prop_type->ref = true;
+        prop_type->shared_ref = true;
 
         Value *from = vgen_ir_from(alc, res);
         item->deref_token = tgen_ref_change_exec(alc, scope, from, -1);
@@ -264,7 +264,7 @@ Value *vgen_array_item(Allocator *alc, Scope *scope, Value *on, Value *index) {
 
     if (scope && type_tracks_ownership(type)) {
         Type *rett = type_clone(alc, type);
-        rett->ref = true;
+        rett->shared_ref = true;
         res->rett = rett;
 
         Value *from = vgen_ir_from(alc, res);

@@ -23,6 +23,7 @@ Class *class_init(Allocator *alc) {
     class->is_struct = false;
     class->can_iter = false;
     class->async = false;
+    class->circular_checked = false;
 
     class->func_ref = NULL;
     class->func_deref = NULL;
@@ -492,6 +493,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
             stage_2_func(new_fc, func);
         }
         stage_2_class_type_checks(new_fc, gclass);
+        stage_3_circular(b, gclass);
         stage_5(new_fc);
     }
 
