@@ -41,7 +41,7 @@ ki build src/*.ki -o hello
 ## Example code
 
 ```js
-func main() void {
+fn main() void {
     println("Hello world!");
 }
 ```
