@@ -113,7 +113,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         if (on->rett->strict_ownership) {
             Type *rett = type_clone(alc, on->rett);
             rett->strict_ownership = false;
-            rett->ref = true;
+            rett->shared_ref = true;
             rett->borrow = false;
             on->rett = rett;
         }
@@ -144,7 +144,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         with = try_convert(fc, alc, with, var->rett);
         type_check(fc, var->rett, with->rett);
 
-        with = usage_move_value(alc, fc, scope, with);
+        with = usage_move_value(alc, fc, scope, with, var->rett);
 
         v = vgen_swap(alc, var, with);
 
@@ -155,6 +155,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             sprintf(fc->sbuf, "Value used in '@ptr_of' must be assignable");
             fc_error(fc);
         }
+        value_disable_upref_deref(on);
         tok_expect(fc, ")", false, true);
         if (on->type == v_decl) {
             Decl *decl = on->item;
@@ -171,6 +172,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             sprintf(fc->sbuf, "Value used in '@array_of' must be assignable");
             fc_error(fc);
         }
+        value_disable_upref_deref(on);
         tok_expect(fc, ")", false, true);
         if (on->type == v_decl) {
             Decl *decl = on->item;
@@ -793,7 +795,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
 
         if (scope && type_tracks_ownership(type)) {
             Type *rett = type_clone(alc, type);
-            rett->ref = true;
+            rett->shared_ref = true;
             res->rett = rett;
 
             Value *from = vgen_ir_from(alc, res);
@@ -859,7 +861,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
                 value = try_convert(fc, alc, value, prop->type);
                 type_check(fc, prop->type, value->rett);
 
-                value = usage_move_value(alc, fc, scope, value);
+                value = usage_move_value(alc, fc, scope, value, prop->type);
 
                 map_set(values, name, value);
                 //
@@ -1385,10 +1387,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
             }
 
             Arg *arg = array_get_index(func->args, 0);
-
-            if (!arg->type->borrow) {
-                first_val = usage_move_value(alc, fc, scope, first_val);
-            }
+            first_val = usage_move_value(alc, fc, scope, first_val, arg->type);
 
             type_check(fc, arg->type, first_val->rett);
 
@@ -1416,9 +1415,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
                 Value *val = read_value(fc, alc, scope, false, 0, false);
                 val = try_convert(fc, alc, val, arg->type);
-                if (!arg->type->borrow) {
-                    val = usage_move_value(alc, fc, scope, val);
-                }
+                val = usage_move_value(alc, fc, scope, val, arg->type);
 
                 type_check(fc, arg->type, val->rett);
                 array_push(values, val);

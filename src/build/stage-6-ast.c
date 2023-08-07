@@ -223,7 +223,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
         if (strcmp(token, "@move") == 0) {
             Value *on = read_value(fc, alc, scope, true, 0, false);
-            on = usage_move_value(alc, fc, scope, on);
+            on = usage_move_value(alc, fc, scope, on, on->rett);
             array_push(scope->ast, token_init(alc, tkn_statement, on));
             tok_expect(fc, ";", false, true);
             continue;
@@ -232,7 +232,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             bool deref = strcmp(token, "@deref") == 0;
             Value *on = read_value(fc, alc, scope, true, 0, false);
             Type *rett = on->rett;
-            class_ref_change(alc, scope, on, deref ? -1 : 1);
+            class_ref_change(alc, scope, on, deref ? -1 : 1, false);
             tok_expect(fc, ";", false, true);
             continue;
         }
@@ -302,12 +302,12 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 right = try_convert(fc, alc, right, left->rett);
                 type_check(fc, left->rett, right->rett);
 
-                if (right->rett->ref && (left->type == v_class_pa || left->type == v_global)) {
+                if (right->rett->shared_ref && (left->type == v_class_pa || left->type == v_global)) {
                     sprintf(fc->sbuf, "References can only be assigned to local variables");
                     fc_error(fc);
                 }
                 if (left->type != v_ptrv) {
-                    right = usage_move_value(alc, fc, scope, right);
+                    right = usage_move_value(alc, fc, scope, right, left->rett);
                 }
                 if (left->type == v_class_pa) {
                     // Check if assigning to moved value
@@ -335,7 +335,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 } else if (left->type == v_class_pa || left->type == v_global) {
                     // Deref
                     Value *on = vgen_value_then_ir_value(alc, left);
-                    class_ref_change(alc, scope, on, -1);
+                    class_ref_change(alc, scope, on, -1, left->rett->weak_ptr);
                 }
 
                 array_push(scope->ast, tgen_assign(alc, left, ir_right));
@@ -417,9 +417,13 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
         type_check(fc, type, val->rett);
     } else {
         type = val->rett;
+        if (type->weak_ptr) {
+            type = type_clone(alc, type);
+            type->weak_ptr = false;
+        }
     }
 
-    val = usage_move_value(alc, fc, scope, val);
+    val = usage_move_value(alc, fc, scope, val, type);
 
     if (type_is_void(type)) {
         sprintf(fc->sbuf, "Variable declaration: Right side does not return a value");
@@ -471,7 +475,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
             vscope->vscope->rett = rett;
         }
 
-        val = usage_move_value(alc, fc, scope, val);
+        val = usage_move_value(alc, fc, scope, val, rett);
 
         IRVal *tvar = al(alc, sizeof(IRVal));
         tvar->value = val;
@@ -517,7 +521,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
 
         type_check(fc, frett, val->rett);
 
-        val = usage_move_value(alc, fc, scope, val);
+        val = usage_move_value(alc, fc, scope, val, frett);
 
         IRVal *tvar = al(alc, sizeof(IRVal));
         tvar->value = val;

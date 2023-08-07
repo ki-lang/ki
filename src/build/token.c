@@ -71,6 +71,6 @@ Token *tgen_each(Allocator *alc, Value *value, Scope *scope, Decl *decl_key, Dec
 Token *tgen_ref_change_exec(Allocator *alc, Scope *scope, Value *on, int amount) {
     //
     Scope *sub = scope_init(alc, sct_default, scope, true);
-    class_ref_change(alc, sub, on, amount);
+    class_ref_change(alc, sub, on, amount, false);
     return tgen_exec(alc, sub, true);
 }

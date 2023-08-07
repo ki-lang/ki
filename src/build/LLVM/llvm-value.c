@@ -270,15 +270,121 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         }
 
         char *lval = llvm_assign_value(b, scope, v);
-        char *res = llvm_ir_load(b, pa->prop->type, lval);
-        pa->llvm_val = res;
+        char *result = llvm_ir_load(b, pa->prop->type, lval);
+
+        ClassProp *prop = pa->prop;
+        Type *type = prop->type;
+        if (type->weak_ptr) {
+            Str *ir = llvm_b_ir(b);
+            char *ltype = llvm_type(b, type);
+            bool nullable = type->nullable;
+
+            LLVMBlock *b_ifnull = llvm_block_init_auto(b);
+            LLVMBlock *b_notnull = llvm_block_init_auto(b);
+            LLVMBlock *b_after = llvm_block_init_auto(b);
+            LLVMBlock *b_if_alive = llvm_block_init_auto(b);
+            // LLVMBlock *b_not_alive = llvm_block_init_auto(b);
+            // LLVMBlock *b_after_alive = llvm_block_init_auto(b);
+
+            if (nullable) {
+                char *is_null = llvm_var(b);
+                str_append_chars(ir, "  ");
+                str_append_chars(ir, is_null);
+                str_append_chars(ir, " = icmp eq ");
+                str_append_chars(ir, ltype);
+                str_append_chars(ir, " ");
+                str_append_chars(ir, result);
+                str_append_chars(ir, ", null\n");
+
+                llvm_ir_cond_jump(b, ir, is_null, b_ifnull, b_notnull);
+            } else {
+                llvm_ir_jump(ir, b_notnull);
+            }
+
+            // if null
+            b->lfunc->block = b_ifnull;
+            ir = llvm_b_ir(b);
+            // char *result_1 = llvm_var(b);
+            // str_append_chars(ir, "  ");
+            // str_append_chars(ir, result_1);
+            // str_append_chars(ir, " = null\n");
+            llvm_ir_jump(ir, b_after);
+
+            // if not null
+            b->lfunc->block = b_notnull;
+            ir = llvm_b_ir(b);
+            // if rc != 0
+            Class *pclass = prop->type->class;
+            llvm_check_defined(b, pclass);
+            ClassProp *rc_prop = map_get(pclass->props, "_RC");
+            char rc_index[20];
+            sprintf(rc_index, "%d", rc_prop->index);
+            char *rc = llvm_var(b);
+            str_append_chars(ir, "  ");
+            str_append_chars(ir, rc);
+            str_append_chars(ir, " = getelementptr inbounds %struct.");
+            str_append_chars(ir, pclass->gname);
+            str_append_chars(ir, ", ptr ");
+            str_append_chars(ir, result);
+            str_append_chars(ir, ", i32 0, i32 ");
+            str_append_chars(ir, rc_index);
+            str_append_chars(ir, "\n");
+
+            char *rc_load = llvm_var(b);
+            str_append_chars(ir, "  ");
+            str_append_chars(ir, rc_load);
+            str_append_chars(ir, " = load i32, ptr ");
+            str_append_chars(ir, rc);
+            str_append_chars(ir, ", align 4\n");
+
+            char *is_alive = llvm_var(b);
+            str_append_chars(ir, "  ");
+            str_append_chars(ir, is_alive);
+            str_append_chars(ir, " = icmp ne i32 ");
+            str_append_chars(ir, rc_load);
+            str_append_chars(ir, ", 0\n");
+
+            llvm_ir_cond_jump(b, ir, is_alive, b_if_alive, b_ifnull);
+
+            // if alive
+            b->lfunc->block = b_if_alive;
+            ir = llvm_b_ir(b);
+            // char *result_2 = llvm_var(b);
+            // str_append_chars(ir, "  ");
+            // str_append_chars(ir, result_2);
+            // str_append_chars(ir, " = ");
+            // str_append_chars(ir, result);
+            // str_append_chars(ir, "\n");
+            llvm_ir_jump(ir, b_after);
+
+            // after nullable
+            b->lfunc->block = b_after;
+            ir = llvm_b_ir(b);
+            char *new_result = llvm_var(b);
+            str_append_chars(ir, "  ");
+            str_append_chars(ir, new_result);
+            str_append_chars(ir, " = phi ptr [ ");
+            str_append_chars(ir, "null");
+            str_append_chars(ir, ", %");
+            str_append_chars(ir, b_ifnull->name);
+            str_append_chars(ir, " ], [ ");
+            str_append_chars(ir, result);
+            str_append_chars(ir, ", %");
+            str_append_chars(ir, b_if_alive->name);
+            str_append_chars(ir, " ]\n");
+
+            result = new_result;
+        }
+
+        if (pa->cache_llvm_val)
+            pa->llvm_val = result;
 
         if (pa->upref_token) {
             Scope *sub = scope_init(alc, sct_default, scope, true);
             array_push(sub->ast, pa->upref_token);
             llvm_write_ast(b, sub);
         }
-        return res;
+        return result;
     }
     if (v->type == v_class_init) {
         VClassInit *ci = v->item;
@@ -527,7 +633,7 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
     if (v->type == v_upref_value) {
         char *lval = llvm_value(b, scope, v->item);
         Scope *sub = scope_init(alc, sct_default, scope, true);
-        class_ref_change(alc, sub, value_init(alc, v_ir_value, lval, v->rett), 1);
+        class_ref_change(alc, sub, value_init(alc, v_ir_value, lval, v->rett), 1, false);
         llvm_write_ast(b, sub);
         return lval;
     }

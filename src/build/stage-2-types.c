@@ -110,7 +110,7 @@ void stage_2_class(Fc *fc, Class *class) {
 
             Type *type_weak = type_gen(b, b->alc, "u32");
             ClassProp *prop_weak = class_prop_init(b->alc, class, type_weak);
-            prop_weak->value = vgen_vint(b->alc, 1, type_weak, false);
+            prop_weak->value = vgen_vint(b->alc, 0, type_weak, false);
             map_set(class->props, "_RC_WEAK", prop_weak);
         }
     }
@@ -245,7 +245,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
                 Arg *arg = array_get_index(func->args, 0);
                 if (type_tracks_ownership(arg->type)) {
                     arg->type->borrow = borrow;
-                    arg->type->ref = ref;
+                    arg->type->shared_ref = ref;
                 }
             }
 
@@ -255,6 +255,12 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             } else if (strcmp(func->name, "__deref") == 0) {
                 class->func_deref = func;
                 class->must_deref = true;
+            } else if (strcmp(func->name, "__ref_weak") == 0) {
+                class->func_ref_weak = func;
+                class->must_ref_weak = true;
+            } else if (strcmp(func->name, "__deref_weak") == 0) {
+                class->func_deref_weak = func;
+                class->must_deref_weak = true;
             } else if (strcmp(func->name, "__free") == 0) {
                 class->func_free = func;
             } else if (strcmp(func->name, "__before_free") == 0) {
@@ -534,7 +540,7 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
     TypeCheck tc_this;
     tc_this.class = class;
     tc_this.borrow = true;
-    tc_this.ref = false;
+    tc_this.shared_ref = false;
     tc_this.array_of = NULL;
     tc_this.type = -1;
     tc_this.array_size = 0;
@@ -545,7 +551,7 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
     TypeCheck tc_void;
     tc_void.class = NULL;
     tc_void.borrow = false;
-    tc_void.ref = false;
+    tc_void.shared_ref = false;
     tc_void.array_of = NULL;
     tc_void.type = type_void;
     tc_void.array_size = 0;
@@ -554,6 +560,12 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
     if (func)
         stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
     func = map_get(class->funcs, "__deref");
+    if (func)
+        stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
+    func = map_get(class->funcs, "__ref_weak");
+    if (func)
+        stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
+    func = map_get(class->funcs, "__deref_weak");
     if (func)
         stage_2_class_type_check(fc, func, checks, 1, &tc_void, false);
     func = map_get(class->funcs, "__free");
@@ -577,7 +589,7 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
         TypeCheck tc_key;
         tc_key.class = NULL;
         tc_key.borrow = type_tracks_ownership(func_init->rett);
-        tc_key.ref = false;
+        tc_key.shared_ref = false;
         tc_key.array_of = type_gen_type_check(alc, func_init->rett);
         tc_key.type = -1;
         tc_key.array_size = 1;
@@ -592,7 +604,7 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
         //     tc->class = NULL;
         //     tc->array_of = NULL;
         //     tc->borrow = true;
-        //     tc->ref = false;
+        //     tc->shared_ref = false;
         //     tc->type = type_arr;
         //     tc->array_size = 1;
         //     checks[2] = tc;
