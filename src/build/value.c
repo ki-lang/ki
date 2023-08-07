@@ -155,6 +155,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             sprintf(fc->sbuf, "Value used in '@ptr_of' must be assignable");
             fc_error(fc);
         }
+        value_disable_upref_deref(on);
         tok_expect(fc, ")", false, true);
         if (on->type == v_decl) {
             Decl *decl = on->item;
