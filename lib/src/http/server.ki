@@ -278,7 +278,7 @@ class Server {
                     }
 
                     let req = Request{
-                        http_con: http_con,
+                        http_con: &http_con,
                         headers: http_con.headers,
                         method: http_con.request_method,
                         path: http_con.request_path,

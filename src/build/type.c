@@ -147,31 +147,22 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     if (strcmp(token, ".") == 0) {
         inline_ = true;
         tok(fc, token, true, false);
-    }
-
-    if (strcmp(token, "raw") == 0) {
+    } else if (strcmp(token, "raw") == 0) {
         raw_ptr = true;
         tok(fc, token, true, true);
-    }
-    if (strcmp(token, "*") == 0) {
+    } else if (strcmp(token, "weak") == 0) {
+        if (context != rtc_prop_type) {
+            sprintf(fc->sbuf, "'weak' types are only allowed for object properties");
+            fc_error(fc);
+        }
+        weak_ptr = true;
+        tok(fc, token, true, true);
+    } else if (strcmp(token, "*") == 0) {
         borrow = true;
         tok(fc, token, true, false);
-    }
-    if (strcmp(token, "&") == 0) {
-        if (borrow) {
-            sprintf(fc->sbuf, "You cannot use both * and & in the same type");
-            fc_error(fc);
-        }
-        if (context == rtc_prop_type) {
-            weak_ptr = true;
-        } else {
-            ref = true;
-        }
+    } else if (strcmp(token, "&") == 0) {
+        ref = true;
         tok(fc, token, true, false);
-        if (strcmp(token, "*") == 0) {
-            sprintf(fc->sbuf, "You cannot use both * and & in the same type");
-            fc_error(fc);
-        }
     }
 
     if (strcmp(token, "?") == 0) {

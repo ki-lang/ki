@@ -6,7 +6,7 @@ class Request {
 	path: &String;
 
 	fn body() String {
-		let con = this.http_con ?! return "";;
+		let con = this.http_con;
 		let buf = con.read_buf;
 		let pos = con.parse_pos;
 		return buf.sub_str(pos, buf.length - pos);
