@@ -1,4 +1,14 @@
 
+use io;
+
 class Connection {
 	~fd: i32;
+
+	fn close() void {
+		#if OS == win
+        sys.closesocket(this.fd @as sys.SOCKET);
+        #else
+        io:close(this.fd);
+        #end
+	}
 }
