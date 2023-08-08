@@ -27,7 +27,7 @@ trait Number {
 
 		// In standard itoa(), negative numbers are handled only with
         // base 10. Otherwise numbers are considered unsigned.
-        #if IS_SIGNED_NUMBER_TYPE CLASS
+        #if TYPE_IS_SIGNED_NUMBER CLASS
         if (num < 0 && base == 10) {
             negative = true;
             num *= -1;
@@ -87,7 +87,7 @@ trait Number {
 
 		// In standard itoa(), negative numbers are handled only with
         // base 10. Otherwise numbers are considered unsigned.
-        #if IS_SIGNED_NUMBER_TYPE CLASS
+        #if TYPE_IS_SIGNED_NUMBER CLASS
         if (num < 0 && base == 10) {
             negative = true;
             num *= -1;

@@ -106,7 +106,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         result = true;
     } else if (strcmp(token, "0") == 0) {
         result = false;
-    } else if (strcmp(token, "IS_REFCOUNTED_TYPE") == 0) {
+    } else if (strcmp(token, "TYPE_IS_REFCOUNTED") == 0) {
 
         Id *id = read_id(fc, true, true, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
@@ -119,7 +119,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
             fc_error(fc);
         }
 
-    } else if (strcmp(token, "IS_NULLABLE_TYPE") == 0) {
+    } else if (strcmp(token, "TYPE_IS_NULLABLE") == 0) {
 
         Id *id = read_id(fc, true, true, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
@@ -132,7 +132,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         fc_error(fc);
         // }
 
-    } else if (strcmp(token, "IS_STRICT_TYPE") == 0) {
+    } else if (strcmp(token, "TYPE_IS_STRICT") == 0) {
 
         Id *id = read_id(fc, true, true, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
@@ -145,7 +145,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
             fc_error(fc);
         }
 
-    } else if (strcmp(token, "IS_SIGNED_NUMBER_TYPE") == 0) {
+    } else if (strcmp(token, "TYPE_IS_SIGNED_NUMBER") == 0) {
 
         Id *id = read_id(fc, true, true, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
@@ -158,7 +158,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
             fc_error(fc);
         }
 
-    } else if (strcmp(token, "IS_UNSIGNED_NUMBER_TYPE") == 0) {
+    } else if (strcmp(token, "TYPE_IS_UNSIGNED_NUMBER") == 0) {
 
         Id *id = read_id(fc, true, true, true);
         Idf *idf = idf_by_id(fc, scope, id, true);
