@@ -98,6 +98,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
     bool first_line = true;
     Allocator *alc = fc->alc_ast;
 
+    bool is_vscope = scope->vscope != NULL;
+    const char *end_char = is_vscope ? "}}" : "}";
+
     while (true) {
         //
         tok(fc, token, false, true);
@@ -117,7 +120,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 rtok(fc);
                 break;
             }
-            if (strcmp(token, "}") != 0) {
+            if (strcmp(token, end_char) != 0) {
                 sprintf(fc->sbuf, "Expected '}'");
                 fc_error(fc);
             }
@@ -130,7 +133,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
         first_line = false;
 
-        if (strcmp(token, "}") == 0 && !single_line) {
+        if (strcmp(token, end_char) == 0 && !single_line) {
             break;
         }
 
@@ -452,7 +455,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
         Type *rett = vscope->vscope->rett;
         Value *val = read_value(fc, alc, scope, true, 0, false);
         if (type_is_void(val->rett)) {
-            sprintf(fc->sbuf, "You cannot return a void value inside a @value scope");
+            sprintf(fc->sbuf, "You cannot return a void value inside a value scope '{{'");
             fc_error(fc);
         }
         if (rett) {

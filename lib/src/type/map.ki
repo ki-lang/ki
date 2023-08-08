@@ -5,11 +5,11 @@ macro map {
 		"{}" values @repeat @replace("=>", ",");
 	}
 	output {
-		"@value {\n"
+		"{{\n"
 		"let map = Map[%type].new();\n"
 		"map.set(%values);\n"
 		"return map;\n"
-		"}"
+		"}}"
 	}
 }
 
