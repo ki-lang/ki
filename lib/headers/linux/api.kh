@@ -18,10 +18,18 @@ fn write(fd: i32, buf: c_string, size: uxx) ixx;
 fn open(path: c_string, flags: i32, mode: i32) i32;
 fn close(fd: i32) i32;
 
+fn fcntl(fd: i32, action: i32, value: i32) i32;
+
+// Files
 fn stat(path: c_string, stat_buf: *cstruct_stat) i32;
 fn fstat(fd: i32, stat_buf: *cstruct_stat) i32;
 fn lstat(path: c_string, stat_buf: *cstruct_stat) i32;
 
+fn opendir(name: c_string) DIR;
+fn readdir(dirp: DIR) cstruct_dirent;
+fn closedir(dirp: DIR) i32;
+
+// Poll
 fn poll(fds: .cstruct_pollfd[unsafe], nfds: u32, timeout: i32) i32;
 
 fn pipe(pipefd: i32[2]) i32;

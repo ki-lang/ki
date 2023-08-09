@@ -117,3 +117,56 @@ fn is_dir(path: *String) bool {
 	return (buf.st_mode & sys.OS.S_IFMT) == sys.OS.S_IFDIR;
 }
 
+fn files_in(directory: *String, files: bool = true, dirs: bool = true) Array[String] {
+	let result = Array[String].new();
+	let path = directory.rtrim("/") + "/";
+
+	#if OS == win
+
+	let pattern = path + "*";
+	let data = @stack_alloc(@sizeof_class(sys.WIN32_FIND_DATAA)) @as sys.WIN32_FIND_DATAA;
+    let hFind = FindFirstFile(pattern, data);
+    if (hFind != -1) {
+		let loop = true;
+		while loop {
+            let is_dir = data.dwFileAttributes & 0x10;
+            let is_file = !is_dir;
+            if (dirs && is_dir) || (files && is_file) {
+				result.push((@ptr_of(data.cFileName) @as c_string).to_str());
+            }
+			loop = FindNextFile(hFind, data);
+		}
+        sys.FindClose(hFind);
+    }
+
+	#else
+
+	let dir = path.to_c_string();
+	let d = sys.opendir(dir);
+
+    if d != null {
+		let ent = sys.readdir(d);
+        while ent != null {
+
+			let fn = (@ptr_of(ent.d_name) @as c_string).to_str();
+			if fn.bytes() < 3 && (fn == "." || fn == "..") {
+				ent = sys.readdir(d);
+				continue;
+			}
+			let fpath = path + fn;
+
+            let _is_dir = is_dir(fpath);
+            let _is_file = !_is_dir;
+
+            if (dirs && _is_dir) || (files && _is_file) {
+				result.push(fpath);
+			}
+			ent = sys.readdir(d);
+        }
+        sys.closedir(d);
+    }
+
+	#end
+
+	return result;
+}

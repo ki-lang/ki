@@ -82,8 +82,8 @@ struct WSADATA {
     szSystemStatus: .u8[257];
 
     // 32-bit fields
-    //szDescription: u8[257];
-    //szSystemStatus: u8[257];
+    //szDescription: .u8[257];
+    //szSystemStatus: .u8[257];
     //iMaxSockets: u16;
     //iMaxUdpDg: u16;
     //lpVendorInfo: c_string;
@@ -94,6 +94,26 @@ struct cstruct_timezone {
     tz_dsttime: i32; // Nonzero if DST is ever in effect
 }
 
+struct WIN32_FIND_DATAA {
+    dwFileAttributes: i32;
+    ftCreationTime: .FILETIME;
+    ftLastAccessTime: .FILETIME;
+    ftLastWriteTime: .FILETIME;
+    nFileSizeHigh: i32;
+    nFileSizeLow: i32;
+    dwReserved0: i32;
+    dwReserved1: i32;
+    cFileName: .i8[260];
+    cAlternateFileName: .i8[14];
+    dwFileType: i32; // Obsolete. Do not use.
+    dwCreatorType: i32; // Obsolete. Do not use
+    wFinderFlags: i16; // Obsolete. Do not use
+}
+
+struct FILETIME {
+    dwLowDateTime: i32;
+    dwHighDateTime: i32;
+}
 
 struct WSPUPCALLTABLE {
     lpWPUCloseEvent: ptr;

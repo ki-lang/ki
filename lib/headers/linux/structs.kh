@@ -1,4 +1,14 @@
 
+class DIR type:ptr {}
+
+struct cstruct_dirent {
+    d_ino: uxx; // Inode number
+    d_off: uxx; // Not an offset; see below
+    d_reclen: u16; // Length of this record
+    d_type: u8; // Type of file; not suppor
+    d_name: .u8[256]; // Null-terminated filename
+}
+
 struct cstruct_stat {
     st_dev: uxx;
     st_ino: uxx;

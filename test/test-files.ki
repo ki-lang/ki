@@ -1,0 +1,10 @@
+
+// TODO: expand tests using a test directory
+
+test "files in directory" {
+
+    let files = fs:files_in(".");
+
+	@expect files.length > 0;
+}
+

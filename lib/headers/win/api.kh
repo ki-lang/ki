@@ -30,10 +30,16 @@ fn _write(fd: i32, buf: c_string, size: uxx) ixx;
 fn _open(path: c_string, flags: i32, mode: i32) i32;
 fn _close(fd: i32) i32;
 
+// Files
 fn _stat(path: c_string, stat_buf: *cstruct_stat) i32;
 fn fstat(fd: i32, stat_buf: *cstruct_stat) i32;
 fn lstat(path: c_string, stat_buf: *cstruct_stat) i32;
 
+fn FindFirstFile(lpFileName: c_string, lpFindFileData: WIN32_FIND_DATAA) ptr;
+fn FindNextFileA(hFindFile: ptr, lpFindFileData: WIN32_FIND_DATAA) bool;
+fn FindClose(hFindFile: ptr) bool;
+
+// Poll
 fn WSAPoll(fds: ptr, nfds: u32, timeout: i32) i32;
 fn WSAGetLastError() i32;
 fn WSAStartup(wVersionRequired: u16, lpWSAData: WSADATA) i32;
