@@ -122,6 +122,9 @@ class String type:ptr track {
 	/////////////////////
 
 	fn sub_str(char_start_index: uxx, char_length: uxx) String {
+
+		if char_length == 0 : return "";
+
 		let buffer = ByteBuffer.new(char_length + 1);
 		let count : uxx = 0;
 		let pos : uxx = 0;
