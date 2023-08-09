@@ -123,21 +123,31 @@ fn files_in(directory: *String, files: bool = true, dirs: bool = true) Array[Str
 
 	#if OS == win
 
-	let pattern = path + "*";
+	let pattern = (path + "*").to_c_string();
 	let data = @stack_alloc(@sizeof_class(sys.WIN32_FIND_DATAA)) @as sys.WIN32_FIND_DATAA;
     let hFind = sys.FindFirstFileA(pattern, data);
     if hFind != -1 @as ptr {
 		let loop = true;
 		while loop {
+			let fn = (@ptr_of(data.cFileName) @as c_string).to_str();
+
+			if fn.bytes() < 3 && (fn == "." || fn == "..") {
+				loop = sys.FindNextFileA(hFind, data);
+				continue;
+			}
+
             let is_dir = (data.dwFileAttributes & 0x10) > 0;
             let is_file = !is_dir;
+
             if (dirs && is_dir) || (files && is_file) {
-				result.push((@ptr_of(data.cFileName) @as c_string).to_str());
+				result.push(path + fn);
             }
+
 			loop = sys.FindNextFileA(hFind, data);
 		}
         sys.FindClose(hFind);
-    }
+	}
+	pattern.free();
 
 	#else
 
@@ -165,6 +175,8 @@ fn files_in(directory: *String, files: bool = true, dirs: bool = true) Array[Str
         }
         sys.closedir(d);
     }
+
+	dir.free();
 
 	#end
 

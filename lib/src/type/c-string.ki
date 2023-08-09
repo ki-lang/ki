@@ -19,4 +19,8 @@ class c_string type:ptr {
 		}
 		return i;
 	}
+
+	fn free() {
+		mem:free(this);
+	}
 }

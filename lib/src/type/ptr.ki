@@ -29,4 +29,8 @@ class ptr type:ptr math async {
         let data = str.data();
         mem:copy(data, adr, str.bytes());
     }
+
+	fn free() {
+		mem:free(this);
+	}
 }
