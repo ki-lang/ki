@@ -125,16 +125,16 @@ fn files_in(directory: *String, files: bool = true, dirs: bool = true) Array[Str
 
 	let pattern = path + "*";
 	let data = @stack_alloc(@sizeof_class(sys.WIN32_FIND_DATAA)) @as sys.WIN32_FIND_DATAA;
-    let hFind = FindFirstFile(pattern, data);
-    if (hFind != -1) {
+    let hFind = sys.FindFirstFileA(pattern, data);
+    if hFind != -1 @as ptr {
 		let loop = true;
 		while loop {
-            let is_dir = data.dwFileAttributes & 0x10;
+            let is_dir = (data.dwFileAttributes & 0x10) > 0;
             let is_file = !is_dir;
             if (dirs && is_dir) || (files && is_file) {
 				result.push((@ptr_of(data.cFileName) @as c_string).to_str());
             }
-			loop = FindNextFile(hFind, data);
+			loop = sys.FindNextFileA(hFind, data);
 		}
         sys.FindClose(hFind);
     }

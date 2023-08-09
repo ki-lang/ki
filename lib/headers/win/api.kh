@@ -35,8 +35,8 @@ fn _stat(path: c_string, stat_buf: *cstruct_stat) i32;
 fn fstat(fd: i32, stat_buf: *cstruct_stat) i32;
 fn lstat(path: c_string, stat_buf: *cstruct_stat) i32;
 
-fn FindFirstFile(lpFileName: c_string, lpFindFileData: WIN32_FIND_DATAA) ptr;
-fn FindNextFileA(hFindFile: ptr, lpFindFileData: WIN32_FIND_DATAA) bool;
+fn FindFirstFileA(lpFileName: c_string, lpFindFileData: *WIN32_FIND_DATAA) ptr;
+fn FindNextFileA(hFindFile: ptr, lpFindFileData: *WIN32_FIND_DATAA) bool;
 fn FindClose(hFindFile: ptr) bool;
 
 // Poll
