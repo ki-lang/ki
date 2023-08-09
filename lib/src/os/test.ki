@@ -39,6 +39,6 @@ fn test_report(total: u32, success: u32, fail: u32, expect_total: u32, expect_su
 	if fail == 0: print("Tests: PASSED\n");
 	else: print("Tests: FAILED\n");
 	print("\n");
-	if fail == 0: exit(1);
-	exit(0);
+	if fail == 0: exit(0);
+	else: exit(1);
 }

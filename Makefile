@@ -43,11 +43,13 @@ clean:
 	rm -f ki $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
 
 test: ki
-	@./ki run test/*.ki --test
+	@./ki run test/*.ki --test || exit 1
 	@echo "--------------------------"
 	@echo "> Run fail tests:"
-	@./ki build test/should-not-compile/test-class-private-props.ki -o /tmp/ki-test | grep -q "Trying to access a private property" && echo "> Private properties : OK"
-	@./ki build test/should-not-compile/test-class-readonly-props.ki -o /tmp/ki-test | grep -q "Trying to assign to a readonly property" && echo "> Readonly properties : OK"
+	@./ki build test/should-not-compile/test-class-private-props.ki -o /tmp/ki-test | grep -q "Trying to access a private property" \
+	&& echo "> Private properties : OK" || (echo "> Private properties : FAILED"; exit 1)
+	@./ki build test/should-not-compile/test-class-readonly-props.ki -o /tmp/ki-test | grep -q "Trying to assign to a readonly property" \
+	&& echo "> Readonly properties : OK" || (echo "> Readonly properties : FAILED"; exit 1)
 	@echo "--------------------------"
 
 ##############

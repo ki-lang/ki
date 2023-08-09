@@ -369,7 +369,9 @@ void cmd_build(int argc, char *argv[]) {
         strcpy(cmd, "\"");
         strcat(cmd, b->path_out);
         strcat(cmd, "\"");
-        system(cmd);
+        int code = system(cmd);
+        code = code == 0 ? 0 : 1;
+        exit(code);
     }
 
     // Free memory
