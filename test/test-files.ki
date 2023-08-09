@@ -1,6 +1,8 @@
 
 // TODO: expand tests using a test directory
 
+use ki:fs;
+
 test "files in directory" {
 
     let files = fs:files_in(".");
