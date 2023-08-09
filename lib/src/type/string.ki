@@ -15,10 +15,6 @@ class String type:ptr track {
 		return @ptrv(this @as ptr + @sizeof(uxx), u8, 0) == 1#u8;
 	}
 
-	fn bytes() uxx %inline {
-		return @ptrv(this @as ptr, uxx, 0);
-	}
-
 	fn rc() u32 %inline {
 		if(this.is_const()) { return 420; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 420.
 		let adr = this @as ptr;
@@ -43,27 +39,148 @@ class String type:ptr track {
 	}
 
 	/////////////////////
+	// Length
+	/////////////////////
+
+	fn bytes() uxx %inline {
+		return @ptrv(this @as ptr, uxx, 0);
+	}
+	fn chars() uxx %inline {
+		let count : uxx = 0;
+		let pos : uxx = 0;
+		let adr = this.data();
+		let bytes = this.bytes();
+		let bytes_left = bytes;
+		while(pos < bytes){
+
+			let bytec : u8 = 1;
+			let byte : u8 = @ptrv(adr, u8, 0);
+			if((byte & 128) > 0){
+				bytec = 0;
+				while((byte & 128) > 0 ){
+					bytec++;
+					byte = byte << 1;
+				}
+			}
+			if(bytec > 4){
+				// Invalid utf8 char
+				bytec = 1;
+			}
+			if(bytec > bytes_left){
+				break;
+			}
+			count++;
+			pos += bytec;
+			bytes_left -= bytec;
+		}
+		return count;
+	}
+
+	/////////////////////
 	// Read
 	/////////////////////
 
 	fn byte(index: uxx) u8 %inline {
+		if index >= this.bytes() : return '\0';
 		return @ptrv(this.data(), u8, index);
 	}
+	fn char(index: uxx) String {
+		let count : uxx = 0;
+		let pos : uxx = 0;
+		let adr = this.data();
+		let bytes = this.bytes();
+		while pos < bytes {
 
-	fn sub_str_bytes(start_index: uxx, length: uxx) String {
+			let bytec : u8 = 1;
+			let byte : u8 = @ptrv(adr, u8, pos);
+			if (byte & 128) > 0 {
+				bytec = 0;
+				while (byte & 128) > 0 {
+					bytec++;
+					byte = byte << 1;
+				}
+			}
+			if bytec > 4 {
+				// Invalid utf8 char
+				bytec = 1;
+			}
+			if (pos + bytec) > bytes {
+				break;
+			}
+			if count == index {
+				return this.sub_str_bytes(pos, bytec);
+			}
+
+			count++;
+			pos += bytec;
+		}
+		return "";
+	}
+
+	/////////////////////
+	// Sub string
+	/////////////////////
+
+	fn sub_str(char_start_index: uxx, char_length: uxx) String {
+		let buffer = ByteBuffer.new(char_length + 1);
+		let count : uxx = 0;
+		let pos : uxx = 0;
+		let adr = this.data();
+		let bytes = this.bytes();
+		while pos < bytes {
+
+			let bytec : u8 = 1;
+			let byte : u8 = @ptrv(adr, u8, pos);
+			if (byte & 128) > 0 {
+				bytec = 0;
+				while (byte & 128) > 0 {
+					bytec++;
+					byte = byte << 1;
+				}
+			}
+			if bytec > 4 {
+				// Invalid utf8 char
+				bytec = 1;
+			}
+			if (pos + bytec) > bytes {
+				break;
+			}
+			if char_start_index > 0 {
+				char_start_index--;
+				pos += bytec;
+				continue;
+			}
+
+			let i : uxx = 0;
+			while i < bytec {
+				buffer.append_byte(@ptrv(adr, u8, pos + i));
+				i++;
+			}
+
+			count++;
+			pos += bytec;
+
+			if count == char_length {
+				break;
+			}
+		}
+		return buffer.to_str();
+	}
+
+	fn sub_str_bytes(byte_start_index: uxx, byte_length: uxx) String {
 		let this_bytes = this.bytes();
-		if(start_index > this_bytes){
+		if(byte_start_index > this_bytes){
 			return "";
 		}
-		if((start_index + length) > this_bytes){
-			length = this_bytes - start_index;
+		if((byte_start_index + byte_length) > this_bytes){
+			byte_length = this_bytes - byte_start_index;
 		}
-		if(length == 0){
+		if(byte_length == 0){
 			return "";
 		}
-		let from = this.data() + start_index;
-		let res = String.make_empty(length);
-		mem:copy(from, res.data(), length);
+		let from = this.data() + byte_start_index;
+		let res = String.make_empty(byte_length);
+		mem:copy(from, res.data(), byte_length);
 		return res;
 	}
 
@@ -325,6 +442,25 @@ class String type:ptr track {
 			}
 			let is_upper = (byte > 64 && byte < 91) @as u8;
 			@ptrv(new_data, u8, pos) = byte + (is_upper * 32);
+			pos++;
+		}
+		return new_str;
+	}
+	fn to_upper() String {
+		let bytes = this.bytes();
+		let data = this.data();
+		let new_str = String.make_empty(bytes);
+		let new_data = new_str.data();
+		let pos : uxx = 0;
+		while pos < bytes {
+			let byte : u8 = @ptrv(data, u8, pos);
+			if byte > 127 {
+				@ptrv(new_data, u8, pos) = byte;
+				pos++;
+				continue;
+			}
+			let is_lower = (byte > 96 && byte < 123) @as u8;
+			@ptrv(new_data, u8, pos) = byte - (is_lower * 32);
 			pos++;
 		}
 		return new_str;
