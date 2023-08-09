@@ -82,7 +82,7 @@ trait Number {
 
         // Handle 0 explicitly, otherwise empty string is printed for 0
         if (num == 0) {
-	        io:write(1, "0") !? 0;
+	        print("0");
         }
 
 		// In standard itoa(), negative numbers are handled only with

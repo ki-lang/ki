@@ -27,7 +27,7 @@ fn free(adr: ptr) void;
 
 fn _read(fd: i32, buf: c_string, size: uxx) ixx;
 fn _write(fd: i32, buf: c_string, size: uxx) ixx;
-fn _open(path: c_string, flags: i32) i32;
+fn _open(path: c_string, flags: i32, mode: i32) i32;
 fn _close(fd: i32) i32;
 
 fn _stat(path: c_string, stat_buf: *cstruct_stat) i32;

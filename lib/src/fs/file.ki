@@ -2,6 +2,7 @@
 header "sys" as sys;
 
 use mem;
+use io;
 
 fn stat(path: *String, buf: *sys.cstruct_stat) void !failed {
 	let plen = path.bytes();
@@ -20,13 +21,8 @@ fn size(path: *String) uxx {
 
 fn open_fd(path: *String, read: bool, write: bool) i32 !open {
 
-	let plen = path.bytes();
-	let cstr_ptr = @stack_alloc(plen + 1);
-	mem:copy(path.data(), cstr_ptr, plen);
-	@ptrv(cstr_ptr, u8, plen) = '\0';
-	let cstr = cstr_ptr @as c_string;
-
-	let fd = sys.open(cstr, 0);
+	let cstr = path.to_c_string();
+	let fd = sys.open(cstr, 0, 0);
 	if fd == -1 {
 		throw open;
 	}
@@ -63,6 +59,19 @@ fn read(path: *String) String !open !read !close {
 	}
 
 	return res.to_str();
+}
+
+fn write(path: *String, content: *String, append: bool = true) void !open {
+
+	let cpath = path.to_c_string();
+
+    let flags = sys.OS.O_TRUNC;
+    if append : flags = sys.OS.O_APPEND;
+
+    let fd = io:open(cpath, sys.OS.O_RDWR | sys.OS.O_CREAT | flags, 0744) !! throw open;;
+
+    io:write(fd, content)!;
+    io:close(fd);
 }
 
 fn exists(path: *String) bool {

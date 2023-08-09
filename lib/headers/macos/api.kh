@@ -15,7 +15,7 @@ fn free(adr: ptr) void;
 
 fn read(fd: i32, buf: c_string, size: uxx) ixx;
 fn write(fd: i32, buf: c_string, size: uxx) ixx;
-fn open(path: c_string, flags: i32) i32;
+fn open(path: c_string, flags: i32, mode: i32) i32;
 fn close(fd: i32) i32;
 
 fn fcntl(fd: i32, action: i32, value: i32) i32;

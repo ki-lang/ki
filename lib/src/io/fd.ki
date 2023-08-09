@@ -1,7 +1,15 @@
 
 header "sys" as sys;
 
-fn write(fd: i32, str: *String) uxx !failed !again {
+fn open(path: *String, flags: i32, mode: i32) i32 !open {
+	let fd = sys.open(path, flags, mode);
+	if fd < 0 {
+		throw open;
+	}
+	return fd;
+}
+
+fn write(fd: i32, str: *String) void !failed !again {
 	let c = sys.write(fd, str.data(), str.bytes());
 	if c == -2 {
 		throw again;
@@ -9,7 +17,6 @@ fn write(fd: i32, str: *String) uxx !failed !again {
 	if c < 0 {
 		throw failed;
 	}
-	return c @as uxx;
 }
 
 fn write_from_ptr(fd: i32, data: ptr, length: uxx) uxx !failed !again {
