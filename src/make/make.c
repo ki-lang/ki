@@ -23,13 +23,16 @@ void cmd_make(int argc, char *argv[]) {
 
 void cmd_make_help() {
     //
-    printf("> ki make [optional:{script-name}] [optional:{config-dir-path}]\n");
+    printf("> ki make [optional:{command-name}] [optional:{config-dir-path}] [-- {append-to-command}]\n");
     printf("\n");
 
-    printf("# If no script name is provided, the make command\n  will run the script named \"default\"\n");
+    printf("# If no command name is provided, then make will\n  run the command named \"default\"\n");
     printf("\n");
 
     printf("# If no directory path is given, it will look in your\n  current working directory for the ki.json config\n");
+    printf("\n");
+
+    printf("# Anything after '--' will be appended to the command that's being executed");
     printf("\n");
 
     exit(1);
