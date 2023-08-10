@@ -108,12 +108,25 @@ class Array[T] {
 		}
 		println("remove: " + (this.length).str());
 	}
+
 	fn pop() T !empty {
 		if this.length > 0 {
 			let value = @ptrv(this.data, T, this.length - 1);
 			return value;
 		}
 		throw empty;
+	}
+
+	fn swap(index_a: uxx, index_b: uxx) {
+		let len = this.length;
+		if index_a >= len || index_b >= len {
+			return;
+		}
+		let data = this.data;
+		let a = @ptrv(data, T, index_a);
+		let b = @ptrv(data, T, index_b);
+		@ptrv(data, T, index_a) = b;
+		@ptrv(data, T, index_b) = a;
 	}
 
 	fn index_of(item: *T) uxx !not_found {
@@ -130,7 +143,31 @@ class Array[T] {
 		throw not_found;
 	}
 
+	fn sort {
+		let v = true;
+    	let i : uxx = 0;
+		let len = this.length - 1;
+    	while i < len && v {
+			v = false;
+    	    let j : uxx = 0;
+			let until = len - i;
+    	    while j < until {
+				let item = this.get(j) !! break;;
+				let next = this.get(j + 1) !! break;;
+    	        if item > next {
+					this.swap(j, j + 1);
+					v = true;
+    	        }
+    	        j++;
+    	    }
+    	    i++;
+    	}
+	}
+
+	////////////////
 	// Internals
+	////////////////
+
 	fn __each_init() uxx {
 		return 0;
 	}
