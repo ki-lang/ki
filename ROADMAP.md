@@ -4,7 +4,6 @@
 Feature todo list in order:
 
 ```
-- ki make command
 - cli option --def
 - add \0 to string data
 - c"c-string-constants"
@@ -43,6 +42,7 @@ Feature todo list in order:
 ## Done
 
 ```
+- ki make command
 - macros
 - array/map shortcuts
 - basic debug info
