@@ -578,6 +578,32 @@ class String type:ptr track {
 		}
 		return mem:equal(this.data(), b.data(), bytes);
 	}
+	fn __lt(b: *String) bool {
+		let a_ptr = this @as ptr;
+		let b_ptr = b @as ptr;
+		if(a_ptr == b_ptr) {
+			return true;
+		}
+		let bytes_a = this.bytes();
+		let bytes_b = b.bytes();
+		let bytes = bytes_a;
+		if bytes_b < bytes_a : bytes = bytes_b;
+		rep bytes = bytes;
+		let i : uxx = 0;
+		let data_a = this.data();
+		let data_b = b.data();
+		while i < bytes {
+			let ch_a = @ptrv(data_a, u8, i);
+			let ch_b = @ptrv(data_b, u8, i);
+			if ch_a < ch_b : return true;
+			if ch_a > ch_b : return false;
+			i++;
+		}
+		return bytes_a <= bytes_b;
+	}
+	fn __gt(b: *String) bool {
+		return !this.__lt(b);
+	}
 
 	fn __each_init() uxx {
 		return 0;

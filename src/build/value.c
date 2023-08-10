@@ -673,9 +673,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
             bool magic = false;
 
-            if (op == op_eq || op == op_ne) {
-                Class *lclass = v->rett->class;
-                if (lclass) {
+            Class *lclass = v->rett->class;
+            if (lclass) {
+                if (op == op_eq || op == op_ne) {
                     Func *func = map_get(lclass->funcs, "__eq");
                     if (func) {
                         Array *values = array_make(alc, 4);
@@ -687,6 +687,28 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                         if (op == op_ne) {
                             v = vgen_compare(alc, b, v, vgen_vint(alc, 0, type_gen(b, alc, "bool"), true), op_eq);
                         }
+                        magic = true;
+                    }
+                } else if (op == op_lt) {
+                    Func *func = map_get(lclass->funcs, "__lt");
+                    if (func) {
+                        Array *values = array_make(alc, 4);
+                        array_push(values, v);
+                        array_push(values, right);
+                        Value *on = vgen_fptr(alc, func, NULL);
+                        fcall_type_check(fc, on, values);
+                        v = vgen_fcall(alc, scope, on, values, func->rett, NULL, line, col);
+                        magic = true;
+                    }
+                } else if (op == op_gt) {
+                    Func *func = map_get(lclass->funcs, "__gt");
+                    if (func) {
+                        Array *values = array_make(alc, 4);
+                        array_push(values, v);
+                        array_push(values, right);
+                        Value *on = vgen_fptr(alc, func, NULL);
+                        fcall_type_check(fc, on, values);
+                        v = vgen_fcall(alc, scope, on, values, func->rett, NULL, line, col);
                         magic = true;
                     }
                 }
