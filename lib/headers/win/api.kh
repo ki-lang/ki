@@ -20,6 +20,9 @@ alias _stat as stat;
 alias _mkdir as mkdir;
 alias _unlink as unlink;
 
+alias _popen as popen;
+alias _pclose as pclose;
+
 alias WSAPoll as poll;
 
 fn malloc(size: uxx) ptr;
@@ -40,9 +43,9 @@ fn FindNextFileA(hFindFile: ptr, lpFindFileData: *WIN32_FIND_DATAA) bool;
 fn FindClose(hFindFile: ptr) bool;
 
 // OS
-fn popen(command: c_string, type: c_string) ?FILE;
+fn _popen(command: c_string, type: c_string) ?FILE;
 fn fgets(s: c_string, n: i32, stream: FILE) ?c_string;
-fn pclose(stream: FILE) i32;
+fn _pclose(stream: FILE) i32;
 fn system(cmd: c_string) i32;
 fn Sleep(ms: u32) void;
 
