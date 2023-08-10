@@ -28,6 +28,12 @@ class u8 type:int:1:false {
 	fn is_upper() bool {
 		return this >= 'A' && this <= 'Z';
 	}
+	fn is_alpha() bool {
+		return (this >= 'A' && this <= 'Z') || (this >= 'a' && this <= 'z');
+	}
+	fn is_alpha_numeric() bool {
+		return (this >= 'A' && this <= 'Z') || (this >= 'a' && this <= 'z') || (this >= '0' && this <= '9');
+	}
 	fn is_whitespace() bool {
 		return (this == '\t' || this == '\n' || this == '\v' || this == '\f' || this == '\r' || this == ' ');
 	}
