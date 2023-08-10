@@ -1,6 +1,35 @@
 
 header "sys" as sys;
 
+fn system(cmd: *String) i32 {
+	let ccmd = cmd.to_c_string();
+	let code = sys.system(ccmd);
+	ccmd.free();
+	return code;
+}
+fn exec(cmd: *String) String !failed {
+
+	let buf = ByteBuffer.new(1024);
+
+	let ccmd = cmd.to_c_string();
+	let cstr_r = "r".to_c_string();
+    let pipe = sys.popen(ccmd, cstr_r);
+	ccmd.free();
+	cstr_r.free();
+
+	rep pipe = pipe ?! throw failed;;
+
+	while true {
+		buf.minimum_free_space(1024);
+		let part = sys.fgets(buf.data + buf.length, 1024, pipe);
+		rep part = part ?! break;;
+		buf.append_str(part.to_str());
+	}
+
+    sys.pclose(pipe);
+    return buf.to_str();
+}
+
 fn sleep_ms(ms: uxx) void {
 	#if OS == win
 	sys.Sleep(ms @as u32);

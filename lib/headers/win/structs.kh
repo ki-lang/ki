@@ -1,5 +1,6 @@
 
 alias uxx as SOCKET;
+alias ptr as FILE;
 
 struct cstruct_stat {
     st_dev: uxx;

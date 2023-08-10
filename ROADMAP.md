@@ -4,6 +4,8 @@
 Feature todo list in order:
 
 ```
+- add \0 to string data
+- c"c-string-constants"
 - declare functions for classes/structs from other libraries
 - add a message to your errors
 

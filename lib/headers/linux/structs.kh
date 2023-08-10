@@ -1,5 +1,6 @@
 
-class DIR type:ptr {}
+alias ptr as FILE;
+alias ptr as DIR;
 
 struct cstruct_dirent {
     d_ino: uxx; // Inode number

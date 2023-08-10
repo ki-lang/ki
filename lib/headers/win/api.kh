@@ -39,6 +39,13 @@ fn FindFirstFileA(lpFileName: c_string, lpFindFileData: *WIN32_FIND_DATAA) ptr;
 fn FindNextFileA(hFindFile: ptr, lpFindFileData: *WIN32_FIND_DATAA) bool;
 fn FindClose(hFindFile: ptr) bool;
 
+// OS
+fn popen(command: c_string, type: c_string) ?FILE;
+fn fgets(s: c_string, n: i32, stream: FILE) ?c_string;
+fn pclose(stream: FILE) i32;
+fn system(cmd: c_string) i32;
+fn Sleep(ms: u32) void;
+
 // Poll
 fn WSAPoll(fds: ptr, nfds: u32, timeout: i32) i32;
 fn WSAGetLastError() i32;
@@ -53,8 +60,6 @@ fn pipe(pipefd: i32[2]) i32;
 //int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict exceptfds, struct timeval *restrict timeout);
 fn dup(old_fd: i32) i32;
 fn dup2(old_fd: i32, new_fd: i32) i32;
-
-fn Sleep(ms: u32) void;
 
 fn socket(domain: i32, type: i32, protocol: i32) SOCKET;
 //fn connect(sockfd: SOCKET, addr: *cstruct_sockaddr, addrlen: u32) i32;

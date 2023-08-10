@@ -1,0 +1,10 @@
+
+use ki:os;
+
+test "os:exec" {
+
+    let res = os:exec("ls -l") !? "";
+
+	@expect res.bytes() > 0;
+}
+

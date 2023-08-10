@@ -29,6 +29,13 @@ fn opendir(name: c_string) DIR;
 fn readdir(dirp: DIR) cstruct_dirent;
 fn closedir(dirp: DIR) i32;
 
+// OS
+fn popen(command: c_string, type: c_string) ?FILE;
+fn fgets(s: c_string, n: i32, stream: FILE) ?c_string;
+fn pclose(stream: FILE) i32;
+fn system(cmd: c_string) i32;
+fn nanosleep(req: *cstruct_timespec, rem: *cstruct_timespec) i32;
+
 // Poll
 fn poll(fds: .cstruct_pollfd[unsafe], nfds: u32, timeout: i32) i32;
 
@@ -36,8 +43,6 @@ fn pipe(pipefd: i32[2]) i32;
 //int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict exceptfds, struct timeval *restrict timeout);
 fn dup(old_fd: i32) i32;
 fn dup2(old_fd: i32, new_fd: i32) i32;
-
-fn nanosleep(req: *cstruct_timespec, rem: *cstruct_timespec) i32;
 
 fn socket(domain: i32, type: i32, protocol: i32) i32;
 fn connect(sockfd: i32, addr: *cstruct_sockaddr, addrlen: u32) i32;
