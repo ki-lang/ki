@@ -144,9 +144,12 @@ class Array[T] {
 	}
 
 	fn sort {
+		let len_ = this.length;
+		if len_ < 2 : return;
+
 		let v = true;
     	let i : uxx = 0;
-		let len = this.length - 1;
+		let len = len_ - 1;
     	while i < len && v {
 			v = false;
     	    let j : uxx = 0;
@@ -162,6 +165,19 @@ class Array[T] {
     	    }
     	    i++;
     	}
+	}
+
+	fn reverse {
+		let len_ = this.length;
+		if len_ < 2 : return;
+		let last = len_ - 1;
+		let first = 0;
+		while len_ > 1 {
+			this.swap(first, last);
+			first++;
+			last--;
+			len_ -= 2;
+		}
 	}
 
 	////////////////
