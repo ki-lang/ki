@@ -51,6 +51,9 @@ bool pkg_install_package(PkgCmd *pc, char *dir, char *name, char *version, char 
 void pkg_install(PkgCmd *pc);
 void pkg_get_dir(char *packages_dir, char *name, char *buf);
 
+// Make
+void cmd_make(int argc, char *argv[]);
+
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);
 bool cfg_has_package(Config *cfg, char *name);
