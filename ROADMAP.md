@@ -4,6 +4,8 @@
 Feature todo list in order:
 
 ```
+- ki make command
+- cli option --def
 - add \0 to string data
 - c"c-string-constants"
 - declare functions for classes/structs from other libraries
