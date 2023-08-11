@@ -773,19 +773,25 @@ void type_check_to_str(TypeCheck *tc, char *buf) {
     }
 }
 
-Type *type_merge(Allocator *alc, Type *a, Type *b) {
+Type *type_merge(Build *build, Allocator *alc, Type *a, Type *b) {
     //
-    Type *res = type_clone(alc, a);
-    if (a->nullable || b->nullable) {
-        res->nullable = true;
+    Type *res;
+
+    if (a->type == type_int && b->type == type_int) {
+        int bytes = a->bytes;
+        if (b->bytes > bytes) {
+            bytes = b->bytes;
+        }
+        res = type_gen_int(build, alc, bytes, a->is_signed || b->is_signed);
+    } else {
+        res = type_clone(alc, a);
     }
 
-    char *reason;
-    if (!type_compat(res, a, &reason)) {
-        return NULL;
+    if (a->nullable || b->nullable) {
+        if (res->type == type_ptr || res->type == type_struct) {
+            res->nullable = true;
+        }
     }
-    if (!type_compat(res, b, &reason)) {
-        return NULL;
-    }
+
     return res;
 }

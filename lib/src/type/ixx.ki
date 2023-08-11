@@ -1,5 +1,4 @@
 
 class ixx type:int:*:true {
-
 	trait Number;
 }

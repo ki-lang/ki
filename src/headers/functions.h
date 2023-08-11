@@ -203,7 +203,7 @@ Type *type_get_inline(Allocator *alc, Type *type);
 TypeCheck *type_gen_type_check(Allocator *alc, Type *type);
 void type_validate(Fc *fc, TypeCheck *check, Type *type, char *msg);
 void type_check_to_str(TypeCheck *tc, char *buf);
-Type *type_merge(Allocator *alc, Type *a, Type *b);
+Type *type_merge(Build* build, Allocator *alc, Type *a, Type *b);
 
 // Var
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_arg);

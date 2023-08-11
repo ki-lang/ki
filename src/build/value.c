@@ -572,8 +572,15 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             tok_expect(fc, ":", false, true);
             Value *right = read_value(fc, alc, false_scope, false, 0, false);
 
-            Type *type = type_merge(alc, left->rett, right->rett);
-            if (!type) {
+            Type *type = type_merge(b, alc, left->rett, right->rett);
+
+            left = try_convert(fc, alc, left, type);
+            right = try_convert(fc, alc, right, type);
+
+            // type_check(fc, type, left->rett);
+            // type_check(fc, type, right->rett);
+            char *reason;
+            if (!type_compat(type, left->rett, &reason) || !type_compat(type, right->rett, &reason)) {
                 char t1s[200];
                 char t2s[200];
                 type_to_str(left->rett, t1s);

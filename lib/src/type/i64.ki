@@ -1,3 +1,4 @@
 
 class i64 type:int:8:true {
+	trait Number;
 }
