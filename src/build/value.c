@@ -1511,24 +1511,24 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                     char *err_name = dups(alc, token);
                     char *msg_name = NULL;
 
-                    tok_expect(fc, "|", true, true);
-                    tok(fc, token, false, true);
+                    // tok_expect(fc, "|", true, true);
                     // tok(fc, token, false, true);
-                    // if (strcmp(token, ",") == 0) {
-                    //     tok(fc, token, true, true);
-                    //     if (!is_valid_varname(token)) {
-                    //         sprintf(fc->sbuf, "Invalid variable name '%s'", token);
-                    //         fc_error(fc);
-                    //     }
-                    //     msg_name = dups(alc, token);
-                    //     tok_expect(fc, "|", true, true);
-                    //     tok(fc, token, false, true);
-                    // } else if (strcmp(token, "|") == 0) {
-                    //     tok(fc, token, false, true);
-                    // } else {
-                    //     sprintf(fc->sbuf, "Expected '|' or ',' but found: '%s'", token);
-                    //     fc_error(fc);
-                    // }
+                    tok(fc, token, false, true);
+                    if (strcmp(token, ",") == 0) {
+                        tok(fc, token, true, true);
+                        if (!is_valid_varname(token)) {
+                            sprintf(fc->sbuf, "Invalid variable name '%s'", token);
+                            fc_error(fc);
+                        }
+                        msg_name = dups(alc, token);
+                        tok_expect(fc, "|", true, true);
+                        tok(fc, token, false, true);
+                    } else if (strcmp(token, "|") == 0) {
+                        tok(fc, token, false, true);
+                    } else {
+                        sprintf(fc->sbuf, "Expected '|' or ',' but found: '%s'", token);
+                        fc_error(fc);
+                    }
 
                     Type *code_type = type_gen(fc->b, alc, "i32");
                     code_type->func_errors = errors;
@@ -1536,8 +1536,16 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                     or->err_code_decl = code_decl;
                     Idf *idf = idf_init(alc, idf_err_code);
                     idf->item = code_decl;
-
                     map_set(usage_scope->identifiers, err_name, idf);
+
+                    if (msg_name) {
+                        Type *msg_type = type_gen(fc->b, alc, "String");
+                        Decl *msg_decl = decl_init(alc, usage_scope, msg_name, msg_type, NULL, false);
+                        or->err_msg_decl = msg_decl;
+                        Idf *idf = idf_init(alc, idf_decl);
+                        idf->item = msg_decl;
+                        map_set(usage_scope->identifiers, msg_name, idf);
+                    }
                 }
 
                 bool single_line = strcmp(token, "{") != 0;

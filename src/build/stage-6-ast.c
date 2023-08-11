@@ -572,10 +572,25 @@ void token_throw(Allocator *alc, Fc *fc, Scope *scope) {
         sprintf(fc->sbuf, "The function has no error named '%s'", token);
         fc_error(fc);
     }
+    char *err_name = dups(alc, token);
 
     Throw *throw = al(fc->alc, sizeof(Throw));
     throw->func = func;
     throw->code = index + 1;
+    throw->msg = NULL;
+
+    tok(fc, token, true, true);
+    if (strcmp(token, ",") == 0) {
+        Value *msg = read_value(fc, alc, scope, false, 0, false);
+        if (msg->type != v_string) {
+            sprintf(fc->sbuf, "Throw message must be a static string value");
+            fc_error(fc);
+        }
+        throw->msg = msg->item;
+    } else {
+        throw->msg = err_name;
+        rtok(fc);
+    }
 
     array_push(scope->ast, token_init(alc, tkn_throw, throw));
     tok_expect(fc, ";", false, true);

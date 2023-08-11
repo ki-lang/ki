@@ -4,11 +4,7 @@
 Feature todo list in order:
 
 ```
-- cli option --def
-- add \0 to string data
-- c"c-string-constants"
 - declare functions for classes/structs from other libraries
-- add a message to your errors
 
 - trait generic types
 - function generic types
@@ -17,6 +13,9 @@ Feature todo list in order:
 - --watch param to watch for file changes and trigger a build
 - vscode extension
 - calling functions using named arguments
+
+- add \0 to string data
+- c"c-string-constants"
 
 - union & c_union
 - closure functions
@@ -42,6 +41,8 @@ Feature todo list in order:
 ## Done
 
 ```
+- add a message to your errors
+- cli option --def
 - ki make command
 - macros
 - array/map shortcuts

@@ -35,6 +35,7 @@ struct TExec {
 struct Throw {
     Func *func;
     int code;
+    char* msg;
 };
 struct TEach {
     Value *value;

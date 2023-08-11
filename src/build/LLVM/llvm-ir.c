@@ -218,12 +218,17 @@ char *llvm_ir_func_call(LB *b, char *on, Array *values, char *lrett, FCallOr *or
     if (ort) {
 
         Type *err_code_type = type_gen(b->fc->b, b->alc, "i32");
+        Type *err_msg_type = type_gen(b->fc->b, b->alc, "String");
 
         char *load_err = llvm_ir_load(b, err_code_type, "@ki_err_code_buffer");
         char *iszero = llvm_ir_iszero_i1(b, "i32", load_err);
         if (ort->err_code_decl) {
             Decl *err_decl = ort->err_code_decl;
             err_decl->llvm_val = llvm_ir_load(b, err_code_type, "@ki_err_code_buffer");
+        }
+        if (ort->err_msg_decl) {
+            Decl *err_decl = ort->err_msg_decl;
+            err_decl->llvm_val = llvm_ir_load(b, err_msg_type, "@ki_err_msg_buffer");
         }
 
         if (ort->value) {

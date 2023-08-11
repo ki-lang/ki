@@ -81,6 +81,10 @@ void llvm_write_ast(LB *b, Scope *scope) {
             sprintf(code, "%d", item->code);
             llvm_ir_store(b, err_code_type, "@ki_err_code_buffer", code);
 
+            Type *err_msg_type = type_gen(b->fc->b, b->alc, "String");
+            char *msg_val = llvm_ir_string(b, item->msg);
+            llvm_ir_store(b, err_msg_type, "@ki_err_msg_buffer", msg_val);
+
             Type *rett = item->func->rett;
             char *ltype = llvm_type(b, rett);
 
