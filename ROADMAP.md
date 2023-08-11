@@ -4,8 +4,6 @@
 Feature todo list in order:
 
 ```
-- declare functions for classes/structs from other libraries
-
 - trait generic types
 - function generic types
 - inline if ... ? ... : ...
@@ -41,6 +39,7 @@ Feature todo list in order:
 ## Done
 
 ```
+- declare functions for classes/structs from other libraries
 - add a message to your errors
 - cli option --def
 - ki make command

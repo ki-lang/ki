@@ -1,0 +1,11 @@
+
+test "Extend class" {
+	let res = "hello".add_world();
+	@expect res == "hello world!";
+}
+
+extend String {
+    fn add_world() String {
+        return this + " world!";
+    }
+}
