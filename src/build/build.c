@@ -7,6 +7,7 @@ void cmd_build_help(bool run_code);
 void build_add_files(Build *b, Array *files);
 char *find_config_dir(Allocator *alc, char *ki_path);
 void build_macro_defs(Build *b, char *defs);
+void build_watch(Build *b, int argc, char *argv[]);
 
 void cmd_build(int argc, char *argv[]) {
     //
@@ -29,7 +30,7 @@ void cmd_build(int argc, char *argv[]) {
         if (arg[0] != '-')
             continue;
         sprintf(argbuf, ".%s.", arg);
-        if (!strstr(".--optimize.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.--help.-h.-v.-vv.-vvv.", argbuf)) {
+        if (!strstr(".--optimize.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.--help.-h.-v.-vv.-vvv.--watch.", argbuf)) {
             sprintf(argbuf, "❓ Unknown option '%s'", arg);
             die(argbuf);
         }
@@ -136,8 +137,8 @@ void cmd_build(int argc, char *argv[]) {
     // Filter out files
     char *first_file = NULL;
     Array *files = array_make(alc, argc);
-    argc = args->length;
-    for (int i = 2; i < argc; i++) {
+    int argc_ = args->length;
+    for (int i = 2; i < argc_; i++) {
         char *arg = array_get_index(args, i);
         if (arg[0] == '-') {
             continue;
@@ -320,6 +321,12 @@ void cmd_build(int argc, char *argv[]) {
     // Compile CLI files
     build_add_files(b, files);
     compile_loop(b, 1); // Scan identifiers
+
+    if (array_contains(args, "--watch", arr_find_str)) {
+        build_watch(b, argc, argv);
+        exit(0);
+    }
+
     compile_loop(b, 6); // Complete all other stages
 
     b->ir_ready = true;
@@ -435,17 +442,18 @@ void cmd_build_help(bool run_code) {
         printf("\n# ki build {ki-files} -o {outpath}\n");
     printf("\n");
 
-    printf(" --optimize -O       apply code optimizations\n");
     printf(" --clean -c          clear cache\n");
     printf(" --debug -d          generate debug info\n");
+    printf(" --optimize -O       apply code optimizations\n");
     printf(" --run -r            run code after compiling\n");
     printf(" --test              generate a 'main' that runs all tests\n");
-    printf(" --target            compile for a specific os/arch\n");
-    printf("                     linux-x64, macos-x64, win-x64\n");
-    printf(" --def               define comptime variables\n");
-    printf("                     format: VAR1=VAL,VAR2=VAL\n");
+    printf(" --watch             watch files & rebuild when code changes\n");
     printf("\n");
 
+    printf(" --def               define comptime variables\n");
+    printf("                     format: VAR1=VAL,VAR2=VAL\n");
+    printf(" --target            compile for a specific os/arch\n");
+    printf("                     linux-x64, macos-x64, win-x64\n");
     printf(" -v -vv -vvv         show compile info\n");
     printf("\n");
 
@@ -549,5 +557,40 @@ void build_macro_defs(Build *b, char *defs) {
     if (!read_key) {
         part[part_i] = '\0';
         map_set(mc->identifiers, dups(alc, key), dups(alc, part));
+    }
+}
+
+void build_watch(Build *b, int argc, char *argv[]) {
+    //
+    Str *cmd_str = str_make(b->alc, 1000);
+    for (int i = 0; i < argc; i++) {
+        char *arg = argv[i];
+        if (strcmp(arg, "--watch") == 0)
+            continue;
+        str_append_chars(cmd_str, arg);
+        str_append_chars(cmd_str, " ");
+    }
+    char *cmd = str_to_chars(b->alc, cmd_str);
+
+    struct stat attr;
+    Array *fcs = b->all_fcs->values;
+    while (true) {
+        bool run = false;
+        for (int i = 0; i < fcs->length; i++) {
+            Fc *fc = array_get_index(fcs, i);
+            stat(fc->path_ki, &attr);
+            long int nsec = attr.st_mtim.tv_nsec;
+            if (fc->mod_time != nsec) {
+                run = true;
+                fc->mod_time = nsec;
+            }
+        }
+
+        if (run) {
+            printf("# Build...\n");
+            system(cmd);
+        } else {
+            sleep_ms(500);
+        }
     }
 }

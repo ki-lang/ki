@@ -186,6 +186,7 @@ struct Fc {
     Array *extends;
     //
     cJSON *cache;
+    long int mod_time;
     //
     int test_counter;
     //

@@ -71,6 +71,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->is_header = is_header;
     fc->ir_changed = false;
     fc->generated = generated;
+    fc->mod_time = 0;
 
     char *hash = al(alc, 64);
     simple_hash(path_ki, hash);
