@@ -4,6 +4,7 @@
 void stage_1_func(Fc *fc);
 void stage_1_class(Fc *fc, bool is_struct);
 void stage_1_trait(Fc *fc);
+void stage_1_extend(Fc *fc);
 void stage_1_enum(Fc *fc);
 void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
@@ -48,6 +49,10 @@ void stage_1(Fc *fc) {
         }
         if (strcmp(token, "trait") == 0) {
             stage_1_trait(fc);
+            continue;
+        }
+        if (strcmp(token, "extend") == 0) {
+            stage_1_extend(fc);
             continue;
         }
         if (strcmp(token, "enum") == 0) {
@@ -395,6 +400,20 @@ void stage_1_trait(Fc *fc) {
     tr->chunk = chunk_clone(fc->alc, fc->chunk);
 
     skip_body(fc, '}');
+}
+
+void stage_1_extend(Fc *fc) {
+    //
+    Extend *ex = malloc(sizeof(Extend));
+    ex->chunk_type = chunk_clone(fc->alc, fc->chunk);
+    ex->chunk_body = NULL;
+
+    skip_type(fc);
+    tok_expect(fc, "{", false, true);
+    ex->chunk_body = chunk_clone(fc->alc, fc->chunk);
+    skip_body(fc, '}');
+
+    array_push(fc->extends, ex);
 }
 
 void stage_1_enum(Fc *fc) {

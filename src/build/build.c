@@ -241,6 +241,7 @@ void cmd_build(int argc, char *argv[]) {
     b->write_ir = chain_make(alc);
     b->stage_1 = chain_make(alc);
     b->stage_2 = chain_make(alc);
+    b->stage_2_1 = chain_make(alc);
     b->stage_3 = chain_make(alc);
     b->stage_4 = chain_make(alc);
     b->stage_5 = chain_make(alc);

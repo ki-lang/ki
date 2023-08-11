@@ -21,6 +21,7 @@ typedef struct Class Class;
 typedef struct ClassProp ClassProp;
 typedef struct Func Func;
 typedef struct Enum Enum;
+typedef struct Extend Extend;
 typedef struct Decl Decl;
 typedef struct DeclOverwrite DeclOverwrite;
 typedef struct Var Var;
@@ -113,6 +114,7 @@ struct Build {
     Chain *write_ir;
     Chain *stage_1;
     Chain *stage_2;
+    Chain *stage_2_1;
     Chain *stage_3;
     Chain *stage_4;
     Chain *stage_5;
@@ -181,6 +183,7 @@ struct Fc {
     Array *aliasses;
     Array *class_size_checks;
     Array *type_size_checks;
+    Array *extends;
     //
     cJSON *cache;
     //
@@ -367,6 +370,10 @@ struct Enum {
     char *dname;
     Fc *fc;
     Map *values;
+};
+struct Extend {
+    Chunk *chunk_type;
+    Chunk *chunk_body;
 };
 
 struct Decl {

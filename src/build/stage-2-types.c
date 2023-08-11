@@ -2,7 +2,7 @@
 #include "../all.h"
 
 void stage_2_class(Fc *fc, Class *class);
-void stage_2_class_props(Fc *fc, Class *class, bool is_trait);
+void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend);
 void stage_2_func(Fc *fc, Func *func);
 void stage_2_class_defaults(Fc *fc, Class *class);
 void stage_2_class_type_checks(Fc *fc, Class *class);
@@ -56,15 +56,6 @@ void stage_2(Fc *fc) {
         }
         stage_2_class_defaults(fc, class);
     }
-    for (int i = 0; i < fc->funcs->length; i++) {
-        Func *func = array_get_index(fc->funcs, i);
-        if (!func->chunk_args)
-            continue;
-        if (b->verbose > 2) {
-            printf("> Scan func types: %s\n", func->dname);
-        }
-        stage_2_func(fc, func);
-    }
     for (int i = 0; i < fc->globals->length; i++) {
         Global *g = array_get_index(fc->globals, i);
         fc->chunk = g->type_chunk;
@@ -75,18 +66,9 @@ void stage_2(Fc *fc) {
         }
         g->type = type;
     }
-    for (int i = 0; i < fc->classes->length; i++) {
-        Class *class = array_get_index(fc->classes, i);
-        if (class->is_generic_base)
-            continue;
-        if (b->verbose > 2) {
-            printf("> Class type check internal functions: %s\n", class->dname);
-        }
-        stage_2_class_type_checks(fc, class);
-    }
 
     //
-    chain_add(b->stage_3, fc);
+    chain_add(b->stage_2_1, fc);
 }
 
 void stage_2_class(Fc *fc, Class *class) {
@@ -96,7 +78,7 @@ void stage_2_class(Fc *fc, Class *class) {
     fc->error_class_info = class;
 
     fc->chunk = class->chunk_body;
-    stage_2_class_props(fc, class, false);
+    stage_2_class_props(fc, class, false, false);
 
     // Generate __free / __deref / _RC
     if (class->type == ct_struct) {
@@ -129,7 +111,7 @@ void stage_2_class(Fc *fc, Class *class) {
     fc->error_class_info = prev_error_class_info;
 }
 
-void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
+void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
     //
     char *token = fc->token;
     Scope *scope = class->scope;
@@ -181,7 +163,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
             map_set(trait_scope->identifiers, "CLASS", map_get(scope->identifiers, "CLASS"));
             class->scope = trait_scope;
 
-            stage_2_class_props(fc, class, true);
+            stage_2_class_props(fc, class, true, false);
 
             class->scope = scope;
             fc->chunk = current;
@@ -283,6 +265,10 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait) {
 
         } else {
             // Property
+            if (is_extend) {
+                sprintf(fc->sbuf, "You cannot define new properties using 'extend'");
+                fc_error(fc);
+            }
             if (is_static) {
                 sprintf(fc->sbuf, "Static properties are not allowed, use globals instead");
                 fc_error(fc);

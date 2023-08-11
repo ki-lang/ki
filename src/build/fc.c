@@ -65,6 +65,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->aliasses = array_make(alc, 4);
     fc->class_size_checks = array_make(alc, 4);
     fc->type_size_checks = array_make(alc, 20);
+    fc->extends = array_make(alc, 4);
 
     fc->cache = NULL;
     fc->is_header = is_header;

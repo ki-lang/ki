@@ -64,6 +64,12 @@ void compile_loop(Build *b, int max_stage) {
                 stage2 = chain_get(b->stage_2);
                 did_work = true;
             }
+            Fc *stage2_1 = chain_get(b->stage_2_1);
+            while (stage2_1) {
+                stage_2_1(stage2_1);
+                stage2_1 = chain_get(b->stage_2_1);
+                did_work = true;
+            }
             if (did_work)
                 continue;
         }
