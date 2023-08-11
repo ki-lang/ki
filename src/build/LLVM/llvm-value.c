@@ -842,6 +842,55 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
 
         return var;
     }
+    if (v->type == v_this_or_that) {
+        VThisThat *tt = v->item;
+        char *lcond = llvm_value(b, scope, tt->cond);
+
+        LLVMBlock *b_true = llvm_block_init_auto(b);
+        LLVMBlock *b_false = llvm_block_init_auto(b);
+        LLVMBlock *b_after = llvm_block_init_auto(b);
+
+        Str *ir = llvm_b_ir(b);
+        llvm_ir_cond_jump(b, ir, llvm_ir_istrue_i1(b, lcond), b_true, b_false);
+
+        // if true
+        b->lfunc->block = b_true;
+        ir = llvm_b_ir(b);
+        char *v_true = llvm_value(b, tt->true_scope, tt->left);
+        llvm_write_ast(b, tt->true_scope);
+        ir = llvm_b_ir(b);
+        llvm_ir_jump(ir, b_after);
+
+        // if false
+        b->lfunc->block = b_false;
+        ir = llvm_b_ir(b);
+        char *v_false = llvm_value(b, tt->false_scope, tt->right);
+        llvm_write_ast(b, tt->false_scope);
+        ir = llvm_b_ir(b);
+        llvm_ir_jump(ir, b_after);
+
+        // After
+        b->lfunc->block = b_after;
+        ir = llvm_b_ir(b);
+
+        char *ltype = llvm_type(b, v->rett);
+        char *result = llvm_var(b);
+        str_append_chars(ir, "  ");
+        str_append_chars(ir, result);
+        str_append_chars(ir, " = phi ");
+        str_append_chars(ir, ltype);
+        str_append_chars(ir, " [ ");
+        str_append_chars(ir, v_true);
+        str_append_chars(ir, ", %");
+        str_append_chars(ir, b_true->name);
+        str_append_chars(ir, " ], [ ");
+        str_append_chars(ir, v_false);
+        str_append_chars(ir, ", %");
+        str_append_chars(ir, b_false->name);
+        str_append_chars(ir, " ]\n");
+
+        return result;
+    }
 
     return "???";
 }

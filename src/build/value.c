@@ -555,6 +555,41 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
     }
 
+    if (prio == 0 || prio > 8) {
+        while (strcmp(token, "?") == 0) {
+            if (!type_is_bool(v->rett, b)) {
+                sprintf(fc->sbuf, "You can only use '?' on bool values");
+                fc_error(fc);
+            }
+
+            Scope *true_scope = usage_scope_init(alc, scope, sct_default);
+            Scope *false_scope = usage_scope_init(alc, scope, sct_default);
+            Array *ancestors = array_make(alc, 10);
+            array_push(ancestors, true_scope);
+            array_push(ancestors, false_scope);
+
+            Value *left = read_value(fc, alc, true_scope, false, 0, false);
+            tok_expect(fc, ":", false, true);
+            Value *right = read_value(fc, alc, false_scope, false, 0, false);
+
+            Type *type = type_merge(alc, left->rett, right->rett);
+            if (!type) {
+                char t1s[200];
+                char t2s[200];
+                type_to_str(left->rett, t1s);
+                type_to_str(right->rett, t2s);
+                sprintf(fc->sbuf, "Types in '... ? x : y' statement do not match: '%s' <-> '%s'", t1s, t2s);
+                fc_error(fc);
+            }
+
+            usage_merge_ancestors(alc, scope, ancestors);
+
+            v = vgen_this_or_that(alc, v, true_scope, left, false_scope, right, type);
+
+            tok(fc, token, false, true);
+        }
+    }
+
     if (prio == 0 || prio > 9) {
         while (strcmp(token, "?!") == 0 || strcmp(token, "??") == 0) {
 

@@ -772,3 +772,20 @@ void type_check_to_str(TypeCheck *tc, char *buf) {
         strcat(buf, "]");
     }
 }
+
+Type *type_merge(Allocator *alc, Type *a, Type *b) {
+    //
+    Type *res = type_clone(alc, a);
+    if (a->nullable || b->nullable) {
+        res->nullable = true;
+    }
+
+    char *reason;
+    if (!type_compat(res, a, &reason)) {
+        return NULL;
+    }
+    if (!type_compat(res, b, &reason)) {
+        return NULL;
+    }
+    return res;
+}

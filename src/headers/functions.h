@@ -203,6 +203,7 @@ Type *type_get_inline(Allocator *alc, Type *type);
 TypeCheck *type_gen_type_check(Allocator *alc, Type *type);
 void type_validate(Fc *fc, TypeCheck *check, Type *type, char *msg);
 void type_check_to_str(TypeCheck *tc, char *buf);
+Type *type_merge(Allocator *alc, Type *a, Type *b);
 
 // Var
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_arg);
@@ -255,6 +256,7 @@ Value *vgen_incr_decr(Allocator *alc, Value *on, bool is_incr);
 Value *vgen_atomicop(Allocator *alc, Value *left, Value *right, int op);
 Value *vgen_array_item(Allocator *alc, Scope *scope, Value *on, Value *index);
 Value *vgen_swap(Allocator *alc, Value *var, Value *with);
+Value *vgen_this_or_that(Allocator *alc, Value *cond, Scope *true_scope, Value *left, Scope *false_scope, Value *right, Type *rett);
 
 // Ast
 void read_ast(Fc *fc, Scope *scope, bool single_line);

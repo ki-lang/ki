@@ -39,6 +39,17 @@ char *llvm_ir_iszero_i1(LB *b, char *ltype, char *val) {
     return var_i1;
 }
 
+char *llvm_ir_istrue_i1(LB *b, char *val) {
+    Str *ir = llvm_b_ir(b);
+    char *var_i1 = llvm_var(b);
+    str_append_chars(ir, "  ");
+    str_append_chars(ir, var_i1);
+    str_append_chars(ir, " = icmp eq i8 ");
+    str_append_chars(ir, val);
+    str_append_chars(ir, ", 1\n");
+    return var_i1;
+}
+
 char *llvm_ir_cmp(LB *b, char *ltype, char *val, char *cmd, char *with) {
     // cmd: eq,ne
     Str *ir = llvm_b_ir(b);

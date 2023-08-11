@@ -282,3 +282,14 @@ Value *vgen_swap(Allocator *alc, Value *var, Value *with) {
     item->right = with;
     return value_init(alc, v_swap, item, var->rett);
 }
+
+Value *vgen_this_or_that(Allocator *alc, Value *cond, Scope *true_scope, Value *left, Scope *false_scope, Value *right, Type *rett) {
+    //
+    VThisThat *item = al(alc, sizeof(VThisThat));
+    item->cond = cond;
+    item->left = left;
+    item->right = right;
+    item->true_scope = true_scope;
+    item->false_scope = false_scope;
+    return value_init(alc, v_this_or_that, item, rett);
+}

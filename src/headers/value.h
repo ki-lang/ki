@@ -26,6 +26,7 @@ typedef struct ValueThenIRValue ValueThenIRValue;
 typedef struct ValueAndExec ValueAndExec;
 typedef struct VIncrDecr VIncrDecr;
 typedef struct VFString VFString;
+typedef struct VThisThat VThisThat;
 
 struct Value {
     int type;
@@ -143,6 +144,13 @@ struct VFString {
     Array *values;
     int line;
     int col;
+};
+struct VThisThat {
+    Value*cond;
+    Value*left;
+    Value*right;
+    Scope* true_scope;
+    Scope* false_scope;
 };
 
 #endif
