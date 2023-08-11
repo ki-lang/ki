@@ -4,19 +4,22 @@
 Feature todo list in order:
 
 ```
-- trait generic types
-- function generic types
 - inline if ... ? ... : ...
-- break outer loops
 - --watch param to watch for file changes and trigger a build
 - vscode extension
+
+- union & c_union
+- closure functions
+
+-- release version 0.1.0
+
+- trait generic types
+- function generic types
+- break outer loops
 - calling functions using named arguments
 
 - add \0 to string data
 - c"c-string-constants"
-
-- union & c_union
-- closure functions
 
 - install global packages that compile the code to a binary in ~/.ki/bin | ki pkg global add {url} | ki pkg global install
 - async library
