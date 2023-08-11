@@ -1,0 +1,9 @@
+
+test "This or that values" {
+
+	let v1 = true ? "this" : "that";
+	let v2 = false ? "this" : "that";
+
+	@expect v1 == "this";
+	@expect v2 == "that";
+}
