@@ -7,9 +7,10 @@ Feature todo list in order:
 - inline if ... ? ... : ...
 - --watch param to watch for file changes and trigger a build
 - vscode extension
-
+- language server
 - union & c_union
 - closure functions
+- package platform: pkg.ki-lang.dev
 
 -- release version 0.1.0
 
