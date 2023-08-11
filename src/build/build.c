@@ -599,7 +599,7 @@ void build_watch(Build *b, int argc, char *argv[]) {
 #ifdef linux
             long int nsec = attr.st_mtim.tv_nsec;
 #else
-            long int nsec = attr.st_mtime.tv_nsec;
+            long int nsec = attr.st_mtimespec.tv_nsec;
 #endif
 #endif
             if (fc->mod_time != nsec) {
