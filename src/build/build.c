@@ -6,6 +6,7 @@ int default_arch();
 void cmd_build_help(bool run_code);
 void build_add_files(Build *b, Array *files);
 char *find_config_dir(Allocator *alc, char *ki_path);
+void build_macro_defs(Build *b, char *defs);
 
 void cmd_build(int argc, char *argv[]) {
     //
@@ -17,6 +18,7 @@ void cmd_build(int argc, char *argv[]) {
     Array *has_value = array_make(alc, 8);
     array_push(has_value, "-o");
     array_push(has_value, "--target");
+    array_push(has_value, "--def");
 
     parse_argv(argv, argc, has_value, args, options);
 
@@ -115,13 +117,21 @@ void cmd_build(int argc, char *argv[]) {
 
     //
     Build *b = al(alc, sizeof(Build));
+    b->alc = alc;
+    b->alc_io = alc_io;
     b->token = al(alc, KI_TOKEN_MAX);
     b->sbuf = al(alc, 2000);
 
+    // Macro definitions
     MacroScope *mc = init_macro_scope(alc);
     map_set(mc->identifiers, "OS", os);
     map_set(mc->identifiers, "ARCH", arch);
     b->mc = mc;
+
+    char *defs = map_get(options, "--def");
+    if (defs) {
+        build_macro_defs(b, defs);
+    }
 
     // Filter out files
     char *first_file = NULL;
@@ -209,8 +219,6 @@ void cmd_build(int argc, char *argv[]) {
     //
     b->path_out = path_out;
     b->ptr_size = ptr_size;
-    b->alc = alc;
-    b->alc_io = alc_io;
     b->alc_ast = alc_make();
     b->cache_dir = cache_dir;
     //
@@ -433,6 +441,8 @@ void cmd_build_help(bool run_code) {
     printf(" --test              generate a 'main' that runs all tests\n");
     printf(" --target            compile for a specific os/arch\n");
     printf("                     linux-x64, macos-x64, win-x64\n");
+    printf(" --def               define comptime variables\n");
+    printf("                     format: VAR1=VAL,VAR2=VAL\n");
     printf("\n");
 
     printf(" -v -vv -vvv         show compile info\n");
@@ -491,4 +501,52 @@ Func *ki_get_func(Build *b, char *ns, char *name) {
     }
 
     return idf->item;
+}
+
+void build_macro_defs(Build *b, char *defs) {
+    //
+    MacroScope *mc = b->mc;
+    Allocator *alc = b->alc;
+
+    int len = strlen(defs);
+    int i = 0;
+    bool read_key = true;
+    int part_i = 0;
+    char part[256];
+    char key[256];
+
+    while (i < len) {
+        char ch = defs[i];
+        i++;
+        if (ch == '=' && read_key) {
+            part[part_i] = '\0';
+            part_i = 0;
+            if (!is_valid_varname_all(part)) {
+                printf("Invalid comptime variable name: '%s'", part);
+                exit(1);
+            }
+            strcpy(key, part);
+            if (map_get(mc->identifiers, key)) {
+                printf("Comptime variable name already used: '%s'", key);
+                exit(1);
+            }
+            read_key = false;
+            continue;
+        }
+        if (ch == ',' && !read_key) {
+            part[part_i] = '\0';
+            part_i = 0;
+
+            map_set(mc->identifiers, dups(alc, key), dups(alc, part));
+
+            read_key = true;
+            continue;
+        }
+        part[part_i] = ch;
+        part_i++;
+    }
+    if (!read_key) {
+        part[part_i] = '\0';
+        map_set(mc->identifiers, dups(alc, key), dups(alc, part));
+    }
 }
