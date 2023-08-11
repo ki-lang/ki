@@ -572,14 +572,36 @@ void build_watch(Build *b, int argc, char *argv[]) {
     }
     char *cmd = str_to_chars(b->alc, cmd_str);
 
-    struct stat attr;
     Array *fcs = b->all_fcs->values;
     while (true) {
         bool run = false;
         for (int i = 0; i < fcs->length; i++) {
             Fc *fc = array_get_index(fcs, i);
+#ifdef _WIN32
+            void *handle = fc->win_file_handle;
+            if (!handle) {
+                handle = CreateFile(fc->path_ki,           // file to open
+                                    GENERIC_READ,          // open for reading
+                                    FILE_SHARE_READ,       // share for reading
+                                    NULL,                  // default security
+                                    OPEN_EXISTING,         // existing file only
+                                    FILE_ATTRIBUTE_NORMAL, // normal file
+                                    NULL                   // no attribute template
+                );
+                fc->win_file_handle = handle;
+            }
+            FILETIME ftCreate, ftAccess, ftWrite;
+            GetFileTime((HANDLE)handle, &ftCreate, &ftAccess, &ftWrite);
+            long int nsec = ftWrite.dwLowDateTime + ftWrite.dwHighDateTime;
+#else
+            struct stat attr;
             stat(fc->path_ki, &attr);
+#ifdef linux
             long int nsec = attr.st_mtim.tv_nsec;
+#else
+            long int nsec = attr.st_mtime.tv_nsec;
+#endif
+#endif
             if (fc->mod_time != nsec) {
                 run = true;
                 fc->mod_time = nsec;
