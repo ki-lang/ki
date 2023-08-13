@@ -58,10 +58,34 @@ void str_append_char(Str *str, char ch) {
 
 void str_append_chars(Str *str, char *add) {
     int add_len = strlen(add);
-    if (add_len == 0) {
+    str_append_from_ptr(str, add, add_len);
+    // if (add_len == 0) {
+    //     return;
+    // }
+    // int new_length = str->length + add_len;
+    // bool reloc = str->mem_size < new_length;
+    // while (str->mem_size < new_length) {
+    //     str->mem_size *= 2;
+    // }
+    // if (reloc) {
+    //     AllocatorBlock *new_block = al_private(str->alc, str->mem_size);
+    //     void *new_data = new_block->start_adr;
+    //     memcpy(new_data, str->data, str->length);
+    //     memcpy(new_data + str->length, add, add_len);
+    //     free_block(str->al_block);
+    //     str->al_block = new_block;
+    //     str->data = new_data;
+    // } else {
+    //     memcpy(str->data + str->length, add, add_len);
+    // }
+    // str->length = new_length;
+}
+void str_append_from_ptr(Str *str, void *ptr, int len) {
+    //
+    if (len == 0) {
         return;
     }
-    int new_length = str->length + add_len;
+    int new_length = str->length + len;
     bool reloc = str->mem_size < new_length;
     while (str->mem_size < new_length) {
         str->mem_size *= 2;
@@ -70,12 +94,12 @@ void str_append_chars(Str *str, char *add) {
         AllocatorBlock *new_block = al_private(str->alc, str->mem_size);
         void *new_data = new_block->start_adr;
         memcpy(new_data, str->data, str->length);
-        memcpy(new_data + str->length, add, add_len);
+        memcpy(new_data + str->length, ptr, len);
         free_block(str->al_block);
         str->al_block = new_block;
         str->data = new_data;
     } else {
-        memcpy(str->data + str->length, add, add_len);
+        memcpy(str->data + str->length, ptr, len);
     }
     str->length = new_length;
 }

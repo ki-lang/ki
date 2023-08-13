@@ -54,6 +54,9 @@ void pkg_get_dir(char *packages_dir, char *name, char *buf);
 // Make
 void cmd_make(int argc, char *argv[]);
 
+// LSP
+void cmd_lsp(int argc, char *argv[]);
+
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);
 bool cfg_has_package(Config *cfg, char *name);

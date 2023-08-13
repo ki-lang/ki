@@ -19,6 +19,8 @@ int main(int argc, char *argv[]) {
         cmd_pkg(argc, argv);
     } else if (strcmp(cmd, "make") == 0) {
         cmd_make(argc, argv);
+    } else if (strcmp(cmd, "lsp") == 0) {
+        cmd_lsp(argc, argv);
     } else {
         help();
     }
@@ -34,6 +36,10 @@ void help() {
     printf(" ki run -h         Build and run ki code\n");
     printf(" ki pkg -h         Manage packages\n");
     printf(" ki make -h        Run pre-defined scripts\n");
+
+    printf("\n");
+    printf(" ki fmt -h         Format ki code\n");
+    printf(" ki lsp -h         Run LSP server\n");
 
     printf("\n");
     exit(1);
