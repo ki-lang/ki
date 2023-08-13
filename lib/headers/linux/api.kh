@@ -1,8 +1,11 @@
 
 global errno: i32;
-shared stderr : i32;
-shared stdin : i32;
-shared stdout : i32;
+shared stderr : ?FILE;
+shared stdin : ?FILE;
+shared stdout : ?FILE;
+
+alias ptr as FILE;
+alias ptr as DIR;
 
 // pid_t = i32
 // socklen_t = u32
@@ -19,6 +22,7 @@ fn open(path: c_string, flags: i32, mode: i32) i32;
 fn close(fd: i32) i32;
 
 fn fcntl(fd: i32, action: i32, value: i32) i32;
+fn fflush(stream: FILE) i32;
 
 // Files
 fn stat(path: c_string, stat_buf: *cstruct_stat) i32;

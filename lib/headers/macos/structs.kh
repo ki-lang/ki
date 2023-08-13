@@ -1,7 +1,4 @@
 
-alias ptr as FILE;
-alias ptr as DIR;
-
 struct cstruct_dirent {
     d_ino: uxx; // Inode number
     d_off: uxx; // Not an offset; see below
