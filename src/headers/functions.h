@@ -56,6 +56,7 @@ void cmd_make(int argc, char *argv[]);
 
 // LSP
 void cmd_lsp(int argc, char *argv[]);
+cJSON *lsp_init(Allocator *alc, cJSON *params);
 
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);

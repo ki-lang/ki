@@ -4,6 +4,7 @@
 void cmd_lsp_help();
 void cmd_lsp_server();
 Array *cmd_lsp_parse_input(Allocator *alc, Str *input);
+cJSON *lsp_handle(Allocator *alc, cJSON *json);
 
 void lsp_log(char *msg) {
     //
@@ -72,6 +73,15 @@ void cmd_lsp_server() {
             if (rcvd > 0) {
                 str_append_from_ptr(input, part, rcvd);
             }
+            if (rcvd < 0) {
+                // stdin closed
+                lsp_log("# Stopping server (stdin closed)\n");
+                return;
+            }
+        }
+        if (input->length == 0) {
+            lsp_log("# Stopping server (empty input)\n");
+            return;
         }
         char *tmp = str_to_chars(alc, input);
         lsp_log("# Input:\n");
@@ -92,10 +102,21 @@ void cmd_lsp_server() {
             lsp_log(req);
             lsp_log("\n");
 
-            // cJSON *json = cJSON_ParseWithLength(req, input->length);
-            // if (json) {
-            //     cJSON *item = cJSON_GetObjectItemCaseSensitive(json, "");
-            // }
+            cJSON *json = cJSON_ParseWithLength(req, strlen(req));
+            if (json) {
+                cJSON *resp = lsp_handle(alc, json);
+                if (resp) {
+                    char *str = cJSON_Print(resp);
+                    printf("Content-Length:%ld\r\n\r\n%s", strlen(str), str);
+
+                    lsp_log("# Resp:\n");
+                    lsp_log(str);
+                    lsp_log("\n");
+                    free(str);
+                }
+            } else {
+                lsp_log("Invalid json\n");
+            }
         }
     }
 }
@@ -206,6 +227,31 @@ Array *cmd_lsp_parse_input(Allocator *alc, Str *input) {
 
     //
     return res;
+}
+
+cJSON *lsp_handle(Allocator *alc, cJSON *json) {
+    //
+    cJSON *resp = NULL;
+
+    cJSON *id = cJSON_GetObjectItemCaseSensitive(json, "id");
+    cJSON *method = cJSON_GetObjectItemCaseSensitive(json, "method");
+
+    if (id && method) {
+        cJSON *params = cJSON_GetObjectItemCaseSensitive(json, "params");
+
+        if (strcmp(method->valuestring, "initialize") == 0 && params) {
+            resp = lsp_init(alc, params);
+        }
+    }
+    if (resp) {
+        cJSON *r = cJSON_CreateObject();
+        cJSON_AddItemToObject(r, "jsonrpc", cJSON_CreateString("2.0"));
+        cJSON_AddItemToObject(r, "id", cJSON_CreateNumber(id->valueint));
+        cJSON_AddItemToObject(r, "result", resp);
+        resp = r;
+    }
+
+    return resp;
 }
 
 void cmd_lsp_help() {

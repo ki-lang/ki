@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
         cmd_pkg(argc, argv);
     } else if (strcmp(cmd, "make") == 0) {
         cmd_make(argc, argv);
-    } else if (strcmp(cmd, "lsp") == 0) {
+    } else if (strcmp(cmd, "ls") == 0) {
         cmd_lsp(argc, argv);
     } else {
         help();
@@ -39,7 +39,7 @@ void help() {
 
     printf("\n");
     printf(" ki fmt -h         Format ki code\n");
-    printf(" ki lsp -h         Run LSP server\n");
+    printf(" ki ls -h          Run language server\n");
 
     printf("\n");
     exit(1);
