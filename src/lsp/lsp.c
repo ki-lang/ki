@@ -1,5 +1,7 @@
 
 #include "../all.h"
+#include <stdio.h>
+#include <unistd.h>
 
 void cmd_lsp_help();
 void cmd_lsp_server();
@@ -69,6 +71,7 @@ void cmd_lsp_server() {
         int rcvd = chunk_len;
         char part[chunk_len];
         while (rcvd == chunk_len) {
+            lsp_log("# Wait\n");
             rcvd = read(STDIN_FILENO, part, chunk_len);
             if (rcvd > 0) {
                 str_append_from_ptr(input, part, rcvd);
@@ -107,7 +110,11 @@ void cmd_lsp_server() {
                 cJSON *resp = lsp_handle(alc, json);
                 if (resp) {
                     char *str = cJSON_Print(resp);
-                    printf("Content-Length:%ld\r\n\r\n%s", strlen(str), str);
+                    cJSON_Minify(str);
+                    int clen = strlen(str);
+                    char output[clen + 100];
+                    sprintf(output, "Content-Length: %d\r\n\r\n%s", clen, str);
+                    write(STDOUT_FILENO, output, strlen(output));
 
                     lsp_log("# Resp:\n");
                     lsp_log(str);
@@ -236,18 +243,19 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
     cJSON *id = cJSON_GetObjectItemCaseSensitive(json, "id");
     cJSON *method = cJSON_GetObjectItemCaseSensitive(json, "method");
 
-    if (id && method) {
+    if (method) {
         cJSON *params = cJSON_GetObjectItemCaseSensitive(json, "params");
 
         if (strcmp(method->valuestring, "initialize") == 0 && params) {
             resp = lsp_init(alc, params);
         }
     }
-    if (resp) {
+    if (id) {
         cJSON *r = cJSON_CreateObject();
-        cJSON_AddItemToObject(r, "jsonrpc", cJSON_CreateString("2.0"));
+        // cJSON_AddItemToObject(r, "jsonrpc", cJSON_CreateString("2.0"));
         cJSON_AddItemToObject(r, "id", cJSON_CreateNumber(id->valueint));
-        cJSON_AddItemToObject(r, "result", resp);
+        if (resp)
+            cJSON_AddItemToObject(r, "result", resp);
         resp = r;
     }
 
