@@ -36,7 +36,7 @@ void cmd_lsp(int argc, char *argv[]) {
     }
     char *action = array_get_index(args, 2);
     if (strcmp(action, "start") == 0) {
-        lsp_log("# Start LSP server\n");
+        // lsp_log("# Start LSP server\n");
 
         // int argcl = 3;
         // char *argvl[argcl];
@@ -71,7 +71,7 @@ void cmd_lsp_server() {
         int rcvd = chunk_len;
         char part[chunk_len];
         while (rcvd == chunk_len) {
-            lsp_log("# Wait\n");
+            // lsp_log("# Wait\n");
             rcvd = read(STDIN_FILENO, part, chunk_len);
             if (rcvd > 0) {
                 str_append_from_ptr(input, part, rcvd);
@@ -87,14 +87,14 @@ void cmd_lsp_server() {
             return;
         }
         char *tmp = str_to_chars(alc, input);
-        lsp_log("# Input:\n");
-        lsp_log(tmp);
-        lsp_log("\n");
+        // lsp_log("# Input:\n");
+        // lsp_log(tmp);
+        // lsp_log("\n");
 
         Array *reqs = cmd_lsp_parse_input(alc, input);
         if (!reqs) {
             // Invalid input
-            lsp_log("Invalid input\n");
+            lsp_log("# Invalid input\n");
             str_clear(input);
             continue;
         }
@@ -122,7 +122,7 @@ void cmd_lsp_server() {
                     free(str);
                 }
             } else {
-                lsp_log("Invalid json\n");
+                lsp_log("# Invalid json\n");
             }
         }
     }
@@ -189,17 +189,17 @@ Array *cmd_lsp_parse_input(Allocator *alc, Str *input) {
             }
 
             char *key_ = str_to_chars(alc, key);
-            sprintf(msg, "header: '%s'\n", key_);
-            lsp_log(msg);
+            // sprintf(msg, "header: '%s'\n", key_);
+            // lsp_log(msg);
             if (strcmp(key_, "Content-Length") == 0) {
                 char *value_ = str_to_chars(alc, value);
-                sprintf(msg, "value: '%s'\n", value_);
-                lsp_log(msg);
+                // sprintf(msg, "value: '%s'\n", value_);
+                // lsp_log(msg);
                 content_len = atoi(value_);
             }
         }
         if (content_len == 0) {
-            lsp_log("No content\n");
+            lsp_log("# No content\n");
             return NULL;
         }
 
@@ -213,8 +213,8 @@ Array *cmd_lsp_parse_input(Allocator *alc, Str *input) {
             count++;
         }
 
-        sprintf(msg, "count: %d/%d\n", count, content_len);
-        lsp_log(msg);
+        // sprintf(msg, "count: %d/%d\n", count, content_len);
+        // lsp_log(msg);
         if (count == content_len) {
             char *body = str_to_chars(alc, content);
             array_push(res, body);
@@ -239,6 +239,7 @@ Array *cmd_lsp_parse_input(Allocator *alc, Str *input) {
 cJSON *lsp_handle(Allocator *alc, cJSON *json) {
     //
     cJSON *resp = NULL;
+    cJSON *error = NULL;
 
     cJSON *id = cJSON_GetObjectItemCaseSensitive(json, "id");
     cJSON *method = cJSON_GetObjectItemCaseSensitive(json, "method");
@@ -248,6 +249,12 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
 
         if (strcmp(method->valuestring, "initialize") == 0 && params) {
             resp = lsp_init(alc, params);
+        } else if (strcmp(method->valuestring, "shutdown") == 0) {
+            resp = cJSON_CreateNull();
+        } else if (strcmp(method->valuestring, "exit") == 0) {
+            exit(0);
+        } else if (strcmp(method->valuestring, "textDocument/didOpen") == 0) {
+            // resp = lsp_did_open();
         }
     }
     if (id) {
@@ -256,6 +263,8 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
         cJSON_AddItemToObject(r, "id", cJSON_CreateNumber(id->valueint));
         if (resp)
             cJSON_AddItemToObject(r, "result", resp);
+        if (error)
+            cJSON_AddItemToObject(r, "error", error);
         resp = r;
     }
 
