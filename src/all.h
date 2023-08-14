@@ -51,4 +51,6 @@ typedef struct AllocatorBlock AllocatorBlock;
 
 #include "headers/functions.h"
 
+extern Map *lsp_doc_content;
+
 #endif

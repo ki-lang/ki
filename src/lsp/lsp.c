@@ -57,7 +57,10 @@ void cmd_lsp_server() {
     //
     Allocator *alc = alc_make();
     Allocator *alc_buf = alc_make();
+    Allocator *alc_keep = alc_make();
     Str *input = str_make(alc, 1000);
+
+    lsp_doc_content = map_make(alc_keep);
 
     while (true) {
         alc_wipe(alc_buf);
@@ -254,7 +257,15 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
         } else if (strcmp(method->valuestring, "exit") == 0) {
             exit(0);
         } else if (strcmp(method->valuestring, "textDocument/didOpen") == 0) {
-            // resp = lsp_did_open();
+            resp = lsp_open(alc, params);
+        } else if (strcmp(method->valuestring, "textDocument/didClose") == 0) {
+            resp = lsp_close(alc, params);
+        } else if (strcmp(method->valuestring, "textDocument/didChange") == 0) {
+            resp = lsp_change(alc, params);
+        } else if (strcmp(method->valuestring, "textDocument/definition") == 0) {
+            resp = lsp_definition(alc, params);
+        } else if (strcmp(method->valuestring, "textDocument/completion") == 0) {
+            resp = lsp_completion(alc, params);
         }
     }
     if (id) {

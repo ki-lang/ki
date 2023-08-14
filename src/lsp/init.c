@@ -16,11 +16,16 @@ cJSON *lsp_init(Allocator *alc, cJSON *params) {
 
     cJSON_AddItemToObject(caps, "definitionProvider", cJSON_CreateTrue());
 
-    // cJSON *compl = cJSON_CreateObject();
-    // cJSON_AddItemToObject(caps, "completionProvider", compl );
-    // cJSON *chars = cJSON_CreateArray();
-    // cJSON_AddItemToArray(chars, cJSON_CreateString("."));
-    // cJSON_AddItemToObject(sync, "triggerCharacters", chars);
+    cJSON *compl = cJSON_CreateObject();
+    cJSON_AddItemToObject(caps, "completionProvider", compl );
+    cJSON *chars = cJSON_CreateArray();
+    cJSON_AddItemToArray(chars, cJSON_CreateString("."));
+    cJSON_AddItemToObject(compl, "triggerCharacters", chars);
+
+    // cJSON *dia = cJSON_CreateObject();
+    // cJSON_AddItemToObject(caps, "diagnosticProvider", dia);
+    // cJSON_AddItemToObject(dia, "interFileDependencies", cJSON_CreateTrue());
+    // cJSON_AddItemToObject(dia, "workspaceDiagnostics", cJSON_CreateTrue());
 
     return resp;
 }

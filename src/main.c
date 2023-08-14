@@ -9,6 +9,10 @@ int main(int argc, char *argv[]) {
         help();
     }
 
+    //
+    lsp_doc_content = NULL;
+
+    //
     char *cmd = argv[1];
 
     if (strcmp(cmd, "build") == 0) {
