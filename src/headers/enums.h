@@ -170,3 +170,8 @@ enum MACRO_PART_TYPE {
     macro_part_type,
     macro_part_value,
 };
+
+enum LSP_DATA_TYPE {
+    lspt_completion,
+    lspt_definition,
+};

@@ -37,6 +37,7 @@ typedef struct MacroPart MacroPart;
 typedef struct MacroVarGroup MacroVarGroup;
 typedef struct MacroVar MacroVar;
 typedef struct MacroReplace MacroReplace;
+typedef struct LspData LspData;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -134,6 +135,8 @@ struct Build {
     Class *class_map;
     //
     Type *type_void;
+    // LSP
+    LspData *lsp;
     //
     int event_count;
     int events_done;
@@ -504,6 +507,15 @@ struct PkgVersion {
     int v1;
     int v2;
     int v3;
+};
+
+struct LspData {
+    int type;
+    int id;
+    int line;
+    int col;
+    char* filepath;
+    char* text;
 };
 
 #endif

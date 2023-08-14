@@ -1,7 +1,5 @@
 
 #include "../all.h"
-#include <stdio.h>
-#include <unistd.h>
 
 void cmd_lsp_help();
 void cmd_lsp_server();
@@ -247,6 +245,8 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
     cJSON *id = cJSON_GetObjectItemCaseSensitive(json, "id");
     cJSON *method = cJSON_GetObjectItemCaseSensitive(json, "method");
 
+    bool respond = true;
+
     if (method) {
         cJSON *params = cJSON_GetObjectItemCaseSensitive(json, "params");
 
@@ -265,10 +265,11 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
         } else if (strcmp(method->valuestring, "textDocument/definition") == 0) {
             resp = lsp_definition(alc, params);
         } else if (strcmp(method->valuestring, "textDocument/completion") == 0) {
-            resp = lsp_completion(alc, params);
+            resp = lsp_completion(alc, params, id->valueint);
+            respond = false;
         }
     }
-    if (id) {
+    if (respond && id) {
         cJSON *r = cJSON_CreateObject();
         // cJSON_AddItemToObject(r, "jsonrpc", cJSON_CreateString("2.0"));
         cJSON_AddItemToObject(r, "id", cJSON_CreateNumber(id->valueint));
@@ -280,6 +281,26 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
     }
 
     return resp;
+}
+
+LspData *lsp_data_init() {
+    //
+    LspData *ld = malloc(sizeof(LspData));
+    ld->type = 0;
+    ld->id = 0;
+    ld->line = 0;
+    ld->col = 0;
+    ld->filepath = NULL;
+    ld->text = NULL;
+    return ld;
+}
+void lsp_data_free(LspData *ld) {
+    //
+    if (ld->filepath)
+        free(ld->filepath);
+    if (ld->text)
+        free(ld->text);
+    free(ld);
 }
 
 void cmd_lsp_help() {

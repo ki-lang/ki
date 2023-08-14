@@ -24,7 +24,7 @@ cJSON *lsp_change(Allocator *alc, cJSON *params) {
 
                 char *prev = map_get(lsp_doc_content, path);
                 if (prev) {
-                    free(prev);
+                    free_delayed(prev);
                 }
                 map_set(lsp_doc_content, path, strdup(text));
             }

@@ -73,3 +73,18 @@ void func_make_arg_decls(Func *func) {
         usage_line_init(alc, fscope, decl);
     }
 }
+
+void *free_delayed_exec(void *item) {
+    //
+    sleep_ms(5000);
+    free(item);
+}
+
+void free_delayed(void *item) {
+#ifdef WIN32
+    void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))free_delayed_exec, item, 0, NULL);
+#else
+    pthread_t thr;
+    pthread_create(&thr, NULL, free_delayed_exec, item);
+#endif
+}

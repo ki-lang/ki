@@ -12,6 +12,7 @@ Array *explode(Allocator *alc, char *part, char *content);
 int system_silent(char *cmd);
 char *str_replace_simple(char *s, const char *s1, const char *s2);
 char *str_replace(Allocator *alc, char *orig, char *rep, char *with);
+void free_delayed(void *item);
 
 // Syntax
 bool is_alpha_char(char c);
@@ -57,11 +58,13 @@ void cmd_make(int argc, char *argv[]);
 // LSP
 void cmd_lsp(int argc, char *argv[]);
 cJSON *lsp_init(Allocator *alc, cJSON *params);
+LspData* lsp_data_init();
+void lsp_data_free(LspData *ld);
 cJSON *lsp_open(Allocator *alc, cJSON *params);
 cJSON *lsp_close(Allocator *alc, cJSON *params);
 cJSON *lsp_change(Allocator *alc, cJSON *params);
 cJSON *lsp_definition(Allocator *alc, cJSON *params);
-cJSON *lsp_completion(Allocator *alc, cJSON *params);
+cJSON *lsp_completion(Allocator *alc, cJSON *params, int id);
 
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);
