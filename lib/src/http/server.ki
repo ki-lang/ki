@@ -17,13 +17,13 @@ class ServerData {
 }
 
 class Server {
-    host: String;
-    port: u16;
-    socket: net:SocketTCP;
-    max_connections: uxx;
-    handler: fn(*Request)(Response);
-    static_dirs: Array[String] = Array[String].new();
-    show_info: bool = false;
+    - host: String;
+    - port: u16;
+    - socket: net:SocketTCP;
+    - max_connections: uxx;
+    - handler: fn(*Request)(Response);
+    - static_dirs: Array[String] = Array[String].new();
+    - show_info: bool = false;
 
     static fn new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error {
 
@@ -39,7 +39,7 @@ class Server {
         };
     }
 
-    -fn server_data() ServerData {
+    - fn server_data() ServerData {
 
         let dirs = Array[String].new();
         each this.static_dirs as dir {
@@ -89,7 +89,7 @@ class Server {
         os:sleep_ms(200);
     }
 
-    -static fn worker(data_: ServerData) void {
+    - static fn worker(data_: ServerData) void {
 
         let data = data_;
 
@@ -234,7 +234,7 @@ class Server {
         }
     }
 
-    -static fn respond(data: *ServerData, http_con: *Connection, handler: fn(*Request)(Response)) void !read_error !sent_error {
+    - static fn respond(data: *ServerData, http_con: *Connection, handler: fn(*Request)(Response)) void !read_error !sent_error {
 
         let buf_size : i32 = 65535;
         let read_buf = http_con.read_buf;

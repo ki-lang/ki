@@ -479,9 +479,20 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 2)) {
                     Array *items = array_make(b->alc, 100);
                     Array *prop_names = class->props->keys;
+                    Array *props = class->props->values;
                     for (int i = 0; i < prop_names->length; i++) {
+                        ClassProp *prop = array_get_index(props, i);
                         char *name = array_get_index(prop_names, i);
-                        array_push(items, lsp_completion_init(alc, lsp_compl_property, name));
+                        LspCompletion *c = lsp_completion_init(alc, lsp_compl_property, name);
+                        if (class->fc->nsc != fc->nsc) {
+                            if (prop->act == act_private) {
+                                continue;
+                            }
+                            if (prop->act == act_readonly) {
+                                c->detail = "readonly";
+                            }
+                        }
+                        array_push(items, c);
                     }
                     Array *func_names = class->funcs->keys;
                     for (int i = 0; i < func_names->length; i++) {
@@ -490,6 +501,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                         if (func->is_static)
                             continue;
                         LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, name);
+                        if (class->fc->nsc != fc->nsc) {
+                            if (func->act == act_private || func->is_generated) {
+                                continue;
+                            }
+                        }
                         c->insert = lsp_func_insert(alc, func, name, true);
                         array_push(items, c);
                     }

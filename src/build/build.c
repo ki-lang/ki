@@ -398,8 +398,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     }
 
     // Free memory
-    alc_delete(b->alc_ast);
-    alc_delete(b->alc);
+    build_clean_up(b);
 }
 
 void build_clean_up(Build *b) {

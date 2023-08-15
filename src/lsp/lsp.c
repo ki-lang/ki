@@ -143,6 +143,7 @@ void lsp_respond(cJSON *resp) {
     // lsp_log("# Resp:\n");
     // lsp_log(str);
     // lsp_log("\n");
+    cJSON_Delete(resp);
     free(str);
 
 #ifdef _WIN32
