@@ -59,9 +59,7 @@ void cmd_make(int argc, char *argv[]);
 // LSP
 void cmd_lsp(int argc, char *argv[]);
 cJSON *lsp_init(Allocator *alc, cJSON *params);
-LspData* lsp_data_init();
 void lsp_log(char *msg);
-void lsp_data_free(LspData *ld);
 cJSON *lsp_open(Allocator *alc, cJSON *params);
 cJSON *lsp_close(Allocator *alc, cJSON *params);
 cJSON *lsp_change(Allocator *alc, cJSON *params);
@@ -70,6 +68,14 @@ cJSON *lsp_completion(Allocator *alc, cJSON *params, int id);
 void lsp_completion_respond(Build *b, LspData* ld, Array *items);
 void lsp_respond(cJSON *resp);
 void lsp_exit_thread();
+
+// LSP structs
+LspData* lsp_data_init();
+void lsp_data_free(LspData *ld);
+LspCompletion *lsp_completion_init(Allocator *alc, int type, char *label);
+
+// LSP completion
+char *lsp_func_insert(Allocator *alc, Func *func, char *name, bool skip_first_arg);
 
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);

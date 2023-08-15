@@ -38,6 +38,7 @@ typedef struct MacroVarGroup MacroVarGroup;
 typedef struct MacroVar MacroVar;
 typedef struct MacroReplace MacroReplace;
 typedef struct LspData LspData;
+typedef struct LspCompletion LspCompletion;
 typedef struct CompileLoopData CompileLoopData;
 
 // Pkg
@@ -520,6 +521,13 @@ struct LspData {
     char *text;
     bool responded;
     bool send_default;
+};
+
+struct LspCompletion {
+    int type;
+    char *label;
+    char *insert;
+    char *detail;
 };
 
 struct CompileLoopData {

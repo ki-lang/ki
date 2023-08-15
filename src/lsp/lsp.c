@@ -314,28 +314,6 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
     return resp;
 }
 
-LspData *lsp_data_init() {
-    //
-    LspData *ld = malloc(sizeof(LspData));
-    ld->type = 0;
-    ld->id = 0;
-    ld->line = 0;
-    ld->col = 0;
-    ld->filepath = NULL;
-    ld->text = NULL;
-    ld->responded = false;
-    ld->send_default = false;
-    return ld;
-}
-void lsp_data_free(LspData *ld) {
-    //
-    if (ld->filepath)
-        free(ld->filepath);
-    if (ld->text)
-        free(ld->text);
-    free(ld);
-}
-
 void cmd_lsp_help() {
     //
     printf("> ki lsp start\n");

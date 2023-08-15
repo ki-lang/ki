@@ -473,15 +473,15 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             if (fc->lsp_file) {
                 LspData *ld = b->lsp;
                 Chunk *chunk = fc->chunk;
-                char msg[200];
-                sprintf(msg, "LINE: %d/%d COL %d/%d\n", chunk->line, ld->line, chunk->col, ld->col);
-                lsp_log(msg);
+                // char msg[200];
+                // sprintf(msg, "LINE: %d/%d COL %d/%d\n", chunk->line, ld->line, chunk->col, ld->col);
+                // lsp_log(msg);
                 if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 2)) {
                     Array *items = array_make(b->alc, 100);
                     Array *prop_names = class->props->keys;
                     for (int i = 0; i < prop_names->length; i++) {
                         char *name = array_get_index(prop_names, i);
-                        array_push(items, name);
+                        array_push(items, lsp_completion_init(alc, lsp_compl_property, name));
                     }
                     Array *func_names = class->funcs->keys;
                     for (int i = 0; i < func_names->length; i++) {
@@ -489,7 +489,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                         Func *func = array_get_index(class->funcs->values, i);
                         if (func->is_static)
                             continue;
-                        array_push(items, name);
+                        LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, name);
+                        c->insert = lsp_func_insert(alc, func, name, true);
+                        array_push(items, c);
                     }
                     lsp_completion_respond(b, ld, items);
                 }
@@ -924,7 +926,9 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
                         Func *func = array_get_index(funcs, i);
                         if (!func->is_static)
                             continue;
-                        array_push(items, name);
+                        LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, name);
+                        c->insert = lsp_func_insert(alc, func, name, false);
+                        array_push(items, c);
                     }
                     lsp_completion_respond(b, ld, items);
                 }

@@ -1,6 +1,5 @@
 
 #include "../all.h"
-#include <string.h>
 
 cJSON *lsp_open(Allocator *alc, cJSON *params) {
     //

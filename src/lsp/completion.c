@@ -51,9 +51,23 @@ void lsp_completion_respond(Build *b, LspData *ld, Array *items) {
     cJSON_AddItemToObject(result, "items", items_);
 
     for (int i = 0; i < items->length; i++) {
-        char *name = array_get_index(items, i);
+        LspCompletion *c = array_get_index(items, i);
         cJSON *item = cJSON_CreateObject();
-        cJSON_AddItemToObject(item, "label", cJSON_CreateString(name));
+        cJSON_AddItemToObject(item, "kind", cJSON_CreateNumber(c->type));
+        cJSON_AddItemToObject(item, "label", cJSON_CreateString(c->label));
+        if (c->detail) {
+            cJSON *detail = cJSON_CreateObject();
+            cJSON_AddItemToObject(item, "labelDetails", detail);
+            cJSON_AddItemToObject(detail, "detail", cJSON_CreateString(c->detail));
+        }
+
+        if (c->insert) {
+            cJSON_AddItemToObject(item, "insertText", cJSON_CreateString(c->insert));
+        }
+        if (c->type == lsp_compl_method || c->type == lsp_compl_function) {
+            cJSON_AddItemToObject(item, "insertTextFormat", cJSON_CreateNumber(2));
+        }
+
         cJSON_AddItemToArray(items_, item);
     }
 
