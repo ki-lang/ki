@@ -9,7 +9,7 @@ char *find_config_dir(Allocator *alc, char *ki_path);
 void build_macro_defs(Build *b, char *defs);
 void build_watch(Build *b, int argc, char *argv[]);
 
-void cmd_build(int argc, char *argv[]) {
+void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     //
     Allocator *alc = alc_make();
     Allocator *alc_io = alc_make();
@@ -45,7 +45,7 @@ void cmd_build(int argc, char *argv[]) {
         die(argbuf);
     }
 
-    if (array_contains(args, "-h", arr_find_str) || array_contains(args, "--help", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0)) {
+    if (!lsp_data && (array_contains(args, "-h", arr_find_str) || array_contains(args, "--help", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0))) {
         cmd_build_help(run_code);
     }
 
@@ -122,6 +122,7 @@ void cmd_build(int argc, char *argv[]) {
     b->alc_io = alc_io;
     b->token = al(alc, KI_TOKEN_MAX);
     b->sbuf = al(alc, 2000);
+    b->lsp = lsp_data;
 
     // Macro definitions
     MacroScope *mc = init_macro_scope(alc);
@@ -144,6 +145,9 @@ void cmd_build(int argc, char *argv[]) {
             continue;
         }
         if (!ends_with(arg, ".ki")) {
+            if (lsp_data) {
+                lsp_exit_thread();
+            }
             sprintf(b->sbuf, "Filename must end with .ki : '%s'", arg);
             die(b->sbuf);
         }
@@ -152,6 +156,9 @@ void cmd_build(int argc, char *argv[]) {
         bool success = get_fullpath(arg, full);
 
         if (!success || !file_exists(full)) {
+            if (lsp_data) {
+                lsp_exit_thread();
+            }
             sprintf(b->sbuf, "File not found: '%s'", arg);
             die(b->sbuf);
         }
@@ -308,12 +315,12 @@ void cmd_build(int argc, char *argv[]) {
     pkc_load_nsc(pkc_ki, "os", NULL);
 
     //
-#ifdef WIN32
-    void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))io_loop, (void *)b, 0, NULL);
-#else
-    pthread_t thr;
-    pthread_create(&thr, NULL, io_loop, (void *)b);
-#endif
+    // #ifdef WIN32
+    //     void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))io_loop, (void *)b, 0, NULL);
+    // #else
+    //     pthread_t thr;
+    //     pthread_create(&thr, NULL, io_loop, (void *)b);
+    // #endif
 
     // Compile ki lib
     compile_loop(b, 1); // Scan identifiers
@@ -391,6 +398,12 @@ void cmd_build(int argc, char *argv[]) {
     }
 
     // Free memory
+    alc_delete(b->alc_ast);
+    alc_delete(b->alc);
+}
+
+void build_clean_up(Build *b) {
+    //
     alc_delete(b->alc_ast);
     alc_delete(b->alc);
 }

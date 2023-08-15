@@ -5,7 +5,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     //
     Fc *prev = map_get(b->all_fcs, path_ki);
     if (prev) {
-        if (!prev->is_header) {
+        if (!b->lsp && !prev->is_header) {
             sprintf(b->sbuf, "Compiler tried to import the same file twice: %s", path_ki);
             die(b->sbuf);
         }
@@ -23,6 +23,8 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
         sprintf(path_cache, "%s/%s_%s_%s.json", b->cache_dir, nsc->name, path_ki, nsc->pkc->hash);
     } else {
         if (!file_exists(path_ki)) {
+            if (b->lsp)
+                lsp_exit_thread();
             sprintf(b->sbuf, "File not found: %s", path_ki);
             die(b->sbuf);
         }
@@ -73,6 +75,10 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->generated = generated;
     fc->win_file_handle = NULL;
     fc->mod_time = 0;
+    fc->lsp_file = b->lsp && (strcmp(b->lsp->filepath, path_ki) == 0);
+    if (fc->lsp_file) {
+        lsp_log("LSP File found\n");
+    }
 
     char *hash = al(alc, 64);
     simple_hash(path_ki, hash);
@@ -93,8 +99,24 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
 
     if (!generated) {
         str_clear(buf);
-        file_get_contents(buf, fc->path_ki);
-        char *content = str_to_chars(alc, buf);
+
+        char *content = NULL;
+        if (lsp_doc_content) {
+            content = map_get(lsp_doc_content, fc->path_ki);
+            if (content) {
+                content = dups(alc, content);
+                // char msg[500];
+                // sprintf(msg, "Found LSP content: %s\n", fc->path_ki);
+                // lsp_log(msg);
+                // lsp_log("-----\n");
+                // lsp_log(content);
+                // lsp_log("-----\n");
+            }
+        }
+        if (!content) {
+            file_get_contents(buf, fc->path_ki);
+            content = str_to_chars(alc, buf);
+        }
         fc->chunk->content = content;
         fc->chunk->length = strlen(content);
         chain_add(b->stage_1, fc);
@@ -154,6 +176,15 @@ void fc_error(Fc *fc) {
     Chunk *chunk = fc->chunk;
     char *content = chunk->content;
     int length = chunk->length;
+
+    Build *b = fc->b;
+    if (b->lsp) {
+        lsp_log("Error: ");
+        lsp_log(fc->sbuf);
+        lsp_log("\n");
+        b->lsp->send_default = true;
+        lsp_exit_thread();
+    }
 
     if (is_newline(get_char(fc, 0))) {
         chunk->i--;

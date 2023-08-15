@@ -1,6 +1,8 @@
 
 #include "../all.h"
 
+void *compile_loop_exec(CompileLoopData *cld);
+
 void *io_loop(void *build) {
     //
     Build *b = (Build *)build;
@@ -42,6 +44,56 @@ void *io_loop(void *build) {
 
 void compile_loop(Build *b, int max_stage) {
     //
+    CompileLoopData cld;
+    cld.b = b;
+    cld.max_stage = max_stage;
+
+    if (b->lsp) {
+        LspData *ld = b->lsp;
+        lsp_log("# LSP build\n");
+
+#ifdef WIN32
+        void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))compile_loop_exec, (void *)&cld, 0, NULL);
+        WaitForSingleObject(thr, INFINITE);
+#else
+        pthread_t thr;
+        pthread_create(&thr, NULL, (void *(*)(void *))compile_loop_exec, (void *)&cld);
+        pthread_join(thr, NULL);
+#endif
+
+        lsp_log("# Build joined\n");
+        if (ld->responded) {
+            lsp_log("# Clean up\n");
+            build_clean_up(b);
+            lsp_exit_thread();
+        }
+        if (max_stage == 6 || ld->send_default) {
+            lsp_log("# Default LSP response\n");
+            // LSP no response, send default response
+            if (ld->type == lspt_completion) {
+                // lsp_completion_respond(b, ld->id, array_make(alc, 1));
+            }
+
+            cJSON *result = cJSON_CreateNull();
+
+            cJSON *resp = cJSON_CreateObject();
+            cJSON_AddItemToObject(resp, "id", cJSON_CreateNumber(ld->id));
+            cJSON_AddItemToObject(resp, "result", result);
+
+            lsp_respond(resp);
+            build_clean_up(b);
+            lsp_exit_thread();
+        }
+
+    } else {
+        compile_loop_exec(&cld);
+    }
+}
+
+void *compile_loop_exec(CompileLoopData *cld) {
+
+    Build *b = cld->b;
+    int max_stage = cld->max_stage;
 
     while (true) {
         bool did_work = false;
@@ -124,4 +176,6 @@ void compile_loop(Build *b, int max_stage) {
 
         sleep_ns(10000); // 10 micro seconds
     }
+
+    return NULL;
 }

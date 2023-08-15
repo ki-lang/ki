@@ -19,6 +19,12 @@ void cmd_lsp(int argc, char *argv[]) {
 
     Allocator *alc = alc_make();
 
+#ifdef _WIN32
+    lsp_resp_lock = CreateMutex(NULL, false, NULL);
+#else
+    pthread_mutex_init(&lsp_resp_lock, NULL);
+#endif
+
     Array *args = array_make(alc, argc);
     Map *options = map_make(alc);
     Array *has_value = array_make(alc, 8);
@@ -102,31 +108,56 @@ void cmd_lsp_server() {
 
         for (int i = 0; i < reqs->length; i++) {
             char *req = array_get_index(reqs, i);
-            lsp_log("# Req:\n");
-            lsp_log(req);
-            lsp_log("\n");
+            // lsp_log("# Req:\n");
+            // lsp_log(req);
+            // lsp_log("\n");
 
             cJSON *json = cJSON_ParseWithLength(req, strlen(req));
             if (json) {
                 cJSON *resp = lsp_handle(alc, json);
                 if (resp) {
-                    char *str = cJSON_Print(resp);
-                    cJSON_Minify(str);
-                    int clen = strlen(str);
-                    char output[clen + 100];
-                    sprintf(output, "Content-Length: %d\r\n\r\n%s", clen, str);
-                    write(STDOUT_FILENO, output, strlen(output));
-
-                    lsp_log("# Resp:\n");
-                    lsp_log(str);
-                    lsp_log("\n");
-                    free(str);
+                    lsp_respond(resp);
                 }
             } else {
                 lsp_log("# Invalid json\n");
             }
         }
     }
+}
+
+void lsp_respond(cJSON *resp) {
+
+#ifdef _WIN32
+    WaitForSingleObject(lsp_resp_lock);
+#else
+    pthread_mutex_lock(&lsp_resp_lock);
+#endif
+
+    char *str = cJSON_Print(resp);
+    cJSON_Minify(str);
+    int clen = strlen(str);
+    char output[clen + 100];
+    sprintf(output, "Content-Length: %d\r\n\r\n%s", clen, str);
+    write(STDOUT_FILENO, output, strlen(output));
+
+    // lsp_log("# Resp:\n");
+    // lsp_log(str);
+    // lsp_log("\n");
+    free(str);
+
+#ifdef _WIN32
+    ReleaseMutex(lsp_resp_lock);
+#else
+    pthread_mutex_unlock(&lsp_resp_lock);
+#endif
+}
+
+void lsp_exit_thread() {
+#ifdef _WIN32
+    ExitThread(0);
+#else
+    pthread_exit(NULL);
+#endif
 }
 
 Array *cmd_lsp_parse_input(Allocator *alc, Str *input) {
@@ -292,6 +323,8 @@ LspData *lsp_data_init() {
     ld->col = 0;
     ld->filepath = NULL;
     ld->text = NULL;
+    ld->responded = false;
+    ld->send_default = false;
     return ld;
 }
 void lsp_data_free(LspData *ld) {

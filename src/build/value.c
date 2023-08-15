@@ -470,6 +470,31 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 fc_error(fc);
             }
 
+            if (fc->lsp_file) {
+                LspData *ld = b->lsp;
+                Chunk *chunk = fc->chunk;
+                char msg[200];
+                sprintf(msg, "LINE: %d/%d COL %d/%d\n", chunk->line, ld->line, chunk->col, ld->col);
+                lsp_log(msg);
+                if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 2)) {
+                    Array *items = array_make(b->alc, 100);
+                    Array *prop_names = class->props->keys;
+                    for (int i = 0; i < prop_names->length; i++) {
+                        char *name = array_get_index(prop_names, i);
+                        array_push(items, name);
+                    }
+                    Array *func_names = class->funcs->keys;
+                    for (int i = 0; i < func_names->length; i++) {
+                        char *name = array_get_index(func_names, i);
+                        Func *func = array_get_index(class->funcs->values, i);
+                        if (func->is_static)
+                            continue;
+                        array_push(items, name);
+                    }
+                    lsp_completion_respond(b, ld, items);
+                }
+            }
+
             tok(fc, token, true, false);
 
             ClassProp *prop = map_get(class->props, token);
@@ -885,9 +910,29 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         if (get_char(fc, 0) == '.') {
             chunk_move(fc->chunk, 1);
             // Static func
+
+            if (fc->lsp_file) {
+                Build *b = fc->b;
+                LspData *ld = b->lsp;
+                Chunk *chunk = fc->chunk;
+                if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 1)) {
+                    Array *items = array_make(b->alc, 100);
+                    Array *funcs = class->funcs->values;
+                    Array *func_names = class->funcs->keys;
+                    for (int i = 0; i < func_names->length; i++) {
+                        char *name = array_get_index(func_names, i);
+                        Func *func = array_get_index(funcs, i);
+                        if (!func->is_static)
+                            continue;
+                        array_push(items, name);
+                    }
+                    lsp_completion_respond(b, ld, items);
+                }
+            }
+
             tok(fc, token, true, false);
             Func *func = map_get(class->funcs, token);
-            if (!func) {
+            if (!func || !func->is_static) {
                 sprintf(fc->sbuf, "Unknown static function: '%s'", token);
                 fc_error(fc);
             }

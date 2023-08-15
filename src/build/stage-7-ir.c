@@ -63,8 +63,9 @@ void stage_7(Fc *fc) {
         }
 
         fc->ir = ir;
-        chain_add(b->write_ir, fc);
-        b->event_count++;
+        // chain_add(b->write_ir, fc);
+        // b->event_count++;
+        write_file(fc->path_ir, fc->ir, false);
     }
 
     //

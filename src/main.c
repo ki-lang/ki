@@ -16,9 +16,9 @@ int main(int argc, char *argv[]) {
     char *cmd = argv[1];
 
     if (strcmp(cmd, "build") == 0) {
-        cmd_build(argc, argv);
+        cmd_build(argc, argv, NULL);
     } else if (strcmp(cmd, "run") == 0) {
-        cmd_build(argc, argv);
+        cmd_build(argc, argv, NULL);
     } else if (strcmp(cmd, "pkg") == 0) {
         cmd_pkg(argc, argv);
     } else if (strcmp(cmd, "make") == 0) {

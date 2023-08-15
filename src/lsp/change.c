@@ -20,7 +20,7 @@ cJSON *lsp_change(Allocator *alc, cJSON *params) {
             if (uri && text && starts_with(uri, "file://")) {
                 int uri_len = strlen(uri);
                 char path[uri_len];
-                memcpy(path, uri + 6, uri_len - 5);
+                memcpy(path, uri + 7, uri_len - 6);
 
                 char *prev = map_get(lsp_doc_content, path);
                 if (prev) {

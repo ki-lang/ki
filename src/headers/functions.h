@@ -40,7 +40,8 @@ void free_block(AllocatorBlock *block);
 char *dups(Allocator *alc, char *str);
 
 // Build
-void cmd_build(int argc, char **argv);
+void cmd_build(int argc, char **argv, LspData *lsp_data);
+void build_clean_up(Build *b);
 Class *ki_get_class(Build *b, char *ns, char *name);
 Func *ki_get_func(Build *b, char *ns, char *name);
 
@@ -59,12 +60,16 @@ void cmd_make(int argc, char *argv[]);
 void cmd_lsp(int argc, char *argv[]);
 cJSON *lsp_init(Allocator *alc, cJSON *params);
 LspData* lsp_data_init();
+void lsp_log(char *msg);
 void lsp_data_free(LspData *ld);
 cJSON *lsp_open(Allocator *alc, cJSON *params);
 cJSON *lsp_close(Allocator *alc, cJSON *params);
 cJSON *lsp_change(Allocator *alc, cJSON *params);
 cJSON *lsp_definition(Allocator *alc, cJSON *params);
 cJSON *lsp_completion(Allocator *alc, cJSON *params, int id);
+void lsp_completion_respond(Build *b, LspData* ld, Array *items);
+void lsp_respond(cJSON *resp);
+void lsp_exit_thread();
 
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);

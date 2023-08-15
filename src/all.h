@@ -52,5 +52,6 @@ typedef struct AllocatorBlock AllocatorBlock;
 #include "headers/functions.h"
 
 extern Map *lsp_doc_content;
+extern pthread_mutex_t lsp_resp_lock;
 
 #endif

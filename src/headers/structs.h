@@ -38,6 +38,7 @@ typedef struct MacroVarGroup MacroVarGroup;
 typedef struct MacroVar MacroVar;
 typedef struct MacroReplace MacroReplace;
 typedef struct LspData LspData;
+typedef struct CompileLoopData CompileLoopData;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -189,7 +190,7 @@ struct Fc {
     Array *extends;
     //
     cJSON *cache;
-    void* win_file_handle;
+    void *win_file_handle;
     long int mod_time;
     //
     int test_counter;
@@ -197,6 +198,7 @@ struct Fc {
     bool is_header;
     bool ir_changed;
     bool generated;
+    bool lsp_file;
 };
 
 struct Nsc {
@@ -514,8 +516,15 @@ struct LspData {
     int id;
     int line;
     int col;
-    char* filepath;
-    char* text;
+    char *filepath;
+    char *text;
+    bool responded;
+    bool send_default;
+};
+
+struct CompileLoopData {
+    Build *b;
+    int max_stage;
 };
 
 #endif

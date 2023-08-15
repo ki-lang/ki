@@ -78,6 +78,7 @@ void *free_delayed_exec(void *item) {
     //
     sleep_ms(5000);
     free(item);
+    return NULL;
 }
 
 void free_delayed(void *item) {
