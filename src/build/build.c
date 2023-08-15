@@ -403,6 +403,13 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
 
 void build_clean_up(Build *b) {
     //
+    for (int i = 0; i < b->packages_by_dir->values->length; i++) {
+        Pkc *pkc = array_get_index(b->packages_by_dir->values, i);
+        cJSON *cfg = pkc->config ? pkc->config->json : NULL;
+        if (cfg) {
+            cJSON_Delete(cfg);
+        }
+    }
     alc_delete(b->alc_ast);
     alc_delete(b->alc);
 }

@@ -404,7 +404,7 @@ void stage_1_trait(Fc *fc) {
 
 void stage_1_extend(Fc *fc) {
     //
-    Extend *ex = malloc(sizeof(Extend));
+    Extend *ex = al(fc->alc, sizeof(Extend));
     ex->chunk_type = chunk_clone(fc->alc, fc->chunk);
     ex->chunk_body = NULL;
 
@@ -593,7 +593,7 @@ void stage_1_link(Fc *fc, int link_type) {
 
     Link *link = map_get(fc->b->link_libs, fn);
     if (!link) {
-        link = malloc(sizeof(Link));
+        link = al(fc->alc, sizeof(Link));
         link->type = link_type;
         map_set(fc->b->link_libs, fn, link);
     }
@@ -689,7 +689,7 @@ void stage_1_global(Fc *fc, bool shared) {
 
 void stage_1_alias(Fc *fc, int alias_type) {
     //
-    Alias *a = malloc(sizeof(Alias));
+    Alias *a = al(fc->alc, sizeof(Alias));
     a->chunk = chunk_clone(fc->alc, fc->chunk);
     a->type = alias_type;
 
@@ -905,7 +905,7 @@ void stage_1_macro(Fc *fc) {
                     fc_error(fc);
                 }
 
-                MacroVar *mv = malloc(sizeof(MacroVar));
+                MacroVar *mv = al(alc, sizeof(MacroVar));
                 mv->name = dups(alc, token);
                 mv->replaces = array_make(alc, 4);
                 mv->repeat = false;
@@ -933,7 +933,7 @@ void stage_1_macro(Fc *fc) {
 
                         tok_expect(fc, ")", true, true);
 
-                        MacroReplace *rep = malloc(sizeof(MacroReplace));
+                        MacroReplace *rep = al(alc, sizeof(MacroReplace));
                         rep->find = find;
                         rep->with = with;
 

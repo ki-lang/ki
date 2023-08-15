@@ -703,7 +703,7 @@ void type_allowed_async_error(Fc *fc, Type *type, Str *chain) {
 
 TypeCheck *type_gen_type_check(Allocator *alc, Type *type) {
     //
-    TypeCheck *tc = malloc(sizeof(TypeCheck));
+    TypeCheck *tc = al(alc, sizeof(TypeCheck));
     tc->type = type->type;
     tc->class = type->class;
     tc->borrow = type->borrow;

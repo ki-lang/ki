@@ -96,6 +96,7 @@ Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc) {
                         fc_init(b, path, nsc, nsc->pkc, false);
                     }
                 }
+                free(dir);
 
                 return nsc;
             }

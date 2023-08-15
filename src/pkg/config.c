@@ -18,7 +18,7 @@ Config *cfg_load(Allocator *alc, Str *buf, char *dir) {
 
     cJSON *json = cJSON_ParseWithLength(content, buf->length);
 
-    Config *cfg = malloc(sizeof(Config));
+    Config *cfg = al(alc, sizeof(Config));
     cfg->path = cpath;
     cfg->dir = dir;
     cfg->content = content;

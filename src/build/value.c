@@ -933,7 +933,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
                 Build *b = fc->b;
                 LspData *ld = b->lsp;
                 Chunk *chunk = fc->chunk;
-                if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 1)) {
+                if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 2)) {
                     Array *items = array_make(b->alc, 100);
                     Array *funcs = class->funcs->values;
                     Array *func_names = class->funcs->keys;
