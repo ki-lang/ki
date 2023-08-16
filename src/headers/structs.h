@@ -517,6 +517,7 @@ struct LspData {
     int id;
     int line;
     int col;
+    int index;
     char *filepath;
     char *text;
     bool responded;

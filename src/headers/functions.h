@@ -60,11 +60,16 @@ void cmd_make(int argc, char *argv[]);
 void cmd_lsp(int argc, char *argv[]);
 cJSON *lsp_init(Allocator *alc, cJSON *params);
 void lsp_log(char *msg);
+int lsp_get_pos_index(char *text, int line, int col);
+char *lsp_set_tag(Allocator *alc, char *text, int line, int col);
 cJSON *lsp_open(Allocator *alc, cJSON *params);
 cJSON *lsp_close(Allocator *alc, cJSON *params);
 cJSON *lsp_change(Allocator *alc, cJSON *params);
-cJSON *lsp_definition(Allocator *alc, cJSON *params);
+cJSON *lsp_definition(Allocator *alc, cJSON *params, int id);
 cJSON *lsp_completion(Allocator *alc, cJSON *params, int id);
+cJSON *lsp_help(Allocator *alc, cJSON *params, int id);
+void lsp_help_respond(Build *b, LspData *ld, char *full, Array *args, int arg_index);
+void lsp_help_check_args(Allocator *alc, Fc *fc, Array *args, bool skip_first, Type *rett, int arg_index);
 void lsp_completion_respond(Build *b, LspData* ld, Array *items);
 void lsp_respond(cJSON *resp);
 void lsp_exit_thread();
@@ -74,8 +79,9 @@ LspData* lsp_data_init();
 void lsp_data_free(LspData *ld);
 LspCompletion *lsp_completion_init(Allocator *alc, int type, char *label);
 
-// LSP completion
+// LSP labels
 char *lsp_func_insert(Allocator *alc, Func *func, char *name, bool skip_first_arg);
+char *lsp_func_help(Allocator *alc, Array *args, bool skip_first_arg, Type *rett);
 
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);
@@ -173,6 +179,7 @@ Id *id_init(Allocator *alc);
 Idf *idf_init(Allocator *alc, int type);
 Idf *idf_init_item(Allocator *alc, int type, void *item);
 Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash);
+Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space);
 Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail);
 Idf *ki_lib_get(Build *b, char *ns, char *name);
 Idf *idf_get_from_header(Fc *hfc, char *name, int depth);

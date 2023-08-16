@@ -20,7 +20,18 @@ cJSON *lsp_init(Allocator *alc, cJSON *params) {
     cJSON_AddItemToObject(caps, "completionProvider", compl );
     cJSON *chars = cJSON_CreateArray();
     cJSON_AddItemToArray(chars, cJSON_CreateString("."));
+    cJSON_AddItemToArray(chars, cJSON_CreateString(":"));
     cJSON_AddItemToObject(compl, "triggerCharacters", chars);
+
+    cJSON *sighelp = cJSON_CreateObject();
+    cJSON_AddItemToObject(caps, "signatureHelpProvider", sighelp);
+    cJSON *help_chars = cJSON_CreateArray();
+    cJSON_AddItemToArray(help_chars, cJSON_CreateString("("));
+    cJSON_AddItemToArray(help_chars, cJSON_CreateString(","));
+    cJSON_AddItemToObject(sighelp, "triggerCharacters", help_chars);
+    cJSON *help_chars_re = cJSON_CreateArray();
+    cJSON_AddItemToArray(help_chars_re, cJSON_CreateString(" "));
+    cJSON_AddItemToObject(sighelp, "retriggerCharacters", help_chars_re);
 
     // cJSON *dia = cJSON_CreateObject();
     // cJSON_AddItemToObject(caps, "diagnosticProvider", dia);

@@ -76,9 +76,6 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->win_file_handle = NULL;
     fc->mod_time = 0;
     fc->lsp_file = b->lsp && (strcmp(b->lsp->filepath, path_ki) == 0);
-    if (fc->lsp_file) {
-        lsp_log("LSP File found\n");
-    }
 
     char *hash = al(alc, 64);
     simple_hash(path_ki, hash);
@@ -101,16 +98,13 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
         str_clear(buf);
 
         char *content = NULL;
-        if (lsp_doc_content) {
+        if (fc->lsp_file && b->lsp->text) {
+            lsp_log("LSP Custom content\n");
+            content = b->lsp->text;
+        } else if (lsp_doc_content) {
             content = map_get(lsp_doc_content, fc->path_ki);
             if (content) {
                 content = dups(alc, content);
-                // char msg[500];
-                // sprintf(msg, "Found LSP content: %s\n", fc->path_ki);
-                // lsp_log(msg);
-                // lsp_log("-----\n");
-                // lsp_log(content);
-                // lsp_log("-----\n");
             }
         }
         if (!content) {
@@ -119,9 +113,8 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
         }
         fc->chunk->content = content;
         fc->chunk->length = strlen(content);
+
         chain_add(b->stage_1, fc);
-        // chain_add(b->read_ki_file, fc);
-        // b->event_count++;
     }
 
     array_push(nsc->fcs, fc);

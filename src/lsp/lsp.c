@@ -295,9 +295,13 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
         } else if (strcmp(method->valuestring, "textDocument/didChange") == 0) {
             resp = lsp_change(alc, params);
         } else if (strcmp(method->valuestring, "textDocument/definition") == 0) {
-            resp = lsp_definition(alc, params);
+            resp = lsp_definition(alc, params, id->valueint);
+            respond = false;
         } else if (strcmp(method->valuestring, "textDocument/completion") == 0) {
             resp = lsp_completion(alc, params, id->valueint);
+            respond = false;
+        } else if (strcmp(method->valuestring, "textDocument/signatureHelp") == 0) {
+            resp = lsp_help(alc, params, id->valueint);
             respond = false;
         }
     }
@@ -313,6 +317,48 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
     }
 
     return resp;
+}
+
+int lsp_get_pos_index(char *text, int line, int col) {
+    //
+    int i = 0;
+    int l = 0;
+    int c = 0;
+    int len = strlen(text);
+    // char msg[200];
+    // sprintf(msg, "FIND INDEX: %d|%d / %d\n", line, col, len);
+    // lsp_log(msg);
+    while (i < len) {
+        if (l == line && c == col) {
+            return i;
+        }
+        char ch = text[i];
+        i++;
+        c++;
+        if (ch == '\n') {
+            l++;
+            c = 0;
+        }
+    }
+    return -1;
+}
+char *lsp_set_tag(Allocator *alc, char *text, int line, int col) {
+    //
+    int index = lsp_get_pos_index(text, line, col);
+    if (index > -1) {
+        int len = strlen(text);
+        char before[index + 1];
+        char after[len - index + 1];
+        Str *result = str_make(alc, len + 30);
+        memcpy(before, text, index);
+        before[index] = '\0';
+        memcpy(after, text + index, len - index + 1);
+        str_append_chars(result, before);
+        str_append_chars(result, lsp_tag);
+        str_append_chars(result, after);
+        return str_to_chars(alc, result);
+    }
+    return text;
 }
 
 void cmd_lsp_help() {

@@ -48,11 +48,6 @@ Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
         chunk_move(fc->chunk, 1);
         tok(fc, token, true, false);
 
-        // if (token[0] == ':') {
-        //     strcpy(token, "main");
-        //     fc->i--;
-        // }
-
         if (!is_valid_varname(token)) {
             if (!crash)
                 return NULL;
@@ -64,6 +59,96 @@ Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
     strcpy(id->name, token);
 
     return id;
+}
+
+Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
+    //
+    char *token = fc->token;
+    tok(fc, token, sameline, allow_space);
+
+    Idf *idf = NULL;
+
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid identifier: '%s'", token);
+        fc_error(fc);
+    }
+
+    if (get_char(fc, 0) == ':') {
+        Id id;
+        id.has_nsc = false;
+        id.name = token;
+        idf = idf_by_id(fc, scope, &id, false);
+        if (!idf) {
+            sprintf(fc->sbuf, "Unknown namespace: '%s', most likely a typo or a missing 'use' token", token);
+            fc_error(fc);
+        }
+        if (idf && idf->type != idf_nsc) {
+            sprintf(fc->sbuf, "Identifier '%s' is not a namespace", token);
+            fc_error(fc);
+        }
+
+        chunk_move(fc->chunk, 1);
+
+        Nsc *nsc = idf->item;
+
+        if (fc->lsp_file) {
+            LspData *ld = fc->b->lsp;
+            Chunk *chunk = fc->chunk;
+            // char msg[200];
+            // sprintf(msg, "NS LINE: %d/%d COL %d/%d\n", chunk->line, ld->line, chunk->col, ld->col);
+            // lsp_log(msg);
+            if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 2)) {
+                if (ld->type == lspt_completion) {
+                    Allocator *alc = fc->alc;
+                    Array *items = array_make(alc, 100);
+                    Scope *cur_scope = nsc->scope;
+                    while (cur_scope) {
+                        Map *identifiers = cur_scope->identifiers;
+                        Array *names = identifiers->keys;
+                        Array *idfs = identifiers->values;
+                        for (int i = 0; i < names->length; i++) {
+                            Idf *idf = array_get_index(idfs, i);
+                            char *name = array_get_index(names, i);
+                            int type = lsp_compl_property;
+                            if (idf->type == idf_func) {
+                                type = lsp_compl_function;
+                            }
+                            LspCompletion *c = lsp_completion_init(alc, type, name);
+                            if (idf->type == idf_func) {
+                                Func *func = idf->item;
+                                if (nsc != fc->nsc && func->act == act_private) {
+                                    continue;
+                                }
+                                // c->insert = lsp_func_insert(alc, func, name, false);
+                            }
+                            array_push(items, c);
+                        }
+                        cur_scope = cur_scope->parent;
+                    }
+                    lsp_completion_respond(fc->b, ld, items);
+                }
+            }
+        }
+
+        tok(fc, token, true, false);
+
+        id.has_nsc = false;
+        id.name = token;
+        idf = idf_by_id(fc, nsc->scope, &id, false);
+
+    } else {
+        Id id;
+        id.has_nsc = false;
+        id.name = token;
+        idf = idf_by_id(fc, scope, &id, false);
+    }
+
+    if (!idf) {
+        sprintf(fc->sbuf, "Unknown identifier: '%s'", token);
+        fc_error(fc);
+    }
+
+    return idf;
 }
 
 Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail) {

@@ -174,6 +174,7 @@ enum MACRO_PART_TYPE {
 enum LSP_DATA_TYPE {
     lspt_completion,
     lspt_definition,
+    lspt_sig_help,
 };
 
 enum LSP_COMPLETION_TYPE {

@@ -1,7 +1,7 @@
 
 #include "../all.h"
 
-Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf);
+Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf);
 void value_equalize_types(Allocator *alc, Fc *fc, Scope *scope, VPair *pair);
 Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on);
 
@@ -439,9 +439,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         //
     } else if (is_valid_varname_char(token[0])) {
         rtok(fc);
-        Id *id = read_id(fc, sameline, true, true);
-        Idf *idf = idf_by_id(fc, scope, id, true);
-        v = value_handle_idf(fc, alc, scope, id, idf);
+        Idf *idf = read_idf(fc, scope, sameline, true);
+        v = value_handle_idf(fc, alc, scope, idf);
     } else {
         sprintf(fc->sbuf, "Unknown value: '%s'", token);
         fc_error(fc);
@@ -477,39 +476,41 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 // sprintf(msg, "LINE: %d/%d COL %d/%d\n", chunk->line, ld->line, chunk->col, ld->col);
                 // lsp_log(msg);
                 if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 2)) {
-                    Array *items = array_make(b->alc, 100);
-                    Array *prop_names = class->props->keys;
-                    Array *props = class->props->values;
-                    for (int i = 0; i < prop_names->length; i++) {
-                        ClassProp *prop = array_get_index(props, i);
-                        char *name = array_get_index(prop_names, i);
-                        LspCompletion *c = lsp_completion_init(alc, lsp_compl_property, name);
-                        if (class->fc->nsc != fc->nsc) {
-                            if (prop->act == act_private) {
-                                continue;
+                    if (ld->type == lspt_completion) {
+                        Array *items = array_make(b->alc, 100);
+                        Array *prop_names = class->props->keys;
+                        Array *props = class->props->values;
+                        for (int i = 0; i < prop_names->length; i++) {
+                            ClassProp *prop = array_get_index(props, i);
+                            char *name = array_get_index(prop_names, i);
+                            LspCompletion *c = lsp_completion_init(alc, lsp_compl_property, name);
+                            if (class->fc->nsc != fc->nsc) {
+                                if (prop->act == act_private) {
+                                    continue;
+                                }
+                                if (prop->act == act_readonly) {
+                                    c->detail = "readonly";
+                                }
                             }
-                            if (prop->act == act_readonly) {
-                                c->detail = "readonly";
-                            }
+                            array_push(items, c);
                         }
-                        array_push(items, c);
-                    }
-                    Array *func_names = class->funcs->keys;
-                    for (int i = 0; i < func_names->length; i++) {
-                        char *name = array_get_index(func_names, i);
-                        Func *func = array_get_index(class->funcs->values, i);
-                        if (func->is_static)
-                            continue;
-                        LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, name);
-                        if (class->fc->nsc != fc->nsc) {
-                            if (func->act == act_private || func->is_generated) {
+                        Array *func_names = class->funcs->keys;
+                        for (int i = 0; i < func_names->length; i++) {
+                            char *name = array_get_index(func_names, i);
+                            Func *func = array_get_index(class->funcs->values, i);
+                            if (func->is_static)
                                 continue;
+                            LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, name);
+                            if (class->fc->nsc != fc->nsc) {
+                                if (func->act == act_private || func->is_generated) {
+                                    continue;
+                                }
                             }
+                            // c->insert = lsp_func_insert(alc, func, name, true);
+                            array_push(items, c);
                         }
-                        c->insert = lsp_func_insert(alc, func, name, true);
-                        array_push(items, c);
+                        lsp_completion_respond(b, ld, items);
                     }
-                    lsp_completion_respond(b, ld, items);
                 }
             }
 
@@ -863,7 +864,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
     return v;
 }
 
-Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) {
+Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
     //
     char *token = fc->token;
 
@@ -934,19 +935,21 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
                 LspData *ld = b->lsp;
                 Chunk *chunk = fc->chunk;
                 if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 2)) {
-                    Array *items = array_make(b->alc, 100);
-                    Array *funcs = class->funcs->values;
-                    Array *func_names = class->funcs->keys;
-                    for (int i = 0; i < func_names->length; i++) {
-                        char *name = array_get_index(func_names, i);
-                        Func *func = array_get_index(funcs, i);
-                        if (!func->is_static)
-                            continue;
-                        LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, name);
-                        c->insert = lsp_func_insert(alc, func, name, false);
-                        array_push(items, c);
+                    if (ld->type == lspt_completion) {
+                        Array *items = array_make(b->alc, 100);
+                        Array *funcs = class->funcs->values;
+                        Array *func_names = class->funcs->keys;
+                        for (int i = 0; i < func_names->length; i++) {
+                            char *name = array_get_index(func_names, i);
+                            Func *func = array_get_index(funcs, i);
+                            if (!func->is_static)
+                                continue;
+                            LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, name);
+                            // c->insert = lsp_func_insert(alc, func, name, false);
+                            array_push(items, c);
+                        }
+                        lsp_completion_respond(b, ld, items);
                     }
-                    lsp_completion_respond(b, ld, items);
                 }
             }
 
@@ -1043,7 +1046,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
             fc_error(fc);
         }
 
-        return value_handle_idf(fc, alc, scope, id, idf_);
+        return value_handle_idf(fc, alc, scope, idf_);
     }
 
     if (idf->type == idf_err_code) {
@@ -1194,7 +1197,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         return read_value(fc, alc, scope, false, 0, false);
     }
 
-    sprintf(fc->sbuf, "Cannot convert identifier to a value: '%s'", id->name);
+    sprintf(fc->sbuf, "Cannot convert identifier to a value");
     fc_error(fc);
     return NULL;
 }
@@ -1502,6 +1505,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     int index = 0;
     Array *values = array_make(alc, 4);
 
+    bool skip_first_arg = false;
     Value *first_arg = NULL;
     bool upref = true;
     if (on->type == v_fptr) {
@@ -1522,11 +1526,16 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
             array_push(values, first_val);
             index++;
+            skip_first_arg = true;
         }
     }
 
     tok(fc, token, false, true);
     bool named_args = strcmp(token, "{") == 0;
+
+    if (lsp_tag_found) {
+        lsp_help_check_args(alc, fc, args, skip_first_arg, rett, index);
+    }
 
     if (named_args) {
         sprintf(fc->sbuf, "Named arguments: TODO");
@@ -1539,6 +1548,11 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                     sprintf(fc->sbuf, "Too many arguments");
                     fc_error(fc);
                 }
+
+                if (lsp_tag_found && index > (skip_first_arg ? 1 : 0)) {
+                    lsp_help_check_args(alc, fc, args, skip_first_arg, rett, index);
+                }
+
                 Arg *arg = array_get_index(args, index);
                 index++;
 
@@ -1551,6 +1565,10 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
                 tok(fc, token, false, true);
                 if (strcmp(token, ",") == 0) {
+                    if (fc->lsp_file) {
+                        tok(fc, token, false, true);
+                        rtok(fc);
+                    }
                     continue;
                 }
                 if (strcmp(token, ")") != 0) {

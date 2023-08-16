@@ -8,6 +8,7 @@ LspData *lsp_data_init() {
     ld->id = 0;
     ld->line = 0;
     ld->col = 0;
+    ld->index = -1;
     ld->filepath = NULL;
     ld->text = NULL;
     ld->responded = false;
@@ -30,10 +31,6 @@ LspCompletion *lsp_completion_init(Allocator *alc, int type, char *label) {
     c->label = label;
     c->detail = NULL;
     c->insert = NULL;
-
-    if (type == lsp_compl_method) {
-        // c->detail = "(";
-    }
 
     return c;
 }
