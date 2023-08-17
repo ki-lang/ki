@@ -25,15 +25,14 @@ cJSON *lsp_help(Allocator *alc, cJSON *params, int id) {
                 int line = line_->valueint;
                 int col = col_->valueint;
 
-                text = strdup(lsp_set_tag(alc, text, line, col));
-
                 LspData *ld = lsp_data_init();
                 ld->type = lspt_sig_help;
                 ld->id = id;
                 ld->line = line;
                 ld->col = col;
                 ld->filepath = uri;
-                ld->text = text;
+                ld->index = lsp_get_pos_index(text, line, col);
+                ld->text = strdup(text);
 
 #ifdef WIN32
                 void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))lsp_help_entry, (void *)ld, 0, NULL);
@@ -52,41 +51,39 @@ void lsp_help_check_args(Allocator *alc, Fc *fc, Array *args, bool skip_first, T
     //
     Build *b = fc->b;
     LspData *ld = b->lsp;
-    if (ld->type == lspt_sig_help) {
-        Str *label = str_make(alc, 50);
-        str_append_chars(label, "fn (");
+    Str *label = str_make(alc, 50);
+    str_append_chars(label, "fn (");
 
-        Array *items = array_make(b->alc, 100);
-        int count = 0;
-        char part[256];
-        for (int i = 0; i < args->length; i++) {
-            if (i == 0 && skip_first)
-                continue;
-            if (count > 0) {
-                str_append_chars(label, ", ");
-            }
-            count++;
-            int start = label->length;
-            Arg *arg = array_get_index(args, i);
-            type_to_str(arg->type, part);
-            str_append_chars(label, part);
-            int end = label->length;
-
-            cJSON *bounds = cJSON_CreateArray();
-            cJSON_AddItemToArray(bounds, cJSON_CreateNumber(start));
-            cJSON_AddItemToArray(bounds, cJSON_CreateNumber(end));
-
-            array_push(items, bounds);
+    Array *items = array_make(b->alc, 100);
+    int count = 0;
+    char part[256];
+    for (int i = 0; i < args->length; i++) {
+        if (i == 0 && skip_first)
+            continue;
+        if (count > 0) {
+            str_append_chars(label, ", ");
         }
-        str_append_chars(label, ")");
-        if (rett) {
-            str_append_chars(label, " ");
-            type_to_str(rett, part);
-            str_append_chars(label, part);
-        }
-        char *full = str_to_chars(alc, label);
-        lsp_help_respond(b, ld, full, items, arg_index - (skip_first ? 1 : 0));
+        count++;
+        int start = label->length;
+        Arg *arg = array_get_index(args, i);
+        type_to_str(arg->type, part, true);
+        str_append_chars(label, part);
+        int end = label->length;
+
+        cJSON *bounds = cJSON_CreateArray();
+        cJSON_AddItemToArray(bounds, cJSON_CreateNumber(start));
+        cJSON_AddItemToArray(bounds, cJSON_CreateNumber(end));
+
+        array_push(items, bounds);
     }
+    str_append_chars(label, ")");
+    if (rett) {
+        str_append_chars(label, " ");
+        type_to_str(rett, part, true);
+        str_append_chars(label, part);
+    }
+    char *full = str_to_chars(alc, label);
+    lsp_help_respond(b, ld, full, items, arg_index - (skip_first ? 1 : 0));
 }
 
 void lsp_help_respond(Build *b, LspData *ld, char *full, Array *args, int arg_index) {

@@ -342,24 +342,46 @@ int lsp_get_pos_index(char *text, int line, int col) {
     }
     return -1;
 }
-char *lsp_set_tag(Allocator *alc, char *text, int line, int col) {
+
+bool lsp_check(Fc *fc) {
     //
-    int index = lsp_get_pos_index(text, line, col);
-    if (index > -1) {
-        int len = strlen(text);
-        char before[index + 1];
-        char after[len - index + 1];
-        Str *result = str_make(alc, len + 30);
-        memcpy(before, text, index);
-        before[index] = '\0';
-        memcpy(after, text + index, len - index + 1);
-        str_append_chars(result, before);
-        str_append_chars(result, lsp_tag);
-        str_append_chars(result, after);
-        return str_to_chars(alc, result);
+    Chunk *chunk = fc->chunk;
+
+    int i = chunk->i;
+    int ti = fc->b->lsp->index;
+    const char *content = chunk->content;
+    while (true) {
+        if (i == ti)
+            return true;
+        char ch = content[i];
+        if (ch == '\0')
+            return false;
+        if (!is_whitespace(ch) && !is_valid_varname_char(ch)) {
+            return false;
+        }
+        i++;
     }
-    return text;
+    return false;
 }
+
+// char *lsp_set_tag(Allocator *alc, char *text, int line, int col) {
+//     //
+//     int index = lsp_get_pos_index(text, line, col);
+//     if (index > -1) {
+//         int len = strlen(text);
+//         char before[index + 1];
+//         char after[len - index + 1];
+//         Str *result = str_make(alc, len + 30);
+//         memcpy(before, text, index);
+//         before[index] = '\0';
+//         memcpy(after, text + index, len - index + 1);
+//         str_append_chars(result, before);
+//         str_append_chars(result, lsp_tag);
+//         str_append_chars(result, after);
+//         return str_to_chars(alc, result);
+//     }
+//     return text;
+// }
 
 void cmd_lsp_help() {
     //

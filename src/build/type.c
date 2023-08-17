@@ -535,7 +535,7 @@ bool type_compat(Type *t1, Type *t2, char **reason) {
     return true;
 }
 
-char *type_to_str(Type *t, char *res) {
+char *type_to_str(Type *t, char *res, bool simple) {
     //
     int depth = t->ptr_depth;
 
@@ -562,7 +562,11 @@ char *type_to_str(Type *t, char *res) {
         if (class->type == ct_struct || class->type == ct_ptr)
             depth--;
 
-        strcat(res, class->dname);
+        if (simple) {
+            strcat(res, class->name);
+        } else {
+            strcat(res, class->dname);
+        }
     } else if (t->type == type_null) {
         strcat(res, "null");
     } else if (t->type == type_void) {
@@ -576,10 +580,10 @@ char *type_to_str(Type *t, char *res) {
                 strcat(res, ", ");
             }
             Arg *arg = array_get_index(t->func_args, i);
-            strcat(res, type_to_str(arg->type, sub_str));
+            strcat(res, type_to_str(arg->type, sub_str, simple));
         }
         strcat(res, ")(");
-        strcat(res, type_to_str(t->func_rett, sub_str));
+        strcat(res, type_to_str(t->func_rett, sub_str, simple));
         strcat(res, ")");
         if (t->func_errors) {
             strcat(res, "!");
@@ -587,7 +591,7 @@ char *type_to_str(Type *t, char *res) {
     } else if (t->type == type_arr) {
         char sub_str[256];
         strcat(res, "(");
-        strcat(res, type_to_str(t->array_of, sub_str));
+        strcat(res, type_to_str(t->array_of, sub_str, simple));
         strcat(res, ")[");
         char nr[10];
         sprintf(nr, "%d", t->array_size);
@@ -610,8 +614,8 @@ void type_check(Fc *fc, Type *t1, Type *t2) {
     if (!type_compat(t1, t2, &reason)) {
         char t1s[200];
         char t2s[200];
-        type_to_str(t1, t1s);
-        type_to_str(t2, t2s);
+        type_to_str(t1, t1s, true);
+        type_to_str(t2, t2s, true);
         sprintf(fc->sbuf, "Types are not compatible: %s <-- %s \nReason: %s", t1s, t2s, reason);
         fc_error(fc);
     }
@@ -674,7 +678,7 @@ void type_allowed_async_error(Fc *fc, Type *type, Str *chain) {
     bool first_type = chain->length == 0;
 
     char buf[256];
-    type_to_str(type, buf);
+    type_to_str(type, buf, true);
     str_append_chars(chain, buf);
 
     if (!type_allowed_async(type, false)) {
@@ -738,7 +742,7 @@ void type_validate(Fc *fc, TypeCheck *tc, Type *type, char *msg) {
         strcpy(t1, "");
         strcpy(t2, "");
         type_check_to_str(tc, t1);
-        type_to_str(type, t2);
+        type_to_str(type, t2, true);
         sprintf(fc->sbuf, "%s\nExpected type: %s\nReceived type: %s\nReason: %s", msg, t1, t2, reason);
         fc_error(fc);
     }

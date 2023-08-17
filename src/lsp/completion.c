@@ -25,15 +25,14 @@ cJSON *lsp_completion(Allocator *alc, cJSON *params, int id) {
                 int line = line_->valueint;
                 int col = col_->valueint;
 
-                text = strdup(lsp_set_tag(alc, text, line, col));
-
                 LspData *ld = lsp_data_init();
                 ld->type = lspt_completion;
                 ld->id = id;
                 ld->line = line;
                 ld->col = col;
                 ld->filepath = uri;
-                ld->text = text;
+                ld->index = lsp_get_pos_index(text, line, col);
+                ld->text = strdup(text);
 
 #ifdef WIN32
                 void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))lsp_completion_entry, (void *)ld, 0, NULL);

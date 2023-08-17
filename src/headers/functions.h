@@ -59,6 +59,7 @@ void cmd_make(int argc, char *argv[]);
 // LSP
 void cmd_lsp(int argc, char *argv[]);
 cJSON *lsp_init(Allocator *alc, cJSON *params);
+bool lsp_check(Fc *fc);
 void lsp_log(char *msg);
 int lsp_get_pos_index(char *text, int line, int col);
 char *lsp_set_tag(Allocator *alc, char *text, int line, int col);
@@ -80,6 +81,7 @@ void lsp_data_free(LspData *ld);
 LspCompletion *lsp_completion_init(Allocator *alc, int type, char *label);
 
 // LSP labels
+char *lsp_func_label(Allocator *alc, Func *func, char *name, bool skip_first_arg);
 char *lsp_func_insert(Allocator *alc, Func *func, char *name, bool skip_first_arg);
 char *lsp_func_help(Allocator *alc, Array *args, bool skip_first_arg, Type *rett);
 
@@ -224,7 +226,7 @@ Type *type_gen(Build *b, Allocator *alc, char *name);
 Type *type_array_of(Allocator *alc, Build *b, Type *type, int size);
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space, int context);
 bool type_compat(Type *t1, Type *t2, char **reason);
-char *type_to_str(Type *t, char *res);
+char *type_to_str(Type *t, char *res, bool simple);
 void type_check(Fc *fc, Type *t1, Type *t2);
 Type *type_clone(Allocator *alc, Type *type);
 bool type_tracks_ownership(Type *type);

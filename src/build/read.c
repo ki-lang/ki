@@ -69,8 +69,6 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
     Chunk *chunk = fc->chunk;
     *fc->chunk_prev = *chunk;
 
-    lsp_tag_found = false;
-
     int i = chunk->i;
     int col = chunk->col;
     const char *content = chunk->content;
@@ -242,17 +240,6 @@ void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
 
     chunk->i = i;
     chunk->col = col;
-
-    if (token[0] == '@' && fc->lsp_file && strcmp(fc->token, lsp_tag) == 0) {
-        // char msg[200];
-        // sprintf(msg, "tag at: %d\n", i);
-        // lsp_log(msg);
-        Chunk prev;
-        prev = *fc->chunk_prev;
-        tok(fc, token, sameline, allow_space);
-        lsp_tag_found = true;
-        *fc->chunk_prev = prev;
-    }
 }
 
 void rtok(Fc *fc) { *fc->chunk = *fc->chunk_prev; }

@@ -469,49 +469,43 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 fc_error(fc);
             }
 
-            if (fc->lsp_file) {
+            if (fc->lsp_file && lsp_check(fc) && fc->b->lsp->type == lspt_completion) {
                 LspData *ld = b->lsp;
                 Chunk *chunk = fc->chunk;
-                // char msg[200];
-                // sprintf(msg, "LINE: %d/%d COL %d/%d\n", chunk->line, ld->line, chunk->col, ld->col);
-                // lsp_log(msg);
-                if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 2)) {
-                    if (ld->type == lspt_completion) {
-                        Array *items = array_make(b->alc, 100);
-                        Array *prop_names = class->props->keys;
-                        Array *props = class->props->values;
-                        for (int i = 0; i < prop_names->length; i++) {
-                            ClassProp *prop = array_get_index(props, i);
-                            char *name = array_get_index(prop_names, i);
-                            LspCompletion *c = lsp_completion_init(alc, lsp_compl_property, name);
-                            if (class->fc->nsc != fc->nsc) {
-                                if (prop->act == act_private) {
-                                    continue;
-                                }
-                                if (prop->act == act_readonly) {
-                                    c->detail = "readonly";
-                                }
-                            }
-                            array_push(items, c);
+                Array *items = array_make(b->alc, 100);
+                Array *prop_names = class->props->keys;
+                Array *props = class->props->values;
+                for (int i = 0; i < prop_names->length; i++) {
+                    ClassProp *prop = array_get_index(props, i);
+                    char *name = array_get_index(prop_names, i);
+                    LspCompletion *c = lsp_completion_init(alc, lsp_compl_property, name);
+                    if (class->fc->nsc != fc->nsc) {
+                        if (prop->act == act_private) {
+                            continue;
                         }
-                        Array *func_names = class->funcs->keys;
-                        for (int i = 0; i < func_names->length; i++) {
-                            char *name = array_get_index(func_names, i);
-                            Func *func = array_get_index(class->funcs->values, i);
-                            if (func->is_static)
-                                continue;
-                            LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, name);
-                            if (class->fc->nsc != fc->nsc) {
-                                if (func->act == act_private || func->is_generated) {
-                                    continue;
-                                }
-                            }
-                            // c->insert = lsp_func_insert(alc, func, name, true);
-                            array_push(items, c);
+                        if (prop->act == act_readonly) {
+                            c->detail = "readonly";
                         }
-                        lsp_completion_respond(b, ld, items);
                     }
+                    array_push(items, c);
                 }
+                Array *func_names = class->funcs->keys;
+                for (int i = 0; i < func_names->length; i++) {
+                    char *name = array_get_index(func_names, i);
+                    Func *func = array_get_index(class->funcs->values, i);
+                    if (func->is_static)
+                        continue;
+                    if (class->fc->nsc != fc->nsc) {
+                        if (func->act == act_private || func->is_generated) {
+                            continue;
+                        }
+                    }
+                    char *label = lsp_func_label(alc, func, name, true);
+                    LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, label);
+                    c->insert = lsp_func_insert(alc, func, name, false);
+                    array_push(items, c);
+                }
+                lsp_completion_respond(b, ld, items);
             }
 
             tok(fc, token, true, false);
@@ -627,8 +621,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             if (!type_compat(type, left->rett, &reason) || !type_compat(type, right->rett, &reason)) {
                 char t1s[200];
                 char t2s[200];
-                type_to_str(left->rett, t1s);
-                type_to_str(right->rett, t2s);
+                type_to_str(left->rett, t1s, true);
+                type_to_str(right->rett, t2s, true);
                 sprintf(fc->sbuf, "Types in '... ? x : y' statement do not match: '%s' <-> '%s'", t1s, t2s);
                 fc_error(fc);
             }
@@ -930,27 +924,24 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
             chunk_move(fc->chunk, 1);
             // Static func
 
-            if (fc->lsp_file) {
+            if (fc->lsp_file && lsp_check(fc) && fc->b->lsp->type == lspt_completion) {
                 Build *b = fc->b;
                 LspData *ld = b->lsp;
                 Chunk *chunk = fc->chunk;
-                if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 2)) {
-                    if (ld->type == lspt_completion) {
-                        Array *items = array_make(b->alc, 100);
-                        Array *funcs = class->funcs->values;
-                        Array *func_names = class->funcs->keys;
-                        for (int i = 0; i < func_names->length; i++) {
-                            char *name = array_get_index(func_names, i);
-                            Func *func = array_get_index(funcs, i);
-                            if (!func->is_static)
-                                continue;
-                            LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, name);
-                            // c->insert = lsp_func_insert(alc, func, name, false);
-                            array_push(items, c);
-                        }
-                        lsp_completion_respond(b, ld, items);
-                    }
+                Array *items = array_make(b->alc, 100);
+                Array *funcs = class->funcs->values;
+                Array *func_names = class->funcs->keys;
+                for (int i = 0; i < func_names->length; i++) {
+                    char *name = array_get_index(func_names, i);
+                    Func *func = array_get_index(funcs, i);
+                    if (!func->is_static)
+                        continue;
+                    char *label = lsp_func_label(alc, func, name, false);
+                    LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, label);
+                    c->insert = lsp_func_insert(alc, func, name, false);
+                    array_push(items, c);
                 }
+                lsp_completion_respond(b, ld, items);
             }
 
             tok(fc, token, true, false);
@@ -1530,12 +1521,12 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    tok(fc, token, false, true);
-    bool named_args = strcmp(token, "{") == 0;
-
-    if (lsp_tag_found) {
+    if (fc->lsp_file && lsp_check(fc) && fc->b->lsp->type == lspt_sig_help) {
         lsp_help_check_args(alc, fc, args, skip_first_arg, rett, index);
     }
+
+    tok(fc, token, false, true);
+    bool named_args = strcmp(token, "{") == 0;
 
     if (named_args) {
         sprintf(fc->sbuf, "Named arguments: TODO");
@@ -1549,7 +1540,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                     fc_error(fc);
                 }
 
-                if (lsp_tag_found && index > (skip_first_arg ? 1 : 0)) {
+                if (fc->lsp_file && lsp_check(fc) && fc->b->lsp->type == lspt_sig_help) {
                     lsp_help_check_args(alc, fc, args, skip_first_arg, rett, index);
                 }
 

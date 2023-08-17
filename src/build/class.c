@@ -431,7 +431,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
         if (i > 0)
             str_append_chars(hash_buf, ", ");
         Type *type = array_get_index(types, i);
-        type_to_str(type, type_buf);
+        type_to_str(type, type_buf, false);
         str_append_chars(hash_buf, type_buf);
     }
     char *hash_content = str_to_chars(alc, hash_buf);
