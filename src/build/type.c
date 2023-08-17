@@ -247,8 +247,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
         rtok(fc);
 
-        Id *id = read_id(fc, sameline, allow_space, false);
-        Idf *idf = id ? idf_by_id(fc, scope, id, false) : NULL;
+        // Id *id = read_id(fc, sameline, allow_space, false);
+        // Idf *idf = id ? idf_by_id(fc, scope, id, false) : NULL;
+        Idf *idf = read_idf(fc, scope, sameline, allow_space);
 
         if (!idf) {
             sprintf(fc->sbuf, "Unknown type: '%s'", token);

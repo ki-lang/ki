@@ -72,6 +72,7 @@ cJSON *lsp_help(Allocator *alc, cJSON *params, int id);
 void lsp_help_respond(Build *b, LspData *ld, char *full, Array *args, int arg_index);
 void lsp_help_check_args(Allocator *alc, Fc *fc, Array *args, bool skip_first, Type *rett, int arg_index);
 void lsp_completion_respond(Build *b, LspData* ld, Array *items);
+void lsp_definition_respond(Build *b, LspData *ld, char *path, int line, int col);
 void lsp_respond(cJSON *resp);
 void lsp_exit_thread();
 

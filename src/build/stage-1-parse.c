@@ -118,6 +118,7 @@ void stage_1_func(Fc *fc) {
     //
     Build *b = fc->b;
     char *token = fc->token;
+    Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
     tok(fc, token, true, true);
 
     bool will_exit = false;
@@ -134,6 +135,7 @@ void stage_1_func(Fc *fc) {
 
     Func *func = func_init(fc->alc, fc->b);
     func->line = fc->chunk->line;
+    func->def_chunk = def_chunk;
 
     bool is_main = fc->nsc == b->nsc_main && strcmp(token, "main") == 0;
     if (is_main) {
@@ -190,6 +192,7 @@ void stage_1_func(Fc *fc) {
 void stage_1_class(Fc *fc, bool is_struct) {
     //
     Build *b = fc->b;
+    Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
     char *token = fc->token;
     tok(fc, token, true, true);
 
@@ -213,6 +216,7 @@ void stage_1_class(Fc *fc, bool is_struct) {
     class->is_rc = !is_struct;
     class->must_ref = !is_struct;
     class->must_deref = !is_struct;
+    class->def_chunk = def_chunk;
 
     array_push(fc->classes, class);
 
@@ -368,6 +372,7 @@ void stage_1_class(Fc *fc, bool is_struct) {
 void stage_1_trait(Fc *fc) {
     //
     char *token = fc->token;
+    Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
     tok(fc, token, true, true);
 
     if (fc->is_header) {
@@ -389,6 +394,7 @@ void stage_1_trait(Fc *fc) {
     tr->name = name;
     tr->gname = gname;
     tr->dname = dname;
+    tr->def_chunk = def_chunk;
 
     tok_expect(fc, "{", false, true);
 
@@ -419,6 +425,7 @@ void stage_1_extend(Fc *fc) {
 void stage_1_enum(Fc *fc) {
     //
     char *token = fc->token;
+    Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
     tok(fc, token, true, true);
 
     if (!is_valid_varname(token)) {
@@ -436,6 +443,7 @@ void stage_1_enum(Fc *fc) {
     enu->name = name;
     enu->gname = gname;
     enu->dname = dname;
+    enu->def_chunk = def_chunk;
 
     int autov = 0;
 
@@ -648,6 +656,7 @@ void stage_1_use(Fc *fc) {
 void stage_1_global(Fc *fc, bool shared) {
     //
     char *token = fc->token;
+    Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
     tok(fc, token, true, true);
 
     if (!is_valid_varname(token)) {
@@ -667,6 +676,7 @@ void stage_1_global(Fc *fc, bool shared) {
     g->dname = dname;
     g->shared = shared;
     g->type = NULL;
+    g->def_chunk = def_chunk;
 
     array_push(fc->globals, g);
 

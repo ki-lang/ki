@@ -63,6 +63,8 @@ Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
 
 Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
     //
+    bool lsp = fc->lsp_file && lsp_check(fc);
+
     char *token = fc->token;
     tok(fc, token, sameline, allow_space);
 
@@ -91,43 +93,40 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
 
         Nsc *nsc = idf->item;
 
-        if (fc->lsp_file) {
+        lsp = lsp || (fc->lsp_file && lsp_check(fc));
+
+        // LSP Completion
+        if (lsp && fc->b->lsp->type == lspt_completion) {
             LspData *ld = fc->b->lsp;
             Chunk *chunk = fc->chunk;
-            // char msg[200];
-            // sprintf(msg, "NS LINE: %d/%d COL %d/%d\n", chunk->line, ld->line, chunk->col, ld->col);
-            // lsp_log(msg);
-            if (chunk->line == (ld->line + 1) && chunk->col == (ld->col + 2)) {
-                if (ld->type == lspt_completion) {
-                    Allocator *alc = fc->alc;
-                    Array *items = array_make(alc, 100);
-                    Scope *cur_scope = nsc->scope;
-                    while (cur_scope) {
-                        Map *identifiers = cur_scope->identifiers;
-                        Array *names = identifiers->keys;
-                        Array *idfs = identifiers->values;
-                        for (int i = 0; i < names->length; i++) {
-                            Idf *idf = array_get_index(idfs, i);
-                            char *name = array_get_index(names, i);
-                            int type = lsp_compl_property;
-                            if (idf->type == idf_func) {
-                                type = lsp_compl_function;
-                            }
-                            LspCompletion *c = lsp_completion_init(alc, type, name);
-                            if (idf->type == idf_func) {
-                                Func *func = idf->item;
-                                if (nsc != fc->nsc && func->act == act_private) {
-                                    continue;
-                                }
-                                // c->insert = lsp_func_insert(alc, func, name, false);
-                            }
-                            array_push(items, c);
-                        }
-                        cur_scope = cur_scope->parent;
+            Allocator *alc = fc->alc;
+            Array *items = array_make(alc, 100);
+            Scope *cur_scope = nsc->scope;
+            while (cur_scope) {
+                Map *identifiers = cur_scope->identifiers;
+                Array *names = identifiers->keys;
+                Array *idfs = identifiers->values;
+                for (int i = 0; i < names->length; i++) {
+                    Idf *idf = array_get_index(idfs, i);
+                    char *name = array_get_index(names, i);
+                    int type = lsp_compl_property;
+                    if (idf->type == idf_func) {
+                        type = lsp_compl_function;
                     }
-                    lsp_completion_respond(fc->b, ld, items);
+                    LspCompletion *c = lsp_completion_init(alc, type, name);
+                    if (idf->type == idf_func) {
+                        Func *func = idf->item;
+                        if (nsc != fc->nsc && func->act == act_private) {
+                            continue;
+                        }
+                        c->label = lsp_func_label(alc, func, name, true);
+                        c->insert = lsp_func_insert(alc, func, name, false);
+                    }
+                    array_push(items, c);
                 }
+                cur_scope = cur_scope->parent;
             }
+            lsp_completion_respond(fc->b, ld, items);
         }
 
         tok(fc, token, true, false);
@@ -146,6 +145,46 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
     if (!idf) {
         sprintf(fc->sbuf, "Unknown identifier: '%s'", token);
         fc_error(fc);
+    }
+
+    if (lsp && fc->b->lsp->type == lspt_definition) {
+        char *path = NULL;
+        int line = 0;
+        int col = 0;
+        if (idf->type == idf_class) {
+            Class *class = idf->item;
+            path = class->fc->path_ki;
+            line = class->def_chunk->line;
+            col = class->def_chunk->col;
+        } else if (idf->type == idf_func) {
+            Func *func = idf->item;
+            path = func->fc->path_ki;
+            line = func->def_chunk->line;
+            col = func->def_chunk->col;
+        } else if (idf->type == idf_global) {
+            Global *g = idf->item;
+            path = g->fc->path_ki;
+            line = g->def_chunk->line;
+            col = g->def_chunk->col;
+        } else if (idf->type == idf_trait) {
+            Trait *t = idf->item;
+            path = t->fc->path_ki;
+            line = t->def_chunk->line;
+            col = t->def_chunk->col;
+        } else if (idf->type == idf_enum) {
+            Enum *enu = idf->item;
+            path = enu->fc->path_ki;
+            line = enu->def_chunk->line;
+            col = enu->def_chunk->col;
+            // } else if (idf->type == idf_decl) {
+            //     Decl *decl = idf->item;
+            //     path = decl->fc->path_ki;
+            //     line = decl->chunk_body->line;
+            //     col = decl->chunk_body->col;
+        }
+        if (path) {
+            lsp_definition_respond(fc->b, fc->b->lsp, path, line - 1, col - 1);
+        }
     }
 
     return idf;

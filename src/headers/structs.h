@@ -302,6 +302,7 @@ struct Class {
     char *dname;
     Fc *fc;
     Scope *scope;
+    Chunk *def_chunk;
     Chunk *chunk_body;
     Map *props;
     Map *funcs;
@@ -349,6 +350,7 @@ struct Func {
     char *dname;
     Fc *fc;
     Scope *scope;
+    Chunk *def_chunk;
     Chunk *chunk_args;
     Chunk *chunk_body;
     Type *rett;
@@ -378,6 +380,7 @@ struct Enum {
     char *dname;
     Fc *fc;
     Map *values;
+    Chunk *def_chunk;
 };
 struct Extend {
     Chunk *chunk_type;
@@ -434,6 +437,7 @@ struct Global {
     char *dname;
     Fc *fc;
     Type *type;
+    Chunk *def_chunk;
     Chunk *type_chunk;
     bool shared;
 };
@@ -443,6 +447,7 @@ struct Trait {
     char *gname;
     char *dname;
     Fc *fc;
+    Chunk *def_chunk;
     Chunk *chunk;
 };
 
