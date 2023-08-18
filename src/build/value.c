@@ -469,7 +469,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 fc_error(fc);
             }
 
-            if (fc->lsp_file && lsp_check(fc) && fc->b->lsp->type == lspt_completion) {
+            bool lsp = fc->lsp_file && lsp_check(fc);
+            if (lsp && fc->b->lsp->type == lspt_completion) {
                 LspData *ld = b->lsp;
                 Chunk *chunk = fc->chunk;
                 Array *items = array_make(b->alc, 100);
@@ -518,6 +519,14 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     fc_error(fc);
                 }
 
+                if (lsp && fc->b->lsp->type == lspt_definition) {
+                    char *path = class->fc->path_ki;
+                    int line = prop->def_chunk->line;
+                    int col = prop->def_chunk->col;
+                    if (path)
+                        lsp_definition_respond(fc->b, fc->b->lsp, path, line - 1, col - 1);
+                }
+
                 v = vgen_class_pa(alc, scope, v, prop);
             } else {
                 // Class func
@@ -530,6 +539,15 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     sprintf(fc->sbuf, "Trying to access static function in a non-static way: '%s'", token);
                     fc_error(fc);
                 }
+
+                if (lsp && fc->b->lsp->type == lspt_definition) {
+                    char *path = func->fc->path_ki;
+                    int line = func->def_chunk->line;
+                    int col = func->def_chunk->col;
+                    if (path)
+                        lsp_definition_respond(fc->b, fc->b->lsp, path, line - 1, col - 1);
+                }
+
                 v = vgen_fptr(alc, func, v);
             }
 

@@ -326,6 +326,7 @@ struct Class {
 struct ClassProp {
     Type *type;
     Value *value;
+    Chunk *def_chunk;
     Chunk *value_chunk;
     int index;
     int act;
