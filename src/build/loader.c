@@ -1,6 +1,21 @@
 
 #include "../all.h"
 
+/*
+1. private func: get pkc for dir
+2. public func: get nsc for dir (calls get pkc & loads all nsc files (if not main) & sets b->namespaces_by_dir[dir] = nsc)
+2.0 check b->namespaces_by_dir if contains dir : if so, return its nsc
+2.1 call get pkc for dir
+2.2 search for correct namespace in config
+2.3 if found: load all namespace files
+2.4 if not found: return pkc->main_nsc (or create it if doesnt exist)
+2.5 set b->namespaces_by_dir[dir] = nsc
+
+# use pkg:ns
+1. get namespace dir from pkc config
+2. call get nsc for dir
+*/
+
 char *loader_find_config_dir(Build *b, char *dir) {
     //
     Allocator *alc = b->alc;
@@ -19,9 +34,8 @@ char *loader_find_config_dir(Build *b, char *dir) {
     return NULL;
 }
 
-Pkc *loader_find_pkc(Build *b, char *dir) {
+Pkc *loader_get_pkc_for_dir(Build *b, char *dir) {
     //
-    // printf("find pkc: %s\n", dir);
     Pkc *pkc = map_get(b->packages_by_dir, dir);
     if (pkc) {
         return pkc;
@@ -31,21 +45,17 @@ Pkc *loader_find_pkc(Build *b, char *dir) {
     char *name = NULL;
 
     char *cfg_dir = loader_find_config_dir(b, dir);
-    if (cfg_dir) {
-        pkc = map_get(b->packages_by_dir, cfg_dir);
-        if (pkc) {
-            return pkc;
-        }
-    }
     if (!cfg_dir) {
-        cfg_dir = b->main_dir;
-        pkc = map_get(b->packages_by_dir, cfg_dir);
-        if (pkc) {
-            return pkc;
-        }
+        pkc = b->pkc_main;
+        map_set(b->packages_by_dir, dir, pkc);
+        return pkc;
     }
 
-    // printf("cfg_dir: %s\n", cfg_dir);
+    pkc = map_get(b->packages_by_dir, cfg_dir);
+    if (pkc) {
+        return pkc;
+    }
+
     Config *cfg = cfg_load(alc, b->str_buf, cfg_dir);
     if (cfg) {
         cJSON *name_ = cJSON_GetObjectItemCaseSensitive(cfg->json, "name");
@@ -54,56 +64,37 @@ Pkc *loader_find_pkc(Build *b, char *dir) {
         }
     }
 
-    bool is_main = false;
     if (!name) {
-        if (b->pkc_main) {
+        if (strcmp(cfg->dir, b->pkc_main->dir) == 0) {
+            pkc = b->pkc_main;
+        } else {
             name = al(alc, 64);
             simple_hash(cfg->dir, name);
-        } else {
-            is_main = true;
-            name = "main";
         }
     }
-    // printf("name: %s\n", name);
 
-    pkc = pkc_init(alc, b, name, cfg_dir, cfg);
+    if (!pkc)
+        pkc = pkc_init(alc, b, name, cfg_dir, cfg);
     map_set(b->packages_by_dir, dir, pkc);
     map_set(b->packages_by_dir, cfg_dir, pkc);
-
-    if (is_main) {
-        b->pkc_main = pkc;
-        b->nsc_main = nsc_init(alc, b, pkc, "main");
-    }
 
     return pkc;
 }
 
-Pkc *loader_find_pkc_for_file(Build *b, char *path) {
-    char dir[KI_PATH_MAX];
-    get_dir_from_path(path, dir);
-    return loader_find_pkc(b, dir);
-}
-
-Nsc *loader_get_nsc_for_file(Pkc *pkc, char *path) {
-    char dir[KI_PATH_MAX];
-    get_dir_from_path(path, dir);
-    return loader_get_nsc_for_dir(pkc, dir);
-}
-
-Nsc *loader_get_nsc_for_dir(Pkc *pkc, char *dir) {
+Nsc *loader_get_nsc_for_dir(Build *b, char *dir) {
     //
-    // printf("# Find nsc for: %s\n", dir);
-
-    Build *b = pkc->b;
-    Allocator *alc = b->alc;
-    Nsc *nsc = NULL;
-    char *name = "main";
-
-    // Find by dir
-    nsc = map_get(b->namespaces_by_dir, dir);
+    // 2.0 check b->namespaces_by_dir if contains dir : if so, return its nsc
+    Nsc *nsc = map_get(b->namespaces_by_dir, dir);
     if (nsc) {
         return nsc;
     }
+
+    // 2.1 call get pkc for dir
+    Pkc *pkc = loader_get_pkc_for_dir(b, dir);
+
+    // 2.2 search for correct namespace in config
+    Allocator *alc = b->alc;
+    char *name = NULL;
 
     if (pkc->config) {
         cJSON *json = pkc->config->json;
@@ -131,13 +122,38 @@ Nsc *loader_get_nsc_for_dir(Pkc *pkc, char *dir) {
         }
     }
 
-    nsc = map_get(pkc->namespaces, name);
-    if (nsc) {
-        return nsc;
+    // 2.3 if found: load all namespace files
+    if (name) {
+        // Name found
+        nsc = nsc_init(alc, b, pkc, name);
+
+        Array *files = get_subfiles(alc, dir, false, true);
+        int len = files->length;
+        int i = 0;
+        while (i < len) {
+            char *fn = array_get_index(files, i);
+            i++;
+            if (!ends_with(fn, ".ki")) {
+                continue;
+            }
+
+            char *path = al(alc, KI_PATH_MAX);
+            strcpy(path, dir);
+            strcat(path, fn);
+            fc_init(b, path, nsc, false);
+        }
     }
 
-    // Create new namespace
-    nsc = nsc_init(alc, b, pkc, name);
+    // 2.4 if not found: use pkc->main_nsc (or create it if doesnt exist)
+    if (!name) {
+        nsc = pkc->main_nsc;
+        if (!nsc) {
+            nsc = nsc_init(alc, b, pkc, "main");
+            pkc->main_nsc = nsc;
+        }
+    }
+
+    // 2.5 set b->namespaces_by_dir[dir] = nsc
     map_set(b->namespaces_by_dir, dir, nsc);
 
     return nsc;
@@ -182,26 +198,8 @@ Nsc *loader_load_nsc(Pkc *pkc, char *name) {
     }
 
     //
-    Pkc *rpkc = loader_find_pkc(b, dir_abs);
-    nsc = loader_get_nsc_for_dir(rpkc, dir_abs);
+    nsc = loader_get_nsc_for_dir(b, dir_abs);
     map_set(pkc->namespaces, name, nsc);
-
-    // Name found
-    Array *files = get_subfiles(alc, dir_abs, false, true);
-    int len = files->length;
-    int i = 0;
-    while (i < len) {
-        char *fn = array_get_index(files, i);
-        i++;
-        if (!ends_with(fn, ".ki")) {
-            continue;
-        }
-
-        char *path = al(alc, KI_PATH_MAX);
-        strcpy(path, dir_abs);
-        strcat(path, fn);
-        fc_init(b, path, false);
-    }
 
     return nsc;
 }

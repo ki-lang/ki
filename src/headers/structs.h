@@ -85,7 +85,6 @@ struct Build {
     char *arch;
     //
     char *path_out;
-    char *main_dir;
     char *cache_dir;
     char *pkg_dir;
     char *token;
@@ -156,6 +155,7 @@ struct Fc {
     Id *id_buf;
     Str *str_buf;
     Nsc *nsc;
+    Pkc *config_pkc;
     Allocator *alc;
     Allocator *alc_ast;
     Array *deps;
@@ -198,6 +198,7 @@ struct Nsc {
 
 struct Pkc {
     Build *b;
+    Nsc *main_nsc;
     char *name;
     char *dir;
     char *hash;

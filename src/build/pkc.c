@@ -7,6 +7,7 @@ Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir, Config *cfg) {
     //
     Pkc *pkc = al(alc, sizeof(Pkc));
     pkc->b = b;
+    pkc->main_nsc = NULL;
     pkc->sub_packages = map_make(alc);
     pkc->namespaces = map_make(alc);
     pkc->name = name;
@@ -162,7 +163,7 @@ Pkc *pkc_get_sub_package(Pkc *pkc, char *name) {
             die(msg);
         }
 
-        Pkc *sub = loader_find_pkc(b, versionpath);
+        Pkc *sub = loader_get_pkc_for_dir(b, versionpath);
 
         map_set(pkc->sub_packages, name, sub);
 

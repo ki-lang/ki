@@ -1,7 +1,7 @@
 
 #include "../all.h"
 
-Fc *fc_init(Build *b, char *path_ki, bool duplicate) {
+Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
     //
     Fc *prev = map_get(b->all_fcs, path_ki);
     if (prev && !duplicate) {
@@ -18,11 +18,18 @@ Fc *fc_init(Build *b, char *path_ki, bool duplicate) {
 
     bool is_header = ends_with(path_ki, ".kh");
 
+    Pkc *pkc = nsc->pkc;
+
+    if (is_header) {
+        // Use main:main namespace
+        nsc = b->nsc_main;
+    }
+
     Allocator *alc = b->alc;
 
-    // Pkc / Nsc
-    Pkc *pkc = loader_find_pkc_for_file(b, path_ki);
-    Nsc *nsc = loader_get_nsc_for_file(pkc, path_ki);
+    char msg[1000];
+    sprintf(msg, "nsc: %s | %s\n", nsc->name, path_ki);
+    lsp_log(msg);
 
     Fc *fc = al(alc, sizeof(Fc));
     fc->b = b;
@@ -32,6 +39,7 @@ Fc *fc_init(Build *b, char *path_ki, bool duplicate) {
     fc->ir = NULL;
     fc->ir_hash = "";
     fc->nsc = nsc;
+    fc->config_pkc = pkc;
     fc->alc = alc;
     fc->alc_ast = b->alc_ast;
     fc->deps = array_make(alc, 20);
@@ -110,7 +118,7 @@ Fc *fc_init(Build *b, char *path_ki, bool duplicate) {
     array_push(nsc->fcs, fc);
     map_set(b->all_fcs, path_ki, fc);
 
-    // printf("FC: %s\n", path_ki);
+    // printf("FC: %s | NSC: %s:%s\n", path_ki, nsc->pkc->name, nsc->name);
 
     return fc;
 }

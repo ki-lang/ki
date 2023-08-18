@@ -504,7 +504,7 @@ void stage_1_header(Fc *fc) {
     char *fn = str_to_chars(fc->alc, fnstr);
     Nsc *nsc_main = fc->b->nsc_main;
 
-    Array *dirs = fc->nsc->pkc->header_dirs;
+    Array *dirs = fc->config_pkc->header_dirs;
     bool found = false;
     for (int i = 0; i < dirs->length; i++) {
         char *dir = array_get_index(dirs, i);
@@ -512,7 +512,7 @@ void stage_1_header(Fc *fc) {
 
         if (file_exists(fc->sbuf)) {
             char *path = dups(fc->alc, fc->sbuf);
-            Fc *hfc = fc_init(fc->b, path, false);
+            Fc *hfc = fc_init(fc->b, path, fc->nsc, false);
 
             //
             if (fc->is_header) {
@@ -746,7 +746,7 @@ void stage_1_test(Fc *fc) {
     tok_expect(fc, "{", false, true);
 
     // If tests enabled && is main package
-    if (b->test && fc->nsc->pkc == b->nsc_main->pkc) {
+    if (b->test && fc->nsc == b->nsc_main) {
 
         Func *func = func_init(fc->alc, fc->b);
         func->line = line;

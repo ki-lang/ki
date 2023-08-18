@@ -48,10 +48,10 @@ Func *ki_get_func(Build *b, char *ns, char *name);
 
 // Loader
 char *loader_find_config_dir(Build *b, char *dir);
-Pkc *loader_find_pkc(Build *b, char *dir);
-Pkc *loader_find_pkc_for_file(Build *b, char *path);
-Nsc *loader_get_nsc_for_file(Pkc *pkc, char *path);
-Nsc *loader_get_nsc_for_dir(Pkc *pkc, char *dir);
+Pkc *loader_get_pkc_for_dir(Build *b, char *dir);
+// Pkc *loader_find_pkc_for_file(Build *b, char *path);
+// Nsc *loader_get_nsc_for_file(Pkc *pkc, char *path);
+Nsc *loader_get_nsc_for_dir(Build *b, char *dir);
 Nsc *loader_load_nsc(Pkc *pkc, char *name);
 
 // Pkg
@@ -132,7 +132,7 @@ char *nsc_gname(Fc *fc, char *name);
 char *nsc_dname(Fc *fc, char *name);
 
 // Fc
-Fc *fc_init(Build *b, char *path_ki, bool duplicate);
+Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate);
 void fc_set_cache_paths(Fc *fc);
 void fc_error(Fc *fc);
 void fc_update_cache(Fc *fc);

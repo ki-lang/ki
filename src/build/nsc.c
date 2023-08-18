@@ -21,8 +21,6 @@ Nsc *nsc_init(Allocator *alc, Build *b, Pkc *pkc, char *name) {
 
     nsc->path_o = o_path;
 
-    map_set(pkc->namespaces, nsc->name, nsc);
-
     return nsc;
 }
 

@@ -454,7 +454,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
         gclass->dname = dname;
         gclass->gname = gname;
 
-        Fc *new_fc = fc_init(b, fc->path_ki, true);
+        Fc *new_fc = fc_init(b, fc->path_ki, fc->nsc, true);
         new_fc->path_ki = gname;
         fc_set_cache_paths(new_fc);
         new_fc->scope->identifiers = fc->scope->identifiers;

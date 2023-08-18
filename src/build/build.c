@@ -187,11 +187,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     char *first_file = array_get_index(files, 0);
     char first_dir[KI_PATH_MAX];
     get_dir_from_path(first_file, first_dir);
-    char *main_dir = loader_find_config_dir(b, first_dir);
-    if (!main_dir) {
-        main_dir = first_dir;
-    }
-    b->main_dir = main_dir;
+    char *cfg_dir = loader_find_config_dir(b, first_dir);
+    char *main_dir = first_dir;
 
     // Cache dir
     char *cache_buf = malloc(1000);
@@ -297,6 +294,17 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     gettimeofday(&begin, NULL);
 #endif
 
+    // Init main:main
+    Config *main_cfg = NULL;
+    if (cfg_dir) {
+        main_dir = cfg_dir;
+        main_cfg = cfg_load(alc, b->str_buf, cfg_dir);
+    }
+    b->pkc_main = pkc_init(alc, b, "main", main_dir, main_cfg);
+    b->nsc_main = nsc_init(alc, b, b->pkc_main, "main");
+    b->pkc_main->main_nsc = b->nsc_main;
+
+    //
     char *pkg_dir = al(alc, KI_PATH_MAX);
     strcpy(pkg_dir, main_dir);
     strcat(pkg_dir, "packages/");
@@ -305,7 +313,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     char *ki_dir = al(alc, KI_PATH_MAX);
     strcpy(ki_dir, get_binary_dir());
     strcat(ki_dir, "/lib/");
-    Pkc *pkc_ki = loader_find_pkc(b, ki_dir);
+    Pkc *pkc_ki = loader_get_pkc_for_dir(b, ki_dir);
     b->pkc_ki = pkc_ki;
 
     // Load core types & functions
@@ -419,8 +427,12 @@ void build_add_files(Build *b, Array *files) {
     int filec = files->length;
     for (int i = 0; i < filec; i++) {
         char *path = array_get_index(files, i);
-        // Fc *fc = fc_init(b, path, b->nsc_main, b->nsc_main->pkc, false);
-        fc_init(b, path, false);
+        char dir[KI_PATH_MAX];
+        get_dir_from_path(path, dir);
+        Nsc *nsc = loader_get_nsc_for_dir(b, dir);
+        if (strcmp(nsc->name, "main") == 0) {
+            fc_init(b, path, nsc, false);
+        }
     }
 }
 
