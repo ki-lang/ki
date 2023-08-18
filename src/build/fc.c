@@ -1,49 +1,37 @@
 
 #include "../all.h"
 
-Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) {
+Fc *fc_init(Build *b, char *path_ki, bool duplicate) {
     //
     Fc *prev = map_get(b->all_fcs, path_ki);
-    if (prev) {
-        if (!b->lsp && !prev->is_header) {
-            sprintf(b->sbuf, "Compiler tried to import the same file twice: %s", path_ki);
-            die(b->sbuf);
-        }
+    if (prev && !duplicate) {
         return prev;
+    }
+
+    //
+    if (!file_exists(path_ki)) {
+        if (b->lsp)
+            lsp_exit_thread();
+        sprintf(b->sbuf, "File not found: %s", path_ki);
+        die(b->sbuf);
     }
 
     bool is_header = ends_with(path_ki, ".kh");
 
     Allocator *alc = b->alc;
 
-    char *path_ir = al(alc, KI_PATH_MAX);
-    char *path_cache = al(alc, KI_PATH_MAX);
-    if (generated) {
-        sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, path_ki, nsc->pkc->hash);
-        sprintf(path_cache, "%s/%s_%s_%s.json", b->cache_dir, nsc->name, path_ki, nsc->pkc->hash);
-    } else {
-        if (!file_exists(path_ki)) {
-            if (b->lsp)
-                lsp_exit_thread();
-            sprintf(b->sbuf, "File not found: %s", path_ki);
-            die(b->sbuf);
-        }
-
-        char *fn = get_path_basename(alc, path_ki);
-        fn = strip_ext(alc, fn);
-        sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
-        sprintf(path_cache, "%s/%s_%s_%s.json", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
-    }
+    // Pkc / Nsc
+    Pkc *pkc = loader_find_pkc_for_file(b, path_ki);
+    Nsc *nsc = loader_get_nsc_for_file(pkc, path_ki);
 
     Fc *fc = al(alc, sizeof(Fc));
     fc->b = b;
     fc->path_ki = path_ki;
-    fc->path_ir = path_ir;
-    fc->path_cache = path_cache;
+    fc->path_ir = NULL;
+    fc->path_cache = NULL;
     fc->ir = NULL;
     fc->ir_hash = "";
     fc->nsc = nsc;
-    fc->pkc_config = pkc_config;
     fc->alc = alc;
     fc->alc_ast = b->alc_ast;
     fc->deps = array_make(alc, 20);
@@ -72,20 +60,18 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->cache = NULL;
     fc->is_header = is_header;
     fc->ir_changed = false;
-    fc->generated = generated;
     fc->win_file_handle = NULL;
     fc->mod_time = 0;
     fc->lsp_file = b->lsp && (strcmp(b->lsp->filepath, path_ki) == 0);
 
-    char *hash = al(alc, 64);
-    simple_hash(path_ki, hash);
-    fc->path_hash = hash;
-
     fc->test_counter = 0;
 
+    //
+    fc_set_cache_paths(fc);
+
     Str *buf = str_make(alc, 500);
-    if (file_exists(path_cache)) {
-        file_get_contents(buf, path_cache);
+    if (file_exists(fc->path_cache)) {
+        file_get_contents(buf, fc->path_cache);
         char *content = str_to_chars(alc, buf);
         fc->cache = cJSON_ParseWithLength(content, buf->length);
         cJSON *item = cJSON_GetObjectItemCaseSensitive(fc->cache, "ir_hash");
@@ -94,7 +80,10 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
         }
     }
 
-    if (!generated) {
+    // Content
+    if (prev) {
+        fc->chunk = chunk_clone(alc, prev->chunk);
+    } else {
         str_clear(buf);
 
         char *content = NULL;
@@ -117,10 +106,34 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
         chain_add(b->stage_1, fc);
     }
 
+    //
     array_push(nsc->fcs, fc);
     map_set(b->all_fcs, path_ki, fc);
 
+    // printf("FC: %s\n", path_ki);
+
     return fc;
+}
+
+void fc_set_cache_paths(Fc *fc) {
+
+    Build *b = fc->b;
+    Allocator *alc = b->alc;
+    Nsc *nsc = fc->nsc;
+
+    char *path_ir = al(alc, KI_PATH_MAX);
+    char *path_cache = al(alc, KI_PATH_MAX);
+    char *fn = get_path_basename(alc, fc->path_ki);
+    fn = strip_ext(alc, fn);
+    sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
+    sprintf(path_cache, "%s/%s_%s_%s.json", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
+
+    fc->path_ir = path_ir;
+    fc->path_cache = path_cache;
+
+    char *hash = al(alc, 64);
+    simple_hash(fc->path_ki, hash);
+    fc->path_hash = hash;
 }
 
 Chain *chain_make(Allocator *alc) {

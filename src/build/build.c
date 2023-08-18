@@ -5,7 +5,6 @@ int default_os();
 int default_arch();
 void cmd_build_help(bool run_code);
 void build_add_files(Build *b, Array *files);
-char *find_config_dir(Allocator *alc, char *ki_path);
 void build_macro_defs(Build *b, char *defs);
 void build_watch(Build *b, int argc, char *argv[]);
 
@@ -123,6 +122,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     b->token = al(alc, KI_TOKEN_MAX);
     b->sbuf = al(alc, 2000);
     b->lsp = lsp_data;
+    b->pkc_main = NULL;
+    b->nsc_main = NULL;
 
     // Macro definitions
     MacroScope *mc = init_macro_scope(alc);
@@ -136,20 +137,13 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     }
 
     // Filter out files
-    char *first_file = NULL;
     Array *files = array_make(alc, argc);
     int argc_ = args->length;
+    bool is_dir = false;
     for (int i = 2; i < argc_; i++) {
         char *arg = array_get_index(args, i);
         if (arg[0] == '-') {
             continue;
-        }
-        if (!ends_with(arg, ".ki")) {
-            if (lsp_data) {
-                lsp_exit_thread();
-            }
-            sprintf(b->sbuf, "Filename must end with .ki : '%s'", arg);
-            die(b->sbuf);
         }
 
         char *full = al(alc, KI_PATH_MAX);
@@ -159,26 +153,51 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
             if (lsp_data) {
                 lsp_exit_thread();
             }
-            sprintf(b->sbuf, "File not found: '%s'", arg);
+            sprintf(b->sbuf, "CLI argument, file/directory not found: '%s'", arg);
             die(b->sbuf);
         }
 
-        if (!first_file)
-            first_file = full;
+        if (dir_exists(full)) {
+            Array *subs = get_subfiles(alc, full, false, true);
+            for (int o = 0; o < subs->length; o++) {
+                char *path = array_get_index(subs, o);
+                if (ends_with(path, ".ki")) {
+                    array_push(files, full);
+                }
+            }
+            continue;
+        }
+
+        if (!ends_with(arg, ".ki")) {
+            if (lsp_data) {
+                lsp_exit_thread();
+            }
+            sprintf(b->sbuf, "CLI argument, filename must end with .ki : '%s'", arg);
+            die(b->sbuf);
+        }
 
         array_push(files, full);
     }
 
-    if (!first_file) {
-        sprintf(b->sbuf, "Nothing to compile, add some files to your command");
+    if (files->length == 0) {
+        sprintf(b->sbuf, "Nothing to compile, add some files or directories to your build command");
         die(b->sbuf);
     }
+
+    char *first_file = array_get_index(files, 0);
+    char first_dir[KI_PATH_MAX];
+    get_dir_from_path(first_file, first_dir);
+    char *main_dir = loader_find_config_dir(b, first_dir);
+    if (!main_dir) {
+        main_dir = first_dir;
+    }
+    b->main_dir = main_dir;
 
     // Cache dir
     char *cache_buf = malloc(1000);
     char *cache_hash = malloc(64);
     char *cache_dir = al(alc, KI_PATH_MAX);
-    get_dir_from_path(first_file, cache_buf);
+    strcpy(cache_buf, main_dir);
     strcat(cache_buf, "||");
     strcat(cache_buf, os);
     strcat(cache_buf, arch);
@@ -236,6 +255,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     //
     b->packages = array_make(alc, 100);
     b->packages_by_dir = map_make(alc);
+    b->namespaces_by_dir = map_make(alc);
     b->all_ki_files = array_make(alc, 1000);
     b->link_libs = map_make(alc);
     b->link_dirs = array_make(alc, 40);
@@ -255,19 +275,6 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     b->stage_5 = chain_make(alc);
     b->stage_6 = chain_make(alc);
     //
-    b->class_u8 = NULL;
-    b->class_u16 = NULL;
-    b->class_u32 = NULL;
-    b->class_u64 = NULL;
-    b->class_i8 = NULL;
-    b->class_i16 = NULL;
-    b->class_i32 = NULL;
-    b->class_i64 = NULL;
-    b->class_string = NULL;
-    b->class_array = NULL;
-    b->class_ptr = NULL;
-    //
-    b->core_types_scanned = false;
     b->ir_ready = false;
     b->optimize = optimize;
     b->test = test;
@@ -290,29 +297,22 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     gettimeofday(&begin, NULL);
 #endif
 
-    Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));
-    Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
-
     char *pkg_dir = al(alc, KI_PATH_MAX);
-    strcpy(pkg_dir, pkc_main->dir);
-    strcat(pkg_dir, "/packages");
+    strcpy(pkg_dir, main_dir);
+    strcat(pkg_dir, "packages/");
     b->pkg_dir = pkg_dir;
 
     char *ki_dir = al(alc, KI_PATH_MAX);
     strcpy(ki_dir, get_binary_dir());
-    strcat(ki_dir, "/lib");
-    Pkc *pkc_ki = pkc_init(alc, b, "ki", ki_dir);
-
-    b->nsc_main = nsc_main;
+    strcat(ki_dir, "/lib/");
+    Pkc *pkc_ki = loader_find_pkc(b, ki_dir);
     b->pkc_ki = pkc_ki;
 
-    array_push(b->packages, pkc_ki);
-    array_push(b->packages, pkc_main);
-
-    b->nsc_type = pkc_load_nsc(pkc_ki, "type", NULL);
-    b->nsc_io = pkc_load_nsc(pkc_ki, "io", NULL);
-    pkc_load_nsc(pkc_ki, "mem", NULL);
-    pkc_load_nsc(pkc_ki, "os", NULL);
+    // Load core types & functions
+    loader_load_nsc(pkc_ki, "type");
+    loader_load_nsc(pkc_ki, "io");
+    loader_load_nsc(pkc_ki, "mem");
+    loader_load_nsc(pkc_ki, "os");
 
     //
     // #ifdef WIN32
@@ -403,8 +403,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
 
 void build_clean_up(Build *b) {
     //
-    for (int i = 0; i < b->packages_by_dir->values->length; i++) {
-        Pkc *pkc = array_get_index(b->packages_by_dir->values, i);
+    for (int i = 0; i < b->packages->length; i++) {
+        Pkc *pkc = array_get_index(b->packages, i);
         cJSON *cfg = pkc->config ? pkc->config->json : NULL;
         if (cfg) {
             cJSON_Delete(cfg);
@@ -419,7 +419,8 @@ void build_add_files(Build *b, Array *files) {
     int filec = files->length;
     for (int i = 0; i < filec; i++) {
         char *path = array_get_index(files, i);
-        Fc *fc = fc_init(b, path, b->nsc_main, b->nsc_main->pkc, false);
+        // Fc *fc = fc_init(b, path, b->nsc_main, b->nsc_main->pkc, false);
+        fc_init(b, path, false);
     }
 }
 
@@ -477,30 +478,6 @@ void cmd_build_help(bool run_code) {
     printf("\n");
 
     exit(1);
-}
-
-char *find_config_dir(Allocator *alc, char *ki_path) {
-    //
-    char *dir = al(alc, KI_PATH_MAX);
-    get_dir_from_path(ki_path, dir);
-    char cfg_path[strlen(dir) + 10];
-
-    bool found = false;
-    while (strlen(dir) > 3) {
-        strcpy(cfg_path, dir);
-        strcat(cfg_path, "ki.json");
-        if (file_exists(cfg_path)) {
-            dir[strlen(dir) - 1] = '\0';
-            found = true;
-            break;
-        }
-        get_dir_from_path(dir, dir);
-    }
-    if (!found) {
-        get_dir_from_path(ki_path, dir);
-        dir[strlen(dir) - 1] = '\0';
-    }
-    return dir;
 }
 
 Class *ki_get_class(Build *b, char *ns, char *name) {

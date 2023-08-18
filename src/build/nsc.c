@@ -26,8 +26,11 @@ Nsc *nsc_init(Allocator *alc, Build *b, Pkc *pkc, char *name) {
     return nsc;
 }
 
-char *nsc_gname(Nsc *nsc, char *name) {
+char *nsc_gname(Fc *fc, char *name) {
     //
+    if (fc->is_header)
+        return dups(fc->alc, name);
+    Nsc *nsc = fc->nsc;
     Pkc *pkc = nsc->pkc;
     char *buf = nsc->b->sbuf;
     strcpy(buf, "");
@@ -42,8 +45,11 @@ char *nsc_gname(Nsc *nsc, char *name) {
     strcat(buf, name);
     return dups(nsc->b->alc, buf);
 }
-char *nsc_dname(Nsc *nsc, char *name) {
+char *nsc_dname(Fc *fc, char *name) {
     //
+    if (fc->is_header)
+        return dups(fc->alc, name);
+    Nsc *nsc = fc->nsc;
     Pkc *pkc = nsc->pkc;
     char *buf = nsc->b->sbuf;
     strcpy(buf, "");

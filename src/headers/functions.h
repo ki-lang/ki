@@ -13,6 +13,7 @@ int system_silent(char *cmd);
 char *str_replace_simple(char *s, const char *s1, const char *s2);
 char *str_replace(Allocator *alc, char *orig, char *rep, char *with);
 void free_delayed(void *item);
+void rtrim(char *str, char ch);
 
 // Syntax
 bool is_alpha_char(char c);
@@ -44,6 +45,14 @@ void cmd_build(int argc, char **argv, LspData *lsp_data);
 void build_clean_up(Build *b);
 Class *ki_get_class(Build *b, char *ns, char *name);
 Func *ki_get_func(Build *b, char *ns, char *name);
+
+// Loader
+char *loader_find_config_dir(Build *b, char *dir);
+Pkc *loader_find_pkc(Build *b, char *dir);
+Pkc *loader_find_pkc_for_file(Build *b, char *path);
+Nsc *loader_get_nsc_for_file(Pkc *pkc, char *path);
+Nsc *loader_get_nsc_for_dir(Pkc *pkc, char *dir);
+Nsc *loader_load_nsc(Pkc *pkc, char *name);
 
 // Pkg
 void cmd_pkg(int argc, char *argv[]);
@@ -113,18 +122,18 @@ void *io_loop(void *build);
 void compile_loop(Build *b, int max_stage);
 
 // Pkc
-Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir);
+Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir, Config *cfg);
 Nsc *pkc_get_nsc(Pkc *pkc, char *name);
-Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc);
 Pkc *pkc_get_sub_package(Pkc *pkc, char *name);
 
 // Nsc
 Nsc *nsc_init(Allocator *alc, Build *b, Pkc *pkc, char *name);
-char *nsc_gname(Nsc *nsc, char *name);
-char *nsc_dname(Nsc *nsc, char *name);
+char *nsc_gname(Fc *fc, char *name);
+char *nsc_dname(Fc *fc, char *name);
 
 // Fc
-Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated);
+Fc *fc_init(Build *b, char *path_ki, bool duplicate);
+void fc_set_cache_paths(Fc *fc);
 void fc_error(Fc *fc);
 void fc_update_cache(Fc *fc);
 

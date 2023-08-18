@@ -85,6 +85,7 @@ struct Build {
     char *arch;
     //
     char *path_out;
+    char *main_dir;
     char *cache_dir;
     char *pkg_dir;
     char *token;
@@ -95,16 +96,16 @@ struct Build {
     Allocator *alc_ast;
     //
     Nsc *nsc_main;
+    Pkc *pkc_main;
     Pkc *pkc_ki;
     Func *main_func;
     Fc *main_fc;
-    Nsc *nsc_type;
-    Nsc *nsc_io;
     //
     MacroScope *mc;
     //
     Array *packages;
     Map *packages_by_dir;
+    Map *namespaces_by_dir;
     Array *all_ki_files;
     Array *link_dirs;
     Map *link_libs;
@@ -123,19 +124,6 @@ struct Build {
     Chain *stage_5;
     Chain *stage_6;
     //
-    Class *class_u8;
-    Class *class_u16;
-    Class *class_u32;
-    Class *class_u64;
-    Class *class_i8;
-    Class *class_i16;
-    Class *class_i32;
-    Class *class_i64;
-    Class *class_ptr;
-    Class *class_string;
-    Class *class_array;
-    Class *class_map;
-    //
     Type *type_void;
     // LSP
     LspData *lsp;
@@ -152,7 +140,6 @@ struct Build {
     bool debug;
     bool clear_cache;
     bool run_code;
-    bool core_types_scanned;
     bool link_static;
 };
 
@@ -169,7 +156,6 @@ struct Fc {
     Id *id_buf;
     Str *str_buf;
     Nsc *nsc;
-    Pkc *pkc_config;
     Allocator *alc;
     Allocator *alc_ast;
     Array *deps;
@@ -198,7 +184,6 @@ struct Fc {
     //
     bool is_header;
     bool ir_changed;
-    bool generated;
     bool lsp_file;
 };
 

@@ -81,6 +81,20 @@ void *free_delayed_exec(void *item) {
     return NULL;
 }
 
+void rtrim(char *str, char ch) {
+    //
+    int i = strlen(str) - 1;
+    while (i >= 0) {
+        char x = str[i];
+        if (x == ch) {
+            str[i] = '\0';
+            i--;
+            continue;
+        }
+        break;
+    }
+}
+
 void free_delayed(void *item) {
 #ifdef WIN32
     void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))free_delayed_exec, item, 0, NULL);

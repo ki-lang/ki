@@ -144,8 +144,8 @@ void stage_1_func(Fc *fc) {
     }
 
     char *name = dups(fc->alc, token);
-    char *gname = nsc_gname(fc->nsc, name);
-    char *dname = nsc_dname(fc->nsc, name);
+    char *gname = nsc_gname(fc, name);
+    char *dname = nsc_dname(fc, name);
 
     func->fc = fc;
     func->name = name;
@@ -203,8 +203,8 @@ void stage_1_class(Fc *fc, bool is_struct) {
     name_taken_check(fc, fc->nsc->scope, token);
 
     char *name = dups(fc->alc, token);
-    char *gname = nsc_gname(fc->nsc, name);
-    char *dname = nsc_dname(fc->nsc, name);
+    char *gname = nsc_gname(fc, name);
+    char *dname = nsc_dname(fc, name);
 
     Class *class = class_init(fc->alc);
     class->fc = fc;
@@ -229,36 +229,6 @@ void stage_1_class(Fc *fc, bool is_struct) {
     }
 
     map_set(class->scope->identifiers, "CLASS", idf);
-
-    if (!b->core_types_scanned) {
-        if (fc->nsc == b->nsc_type) {
-            if (strcmp(name, "u8") == 0) {
-                b->class_u8 = class;
-            } else if (strcmp(name, "u16") == 0) {
-                b->class_u16 = class;
-            } else if (strcmp(name, "u32") == 0) {
-                b->class_u32 = class;
-            } else if (strcmp(name, "u64") == 0) {
-                b->class_u64 = class;
-            } else if (strcmp(name, "i8") == 0) {
-                b->class_i8 = class;
-            } else if (strcmp(name, "i16") == 0) {
-                b->class_i16 = class;
-            } else if (strcmp(name, "i32") == 0) {
-                b->class_i32 = class;
-            } else if (strcmp(name, "i64") == 0) {
-                b->class_i64 = class;
-            } else if (strcmp(name, "ptr") == 0) {
-                b->class_ptr = class;
-            } else if (strcmp(name, "String") == 0) {
-                b->class_string = class;
-            } else if (strcmp(name, "Array") == 0) {
-                b->class_array = class;
-            } else if (strcmp(name, "Map") == 0) {
-                b->class_map = class;
-            }
-        }
-    }
 
     if (get_char(fc, 0) == '[') {
         chunk_move(fc->chunk, 1);
@@ -386,8 +356,8 @@ void stage_1_trait(Fc *fc) {
     name_taken_check(fc, fc->nsc->scope, token);
 
     char *name = dups(fc->alc, token);
-    char *gname = nsc_gname(fc->nsc, name);
-    char *dname = nsc_dname(fc->nsc, name);
+    char *gname = nsc_gname(fc, name);
+    char *dname = nsc_dname(fc, name);
 
     Trait *tr = al(fc->alc, sizeof(Trait));
     tr->fc = fc;
@@ -435,8 +405,8 @@ void stage_1_enum(Fc *fc) {
     name_taken_check(fc, fc->nsc->scope, token);
 
     char *name = dups(fc->alc, token);
-    char *gname = nsc_gname(fc->nsc, name);
-    char *dname = nsc_dname(fc->nsc, name);
+    char *gname = nsc_gname(fc, name);
+    char *dname = nsc_dname(fc, name);
 
     Enum *enu = al(fc->alc, sizeof(Enum));
     enu->fc = fc;
@@ -534,7 +504,7 @@ void stage_1_header(Fc *fc) {
     char *fn = str_to_chars(fc->alc, fnstr);
     Nsc *nsc_main = fc->b->nsc_main;
 
-    Array *dirs = fc->pkc_config->header_dirs;
+    Array *dirs = fc->nsc->pkc->header_dirs;
     bool found = false;
     for (int i = 0; i < dirs->length; i++) {
         char *dir = array_get_index(dirs, i);
@@ -542,7 +512,7 @@ void stage_1_header(Fc *fc) {
 
         if (file_exists(fc->sbuf)) {
             char *path = dups(fc->alc, fc->sbuf);
-            Fc *hfc = fc_init(fc->b, path, nsc_main, fc->nsc->pkc, false);
+            Fc *hfc = fc_init(fc->b, path, false);
 
             //
             if (fc->is_header) {
@@ -628,7 +598,11 @@ void stage_1_use(Fc *fc) {
         }
     }
 
-    Nsc *nsc = pkc_load_nsc(pkc, nsc_name, fc);
+    Nsc *nsc = loader_load_nsc(pkc, nsc_name);
+    if (!nsc) {
+        sprintf(fc->sbuf, "Cannot find namespace '%s' in package '%s'", nsc_name, pkc->name);
+        fc_error(fc);
+    }
 
     char *as = nsc_name;
     char *token = fc->token;
@@ -666,8 +640,8 @@ void stage_1_global(Fc *fc, bool shared) {
     name_taken_check(fc, fc->nsc->scope, token);
 
     char *name = dups(fc->alc, token);
-    char *gname = nsc_gname(fc->nsc, name);
-    char *dname = nsc_dname(fc->nsc, name);
+    char *gname = nsc_gname(fc, name);
+    char *dname = nsc_dname(fc, name);
 
     Global *g = al(fc->alc, sizeof(Global));
     g->fc = fc;
@@ -780,8 +754,8 @@ void stage_1_test(Fc *fc) {
         sprintf(token, "ki__TEST_%d__%s", ++fc->test_counter, fc->path_hash);
 
         char *name = dups(fc->alc, token);
-        char *gname = nsc_gname(fc->nsc, name);
-        char *dname = nsc_dname(fc->nsc, name);
+        char *gname = nsc_gname(fc, name);
+        char *dname = nsc_dname(fc, name);
 
         func->fc = fc;
         func->name = name;
@@ -827,7 +801,7 @@ void stage_1_macro(Fc *fc) {
     name_taken_check(fc, fc->nsc->scope, token);
 
     char *name = dups(fc->alc, token);
-    char *dname = nsc_dname(fc->nsc, name);
+    char *dname = nsc_dname(fc, name);
 
     Macro *mac = al(alc, sizeof(Macro));
     mac->name = name;

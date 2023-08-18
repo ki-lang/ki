@@ -5,7 +5,7 @@ Config *cfg_load(Allocator *alc, Str *buf, char *dir) {
     //
     char path[strlen(dir) + 20];
     strcpy(path, dir);
-    strcat(path, "/ki.json");
+    strcat(path, "ki.json");
 
     if (!file_exists(path)) {
         return NULL;
@@ -17,6 +17,9 @@ Config *cfg_load(Allocator *alc, Str *buf, char *dir) {
     char *content = str_to_chars(alc, buf);
 
     cJSON *json = cJSON_ParseWithLength(content, buf->length);
+    if (!json) {
+        return NULL;
+    }
 
     Config *cfg = al(alc, sizeof(Config));
     cfg->path = cpath;

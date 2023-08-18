@@ -3,13 +3,8 @@
 
 void pkc_load_config(Pkc *pkc);
 
-Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
+Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir, Config *cfg) {
     //
-    if (!file_exists(dir)) {
-        sprintf(b->sbuf, "Package directory for '%s' not found. Directory: '%s'", name, dir);
-        die(b->sbuf);
-    }
-
     Pkc *pkc = al(alc, sizeof(Pkc));
     pkc->b = b;
     pkc->sub_packages = map_make(alc);
@@ -19,23 +14,26 @@ Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir) {
     pkc->hash = al(alc, 64);
     pkc->config = NULL;
     pkc->header_dirs = array_make(alc, 10);
+    pkc->config = cfg;
 
-    simple_hash(dir, pkc->hash);
+    simple_hash(pkc->dir, pkc->hash);
+
+    array_push(b->packages, pkc);
 
     pkc_load_config(pkc);
 
-    if (!name) {
-        // Load name from package config
-        if (pkc->config) {
-            cJSON *json = pkc->config->json;
-            const cJSON *jname = cJSON_GetObjectItemCaseSensitive(json, "name");
-            pkc->name = dups(alc, jname->valuestring);
-        }
-        if (!pkc->name) {
-            sprintf(b->sbuf, "Package in directory '%s' has no name defined", dir);
-            die(b->sbuf);
-        }
-    }
+    // if (!name) {
+    //     // Load name from package config
+    //     if (pkc->config) {
+    //         cJSON *json = pkc->config->json;
+    //         const cJSON *jname = cJSON_GetObjectItemCaseSensitive(json, "name");
+    //         pkc->name = dups(alc, jname->valuestring);
+    //     }
+    //     if (!pkc->name) {
+    //         sprintf(b->sbuf, "Package in directory '%s' has no name defined", dir);
+    //         die(b->sbuf);
+    //     }
+    // }
 
     return pkc;
 }
@@ -50,76 +48,14 @@ Nsc *pkc_get_nsc(Pkc *pkc, char *name) {
     return nsc;
 }
 
-Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc) {
-    //
-    Nsc *nsc = map_get(pkc->namespaces, name);
-    if (nsc) {
-        return nsc;
-    }
-
-    Build *b = pkc->b;
-    Allocator *alc = b->alc;
-
-    // Check config
-    if (pkc->config) {
-        Config *cfg = pkc->config;
-        cJSON *namespaces = cJSON_GetObjectItemCaseSensitive(cfg->json, "namespaces");
-        if (namespaces) {
-            cJSON *ns = cJSON_GetObjectItemCaseSensitive(namespaces, name);
-            if (ns) {
-                char *dir = malloc(KI_PATH_MAX);
-                strcpy(dir, pkc->dir);
-                strcat(dir, "/");
-                strcat(dir, ns->valuestring);
-                if (!file_exists(dir)) {
-                    if (parsing_fc) {
-                        sprintf(parsing_fc->sbuf, "Namespace directory does not exist: '%s'", dir);
-                        fc_error(parsing_fc);
-                    } else {
-                        sprintf(b->sbuf, "Namespace directory does not exist: '%s'", dir);
-                        die(b->sbuf);
-                    }
-                }
-
-                nsc = nsc_init(alc, b, pkc, name);
-
-                Array *files = get_subfiles(alc, dir, false, true);
-                int i = files->length;
-                while (i > 0) {
-                    i--;
-                    char *path = al(alc, KI_PATH_MAX);
-                    char *fn = array_get_index(files, i);
-                    strcpy(path, dir);
-                    strcat(path, "/");
-                    strcat(path, fn);
-                    if (ends_with(path, ".ki")) {
-                        fc_init(b, path, nsc, nsc->pkc, false);
-                    }
-                }
-                free(dir);
-
-                return nsc;
-            }
-        }
-    }
-
-    if (parsing_fc) {
-        sprintf(parsing_fc->sbuf, "Cannot find namespace '%s' in package '%s'", name, pkc->name);
-        fc_error(parsing_fc);
-    } else {
-        sprintf(pkc->b->sbuf, "Cannot find namespace '%s' in package '%s'", name, pkc->name);
-        die(pkc->b->sbuf);
-    }
-    return NULL;
-}
-
 void pkc_load_config(Pkc *pkc) {
 
     Build *b = pkc->b;
     Allocator *alc = b->alc;
     char *dir = pkc->dir;
 
-    Config *cfg = cfg_load(alc, b->str_buf, dir);
+    Config *cfg = pkc->config;
+    // Config *cfg = cfg_load(alc, b->str_buf, dir);
     if (!cfg)
         return;
 
@@ -134,7 +70,6 @@ void pkc_load_config(Pkc *pkc) {
             while (cdir) {
 
                 strcpy(fullpath, pkc->dir);
-                strcat(fullpath, "/");
                 strcat(fullpath, cdir->valuestring);
 
                 if (!file_exists(fullpath)) {
@@ -210,20 +145,26 @@ Pkc *pkc_get_sub_package(Pkc *pkc, char *name) {
 
         char pkgpath[KI_PATH_MAX];
         char versionpath[KI_PATH_MAX];
+        char config_path[KI_PATH_MAX];
 
         pkg_get_dir(b->pkg_dir, jname->valuestring, pkgpath);
 
         strcpy(versionpath, pkgpath);
         strcat(versionpath, "/");
         strcat(versionpath, jversion->valuestring);
+        strcat(versionpath, "/");
 
-        Pkc *sub = map_get(b->packages_by_dir, versionpath);
-        if (!sub) {
-            sub = pkc_init(b->alc, b, NULL, versionpath);
+        strcpy(config_path, versionpath);
+        strcat(config_path, "ki.json");
+
+        if (!file_exists(config_path)) {
+            sprintf(msg, "Package '%s' has no 'ki.json' config. Expected file: '%s'", name, config_path);
+            die(msg);
         }
 
+        Pkc *sub = loader_find_pkc(b, versionpath);
+
         map_set(pkc->sub_packages, name, sub);
-        array_push(b->packages, sub);
 
         return sub;
     }

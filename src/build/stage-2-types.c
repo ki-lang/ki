@@ -15,8 +15,6 @@ void stage_2(Fc *fc) {
         printf("# Stage 2 : Read types : %s\n", fc->path_ki);
     }
 
-    b->core_types_scanned = true;
-
     for (int i = 0; i < fc->aliasses->length; i++) {
         Alias *a = array_get_index(fc->aliasses, i);
         fc->chunk = a->chunk;
@@ -443,7 +441,7 @@ void stage_2_func(Fc *fc, Func *func) {
         // Type check return type
         Type *rett = func->rett;
         Class *class = rett->class;
-        if ((!type_is_void(rett) && class != b->class_i32) || rett->ptr_depth > 0) {
+        if ((!type_is_void(rett) && class != ki_get_class(b, "type", "i32")) || rett->ptr_depth > 0) {
             sprintf(fc->sbuf, "func 'main' should return 'void' or 'i32'");
             fc_error(fc);
         }

@@ -11,6 +11,14 @@ bool get_fullpath(char *filepath, char *buf) {
 #else
     char *res = realpath(filepath, buf);
 #endif
+    if (res && dir_exists(res)) {
+        int len = strlen(res);
+        char ch = res[len - 1];
+        if (ch != '/' && ch != '\\') {
+            res[len] = '/';
+            res[len + 1] = '\0';
+        }
+    }
     return res != NULL;
 }
 
