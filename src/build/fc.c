@@ -77,22 +77,11 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
     //
     fc_set_cache_paths(fc);
 
-    Str *buf = str_make(alc, 500);
-    if (file_exists(fc->path_cache)) {
-        file_get_contents(buf, fc->path_cache);
-        char *content = str_to_chars(alc, buf);
-        fc->cache = cJSON_ParseWithLength(content, buf->length);
-        cJSON *item = cJSON_GetObjectItemCaseSensitive(fc->cache, "ir_hash");
-        if (item) {
-            fc->ir_hash = item->valuestring;
-        }
-    }
-
     // Content
     if (prev) {
         fc->chunk = chunk_clone(alc, prev->chunk);
     } else {
-        str_clear(buf);
+        Str *buf = str_make(alc, 500);
 
         char *content = NULL;
         if (fc->lsp_file && b->lsp->text) {
@@ -142,6 +131,17 @@ void fc_set_cache_paths(Fc *fc) {
     char *hash = al(alc, 64);
     simple_hash(fc->path_ki, hash);
     fc->path_hash = hash;
+
+    Str *buf = str_make(alc, 500);
+    if (file_exists(fc->path_cache)) {
+        file_get_contents(buf, fc->path_cache);
+        char *content = str_to_chars(alc, buf);
+        fc->cache = cJSON_ParseWithLength(content, buf->length);
+        cJSON *item = cJSON_GetObjectItemCaseSensitive(fc->cache, "ir_hash");
+        if (item) {
+            fc->ir_hash = item->valuestring;
+        }
+    }
 }
 
 Chain *chain_make(Allocator *alc) {

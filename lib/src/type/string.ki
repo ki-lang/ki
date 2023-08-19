@@ -11,7 +11,7 @@ class String type:ptr track {
 	// Core
 	/////////////////////
 
-	- fn is_const() bool %inline {
+	fn is_const() bool %inline {
 		return @ptrv(this @as ptr + @sizeof(uxx), u8, 0) == 1#u8;
 	}
 
