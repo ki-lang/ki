@@ -16,6 +16,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     Build *b = al(alc, sizeof(Build));
     b->alc = alc;
     b->alc_io = alc_io;
+    b->alc_ast = alc_make();
     b->token = al(alc, KI_TOKEN_MAX);
     b->sbuf = al(alc, 2000);
     b->lsp = lsp_data;
@@ -239,7 +240,6 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     //
     b->path_out = path_out;
     b->ptr_size = ptr_size;
-    b->alc_ast = alc_make();
     b->cache_dir = cache_dir;
     //
     b->event_count = 0;
@@ -417,6 +417,7 @@ void build_clean_up(Build *b) {
             cJSON_Delete(cfg);
         }
     }
+    alc_delete(b->alc_io);
     alc_delete(b->alc_ast);
     alc_delete(b->alc);
 }

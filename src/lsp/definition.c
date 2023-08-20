@@ -56,8 +56,6 @@ void lsp_definition_respond(Allocator *alc, LspData *ld, char *path, int line, i
     str_append_chars(uri, path);
 
     char *uri_str = str_to_chars(alc, uri);
-    lsp_log(uri_str);
-    lsp_log("<<<\n");
     cJSON_AddItemToObject(result, "uri", cJSON_CreateString(uri_str));
     cJSON_AddItemToObject(result, "range", range);
     cJSON_AddItemToObject(range, "start", pos);

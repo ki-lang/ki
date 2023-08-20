@@ -8,11 +8,11 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json);
 
 void lsp_log(char *msg) {
     //
-    if (file_exists("C:/www/out.txt")) {
-        write_file("C:/www/out.txt", msg, true);
-    } else {
-        write_file("/mnt/c/www/out.txt", msg, true);
-    }
+    // if (file_exists("C:/www/out.txt")) {
+    //     write_file("C:/www/out.txt", msg, true);
+    // } else {
+    //     write_file("/mnt/c/www/out.txt", msg, true);
+    // }
 }
 
 void cmd_lsp(int argc, char *argv[]) {
@@ -40,18 +40,8 @@ void cmd_lsp(int argc, char *argv[]) {
     }
     char *action = array_get_index(args, 2);
     if (strcmp(action, "start") == 0) {
-        // lsp_log("# Start LSP server\n");
-
-        // int argcl = 3;
-        // char *argvl[argcl];
-        // argvl[0] = "ki";
-        // argvl[1] = "build";
-        // argvl[2] = "--lsp";
-
-        // cmd_build(argcl, argvl);
-
+        lsp_log("# Start LSP server\n");
         cmd_lsp_server();
-
     } else {
         cmd_lsp_help();
     }
@@ -78,7 +68,6 @@ void cmd_lsp_server() {
         int rcvd = chunk_len;
         char part[chunk_len];
         while (rcvd == chunk_len) {
-            // lsp_log("# Wait\n");
             rcvd = read(STDIN_FILENO, part, chunk_len);
             if (rcvd > 0) {
                 str_append_from_ptr(input, part, rcvd);
@@ -135,9 +124,6 @@ void lsp_respond(cJSON *resp) {
     sprintf(output, "Content-Length: %d\r\n\r\n%s", clen, str);
     write(STDOUT_FILENO, output, strlen(output));
 
-    // lsp_log("# Resp:\n");
-    // lsp_log(str);
-    // lsp_log("\n");
     cJSON_Delete(resp);
     free(str);
 
@@ -217,12 +203,8 @@ Array *cmd_lsp_parse_input(Allocator *alc, Str *input) {
             }
 
             char *key_ = str_to_chars(alc, key);
-            // sprintf(msg, "header: '%s'\n", key_);
-            // lsp_log(msg);
             if (strcmp(key_, "Content-Length") == 0) {
                 char *value_ = str_to_chars(alc, value);
-                // sprintf(msg, "value: '%s'\n", value_);
-                // lsp_log(msg);
                 content_len = atoi(value_);
             }
         }
@@ -241,8 +223,6 @@ Array *cmd_lsp_parse_input(Allocator *alc, Str *input) {
             count++;
         }
 
-        // sprintf(msg, "count: %d/%d\n", count, content_len);
-        // lsp_log(msg);
         if (count == content_len) {
             char *body = str_to_chars(alc, content);
             array_push(res, body);
@@ -322,9 +302,6 @@ int lsp_get_pos_index(char *text, int line, int col) {
     int l = 0;
     int c = 0;
     int len = strlen(text);
-    // char msg[200];
-    // sprintf(msg, "FIND INDEX: %d|%d / %d\n", line, col, len);
-    // lsp_log(msg);
     while (i < len) {
         if (l == line && c == col) {
             return i;

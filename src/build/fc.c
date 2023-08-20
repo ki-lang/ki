@@ -26,8 +26,6 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
     Allocator *alc = b->alc;
 
     char msg[1000];
-    sprintf(msg, "nsc: %s | %s\n", nsc->name, path_ki);
-    lsp_log(msg);
 
     Fc *fc = al(alc, sizeof(Fc));
     fc->b = b;
@@ -83,7 +81,6 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
 
         char *content = NULL;
         if (fc->lsp_file && b->lsp->text) {
-            lsp_log("LSP Custom content\n");
             content = b->lsp->text;
         } else if (lsp_doc_content) {
             content = map_get(lsp_doc_content, fc->path_ki);
@@ -200,9 +197,6 @@ void fc_error(Fc *fc) {
     Build *b = fc->b;
     if (b->lsp) {
         LspData *ld = b->lsp;
-        lsp_log("Error: ");
-        lsp_log(fc->sbuf);
-        lsp_log("\n");
         if (ld->type == lspt_diagnostic) {
             Array *errors = array_make(alc, 10);
             FcError *err = al(alc, sizeof(FcError));
