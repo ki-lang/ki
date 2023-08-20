@@ -1,4 +1,6 @@
 
+alias uxx as SOCKET;
+
 struct cstruct_stat {
     st_dev: uxx;
     st_ino: uxx;
