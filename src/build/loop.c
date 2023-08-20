@@ -72,6 +72,9 @@ void compile_loop(Build *b, int max_stage) {
             // LSP no response, send default response
             if (ld->type == lspt_completion) {
                 // lsp_completion_respond(b, ld->id, array_make(alc, 1));
+            } else if (ld->type == lspt_diagnostic) {
+                Array *errors = array_make(b->alc, 2);
+                lsp_diagnostic_respond(b, ld, errors);
             }
 
             cJSON *result = cJSON_CreateNull();

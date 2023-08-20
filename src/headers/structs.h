@@ -40,6 +40,7 @@ typedef struct MacroReplace MacroReplace;
 typedef struct LspData LspData;
 typedef struct LspCompletion LspCompletion;
 typedef struct CompileLoopData CompileLoopData;
+typedef struct FcError FcError;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -526,6 +527,13 @@ struct LspCompletion {
 struct CompileLoopData {
     Build *b;
     int max_stage;
+};
+
+struct FcError {
+    char *path;
+    char *msg;
+    int line;
+    int col;
 };
 
 #endif

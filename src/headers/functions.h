@@ -75,6 +75,7 @@ char *lsp_set_tag(Allocator *alc, char *text, int line, int col);
 cJSON *lsp_open(Allocator *alc, cJSON *params);
 cJSON *lsp_close(Allocator *alc, cJSON *params);
 cJSON *lsp_change(Allocator *alc, cJSON *params);
+cJSON *lsp_save(Allocator *alc, cJSON *params);
 cJSON *lsp_definition(Allocator *alc, cJSON *params, int id);
 cJSON *lsp_completion(Allocator *alc, cJSON *params, int id);
 cJSON *lsp_help(Allocator *alc, cJSON *params, int id);
@@ -82,6 +83,7 @@ void lsp_help_respond(Build *b, LspData *ld, char *full, Array *args, int arg_in
 void lsp_help_check_args(Allocator *alc, Fc *fc, Array *args, bool skip_first, Type *rett, int arg_index);
 void lsp_completion_respond(Build *b, LspData* ld, Array *items);
 void lsp_definition_respond(Build *b, LspData *ld, char *path, int line, int col);
+void lsp_diagnostic_respond(Build *b, LspData *ld, Array *errors);
 void lsp_respond(cJSON *resp);
 void lsp_exit_thread();
 

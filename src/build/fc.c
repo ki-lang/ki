@@ -187,16 +187,29 @@ void chain_add(Chain *chain, Fc *item) {
 
 void fc_error(Fc *fc) {
     //
+    Allocator *alc = fc->alc;
     Chunk *chunk = fc->chunk;
     char *content = chunk->content;
     int length = chunk->length;
 
     Build *b = fc->b;
     if (b->lsp) {
+        LspData *ld = b->lsp;
         lsp_log("Error: ");
         lsp_log(fc->sbuf);
         lsp_log("\n");
-        b->lsp->send_default = true;
+        if (ld->type == lspt_diagnostic) {
+            Array *errors = array_make(alc, 10);
+            FcError *err = al(alc, sizeof(FcError));
+            err->line = chunk->line - 1;
+            err->col = chunk->col - 1;
+            err->msg = fc->sbuf;
+            err->path = fc->path_ki;
+            array_push(errors, err);
+            lsp_diagnostic_respond(b, ld, errors);
+        } else {
+            b->lsp->send_default = true;
+        }
         lsp_exit_thread();
     }
 

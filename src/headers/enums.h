@@ -175,6 +175,7 @@ enum LSP_DATA_TYPE {
     lspt_completion,
     lspt_definition,
     lspt_sig_help,
+    lspt_diagnostic,
 };
 
 enum LSP_COMPLETION_TYPE {

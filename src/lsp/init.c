@@ -13,6 +13,7 @@ cJSON *lsp_init(Allocator *alc, cJSON *params) {
 
     cJSON_AddItemToObject(sync, "openClose", cJSON_CreateTrue());
     cJSON_AddItemToObject(sync, "change", cJSON_CreateNumber(1)); // Send full content
+    cJSON_AddItemToObject(sync, "save", cJSON_CreateNumber(1));   // Send full content
 
     cJSON_AddItemToObject(caps, "definitionProvider", cJSON_CreateTrue());
 
