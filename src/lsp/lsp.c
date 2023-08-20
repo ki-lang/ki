@@ -112,7 +112,7 @@ void cmd_lsp_server() {
 void lsp_respond(cJSON *resp) {
 
 #ifdef _WIN32
-    WaitForSingleObject(lsp_resp_lock);
+    WaitForSingleObject(lsp_resp_lock, INFINITE);
 #else
     pthread_mutex_lock(&lsp_resp_lock);
 #endif
