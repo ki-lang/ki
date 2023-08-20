@@ -1,10 +1,13 @@
 
 #include "../all.h"
 
+const int block_size = 1000000;
+const int block_private_size = 100000;
+
 Allocator *alc_make() {
     //
     Allocator *alc = malloc(sizeof(Allocator));
-    AllocatorBlock *block = alc_block_make(NULL, NULL, 100000);
+    AllocatorBlock *block = alc_block_make(NULL, NULL, block_size);
     alc->first_block = block;
     alc->current_block = block;
     alc->last_block = block;
@@ -42,7 +45,7 @@ AllocatorBlock *alc_block_make(AllocatorBlock *prev, AllocatorBlock *next, size_
 }
 void *al(Allocator *alc, size_t size) {
     //
-    if (size > 500) {
+    if (size > block_private_size) {
         return al_private(alc, size)->start_adr;
     }
     if (size % 8 > 0) {
@@ -56,7 +59,7 @@ void *al(Allocator *alc, size_t size) {
         // printf("l:%ld\n", block->space_left);
         return adr;
     }
-    size_t new_size = 100000;
+    size_t new_size = block_size;
     if (size > new_size) {
         new_size = size;
     }

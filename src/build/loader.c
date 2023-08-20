@@ -194,7 +194,7 @@ Nsc *loader_load_nsc(Pkc *pkc, char *name) {
 
     if (!dir_exists(dir_abs)) {
         sprintf(b->sbuf, "Namespace directory not found: '%s'", dir_abs);
-        die(b->sbuf);
+        build_error(b, b->sbuf);
     }
 
     //

@@ -10,10 +10,8 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
 
     //
     if (!file_exists(path_ki)) {
-        if (b->lsp)
-            lsp_exit_thread();
         sprintf(b->sbuf, "File not found: %s", path_ki);
-        die(b->sbuf);
+        build_error(b, b->sbuf);
     }
 
     bool is_header = ends_with(path_ki, ".kh");

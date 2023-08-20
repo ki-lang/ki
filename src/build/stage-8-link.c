@@ -141,7 +141,7 @@ void stage_8(Build *b) {
     }
 
     if (!b->main_func && !b->test) {
-        die("❌ Missing 'main' function");
+        build_error(b, "❌ Missing 'main' function");
     }
 
     stage_8_link(b, o_files);
@@ -318,7 +318,7 @@ void llvm_init(Build *b, struct Target *t) {
         }
     }
     if (!triple) {
-        die("❌ Could not figure out the LLVM triple");
+        build_error(b, "❌ Could not figure out the LLVM triple");
     }
 
     LLVMTargetRef target;
@@ -413,7 +413,7 @@ void stage_8_link(Build *b, Array *o_files) {
     }
 
     if (!linker) {
-        die("❌ Could not figure out which linker to use for your host os / target os.");
+        build_error(b, "❌ Could not figure out which linker to use for your host os / target os.");
     }
 
     //
@@ -528,6 +528,6 @@ void stage_8_link(Build *b, Array *o_files) {
     }
     int res = system(cmd_str);
     if (res != 0) {
-        die("❌ Failed to link");
+        build_error(b, "❌ Failed to link");
     }
 }

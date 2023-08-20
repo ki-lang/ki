@@ -239,10 +239,10 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
     if ((d = opendir(dir)) != NULL) {
         /* print all the files and directories within directory */
         while ((ent = readdir(d)) != NULL) {
-            char *path = malloc(strlen(dir) + strlen(ent->d_name) + 2);
             if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
                 continue;
             }
+            char *path = malloc(strlen(dir) + strlen(ent->d_name) + 2);
             strcpy(path, dir);
             strcat(path, "/");
             strcat(path, ent->d_name);

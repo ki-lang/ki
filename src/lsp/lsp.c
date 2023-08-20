@@ -94,9 +94,6 @@ void cmd_lsp_server() {
             return;
         }
         char *tmp = str_to_chars(alc, input);
-        // lsp_log("# Input:\n");
-        // lsp_log(tmp);
-        // lsp_log("\n");
 
         Array *reqs = cmd_lsp_parse_input(alc, input);
         if (!reqs) {
@@ -108,9 +105,6 @@ void cmd_lsp_server() {
 
         for (int i = 0; i < reqs->length; i++) {
             char *req = array_get_index(reqs, i);
-            // lsp_log("# Req:\n");
-            // lsp_log(req);
-            // lsp_log("\n");
 
             cJSON *json = cJSON_ParseWithLength(req, strlen(req));
             if (json) {
@@ -118,6 +112,7 @@ void cmd_lsp_server() {
                 if (resp) {
                     lsp_respond(resp);
                 }
+                cJSON_Delete(json);
             } else {
                 lsp_log("# Invalid json\n");
             }
@@ -395,6 +390,7 @@ void *lsp_run_build_entry(void *ld_) {
         }
     }
 
+    lsp_data_free(ld);
     alc_delete(alc);
     return NULL;
 }
@@ -410,8 +406,6 @@ void *lsp_run_build_entry_2(void *ld_) {
     argv[2] = ld->filepath;
 
     cmd_build(argc, argv, ld);
-
-    lsp_data_free(ld);
     return NULL;
 }
 

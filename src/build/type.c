@@ -410,7 +410,7 @@ Type *type_gen_int(Build *b, Allocator *alc, int bytes, bool is_signed) {
             return type_gen(b, alc, "u64");
         }
     }
-    die("Cannot generate integer type (bug)");
+    build_error(b, "Cannot generate integer type (bug)");
     return NULL;
 }
 
@@ -422,7 +422,7 @@ Type *type_gen(Build *b, Allocator *alc, char *name) {
     Idf *idf = map_get(nsc->scope->identifiers, name);
     if (!idf || idf->type != idf_class) {
         sprintf(b->sbuf, "Type not found '%s'", name);
-        die(b->sbuf);
+        build_error(b, b->sbuf);
     }
 
     return type_gen_class(alc, idf->item);

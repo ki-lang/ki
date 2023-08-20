@@ -158,6 +158,7 @@ enum TARGET_OS {
     os_win,
 };
 enum TARGET_ARCH {
+    arch_other,
     arch_x64,
     arch_arm64,
 };

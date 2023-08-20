@@ -60,6 +60,7 @@ char *llvm_ir_gep(LB *b, char *type, char *lon, char *index, char *index_type);
 
 struct LB {
     Fc *fc;
+    Build *build;
     Allocator *alc;
     LLVMFunc *lfunc;
     Array *lfuncs;

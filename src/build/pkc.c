@@ -44,7 +44,7 @@ Nsc *pkc_get_nsc(Pkc *pkc, char *name) {
     Nsc *nsc = map_get(pkc->namespaces, name);
     if (!nsc) {
         sprintf(pkc->b->sbuf, "Namespace not found: '%s'", name);
-        die(pkc->b->sbuf);
+        build_error(pkc->b, pkc->b->sbuf);
     }
     return nsc;
 }
@@ -125,7 +125,6 @@ Pkc *pkc_get_sub_package(Pkc *pkc, char *name) {
         return res;
     }
 
-    char msg[256];
     Build *b = pkc->b;
 
     // Load from config
@@ -140,8 +139,8 @@ Pkc *pkc_get_sub_package(Pkc *pkc, char *name) {
         const cJSON *jversion = cJSON_GetObjectItemCaseSensitive(item, "version");
 
         if (!jname || !jname->valuestring || !jversion || !jversion->valuestring) {
-            sprintf(msg, "Package '%s' has no name/version defined in: %s", name, cfg->path);
-            die(msg);
+            sprintf(b->sbuf, "Package '%s' has no name/version defined in: %s", name, cfg->path);
+            build_error(b, b->sbuf);
         }
 
         char pkgpath[KI_PATH_MAX];
@@ -159,8 +158,8 @@ Pkc *pkc_get_sub_package(Pkc *pkc, char *name) {
         strcat(config_path, "ki.json");
 
         if (!file_exists(config_path)) {
-            sprintf(msg, "Package '%s' has no 'ki.json' config. Expected file: '%s'", name, config_path);
-            die(msg);
+            sprintf(b->sbuf, "Package '%s' has no 'ki.json' config. Expected file: '%s'", name, config_path);
+            build_error(b, b->sbuf);
         }
 
         Pkc *sub = loader_get_pkc_for_dir(b, versionpath);

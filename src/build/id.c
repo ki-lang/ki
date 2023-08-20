@@ -255,7 +255,7 @@ Idf *ki_lib_get(Build *b, char *ns, char *name) {
     Idf *idf = map_get(nsc->scope->identifiers, name);
     if (!idf) {
         sprintf(b->sbuf, "ki lib identifier not found: '%s'", name);
-        die(b->sbuf);
+        build_error(b, b->sbuf);
     }
     return idf;
 }

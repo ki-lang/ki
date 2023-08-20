@@ -37,7 +37,7 @@ void stage_3(Fc *fc) {
         }
         if (did_fix_any && last != NULL) {
             sprintf(b->sbuf, "Compiler could not figure out all type sizes");
-            die(b->sbuf);
+            build_error(b, b->sbuf);
         }
         if (!had_missing_size) {
             break;
@@ -55,7 +55,7 @@ void stage_3(Fc *fc) {
         }
         if (class->size == 0) {
             sprintf(b->sbuf, "Missing class size: %s", class->dname);
-            die(b->sbuf);
+            build_error(b, b->sbuf);
         }
     }
 
@@ -122,9 +122,8 @@ void stage_3_circular(Build *b, Class *class) {
                     str_append_chars(list, array_get_index(prop_names, i));
                 }
                 // Show error
-                char err[1024];
-                sprintf(err, "Property '%s.%s' has a shared reference type, shared reference types are not allowed to loop back to it's own class. We dont allow this because it can result into a memory leak. Use 'weak' references instead for this situation.\nLoop: %s -> %s (%s)", class->dname, pname, class->dname, str_to_chars(b->alc, list), class->dname);
-                die(err);
+                sprintf(b->sbuf, "Property '%s.%s' has a shared reference type, shared reference types are not allowed to loop back to it's own class. We dont allow this because it can result into a memory leak. Use 'weak' references instead for this situation.\nLoop: %s -> %s (%s)", class->dname, pname, class->dname, str_to_chars(b->alc, list), class->dname);
+                build_error(b, b->sbuf);
             }
         }
     }

@@ -1360,7 +1360,7 @@ void value_equalize_types(Allocator *alc, Fc *fc, Scope *scope, VPair *pair) {
     }
 
     if (lt->type != type_int || rt->type != type_int) {
-        die("Could not convert value to a number\n");
+        build_error(fc->b, "Could not convert value to a number");
         return;
     }
 

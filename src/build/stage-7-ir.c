@@ -11,6 +11,7 @@ void stage_7(Fc *fc) {
     Allocator *alc = fc->alc_ast;
 
     LB *lb = al(alc, sizeof(LB));
+    lb->build = b;
     lb->fc = fc;
     lb->alc = alc;
 
