@@ -21,38 +21,15 @@ cJSON *lsp_save(Allocator *alc, cJSON *params) {
             ld->type = lspt_diagnostic;
             ld->filepath = uri;
 
-#ifdef WIN32
-            void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))lsp_completion_entry, (void *)ld, 0, NULL);
-#else
-            pthread_t thr;
-            pthread_create(&thr, NULL, lsp_diagnostic_entry, (void *)ld);
-#endif
+            lsp_run_build(ld);
         }
     }
 
     return NULL;
 }
 
-void *lsp_diagnostic_entry(void *ld_) {
+void lsp_diagnostic_respond(Allocator *alc, LspData *ld, Array *errors_) {
     //
-    LspData *ld = (LspData *)ld_;
-
-    int argc = 3;
-    char *argv[argc];
-    argv[0] = "ki";
-    argv[1] = "build";
-    argv[2] = ld->filepath;
-
-    cmd_build(argc, argv, ld);
-
-    lsp_data_free(ld);
-    return NULL;
-}
-
-void lsp_diagnostic_respond(Build *b, LspData *ld, Array *errors_) {
-    //
-    Allocator *alc = b->alc;
-
     FcError *first = NULL;
     Array *errors = array_make(alc, 10);
     for (int i = 0; i < errors_->length; i++) {
@@ -104,5 +81,4 @@ void lsp_diagnostic_respond(Build *b, LspData *ld, Array *errors_) {
 
     ld->responded = true;
     lsp_respond(resp);
-    lsp_exit_thread();
 }

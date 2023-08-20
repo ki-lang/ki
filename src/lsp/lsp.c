@@ -366,24 +366,54 @@ bool lsp_check(Fc *fc) {
     return false;
 }
 
-// char *lsp_set_tag(Allocator *alc, char *text, int line, int col) {
-//     //
-//     int index = lsp_get_pos_index(text, line, col);
-//     if (index > -1) {
-//         int len = strlen(text);
-//         char before[index + 1];
-//         char after[len - index + 1];
-//         Str *result = str_make(alc, len + 30);
-//         memcpy(before, text, index);
-//         before[index] = '\0';
-//         memcpy(after, text + index, len - index + 1);
-//         str_append_chars(result, before);
-//         str_append_chars(result, lsp_tag);
-//         str_append_chars(result, after);
-//         return str_to_chars(alc, result);
-//     }
-//     return text;
-// }
+void lsp_run_build(LspData *ld) {
+    //
+    run_async(lsp_run_build_entry, ld, false);
+}
+
+void *lsp_run_build_entry(void *ld_) {
+    //
+    LspData *ld = (LspData *)ld_;
+    Allocator *alc = alc_make();
+
+    // Run build and wait
+    run_async(lsp_run_build_entry_2, ld, true);
+
+    if (!ld->responded) {
+        if (ld->type == lspt_completion) {
+            lsp_completion_respond(alc, ld, array_make(alc, 1));
+        } else if (ld->type == lspt_diagnostic) {
+            Array *errors = array_make(alc, 2);
+            lsp_diagnostic_respond(alc, ld, errors);
+        } else {
+            // Default response
+            cJSON *result = cJSON_CreateNull();
+            cJSON *resp = cJSON_CreateObject();
+            cJSON_AddItemToObject(resp, "id", cJSON_CreateNumber(ld->id));
+            cJSON_AddItemToObject(resp, "result", result);
+            lsp_respond(resp);
+        }
+    }
+
+    alc_delete(alc);
+    return NULL;
+}
+
+void *lsp_run_build_entry_2(void *ld_) {
+    //
+    LspData *ld = (LspData *)ld_;
+
+    int argc = 3;
+    char *argv[argc];
+    argv[0] = "ki";
+    argv[1] = "build";
+    argv[2] = ld->filepath;
+
+    cmd_build(argc, argv, ld);
+
+    lsp_data_free(ld);
+    return NULL;
+}
 
 void cmd_lsp_help() {
     //

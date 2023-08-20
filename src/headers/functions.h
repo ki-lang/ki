@@ -14,6 +14,7 @@ char *str_replace_simple(char *s, const char *s1, const char *s2);
 char *str_replace(Allocator *alc, char *orig, char *rep, char *with);
 void free_delayed(void *item);
 void rtrim(char *str, char ch);
+void run_async(void *func, void *arg, bool wait);
 
 // Syntax
 bool is_alpha_char(char c);
@@ -42,7 +43,8 @@ char *dups(Allocator *alc, char *str);
 
 // Build
 void cmd_build(int argc, char **argv, LspData *lsp_data);
-void build_clean_up(Build *b);
+void build_end(Build *b, int exit_code);
+void build_error(Build *b, char *msg);
 Class *ki_get_class(Build *b, char *ns, char *name);
 Func *ki_get_func(Build *b, char *ns, char *name);
 
@@ -71,7 +73,9 @@ cJSON *lsp_init(Allocator *alc, cJSON *params);
 bool lsp_check(Fc *fc);
 void lsp_log(char *msg);
 int lsp_get_pos_index(char *text, int line, int col);
-char *lsp_set_tag(Allocator *alc, char *text, int line, int col);
+void lsp_run_build(LspData *ld);
+void *lsp_run_build_entry(void *ld_);
+void *lsp_run_build_entry_2(void *ld_);
 cJSON *lsp_open(Allocator *alc, cJSON *params);
 cJSON *lsp_close(Allocator *alc, cJSON *params);
 cJSON *lsp_change(Allocator *alc, cJSON *params);
@@ -81,9 +85,9 @@ cJSON *lsp_completion(Allocator *alc, cJSON *params, int id);
 cJSON *lsp_help(Allocator *alc, cJSON *params, int id);
 void lsp_help_respond(Build *b, LspData *ld, char *full, Array *args, int arg_index);
 void lsp_help_check_args(Allocator *alc, Fc *fc, Array *args, bool skip_first, Type *rett, int arg_index);
-void lsp_completion_respond(Build *b, LspData* ld, Array *items);
-void lsp_definition_respond(Build *b, LspData *ld, char *path, int line, int col);
-void lsp_diagnostic_respond(Build *b, LspData *ld, Array *errors);
+void lsp_completion_respond(Allocator *alc, LspData* ld, Array *items);
+void lsp_definition_respond(Allocator *alc, LspData *ld, char *path, int line, int col);
+void lsp_diagnostic_respond(Allocator *alc, LspData *ld, Array *errors_);
 void lsp_respond(cJSON *resp);
 void lsp_exit_thread();
 

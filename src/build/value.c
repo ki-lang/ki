@@ -506,7 +506,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     c->insert = lsp_func_insert(alc, func, name, false);
                     array_push(items, c);
                 }
-                lsp_completion_respond(b, ld, items);
+                lsp_completion_respond(b->alc, ld, items);
+                build_end(b, 0);
             }
 
             tok(fc, token, true, false);
@@ -523,8 +524,10 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     char *path = class->fc->path_ki;
                     int line = prop->def_chunk->line;
                     int col = prop->def_chunk->col;
-                    if (path)
-                        lsp_definition_respond(fc->b, fc->b->lsp, path, line - 1, col - 1);
+                    if (path) {
+                        lsp_definition_respond(b->alc, b->lsp, path, line - 1, col - 1);
+                        build_end(b, 0);
+                    }
                 }
 
                 v = vgen_class_pa(alc, scope, v, prop);
@@ -544,8 +547,10 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     char *path = func->fc->path_ki;
                     int line = func->def_chunk->line;
                     int col = func->def_chunk->col;
-                    if (path)
-                        lsp_definition_respond(fc->b, fc->b->lsp, path, line - 1, col - 1);
+                    if (path) {
+                        lsp_definition_respond(b->alc, b->lsp, path, line - 1, col - 1);
+                        build_end(b, 0);
+                    }
                 }
 
                 v = vgen_fptr(alc, func, v);
@@ -959,7 +964,8 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
                     c->insert = lsp_func_insert(alc, func, name, false);
                     array_push(items, c);
                 }
-                lsp_completion_respond(b, ld, items);
+                lsp_completion_respond(b->alc, ld, items);
+                build_end(b, 0);
             }
 
             tok(fc, token, true, false);
@@ -1541,6 +1547,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
     if (fc->lsp_file && lsp_check(fc) && fc->b->lsp->type == lspt_sig_help) {
         lsp_help_check_args(alc, fc, args, skip_first_arg, rett, index);
+        build_end(fc->b, 0);
     }
 
     tok(fc, token, false, true);
@@ -1560,6 +1567,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
                 if (fc->lsp_file && lsp_check(fc) && fc->b->lsp->type == lspt_sig_help) {
                     lsp_help_check_args(alc, fc, args, skip_first_arg, rett, index);
+                    build_end(fc->b, 0);
                 }
 
                 Arg *arg = array_get_index(args, index);

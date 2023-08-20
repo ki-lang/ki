@@ -206,11 +206,11 @@ void fc_error(Fc *fc) {
             err->msg = fc->sbuf;
             err->path = fc->path_ki;
             array_push(errors, err);
-            lsp_diagnostic_respond(b, ld, errors);
+            lsp_diagnostic_respond(alc, ld, errors);
         } else {
             b->lsp->send_default = true;
         }
-        lsp_exit_thread();
+        build_end(b, 1);
     }
 
     if (is_newline(get_char(fc, 0))) {

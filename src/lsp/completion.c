@@ -34,12 +34,7 @@ cJSON *lsp_completion(Allocator *alc, cJSON *params, int id) {
                 ld->index = lsp_get_pos_index(text, line, col);
                 ld->text = strdup(text);
 
-#ifdef WIN32
-                void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))lsp_completion_entry, (void *)ld, 0, NULL);
-#else
-                pthread_t thr;
-                pthread_create(&thr, NULL, lsp_completion_entry, (void *)ld);
-#endif
+                lsp_run_build(ld);
                 return NULL;
             }
         }
@@ -47,7 +42,7 @@ cJSON *lsp_completion(Allocator *alc, cJSON *params, int id) {
     return cJSON_CreateNull();
 }
 
-void lsp_completion_respond(Build *b, LspData *ld, Array *items) {
+void lsp_completion_respond(Allocator *alc, LspData *ld, Array *items) {
     //
     cJSON *result = cJSON_CreateObject();
     cJSON *items_ = cJSON_CreateArray();
@@ -82,21 +77,4 @@ void lsp_completion_respond(Build *b, LspData *ld, Array *items) {
 
     ld->responded = true;
     lsp_respond(resp);
-    lsp_exit_thread();
-}
-
-void *lsp_completion_entry(void *ld_) {
-    //
-    LspData *ld = (LspData *)ld_;
-
-    int argc = 3;
-    char *argv[argc];
-    argv[0] = "ki";
-    argv[1] = "build";
-    argv[2] = ld->filepath;
-
-    cmd_build(argc, argv, ld);
-
-    lsp_data_free(ld);
-    return NULL;
 }

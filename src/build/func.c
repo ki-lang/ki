@@ -76,7 +76,7 @@ void func_make_arg_decls(Func *func) {
 
 void *free_delayed_exec(void *item) {
     //
-    sleep_ms(5000);
+    sleep_ms(10000);
     free(item);
     return NULL;
 }

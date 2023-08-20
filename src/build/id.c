@@ -64,6 +64,7 @@ Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
 Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
     //
     bool lsp = fc->lsp_file && lsp_check(fc);
+    Build *b = fc->b;
 
     char *token = fc->token;
     tok(fc, token, sameline, allow_space);
@@ -96,8 +97,8 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
         lsp = lsp || (fc->lsp_file && lsp_check(fc));
 
         // LSP Completion
-        if (lsp && fc->b->lsp->type == lspt_completion) {
-            LspData *ld = fc->b->lsp;
+        if (lsp && b->lsp->type == lspt_completion) {
+            LspData *ld = b->lsp;
             Chunk *chunk = fc->chunk;
             Allocator *alc = fc->alc;
             Array *items = array_make(alc, 100);
@@ -126,7 +127,8 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
                 }
                 cur_scope = cur_scope->parent;
             }
-            lsp_completion_respond(fc->b, ld, items);
+            lsp_completion_respond(b->alc, ld, items);
+            build_end(b, 0);
         }
 
         tok(fc, token, true, false);
@@ -183,7 +185,8 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
             //     col = decl->chunk_body->col;
         }
         if (path) {
-            lsp_definition_respond(fc->b, fc->b->lsp, path, line - 1, col - 1);
+            lsp_definition_respond(b->alc, b->lsp, path, line - 1, col - 1);
+            build_end(b, 0);
         }
     }
 

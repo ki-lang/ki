@@ -13,6 +13,13 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     Allocator *alc = alc_make();
     Allocator *alc_io = alc_make();
     //
+    Build *b = al(alc, sizeof(Build));
+    b->alc = alc;
+    b->alc_io = alc_io;
+    b->token = al(alc, KI_TOKEN_MAX);
+    b->sbuf = al(alc, 2000);
+    b->lsp = lsp_data;
+    //
     Array *args = array_make(alc, argc);
     Map *options = map_make(alc);
     Array *has_value = array_make(alc, 8);
@@ -23,15 +30,14 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     parse_argv(argv, argc, has_value, args, options);
 
     // Args
-    char argbuf[KI_PATH_MAX];
     for (int i = 0; i < args->length; i++) {
         char *arg = array_get_index(args, i);
         if (arg[0] != '-')
             continue;
-        sprintf(argbuf, ".%s.", arg);
-        if (!strstr(".--optimize.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.--help.-h.-v.-vv.-vvv.--watch.", argbuf)) {
-            sprintf(argbuf, "❓ Unknown option '%s'", arg);
-            die(argbuf);
+        sprintf(b->sbuf, ".%s.", arg);
+        if (!strstr(".--optimize.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.--help.-h.-v.-vv.-vvv.--watch.", b->sbuf)) {
+            sprintf(b->sbuf, "❓ Unknown option '%s'", arg);
+            build_error(b, b->sbuf);
         }
     }
 
@@ -40,8 +46,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     // Check options
     char *path_out = map_get(options, "-o");
     if (path_out && path_out[0] == '-') {
-        sprintf(argbuf, "Invalid value for -o, first character cannot be '-' | Value: '%s'", path_out);
-        die(argbuf);
+        sprintf(b->sbuf, "Invalid value for -o, first character cannot be '-' | Value: '%s'", path_out);
+        build_error(b, b->sbuf);
     }
 
     if (!lsp_data && (array_contains(args, "-h", arr_find_str) || array_contains(args, "--help", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0))) {
@@ -75,9 +81,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
             target_os = os_win;
             target_arch = arch_arm64;
         } else {
-            char err[256];
-            sprintf(err, "Unsupported target: '%s' | options:\n - linux-x64\n - linux-arm64\n - macos-x64\n - macos-arm64\n - win-x64\n - win-arm64\n\n", target);
-            die(err);
+            sprintf(b->sbuf, "Unsupported target: '%s'\nOptions: linux-x64, linux-arm64, macos-x64, macos-arm64, win-x64, win-arm64", target);
+            build_error(b, b->sbuf);
         }
     }
 
@@ -90,6 +95,10 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
         os = "macos";
     else if (target_os == os_win)
         os = "win";
+    else {
+        sprintf(b->sbuf, "Unknown build target");
+        build_error(b, b->sbuf);
+    }
 
     if (target_arch == arch_x64)
         arch = "x64";
@@ -116,12 +125,6 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     bool link_static = array_contains(args, "--static", arr_find_str) || array_contains(args, "-s", arr_find_str);
 
     //
-    Build *b = al(alc, sizeof(Build));
-    b->alc = alc;
-    b->alc_io = alc_io;
-    b->token = al(alc, KI_TOKEN_MAX);
-    b->sbuf = al(alc, 2000);
-    b->lsp = lsp_data;
     b->pkc_main = NULL;
     b->nsc_main = NULL;
 
@@ -150,11 +153,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
         bool success = get_fullpath(arg, full);
 
         if (!success || !file_exists(full)) {
-            if (lsp_data) {
-                lsp_exit_thread();
-            }
             sprintf(b->sbuf, "CLI argument, file/directory not found: '%s'", arg);
-            die(b->sbuf);
+            build_error(b, b->sbuf);
         }
 
         if (dir_exists(full)) {
@@ -169,11 +169,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
         }
 
         if (!ends_with(arg, ".ki")) {
-            if (lsp_data) {
-                lsp_exit_thread();
-            }
             sprintf(b->sbuf, "CLI argument, filename must end with .ki : '%s'", arg);
-            die(b->sbuf);
+            build_error(b, b->sbuf);
         }
 
         array_push(files, full);
@@ -181,7 +178,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
 
     if (files->length == 0) {
         sprintf(b->sbuf, "Nothing to compile, add some files or directories to your build command");
-        die(b->sbuf);
+        build_error(b, b->sbuf);
     }
 
     char *first_file = array_get_index(files, 0);
@@ -322,14 +319,6 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     loader_load_nsc(pkc_ki, "mem");
     loader_load_nsc(pkc_ki, "os");
 
-    //
-    // #ifdef WIN32
-    //     void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))io_loop, (void *)b, 0, NULL);
-    // #else
-    //     pthread_t thr;
-    //     pthread_create(&thr, NULL, io_loop, (void *)b);
-    // #endif
-
     // Compile ki lib
     compile_loop(b, 1); // Scan identifiers
 
@@ -343,6 +332,10 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     }
 
     compile_loop(b, 6); // Complete all other stages
+
+    if (b->lsp) {
+        build_end(b, 0);
+    }
 
     b->ir_ready = true;
 
@@ -405,8 +398,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
         exit(code);
     }
 
-    // Free memory
-    build_clean_up(b);
+    //
+    build_end(b, 0);
 }
 
 void build_clean_up(Build *b) {
@@ -420,6 +413,24 @@ void build_clean_up(Build *b) {
     }
     alc_delete(b->alc_ast);
     alc_delete(b->alc);
+}
+
+void build_end(Build *b, int exit_code) {
+    //
+    bool is_lsp = b->lsp ? true : false;
+    build_clean_up(b);
+    if (is_lsp)
+        lsp_exit_thread();
+    else
+        exit(exit_code);
+}
+
+void build_error(Build *b, char *msg) {
+    //
+    if (!b->lsp) {
+        printf("Build error: %s\n", msg);
+    }
+    build_end(b, 1);
 }
 
 void build_add_files(Build *b, Array *files) {
@@ -451,7 +462,7 @@ int default_os() {
 #if __APPLE__
     return os_macos;
 #endif
-    die("Cannot determine default target 'os', use --os to specify manually");
+    return os_other;
 }
 
 int default_arch() {

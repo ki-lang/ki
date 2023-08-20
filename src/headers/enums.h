@@ -152,6 +152,7 @@ enum LINKTYPE {
 };
 
 enum TARGET_OS {
+    os_other,
     os_linux,
     os_macos,
     os_win,
