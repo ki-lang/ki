@@ -1291,14 +1291,14 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
 
     bool is_ptr = lt->type == type_ptr || rt->type == type_ptr;
 
-    VPair *pair = malloc(sizeof(VPair));
-    pair->left = left;
-    pair->right = right;
+    // VPair *pair = malloc(sizeof(VPair));
+    VPair pair;
+    pair.left = left;
+    pair.right = right;
 
-    value_equalize_types(alc, fc, scope, pair);
-    Value *l = pair->left;
-    Value *r = pair->right;
-    free(pair);
+    value_equalize_types(alc, fc, scope, &pair);
+    Value *l = pair.left;
+    Value *r = pair.right;
 
     type_check(fc, l->rett, r->rett);
     Value *v = vgen_op(alc, fc->b, l, r, op, is_ptr);

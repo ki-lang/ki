@@ -3,7 +3,7 @@
 
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
     //
-    Fc *prev = map_get(b->all_fcs, path_ki);
+    Fc *prev = map_get(b->fcs_by_path, path_ki);
     if (prev && !duplicate) {
         return prev;
     }
@@ -98,12 +98,14 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
         fc->chunk->content = content;
         fc->chunk->length = strlen(content);
 
+        map_set(b->fcs_by_path, path_ki, fc);
+
         chain_add(b->stage_1, fc);
     }
 
     //
     array_push(nsc->fcs, fc);
-    map_set(b->all_fcs, path_ki, fc);
+    array_push(b->all_fcs, fc);
 
     // printf("FC: %s | NSC: %s:%s\n", path_ki, nsc->pkc->name, nsc->name);
 
@@ -130,7 +132,12 @@ void fc_set_cache_paths(Fc *fc) {
     simple_hash(fc->path_ki, hash);
     fc->path_hash = hash;
 
-    Str *buf = str_make(alc, 500);
+    // Str *buf = str_make(alc, 500);
+    Str *buf = fc->str_buf;
+    if (fc->cache) {
+        cJSON_Delete(fc->cache);
+        fc->cache = NULL;
+    }
     if (file_exists(fc->path_cache)) {
         file_get_contents(buf, fc->path_cache);
         char *content = str_to_chars(alc, buf);

@@ -37,6 +37,7 @@ cJSON *lsp_completion(Allocator *alc, cJSON *params, int id) {
                 lsp_run_build(ld);
                 return NULL;
             }
+            free(uri);
         }
     }
     return cJSON_CreateNull();

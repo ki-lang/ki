@@ -189,8 +189,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     char *main_dir = first_dir;
 
     // Cache dir
-    char *cache_buf = malloc(1000);
-    char *cache_hash = malloc(64);
+    char *cache_buf = al(alc, 1000);
+    char *cache_hash = al(alc, 64);
     char *cache_dir = al(alc, KI_PATH_MAX);
     strcpy(cache_buf, main_dir);
     strcat(cache_buf, "||");
@@ -200,7 +200,6 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     strcat(cache_buf, debug ? "1" : "0");
     strcat(cache_buf, test ? "1" : "0");
     simple_hash(cache_buf, cache_hash);
-    free(cache_buf);
     strcpy(cache_dir, get_storage_path());
     strcat(cache_dir, "/cache/");
 
@@ -209,7 +208,6 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     }
 
     strcat(cache_dir, cache_hash);
-    free(cache_hash);
 
     if (!file_exists(cache_dir)) {
         makedir(cache_dir, 0700);
@@ -254,7 +252,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     b->all_ki_files = array_make(alc, 1000);
     b->link_libs = map_make(alc);
     b->link_dirs = array_make(alc, 40);
-    b->all_fcs = map_make(alc);
+    b->fcs_by_path = map_make(alc);
+    b->all_fcs = array_make(alc, 80);
     b->main_func = NULL;
     b->str_buf = str_make(alc, 5000);
     b->str_buf_io = str_make(alc_io, 10000);
@@ -405,6 +404,12 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
 
 void build_clean_up(Build *b) {
     //
+    for (int i = 0; i < b->all_fcs->length; i++) {
+        Fc *fc = array_get_index(b->all_fcs, i);
+        if (fc->cache) {
+            cJSON_Delete(fc->cache);
+        }
+    }
     for (int i = 0; i < b->packages->length; i++) {
         Pkc *pkc = array_get_index(b->packages, i);
         cJSON *cfg = pkc->config ? pkc->config->json : NULL;
@@ -592,7 +597,7 @@ void build_watch(Build *b, int argc, char *argv[]) {
     }
     char *cmd = str_to_chars(b->alc, cmd_str);
 
-    Array *fcs = b->all_fcs->values;
+    Array *fcs = b->all_fcs;
     while (true) {
         bool run = false;
         for (int i = 0; i < fcs->length; i++) {

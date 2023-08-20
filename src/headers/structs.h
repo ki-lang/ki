@@ -109,7 +109,8 @@ struct Build {
     Array *all_ki_files;
     Array *link_dirs;
     Map *link_libs;
-    Map *all_fcs;
+    Map *fcs_by_path;
+    Array *all_fcs;
     Str *str_buf;
     Str *str_buf_io;
     Array *tests;

@@ -73,8 +73,11 @@ Pkc *loader_get_pkc_for_dir(Build *b, char *dir) {
         }
     }
 
-    if (!pkc)
+    if (!pkc) {
         pkc = pkc_init(alc, b, name, cfg_dir, cfg);
+    } else {
+        cJSON_Delete(cfg->json);
+    }
     map_set(b->packages_by_dir, dir, pkc);
     map_set(b->packages_by_dir, cfg_dir, pkc);
 

@@ -7,7 +7,6 @@ typedef struct Str {
     int length;
     int mem_size;
     void *data;
-    AllocatorBlock *al_block;
 } Str;
 
 Str *str_make(Allocator *alc, int mem_size);

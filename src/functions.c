@@ -159,7 +159,7 @@ void simple_hash(char *content_, char *buf_) {
 }
 
 Array *explode(Allocator *alc, char *part, char *content) {
-    char *copy = strdup(content);
+    char *copy = dups(alc, content);
     Array *res = array_make(alc, 2);
     char *token = strtok(copy, part);
     while (token != NULL) {
