@@ -1,8 +1,11 @@
 
 global errno: i32;
-shared stderr : i32;
-shared stdin : i32;
-shared stdout : i32;
+shared stderr : ?FILE;
+shared stdin : ?FILE;
+shared stdout : ?FILE;
+
+alias ptr as FILE;
+alias uxx as SOCKET;
 
 // HANDLE : ptr
 // DWORD : u32

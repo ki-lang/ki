@@ -15,8 +15,6 @@ void stage_2(Fc *fc) {
         printf("# Stage 2 : Read types : %s\n", fc->path_ki);
     }
 
-    b->core_types_scanned = true;
-
     for (int i = 0; i < fc->aliasses->length; i++) {
         Alias *a = array_get_index(fc->aliasses, i);
         fc->chunk = a->chunk;
@@ -88,11 +86,13 @@ void stage_2_class(Fc *fc, Class *class) {
             Type *type = type_gen(b, b->alc, "u32");
             ClassProp *prop = class_prop_init(b->alc, class, type);
             prop->value = vgen_vint(b->alc, 1, type, false);
+            prop->act = act_private;
             map_set(class->props, "_RC", prop);
 
             Type *type_weak = type_gen(b, b->alc, "u32");
             ClassProp *prop_weak = class_prop_init(b->alc, class, type_weak);
             prop_weak->value = vgen_vint(b->alc, 0, type_weak, false);
+            prop_weak->act = act_private;
             map_set(class->props, "_RC_WEAK", prop_weak);
         }
     }
@@ -185,13 +185,21 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
             tok(fc, token, true, true);
         }
 
-        if (strcmp(token, "static") == 0) {
+        Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
+
+        char next_token[KI_TOKEN_MAX];
+        tok(fc, next_token, true, true);
+
+        if (strcmp(token, "static") == 0 && strcmp(next_token, "fn") == 0) {
             is_static = true;
-            tok(fc, token, true, true);
+            strcpy(token, next_token);
+        } else {
+            rtok(fc);
         }
 
         if (strcmp(token, "fn") == 0) {
             // Function
+            *def_chunk = *fc->chunk;
             tok(fc, token, true, true);
 
             bool borrow = true;
@@ -200,12 +208,14 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
 
             if (strcmp(token, "!") == 0) {
                 will_exit = true;
+                *def_chunk = *fc->chunk;
                 tok(fc, token, true, false);
             }
 
             if (!is_static) {
                 if (strcmp(token, ">") == 0) {
                     borrow = false;
+                    *def_chunk = *fc->chunk;
                     tok(fc, token, true, false);
                 }
             }
@@ -222,6 +232,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
             Func *func = class_define_func(fc, class, is_static, token, NULL, NULL, fc->chunk->line);
             func->act = act;
             func->will_exit = will_exit;
+            func->def_chunk = def_chunk;
 
             if (!is_static) {
                 Arg *arg = array_get_index(func->args, 0);
@@ -275,7 +286,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
             }
 
             if (!is_valid_varname(token)) {
-                sprintf(fc->sbuf, "Invalid function name syntax: '%s'", token);
+                sprintf(fc->sbuf, "Invalid property name syntax: '%s'", token);
                 fc_error(fc);
             }
             if (map_get(class->props, token) || map_get(class->funcs, token)) {
@@ -287,6 +298,7 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
 
             ClassProp *prop = class_prop_init(fc->alc, class, NULL);
             prop->act = act;
+            prop->def_chunk = def_chunk;
 
             tok(fc, token, true, true);
             if (strcmp(token, ":") == 0) {
@@ -441,7 +453,7 @@ void stage_2_func(Fc *fc, Func *func) {
         // Type check return type
         Type *rett = func->rett;
         Class *class = rett->class;
-        if ((!type_is_void(rett) && class != b->class_i32) || rett->ptr_depth > 0) {
+        if ((!type_is_void(rett) && class != ki_get_class(b, "type", "i32")) || rett->ptr_depth > 0) {
             sprintf(fc->sbuf, "func 'main' should return 'void' or 'i32'");
             fc_error(fc);
         }
@@ -508,13 +520,16 @@ void stage_2_class_defaults(Fc *fc, Class *class) {
                 Class *pclass = prop->type->class;
                 if (pclass && pclass->must_deref) {
                     class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, b->type_void, 0);
+                    class->func_deref_props->is_generated = true;
                     break;
                 }
             }
         }
         // Define __free
-        if (!class->func_free)
+        if (!class->func_free) {
             class->func_free = class_define_func(fc, class, false, "__free", NULL, b->type_void, 0);
+            class->func_free->is_generated = true;
+        }
     }
 }
 

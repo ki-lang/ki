@@ -1,47 +1,42 @@
 
 #include "../all.h"
 
-Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) {
+Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
     //
-    Fc *prev = map_get(b->all_fcs, path_ki);
-    if (prev) {
-        if (!prev->is_header) {
-            sprintf(b->sbuf, "Compiler tried to import the same file twice: %s", path_ki);
-            die(b->sbuf);
-        }
+    Fc *prev = map_get(b->fcs_by_path, path_ki);
+    if (prev && !duplicate) {
         return prev;
+    }
+    // printf("fc:%s\n", path_ki);
+
+    //
+    if (!file_exists(path_ki)) {
+        sprintf(b->sbuf, "File not found: %s", path_ki);
+        build_error(b, b->sbuf);
     }
 
     bool is_header = ends_with(path_ki, ".kh");
 
+    Pkc *pkc = nsc->pkc;
+
+    if (is_header) {
+        // Use main:main namespace
+        nsc = b->nsc_main;
+    }
+
     Allocator *alc = b->alc;
 
-    char *path_ir = al(alc, KI_PATH_MAX);
-    char *path_cache = al(alc, KI_PATH_MAX);
-    if (generated) {
-        sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, path_ki, nsc->pkc->hash);
-        sprintf(path_cache, "%s/%s_%s_%s.json", b->cache_dir, nsc->name, path_ki, nsc->pkc->hash);
-    } else {
-        if (!file_exists(path_ki)) {
-            sprintf(b->sbuf, "File not found: %s", path_ki);
-            die(b->sbuf);
-        }
-
-        char *fn = get_path_basename(alc, path_ki);
-        fn = strip_ext(alc, fn);
-        sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
-        sprintf(path_cache, "%s/%s_%s_%s.json", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
-    }
+    char msg[1000];
 
     Fc *fc = al(alc, sizeof(Fc));
     fc->b = b;
     fc->path_ki = path_ki;
-    fc->path_ir = path_ir;
-    fc->path_cache = path_cache;
+    fc->path_ir = NULL;
+    fc->path_cache = NULL;
     fc->ir = NULL;
     fc->ir_hash = "";
     fc->nsc = nsc;
-    fc->pkc_config = pkc_config;
+    fc->config_pkc = pkc;
     fc->alc = alc;
     fc->alc_ast = b->alc_ast;
     fc->deps = array_make(alc, 20);
@@ -70,19 +65,79 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
     fc->cache = NULL;
     fc->is_header = is_header;
     fc->ir_changed = false;
-    fc->generated = generated;
     fc->win_file_handle = NULL;
     fc->mod_time = 0;
-
-    char *hash = al(alc, 64);
-    simple_hash(path_ki, hash);
-    fc->path_hash = hash;
+    fc->lsp_file = b->lsp && (strcmp(b->lsp->filepath, path_ki) == 0);
 
     fc->test_counter = 0;
 
-    Str *buf = str_make(alc, 500);
-    if (file_exists(path_cache)) {
-        file_get_contents(buf, path_cache);
+    //
+    fc_set_cache_paths(fc);
+
+    // Content
+    if (prev) {
+        fc->chunk = chunk_clone(alc, prev->chunk);
+    } else {
+        Str *buf = str_make(alc, 500);
+
+        char *content = NULL;
+        if (fc->lsp_file && b->lsp->text) {
+            content = b->lsp->text;
+        } else if (lsp_doc_content) {
+            content = map_get(lsp_doc_content, fc->path_ki);
+            if (content) {
+                content = dups(alc, content);
+            }
+        }
+        if (!content) {
+            file_get_contents(buf, fc->path_ki);
+            content = str_to_chars(alc, buf);
+        }
+        fc->chunk->content = content;
+        fc->chunk->length = strlen(content);
+
+        map_set(b->fcs_by_path, path_ki, fc);
+
+        chain_add(b->stage_1, fc);
+    }
+
+    //
+    array_push(nsc->fcs, fc);
+    array_push(b->all_fcs, fc);
+
+    // printf("FC: %s | NSC: %s:%s\n", path_ki, nsc->pkc->name, nsc->name);
+
+    return fc;
+}
+
+void fc_set_cache_paths(Fc *fc) {
+
+    Build *b = fc->b;
+    Allocator *alc = b->alc;
+    Nsc *nsc = fc->nsc;
+
+    char *path_ir = al(alc, KI_PATH_MAX);
+    char *path_cache = al(alc, KI_PATH_MAX);
+    char *fn = get_path_basename(alc, fc->path_ki);
+    fn = strip_ext(alc, fn);
+    sprintf(path_ir, "%s/%s_%s_%s.ir", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
+    sprintf(path_cache, "%s/%s_%s_%s.json", b->cache_dir, nsc->name, fn, nsc->pkc->hash);
+
+    fc->path_ir = path_ir;
+    fc->path_cache = path_cache;
+
+    char *hash = al(alc, 64);
+    simple_hash(fc->path_ki, hash);
+    fc->path_hash = hash;
+
+    // Str *buf = str_make(alc, 500);
+    Str *buf = fc->str_buf;
+    if (fc->cache) {
+        cJSON_Delete(fc->cache);
+        fc->cache = NULL;
+    }
+    if (file_exists(fc->path_cache)) {
+        file_get_contents(buf, fc->path_cache);
         char *content = str_to_chars(alc, buf);
         fc->cache = cJSON_ParseWithLength(content, buf->length);
         cJSON *item = cJSON_GetObjectItemCaseSensitive(fc->cache, "ir_hash");
@@ -90,22 +145,6 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated) 
             fc->ir_hash = item->valuestring;
         }
     }
-
-    if (!generated) {
-        str_clear(buf);
-        file_get_contents(buf, fc->path_ki);
-        char *content = str_to_chars(alc, buf);
-        fc->chunk->content = content;
-        fc->chunk->length = strlen(content);
-        chain_add(b->stage_1, fc);
-        // chain_add(b->read_ki_file, fc);
-        // b->event_count++;
-    }
-
-    array_push(nsc->fcs, fc);
-    map_set(b->all_fcs, path_ki, fc);
-
-    return fc;
 }
 
 Chain *chain_make(Allocator *alc) {
@@ -151,9 +190,28 @@ void chain_add(Chain *chain, Fc *item) {
 
 void fc_error(Fc *fc) {
     //
+    Allocator *alc = fc->alc;
     Chunk *chunk = fc->chunk;
     char *content = chunk->content;
     int length = chunk->length;
+
+    Build *b = fc->b;
+    if (b->lsp) {
+        LspData *ld = b->lsp;
+        if (ld->type == lspt_diagnostic) {
+            Array *errors = array_make(alc, 10);
+            FcError *err = al(alc, sizeof(FcError));
+            err->line = chunk->line - 1;
+            err->col = chunk->col - 1;
+            err->msg = fc->sbuf;
+            err->path = fc->path_ki;
+            array_push(errors, err);
+            lsp_diagnostic_respond(alc, ld, errors);
+        } else {
+            b->lsp->send_default = true;
+        }
+        build_end(b, 1);
+    }
 
     if (is_newline(get_char(fc, 0))) {
         chunk->i--;

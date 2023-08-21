@@ -80,7 +80,7 @@ void read_macro(Fc *fc, Allocator *alc, Scope *scope) {
         }
 
         char str[256];
-        type_to_str(type, str);
+        type_to_str(type, str, false);
         printf("PRINT TYPE: '%s'\n", str);
 
     } else {

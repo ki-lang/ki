@@ -41,7 +41,6 @@ void *io_loop(void *build) {
 }
 
 void compile_loop(Build *b, int max_stage) {
-    //
 
     while (true) {
         bool did_work = false;

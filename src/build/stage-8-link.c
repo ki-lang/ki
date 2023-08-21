@@ -56,67 +56,64 @@ void stage_8(Build *b) {
     sync();
 #endif
 
-    for (int i = 0; i < b->packages->length; i++) {
-        Pkc *pkc = array_get_index(b->packages, i);
-        for (int o = 0; o < pkc->namespaces->values->length; o++) {
-            Nsc *nsc = array_get_index(pkc->namespaces->values, o);
+    for (int o = 0; o < b->namespaces_by_dir->values->length; o++) {
+        Nsc *nsc = array_get_index(b->namespaces_by_dir->values, o);
 
-            bool compile = false;
-            Array *ir_files = array_make(b->alc, 20);
+        bool compile = false;
+        Array *ir_files = array_make(b->alc, 20);
 
-            for (int u = 0; u < nsc->fcs->length; u++) {
-                Fc *fc = array_get_index(nsc->fcs, u);
-                //
-                if (fc->is_header) {
-                    continue;
-                }
-                if (fc->ir_changed) {
-                    fc_update_cache(fc);
-                    compile = true;
-                }
-
-                //
-                array_push(ir_files, fc->path_ir);
+        for (int u = 0; u < nsc->fcs->length; u++) {
+            Fc *fc = array_get_index(nsc->fcs, u);
+            //
+            if (fc->is_header) {
+                continue;
+            }
+            if (fc->ir_changed) {
+                fc_update_cache(fc);
+                compile = true;
             }
 
-            if (compile || !file_exists(nsc->path_o)) {
-                compiled_any = true;
-                if (b->verbose > 1) {
-                    printf("⚙ Compile o file: %s\n", nsc->path_o);
-                }
+            //
+            array_push(ir_files, fc->path_ir);
+        }
 
-                struct CompileData *data = al(b->alc, sizeof(struct CompileData));
-                data->b = b;
-                data->ir_files = ir_files;
-                data->path_o = nsc->path_o;
-                data->target = al(b->alc, sizeof(struct Target));
-                llvm_init(b, data->target);
-                // stage_8_compile_o((void *)data);
+        if (compile || !file_exists(nsc->path_o)) {
+            compiled_any = true;
+            if (b->verbose > 1) {
+                printf("⚙ Compile o file: %s\n", nsc->path_o);
+            }
+
+            struct CompileData *data = al(b->alc, sizeof(struct CompileData));
+            data->b = b;
+            data->ir_files = ir_files;
+            data->path_o = nsc->path_o;
+            data->target = al(b->alc, sizeof(struct Target));
+            llvm_init(b, data->target);
+            // stage_8_compile_o((void *)data);
 
 #ifdef WIN32
-                if (threads->length >= 16) {
-                    // Wait for the first thread
-                    void *thr = array_pop_first(threads);
-                    WaitForSingleObject(thr, INFINITE);
-                }
-
-                void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))stage_8_compile_o, (void *)data, 0, NULL);
-#else
-                if (threads->length >= 16) {
-                    // Wait for the first thread
-                    pthread_t *thr = array_pop_first(threads);
-                    pthread_join(*thr, NULL);
-                }
-
-                pthread_t *thr = al(b->alc, sizeof(pthread_t));
-                pthread_create(thr, NULL, stage_8_compile_o, (void *)data);
-#endif
-
-                array_push(threads, thr);
+            if (threads->length >= 16) {
+                // Wait for the first thread
+                void *thr = array_pop_first(threads);
+                WaitForSingleObject(thr, INFINITE);
             }
 
-            array_push(o_files, nsc->path_o);
+            void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))stage_8_compile_o, (void *)data, 0, NULL);
+#else
+            if (threads->length >= 16) {
+                // Wait for the first thread
+                pthread_t *thr = array_pop_first(threads);
+                pthread_join(*thr, NULL);
+            }
+
+            pthread_t *thr = al(b->alc, sizeof(pthread_t));
+            pthread_create(thr, NULL, stage_8_compile_o, (void *)data);
+#endif
+
+            array_push(threads, thr);
         }
+
+        array_push(o_files, nsc->path_o);
     }
 
     for (int i = 0; i < threads->length; i++) {
@@ -144,7 +141,7 @@ void stage_8(Build *b) {
     }
 
     if (!b->main_func && !b->test) {
-        die("❌ Missing 'main' function");
+        build_error(b, "❌ Missing 'main' function");
     }
 
     stage_8_link(b, o_files);
@@ -321,7 +318,7 @@ void llvm_init(Build *b, struct Target *t) {
         }
     }
     if (!triple) {
-        die("❌ Could not figure out the LLVM triple");
+        build_error(b, "❌ Could not figure out the LLVM triple");
     }
 
     LLVMTargetRef target;
@@ -416,7 +413,7 @@ void stage_8_link(Build *b, Array *o_files) {
     }
 
     if (!linker) {
-        die("❌ Could not figure out which linker to use for your host os / target os.");
+        build_error(b, "❌ Could not figure out which linker to use for your host os / target os.");
     }
 
     //
@@ -531,6 +528,6 @@ void stage_8_link(Build *b, Array *o_files) {
     }
     int res = system(cmd_str);
     if (res != 0) {
-        die("❌ Failed to link");
+        build_error(b, "❌ Failed to link");
     }
 }

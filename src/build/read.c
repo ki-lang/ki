@@ -21,7 +21,33 @@ Chunk *chunk_clone(Allocator *alc, Chunk *chunk) {
 }
 void chunk_move(Chunk *chunk, int pos) {
     //
-    chunk->i += pos;
+    int i = chunk->i;
+    while (pos > 0) {
+        pos--;
+        char ch = chunk->content[chunk->i];
+        chunk->i++;
+        chunk->col++;
+        if (ch == '\n') {
+            chunk->line++;
+            chunk->col = 0;
+        }
+    }
+    while (pos < 0) {
+        pos++;
+        char ch = chunk->content[chunk->i];
+        chunk->i--;
+        chunk->col--;
+        if (ch == '\n') {
+            chunk->line--;
+            int x = chunk->i;
+            int col = 0;
+            while (x > 0 && chunk->content[x] != '\n') {
+                x--;
+                col++;
+            }
+            chunk->col = col;
+        }
+    }
 }
 void chunk_update_col(Chunk *chunk) {
     //
@@ -270,6 +296,7 @@ Str *read_string(Fc *fc) {
     while (i < len) {
         char ch = *(data + i);
         i++;
+        col++;
 
         if (ch == '\\') {
             if (i == len) {
@@ -306,7 +333,7 @@ Str *read_string(Fc *fc) {
 
         if (is_newline(ch)) {
             line++;
-            col = 1;
+            col = 0;
         }
         str_append_char(buf, ch);
     }

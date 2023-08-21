@@ -40,6 +40,11 @@ void stage_6(Fc *fc) {
         stage_6_func(fc, func);
     }
 
+    if (b->lsp) {
+        alc_wipe(fc->alc_ast);
+        return;
+    }
+
     // Write IR
     stage_7(fc);
 }

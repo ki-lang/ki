@@ -104,8 +104,8 @@ char *llvm_type(LB *b, Type *type) {
         char *lof = llvm_type(b, type->array_of);
         str_append_chars(result, lof);
     } else {
-        printf("Type: %d\n", type->type);
-        die("Unknown LLVM type (bug)");
+        // printf("Type: %d\n", type->type);
+        build_error(b->build, "Unknown LLVM type (bug)");
     }
     //
     return str_to_chars(b->alc, result);
@@ -194,8 +194,9 @@ char *llvm_di_type(LB *b, Type *type) {
         }
     }
 
-    sprintf(b->fc->sbuf, "LLVM: Cannot generate debug type");
-    die(b->fc->sbuf);
+    Build *bl = b->build;
+    sprintf(bl->sbuf, "LLVM: Cannot generate debug type");
+    build_error(bl, bl->sbuf);
     return NULL;
 }
 
@@ -210,8 +211,9 @@ char *llvm_type_int(LB *b, int bytes) {
         return "i64";
     }
 
-    sprintf(b->fc->sbuf, "LLVM: Unsupported type size: '%d'", bytes);
-    die(b->fc->sbuf);
+    Build *bl = b->build;
+    sprintf(bl->sbuf, "LLVM: Unsupported type size: '%d'", bytes);
+    build_error(bl, bl->sbuf);
     return "";
 }
 

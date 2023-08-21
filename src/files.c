@@ -11,7 +11,58 @@ bool get_fullpath(char *filepath, char *buf) {
 #else
     char *res = realpath(filepath, buf);
 #endif
+    if (res && dir_exists(res)) {
+        fix_slashes(res, true);
+        // int len = strlen(res);
+        // char ch = res[len - 1];
+        // if (ch != '/' && ch != '\\') {
+        //     res[len] = PATH_SLASH_CHAR;
+        //     res[len + 1] = '\0';
+        // }
+    }
     return res != NULL;
+}
+
+void fix_slashes(char *path, bool must_end_with_slash) {
+    //
+    int len = strlen(path);
+    int i = 0;
+    while (i < len) {
+#ifdef WIN32
+        if (path[i] == '/')
+            path[i] = PATH_SLASH_CHAR;
+#else
+        if (path[i] == '\\')
+            path[i] = PATH_SLASH_CHAR;
+#endif
+        i++;
+    }
+    i = 0;
+    int set = 0;
+    bool prev = false;
+    while (i <= len) {
+        char ch = path[i];
+        if (ch == PATH_SLASH_CHAR) {
+            if (prev) {
+                i++;
+                continue;
+            } else {
+                prev = true;
+            }
+        } else {
+            prev = false;
+        }
+        path[set] = ch;
+        i++;
+        set++;
+    }
+    if (must_end_with_slash) {
+        char ch = path[len - 1];
+        if (ch != '/' && ch != '\\') {
+            path[len] = PATH_SLASH_CHAR;
+            path[len + 1] = '\0';
+        }
+    }
 }
 
 int file_exists(const char *path) {
@@ -208,7 +259,9 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
 #ifdef WIN32
     char pattern[KI_PATH_MAX];
     strcpy(pattern, dir);
-    strcat(pattern, "/*");
+    strcat(pattern, "*");
+    // printf("pattern:%s\n", pattern);
+
     WIN32_FIND_DATA data;
     HANDLE hFind = FindFirstFile(pattern, &data); // DIRECTORY
     if (hFind != INVALID_HANDLE_VALUE) {
@@ -231,10 +284,10 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
     if ((d = opendir(dir)) != NULL) {
         /* print all the files and directories within directory */
         while ((ent = readdir(d)) != NULL) {
-            char *path = malloc(strlen(dir) + strlen(ent->d_name) + 2);
             if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
                 continue;
             }
+            char *path = malloc(strlen(dir) + strlen(ent->d_name) + 2);
             strcpy(path, dir);
             strcat(path, "/");
             strcat(path, ent->d_name);

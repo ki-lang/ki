@@ -1,7 +1,7 @@
 
 #include "../all.h"
 
-Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf);
+Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf);
 void value_equalize_types(Allocator *alc, Fc *fc, Scope *scope, VPair *pair);
 Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on);
 
@@ -439,9 +439,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         //
     } else if (is_valid_varname_char(token[0])) {
         rtok(fc);
-        Id *id = read_id(fc, sameline, true, true);
-        Idf *idf = idf_by_id(fc, scope, id, true);
-        v = value_handle_idf(fc, alc, scope, id, idf);
+        Idf *idf = read_idf(fc, scope, sameline, true);
+        v = value_handle_idf(fc, alc, scope, idf);
     } else {
         sprintf(fc->sbuf, "Unknown value: '%s'", token);
         fc_error(fc);
@@ -470,6 +469,47 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 fc_error(fc);
             }
 
+            bool lsp = fc->lsp_file && lsp_check(fc);
+            if (lsp && fc->b->lsp->type == lspt_completion) {
+                LspData *ld = b->lsp;
+                Chunk *chunk = fc->chunk;
+                Array *items = array_make(b->alc, 100);
+                Array *prop_names = class->props->keys;
+                Array *props = class->props->values;
+                for (int i = 0; i < prop_names->length; i++) {
+                    ClassProp *prop = array_get_index(props, i);
+                    char *name = array_get_index(prop_names, i);
+                    LspCompletion *c = lsp_completion_init(alc, lsp_compl_property, name);
+                    if (class->fc->nsc != fc->nsc) {
+                        if (prop->act == act_private) {
+                            continue;
+                        }
+                        if (prop->act == act_readonly) {
+                            c->detail = "readonly";
+                        }
+                    }
+                    array_push(items, c);
+                }
+                Array *func_names = class->funcs->keys;
+                for (int i = 0; i < func_names->length; i++) {
+                    char *name = array_get_index(func_names, i);
+                    Func *func = array_get_index(class->funcs->values, i);
+                    if (func->is_static)
+                        continue;
+                    if (class->fc->nsc != fc->nsc) {
+                        if (func->act == act_private || func->is_generated) {
+                            continue;
+                        }
+                    }
+                    char *label = lsp_func_label(alc, func, name, true);
+                    LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, label);
+                    c->insert = lsp_func_insert(alc, func, name, false);
+                    array_push(items, c);
+                }
+                lsp_completion_respond(b->alc, ld, items);
+                build_end(b, 0);
+            }
+
             tok(fc, token, true, false);
 
             ClassProp *prop = map_get(class->props, token);
@@ -478,6 +518,16 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 if (prop->act == act_private && class->fc->nsc != fc->nsc) {
                     sprintf(fc->sbuf, "Trying to access a private property from another namespace");
                     fc_error(fc);
+                }
+
+                if (lsp && fc->b->lsp->type == lspt_definition) {
+                    char *path = class->fc->path_ki;
+                    int line = prop->def_chunk->line;
+                    int col = prop->def_chunk->col;
+                    if (path) {
+                        lsp_definition_respond(b->alc, b->lsp, path, line - 1, col - 1);
+                        build_end(b, 0);
+                    }
                 }
 
                 v = vgen_class_pa(alc, scope, v, prop);
@@ -492,6 +542,17 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     sprintf(fc->sbuf, "Trying to access static function in a non-static way: '%s'", token);
                     fc_error(fc);
                 }
+
+                if (lsp && fc->b->lsp->type == lspt_definition) {
+                    char *path = func->fc->path_ki;
+                    int line = func->def_chunk->line;
+                    int col = func->def_chunk->col;
+                    if (path) {
+                        lsp_definition_respond(b->alc, b->lsp, path, line - 1, col - 1);
+                        build_end(b, 0);
+                    }
+                }
+
                 v = vgen_fptr(alc, func, v);
             }
 
@@ -583,8 +644,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             if (!type_compat(type, left->rett, &reason) || !type_compat(type, right->rett, &reason)) {
                 char t1s[200];
                 char t2s[200];
-                type_to_str(left->rett, t1s);
-                type_to_str(right->rett, t2s);
+                type_to_str(left->rett, t1s, true);
+                type_to_str(right->rett, t2s, true);
                 sprintf(fc->sbuf, "Types in '... ? x : y' statement do not match: '%s' <-> '%s'", t1s, t2s);
                 fc_error(fc);
             }
@@ -820,7 +881,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
     return v;
 }
 
-Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) {
+Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
     //
     char *token = fc->token;
 
@@ -885,9 +946,31 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         if (get_char(fc, 0) == '.') {
             chunk_move(fc->chunk, 1);
             // Static func
+
+            if (fc->lsp_file && lsp_check(fc) && fc->b->lsp->type == lspt_completion) {
+                Build *b = fc->b;
+                LspData *ld = b->lsp;
+                Chunk *chunk = fc->chunk;
+                Array *items = array_make(b->alc, 100);
+                Array *funcs = class->funcs->values;
+                Array *func_names = class->funcs->keys;
+                for (int i = 0; i < func_names->length; i++) {
+                    char *name = array_get_index(func_names, i);
+                    Func *func = array_get_index(funcs, i);
+                    if (!func->is_static)
+                        continue;
+                    char *label = lsp_func_label(alc, func, name, false);
+                    LspCompletion *c = lsp_completion_init(alc, lsp_compl_method, label);
+                    c->insert = lsp_func_insert(alc, func, name, false);
+                    array_push(items, c);
+                }
+                lsp_completion_respond(b->alc, ld, items);
+                build_end(b, 0);
+            }
+
             tok(fc, token, true, false);
             Func *func = map_get(class->funcs, token);
-            if (!func) {
+            if (!func || !func->is_static) {
                 sprintf(fc->sbuf, "Unknown static function: '%s'", token);
                 fc_error(fc);
             }
@@ -978,7 +1061,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
             fc_error(fc);
         }
 
-        return value_handle_idf(fc, alc, scope, id, idf_);
+        return value_handle_idf(fc, alc, scope, idf_);
     }
 
     if (idf->type == idf_err_code) {
@@ -1129,7 +1212,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Id *id, Idf *idf) 
         return read_value(fc, alc, scope, false, 0, false);
     }
 
-    sprintf(fc->sbuf, "Cannot convert identifier to a value: '%s'", id->name);
+    sprintf(fc->sbuf, "Cannot convert identifier to a value");
     fc_error(fc);
     return NULL;
 }
@@ -1208,14 +1291,14 @@ Value *value_op(Fc *fc, Allocator *alc, Scope *scope, Value *left, Value *right,
 
     bool is_ptr = lt->type == type_ptr || rt->type == type_ptr;
 
-    VPair *pair = malloc(sizeof(VPair));
-    pair->left = left;
-    pair->right = right;
+    // VPair *pair = malloc(sizeof(VPair));
+    VPair pair;
+    pair.left = left;
+    pair.right = right;
 
-    value_equalize_types(alc, fc, scope, pair);
-    Value *l = pair->left;
-    Value *r = pair->right;
-    free(pair);
+    value_equalize_types(alc, fc, scope, &pair);
+    Value *l = pair.left;
+    Value *r = pair.right;
 
     type_check(fc, l->rett, r->rett);
     Value *v = vgen_op(alc, fc->b, l, r, op, is_ptr);
@@ -1277,7 +1360,7 @@ void value_equalize_types(Allocator *alc, Fc *fc, Scope *scope, VPair *pair) {
     }
 
     if (lt->type != type_int || rt->type != type_int) {
-        die("Could not convert value to a number\n");
+        build_error(fc->b, "Could not convert value to a number");
         return;
     }
 
@@ -1437,6 +1520,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     int index = 0;
     Array *values = array_make(alc, 4);
 
+    bool skip_first_arg = false;
     Value *first_arg = NULL;
     bool upref = true;
     if (on->type == v_fptr) {
@@ -1457,7 +1541,13 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
             array_push(values, first_val);
             index++;
+            skip_first_arg = true;
         }
+    }
+
+    if (fc->lsp_file && lsp_check(fc) && fc->b->lsp->type == lspt_sig_help) {
+        lsp_help_check_args(alc, fc, args, skip_first_arg, rett, index);
+        build_end(fc->b, 0);
     }
 
     tok(fc, token, false, true);
@@ -1474,6 +1564,12 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                     sprintf(fc->sbuf, "Too many arguments");
                     fc_error(fc);
                 }
+
+                if (fc->lsp_file && lsp_check(fc) && fc->b->lsp->type == lspt_sig_help) {
+                    lsp_help_check_args(alc, fc, args, skip_first_arg, rett, index);
+                    build_end(fc->b, 0);
+                }
+
                 Arg *arg = array_get_index(args, index);
                 index++;
 
@@ -1486,6 +1582,10 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
                 tok(fc, token, false, true);
                 if (strcmp(token, ",") == 0) {
+                    if (fc->lsp_file) {
+                        tok(fc, token, false, true);
+                        rtok(fc);
+                    }
                     continue;
                 }
                 if (strcmp(token, ")") != 0) {

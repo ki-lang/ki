@@ -9,8 +9,7 @@ Str *str_make(Allocator *alc, int mem_size) {
     result->alc = alc;
     result->length = 0;
     result->mem_size = mem_size;
-    result->al_block = al_private(alc, mem_size);
-    result->data = result->al_block->start_adr;
+    result->data = al(alc, mem_size);
     return result;
 }
 
@@ -24,16 +23,11 @@ void str_append(Str *str, Str *add) {
         str->mem_size *= 2;
     }
     if (reloc) {
-        AllocatorBlock *new_block = al_private(str->alc, str->mem_size);
-        void *new_data = new_block->start_adr;
-        memcpy(new_data, str->data, str->length);
-        memcpy(new_data + str->length, add->data, add->length);
-        free_block(str->al_block);
-        str->al_block = new_block;
-        str->data = new_data;
-    } else {
-        memcpy(str->data + str->length, add->data, add->length);
+        void *prev = str->data;
+        str->data = al(str->alc, str->mem_size);
+        memcpy(str->data, prev, str->length);
     }
+    memcpy(str->data + str->length, add->data, add->length);
     str->length = new_length;
 }
 
@@ -44,12 +38,9 @@ void str_append_char(Str *str, char ch) {
         str->mem_size *= 2;
     }
     if (reloc) {
-        AllocatorBlock *new_block = al_private(str->alc, str->mem_size);
-        void *new_data = new_block->start_adr;
-        memcpy(new_data, str->data, str->length);
-        free_block(str->al_block);
-        str->al_block = new_block;
-        str->data = new_data;
+        void *prev = str->data;
+        str->data = al(str->alc, str->mem_size);
+        memcpy(str->data, prev, str->length);
     }
     char *adr = str->data + str->length;
     *adr = ch;
@@ -58,25 +49,24 @@ void str_append_char(Str *str, char ch) {
 
 void str_append_chars(Str *str, char *add) {
     int add_len = strlen(add);
-    if (add_len == 0) {
+    str_append_from_ptr(str, add, add_len);
+}
+void str_append_from_ptr(Str *str, void *ptr, int len) {
+    //
+    if (len == 0) {
         return;
     }
-    int new_length = str->length + add_len;
+    int new_length = str->length + len;
     bool reloc = str->mem_size < new_length;
     while (str->mem_size < new_length) {
         str->mem_size *= 2;
     }
     if (reloc) {
-        AllocatorBlock *new_block = al_private(str->alc, str->mem_size);
-        void *new_data = new_block->start_adr;
-        memcpy(new_data, str->data, str->length);
-        memcpy(new_data + str->length, add, add_len);
-        free_block(str->al_block);
-        str->al_block = new_block;
-        str->data = new_data;
-    } else {
-        memcpy(str->data + str->length, add, add_len);
+        void *prev = str->data;
+        str->data = al(str->alc, str->mem_size);
+        memcpy(str->data, prev, str->length);
     }
+    memcpy(str->data + str->length, ptr, len);
     str->length = new_length;
 }
 

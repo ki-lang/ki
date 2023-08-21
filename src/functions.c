@@ -159,7 +159,7 @@ void simple_hash(char *content_, char *buf_) {
 }
 
 Array *explode(Allocator *alc, char *part, char *content) {
-    char *copy = strdup(content);
+    char *copy = dups(alc, content);
     Array *res = array_make(alc, 2);
     char *token = strtok(copy, part);
     while (token != NULL) {
@@ -243,4 +243,21 @@ char *str_replace(Allocator *alc, char *orig, char *rep, char *with) {
     }
     strcpy(tmp, orig);
     return result;
+}
+
+void run_async(void *func, void *arg, bool wait) {
+    //
+#ifdef WIN32
+    void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))func, (void *)arg, 0, NULL);
+#else
+    pthread_t thr;
+    pthread_create(&thr, NULL, func, (void *)arg);
+#endif
+    if (wait) {
+#ifdef WIN32
+        WaitForSingleObject(thr, INFINITE);
+#else
+        pthread_join(thr, NULL);
+#endif
+    }
 }

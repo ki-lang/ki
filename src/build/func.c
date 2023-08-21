@@ -73,3 +73,33 @@ void func_make_arg_decls(Func *func) {
         usage_line_init(alc, fscope, decl);
     }
 }
+
+void *free_delayed_exec(void *item) {
+    //
+    sleep_ms(10000);
+    free(item);
+    return NULL;
+}
+
+void rtrim(char *str, char ch) {
+    //
+    int i = strlen(str) - 1;
+    while (i >= 0) {
+        char x = str[i];
+        if (x == ch) {
+            str[i] = '\0';
+            i--;
+            continue;
+        }
+        break;
+    }
+}
+
+void free_delayed(void *item) {
+#ifdef WIN32
+    void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))free_delayed_exec, item, 0, NULL);
+#else
+    pthread_t thr;
+    pthread_create(&thr, NULL, free_delayed_exec, item);
+#endif
+}

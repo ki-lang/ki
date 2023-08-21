@@ -37,6 +37,10 @@ typedef struct MacroPart MacroPart;
 typedef struct MacroVarGroup MacroVarGroup;
 typedef struct MacroVar MacroVar;
 typedef struct MacroReplace MacroReplace;
+typedef struct LspData LspData;
+typedef struct LspCompletion LspCompletion;
+typedef struct CompileLoopData CompileLoopData;
+typedef struct FcError FcError;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -92,20 +96,21 @@ struct Build {
     Allocator *alc_ast;
     //
     Nsc *nsc_main;
+    Pkc *pkc_main;
     Pkc *pkc_ki;
     Func *main_func;
     Fc *main_fc;
-    Nsc *nsc_type;
-    Nsc *nsc_io;
     //
     MacroScope *mc;
     //
     Array *packages;
     Map *packages_by_dir;
+    Map *namespaces_by_dir;
     Array *all_ki_files;
     Array *link_dirs;
     Map *link_libs;
-    Map *all_fcs;
+    Map *fcs_by_path;
+    Array *all_fcs;
     Str *str_buf;
     Str *str_buf_io;
     Array *tests;
@@ -120,20 +125,9 @@ struct Build {
     Chain *stage_5;
     Chain *stage_6;
     //
-    Class *class_u8;
-    Class *class_u16;
-    Class *class_u32;
-    Class *class_u64;
-    Class *class_i8;
-    Class *class_i16;
-    Class *class_i32;
-    Class *class_i64;
-    Class *class_ptr;
-    Class *class_string;
-    Class *class_array;
-    Class *class_map;
-    //
     Type *type_void;
+    // LSP
+    LspData *lsp;
     //
     int event_count;
     int events_done;
@@ -147,7 +141,6 @@ struct Build {
     bool debug;
     bool clear_cache;
     bool run_code;
-    bool core_types_scanned;
     bool link_static;
 };
 
@@ -164,7 +157,7 @@ struct Fc {
     Id *id_buf;
     Str *str_buf;
     Nsc *nsc;
-    Pkc *pkc_config;
+    Pkc *config_pkc;
     Allocator *alc;
     Allocator *alc_ast;
     Array *deps;
@@ -186,14 +179,14 @@ struct Fc {
     Array *extends;
     //
     cJSON *cache;
-    void* win_file_handle;
+    void *win_file_handle;
     long int mod_time;
     //
     int test_counter;
     //
     bool is_header;
     bool ir_changed;
-    bool generated;
+    bool lsp_file;
 };
 
 struct Nsc {
@@ -207,6 +200,7 @@ struct Nsc {
 
 struct Pkc {
     Build *b;
+    Nsc *main_nsc;
     char *name;
     char *dir;
     char *hash;
@@ -296,6 +290,7 @@ struct Class {
     char *dname;
     Fc *fc;
     Scope *scope;
+    Chunk *def_chunk;
     Chunk *chunk_body;
     Map *props;
     Map *funcs;
@@ -333,6 +328,7 @@ struct Class {
 struct ClassProp {
     Type *type;
     Value *value;
+    Chunk *def_chunk;
     Chunk *value_chunk;
     int index;
     int act;
@@ -343,6 +339,7 @@ struct Func {
     char *dname;
     Fc *fc;
     Scope *scope;
+    Chunk *def_chunk;
     Chunk *chunk_args;
     Chunk *chunk_body;
     Type *rett;
@@ -372,6 +369,7 @@ struct Enum {
     char *dname;
     Fc *fc;
     Map *values;
+    Chunk *def_chunk;
 };
 struct Extend {
     Chunk *chunk_type;
@@ -428,6 +426,7 @@ struct Global {
     char *dname;
     Fc *fc;
     Type *type;
+    Chunk *def_chunk;
     Chunk *type_chunk;
     bool shared;
 };
@@ -437,6 +436,7 @@ struct Trait {
     char *gname;
     char *dname;
     Fc *fc;
+    Chunk *def_chunk;
     Chunk *chunk;
 };
 
@@ -504,6 +504,37 @@ struct PkgVersion {
     int v1;
     int v2;
     int v3;
+};
+
+struct LspData {
+    int type;
+    int id;
+    int line;
+    int col;
+    int index;
+    char *filepath;
+    char *text;
+    bool responded;
+    bool send_default;
+};
+
+struct LspCompletion {
+    int type;
+    char *label;
+    char *insert;
+    char *detail;
+};
+
+struct CompileLoopData {
+    Build *b;
+    int max_stage;
+};
+
+struct FcError {
+    char *path;
+    char *msg;
+    int line;
+    int col;
 };
 
 #endif

@@ -15,13 +15,13 @@ class String type:ptr track {
 		return @ptrv(this @as ptr + @sizeof(uxx), u8, 0) == 1#u8;
 	}
 
-	fn rc() u32 %inline {
+	- fn rc() u32 %inline {
 		if(this.is_const()) { return 420; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 420.
 		let adr = this @as ptr;
 		adr += @sizeof(uxx) + 2;
 		return @ptrv(adr, u16, 0) @as u32;
 	}
-	fn rc_weak() u32 %inline {
+	- fn rc_weak() u32 %inline {
 		if(this.is_const()) { return 0; }
 		let adr = this @as ptr;
 		adr += @sizeof(uxx) + 4;
@@ -503,13 +503,13 @@ class String type:ptr track {
 		return this @as String;
 	}
 
-	fn __ref() void {
+	- fn __ref() void {
 		if this.is_const() { return; }
 		let adr = (this @as ptr) + @sizeof(uxx) + 2;
 		let rc = @ptrv(adr, u16, 0) + 1;
 		@ptrv(adr, u16, 0) = rc;
 	}
-	fn __deref() void {
+	- fn __deref() void {
 		if this.is_const() { return; }
 		let adr = (this @as ptr) + @sizeof(uxx) + 2;
 		let rc = @ptrv(adr, u16, 0) - 1;
@@ -522,13 +522,13 @@ class String type:ptr track {
 		}
 		@ptrv(adr, u16, 0) = rc;
 	}
-	fn __ref_weak() void {
+	- fn __ref_weak() void {
 		if this.is_const() { return; }
 		let adr = (this @as ptr) + @sizeof(uxx) + 4;
 		let rcw = @ptrv(adr, u32, 0) + 1;
 		@ptrv(adr, u32, 0) = rcw;
 	}
-	fn __deref_weak() void {
+	- fn __deref_weak() void {
 		if this.is_const() { return; }
 		let adr = (this @as ptr) + @sizeof(uxx) + 2;
 		let adrw = adr + 2;
@@ -542,12 +542,12 @@ class String type:ptr track {
 		}
 		@ptrv(adrw, u32, 0) = rcw;
 	}
-	fn __free() void {
+	- fn __free() void {
 		if this.is_const() { return; }
 		mem:free(this @as ptr);
 	}
 
-	fn __add(str: *String) String {
+	- fn __add(str: *String) String {
 		let this_len = this.bytes();
 		let str_len = str.bytes();
 		if str_len == 0 {
@@ -566,7 +566,7 @@ class String type:ptr track {
 		return new_str;
 	}
 
-	fn __eq(b: *String) bool {
+	- fn __eq(b: *String) bool {
 		let a_ptr = this @as ptr;
 		let b_ptr = b @as ptr;
 		if(a_ptr == b_ptr) {
@@ -578,7 +578,7 @@ class String type:ptr track {
 		}
 		return mem:equal(this.data(), b.data(), bytes);
 	}
-	fn __lt(b: *String) bool {
+	- fn __lt(b: *String) bool {
 		let a_ptr = this @as ptr;
 		let b_ptr = b @as ptr;
 		if(a_ptr == b_ptr) {
@@ -601,14 +601,14 @@ class String type:ptr track {
 		}
 		return bytes_a <= bytes_b;
 	}
-	fn __gt(b: *String) bool {
+	- fn __gt(b: *String) bool {
 		return !this.__lt(b);
 	}
 
-	fn __each_init() uxx {
+	- fn __each_init() uxx {
 		return 0;
 	}
-	fn __each(key_ref: uxx[1]) u8 !end {
+	- fn __each(key_ref: uxx[1]) u8 !end {
 		let key = key_ref[0];
 		if key == this.bytes() {
 			throw end;

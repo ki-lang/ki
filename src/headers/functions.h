@@ -12,6 +12,9 @@ Array *explode(Allocator *alc, char *part, char *content);
 int system_silent(char *cmd);
 char *str_replace_simple(char *s, const char *s1, const char *s2);
 char *str_replace(Allocator *alc, char *orig, char *rep, char *with);
+void free_delayed(void *item);
+void rtrim(char *str, char ch);
+void run_async(void *func, void *arg, bool wait);
 
 // Syntax
 bool is_alpha_char(char c);
@@ -39,9 +42,19 @@ void free_block(AllocatorBlock *block);
 char *dups(Allocator *alc, char *str);
 
 // Build
-void cmd_build(int argc, char **argv);
+void cmd_build(int argc, char **argv, LspData *lsp_data);
+void build_end(Build *b, int exit_code);
+void build_error(Build *b, char *msg);
 Class *ki_get_class(Build *b, char *ns, char *name);
 Func *ki_get_func(Build *b, char *ns, char *name);
+
+// Loader
+char *loader_find_config_dir(Build *b, char *dir);
+Pkc *loader_get_pkc_for_dir(Build *b, char *dir);
+// Pkc *loader_find_pkc_for_file(Build *b, char *path);
+// Nsc *loader_get_nsc_for_file(Pkc *pkc, char *path);
+Nsc *loader_get_nsc_for_dir(Build *b, char *dir);
+Nsc *loader_load_nsc(Pkc *pkc, char *name);
 
 // Pkg
 void cmd_pkg(int argc, char *argv[]);
@@ -53,6 +66,40 @@ void pkg_get_dir(char *packages_dir, char *name, char *buf);
 
 // Make
 void cmd_make(int argc, char *argv[]);
+
+// LSP
+void cmd_lsp(int argc, char *argv[]);
+cJSON *lsp_init(Allocator *alc, cJSON *params);
+bool lsp_check(Fc *fc);
+void lsp_log(char *msg);
+int lsp_get_pos_index(char *text, int line, int col);
+void lsp_run_build(LspData *ld);
+void *lsp_run_build_entry(void *ld_);
+void *lsp_run_build_entry_2(void *ld_);
+cJSON *lsp_open(Allocator *alc, cJSON *params);
+cJSON *lsp_close(Allocator *alc, cJSON *params);
+cJSON *lsp_change(Allocator *alc, cJSON *params);
+cJSON *lsp_save(Allocator *alc, cJSON *params);
+cJSON *lsp_definition(Allocator *alc, cJSON *params, int id);
+cJSON *lsp_completion(Allocator *alc, cJSON *params, int id);
+cJSON *lsp_help(Allocator *alc, cJSON *params, int id);
+void lsp_help_respond(Build *b, LspData *ld, char *full, Array *args, int arg_index);
+void lsp_help_check_args(Allocator *alc, Fc *fc, Array *args, bool skip_first, Type *rett, int arg_index);
+void lsp_completion_respond(Allocator *alc, LspData* ld, Array *items);
+void lsp_definition_respond(Allocator *alc, LspData *ld, char *path, int line, int col);
+void lsp_diagnostic_respond(Allocator *alc, LspData *ld, Array *errors_);
+void lsp_respond(cJSON *resp);
+void lsp_exit_thread();
+
+// LSP structs
+LspData* lsp_data_init();
+void lsp_data_free(LspData *ld);
+LspCompletion *lsp_completion_init(Allocator *alc, int type, char *label);
+
+// LSP labels
+char *lsp_func_label(Allocator *alc, Func *func, char *name, bool skip_first_arg);
+char *lsp_func_insert(Allocator *alc, Func *func, char *name, bool skip_first_arg);
+char *lsp_func_help(Allocator *alc, Array *args, bool skip_first_arg, Type *rett);
 
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);
@@ -81,18 +128,18 @@ void *io_loop(void *build);
 void compile_loop(Build *b, int max_stage);
 
 // Pkc
-Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir);
+Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir, Config *cfg);
 Nsc *pkc_get_nsc(Pkc *pkc, char *name);
-Nsc *pkc_load_nsc(Pkc *pkc, char *name, Fc *parsing_fc);
 Pkc *pkc_get_sub_package(Pkc *pkc, char *name);
 
 // Nsc
 Nsc *nsc_init(Allocator *alc, Build *b, Pkc *pkc, char *name);
-char *nsc_gname(Nsc *nsc, char *name);
-char *nsc_dname(Nsc *nsc, char *name);
+char *nsc_gname(Fc *fc, char *name);
+char *nsc_dname(Fc *fc, char *name);
 
 // Fc
-Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, Pkc *pkc_config, bool generated);
+Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate);
+void fc_set_cache_paths(Fc *fc);
 void fc_error(Fc *fc);
 void fc_update_cache(Fc *fc);
 
@@ -150,6 +197,7 @@ Id *id_init(Allocator *alc);
 Idf *idf_init(Allocator *alc, int type);
 Idf *idf_init_item(Allocator *alc, int type, void *item);
 Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash);
+Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space);
 Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail);
 Idf *ki_lib_get(Build *b, char *ns, char *name);
 Idf *idf_get_from_header(Fc *hfc, char *name, int depth);
@@ -194,7 +242,7 @@ Type *type_gen(Build *b, Allocator *alc, char *name);
 Type *type_array_of(Allocator *alc, Build *b, Type *type, int size);
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space, int context);
 bool type_compat(Type *t1, Type *t2, char **reason);
-char *type_to_str(Type *t, char *res);
+char *type_to_str(Type *t, char *res, bool simple);
 void type_check(Fc *fc, Type *t1, Type *t2);
 Type *type_clone(Allocator *alc, Type *type);
 bool type_tracks_ownership(Type *type);

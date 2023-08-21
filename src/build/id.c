@@ -48,11 +48,6 @@ Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
         chunk_move(fc->chunk, 1);
         tok(fc, token, true, false);
 
-        // if (token[0] == ':') {
-        //     strcpy(token, "main");
-        //     fc->i--;
-        // }
-
         if (!is_valid_varname(token)) {
             if (!crash)
                 return NULL;
@@ -64,6 +59,138 @@ Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
     strcpy(id->name, token);
 
     return id;
+}
+
+Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
+    //
+    bool lsp = fc->lsp_file && lsp_check(fc);
+    Build *b = fc->b;
+
+    char *token = fc->token;
+    tok(fc, token, sameline, allow_space);
+
+    Idf *idf = NULL;
+
+    if (!is_valid_varname(token)) {
+        sprintf(fc->sbuf, "Invalid identifier: '%s'", token);
+        fc_error(fc);
+    }
+
+    if (get_char(fc, 0) == ':') {
+        Id id;
+        id.has_nsc = false;
+        id.name = token;
+        idf = idf_by_id(fc, scope, &id, false);
+        if (!idf) {
+            sprintf(fc->sbuf, "Unknown namespace: '%s', most likely a typo or a missing 'use' token", token);
+            fc_error(fc);
+        }
+        if (idf && idf->type != idf_nsc) {
+            sprintf(fc->sbuf, "Identifier '%s' is not a namespace", token);
+            fc_error(fc);
+        }
+
+        chunk_move(fc->chunk, 1);
+
+        Nsc *nsc = idf->item;
+
+        lsp = lsp || (fc->lsp_file && lsp_check(fc));
+
+        // LSP Completion
+        if (lsp && b->lsp->type == lspt_completion) {
+            LspData *ld = b->lsp;
+            Chunk *chunk = fc->chunk;
+            Allocator *alc = fc->alc;
+            Array *items = array_make(alc, 100);
+            Scope *cur_scope = nsc->scope;
+            while (cur_scope) {
+                Map *identifiers = cur_scope->identifiers;
+                Array *names = identifiers->keys;
+                Array *idfs = identifiers->values;
+                for (int i = 0; i < names->length; i++) {
+                    Idf *idf = array_get_index(idfs, i);
+                    char *name = array_get_index(names, i);
+                    int type = lsp_compl_property;
+                    if (idf->type == idf_func) {
+                        type = lsp_compl_function;
+                    }
+                    LspCompletion *c = lsp_completion_init(alc, type, name);
+                    if (idf->type == idf_func) {
+                        Func *func = idf->item;
+                        if (nsc != fc->nsc && func->act == act_private) {
+                            continue;
+                        }
+                        c->label = lsp_func_label(alc, func, name, true);
+                        c->insert = lsp_func_insert(alc, func, name, false);
+                    }
+                    array_push(items, c);
+                }
+                cur_scope = cur_scope->parent;
+            }
+            lsp_completion_respond(b->alc, ld, items);
+            build_end(b, 0);
+        }
+
+        tok(fc, token, true, false);
+
+        id.has_nsc = false;
+        id.name = token;
+        idf = idf_by_id(fc, nsc->scope, &id, false);
+
+    } else {
+        Id id;
+        id.has_nsc = false;
+        id.name = token;
+        idf = idf_by_id(fc, scope, &id, false);
+    }
+
+    if (!idf) {
+        sprintf(fc->sbuf, "Unknown identifier: '%s'", token);
+        fc_error(fc);
+    }
+
+    if (lsp && fc->b->lsp->type == lspt_definition) {
+        char *path = NULL;
+        int line = 0;
+        int col = 0;
+        if (idf->type == idf_class) {
+            Class *class = idf->item;
+            path = class->fc->path_ki;
+            line = class->def_chunk->line;
+            col = class->def_chunk->col;
+        } else if (idf->type == idf_func) {
+            Func *func = idf->item;
+            path = func->fc->path_ki;
+            line = func->def_chunk->line;
+            col = func->def_chunk->col;
+        } else if (idf->type == idf_global) {
+            Global *g = idf->item;
+            path = g->fc->path_ki;
+            line = g->def_chunk->line;
+            col = g->def_chunk->col;
+        } else if (idf->type == idf_trait) {
+            Trait *t = idf->item;
+            path = t->fc->path_ki;
+            line = t->def_chunk->line;
+            col = t->def_chunk->col;
+        } else if (idf->type == idf_enum) {
+            Enum *enu = idf->item;
+            path = enu->fc->path_ki;
+            line = enu->def_chunk->line;
+            col = enu->def_chunk->col;
+            // } else if (idf->type == idf_decl) {
+            //     Decl *decl = idf->item;
+            //     path = decl->fc->path_ki;
+            //     line = decl->chunk_body->line;
+            //     col = decl->chunk_body->col;
+        }
+        if (path) {
+            lsp_definition_respond(b->alc, b->lsp, path, line - 1, col - 1);
+            build_end(b, 0);
+        }
+    }
+
+    return idf;
 }
 
 Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail) {
@@ -128,7 +255,7 @@ Idf *ki_lib_get(Build *b, char *ns, char *name) {
     Idf *idf = map_get(nsc->scope->identifiers, name);
     if (!idf) {
         sprintf(b->sbuf, "ki lib identifier not found: '%s'", name);
-        die(b->sbuf);
+        build_error(b, b->sbuf);
     }
     return idf;
 }

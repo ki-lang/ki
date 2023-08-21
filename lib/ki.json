@@ -1,4 +1,5 @@
 {
+	"name": "ki",
 	"namespaces": {
 		"fs": "src/fs",
 		"io": "src/io",

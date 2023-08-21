@@ -1,5 +1,6 @@
 
 bool get_fullpath(char *filepath, char *buf);
+void fix_slashes(char *path, bool must_end_with_slash);
 int file_exists(const char *path);
 int dir_exists(const char *path);
 void get_dir_from_path(char *path, char *buf);

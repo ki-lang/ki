@@ -152,11 +152,13 @@ enum LINKTYPE {
 };
 
 enum TARGET_OS {
+    os_other,
     os_linux,
     os_macos,
     os_win,
 };
 enum TARGET_ARCH {
+    arch_other,
     arch_x64,
     arch_arm64,
 };
@@ -169,4 +171,39 @@ enum ALIAS {
 enum MACRO_PART_TYPE {
     macro_part_type,
     macro_part_value,
+};
+
+enum LSP_DATA_TYPE {
+    lspt_completion,
+    lspt_definition,
+    lspt_sig_help,
+    lspt_diagnostic,
+};
+
+enum LSP_COMPLETION_TYPE {
+	lsp_compl_text = 1,
+	lsp_compl_method = 2,
+	lsp_compl_function = 3,
+	lsp_compl_constructor = 4,
+	lsp_compl_field = 5,
+	lsp_compl_variable = 6,
+	lsp_compl_class = 7,
+	lsp_compl_interface = 8,
+	lsp_compl_module = 9,
+	lsp_compl_property = 10,
+	lsp_compl_unit = 11,
+	lsp_compl_value = 12,
+	lsp_compl_enum = 13,
+	lsp_compl_keyword = 14,
+	lsp_compl_snippet = 15,
+	lsp_compl_color = 16,
+	lsp_compl_file = 17,
+	lsp_compl_reference = 18,
+	lsp_compl_folder = 19,
+	lsp_compl_enumMember = 20,
+	lsp_compl_constant = 21,
+	lsp_compl_struct = 22,
+	lsp_compl_event = 23,
+	lsp_compl_operator = 24,
+	lsp_compl_typeParameter = 25,
 };

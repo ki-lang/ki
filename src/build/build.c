@@ -5,14 +5,21 @@ int default_os();
 int default_arch();
 void cmd_build_help(bool run_code);
 void build_add_files(Build *b, Array *files);
-char *find_config_dir(Allocator *alc, char *ki_path);
 void build_macro_defs(Build *b, char *defs);
 void build_watch(Build *b, int argc, char *argv[]);
 
-void cmd_build(int argc, char *argv[]) {
+void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     //
     Allocator *alc = alc_make();
     Allocator *alc_io = alc_make();
+    //
+    Build *b = al(alc, sizeof(Build));
+    b->alc = alc;
+    b->alc_io = alc_io;
+    b->alc_ast = alc_make();
+    b->token = al(alc, KI_TOKEN_MAX);
+    b->sbuf = al(alc, 2000);
+    b->lsp = lsp_data;
     //
     Array *args = array_make(alc, argc);
     Map *options = map_make(alc);
@@ -24,15 +31,14 @@ void cmd_build(int argc, char *argv[]) {
     parse_argv(argv, argc, has_value, args, options);
 
     // Args
-    char argbuf[KI_PATH_MAX];
     for (int i = 0; i < args->length; i++) {
         char *arg = array_get_index(args, i);
         if (arg[0] != '-')
             continue;
-        sprintf(argbuf, ".%s.", arg);
-        if (!strstr(".--optimize.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.--help.-h.-v.-vv.-vvv.--watch.", argbuf)) {
-            sprintf(argbuf, "❓ Unknown option '%s'", arg);
-            die(argbuf);
+        sprintf(b->sbuf, ".%s.", arg);
+        if (!strstr(".--optimize.-O.--debug.-d.--test.--clean.-c.--static.-s.--run.-r.--help.-h.-v.-vv.-vvv.--watch.", b->sbuf)) {
+            sprintf(b->sbuf, "❓ Unknown option '%s'", arg);
+            build_error(b, b->sbuf);
         }
     }
 
@@ -41,11 +47,11 @@ void cmd_build(int argc, char *argv[]) {
     // Check options
     char *path_out = map_get(options, "-o");
     if (path_out && path_out[0] == '-') {
-        sprintf(argbuf, "Invalid value for -o, first character cannot be '-' | Value: '%s'", path_out);
-        die(argbuf);
+        sprintf(b->sbuf, "Invalid value for -o, first character cannot be '-' | Value: '%s'", path_out);
+        build_error(b, b->sbuf);
     }
 
-    if (array_contains(args, "-h", arr_find_str) || array_contains(args, "--help", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0)) {
+    if (!lsp_data && (array_contains(args, "-h", arr_find_str) || array_contains(args, "--help", arr_find_str) || (!run_code && !path_out) || (path_out && strlen(path_out) == 0))) {
         cmd_build_help(run_code);
     }
 
@@ -76,10 +82,14 @@ void cmd_build(int argc, char *argv[]) {
             target_os = os_win;
             target_arch = arch_arm64;
         } else {
-            char err[256];
-            sprintf(err, "Unsupported target: '%s' | options:\n - linux-x64\n - linux-arm64\n - macos-x64\n - macos-arm64\n - win-x64\n - win-arm64\n\n", target);
-            die(err);
+            sprintf(b->sbuf, "Unsupported target: '%s'\nOptions: linux-x64, linux-arm64, macos-x64, macos-arm64, win-x64, win-arm64", target);
+            build_error(b, b->sbuf);
         }
+    }
+
+    if (target_os == os_other || target_arch == arch_other) {
+        sprintf(b->sbuf, "Unknown build target");
+        build_error(b, b->sbuf);
     }
 
     char *os = NULL;
@@ -117,11 +127,8 @@ void cmd_build(int argc, char *argv[]) {
     bool link_static = array_contains(args, "--static", arr_find_str) || array_contains(args, "-s", arr_find_str);
 
     //
-    Build *b = al(alc, sizeof(Build));
-    b->alc = alc;
-    b->alc_io = alc_io;
-    b->token = al(alc, KI_TOKEN_MAX);
-    b->sbuf = al(alc, 2000);
+    b->pkc_main = NULL;
+    b->nsc_main = NULL;
 
     // Macro definitions
     MacroScope *mc = init_macro_scope(alc);
@@ -135,43 +142,58 @@ void cmd_build(int argc, char *argv[]) {
     }
 
     // Filter out files
-    char *first_file = NULL;
     Array *files = array_make(alc, argc);
     int argc_ = args->length;
+    bool is_dir = false;
     for (int i = 2; i < argc_; i++) {
         char *arg = array_get_index(args, i);
         if (arg[0] == '-') {
             continue;
-        }
-        if (!ends_with(arg, ".ki")) {
-            sprintf(b->sbuf, "Filename must end with .ki : '%s'", arg);
-            die(b->sbuf);
         }
 
         char *full = al(alc, KI_PATH_MAX);
         bool success = get_fullpath(arg, full);
 
         if (!success || !file_exists(full)) {
-            sprintf(b->sbuf, "File not found: '%s'", arg);
-            die(b->sbuf);
+            sprintf(b->sbuf, "CLI argument, file/directory not found: '%s'", arg);
+            build_error(b, b->sbuf);
         }
 
-        if (!first_file)
-            first_file = full;
+        if (dir_exists(full)) {
+            Array *subs = get_subfiles(alc, full, false, true);
+            for (int o = 0; o < subs->length; o++) {
+                char *path = array_get_index(subs, o);
+                if (ends_with(path, ".ki")) {
+                    array_push(files, full);
+                }
+            }
+            continue;
+        }
+
+        if (!ends_with(arg, ".ki")) {
+            sprintf(b->sbuf, "CLI argument, filename must end with .ki : '%s'", arg);
+            build_error(b, b->sbuf);
+        }
 
         array_push(files, full);
     }
 
-    if (!first_file) {
-        sprintf(b->sbuf, "Nothing to compile, add some files to your command");
-        die(b->sbuf);
+    if (files->length == 0) {
+        sprintf(b->sbuf, "Nothing to compile, add some files or directories to your build command");
+        build_error(b, b->sbuf);
     }
 
+    char *first_file = array_get_index(files, 0);
+    char first_dir[KI_PATH_MAX];
+    get_dir_from_path(first_file, first_dir);
+    char *cfg_dir = loader_find_config_dir(b, first_dir);
+    char *main_dir = first_dir;
+
     // Cache dir
-    char *cache_buf = malloc(1000);
-    char *cache_hash = malloc(64);
+    char *cache_buf = al(alc, 1000);
+    char *cache_hash = al(alc, 64);
     char *cache_dir = al(alc, KI_PATH_MAX);
-    get_dir_from_path(first_file, cache_buf);
+    strcpy(cache_buf, main_dir);
     strcat(cache_buf, "||");
     strcat(cache_buf, os);
     strcat(cache_buf, arch);
@@ -179,7 +201,6 @@ void cmd_build(int argc, char *argv[]) {
     strcat(cache_buf, debug ? "1" : "0");
     strcat(cache_buf, test ? "1" : "0");
     simple_hash(cache_buf, cache_hash);
-    free(cache_buf);
     strcpy(cache_dir, get_storage_path());
     strcat(cache_dir, "/cache/");
 
@@ -188,7 +209,6 @@ void cmd_build(int argc, char *argv[]) {
     }
 
     strcat(cache_dir, cache_hash);
-    free(cache_hash);
 
     if (!file_exists(cache_dir)) {
         makedir(cache_dir, 0700);
@@ -220,7 +240,6 @@ void cmd_build(int argc, char *argv[]) {
     //
     b->path_out = path_out;
     b->ptr_size = ptr_size;
-    b->alc_ast = alc_make();
     b->cache_dir = cache_dir;
     //
     b->event_count = 0;
@@ -229,10 +248,12 @@ void cmd_build(int argc, char *argv[]) {
     //
     b->packages = array_make(alc, 100);
     b->packages_by_dir = map_make(alc);
+    b->namespaces_by_dir = map_make(alc);
     b->all_ki_files = array_make(alc, 1000);
     b->link_libs = map_make(alc);
     b->link_dirs = array_make(alc, 40);
-    b->all_fcs = map_make(alc);
+    b->fcs_by_path = map_make(alc);
+    b->all_fcs = array_make(alc, 80);
     b->main_func = NULL;
     b->str_buf = str_make(alc, 5000);
     b->str_buf_io = str_make(alc_io, 10000);
@@ -248,19 +269,6 @@ void cmd_build(int argc, char *argv[]) {
     b->stage_5 = chain_make(alc);
     b->stage_6 = chain_make(alc);
     //
-    b->class_u8 = NULL;
-    b->class_u16 = NULL;
-    b->class_u32 = NULL;
-    b->class_u64 = NULL;
-    b->class_i8 = NULL;
-    b->class_i16 = NULL;
-    b->class_i32 = NULL;
-    b->class_i64 = NULL;
-    b->class_string = NULL;
-    b->class_array = NULL;
-    b->class_ptr = NULL;
-    //
-    b->core_types_scanned = false;
     b->ir_ready = false;
     b->optimize = optimize;
     b->test = test;
@@ -283,37 +291,33 @@ void cmd_build(int argc, char *argv[]) {
     gettimeofday(&begin, NULL);
 #endif
 
-    Pkc *pkc_main = pkc_init(alc, b, "main", find_config_dir(alc, first_file));
-    Nsc *nsc_main = nsc_init(alc, b, pkc_main, "main");
+    // Init main:main
+    Config *main_cfg = NULL;
+    if (cfg_dir) {
+        main_dir = cfg_dir;
+        main_cfg = cfg_load(alc, b->str_buf, cfg_dir);
+    }
+    b->pkc_main = pkc_init(alc, b, "main", main_dir, main_cfg);
+    b->nsc_main = nsc_init(alc, b, b->pkc_main, "main");
+    b->pkc_main->main_nsc = b->nsc_main;
 
+    //
     char *pkg_dir = al(alc, KI_PATH_MAX);
-    strcpy(pkg_dir, pkc_main->dir);
-    strcat(pkg_dir, "/packages");
+    strcpy(pkg_dir, main_dir);
+    strcat(pkg_dir, "packages/");
     b->pkg_dir = pkg_dir;
 
     char *ki_dir = al(alc, KI_PATH_MAX);
     strcpy(ki_dir, get_binary_dir());
-    strcat(ki_dir, "/lib");
-    Pkc *pkc_ki = pkc_init(alc, b, "ki", ki_dir);
-
-    b->nsc_main = nsc_main;
+    strcat(ki_dir, "/lib/");
+    Pkc *pkc_ki = loader_get_pkc_for_dir(b, ki_dir);
     b->pkc_ki = pkc_ki;
 
-    array_push(b->packages, pkc_ki);
-    array_push(b->packages, pkc_main);
-
-    b->nsc_type = pkc_load_nsc(pkc_ki, "type", NULL);
-    b->nsc_io = pkc_load_nsc(pkc_ki, "io", NULL);
-    pkc_load_nsc(pkc_ki, "mem", NULL);
-    pkc_load_nsc(pkc_ki, "os", NULL);
-
-    //
-#ifdef WIN32
-    void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))io_loop, (void *)b, 0, NULL);
-#else
-    pthread_t thr;
-    pthread_create(&thr, NULL, io_loop, (void *)b);
-#endif
+    // Load core types & functions
+    loader_load_nsc(pkc_ki, "type");
+    loader_load_nsc(pkc_ki, "io");
+    loader_load_nsc(pkc_ki, "mem");
+    loader_load_nsc(pkc_ki, "os");
 
     // Compile ki lib
     compile_loop(b, 1); // Scan identifiers
@@ -328,6 +332,10 @@ void cmd_build(int argc, char *argv[]) {
     }
 
     compile_loop(b, 6); // Complete all other stages
+
+    if (b->lsp) {
+        build_end(b, 0);
+    }
 
     b->ir_ready = true;
 
@@ -390,9 +398,46 @@ void cmd_build(int argc, char *argv[]) {
         exit(code);
     }
 
-    // Free memory
+    //
+    build_end(b, 0);
+}
+
+void build_clean_up(Build *b) {
+    //
+    for (int i = 0; i < b->all_fcs->length; i++) {
+        Fc *fc = array_get_index(b->all_fcs, i);
+        if (fc->cache) {
+            cJSON_Delete(fc->cache);
+        }
+    }
+    for (int i = 0; i < b->packages->length; i++) {
+        Pkc *pkc = array_get_index(b->packages, i);
+        cJSON *cfg = pkc->config ? pkc->config->json : NULL;
+        if (cfg) {
+            cJSON_Delete(cfg);
+        }
+    }
+    alc_delete(b->alc_io);
     alc_delete(b->alc_ast);
     alc_delete(b->alc);
+}
+
+void build_end(Build *b, int exit_code) {
+    //
+    bool is_lsp = b->lsp ? true : false;
+    build_clean_up(b);
+    if (is_lsp)
+        lsp_exit_thread();
+    else
+        exit(exit_code);
+}
+
+void build_error(Build *b, char *msg) {
+    //
+    if (!b->lsp) {
+        printf("Build error: %s\n", msg);
+    }
+    build_end(b, 1);
 }
 
 void build_add_files(Build *b, Array *files) {
@@ -400,7 +445,12 @@ void build_add_files(Build *b, Array *files) {
     int filec = files->length;
     for (int i = 0; i < filec; i++) {
         char *path = array_get_index(files, i);
-        Fc *fc = fc_init(b, path, b->nsc_main, b->nsc_main->pkc, false);
+        char dir[KI_PATH_MAX];
+        get_dir_from_path(path, dir);
+        Nsc *nsc = loader_get_nsc_for_dir(b, dir);
+        if (strcmp(nsc->name, "main") == 0) {
+            fc_init(b, path, nsc, false);
+        }
     }
 }
 
@@ -419,7 +469,7 @@ int default_os() {
 #if __APPLE__
     return os_macos;
 #endif
-    die("Cannot determine default target 'os', use --os to specify manually");
+    return os_other;
 }
 
 int default_arch() {
@@ -431,7 +481,7 @@ int default_arch() {
 #elif defined(__aarch64__) || defined(_M_ARM64)
     return arch_arm64;
 #endif
-    die("Cannot determine default target 'arch', use --arch to specify manually");
+    return arch_other;
 }
 
 void cmd_build_help(bool run_code) {
@@ -460,30 +510,6 @@ void cmd_build_help(bool run_code) {
     exit(1);
 }
 
-char *find_config_dir(Allocator *alc, char *ki_path) {
-    //
-    char *dir = al(alc, KI_PATH_MAX);
-    get_dir_from_path(ki_path, dir);
-    char cfg_path[strlen(dir) + 10];
-
-    bool found = false;
-    while (strlen(dir) > 3) {
-        strcpy(cfg_path, dir);
-        strcat(cfg_path, "ki.json");
-        if (file_exists(cfg_path)) {
-            dir[strlen(dir) - 1] = '\0';
-            found = true;
-            break;
-        }
-        get_dir_from_path(dir, dir);
-    }
-    if (!found) {
-        get_dir_from_path(ki_path, dir);
-        dir[strlen(dir) - 1] = '\0';
-    }
-    return dir;
-}
-
 Class *ki_get_class(Build *b, char *ns, char *name) {
     //
     Pkc *pkc = b->pkc_ki;
@@ -492,7 +518,7 @@ Class *ki_get_class(Build *b, char *ns, char *name) {
     Idf *idf = map_get(nsc->scope->identifiers, name);
     if (!idf || idf->type != idf_class) {
         sprintf(b->sbuf, "Class not found in ki-lib '%s:%s'", ns, name);
-        die(b->sbuf);
+        build_error(b, b->sbuf);
     }
 
     return idf->item;
@@ -506,7 +532,7 @@ Func *ki_get_func(Build *b, char *ns, char *name) {
     Idf *idf = map_get(nsc->scope->identifiers, name);
     if (!idf || idf->type != idf_func) {
         sprintf(b->sbuf, "Func not found in ki-lib '%s:%s'", ns, name);
-        die(b->sbuf);
+        build_error(b, b->sbuf);
     }
 
     return idf->item;
@@ -572,7 +598,7 @@ void build_watch(Build *b, int argc, char *argv[]) {
     }
     char *cmd = str_to_chars(b->alc, cmd_str);
 
-    Array *fcs = b->all_fcs->values;
+    Array *fcs = b->all_fcs;
     while (true) {
         bool run = false;
         for (int i = 0; i < fcs->length; i++) {
