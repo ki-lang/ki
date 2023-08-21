@@ -62,13 +62,13 @@ void pkg_get_dir(char *packages_dir, char *name, char *buf) {
         char ch = dirname[i];
         if (ch == 0)
             break;
-        if (ch == '/')
+        if (ch == '/' || ch == '\\')
             dirname[i] = '_';
         i++;
     }
     str_replace_simple(dirname, "github.com", "github");
     strcpy(buf, packages_dir);
-    strcat(buf, "/");
+    strcat(buf, PATH_SLASH);
     strcat(buf, dirname);
 }
 

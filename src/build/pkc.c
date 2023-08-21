@@ -151,9 +151,9 @@ Pkc *pkc_get_sub_package(Pkc *pkc, char *name) {
         pkg_get_dir(b->pkg_dir, jname->valuestring, pkgpath);
 
         strcpy(versionpath, pkgpath);
-        strcat(versionpath, "/");
+        strcat(versionpath, PATH_SLASH);
         strcat(versionpath, jversion->valuestring);
-        strcat(versionpath, "/");
+        strcat(versionpath, PATH_SLASH);
 
         strcpy(config_path, versionpath);
         strcat(config_path, "ki.json");
