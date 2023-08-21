@@ -55,6 +55,8 @@ typedef struct AllocatorBlock AllocatorBlock;
 // LSP
 /////////////////
 extern Map *lsp_doc_content;
+extern const char PATH_SLASH_CHAR;
+extern const char *PATH_SLASH;
 
 #ifdef _WIN32
 extern HANDLE lsp_resp_lock;

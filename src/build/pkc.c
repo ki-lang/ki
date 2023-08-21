@@ -72,6 +72,7 @@ void pkc_load_config(Pkc *pkc) {
 
                 strcpy(fullpath, pkc->dir);
                 strcat(fullpath, cdir->valuestring);
+                fix_slashes(fullpath, true);
 
                 if (!file_exists(fullpath)) {
                     printf("Header directory not found: %s => (%s)\n", cdir->valuestring, fullpath);
@@ -96,8 +97,8 @@ void pkc_load_config(Pkc *pkc) {
             while (cdir) {
 
                 strcpy(fullpath, pkc->dir);
-                strcat(fullpath, "/");
                 strcat(fullpath, cdir->valuestring);
+                fix_slashes(fullpath, true);
 
                 if (!file_exists(fullpath)) {
                     printf("Link directory not found: %s => (%s)\n", cdir->valuestring, fullpath);

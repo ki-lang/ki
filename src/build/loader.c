@@ -107,8 +107,9 @@ Nsc *loader_get_nsc_for_dir(Build *b, char *dir) {
             while (ns) {
                 char ndir[KI_PATH_MAX];
                 strcpy(ndir, pkc->dir);
-                strcat(ndir, "/");
+                strcat(ndir, PATH_SLASH);
                 strcat(ndir, ns->valuestring);
+                fix_slashes(ndir, true);
 
                 char dir_abs[KI_PATH_MAX];
                 get_fullpath(ndir, dir_abs);
@@ -188,9 +189,7 @@ Nsc *loader_load_nsc(Pkc *pkc, char *name) {
     char ndir[KI_PATH_MAX];
     strcpy(ndir, pkc->dir);
     strcat(ndir, ns->valuestring);
-    char lch = ndir[strlen(ndir) - 1];
-    if (lch != '/' && lch != '\\')
-        strcat(ndir, "/");
+    fix_slashes(ndir, true);
 
     char dir_abs[KI_PATH_MAX];
     get_fullpath(ndir, dir_abs);

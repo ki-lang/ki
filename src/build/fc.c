@@ -7,7 +7,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
     if (prev && !duplicate) {
         return prev;
     }
-    printf("fc:%s\n", path_ki);
+    // printf("fc:%s\n", path_ki);
 
     //
     if (!file_exists(path_ki)) {

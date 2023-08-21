@@ -12,14 +12,57 @@ bool get_fullpath(char *filepath, char *buf) {
     char *res = realpath(filepath, buf);
 #endif
     if (res && dir_exists(res)) {
-        int len = strlen(res);
-        char ch = res[len - 1];
-        if (ch != '/' && ch != '\\') {
-            res[len] = '/';
-            res[len + 1] = '\0';
-        }
+        fix_slashes(res, true);
+        // int len = strlen(res);
+        // char ch = res[len - 1];
+        // if (ch != '/' && ch != '\\') {
+        //     res[len] = PATH_SLASH_CHAR;
+        //     res[len + 1] = '\0';
+        // }
     }
     return res != NULL;
+}
+
+void fix_slashes(char *path, bool must_end_with_slash) {
+    //
+    int len = strlen(path);
+    int i = 0;
+    while (i < len) {
+#ifdef WIN32
+        if (path[i] == '/')
+            path[i] = PATH_SLASH_CHAR;
+#else
+        if (path[i] == '\\')
+            path[i] = PATH_SLASH_CHAR;
+#endif
+        i++;
+    }
+    i = 0;
+    int set = 0;
+    bool prev = false;
+    while (i <= len) {
+        char ch = path[i];
+        if (ch == PATH_SLASH_CHAR) {
+            if (prev) {
+                i++;
+                continue;
+            } else {
+                prev = true;
+            }
+        } else {
+            prev = false;
+        }
+        path[set] = ch;
+        i++;
+        set++;
+    }
+    if (must_end_with_slash) {
+        char ch = path[len - 1];
+        if (ch != '/' && ch != '\\') {
+            path[len] = PATH_SLASH_CHAR;
+            path[len + 1] = '\0';
+        }
+    }
 }
 
 int file_exists(const char *path) {
@@ -217,7 +260,8 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
     char pattern[KI_PATH_MAX];
     strcpy(pattern, dir);
     strcat(pattern, "*");
-    printf("pattern:%s\n", pattern);
+    // printf("pattern:%s\n", pattern);
+
     WIN32_FIND_DATA data;
     HANDLE hFind = FindFirstFile(pattern, &data); // DIRECTORY
     if (hFind != INVALID_HANDLE_VALUE) {
