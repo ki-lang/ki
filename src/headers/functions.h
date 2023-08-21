@@ -101,6 +101,9 @@ char *lsp_func_label(Allocator *alc, Func *func, char *name, bool skip_first_arg
 char *lsp_func_insert(Allocator *alc, Func *func, char *name, bool skip_first_arg);
 char *lsp_func_help(Allocator *alc, Array *args, bool skip_first_arg, Type *rett);
 
+// Fmt
+void fmt_format(Allocator* alc, char* path);
+
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);
 bool cfg_has_package(Config *cfg, char *name);
