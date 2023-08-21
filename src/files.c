@@ -217,6 +217,7 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
     char pattern[KI_PATH_MAX];
     strcpy(pattern, dir);
     strcat(pattern, "*");
+    printf("pattern:%s\n", pattern);
     WIN32_FIND_DATA data;
     HANDLE hFind = FindFirstFile(pattern, &data); // DIRECTORY
     if (hFind != INVALID_HANDLE_VALUE) {
