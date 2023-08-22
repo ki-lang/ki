@@ -60,7 +60,9 @@ void cmd_fmt(int argc, char *argv[]) {
             continue;
         Str *content = str_make(alc, 10000);
         file_get_contents(content, path);
-        fmt_format(alc, str_to_chars(alc, content), false, 4);
+        char *result = fmt_format(alc, str_to_chars(alc, content), false, 4);
+        // printf("%s\n", result);
+        write_file(path, result, false);
     }
 }
 
@@ -208,8 +210,6 @@ char *fmt_format(Allocator *alc, char *data, bool use_tabs, int spaces) {
     }
 
     char *result = str_to_chars(alc, content);
-    // printf("%s\n", result);
-    // write_file(path, result, false);
     return result;
 }
 
