@@ -1,5 +1,20 @@
 
+header "openssl" as ssl;
+
+enum METHOD {
+	GET,
+	POST,
+	PUT,
+	PATCH,
+}
+
 class Client {
 
+	static fn req(method: METHOD, url: String) ClientRequest {
 
+		return ClientRequest {
+			type: method,
+			url: url
+		};
+	}
 }

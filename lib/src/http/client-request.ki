@@ -1,0 +1,10 @@
+
+header "openssl" as ssl;
+
+class ClientRequest {
+	type: METHOD;
+	url: String;
+
+	fn exec() {
+	}
+}

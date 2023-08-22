@@ -1,0 +1,4 @@
+
+link_static "crypto";
+link_static "ssl";
+header "openssl";
