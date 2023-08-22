@@ -25,6 +25,8 @@ int main(int argc, char *argv[]) {
         cmd_make(argc, argv);
     } else if (strcmp(cmd, "ls") == 0) {
         cmd_lsp(argc, argv);
+    } else if (strcmp(cmd, "fmt") == 0) {
+        cmd_fmt(argc, argv);
     } else {
         help();
     }

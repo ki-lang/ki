@@ -271,6 +271,8 @@ cJSON *lsp_handle(Allocator *alc, cJSON *json) {
             resp = lsp_change(alc, params);
         } else if (strcmp(method->valuestring, "textDocument/didSave") == 0) {
             resp = lsp_save(alc, params);
+        } else if (strcmp(method->valuestring, "textDocument/formatting") == 0) {
+            resp = lsp_format(alc, params);
         } else if (strcmp(method->valuestring, "textDocument/definition") == 0) {
             resp = lsp_definition(alc, params, id->valueint);
             respond = false;

@@ -144,7 +144,6 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     // Filter out files
     Array *files = array_make(alc, argc);
     int argc_ = args->length;
-    bool is_dir = false;
     for (int i = 2; i < argc_; i++) {
         char *arg = array_get_index(args, i);
         if (arg[0] == '-') {

@@ -41,6 +41,7 @@ typedef struct LspData LspData;
 typedef struct LspCompletion LspCompletion;
 typedef struct CompileLoopData CompileLoopData;
 typedef struct FcError FcError;
+typedef struct Fmt Fmt;
 
 // Pkg
 typedef struct PkgCmd PkgCmd;
@@ -535,6 +536,13 @@ struct FcError {
     char *msg;
     int line;
     int col;
+};
+
+struct Fmt {
+    Str *content;
+    int depth;
+    int spaces;
+    bool use_tabs;
 };
 
 #endif

@@ -207,3 +207,12 @@ enum LSP_COMPLETION_TYPE {
 	lsp_compl_operator = 24,
 	lsp_compl_typeParameter = 25,
 };
+
+enum FMT_CONTENT{
+    fmtc_root,
+    fmtc_class,
+    fmtc_func,
+    fmtc_args,
+    fmtc_value,
+    fmtc_type,
+};
