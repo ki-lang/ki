@@ -104,7 +104,7 @@ char *lsp_func_help(Allocator *alc, Array *args, bool skip_first_arg, Type *rett
 
 // Fmt
 void cmd_fmt(int argc, char *argv[]);
-char *fmt_format(Allocator *alc, char *path, bool use_tabs, int spaces);
+char *fmt_format(Allocator *alc, char *text, bool use_tabs, int spaces);
 
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);

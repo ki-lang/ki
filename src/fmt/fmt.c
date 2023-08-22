@@ -56,20 +56,18 @@ void cmd_fmt(int argc, char *argv[]) {
     int filec = files->length;
     for (int i = 0; i < filec; i++) {
         char *path = array_get_index(files, i);
-        fmt_format(alc, path, false, 4);
+        if (!file_exists(path))
+            continue;
+        Str *content = str_make(alc, 10000);
+        file_get_contents(content, path);
+        fmt_format(alc, str_to_chars(alc, content), false, 4);
     }
 }
 
-char *fmt_format(Allocator *alc, char *path, bool use_tabs, int spaces) {
+char *fmt_format(Allocator *alc, char *data, bool use_tabs, int spaces) {
     //
-    if (!file_exists(path))
-        return NULL;
     Str *content = str_make(alc, 10000);
-    file_get_contents(content, path);
-
-    char *data = str_to_chars(alc, content);
-    int len = content->length;
-    str_clear(content);
+    int len = strlen(data);
 
     Fmt *fmt = al(alc, sizeof(Fmt));
     fmt->content = content;
@@ -197,6 +195,7 @@ char *fmt_format(Allocator *alc, char *path, bool use_tabs, int spaces) {
                 str_append_char(content, ch);
                 if (is_newline(ch)) {
                     start_of_line = true;
+                    newlines = 1;
                     break;
                 }
             }
