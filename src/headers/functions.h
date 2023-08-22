@@ -80,6 +80,7 @@ cJSON *lsp_open(Allocator *alc, cJSON *params);
 cJSON *lsp_close(Allocator *alc, cJSON *params);
 cJSON *lsp_change(Allocator *alc, cJSON *params);
 cJSON *lsp_save(Allocator *alc, cJSON *params);
+cJSON *lsp_format(Allocator *alc, cJSON *params);
 cJSON *lsp_definition(Allocator *alc, cJSON *params, int id);
 cJSON *lsp_completion(Allocator *alc, cJSON *params, int id);
 cJSON *lsp_help(Allocator *alc, cJSON *params, int id);
@@ -103,7 +104,7 @@ char *lsp_func_help(Allocator *alc, Array *args, bool skip_first_arg, Type *rett
 
 // Fmt
 void cmd_fmt(int argc, char *argv[]);
-void fmt_format(Allocator* alc, char* path);
+char *fmt_format(Allocator *alc, char *path, bool use_tabs, int spaces);
 
 // Config
 Config *cfg_load(Allocator *alc, Str *buf, char *dir);

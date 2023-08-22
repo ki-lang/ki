@@ -2,7 +2,7 @@
 #include "../all.h"
 
 void cmd_fmt_help();
-void fmt_indent(Str *content, int indents);
+void fmt_indent(Fmt *fmt);
 
 void cmd_fmt(int argc, char *argv[]) {
 
@@ -56,14 +56,14 @@ void cmd_fmt(int argc, char *argv[]) {
     int filec = files->length;
     for (int i = 0; i < filec; i++) {
         char *path = array_get_index(files, i);
-        fmt_format(alc, path);
+        fmt_format(alc, path, false, 4);
     }
 }
 
-void fmt_format(Allocator *alc, char *path) {
+char *fmt_format(Allocator *alc, char *path, bool use_tabs, int spaces) {
     //
     if (!file_exists(path))
-        return;
+        return NULL;
     Str *content = str_make(alc, 10000);
     file_get_contents(content, path);
 
@@ -71,8 +71,13 @@ void fmt_format(Allocator *alc, char *path) {
     int len = content->length;
     str_clear(content);
 
+    Fmt *fmt = al(alc, sizeof(Fmt));
+    fmt->content = content;
+    fmt->depth = 0;
+    fmt->spaces = spaces;
+    fmt->use_tabs = use_tabs;
+
     int i = 0;
-    int depth = 0;
     int newlines = 0;
     int ctx = fmtc_root;
     Array *contexts = array_make(alc, 50);
@@ -87,7 +92,7 @@ void fmt_format(Allocator *alc, char *path) {
         i++;
         // Newlines
         if (is_newline(ch)) {
-            if (newlines < (depth == 0 ? 3 : 2)) {
+            if (newlines < (fmt->depth == 0 ? 3 : 2)) {
                 str_append_char(content, '\n');
                 start_of_line = true;
             }
@@ -109,9 +114,9 @@ void fmt_format(Allocator *alc, char *path) {
         // Indent
         if (ch == '{' && data[i] != '{') {
             if (start_of_line) {
-                fmt_indent(content, depth);
+                fmt_indent(fmt);
             }
-            depth++;
+            fmt->depth++;
             str_append_chars(content, "{");
             start_of_line = true;
             expects_newline = true;
@@ -119,11 +124,11 @@ void fmt_format(Allocator *alc, char *path) {
         }
         if (ch == '}') {
             if (pch != '}') {
-                depth--;
+                fmt->depth--;
                 if (!start_of_line) {
                     str_append_char(content, '\n');
                 }
-                fmt_indent(content, depth);
+                fmt_indent(fmt);
             }
             str_append_chars(content, "}");
             if (data[i] != '{') {
@@ -136,7 +141,7 @@ void fmt_format(Allocator *alc, char *path) {
         if (start_of_line && ch != ';') {
             if (expects_newline)
                 str_append_char(content, '\n');
-            fmt_indent(content, depth);
+            fmt_indent(fmt);
         }
         newlines = 0;
         start_of_line = false;
@@ -204,12 +209,20 @@ void fmt_format(Allocator *alc, char *path) {
     }
 
     char *result = str_to_chars(alc, content);
-    printf("%s\n", result);
+    // printf("%s\n", result);
+    // write_file(path, result, false);
+    return result;
 }
 
-void fmt_indent(Str *content, int indents) {
-    for (int i = 0; i < indents; i++) {
-        str_append_chars(content, "    ");
+void fmt_indent(Fmt *fmt) {
+    for (int i = 0; i < fmt->depth; i++) {
+        if (fmt->use_tabs) {
+            str_append_chars(fmt->content, "\t");
+        } else {
+            for (int o = 0; o < fmt->spaces; o++) {
+                str_append_chars(fmt->content, " ");
+            }
+        }
     }
 }
 
