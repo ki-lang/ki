@@ -124,6 +124,9 @@ char *fmt_format(Allocator *alc, char *data, bool use_tabs, int spaces) {
         }
         if (ch == '}') {
             if (pch != '}') {
+                if (fmt->depth == 0) {
+                    return NULL;
+                }
                 fmt->depth--;
                 if (!start_of_line) {
                     str_append_char(content, '\n');
@@ -207,6 +210,10 @@ char *fmt_format(Allocator *alc, char *data, bool use_tabs, int spaces) {
             str_append_char(content, ' ');
             added_spacing = true;
         }
+    }
+
+    if (fmt->depth > 0) {
+        return NULL;
     }
 
     char *result = str_to_chars(alc, content);
