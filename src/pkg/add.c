@@ -71,6 +71,7 @@ void pkg_add(PkgCmd *pc, char *name, char *version, char *alias) {
     // Add to ki.json
     char cwd[KI_PATH_MAX];
     getcwd(cwd, sizeof(cwd));
+    fix_slashes(cwd, true);
     Config *cfg = cfg_load(alc, pc->str_buf, cwd);
     if (cfg == NULL) {
         sprintf(cbuf, "ki.json config not found in '%s'\n", cwd);

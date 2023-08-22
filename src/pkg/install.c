@@ -8,6 +8,7 @@ void pkg_install(PkgCmd *pc) {
 
     char cwd[KI_PATH_MAX];
     getcwd(cwd, sizeof(cwd));
+    fix_slashes(cwd, true);
     Config *cfg = cfg_load(alc, pc->str_buf, cwd);
     if (cfg == NULL) {
         sprintf(cbuf, "No ki.json config not found in '%s'", cwd);
@@ -70,6 +71,7 @@ void pkg_get_dir(char *packages_dir, char *name, char *buf) {
     strcpy(buf, packages_dir);
     strcat(buf, PATH_SLASH);
     strcat(buf, dirname);
+    strcat(buf, PATH_SLASH);
 }
 
 bool pkg_install_package(PkgCmd *pc, char *dir, char *name, char *version, char *clone_url, char *hash) {
@@ -78,7 +80,8 @@ bool pkg_install_package(PkgCmd *pc, char *dir, char *name, char *version, char 
     char pkgpath[KI_PATH_MAX];
     char versionpath[KI_PATH_MAX];
     strcpy(pkgdir, dir);
-    strcat(pkgdir, "/packages");
+    strcat(pkgdir, "packages");
+    fix_slashes(dir, true);
 
     if (!file_exists(pkgdir)) {
         makedir(pkgdir, 0755);
@@ -94,8 +97,8 @@ bool pkg_install_package(PkgCmd *pc, char *dir, char *name, char *version, char 
     char cmdout[1000];
 
     strcpy(versionpath, pkgpath);
-    strcat(versionpath, "/");
     strcat(versionpath, version);
+    strcat(versionpath, PATH_SLASH);
 
     if (!file_exists(versionpath)) {
         strcpy(cmd, "cd ");

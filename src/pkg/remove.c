@@ -8,6 +8,7 @@ void pkg_remove(PkgCmd *pc, char *name) {
 
     char cwd[KI_PATH_MAX];
     getcwd(cwd, sizeof(cwd));
+    fix_slashes(cwd, true);
     Config *cfg = cfg_load(alc, pc->str_buf, cwd);
     if (cfg == NULL) {
         sprintf(cbuf, "No ki.json config not found in '%s'", cwd);
