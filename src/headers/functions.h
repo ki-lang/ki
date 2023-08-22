@@ -102,6 +102,7 @@ char *lsp_func_insert(Allocator *alc, Func *func, char *name, bool skip_first_ar
 char *lsp_func_help(Allocator *alc, Array *args, bool skip_first_arg, Type *rett);
 
 // Fmt
+void cmd_fmt(int argc, char *argv[]);
 void fmt_format(Allocator* alc, char* path);
 
 // Config
