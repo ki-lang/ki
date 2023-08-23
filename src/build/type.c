@@ -644,10 +644,7 @@ bool type_tracks_ownership(Type *type) {
     if (!class) {
         return false;
     }
-    if (!class->track_ownership) {
-        return false;
-    }
-    return true;
+    return class->track_ownership;
 }
 
 bool type_allowed_async(Type *type, bool recursive) {

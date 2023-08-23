@@ -20,6 +20,8 @@ class Array[T] {
 	~length: uxx = 0;
 	~data: ptr;
 
+	stores_references_to T;
+
 	static fn new(start_size: uxx = 2) CLASS {
 		if start_size < 2 {
 			start_size = 2;

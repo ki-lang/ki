@@ -78,11 +78,11 @@ bool stage_3_circular_find(Class *find, Class *in, Array *prop_names) {
         return true;
     }
     in->circular_checked = true;
-    Map *props = in->props;
-    for (int i = 0; i < props->values->length; i++) {
-        char *name = array_get_index(props->keys, i);
-        ClassProp *prop = array_get_index(props->values, i);
-        Type *type = prop->type;
+    Array *types = in->refers_to_types;
+    Array *names = in->refers_to_names;
+    for (int i = 0; i < types->length; i++) {
+        Type *type = array_get_index(types, i);
+        char *name = array_get_index(names, i);
         Class *pclass = type->class;
         if (!pclass || type->weak_ptr) {
             continue;
@@ -111,11 +111,14 @@ void stage_3_circular(Build *b, Class *class) {
     //
     if (!class->is_rc)
         return;
-    Map *props = class->props;
     bool circular = false;
-    for (int i = 0; i < props->values->length; i++) {
-        ClassProp *prop = array_get_index(props->values, i);
-        Type *type = prop->type;
+    Array *types = class->refers_to_types;
+    Array *names = class->refers_to_names;
+    for (int i = 0; i < types->length; i++) {
+        Type *type = array_get_index(types, i);
+        if (type->array_of) {
+            type = type->array_of;
+        }
         Class *pclass = type->class;
         if (!pclass || type->weak_ptr) {
             continue;
@@ -135,10 +138,13 @@ void stage_3_shared_circular_refs(Build *b, Class *class) {
     //
     if (!class->is_rc)
         return;
-    Map *props = class->props;
-    for (int i = 0; i < props->values->length; i++) {
-        ClassProp *prop = array_get_index(props->values, i);
-        Type *type = prop->type;
+    Array *types = class->refers_to_types;
+    Array *names = class->refers_to_names;
+    for (int i = 0; i < types->length; i++) {
+        Type *type = array_get_index(types, i);
+        if (type->array_of) {
+            type = type->array_of;
+        }
         Class *pclass = type->class;
         if (!pclass || type->weak_ptr) {
             continue;
@@ -154,7 +160,7 @@ void stage_3_shared_circular_refs(Build *b, Class *class) {
             stage_3_circular_find(class, pclass, prop_names);
             // Circular error
             // Add first property to list
-            char *pname = array_get_index(props->keys, i);
+            char *pname = array_get_index(names, i);
             array_shift(prop_names, pname);
             // Make property chain string
             Str *list = str_make(b->alc, 500);

@@ -197,7 +197,15 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
             rtok(fc);
         }
 
-        if (strcmp(token, "fn") == 0) {
+        if (strcmp(token, "stores_references_to") == 0) {
+
+            Type *type = read_type(fc, fc->alc, scope, true, true, rtc_prop_type);
+            tok_expect(fc, ";", false, true);
+
+            array_push(class->refers_to_types, type);
+            array_push(class->refers_to_names, "*");
+
+        } else if (strcmp(token, "fn") == 0) {
             // Function
             *def_chunk = *fc->chunk;
             tok(fc, token, true, true);
@@ -327,6 +335,8 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
             }
 
             map_set(class->props, prop_name, prop);
+            array_push(class->refers_to_types, prop->type);
+            array_push(class->refers_to_names, prop_name);
 
             skip_until_char(fc, ";");
         }

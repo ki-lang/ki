@@ -295,6 +295,8 @@ struct Class {
     Chunk *chunk_body;
     Map *props;
     Map *funcs;
+    Array *refers_to_names;
+    Array *refers_to_types;
     Func *func_ref;
     Func *func_deref;
     Func *func_ref_weak;

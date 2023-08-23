@@ -18,6 +18,8 @@ Class *class_init(Allocator *alc) {
     class->chunk_body = NULL;
     class->props = map_make(alc);
     class->funcs = map_make(alc);
+    class->refers_to_names = array_make(alc, 4);
+    class->refers_to_types = array_make(alc, 4);
     class->allow_math = false;
     class->track_ownership = false;
     class->is_struct = false;
