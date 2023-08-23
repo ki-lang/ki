@@ -24,6 +24,7 @@ Class *class_init(Allocator *alc) {
     class->can_iter = false;
     class->async = false;
     class->circular_checked = false;
+    class->is_circular = false;
 
     class->func_ref = NULL;
     class->func_deref = NULL;
@@ -500,6 +501,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
         }
         stage_2_class_type_checks(new_fc, gclass);
         stage_3_circular(b, gclass);
+        stage_3_shared_circular_refs(b, class);
         stage_5(new_fc);
     }
 

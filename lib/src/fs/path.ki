@@ -44,7 +44,7 @@ class Path {
 	//}
 }
 
-fn exe_dir() &String {
+fn exe_dir() String {
 	let res = EXE_DIR ?! {
 		let dir = dir_of(exe_path());
 		EXE_DIR = dir;

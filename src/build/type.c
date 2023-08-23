@@ -310,7 +310,8 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     if (type_tracks_ownership(type)) {
-        type->shared_ref = ref;
+        if (type->class && type->class->is_circular)
+            type->shared_ref = ref;
         type->borrow = borrow;
         type->weak_ptr = weak_ptr;
         type->raw_ptr = raw_ptr;
@@ -321,10 +322,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     if (async) {
-        if (!type_allowed_async(type, true)) {
-            Str *chain = str_make(alc, 500);
-            type_allowed_async_error(fc, type, chain);
-        }
+        // if (!type_allowed_async(type, true)) {
+        //     Str *chain = str_make(alc, 500);
+        //     type_allowed_async_error(fc, type, chain);
+        // }
     }
 
     //
@@ -643,7 +644,7 @@ bool type_tracks_ownership(Type *type) {
     if (!class) {
         return false;
     }
-    if (class->type != ct_struct && !class->track_ownership) {
+    if (!class->track_ownership) {
         return false;
     }
     return true;

@@ -325,6 +325,7 @@ struct Class {
     bool async;
     bool has_borrows;
     bool circular_checked;
+    bool is_circular;
 };
 struct ClassProp {
     Type *type;

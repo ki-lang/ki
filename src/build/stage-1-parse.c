@@ -216,6 +216,7 @@ void stage_1_class(Fc *fc, bool is_struct) {
     class->is_rc = !is_struct;
     class->must_ref = !is_struct;
     class->must_deref = !is_struct;
+    class->track_ownership = !is_struct;
     class->def_chunk = def_chunk;
 
     array_push(fc->classes, class);
@@ -262,8 +263,10 @@ void stage_1_class(Fc *fc, bool is_struct) {
     }
 
     tok(fc, token, true, true);
+    bool track = false;
     while (strcmp(token, "{") != 0) {
         if (strcmp(token, "type") == 0) {
+            class->track_ownership = false;
             tok_expect(fc, ":", true, false);
             tok(fc, token, true, false);
             if (strcmp(token, "ptr") == 0) {
@@ -323,7 +326,7 @@ void stage_1_class(Fc *fc, bool is_struct) {
         } else if (strcmp(token, "math") == 0) {
             class->allow_math = true;
         } else if (strcmp(token, "track") == 0) {
-            class->track_ownership = true;
+            track = true;
         } else if (strcmp(token, "async") == 0) {
             class->async = true;
         } else {
@@ -333,6 +336,9 @@ void stage_1_class(Fc *fc, bool is_struct) {
 
         tok(fc, token, true, true);
     }
+
+    if (track)
+        class->track_ownership = true;
 
     class->chunk_body = chunk_clone(fc->alc, fc->chunk);
 

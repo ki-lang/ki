@@ -4,8 +4,8 @@ header "sys" as sys;
 use io;
 
 class Connection {
-	~fd: i32;
-	~open: bool = true;
+	~ fd: i32;
+	~ open: bool = true;
 
 	fn close() {
 		if !this.open : return;

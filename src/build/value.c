@@ -109,11 +109,12 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = vgen_compare(alc, b, on, vgen_vint(alc, 0, type_gen(b, alc, "bool"), true), op_eq);
     } else if (strcmp(token, "&") == 0) {
-        Value *on = read_value(fc, alc, scope, false, 8, false);
+        Value *on = read_value(fc, alc, scope, false, 1, false);
         if (on->rett->strict_ownership) {
             Type *rett = type_clone(alc, on->rett);
             rett->strict_ownership = false;
-            rett->shared_ref = rett->class && rett->class->circular_checked;
+            if (rett->class && rett->class->is_circular)
+                rett->shared_ref = true;
             rett->borrow = false;
             on->rett = rett;
         }
@@ -919,7 +920,8 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
 
         if (scope && type_tracks_ownership(type)) {
             Type *rett = type_clone(alc, type);
-            rett->shared_ref = true;
+            if (rett->class && rett->class->is_circular)
+                rett->shared_ref = true;
             res->rett = rett;
 
             Value *from = vgen_ir_from(alc, res);

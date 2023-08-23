@@ -159,6 +159,7 @@ void stage_2_func(Fc *fc, Func *func);
 void stage_2_1(Fc *fc);
 void stage_3(Fc *);
 void stage_3_circular(Build *b, Class *class);
+void stage_3_shared_circular_refs(Build *b, Class *class);
 void stage_4(Fc *);
 void stage_5(Fc *);
 void stage_6(Fc *);
