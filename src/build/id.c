@@ -76,19 +76,20 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
         fc_error(fc);
     }
 
-    if (get_char(fc, 0) == ':') {
-        Id id;
-        id.has_nsc = false;
-        id.name = token;
-        idf = idf_by_id(fc, scope, &id, false);
-        if (!idf) {
-            sprintf(fc->sbuf, "Unknown namespace: '%s', most likely a typo or a missing 'use' token", token);
-            fc_error(fc);
-        }
-        if (idf && idf->type != idf_nsc) {
-            sprintf(fc->sbuf, "Identifier '%s' is not a namespace", token);
-            fc_error(fc);
-        }
+    Id id;
+    id.has_nsc = false;
+    id.name = token;
+    idf = idf_by_id(fc, scope, &id, false);
+
+    if (idf && idf->type == idf_nsc && get_char(fc, 0) == ':') {
+        // if (!idf) {
+        //     sprintf(fc->sbuf, "Unknown namespace: '%s', most likely a typo or a missing 'use' token", token);
+        //     fc_error(fc);
+        // }
+        // if (idf && idf->type != idf_nsc) {
+        //     sprintf(fc->sbuf, "Identifier '%s' is not a namespace", token);
+        //     fc_error(fc);
+        // }
 
         chunk_move(fc->chunk, 1);
 
@@ -137,11 +138,11 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
         id.name = token;
         idf = idf_by_id(fc, nsc->scope, &id, false);
 
-    } else {
-        Id id;
-        id.has_nsc = false;
-        id.name = token;
-        idf = idf_by_id(fc, scope, &id, false);
+        // } else {
+        //     Id id;
+        //     id.has_nsc = false;
+        //     id.name = token;
+        //     idf = idf_by_id(fc, scope, &id, false);
     }
 
     if (!idf) {

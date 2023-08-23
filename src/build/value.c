@@ -113,7 +113,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         if (on->rett->strict_ownership) {
             Type *rett = type_clone(alc, on->rett);
             rett->strict_ownership = false;
-            rett->shared_ref = true;
+            rett->shared_ref = rett->class && rett->class->circular_checked;
             rett->borrow = false;
             on->rett = rett;
         }

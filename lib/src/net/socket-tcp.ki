@@ -5,22 +5,27 @@ use mem;
 use os;
 
 class SocketTCP async {
-	~fd: i32;
-	~port: u16;
+	~ host: String;
+	~ fd: i32;
+	~ port: u16;
+	~ blocking: bool = true;
 
-	static fn new(host: *String, port: u16) SocketTCP !os_socket_create !get_addr_info !bind !listen {
+	static fn new(host: String, port: u16, blocking: bool = true) SocketTCP !os_socket_create {
 
         #if OS == win
 		os:WSA_init();
 		#end
 
         #if OS == linux
-    	let fd = sys.socket(sys.OS.AF_INET, sys.OS.SOCK_STREAM | sys.OS.SOCK_NONBLOCK, 0);
+		let flags = sys.OS.SOCK_STREAM;
+		if !blocking: flags = flags | sys.OS.SOCK_NONBLOCK;
+    	let fd = sys.socket(sys.OS.AF_INET, flags, 0);
 		#else
+		// Win & macos
     	let fd = sys.socket(sys.OS.AF_INET, sys.OS.SOCK_STREAM, 0);
         #if OS == macos
 		let flags = sys.fcntl(fd, sys.OS.F_GETFL, 0);
-		if flags >= 0 : sys.fcntl(fd, sys.OS.F_SETFL, flags | sys.OS.O_NONBLOCK);
+		if flags >= 0 && !blocking : sys.fcntl(fd, sys.OS.F_SETFL, flags | sys.OS.O_NONBLOCK);
 		#end
         #if OS == win
 		rep fd = os:WSA_unix_fd(fd);
@@ -34,11 +39,49 @@ class SocketTCP async {
 			throw os_socket_create;
     	}
 
+		return SocketTCP{
+			host: host,
+			port: port,
+			fd: fd,
+			blocking: blocking,
+		};
+    }
+
+	fn connect() !get_addr_info !connection_failed {
+
+		let addrinfo = this.get_addrinfo() !! throw get_addr_info;;
+
+		let err = sys.connect(this.fd, addrinfo.ai_addr, addrinfo.ai_addrlen);
+		if err != 0 : throw connection_failed;
+	}
+
+	fn bind() !get_addr_info !bind !listen {
 		let yes : i32 = 1;
 		let yes_ptr = @ptr_of(yes);
-    	sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_REUSEADDR, yes_ptr, @sizeof(i32));
-    	//sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_REUSEPORT, yes_ptr, @sizeof(i32));
+    	sys.setsockopt(this.fd, sys.OS.SOL_SOCKET, sys.OS.SO_REUSEADDR, yes_ptr, @sizeof(i32));
 		
+		let addrinfo = this.get_addrinfo() !! throw get_addr_info;;
+
+		let err : i32 = 0;
+        #if OS == win
+    	err = sys.bind(this.fd, addrinfo.ai_addr, addrinfo.ai_addrlen @as i32);
+		#else
+    	err = sys.bind(this.fd, addrinfo.ai_addr, addrinfo.ai_addrlen);
+		#end
+		if err != 0 {
+			throw bind;
+		}
+
+    	err = sys.listen(this.fd, 2000000);
+		if err != 0 {
+			throw listen;
+		}
+
+		sys.freeaddrinfo(addrinfo);
+	}
+
+	- fn get_addrinfo() sys.cstruct_addrinfo !get_addr_info {
+
 		let addrinfo : ?sys.cstruct_addrinfo = null;
 		let hints = @stack_object(sys.cstruct_addrinfo);
 		mem:clear(hints @as ptr, @sizeof_class(sys.cstruct_addrinfo));
@@ -46,8 +89,8 @@ class SocketTCP async {
 		hints.ai_socktype = sys.OS.SOCK_STREAM;
 		hints.ai_flags = sys.OS.AI_PASSIVE;
 
-		let chost = host.to_c_string();
-		let cport = port.str().to_c_string();
+		let chost = this.host.to_c_string();
+		let cport = this.port.str().to_c_string();
     	let err = sys.getaddrinfo(chost, cport, hints, @array_of(addrinfo));
 		if err != 0 {
 			throw get_addr_info;
@@ -55,27 +98,10 @@ class SocketTCP async {
 		rep addrinfo = addrinfo ?! {
 			throw get_addr_info;
 		};
+		chost.free();
+		cport.free();
 
-        #if OS == win
-    	err = sys.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen @as i32);
-		#else
-    	err = sys.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen);
-		#end
-		if err != 0 {
-			throw bind;
-		}
-
-    	err = sys.listen(fd, 2000000);
-		if err != 0 {
-			throw listen;
-		}
-
-		sys.freeaddrinfo(addrinfo);
-
-		return SocketTCP{
-			port: port,
-			fd: fd,
-		};
+		return addrinfo;
 	}
 
 	fn accept() Connection !error {
@@ -101,8 +127,10 @@ class SocketTCP async {
 
 	fn clone() CLASS {
 		return CLASS {
+			host: this.host + "",
 			fd: this.fd,
 			port: this.port,
+			blocking: this.blocking,
 		};
 	}
 }

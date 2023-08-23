@@ -25,10 +25,11 @@ class Server {
     - static_dirs: Array[String] = Array[String].new();
     - show_info: bool = false;
 
-    static fn new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error {
+    static fn new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error !socket_bind_error {
 
         let max_connections : uxx = 10000;
-        let socket = net:Socket.new_tcp(host, port) !! throw socket_init_error;;
+        let socket = net:Socket.new_tcp(host + "", port, false) !! throw socket_init_error;;
+        socket.bind() !! throw socket_bind_error;;
 
         return Server{
             host: host,

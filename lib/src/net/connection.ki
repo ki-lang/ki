@@ -5,12 +5,15 @@ use io;
 
 class Connection {
 	~fd: i32;
+	~open: bool = true;
 
-	fn close() void {
+	fn close() {
+		if !this.open : return;
 		#if OS == win
         sys.closesocket(this.fd @as sys.SOCKET);
         #else
         io:close(this.fd);
         #end
+		this.open = false;
 	}
 }
