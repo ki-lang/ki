@@ -244,17 +244,10 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
     Type *type = on->rett;
     Class *class = type->class;
 
-    if (!class)
+    if (!class || !class->is_rc)
         return;
 
     Build *b = class->fc->b;
-
-    if (!weak && !class->func_deref && !class->func_ref && !class->is_rc) {
-        return;
-    }
-    if (weak && !class->func_deref_weak && !class->func_ref_weak && !class->is_rc) {
-        return;
-    }
 
     if (type->nullable) {
         Value *is_null = vgen_compare(alc, class->fc->b, on, vgen_null(alc, b), op_ne);
@@ -283,7 +276,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
         Value *fcall = vgen_fcall(alc, NULL, fptr, values, b->type_void, NULL, 1, 1);
         array_push(scope->ast, token_init(alc, tkn_statement, fcall));
 
-    } else if (class->is_rc) {
+    } else if (class->type == ct_struct) {
 
         // _RC-- or _RC++
         Value *ir_on = vgen_ir_val(alc, on, on->rett);
@@ -386,6 +379,8 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
                 array_push(free_code->ast, token_init(alc, tkn_statement, fcall));
             }
         }
+    } else {
+        printf("Compiler bug: tried to generate ref/deref code for non-rc class\n");
     }
 }
 
