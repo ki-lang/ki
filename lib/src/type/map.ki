@@ -46,7 +46,7 @@ class Map[T] {
 
 	fn clear() {
 		this._keys = Array[String].new();
-		this._values = Array[String].new();
+		this._values = Array[T].new();
 	}
 
 	fn __each_init() uxx {
