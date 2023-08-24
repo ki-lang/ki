@@ -3,6 +3,12 @@ header "openssl" as ssl;
 
 use net;
 
+class ClientResponse {
+	status: uxx = 0;
+	headers: Map[String] = Map[String]{};
+	body: String = "";
+}
+
 class ClientRequest {
 	method: String;
 	url: String;
@@ -71,12 +77,16 @@ class ClientRequest {
 		con.recv(buf, recv);
 
 		// Parse response
-		let res = ClientResponse{};
+		let res = ParseResult{};
 		Parser.parse_response(buf, res) !! {
 			throw invalid_response, "Invalid response";
 		};
 
-		return res;
+		return ClientResponse {
+			status: res.status,
+			headers: res.headers,
+			body: res.body,
+		};
 	}
 
 }

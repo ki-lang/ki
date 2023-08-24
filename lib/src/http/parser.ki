@@ -1,8 +1,17 @@
 
-class ClientResponse {
+class ServerRequest {
+	method: String = "";
+	path: String = "";
+	headers: Map[String] = Map[String]{};
+	body: String = "";
+}
+
+class ParseResult {
+	~ status: uxx = 0;
+	~ method: String = "";
+	~ path: String = "";
 	~ headers: Map[String] = Map[String]{};
 	~ body: String = "";
-	~ status: uxx = 0;
 	~ content_length: uxx = 0;
 	~ fully_parsed: bool = false;
 	~ headers_parsed: bool = false;
@@ -12,30 +21,37 @@ class ClientResponse {
 
 class Parser {
 
-	static fn parse_response(bytes: *ByteBuffer, resp: *ClientResponse, only_headers: bool = false) !invalid {
+	static fn parse_response(bytes: *ByteBuffer, result: *ParseResult, only_headers: bool = false) !invalid {
+		Parser.parse_bytes(bytes, result, only_headers, false) !! throw invalid;;
+	}
+	static fn parse_request(bytes: *ByteBuffer, result: *ParseResult, only_headers: bool = false) !invalid {
+		Parser.parse_bytes(bytes, result, only_headers, true) !! throw invalid;;
+	}
+
+	- static fn parse_bytes(bytes: *ByteBuffer, result: *ParseResult, only_headers: bool, is_request: bool) !invalid {
 
 		// Stage 0. Protocol & status
 		// Stage 1. Headers
 		// Stage 2. Body
 		// Stage 3. Done
 
-		if resp.fully_parsed {
-			resp.stage = 0;
-			resp.buffer.clear();
-			resp.headers_parsed = false;
-			resp.fully_parsed = false;
-			resp.content_length = 0;
-			resp.status = 0;
-			resp.body = "";
-			resp.headers.clear();
+		if result.fully_parsed {
+			result.stage = 0;
+			result.buffer.clear();
+			result.headers_parsed = false;
+			result.fully_parsed = false;
+			result.content_length = 0;
+			result.status = 0;
+			result.body = "";
+			result.headers.clear();
 		}
 
-		let line = resp.buffer;
-		let stage = resp.stage;
+		let line = result.buffer;
+		let stage = result.stage;
 		let data = bytes.data;
 		let pos = bytes.start_index;
 		let length = bytes.length;
-		let content_len = resp.content_length;
+		let content_len = result.content_length;
 
 		if stage > 2 && only_headers {
 			return;
@@ -54,9 +70,9 @@ class Parser {
 				line.append_byte(ch);
 				if line.length == content_len {
 					stage = 3;
-					resp.stage = stage;
-					resp.body = line.to_str();
-					resp.fully_parsed = true;
+					result.stage = stage;
+					result.body = line.to_str();
+					result.fully_parsed = true;
 					break;
 				}
 				continue;
@@ -69,7 +85,7 @@ class Parser {
 				if stage == 0 {
 					// Parse "HTTP/1.1 200 OK"
 					stage = 1;
-					resp.stage = stage;
+					result.stage = stage;
 					line.clear();
 					continue;
 				}
@@ -77,9 +93,9 @@ class Parser {
 				// Parse headers
 				if line.length == 0 {
 					// End of headers
-					resp.headers_parsed = true;
+					result.headers_parsed = true;
 					stage = 2;
-					resp.stage = stage;
+					result.stage = stage;
 					line.clear();
 					if only_headers {
 						break;
@@ -87,7 +103,7 @@ class Parser {
 					continue;
 				}
 
-				let headers = resp.headers;
+				let headers = result.headers;
 				let split_index = line.index_of_byte(':') !! {
 					throw invalid;
 				};
@@ -102,7 +118,7 @@ class Parser {
 					content_len = value.to_uxx() !! {
 						throw invalid;
 					};
-					resp.content_length = content_len;
+					result.content_length = content_len;
 				}
 
 				headers.set(key, value);
