@@ -318,10 +318,6 @@ struct Class {
     bool is_generic_base;
     bool allow_math;
     bool track_ownership;
-    bool must_ref;
-    bool must_deref;
-    bool must_ref_weak;
-    bool must_deref_weak;
     bool is_struct;
     bool can_iter;
     bool async;

@@ -252,6 +252,7 @@ char *type_to_str(Type *t, char *res, bool simple);
 void type_check(Fc *fc, Type *t1, Type *t2);
 Type *type_clone(Allocator *alc, Type *type);
 bool type_tracks_ownership(Type *type);
+bool type_is_rc(Type *type);
 bool type_allowed_async(Type *type, bool recursive);
 Type *type_get_inline(Allocator *alc, Type *type);
 TypeCheck *type_gen_type_check(Allocator *alc, Type *type);

@@ -214,8 +214,6 @@ void stage_1_class(Fc *fc, bool is_struct) {
     class->scope = scope_init(fc->alc, sct_class, fc->scope, false);
     class->is_struct = is_struct;
     class->is_rc = !is_struct;
-    class->must_ref = !is_struct;
-    class->must_deref = !is_struct;
     class->track_ownership = !is_struct;
     class->def_chunk = def_chunk;
 
@@ -267,19 +265,14 @@ void stage_1_class(Fc *fc, bool is_struct) {
     while (strcmp(token, "{") != 0) {
         if (strcmp(token, "type") == 0) {
             class->track_ownership = false;
+            class->is_rc = false;
             tok_expect(fc, ":", true, false);
             tok(fc, token, true, false);
             if (strcmp(token, "ptr") == 0) {
                 class->type = ct_ptr;
-                class->is_rc = false;
-                class->must_ref = false;
-                class->must_deref = false;
                 class->size = fc->b->ptr_size;
             } else if (strcmp(token, "int") == 0 || strcmp(token, "float") == 0) {
                 class->type = strcmp(token, "int") == 0 ? ct_int : ct_float;
-                class->is_rc = false;
-                class->must_ref = false;
-                class->must_deref = false;
                 tok_expect(fc, ":", true, false);
                 tok(fc, token, true, false);
                 int size = 0;
@@ -317,10 +310,6 @@ void stage_1_class(Fc *fc, bool is_struct) {
                 sprintf(fc->sbuf, "Unknown class type: '%s'", token);
                 fc_error(fc);
             }
-        } else if (class->is_rc && strcmp(token, "norc") == 0) {
-            class->is_rc = false;
-            class->must_ref = false;
-            class->must_deref = false;
         } else if (strcmp(token, "packed") == 0) {
             class->packed = true;
         } else if (strcmp(token, "math") == 0) {
@@ -329,6 +318,8 @@ void stage_1_class(Fc *fc, bool is_struct) {
             track = true;
         } else if (strcmp(token, "async") == 0) {
             class->async = true;
+        } else if (strcmp(token, "rc") == 0) {
+            class->is_rc = true;
         } else {
             sprintf(fc->sbuf, "Unexpected token: '%s' (class attributes)", token);
             fc_error(fc);

@@ -7,8 +7,6 @@ Class *class_init(Allocator *alc) {
     class->type = ct_struct;
     class->size = 0;
     class->is_rc = true;
-    class->must_deref = true;
-    class->must_ref = true;
     class->is_signed = false;
     class->packed = false;
     class->is_generic_base = false;

@@ -74,7 +74,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val, Type *
     //
     if (storage_type->weak_ptr) {
         Class *class = storage_type->class;
-        if (class && class->must_ref) {
+        if (class && class->is_rc) {
             Value *v = vgen_value_then_ir_value(alc, val);
             Scope *sub = scope_init(alc, sct_default, scope, true);
             class_ref_change(alc, sub, v, 1, true);
@@ -123,7 +123,7 @@ Value *usage_move_value(Allocator *alc, Fc *fc, Scope *scope, Value *val, Type *
 
             Type *type = val->rett;
             Class *class = type->class;
-            if (class && class->must_ref) {
+            if (class && class->is_rc) {
 
                 Value *v = vgen_value_then_ir_value(alc, val);
 
@@ -317,12 +317,9 @@ void usage_merge_ancestors(Allocator *alc, Scope *left, Array *ancestors) {
             if (!is_loop) {
                 Type *type = decl->type;
                 Class *class = type->class;
-                // if (class && (class->must_deref || class->must_ref)) {
-                // if (uesd && class && (class->must_deref || class->must_ref)) {
                 if (!new_ul->ancestors)
                     new_ul->ancestors = array_make(alc, 8);
                 array_push(new_ul->ancestors, r_ul);
-                // }
             }
         }
         i++;
@@ -342,7 +339,7 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
     }
 
     Class *class = type->class;
-    if (class && (class->must_deref || class->must_ref)) {
+    if (class && class->is_rc) {
 
         if (ul->upref_token && !ul->read_after_move) {
             // Disable upref
@@ -394,14 +391,12 @@ void end_usage_line(Allocator *alc, UsageLine *ul, Array *ast) {
 
         } else {
             // Add deref token
-            if (class->must_deref) {
-                Scope *sub = scope_init(alc, sct_default, ul->scope, true);
-                Value *val = value_init(alc, v_decl, decl, type);
-                class_ref_change(alc, sub, val, -1, false);
-                Token *t = tgen_exec(alc, sub, true);
-                array_push((ul->deref_scope ? ul->deref_scope->ast : ul->scope->ast), t);
-                ul->deref_token = t->item;
-            }
+            Scope *sub = scope_init(alc, sct_default, ul->scope, true);
+            Value *val = value_init(alc, v_decl, decl, type);
+            class_ref_change(alc, sub, val, -1, false);
+            Token *t = tgen_exec(alc, sub, true);
+            array_push((ul->deref_scope ? ul->deref_scope->ast : ul->scope->ast), t);
+            ul->deref_token = t->item;
         }
     }
 }

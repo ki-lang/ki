@@ -364,7 +364,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         Type *rett = val->rett;
         Class *class = rett->class;
 
-        if (!type_is_void(rett) && class && (class->must_deref || class->must_ref)) {
+        if (!type_is_void(rett) && class && class->is_rc) {
             sprintf(fc->sbuf, "Statement returns a value, but no variable to store it in");
             fc_error(fc);
         }

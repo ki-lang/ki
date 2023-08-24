@@ -312,6 +312,8 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     if (type_tracks_ownership(type)) {
         if (type->class && type->class->is_circular)
             type->shared_ref = ref;
+    }
+    if (type_is_rc(type)) {
         type->borrow = borrow;
         type->weak_ptr = weak_ptr;
         type->raw_ptr = raw_ptr;
@@ -621,6 +623,13 @@ void type_check(Fc *fc, Type *t1, Type *t2) {
         sprintf(fc->sbuf, "Types are not compatible: %s <-- %s \nReason: %s", t1s, t2s, reason);
         fc_error(fc);
     }
+}
+
+bool type_is_rc(Type *type) {
+    Class *class = type->class;
+    if (!class)
+        return false;
+    return class->is_rc;
 }
 
 bool type_tracks_ownership(Type *type) {

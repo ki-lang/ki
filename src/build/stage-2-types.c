@@ -252,16 +252,12 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
 
             if (strcmp(func->name, "__ref") == 0) {
                 class->func_ref = func;
-                class->must_ref = true;
             } else if (strcmp(func->name, "__deref") == 0) {
                 class->func_deref = func;
-                class->must_deref = true;
             } else if (strcmp(func->name, "__ref_weak") == 0) {
                 class->func_ref_weak = func;
-                class->must_ref_weak = true;
             } else if (strcmp(func->name, "__deref_weak") == 0) {
                 class->func_deref_weak = func;
-                class->must_deref_weak = true;
             } else if (strcmp(func->name, "__free") == 0) {
                 class->func_free = func;
             } else if (strcmp(func->name, "__before_free") == 0) {
@@ -528,7 +524,7 @@ void stage_2_class_defaults(Fc *fc, Class *class) {
             for (int i = 0; i < props->length; i++) {
                 ClassProp *prop = array_get_index(props, i);
                 Class *pclass = prop->type->class;
-                if (pclass && pclass->must_deref) {
+                if (pclass && pclass->is_rc) {
                     class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, b->type_void, 0);
                     class->func_deref_props->is_generated = true;
                     break;
@@ -539,6 +535,31 @@ void stage_2_class_defaults(Fc *fc, Class *class) {
         if (!class->func_free) {
             class->func_free = class_define_func(fc, class, false, "__free", NULL, b->type_void, 0);
             class->func_free->is_generated = true;
+        }
+    }
+
+    if (class->is_rc) {
+        if (class->type != ct_struct) {
+            if (!class->func_ref) {
+                sprintf(fc->sbuf, "Missing function '__ref' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+            if (!class->func_deref) {
+                sprintf(fc->sbuf, "Missing function '__deref' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+            if (!class->func_ref_weak) {
+                sprintf(fc->sbuf, "Missing function '__ref_weak' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+            if (!class->func_deref_weak) {
+                sprintf(fc->sbuf, "Missing function '__deref_weak' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+        }
+        if (!class->func_free) {
+            sprintf(fc->sbuf, "Missing function '__free' in type '%s'", class->dname);
+            fc_error(fc);
         }
     }
 }
@@ -599,7 +620,7 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
 
         TypeCheck tc_key;
         tc_key.class = NULL;
-        tc_key.borrow = type_tracks_ownership(func_init->rett);
+        tc_key.borrow = type_is_rc(func_init->rett);
         tc_key.shared_ref = false;
         tc_key.array_of = type_gen_type_check(alc, func_init->rett);
         tc_key.type = -1;
