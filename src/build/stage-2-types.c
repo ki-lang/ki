@@ -584,26 +584,13 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
 
         checks[1] = &tc_key;
 
-        int argc = 2;
-        // if (func->args->length > 2) {
-        //     argc++;
-        //     Arg *arg = array_get_index(func->args, 2);
-        //     TypeCheck *tc = malloc(sizeof(TypeCheck));
-        //     tc->class = NULL;
-        //     tc->array_of = NULL;
-        //     tc->borrow = true;
-        //     tc->shared_ref = false;
-        //     tc->type = type_arr;
-        //     tc->array_size = 1;
-        //     checks[2] = tc;
-        // }
-
         if (type_is_void(func->rett)) {
             fc->chunk = func->chunk_args;
             sprintf(fc->sbuf, "__each can have any return type except 'void'");
             fc_error(fc);
         }
-        stage_2_class_type_check(fc, func, checks, argc, NULL, true);
+
+        stage_2_class_type_check(fc, func, checks, 2, NULL, true);
         class->can_iter = true;
     }
 }
@@ -648,37 +635,4 @@ void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *checks[], int argc_
         sprintf(fc->sbuf, can_error ? "This function should atleast have 1 error defined" : "This function should not be able to return errors");
         fc_error(fc);
     }
-
-    // if (!equal) {
-    //     char buf[256];
-    //     char expected[256];
-    //     strcpy(expected, "fn(");
-    //     int i = 0;
-    //     while (i < argc) {
-    //         if (i > 0) {
-    //             strcat(expected, ", ");
-    //         }
-    //         Type *type = args[i];
-    //         i++;
-    //         type_to_str(type, buf);
-    //         strcat(expected, buf);
-    //     }
-    //     strcat(expected, ")(");
-    //     if (rett) {
-    //         type_to_str(rett, buf);
-    //         strcat(expected, buf);
-    //     } else {
-    //         strcat(expected, "{ANY}");
-    //     }
-    //     strcat(expected, ")");
-    //     if (can_error) {
-    //         strcat(expected, "!");
-    //     }
-    //     //
-    //     type_to_str(type_gen_fptr(fc->alc, func), buf);
-    //     //
-    //     fc->chunk = chunk;
-    //     sprintf(fc->sbuf, "Expected type for '%s' should be '%s', but was '%s'", func->dname, expected, buf);
-    //     fc_error(fc);
-    // }
 }
