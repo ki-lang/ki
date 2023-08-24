@@ -68,7 +68,7 @@ fn dup(old_fd: i32) i32;
 fn dup2(old_fd: i32, new_fd: i32) i32;
 
 fn socket(domain: i32, type: i32, protocol: i32) SOCKET;
-//fn connect(sockfd: SOCKET, addr: *cstruct_sockaddr, addrlen: u32) i32;
+fn connect(sockfd: SOCKET, addr: *cstruct_sockaddr, addrlen: i32) i32;
 fn accept(sockfd: SOCKET, addr: *?cstruct_sockaddr, addrlen: ?u32[1]) i32;
 //fn accept4(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1], flags: i32) i32;
 fn shutdown(sockfd: SOCKET, how: i32) i32;

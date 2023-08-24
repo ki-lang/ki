@@ -1,6 +1,15 @@
 
+#if OS == win
+link_static "libssl";
+link_static "libcrypto";
+link_static "advapi32";
+link_static "user32";
+link_static "bcrypt";
+link_static "crypt32";
+#else
 link_static "ssl";
 link_static "crypto";
+#end
 
 #if OS == linux
 link_dynamic "dl";

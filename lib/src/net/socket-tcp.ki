@@ -66,7 +66,11 @@ class SocketTCP async {
 		}};
 
 		if !c.open {
+        	#if OS == win
+			let err = sys.connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @as i32);
+			#else
 			let err = sys.connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen);
+			#end
 			if err != 0 : throw connection_failed;
 			c.open = true;
 		}
