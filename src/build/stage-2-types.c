@@ -465,50 +465,6 @@ void stage_2_func(Fc *fc, Func *func) {
         }
     }
 
-    // if (func == g_main_func) {
-    //     //
-    //     if (func->args->length > 1) {
-    //         fc_error(fc, "main() too many arguments (max 1)", NULL);
-    //     }
-    //     if (func->args->length == 1) {
-    //         // Replace args from main
-    //         VarDecl *decl = array_get_index(func->args, 0);
-    //         char *name = array_get_index(func->arg_names, 0);
-    //         Type *type = decl->type;
-    //         char hash[33];
-    //         Array *types = array_make(1);
-    //         array_push(types, type_gen_class(g_class_string));
-    //         class_generate_generic_hash(types, hash);
-    //         Class *class = class_get_generic_class(g_class_array, hash, types, true);
-    //         if (type->class != class) {
-    //             fc_error(fc, "main() argument must of type Array<String>", NULL);
-    //         }
-    //         g_main_func_arg_name = name;
-    //         g_main_func_arg_mut = decl->is_mut;
-    //         g_main_func_arg_type = decl->type;
-    //         //
-    //         VarDecl *argc = init_decl(false, true, type_gen_class(g_class_i32));
-    //         VarDecl *argv = init_decl(false, true, type_gen_class(g_class_ptr));
-    //         array_set_index(func->args, 0, argc);
-    //         array_set_index(func->arg_names, 0, "KI_ARGC");
-    //         array_set_index(func->arg_defaults, 0, NULL);
-    //         array_push(func->args, argv);
-    //         array_push(func->arg_names, "KI_ARGV");
-    //         array_push(func->arg_defaults, NULL);
-    //     }
-
-    //     //
-    //     if (func->return_type) {
-    //         Class *class = func->return_type->class;
-    //         if (!class || class != g_class_i32) {
-    //             fc_error(fc, "main() must have a void or i32 return type", NULL);
-    //         }
-    //     }
-    //     if (func->can_error) {
-    //         fc_error(fc, "main() should not return errors", NULL);
-    //     }
-    // }
-
     fc->error_func_info = prev_error_func_info;
 }
 
