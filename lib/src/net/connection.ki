@@ -3,17 +3,106 @@ header "sys" as sys;
 
 use io;
 
-class Connection {
-	~ fd: i32;
-	~ open: bool = true;
+class SendResult {
+    bytes_sent: uxx = 0;
+    connection_error: bool = false;
+    incomplete: bool = false; // EAGAIN in async connections
+}
+class RecvResult {
+    bytes_received: uxx = 0;
+    connection_error: bool = false;
+    incomplete: bool = false; // EAGAIN in async connections
+}
 
-	fn close() {
-		if !this.open : return;
-		#if OS == win
+class Connection {
+    ~ fd: i32;
+    ~ open: bool = true;
+
+    fn close() {
+        if !this.open : return;
+        #if OS == win
         sys.closesocket(this.fd @as sys.SOCKET);
         #else
         io:close(this.fd);
         #end
-		this.open = false;
-	}
+        this.open = false;
+    }
+
+    fn send(buffer: *ByteBuffer, start_index: uxx = 0, result: *SendResult) {
+
+        result.bytes_sent = 0;
+        result.incomplete = false;
+        result.connection_error = false;
+
+        if !this.open : return;
+
+        let sent = 0#uxx;
+		let bytes = buffer.length - start_index;
+        let chunk_size : uxx = 65535;
+		while sent < bytes {
+    		#if OS == win
+			let wbytes = sys.send(this.fd, buffer.data + start_index, chunk_size @as i32, 0);
+			#else
+			let wbytes = sys.send(this.fd, buffer.data + start_index, chunk_size, 0);
+			#end
+			if wbytes == -2 {
+                result.incomplete = true;
+                break;
+            }
+			if wbytes < 0 {
+                result.connection_error = true;
+                break;
+            }
+			if wbytes == 0 {
+                break;
+            }
+            let count = wbytes @as uxx;
+			sent += count;
+			start_index += count;
+		}
+
+        result.bytes_sent = sent;
+    }
+
+    fn recv(buffer: *ByteBuffer, result: *RecvResult) {
+
+        result.bytes_received = 0;
+        result.incomplete = false;
+        result.connection_error = false;
+
+        if !this.open : return;
+
+        let bytes = 0#uxx;
+        let buf_size : uxx = 65535;
+        while true {
+            buffer.minimum_free_space(buf_size);
+            #if OS == win
+            let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size @as i32, 0);
+            #else
+            let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size, 0);
+            #end
+            if (rcvd == -2){
+                // EAGAIN
+                result.incomplete = true;
+                break;
+            }
+            if (rcvd < 0) {
+                result.connection_error = true;
+                break;
+            }
+            if (rcvd == 0) {
+                break;
+            }
+
+            let count = rcvd @as uxx;
+            buffer.length += count;
+            bytes += count;
+
+            if(count < buf_size) {
+                break;
+            }
+        }
+
+        result.bytes_received = bytes;
+    }
 }

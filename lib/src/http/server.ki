@@ -239,8 +239,8 @@ class Server {
 
         let buf_size : i32 = 65535;
         let read_buf = http_con.read_buf;
-        read_buf.minimum_free_space(buf_size);
         while true {
+            read_buf.minimum_free_space(buf_size);
             #if OS == win
             let rcvd = sys.recv(http_con.fd, read_buf.data + read_buf.length, buf_size, 0);
             #else
