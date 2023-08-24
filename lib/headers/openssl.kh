@@ -5,7 +5,6 @@ link_static "crypto";
 #if OS == linux
 link_dynamic "dl";
 link_dynamic ":libc_nonshared.a";
-link_dynamic "pthread";
 #end
 
 struct SSL type:ptr {}
