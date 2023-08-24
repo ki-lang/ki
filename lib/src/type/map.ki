@@ -38,6 +38,17 @@ class Map[T] {
 		return this._values.get(index) !! throw not_found;;
 	}
 
+	fn remove(key: *String) {
+		let index = this._keys.index_of(key) !! return;;
+		this._keys.remove(index);
+		this._values.remove(index);
+	}
+
+	fn clear() {
+		this._keys = Array[String].new();
+		this._values = Array[String].new();
+	}
+
 	fn __each_init() uxx {
 		return 0;
 	}

@@ -10,10 +10,10 @@ enum METHOD {
 
 class Client {
 
-	static fn req(method: METHOD, url: String) ClientRequest {
+	static fn request(method: String, url: String) ClientRequest {
 
 		return ClientRequest {
-			type: method,
+			method: method,
 			url: url
 		};
 	}

@@ -6,12 +6,12 @@ use io;
 class SendResult {
     bytes_sent: uxx = 0;
     connection_error: bool = false;
-    incomplete: bool = false; // EAGAIN in async connections
+    incomplete: bool = false; // EAGAIN in async communication
 }
 class RecvResult {
     bytes_received: uxx = 0;
     connection_error: bool = false;
-    incomplete: bool = false; // EAGAIN in async connections
+    incomplete: bool = false; // EAGAIN in async communication
 }
 
 class Connection {
@@ -20,11 +20,7 @@ class Connection {
 
     fn close() {
         if !this.open : return;
-        #if OS == win
-        sys.closesocket(this.fd @as sys.SOCKET);
-        #else
-        io:close(this.fd);
-        #end
+        Socket.close(this.fd);
         this.open = false;
     }
 
@@ -105,4 +101,8 @@ class Connection {
 
         result.bytes_received = bytes;
     }
+
+	fn __before_free() {
+        this.close();
+	}
 }
