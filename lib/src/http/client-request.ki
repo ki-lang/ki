@@ -2,6 +2,7 @@
 header "openssl" as ssl;
 
 use net;
+use type;
 
 class ClientResponse {
 	status: uxx = 0;
@@ -29,9 +30,48 @@ class ClientRequest {
 			throw connection_failed, "Connection failed";
 		};
 
+		if is_https {
+			con.ssl_connect() !! {
+				con.close();
+				throw connection_failed, "SSL connection failed";
+			};
+		}
+
 		// Send request
-		let buf = ByteBuffer.new(this.body.bytes() + 100);
+		let buf = this.get_send_data(parts);
+		let sendres = net:SendResult{};
+		con.send(buf, 0, sendres);
+
+		if sendres.connection_error {
+			throw connection_failed, "Connection failed";
+		}
+
+		// Receive response
+		let recv = net:RecvResult{};
+		buf.clear();
+		con.recv(buf, recv);
+
+		if recv.connection_error || recv.incomplete {
+			throw connection_failed, "Failed reading from connection";
+		}
+
+		// Parse response
+		let res = ParseResult{};
+		Parser.parse_response(buf, res) !! {
+			throw invalid_response, "Invalid response";
+		};
+
+		return ClientResponse {
+			status: res.status,
+			headers: res.headers,
+			body: res.body,
+		};
+	}
+
+	- fn get_send_data(parts: *type:Uri) ByteBuffer {
+
 		let len = this.body.bytes();
+		let buf = ByteBuffer.new(len + 256);
 
 		let method = this.method;
 
@@ -64,29 +104,6 @@ class ClientRequest {
 		buf.append_str("\r\n");
 		buf.append_str(this.body);
 
-		let sendres = net:SendResult{};
-		con.send(buf, 0, sendres);
-
-		if sendres.connection_error {
-			throw connection_failed, "Connection failed";
-		}
-
-		// Receive response
-		let recv = net:RecvResult{};
-		buf.clear();
-		con.recv(buf, recv);
-
-		// Parse response
-		let res = ParseResult{};
-		Parser.parse_response(buf, res) !! {
-			throw invalid_response, "Invalid response";
-		};
-
-		return ClientResponse {
-			status: res.status,
-			headers: res.headers,
-			body: res.body,
-		};
+		return buf;
 	}
-
 }

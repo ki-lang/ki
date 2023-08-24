@@ -250,7 +250,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     b->namespaces_by_dir = map_make(alc);
     b->all_ki_files = array_make(alc, 1000);
     b->link_libs = map_make(alc);
-    b->link_dirs = array_make(alc, 40);
+    b->link_dirs = array_make(alc, 20);
+    b->links = array_make(alc, 40);
     b->fcs_by_path = map_make(alc);
     b->all_fcs = array_make(alc, 80);
     b->main_func = NULL;

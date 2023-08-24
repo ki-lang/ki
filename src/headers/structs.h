@@ -111,6 +111,7 @@ struct Build {
     Array *link_dirs;
     Map *link_libs;
     Map *fcs_by_path;
+    Array *links;
     Array *all_fcs;
     Str *str_buf;
     Str *str_buf_io;
@@ -219,6 +220,7 @@ struct Config {
 
 struct Link {
     int type;
+    char *name;
 };
 
 struct Chunk {

@@ -570,11 +570,17 @@ void stage_1_link(Fc *fc, int link_type) {
     if (!link) {
         link = al(fc->alc, sizeof(Link));
         link->type = link_type;
+        link->name = fn;
         map_set(fc->b->link_libs, fn, link);
     }
     if (link_type == link_dynamic && link->type != link_dynamic) {
         link->type = link_dynamic;
     }
+
+    link = al(fc->alc, sizeof(Link));
+    link->type = link_type;
+    link->name = fn;
+    array_push(fc->b->links, link);
 
     tok_expect(fc, ";", true, true);
 }

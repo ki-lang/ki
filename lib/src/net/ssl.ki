@@ -1,0 +1,21 @@
+
+header "openssl" as ossl;
+
+class SSL {
+	~ ssl: ossl.SSL;
+
+	static fn new(fd: i32) SSL {
+		let method = ossl.TLS_client_method();
+		let ctx = ossl.SSL_CTX_new(method);
+		let ssl = ossl.SSL_new(ctx);
+		ossl.SSL_set_fd(ssl, fd);
+
+		return SSL {
+			ssl: ssl
+		};
+	}
+
+	fn __before_free() {
+		ossl.SSL_free(this.ssl);
+	}
+}
