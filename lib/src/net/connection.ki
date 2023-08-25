@@ -89,7 +89,11 @@ class Connection {
                         break;
                     }
                     #else
+                    #if OS == macos
+                    let err = @ptrv(sys.__error(), i32, 0);
+                    #else
                     let err = @ptrv(sys.__errno_location(), i32, 0);
+                    #end
                     if err == sys.OS.EAGAIN {
                         // EAGAIN
                         result.incomplete = true;
@@ -159,7 +163,11 @@ class Connection {
                     return;
                 }
                 #else
+                #if OS == macos
+                let err = @ptrv(sys.__error(), i32, 0);
+                #else
                 let err = @ptrv(sys.__errno_location(), i32, 0);
+                #end
                 if err == sys.OS.EAGAIN {
                     // EAGAIN
                     result.incomplete = true;
