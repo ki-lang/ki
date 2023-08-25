@@ -255,7 +255,9 @@ class Server {
                     throw read_error, "Failed reading from connection";
                 }
                 read_buf.clear();
-                if recv.incomplete : return;
+                if recv.incomplete {
+                    return;
+                }
             }
 
             if !res.fully_parsed {

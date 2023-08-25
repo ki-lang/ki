@@ -13,6 +13,7 @@ alias ptr as DIR;
 // uid_t = u32
 // gid_t = u32
 
+fn __errno_location() ptr;
 fn malloc(size: uxx) ptr;
 fn free(adr: ptr) void;
 

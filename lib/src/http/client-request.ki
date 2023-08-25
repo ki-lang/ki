@@ -79,6 +79,12 @@ class ClientRequest {
 			if recv.connection_error {
 				throw connection_failed, "Failed reading from connection";
 			}
+			if recv.incomplete {
+				throw connection_failed, "Waiting for response timeout";
+			}
+			if recv.bytes_received == 0 {
+				throw connection_failed, "Empty packet";
+			}
 		}
 
 		return ClientResponse {

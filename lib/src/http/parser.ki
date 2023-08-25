@@ -114,10 +114,11 @@ class Parser {
 					result.stage = stage;
 					line.clear();
 
-					let content_len = result.headers.get("content-length") !? "0";
-					result.content_length = content_len.to_uxx() !! {
+					let content_len_str = result.headers.get("content-length") !? "0";
+					content_len = content_len_str.to_uxx() !! {
 						throw invalid;
 					};
+					result.content_length = content_len;
 
 					if result.content_length == 0 {
 						stage = 3;

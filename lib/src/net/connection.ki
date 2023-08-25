@@ -48,14 +48,14 @@ class Connection {
         if !this.open : return;
 
         let sent = 0#uxx;
-        let bytes = buffer.length - start_index;
+        let bytes_to_send = buffer.length - start_index;
         let chunk_size : uxx = 65535;
         let ssl = this.ssl;
-        while sent < bytes {
+        while bytes_to_send > 0 {
             let bytes_sent = 0#uxx;
             if @isset(ssl) {
                 // SSL
-                let wbytes = ossl.SSL_write(ssl.ssl, buffer.data + start_index, chunk_size @as i32);
+                let wbytes = ossl.SSL_write(ssl.ssl, buffer.data + start_index, bytes_to_send @as i32);
                 if wbytes <= 0 {
                     // SSL_ERROR_WANT_WRITE: 3
                     let err = ossl.SSL_get_error(ssl.ssl, wbytes);
@@ -68,22 +68,34 @@ class Connection {
                     }
                     break;
                 }
+                if wbytes == 0 {
+                    break;
+                }
                 bytes_sent = wbytes @as uxx;
 
             } else {
                 // No SSL
                 #if OS == win
-                let wbytes = sys.send(this.fd, buffer.data + start_index, chunk_size @as i32, 0);
+                let wbytes = sys.send(this.fd, buffer.data + start_index, bytes_to_send @as i32, 0);
                 #else
-                let wbytes = sys.send(this.fd, buffer.data + start_index, chunk_size, 0);
+                let wbytes = sys.send(this.fd, buffer.data + start_index, bytes_to_send, 0);
                 #end
                 if wbytes < 0 {
-                    let err = @ptrv(sys.__errno_location(), i32, 0);
-                    if err == 11 {
+                    #if OS == win
+                    let err = sys.WSAGetLastError();
+                    if err == sys.OS.WSAENOBUFS {
                         // EAGAIN
                         result.incomplete = true;
                         break;
                     }
+                    #else
+                    let err = @ptrv(sys.__errno_location(), i32, 0);
+                    if err == sys.OS.EAGAIN {
+                        // EAGAIN
+                        result.incomplete = true;
+                        break;
+                    }
+                    #end
                     result.connection_error = true;
                     break;
                 }
@@ -94,6 +106,7 @@ class Connection {
             }
             sent += bytes_sent;
             start_index += bytes_sent;
+            bytes_to_send -= bytes_sent;
         }
 
         result.bytes_sent = sent;
@@ -138,12 +151,21 @@ class Connection {
             let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size, 0);
             #end
             if (rcvd < 0) {
-                let err = @ptrv(sys.__errno_location(), i32, 0);
-                if err == 11 {
+                #if OS == win
+                let err = sys.WSAGetLastError();
+                if err == sys.OS.WSAENOBUFS {
                     // EAGAIN
                     result.incomplete = true;
                     return;
                 }
+                #else
+                let err = @ptrv(sys.__errno_location(), i32, 0);
+                if err == sys.OS.EAGAIN {
+                    // EAGAIN
+                    result.incomplete = true;
+                    return;
+                }
+                #end
                 result.connection_error = true;
                 return;
             }

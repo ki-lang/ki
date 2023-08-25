@@ -9,6 +9,8 @@ enum OS {
 	POLLHUP: 0x0002,
     PATHMAX: 4096,
 
+    WSAENOBUFS: 10055,
+
     SOCK_STREAM:     1,               // stream socket
     SOCK_DGRAM:      2,               // datagram socket
     SOCK_RAW:        3,               // raw-protocol interface

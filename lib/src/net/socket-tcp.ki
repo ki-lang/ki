@@ -57,7 +57,7 @@ class SocketTCP async {
 		let timeout = @stack_object(sys.cstruct_timeval);
 		timeout.tv_sec = 5;
 		timeout.tv_usec = 0;
-    	sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_RCVTIMEO, @ptr_of(timeout), @sizeof(sys.cstruct_timeval));
+    	sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_RCVTIMEO, timeout @as ptr, @sizeof(.sys.cstruct_timeval));
 		#end
 
 		return SocketTCP{
