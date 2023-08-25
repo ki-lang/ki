@@ -43,10 +43,40 @@ ClassProp *class_prop_init(Allocator *alc, Class *class, Type *type) {
     ClassProp *prop = al(alc, sizeof(ClassProp));
     prop->type = type;
     prop->index = class->props->keys->length;
+    prop->class = class;
     prop->value = NULL;
     prop->value_chunk = NULL;
+    prop->parsing_value = false;
 
     return prop;
+}
+
+Value *class_prop_get_value(Fc *fc, ClassProp *prop) {
+    //
+    if (prop->value) {
+        Value *res = al(fc->alc, sizeof(Value));
+        Value *default_val = prop->value;
+        *res = *default_val;
+        return res;
+    }
+    if (prop->value_chunk) {
+        if (prop->parsing_value) {
+            sprintf(fc->sbuf, "Class property has an infinite recursive value definition");
+            fc_error(fc);
+        }
+        prop->parsing_value = true;
+
+        Chunk original;
+        original = *fc->chunk;
+        *fc->chunk = *prop->value_chunk;
+        Value *res = read_value(fc, fc->alc, prop->class->scope, false, 0, false);
+        *fc->chunk = original;
+
+        prop->parsing_value = false;
+        prop->value = res;
+        return res;
+    }
+    return NULL;
 }
 
 bool class_check_size(Class *class) {

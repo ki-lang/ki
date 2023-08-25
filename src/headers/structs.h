@@ -329,11 +329,13 @@ struct Class {
 };
 struct ClassProp {
     Type *type;
+    Class *class;
     Value *value;
     Chunk *def_chunk;
     Chunk *value_chunk;
     int index;
     int act;
+    bool parsing_value;
 };
 struct Func {
     char *name;

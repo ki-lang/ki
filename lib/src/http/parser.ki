@@ -83,7 +83,25 @@ class Parser {
 				line.length--; // Remove \r
 
 				if stage == 0 {
-					// Parse "HTTP/1.1 200 OK"
+					let line_str = line.to_str();
+					let split = line_str.split(" ");
+					//if split.length != 3 {
+					//	throw invalid;
+					//}
+					let version = "";
+					if is_request {
+						// Request "GET / HTTP/1.1"
+						//result.method = split.get(0) !? "GET";
+						//result.path = split.get(1) !? "/";
+						//version = split.get(2) !? "";
+					} else {
+						// Response "HTTP/1.1 200 OK"
+						//version = split.get(0) !? "";
+						//let status_str = split.get(1) !! throw invalid;;
+						//result.status = status_str.to_uxx() !! throw invalid;;
+						//let ok = split.get(2) !? "";
+					}
+
 					stage = 1;
 					result.stage = stage;
 					line.clear();
@@ -97,6 +115,20 @@ class Parser {
 					stage = 2;
 					result.stage = stage;
 					line.clear();
+
+					let content_len = result.headers.get("content-length") !? "0";
+					result.content_length = content_len.to_uxx() !! {
+						throw invalid;
+					};
+
+					if result.content_length == 0 {
+						stage = 3;
+						result.stage = stage;
+						result.body = "";
+						result.fully_parsed = true;
+						break;
+					}
+
 					if only_headers {
 						break;
 					}
@@ -113,13 +145,6 @@ class Parser {
 				let value_start_index = split_index + 1;
 				let value_index = line.index_where_byte_is_not(' ', value_start_index) !? value_start_index;
 				let value = line.sub_str(value_index, line.length - value_index);
-
-				if key == "content-length" {
-					content_len = value.to_uxx() !! {
-						throw invalid;
-					};
-					result.content_length = content_len;
-				}
 
 				headers.set(key, value);
 				line.clear();

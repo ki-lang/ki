@@ -42,6 +42,7 @@ class Array[T] {
 			let new_size = size * 2;
 			let new_data = mem:alloc(new_size * @sizeof(T));
 			mem:copy(data, new_data, size * @sizeof(T));
+			mem:free(data);
 			data = new_data;
 			this.data = new_data;
 			this.size = new_size;
@@ -65,6 +66,7 @@ class Array[T] {
 			let new_size = size * 2;
 			let new_data = mem:alloc(new_size * @sizeof(T));
 			mem:copy(data, new_data, size * @sizeof(T));
+			mem:free(data);
 			data = new_data;
 			this.data = new_data;
 			this.size = new_size;

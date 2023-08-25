@@ -225,6 +225,7 @@ void func_make_arg_decls(Func *func);
 // Class
 Class *class_init(Allocator *alc);
 ClassProp *class_prop_init(Allocator *alc, Class *class, Type *type);
+Value *class_prop_get_value(Fc *fc, ClassProp *prop);
 bool class_check_size(Class *class);
 Func *class_define_func(Fc *fc, Class *class, bool is_static, char *name, Array *args, Type *rett, int line);
 void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool weak);

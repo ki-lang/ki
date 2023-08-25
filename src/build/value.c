@@ -1024,11 +1024,12 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
                 Value *v = map_get(values, key);
                 if (v)
                     continue;
-                if (!prop->value) {
+                Value *default_val = class_prop_get_value(fc, prop);
+                if (!default_val) {
                     sprintf(fc->sbuf, "Missing property: '%s'", key);
                     fc_error(fc);
                 }
-                map_set(values, key, prop->value);
+                map_set(values, key, default_val);
             }
             return vgen_class_init(alc, scope, class, values);
         }

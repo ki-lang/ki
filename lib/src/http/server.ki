@@ -154,8 +154,8 @@ class Server {
                         http_con.netcon = netcon;
 
                         http_con.reset_parser();
+                        http_con.read_buf.clear();
                         http_con.reset_out();
-                        http_con.reset_request_data();
                     }
 
                     let lsn = poll.listener(fd, index);
@@ -227,10 +227,6 @@ class Server {
                     } else {
                         http_con.reset_out();
                     }
-
-                    if http_con.phase == 0 && http_con.parse_pos == http_con.read_buf.length {
-                        http_con.reset_parser();
-                    }
                     continue;
                 }
             }
@@ -239,64 +235,53 @@ class Server {
 
     - static fn respond(data: *ServerData, http_con: *Connection, handler: fn(*Request)(Response)) void !read_error !sent_error {
 
-        let buf_size : i32 = 65535;
+        let res = http_con.parse_result;
         let read_buf = http_con.read_buf;
-        while true {
-            read_buf.minimum_free_space(buf_size);
-            #if OS == win
-            let rcvd = sys.recv(http_con.fd, read_buf.data + read_buf.length, buf_size, 0);
-            #else
-            let rcvd = sys.read(http_con.fd, read_buf.data + read_buf.length, buf_size);
-            #end
-            if (rcvd == -2){
-                // EAGAIN
-                return;
-            } else if (rcvd < 0) {
-                throw read_error;
-            } else if (rcvd == 0) {
-                break;
-            }
+        let recv = http_con.recv_result;
+		while true {
+			http_con.netcon.recv(read_buf, recv);
+			Parser.parse_request(read_buf, res) !! {
+                http_con.respond(Response.error(400));
+				throw read_error, "Invalid request";
+			};
+			if res.fully_parsed {
+				break;
+			}
+			if recv.connection_error {
+                http_con.respond(Response.error(400));
+				throw read_error, "Failed reading from connection";
+			}
+			read_buf.clear();
+		}
 
-            read_buf.length += rcvd @as uxx;
+        if !res.fully_parsed {
+            return;
+        }
 
-            while http_con.parse_pos < http_con.read_buf.length {
-        
-                http_con.parse() !! {
-                    throw sent_error;
-                };
+        http_con.reset_parser();
 
-                if http_con.body_parsed {
-
-                    if data.static_dirs.length > 0 {
-                        let path = http_con.request_path.trim("/");
-                        each data.static_dirs as dir {
-                            let fullpath = dir + path; 
-                            if fs:is_file(fullpath) {
-                                let stream = fs:open(fullpath, true, false) !! continue;;
-                                http_con.send_file(stream, null);
-                                http_con.reset_request_data();
-                                return;
-                            }
-                        }
-                    }
-
-                    let req = Request{
-                        http_con: &http_con,
-                        headers: http_con.headers,
-                        method: http_con.request_method,
-                        path: http_con.request_path,
-                    };
-                    let resp = handler(req);
-
-                    http_con.respond(resp);
-                    http_con.reset_request_data();
+        if data.static_dirs.length > 0 {
+            let path = res.path.trim("/");
+            each data.static_dirs as dir {
+                let fullpath = dir + path; 
+                if fs:is_file(fullpath) {
+                    let stream = fs:open(fullpath, true, false) !! continue;;
+                    http_con.send_file(stream, null);
+                    return;
                 }
             }
-
-            if(rcvd < buf_size) {
-                break;
-            }
         }
+
+        let req = Request{
+            http_con: &http_con,
+            headers: res.headers,
+            method: res.method,
+            path: res.path,
+            body: res.body,
+        };
+        let resp = handler(req);
+
+        http_con.respond(resp);
     }
 
     fn add_static_dir(path: *String) void {
