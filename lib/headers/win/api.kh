@@ -131,5 +131,6 @@ fn signal(signum: i32, handler: ?fn(i32)(void)) void;
 fn raise(sig: i32) i32;
 
 fn CreateThread(lpThreadAttributes: ?ptr, dwStackSize: uxx, lpStartAddress: ptr, lpParameter: ?ptr, dwCreationFlags: u32, lpThreadId: ?u32[1]) ?HANDLE;
+fn TerminateThread(handle: HANDLE, exit_code: i32) bool;
 fn WaitForSingleObject(handle: HANDLE, timeout_ms: u32) u32;
 fn CloseHandle(handle: HANDLE) bool;

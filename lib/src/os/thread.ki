@@ -15,14 +15,14 @@ struct ThreadEntry[F, T] {
 class Thread[T] {
 
 	#if OS == win
-	-os_handle: sys.HANDLE;
+	- os_handle: sys.HANDLE;
 	#else
-	-os_thread: pt.pthread_t;
+	- os_thread: pt.pthread_t;
 	#end
 
 	#if TYPE_IS_VOID T
 
-	-static fn entry(data: ptr) void {
+	- static fn entry(data: ptr) void {
 		let func = data @as fn()(void);
 		func();
 	}
@@ -47,7 +47,7 @@ class Thread[T] {
 
 	#else
 
-	-static fn entry(data: ptr) void {
+	- static fn entry(data: ptr) void {
 		let entry = data @as ThreadEntry[fn(T)(void), T];
 		entry.start_func(entry.data @as T);
 		mem:free(entry @as ptr);
@@ -77,5 +77,13 @@ class Thread[T] {
 	}
 
 	#end
+
+	fn terminate() {
+		#if OS == win
+		let check = TerminateThread(this.os_handle, 0);
+		#else
+		// TODO
+		#end
+	}
 }
 

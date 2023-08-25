@@ -26,4 +26,6 @@ test "http" {
     };
 
 	@expect resp.body == "TEST_RESPONSE";
+
+	thread.terminate();
 }
