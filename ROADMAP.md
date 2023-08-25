@@ -4,15 +4,15 @@
 Feature todo list in order:
 
 ```
-- inline if ... ? ... : ...
-- vscode extension
-- language server
-- union & c_union
-- closure functions
 - package platform: pkg.ki-lang.dev
+- test if poll frees Listener objects
+- fix correctness of shared reference types
+- rename '@as' to 'as'
 
 -- release version 0.1.0
 
+- union & c_union
+- closure functions
 - trait generic types
 - function generic types
 - break outer loops
@@ -42,6 +42,9 @@ Feature todo list in order:
 ## Done
 
 ```
+- inline if ... ? ... : ...
+- vscode extension
+- language server
 - --watch param to watch for file changes and trigger a build
 - declare functions for classes/structs from other libraries
 - add a message to your errors
