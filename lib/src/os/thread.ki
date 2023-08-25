@@ -80,7 +80,7 @@ class Thread[T] {
 
 	fn terminate() {
 		#if OS == win
-		let check = TerminateThread(this.os_handle, 0);
+		let check = sys.TerminateThread(this.os_handle, 0);
 		#else
 		// TODO
 		#end
