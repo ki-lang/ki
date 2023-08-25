@@ -17,7 +17,7 @@ class Poll[T] {
         let fd = sys.epoll_create(1);
         return CLASS {
             epoll_fd: fd,
-            epoll_buffer: mem:alloc(20 * @sizeof(.sys.cstruct_epoll_event)),
+            epoll_buffer: mem:alloc(20 * @sizeof_class(sys.cstruct_epoll_event)),
             lsn_by_index: 0 @as ptr,
         };
         #else
@@ -34,24 +34,23 @@ class Poll[T] {
 
         #if OS == linux
         let ebuf = this.epoll_buffer;
-        let count = sys.epoll_wait(this.epoll_fd, ebuf, 20, timeout);
-        if count < 0 {
+        let count = sys.epoll_wait(this.epoll_fd, ebuf, 10, timeout);
+        if count <= 0 {
             return events;
         }
         rep count = count @as uxx;
         let i = 0#uxx;
         while i < count {
-            let ev = (ebuf + (i * @sizeof(.sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event;
-            let lsn = ev.data @as Listener[T];
+            let ev = (ebuf + (i * @sizeof_class(sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event;
+            let lsn = ev.data @as *Listener[T];
             lsn.set_events(ev.events);
             if lsn.has_stopped_the_connection() {
-                println("DISCONNECT");
                 this.listeners.remove_item(lsn);
                 //let ev = @stack_object(sys.cstruct_epoll_event);
                 //ev.events = 0;
                 //let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_DEL, lsn.fd, ev);
             }
-            events.push(lsn);
+            events.push(&lsn);
             i++;
         }
         #else

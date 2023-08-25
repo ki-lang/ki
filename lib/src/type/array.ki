@@ -106,11 +106,11 @@ class Array[T] {
 	}
 
 	fn remove_index(index: uxx) {
-		println(index.str());
-		if index == this.length - 1 {
-			this.length--;
-		}
-		println("remove: " + (this.length).str());
+		//println(index.str());
+		//if index == this.length - 1 {
+		//	this.length--;
+		//}
+		//println("remove: " + (this.length).str());
 	}
 	fn remove_item(item: *T) {
 		let index = this.index_of(item) !! return;;

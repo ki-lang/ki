@@ -115,13 +115,12 @@ class Server {
             let event_count = events.length;
             let i : uxx = 0;
 
-            println("count:%"{ event_count.str() });
             while i < event_count {
                 let lsn = events.get(i) !! break;;
                 let fd = lsn.fd;
                 i++;
 
-                println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
+                //println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
 
                 if fd == sock_fd {
                     // New connection
