@@ -36,6 +36,9 @@ fn _write(fd: i32, buf: c_string, size: uxx) ixx;
 fn _open(path: c_string, flags: i32, mode: i32) i32;
 fn _close(fd: i32) i32;
 
+fn recv(fd: SOCKET, buf: ptr, len: i32, flags: i32) i32;
+fn send(fd: SOCKET, buf: ptr, len: i32, flags: i32) i32;
+
 // Files
 fn _stat(path: c_string, stat_buf: *cstruct_stat) i32;
 fn fstat(fd: i32, stat_buf: *cstruct_stat) i32;
@@ -59,16 +62,13 @@ fn WSAStartup(wVersionRequired: u16, lpWSAData: WSADATA) i32;
 fn closesocket(fd: SOCKET) i32;
 //fn WSPStartup(wVersionRequested: u16, lpWSPData: WSPDATA, lpProtocolInfo: WSAPROTOCOL_INFOA, UpcallTable: .WSPUPCALLTABLE, lpProcTable: WSPPROC_TABLE) i32;
 
-fn recv(fd: SOCKET, buf: ptr, len: i32, flags: i32) i32;
-fn send(fd: SOCKET, buf: ptr, len: i32, flags: i32) i32;
-
 fn pipe(pipefd: i32[2]) i32;
 //int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict exceptfds, struct timeval *restrict timeout);
 fn dup(old_fd: i32) i32;
 fn dup2(old_fd: i32, new_fd: i32) i32;
 
 fn socket(domain: i32, type: i32, protocol: i32) SOCKET;
-//fn connect(sockfd: SOCKET, addr: *cstruct_sockaddr, addrlen: u32) i32;
+fn connect(sockfd: SOCKET, addr: *cstruct_sockaddr, addrlen: i32) i32;
 fn accept(sockfd: SOCKET, addr: *?cstruct_sockaddr, addrlen: ?u32[1]) i32;
 //fn accept4(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1], flags: i32) i32;
 fn shutdown(sockfd: SOCKET, how: i32) i32;
@@ -131,5 +131,6 @@ fn signal(signum: i32, handler: ?fn(i32)(void)) void;
 fn raise(sig: i32) i32;
 
 fn CreateThread(lpThreadAttributes: ?ptr, dwStackSize: uxx, lpStartAddress: ptr, lpParameter: ?ptr, dwCreationFlags: u32, lpThreadId: ?u32[1]) ?HANDLE;
+fn TerminateThread(handle: HANDLE, exit_code: i32) bool;
 fn WaitForSingleObject(handle: HANDLE, timeout_ms: u32) u32;
 fn CloseHandle(handle: HANDLE) bool;

@@ -1,16 +1,193 @@
 
 header "sys" as sys;
+header "openssl" as ossl;
 
 use io;
 
-class Connection {
-	~fd: i32;
+class SendResult {
+    bytes_sent: uxx = 0;
+    connection_error: bool = false;
+    incomplete: bool = false; // EAGAIN in async communication
+}
+class RecvResult {
+    bytes_received: uxx = 0;
+    connection_error: bool = false;
+    incomplete: bool = false; // EAGAIN in async communication
+}
 
-	fn close() void {
-		#if OS == win
-        sys.closesocket(this.fd @as sys.SOCKET);
-        #else
-        io:close(this.fd);
-        #end
-	}
+class Connection {
+    ~ fd: i32;
+    ~ open: bool = true;
+    ~ ssl_enabled: bool = false;
+    - ssl: ?SSL = null;
+
+
+    fn ssl_connect() !ssl_error {
+        if this.ssl_enabled : return;
+        let ssl = SSL.new(this.fd);
+        let err = ossl.SSL_connect(ssl.ssl);
+        if err != 1 {
+            throw ssl_error;
+        }
+        this.ssl = ssl;
+        this.ssl_enabled = true;
+    }
+
+    fn close() {
+        if !this.open : return;
+        Socket.close(this.fd);
+        this.open = false;
+    }
+
+    fn send(buffer: *ByteBuffer, start_index: uxx = 0, result: *SendResult) {
+
+        result.bytes_sent = 0;
+        result.incomplete = false;
+        result.connection_error = false;
+
+        if !this.open : return;
+
+        let sent = 0#uxx;
+        let bytes_to_send = buffer.length - start_index;
+        let chunk_size : uxx = 65535;
+        let ssl = this.ssl;
+        while bytes_to_send > 0 {
+            let bytes_sent = 0#uxx;
+            if @isset(ssl) {
+                // SSL
+                let wbytes = ossl.SSL_write(ssl.ssl, buffer.data + start_index, bytes_to_send @as i32);
+                if wbytes <= 0 {
+                    // SSL_ERROR_WANT_WRITE: 3
+                    let err = ossl.SSL_get_error(ssl.ssl, wbytes);
+                    if err != 0 {
+                        if err == 3 {
+                            result.incomplete = true;
+                            break;
+                        }
+                        result.connection_error = true;
+                    }
+                    break;
+                }
+                if wbytes == 0 {
+                    break;
+                }
+                bytes_sent = wbytes @as uxx;
+
+            } else {
+                // No SSL
+                #if OS == win
+                let wbytes = sys.send(this.fd, buffer.data + start_index, bytes_to_send @as i32, 0);
+                #else
+                let wbytes = sys.send(this.fd, buffer.data + start_index, bytes_to_send, 0);
+                #end
+                if wbytes < 0 {
+                    #if OS == win
+                    let err = sys.WSAGetLastError();
+                    if err == sys.OS.WSAENOBUFS {
+                        // EAGAIN
+                        result.incomplete = true;
+                        break;
+                    }
+                    #else
+                    #if OS == macos
+                    let err = @ptrv(sys.__error(), i32, 0);
+                    #else
+                    let err = @ptrv(sys.__errno_location(), i32, 0);
+                    #end
+                    if err == sys.OS.EAGAIN {
+                        // EAGAIN
+                        result.incomplete = true;
+                        break;
+                    }
+                    #end
+                    result.connection_error = true;
+                    break;
+                }
+                if wbytes == 0 {
+                    break;
+                }
+                bytes_sent = wbytes @as uxx;
+            }
+            sent += bytes_sent;
+            start_index += bytes_sent;
+            bytes_to_send -= bytes_sent;
+        }
+
+        result.bytes_sent = sent;
+    }
+
+    fn recv(buffer: *ByteBuffer, result: *RecvResult) {
+
+        result.bytes_received = 0;
+        result.incomplete = false;
+        result.connection_error = false;
+
+        if !this.open : return;
+
+        let buf_size : uxx = 65535;
+        let ssl = this.ssl;
+
+        buffer.minimum_free_space(buf_size);
+        let count = 0#uxx;
+
+        if @isset(ssl) {
+            let rcvd = ossl.SSL_read(ssl.ssl, buffer.data + buffer.length, buf_size);
+            if rcvd <= 0 {
+                // SSL_ERROR_NONE: 0
+                // SSL_ERROR_WANT_READ: 2
+                // SSL_ERROR_ZERO_RETURN: 6
+                let err = ossl.SSL_get_error(ssl.ssl, rcvd);
+                if err != 0 && err != 6 {
+                    if err == 2 {
+                        result.incomplete = true;
+                        return;
+                    }
+                    result.connection_error = true;
+                }
+                return;
+            }
+            count = rcvd @as uxx;
+
+        } else {
+            #if OS == win
+            let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size @as i32, 0);
+            #else
+            let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size, 0);
+            #end
+            if (rcvd < 0) {
+                #if OS == win
+                let err = sys.WSAGetLastError();
+                if err == sys.OS.WSAENOBUFS {
+                    // EAGAIN
+                    result.incomplete = true;
+                    return;
+                }
+                #else
+                #if OS == macos
+                let err = @ptrv(sys.__error(), i32, 0);
+                #else
+                let err = @ptrv(sys.__errno_location(), i32, 0);
+                #end
+                if err == sys.OS.EAGAIN {
+                    // EAGAIN
+                    result.incomplete = true;
+                    return;
+                }
+                #end
+                result.connection_error = true;
+                return;
+            }
+            if (rcvd == 0) {
+                return;
+            }
+            count = rcvd @as uxx;
+        }
+            
+        buffer.length += count;
+        result.bytes_received = count;
+    }
+
+    fn __before_free() {
+        this.close();
+    }
 }

@@ -10,20 +10,8 @@ class Connection {
 	fd: i32;
 	uploads: ?Array[String] = null;
 	read_buf: ByteBuffer = ByteBuffer.new(500);
-
-	// Parsing
-	phase: uxx = 0;
-	parse_pos: uxx = 0;
-	line: ByteBuffer = ByteBuffer.new(200);
-	headers: Map[String] = Map[String].new();
-	request_method: String = "GET";
-	request_path: String = "/";
-	request_protocol: String = "HTTP/1.1";
-	content_length: uxx = 0;
-	content_end_pos: uxx = 0;
-
-	headers_parsed: bool = false;
-	body_parsed: bool = false;
+	parse_result: ParseResult = ParseResult{};
+	recv_result: net:RecvResult = net:RecvResult{};
 
 	// Response
 	out_file: ?fs:FileStream = null;
@@ -32,136 +20,17 @@ class Connection {
 
 	fn reset_parser() void {
 
+		this.parse_result = ParseResult{};
+
         let read_buf = this.read_buf;
-        if this.parse_pos == read_buf.length {
+        if read_buf.start_index == read_buf.length {
             read_buf.clear();
-            this.parse_pos = 0;
         }
-        this.line.clear();
 	}
 
 	fn reset_out() void {
         this.out_buf.clear();
         this.out_pos = 0;
-	}
-
-	fn reset_request_data() void {
-        this.uploads = null;
-        this.phase = 0;
-        this.headers = Map[String].new();
-        this.headers_parsed = false;
-		this.body_parsed = false;
-		this.content_length = 0;
-		//
-		this.parse_pos = this.content_end_pos;
-		this.content_end_pos = 0;
-	}
-
-	fn parse() void !sent_error {
-		if this.headers_parsed {
-			this.parse_body();
-		} else {
-			this.parse_headers() !! throw sent_error;;
-			if this.headers_parsed {
-				this.parse_body();
-			}
-		}
-	}
-
-	-fn parse_body() void {
-		if this.read_buf.length >= this.content_end_pos {
-			this.body_parsed = true;
-		}
-	}
-
-	-fn parse_headers() void !sent_error {
-
-		let phase = this.phase;
-		let pos = this.parse_pos;
-		let read_buf = this.read_buf;
-		let line = this.line;
-		let length = read_buf.length;
-		let data = read_buf.data;
-		let prev_ch = '\0';
-		if line.length > 0 {
-			prev_ch = @ptrv(line.data, u8, line.length - 1);
-		}
-		while pos < length {
-			let ch = @ptrv(data, u8, pos);
-			pos++;
-
-			if prev_ch == '\r' && ch == '\n' {
-
-				line.length--; // Remove \r
-
-				if line.length == 0 {
-					this.headers_parsed = true;
-					this.content_end_pos = pos + this.content_length;
-					break;
-				}
-
-				if phase == 1 {
-					// Header
-					let headers = this.headers;
-					let split_index = line.index_of_byte(':') !! {
-						this.respond(Response.error(400)); // Invalid request
-						throw sent_error;
-					};
-					// Key
-					let key = line.sub_str(0, split_index).to_lower();
-					// Value
-					let value_start_index = split_index + 1;
-					let value_index = line.index_where_byte_is_not(' ', value_start_index) !? value_start_index;
-					let value = line.sub_str(value_index, line.length - value_index);
-
-					if key == "content-length" {
-						this.content_length = value.to_uxx() !! {
-							this.respond(Response.error(400)); // Invalid request
-							throw sent_error;
-						};
-					}
-
-					headers.set(key, value);
-
-				} else if phase == 0 {
-					// HTTP line
-					let first_space_index = line.index_of_byte(' ') !! {
-						this.respond(Response.error(400)); // Invalid request
-						throw sent_error;
-					};
-					let second_space_index = line.index_of_byte(' ', first_space_index + 1) !! {
-						this.respond(Response.error(400)); // Invalid request
-						throw sent_error;
-					};
-					// Method
-					let method = line.sub_str(0, first_space_index);
-					// Path
-					let path_index = first_space_index + 1;
-					let path = line.sub_str(path_index, second_space_index - path_index);
-					// Protocol
-					let proto_index = second_space_index + 1;
-					let proto = line.sub_str(proto_index, line.length - proto_index);
-					if proto != "HTTP/1.1" && proto != "HTTP/1.0" {
-						this.respond(Response.error(415)); // Unsupported protocol
-						throw sent_error;
-					}
-
-					this.request_method = method;
-					this.request_path = path;
-					this.request_protocol = proto;
-					
-					phase = 1;
-				}
-
-				line.clear();
-				prev_ch = '\n';
-				continue;
-			}
-			line.append_byte(ch);
-			prev_ch = ch;
-		}
-
-		this.parse_pos = pos;
 	}
 
 	fn send_file(stream: fs:FileStream, filename: *?String) void {

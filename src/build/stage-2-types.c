@@ -197,7 +197,15 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
             rtok(fc);
         }
 
-        if (strcmp(token, "fn") == 0) {
+        if (strcmp(token, "stores_references_to") == 0) {
+
+            Type *type = read_type(fc, fc->alc, scope, true, true, rtc_prop_type);
+            tok_expect(fc, ";", false, true);
+
+            array_push(class->refers_to_types, type);
+            array_push(class->refers_to_names, "*");
+
+        } else if (strcmp(token, "fn") == 0) {
             // Function
             *def_chunk = *fc->chunk;
             tok(fc, token, true, true);
@@ -244,16 +252,12 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
 
             if (strcmp(func->name, "__ref") == 0) {
                 class->func_ref = func;
-                class->must_ref = true;
             } else if (strcmp(func->name, "__deref") == 0) {
                 class->func_deref = func;
-                class->must_deref = true;
             } else if (strcmp(func->name, "__ref_weak") == 0) {
                 class->func_ref_weak = func;
-                class->must_ref_weak = true;
             } else if (strcmp(func->name, "__deref_weak") == 0) {
                 class->func_deref_weak = func;
-                class->must_deref_weak = true;
             } else if (strcmp(func->name, "__free") == 0) {
                 class->func_free = func;
             } else if (strcmp(func->name, "__before_free") == 0) {
@@ -327,6 +331,8 @@ void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
             }
 
             map_set(class->props, prop_name, prop);
+            array_push(class->refers_to_types, prop->type);
+            array_push(class->refers_to_names, prop_name);
 
             skip_until_char(fc, ";");
         }
@@ -459,50 +465,6 @@ void stage_2_func(Fc *fc, Func *func) {
         }
     }
 
-    // if (func == g_main_func) {
-    //     //
-    //     if (func->args->length > 1) {
-    //         fc_error(fc, "main() too many arguments (max 1)", NULL);
-    //     }
-    //     if (func->args->length == 1) {
-    //         // Replace args from main
-    //         VarDecl *decl = array_get_index(func->args, 0);
-    //         char *name = array_get_index(func->arg_names, 0);
-    //         Type *type = decl->type;
-    //         char hash[33];
-    //         Array *types = array_make(1);
-    //         array_push(types, type_gen_class(g_class_string));
-    //         class_generate_generic_hash(types, hash);
-    //         Class *class = class_get_generic_class(g_class_array, hash, types, true);
-    //         if (type->class != class) {
-    //             fc_error(fc, "main() argument must of type Array<String>", NULL);
-    //         }
-    //         g_main_func_arg_name = name;
-    //         g_main_func_arg_mut = decl->is_mut;
-    //         g_main_func_arg_type = decl->type;
-    //         //
-    //         VarDecl *argc = init_decl(false, true, type_gen_class(g_class_i32));
-    //         VarDecl *argv = init_decl(false, true, type_gen_class(g_class_ptr));
-    //         array_set_index(func->args, 0, argc);
-    //         array_set_index(func->arg_names, 0, "KI_ARGC");
-    //         array_set_index(func->arg_defaults, 0, NULL);
-    //         array_push(func->args, argv);
-    //         array_push(func->arg_names, "KI_ARGV");
-    //         array_push(func->arg_defaults, NULL);
-    //     }
-
-    //     //
-    //     if (func->return_type) {
-    //         Class *class = func->return_type->class;
-    //         if (!class || class != g_class_i32) {
-    //             fc_error(fc, "main() must have a void or i32 return type", NULL);
-    //         }
-    //     }
-    //     if (func->can_error) {
-    //         fc_error(fc, "main() should not return errors", NULL);
-    //     }
-    // }
-
     fc->error_func_info = prev_error_func_info;
 }
 
@@ -518,7 +480,7 @@ void stage_2_class_defaults(Fc *fc, Class *class) {
             for (int i = 0; i < props->length; i++) {
                 ClassProp *prop = array_get_index(props, i);
                 Class *pclass = prop->type->class;
-                if (pclass && pclass->must_deref) {
+                if (pclass && pclass->is_rc) {
                     class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, b->type_void, 0);
                     class->func_deref_props->is_generated = true;
                     break;
@@ -529,6 +491,31 @@ void stage_2_class_defaults(Fc *fc, Class *class) {
         if (!class->func_free) {
             class->func_free = class_define_func(fc, class, false, "__free", NULL, b->type_void, 0);
             class->func_free->is_generated = true;
+        }
+    }
+
+    if (class->is_rc) {
+        if (class->type != ct_struct) {
+            if (!class->func_ref) {
+                sprintf(fc->sbuf, "Missing function '__ref' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+            if (!class->func_deref) {
+                sprintf(fc->sbuf, "Missing function '__deref' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+            if (!class->func_ref_weak) {
+                sprintf(fc->sbuf, "Missing function '__ref_weak' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+            if (!class->func_deref_weak) {
+                sprintf(fc->sbuf, "Missing function '__deref_weak' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+        }
+        if (!class->func_free) {
+            sprintf(fc->sbuf, "Missing function '__free' in type '%s'", class->dname);
+            fc_error(fc);
         }
     }
 }
@@ -589,7 +576,7 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
 
         TypeCheck tc_key;
         tc_key.class = NULL;
-        tc_key.borrow = type_tracks_ownership(func_init->rett);
+        tc_key.borrow = type_is_rc(func_init->rett);
         tc_key.shared_ref = false;
         tc_key.array_of = type_gen_type_check(alc, func_init->rett);
         tc_key.type = -1;
@@ -597,26 +584,13 @@ void stage_2_class_type_checks(Fc *fc, Class *class) {
 
         checks[1] = &tc_key;
 
-        int argc = 2;
-        // if (func->args->length > 2) {
-        //     argc++;
-        //     Arg *arg = array_get_index(func->args, 2);
-        //     TypeCheck *tc = malloc(sizeof(TypeCheck));
-        //     tc->class = NULL;
-        //     tc->array_of = NULL;
-        //     tc->borrow = true;
-        //     tc->shared_ref = false;
-        //     tc->type = type_arr;
-        //     tc->array_size = 1;
-        //     checks[2] = tc;
-        // }
-
         if (type_is_void(func->rett)) {
             fc->chunk = func->chunk_args;
             sprintf(fc->sbuf, "__each can have any return type except 'void'");
             fc_error(fc);
         }
-        stage_2_class_type_check(fc, func, checks, argc, NULL, true);
+
+        stage_2_class_type_check(fc, func, checks, 2, NULL, true);
         class->can_iter = true;
     }
 }
@@ -661,37 +635,4 @@ void stage_2_class_type_check(Fc *fc, Func *func, TypeCheck *checks[], int argc_
         sprintf(fc->sbuf, can_error ? "This function should atleast have 1 error defined" : "This function should not be able to return errors");
         fc_error(fc);
     }
-
-    // if (!equal) {
-    //     char buf[256];
-    //     char expected[256];
-    //     strcpy(expected, "fn(");
-    //     int i = 0;
-    //     while (i < argc) {
-    //         if (i > 0) {
-    //             strcat(expected, ", ");
-    //         }
-    //         Type *type = args[i];
-    //         i++;
-    //         type_to_str(type, buf);
-    //         strcat(expected, buf);
-    //     }
-    //     strcat(expected, ")(");
-    //     if (rett) {
-    //         type_to_str(rett, buf);
-    //         strcat(expected, buf);
-    //     } else {
-    //         strcat(expected, "{ANY}");
-    //     }
-    //     strcat(expected, ")");
-    //     if (can_error) {
-    //         strcat(expected, "!");
-    //     }
-    //     //
-    //     type_to_str(type_gen_fptr(fc->alc, func), buf);
-    //     //
-    //     fc->chunk = chunk;
-    //     sprintf(fc->sbuf, "Expected type for '%s' should be '%s', but was '%s'", func->dname, expected, buf);
-    //     fc_error(fc);
-    // }
 }

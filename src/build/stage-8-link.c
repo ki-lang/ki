@@ -373,6 +373,35 @@ void stage_8_link_libs(Str *cmd, Build *b, int type) {
         str_append_chars(cmd, " ");
     }
 }
+
+void stage_8_link_libs_all(Str *cmd, Build *b) {
+    //
+    bool is_win = b->target_os == os_win;
+    bool is_macos = b->target_os == os_macos;
+
+    for (int i = 0; i < b->links->length; i++) {
+        Link *link = array_get_index(b->links, i);
+
+        char *prefix = "";
+        char *suffix = "";
+        bool is_static = link->type == link_static;
+        if (!is_win) {
+            prefix = "-l";
+            if (is_static && !is_macos) {
+                prefix = "-l:lib";
+                suffix = ".a";
+            }
+        } else {
+            suffix = ".lib";
+        }
+
+        str_append_chars(cmd, prefix);
+        str_append_chars(cmd, link->name);
+        str_append_chars(cmd, suffix);
+        str_append_chars(cmd, " ");
+    }
+}
+
 void stage_8_link(Build *b, Array *o_files) {
     //
     Str *cmd = str_make(b->alc, 1000);
@@ -472,6 +501,7 @@ void stage_8_link(Build *b, Array *o_files) {
         if (b->type == build_t_exe) {
             str_append_chars(cmd, "-l:Scrt1.o ");
             str_append_chars(cmd, "-l:crti.o ");
+            str_append_chars(cmd, "-l:crtbeginS.o ");
         } else if (b->type == build_t_shared_lib) {
             str_append_chars(cmd, "--shared ");
         }
@@ -487,7 +517,7 @@ void stage_8_link(Build *b, Array *o_files) {
         } else if (is_arm64) {
             str_append_chars(cmd, "-arch arm64 ");
         }
-        str_append_chars(cmd, "-platform_version macos 10.13 11.1 ");
+        str_append_chars(cmd, "-platform_version macos 11.0 11.1 ");
         // str_append_chars(cmd, "-sdk_version 11.1 ");
         // -macosx_version_min 11.1.0 -sdk_version 11.1.0
         if (b->type == build_t_shared_lib) {
@@ -513,11 +543,13 @@ void stage_8_link(Build *b, Array *o_files) {
     }
 
     // Link libs
-    stage_8_link_libs(cmd, b, link_dynamic);
-    stage_8_link_libs(cmd, b, link_static);
+    stage_8_link_libs_all(cmd, b);
+    // stage_8_link_libs(cmd, b, link_dynamic);
+    // stage_8_link_libs(cmd, b, link_static);
 
     // End
     if (is_linux) {
+        str_append_chars(cmd, "-l:crtendS.o ");
         str_append_chars(cmd, "-l:crtn.o ");
     }
 

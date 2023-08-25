@@ -5,6 +5,7 @@ trait ByteBufferTrait {
 	~data: ptr;
 	~size: uxx;
 	length: uxx = 0;
+	start_index: uxx = 0;
 
 	static fn new(start_size: uxx) CLASS {
 		if start_size < 10 {
@@ -17,6 +18,7 @@ trait ByteBufferTrait {
 	}
 
 	fn clear() void %inline {
+		this.start_index = 0;
 		this.length = 0;
 	}
 

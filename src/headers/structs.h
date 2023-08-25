@@ -111,6 +111,7 @@ struct Build {
     Array *link_dirs;
     Map *link_libs;
     Map *fcs_by_path;
+    Array *links;
     Array *all_fcs;
     Str *str_buf;
     Str *str_buf_io;
@@ -219,6 +220,7 @@ struct Config {
 
 struct Link {
     int type;
+    char *name;
 };
 
 struct Chunk {
@@ -295,6 +297,8 @@ struct Class {
     Chunk *chunk_body;
     Map *props;
     Map *funcs;
+    Array *refers_to_names;
+    Array *refers_to_types;
     Func *func_ref;
     Func *func_deref;
     Func *func_ref_weak;
@@ -316,23 +320,22 @@ struct Class {
     bool is_generic_base;
     bool allow_math;
     bool track_ownership;
-    bool must_ref;
-    bool must_deref;
-    bool must_ref_weak;
-    bool must_deref_weak;
     bool is_struct;
     bool can_iter;
     bool async;
     bool has_borrows;
     bool circular_checked;
+    bool is_circular;
 };
 struct ClassProp {
     Type *type;
+    Class *class;
     Value *value;
     Chunk *def_chunk;
     Chunk *value_chunk;
     int index;
     int act;
+    bool parsing_value;
 };
 struct Func {
     char *name;

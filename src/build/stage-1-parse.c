@@ -214,8 +214,7 @@ void stage_1_class(Fc *fc, bool is_struct) {
     class->scope = scope_init(fc->alc, sct_class, fc->scope, false);
     class->is_struct = is_struct;
     class->is_rc = !is_struct;
-    class->must_ref = !is_struct;
-    class->must_deref = !is_struct;
+    class->track_ownership = !is_struct;
     class->def_chunk = def_chunk;
 
     array_push(fc->classes, class);
@@ -262,21 +261,18 @@ void stage_1_class(Fc *fc, bool is_struct) {
     }
 
     tok(fc, token, true, true);
+    bool track = false;
     while (strcmp(token, "{") != 0) {
         if (strcmp(token, "type") == 0) {
+            class->track_ownership = false;
+            class->is_rc = false;
             tok_expect(fc, ":", true, false);
             tok(fc, token, true, false);
             if (strcmp(token, "ptr") == 0) {
                 class->type = ct_ptr;
-                class->is_rc = false;
-                class->must_ref = false;
-                class->must_deref = false;
                 class->size = fc->b->ptr_size;
             } else if (strcmp(token, "int") == 0 || strcmp(token, "float") == 0) {
                 class->type = strcmp(token, "int") == 0 ? ct_int : ct_float;
-                class->is_rc = false;
-                class->must_ref = false;
-                class->must_deref = false;
                 tok_expect(fc, ":", true, false);
                 tok(fc, token, true, false);
                 int size = 0;
@@ -314,18 +310,16 @@ void stage_1_class(Fc *fc, bool is_struct) {
                 sprintf(fc->sbuf, "Unknown class type: '%s'", token);
                 fc_error(fc);
             }
-        } else if (class->is_rc && strcmp(token, "norc") == 0) {
-            class->is_rc = false;
-            class->must_ref = false;
-            class->must_deref = false;
         } else if (strcmp(token, "packed") == 0) {
             class->packed = true;
         } else if (strcmp(token, "math") == 0) {
             class->allow_math = true;
         } else if (strcmp(token, "track") == 0) {
-            class->track_ownership = true;
+            track = true;
         } else if (strcmp(token, "async") == 0) {
             class->async = true;
+        } else if (strcmp(token, "rc") == 0) {
+            class->is_rc = true;
         } else {
             sprintf(fc->sbuf, "Unexpected token: '%s' (class attributes)", token);
             fc_error(fc);
@@ -333,6 +327,9 @@ void stage_1_class(Fc *fc, bool is_struct) {
 
         tok(fc, token, true, true);
     }
+
+    if (track)
+        class->track_ownership = true;
 
     class->chunk_body = chunk_clone(fc->alc, fc->chunk);
 
@@ -573,11 +570,17 @@ void stage_1_link(Fc *fc, int link_type) {
     if (!link) {
         link = al(fc->alc, sizeof(Link));
         link->type = link_type;
+        link->name = fn;
         map_set(fc->b->link_libs, fn, link);
     }
     if (link_type == link_dynamic && link->type != link_dynamic) {
         link->type = link_dynamic;
     }
+
+    link = al(fc->alc, sizeof(Link));
+    link->type = link_type;
+    link->name = fn;
+    array_push(fc->b->links, link);
 
     tok_expect(fc, ";", true, true);
 }

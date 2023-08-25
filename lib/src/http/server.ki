@@ -23,12 +23,13 @@ class Server {
     - max_connections: uxx;
     - handler: fn(*Request)(Response);
     - static_dirs: Array[String] = Array[String].new();
-    - show_info: bool = false;
+    show_info: bool = false;
 
-    static fn new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error {
+    static fn new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error !socket_bind_error {
 
         let max_connections : uxx = 10000;
-        let socket = net:Socket.new_tcp(host, port) !! throw socket_init_error;;
+        let socket = net:Socket.new_tcp(host + "", port, false) !! throw socket_init_error;;
+        socket.bind() !! throw socket_bind_error;;
 
         return Server{
             host: host,
@@ -70,8 +71,10 @@ class Server {
             worker_count = 128;
         }
 
-        println("[+] Running http server on port " + this.port.str());
-        println("[+] Worker count: " + worker_count.str());
+        if this.show_info {
+            println("[+] Running http server on port " + this.port.str());
+            println("[+] Worker count: " + worker_count.str());
+        }
 
         worker_count--;
         while worker_count > 0 {
@@ -151,8 +154,8 @@ class Server {
                         http_con.netcon = netcon;
 
                         http_con.reset_parser();
+                        http_con.read_buf.clear();
                         http_con.reset_out();
-                        http_con.reset_request_data();
                     }
 
                     let lsn = poll.listener(fd, index);
@@ -224,10 +227,6 @@ class Server {
                     } else {
                         http_con.reset_out();
                     }
-
-                    if http_con.phase == 0 && http_con.parse_pos == http_con.read_buf.length {
-                        http_con.reset_parser();
-                    }
                     continue;
                 }
             }
@@ -236,69 +235,67 @@ class Server {
 
     - static fn respond(data: *ServerData, http_con: *Connection, handler: fn(*Request)(Response)) void !read_error !sent_error {
 
-        let buf_size : i32 = 65535;
-        let read_buf = http_con.read_buf;
-        read_buf.minimum_free_space(buf_size);
         while true {
-            #if OS == win
-            let rcvd = sys.recv(http_con.fd, read_buf.data + read_buf.length, buf_size, 0);
-            #else
-            let rcvd = sys.read(http_con.fd, read_buf.data + read_buf.length, buf_size);
-            #end
-            if (rcvd == -2){
-                // EAGAIN
-                return;
-            } else if (rcvd < 0) {
-                throw read_error;
-            } else if (rcvd == 0) {
-                break;
-            }
-
-            read_buf.length += rcvd @as uxx;
-
-            while http_con.parse_pos < http_con.read_buf.length {
-        
-                http_con.parse() !! {
-                    throw sent_error;
+            let res = http_con.parse_result;
+            let read_buf = http_con.read_buf;
+            let recv = http_con.recv_result;
+            while true {
+                if read_buf.start_index == read_buf.length {
+                    http_con.netcon.recv(read_buf, recv);
+                }
+                Parser.parse_request(read_buf, res) !! {
+                    http_con.respond(Response.error(400));
+                    throw read_error, "Invalid request";
                 };
-
-                if http_con.body_parsed {
-
-                    if data.static_dirs.length > 0 {
-                        let path = http_con.request_path.trim("/");
-                        each data.static_dirs as dir {
-                            let fullpath = dir + path; 
-                            if fs:is_file(fullpath) {
-                                let stream = fs:open(fullpath, true, false) !! continue;;
-                                http_con.send_file(stream, null);
-                                http_con.reset_request_data();
-                                return;
-                            }
-                        }
-                    }
-
-                    let req = Request{
-                        http_con: &http_con,
-                        headers: http_con.headers,
-                        method: http_con.request_method,
-                        path: http_con.request_path,
-                    };
-                    let resp = handler(req);
-
-                    http_con.respond(resp);
-                    http_con.reset_request_data();
+                if res.fully_parsed {
+                    break;
+                }
+                if recv.connection_error {
+                    http_con.respond(Response.error(400));
+                    throw read_error, "Failed reading from connection";
+                }
+                read_buf.clear();
+                if recv.incomplete {
+                    return;
                 }
             }
 
-            if(rcvd < buf_size) {
-                break;
+            if !res.fully_parsed {
+                return;
             }
+
+            http_con.reset_parser();
+
+            if data.static_dirs.length > 0 {
+                let path = res.path.trim("/");
+                each data.static_dirs as dir {
+                    let fullpath = dir + path; 
+                    if fs:is_file(fullpath) {
+                        let stream = fs:open(fullpath, true, false) !! continue;;
+                        http_con.send_file(stream, null);
+                        return;
+                    }
+                }
+            }
+
+            let req = Request{
+                http_con: &http_con,
+                headers: res.headers,
+                method: res.method,
+                path: res.path,
+                body: res.body,
+            };
+            let resp = handler(req);
+
+            http_con.respond(resp);
         }
     }
 
     fn add_static_dir(path: *String) void {
         let full = fs:exe_dir() + "/" + path.trim("/") + "/";
-        println("[+] Add static dir: " + full);
+        if this.show_info {
+            println("[+] Add static dir: " + full);
+        }
         this.static_dirs.push(full);
     }
 }

@@ -1,0 +1,45 @@
+
+class Uri {
+	protocol: String; // http, https, file, ...
+	domain: String; // http, https
+	path: String;
+	query: String; // http, https only
+}
+
+extend String {
+	fn parse_uri() Uri {
+		let proto = "";
+		let domain = "";
+		let path = "";
+		let query = "";
+
+		let start = 0#uxx;
+		let index = this.index_of("://") !? 0;
+		if index > 0 {
+			let part = this.sub_str_bytes(0, index);
+			if part.is_alpha() {
+				start = index + 3;
+				proto = part;
+			}
+		}
+
+		let query_index = 999999#uxx;
+		if proto == "http" || proto == "https" {
+			index = this.index_of("/", start) !? start;
+			if index == start :
+				index = this.index_of("?", start) !? 999999;
+			domain = this.sub_str(start, index - start);
+			start = index;
+			query_index = this.index_of("?", start) !? query_index;
+		}
+		path = this.sub_str(start, query_index - start);
+		query = this.sub_str(query_index + 1, 999999);
+
+		return Uri {
+			protocol: proto,
+			domain: domain,
+			path: path,
+			query: query,
+		};
+	}
+}

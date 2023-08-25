@@ -91,7 +91,8 @@ void skip_until_char(Fc *fc, char *find) {
     int i = chunk->i;
     int col = chunk->col;
     const char *content = chunk->content;
-    while (chunk->i < chunk->length) {
+    int chunk_len = chunk->length;
+    while (i < chunk_len) {
         //
         ch = chunk->content[i];
         i++;

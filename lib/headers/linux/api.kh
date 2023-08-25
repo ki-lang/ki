@@ -13,6 +13,7 @@ alias ptr as DIR;
 // uid_t = u32
 // gid_t = u32
 
+fn __errno_location() ptr;
 fn malloc(size: uxx) ptr;
 fn free(adr: ptr) void;
 
@@ -20,6 +21,9 @@ fn read(fd: i32, buf: c_string, size: uxx) ixx;
 fn write(fd: i32, buf: c_string, size: uxx) ixx;
 fn open(path: c_string, flags: i32, mode: i32) i32;
 fn close(fd: i32) i32;
+
+fn recv(fd: i32, buf: ptr, len: uxx, flags: i32) ixx;
+fn send(fd: i32, buf: ptr, len: uxx, flags: i32) ixx;
 
 fn fcntl(fd: i32, action: i32, value: i32) i32;
 fn fflush(stream: FILE) i32;

@@ -1,0 +1,8 @@
+
+class Request {
+	~http_con: Connection;
+	headers: Map[String];
+	method: String;
+	path: String;
+	body: String;
+}

@@ -1,0 +1,135 @@
+
+header "openssl" as ssl;
+
+use net;
+use type;
+
+class ClientResponse {
+	status: uxx = 0;
+	headers: Map[String] = Map[String]{};
+	body: String = "";
+}
+
+class ClientRequest {
+	method: String;
+	url: String;
+	body: String = "";
+	headers: Map[String] = Map[String]{};
+
+	fn exec() ClientResponse !invalid_url !connection_failed !invalid_response {
+
+		let parts = this.url.parse_uri();
+
+		let is_https = parts.protocol == "https";
+
+		let split = parts.domain.split(":");
+		let domain = parts.domain;
+		let port = is_https ? 443#u16 : 80#u16;
+		if split.length > 2 : throw invalid_url;
+		if split.length == 2 {
+			domain = split.get(0) !? "";
+			let p = split.get(1) !! throw invalid_url;;
+			port = (p.to_uxx() !! throw invalid_url;) @as u16;
+		}
+
+		let sock = net:Socket.new_tcp(domain, port, true) !! |err, msg| {
+			throw invalid_url, "Invalid request url";
+		};
+
+		let con = sock.connect() !! {
+			throw connection_failed, "Connection failed";
+		};
+
+		if is_https {
+			con.ssl_connect() !! {
+				con.close();
+				throw connection_failed, "SSL connection failed";
+			};
+		}
+
+		// Send request
+		let buf = this.get_send_data(parts);
+		let sendres = net:SendResult{};
+		con.send(buf, 0, sendres);
+
+		if sendres.connection_error {
+			throw connection_failed, "Connection failed";
+		}
+
+		// Receive response
+		let recv = net:RecvResult{};
+		buf.clear();
+		con.recv(buf, recv);
+
+		if recv.connection_error {
+			throw connection_failed, "Failed reading from connection";
+		}
+
+		// Parse response
+		let res = ParseResult{};
+		while true {
+			Parser.parse_response(buf, res) !! {
+				throw invalid_response, "Invalid response";
+			};
+			if res.fully_parsed {
+				break;
+			}
+			buf.clear();
+			con.recv(buf, recv);
+			if recv.connection_error {
+				throw connection_failed, "Failed reading from connection";
+			}
+			if recv.incomplete {
+				throw connection_failed, "Waiting for response timeout";
+			}
+			if recv.bytes_received == 0 {
+				throw connection_failed, "Empty packet";
+			}
+		}
+
+		return ClientResponse {
+			status: res.status,
+			headers: res.headers,
+			body: res.body,
+		};
+	}
+
+	- fn get_send_data(parts: *type:Uri) ByteBuffer {
+
+		let len = this.body.bytes();
+		let buf = ByteBuffer.new(len + 256);
+
+		let method = this.method;
+
+		buf.append_str(method);
+		buf.append_str(" ");
+		buf.append_str(parts.path);
+		if parts.query != "" {
+			buf.append_str("?");
+			buf.append_str(parts.query);
+		}
+		buf.append_str(" HTTP/1.1\r\n");
+
+		buf.append_str("Host: ");
+		buf.append_str(parts.domain);
+		buf.append_str("\r\n");
+
+		buf.append_str("Content-Length: ");
+		buf.append_str(this.body.bytes().str());
+		buf.append_str("\r\n");
+
+		let headers = this.headers;
+		each headers._keys as i,k {
+			let v = headers._values.get(i) !! break;;
+			buf.append_str(k);
+			buf.append_str(": ");
+			buf.append_str(v);
+			buf.append_str("\r\n");
+		}
+
+		buf.append_str("\r\n");
+		buf.append_str(this.body);
+
+		return buf;
+	}
+}

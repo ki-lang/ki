@@ -145,6 +145,13 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
             fc_error(fc);
         }
 
+    } else if (strcmp(token, "TYPES_HAVE_SAME_CLASS") == 0) {
+
+        Type *t1 = read_type(fc, fc->alc, scope, true, true, rtc_default);
+        Type *t2 = read_type(fc, fc->alc, scope, true, true, rtc_default);
+
+        result = t1->class == t2->class;
+
     } else if (strcmp(token, "TYPE_IS_SIGNED_NUMBER") == 0) {
 
         Id *id = read_id(fc, true, true, true);

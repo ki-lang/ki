@@ -46,17 +46,23 @@ void stage_3(Fc *fc) {
 
     Array *classes = fc->classes;
     for (int i = 0; i < classes->length; i++) {
-
         Class *class = array_get_index(classes, i);
+        if (class->is_generic_base)
+            continue;
+
         stage_3_circular(b, class);
 
-        if (class->is_generic_base) {
-            continue;
-        }
         if (class->size == 0) {
             sprintf(b->sbuf, "Missing class size: %s", class->dname);
             build_error(b, b->sbuf);
         }
+    }
+    for (int i = 0; i < classes->length; i++) {
+        Class *class = array_get_index(classes, i);
+        if (class->is_generic_base)
+            continue;
+
+        stage_3_shared_circular_refs(b, class);
     }
 
     //
@@ -72,17 +78,18 @@ bool stage_3_circular_find(Class *find, Class *in, Array *prop_names) {
         return true;
     }
     in->circular_checked = true;
-    Map *props = in->props;
-    for (int i = 0; i < props->values->length; i++) {
-        char *name = array_get_index(props->keys, i);
-        ClassProp *prop = array_get_index(props->values, i);
-        Type *type = prop->type;
-        if (type->weak_ptr) {
+    Array *types = in->refers_to_types;
+    Array *names = in->refers_to_names;
+    for (int i = 0; i < types->length; i++) {
+        Type *type = array_get_index(types, i);
+        char *name = array_get_index(names, i);
+        Class *pclass = type->class;
+        if (!pclass || type->weak_ptr) {
             continue;
         }
-        Class *pclass = type->class;
-        if (pclass && pclass->type == ct_struct && pclass->is_rc) {
-            array_push(prop_names, name);
+        if (pclass->is_rc) {
+            if (prop_names)
+                array_push(prop_names, name);
             if (pclass == find) {
                 in->circular_checked = false;
                 return true;
@@ -92,7 +99,8 @@ bool stage_3_circular_find(Class *find, Class *in, Array *prop_names) {
                 in->circular_checked = false;
                 return true;
             }
-            array_pop(prop_names);
+            if (prop_names)
+                array_pop(prop_names);
         }
     }
     in->circular_checked = false;
@@ -101,30 +109,70 @@ bool stage_3_circular_find(Class *find, Class *in, Array *prop_names) {
 
 void stage_3_circular(Build *b, Class *class) {
     //
-    Map *props = class->props;
-    for (int i = 0; i < props->values->length; i++) {
-        ClassProp *prop = array_get_index(props->values, i);
-        Class *pclass = prop->type->class;
-        if (class && prop->type->shared_ref && class->type == ct_struct && class->is_rc) {
-            Array *prop_names = array_make(b->alc, 10);
-            bool circular = stage_3_circular_find(class, pclass, prop_names);
-            if (circular) {
-                // Circular error
-                // Add first property to list
-                char *pname = array_get_index(props->keys, i);
-                array_shift(prop_names, pname);
-                // Make property chain string
-                Str *list = str_make(b->alc, 500);
-                for (int i = 0; i < prop_names->length; i++) {
-                    if (i > 0) {
-                        str_append_chars(list, " -> ");
-                    }
-                    str_append_chars(list, array_get_index(prop_names, i));
-                }
-                // Show error
-                sprintf(b->sbuf, "Property '%s.%s' has a shared reference type, shared reference types are not allowed to loop back to it's own class. We dont allow this because it can result into a memory leak. Use 'weak' references instead for this situation.\nLoop: %s -> %s (%s)", class->dname, pname, class->dname, str_to_chars(b->alc, list), class->dname);
-                build_error(b, b->sbuf);
+    if (!class->is_rc)
+        return;
+    bool circular = false;
+    Array *types = class->refers_to_types;
+    Array *names = class->refers_to_names;
+    for (int i = 0; i < types->length; i++) {
+        Type *type = array_get_index(types, i);
+        if (type->array_of) {
+            type = type->array_of;
+        }
+        Class *pclass = type->class;
+        if (!pclass || type->weak_ptr) {
+            continue;
+        }
+        if (pclass->is_rc) {
+            if (stage_3_circular_find(class, pclass, NULL)) {
+                circular = true;
+                break;
             }
+        }
+    }
+    if (circular) {
+        class->is_circular = true;
+    }
+}
+void stage_3_shared_circular_refs(Build *b, Class *class) {
+    //
+    if (!class->is_rc)
+        return;
+    Array *types = class->refers_to_types;
+    Array *names = class->refers_to_names;
+    for (int i = 0; i < types->length; i++) {
+        Type *type = array_get_index(types, i);
+        if (type->array_of) {
+            type = type->array_of;
+        }
+        Class *pclass = type->class;
+        if (!pclass || type->weak_ptr) {
+            continue;
+        }
+        if (!pclass->is_circular) {
+            if (!type_tracks_ownership(type)) {
+                type->shared_ref = false;
+            }
+            continue;
+        }
+        if (class->is_rc && type->shared_ref) {
+            Array *prop_names = array_make(b->alc, 10);
+            stage_3_circular_find(class, pclass, prop_names);
+            // Circular error
+            // Add first property to list
+            char *pname = array_get_index(names, i);
+            array_shift(prop_names, pname);
+            // Make property chain string
+            Str *list = str_make(b->alc, 500);
+            for (int i = 0; i < prop_names->length; i++) {
+                if (i > 0) {
+                    str_append_chars(list, " -> ");
+                }
+                str_append_chars(list, array_get_index(prop_names, i));
+            }
+            // Show error
+            sprintf(b->sbuf, "Property '%s.%s' has a shared reference type, shared reference types are not allowed to loop back to it's own class. We dont allow this because it can result into a memory leak. Use 'weak' references instead for this situation.\nLoop: %s -> %s (%s)", class->dname, pname, class->dname, str_to_chars(b->alc, list), class->dname);
+            build_error(b, b->sbuf);
         }
     }
 }

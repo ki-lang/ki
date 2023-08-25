@@ -3,7 +3,11 @@ use ki:os;
 
 test "os:exec" {
 
+	#if OS == win
+    let res = os:exec("dir") !? "";
+	#else
     let res = os:exec("ls -l") !? "";
+	#end
 
 	@expect res.bytes() > 0;
 }

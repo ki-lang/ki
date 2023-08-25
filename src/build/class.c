@@ -7,8 +7,6 @@ Class *class_init(Allocator *alc) {
     class->type = ct_struct;
     class->size = 0;
     class->is_rc = true;
-    class->must_deref = true;
-    class->must_ref = true;
     class->is_signed = false;
     class->packed = false;
     class->is_generic_base = false;
@@ -18,12 +16,15 @@ Class *class_init(Allocator *alc) {
     class->chunk_body = NULL;
     class->props = map_make(alc);
     class->funcs = map_make(alc);
+    class->refers_to_names = array_make(alc, 4);
+    class->refers_to_types = array_make(alc, 4);
     class->allow_math = false;
     class->track_ownership = false;
     class->is_struct = false;
     class->can_iter = false;
     class->async = false;
     class->circular_checked = false;
+    class->is_circular = false;
 
     class->func_ref = NULL;
     class->func_deref = NULL;
@@ -42,10 +43,40 @@ ClassProp *class_prop_init(Allocator *alc, Class *class, Type *type) {
     ClassProp *prop = al(alc, sizeof(ClassProp));
     prop->type = type;
     prop->index = class->props->keys->length;
+    prop->class = class;
     prop->value = NULL;
     prop->value_chunk = NULL;
+    prop->parsing_value = false;
 
     return prop;
+}
+
+Value *class_prop_get_value(Fc *fc, ClassProp *prop) {
+    //
+    if (prop->value) {
+        Value *res = al(fc->alc, sizeof(Value));
+        Value *default_val = prop->value;
+        *res = *default_val;
+        return res;
+    }
+    if (prop->value_chunk) {
+        if (prop->parsing_value) {
+            sprintf(fc->sbuf, "Class property has an infinite recursive value definition");
+            fc_error(fc);
+        }
+        prop->parsing_value = true;
+
+        Chunk original;
+        original = *fc->chunk;
+        *fc->chunk = *prop->value_chunk;
+        Value *res = read_value(fc, fc->alc, prop->class->scope, false, 0, false);
+        *fc->chunk = original;
+
+        prop->parsing_value = false;
+        prop->value = res;
+        return res;
+    }
+    return NULL;
 }
 
 bool class_check_size(Class *class) {
@@ -243,17 +274,10 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
     Type *type = on->rett;
     Class *class = type->class;
 
-    if (!class)
+    if (!class || !class->is_rc)
         return;
 
     Build *b = class->fc->b;
-
-    if (!weak && !class->func_deref && !class->func_ref && !class->is_rc) {
-        return;
-    }
-    if (weak && !class->func_deref_weak && !class->func_ref_weak && !class->is_rc) {
-        return;
-    }
 
     if (type->nullable) {
         Value *is_null = vgen_compare(alc, class->fc->b, on, vgen_null(alc, b), op_ne);
@@ -282,7 +306,7 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
         Value *fcall = vgen_fcall(alc, NULL, fptr, values, b->type_void, NULL, 1, 1);
         array_push(scope->ast, token_init(alc, tkn_statement, fcall));
 
-    } else if (class->is_rc) {
+    } else if (class->type == ct_struct) {
 
         // _RC-- or _RC++
         Value *ir_on = vgen_ir_val(alc, on, on->rett);
@@ -385,6 +409,8 @@ void class_ref_change(Allocator *alc, Scope *scope, Value *on, int amount, bool 
                 array_push(free_code->ast, token_init(alc, tkn_statement, fcall));
             }
         }
+    } else {
+        printf("Compiler bug: tried to generate ref/deref code for non-rc class\n");
     }
 }
 
@@ -500,6 +526,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
         }
         stage_2_class_type_checks(new_fc, gclass);
         stage_3_circular(b, gclass);
+        stage_3_shared_circular_refs(b, class);
         stage_5(new_fc);
     }
 

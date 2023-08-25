@@ -310,7 +310,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     if (type_tracks_ownership(type)) {
-        type->shared_ref = ref;
+        if (type->class && type->class->is_circular)
+            type->shared_ref = ref;
+    }
+    if (type_is_rc(type)) {
         type->borrow = borrow;
         type->weak_ptr = weak_ptr;
         type->raw_ptr = raw_ptr;
@@ -321,10 +324,10 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     if (async) {
-        if (!type_allowed_async(type, true)) {
-            Str *chain = str_make(alc, 500);
-            type_allowed_async_error(fc, type, chain);
-        }
+        // if (!type_allowed_async(type, true)) {
+        //     Str *chain = str_make(alc, 500);
+        //     type_allowed_async_error(fc, type, chain);
+        // }
     }
 
     //
@@ -622,6 +625,13 @@ void type_check(Fc *fc, Type *t1, Type *t2) {
     }
 }
 
+bool type_is_rc(Type *type) {
+    Class *class = type->class;
+    if (!class)
+        return false;
+    return class->is_rc;
+}
+
 bool type_tracks_ownership(Type *type) {
     //
     if (type->ptr_depth == 0) {
@@ -643,10 +653,7 @@ bool type_tracks_ownership(Type *type) {
     if (!class) {
         return false;
     }
-    if (class->type != ct_struct && !class->track_ownership) {
-        return false;
-    }
-    return true;
+    return class->track_ownership;
 }
 
 bool type_allowed_async(Type *type, bool recursive) {

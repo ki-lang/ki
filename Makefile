@@ -52,6 +52,9 @@ test: ki
 	&& echo "> Readonly properties : OK" || (echo "> Readonly properties : FAILED"; exit 1)
 	@echo "--------------------------"
 
+test_win: ki
+	@./ki run test/*.ki --test --target win-x64 || exit 1
+
 ##############
 # DIST BULDS
 ##############
