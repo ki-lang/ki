@@ -40,8 +40,8 @@ class Map[T] {
 
 	fn remove(key: *String) {
 		let index = this._keys.index_of(key) !! return;;
-		this._keys.remove(index);
-		this._values.remove(index);
+		this._keys.remove_index(index);
+		this._values.remove_index(index);
 	}
 
 	fn clear() {

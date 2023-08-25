@@ -5,25 +5,14 @@ use mem;
 use utils;
 use os;
 
-class Poll {
-    #if OS == linux
-    -fd: i32;
-    #else
-    -poll_size: uxx;
-    -poll_index: uxx = 0;
-    -lsn_by_fd: ptr;
-    -lsn_by_fd_size: uxx = 20;
-    #end
+class Poll[T] {
+    - epoll_fd: i32 = 0;
+    - epoll_buffer: ptr;
+    - listeners: Array[Listener[T]] = Array[Listener[T]].new();
+    - lsn_by_index: ptr;
+    - lsn_by_index_size: uxx = 20;
 
-    -resultc: uxx = 0;
-    ~results: ptr;
-    -results_int: ptr;
-    //
-    -pool: utils:Pool[PollListener];
-    -listeners: Array[PollListener] = Array[PollListener].new();
-    ~max_connections: uxx;
-
-    static fn new(max_connections: uxx) Poll {
+    static fn new() CLASS {
 
         #if OS == win
 		os:WSA_init();
@@ -31,330 +20,149 @@ class Poll {
 
         #if OS == linux
         let fd = sys.epoll_create(1);
-        let results = mem:calloc(@sizeof_class(sys.cstruct_epoll_event) * 20);
+        return CLASS {
+            epoll_fd: fd,
+            epoll_buffer: mem:alloc(20 * @sizeof_class(sys.cstruct_epoll_event)),
+            lsn_by_index: 0 @as ptr,
+        };
         #else
-        let results = mem:calloc(@sizeof_class(sys.cstruct_pollfd) * 20);
-        let lsn_by_fd = mem:calloc(@sizeof(ptr) * 20);
-        CLASS.disable_poll_fds(results, 0, 20);
+        return CLASS {
+            epoll_buffer: mem:alloc(20 * @sizeof_class(sys.cstruct_pollfd)),
+            lsn_by_index: mem:alloc(20 * @sizeof(ptr)),
+        };
         #end
+    }
 
-        let results_int = mem:calloc(@sizeof_class(PollEvent) * 20);
+    fn wait(timeout: i32 = -1) Array[Listener[T]] {
+
+        let events = Array[Listener[T]].new();
 
         #if OS == linux
-        return Poll {
-            fd: fd,
-            results: results,
-            results_int: results_int,
-            pool: utils:Pool[PollListener].new(max_connections),
-            max_connections: max_connections,
-        };
-        #else
-        return Poll {
-            poll_size: 20,
-            lsn_by_fd: lsn_by_fd,
-            lsn_by_fd_size: 20,
-            results: results,
-            results_int: results_int,
-            pool: utils:Pool[PollListener].new(max_connections),
-            max_connections: max_connections,
-        };
-        #end
-    }
-
-    #if OS != linux
-    -static fn disable_poll_fds(list: ptr, start_index: uxx, count: uxx) void {
-        let i = start_index;
-        let last = i + count;
-        while i < last {
-            let event = (list + @sizeof_class(sys.cstruct_pollfd) * i) @as sys.cstruct_pollfd;
-            #if OS == win
-            event.fd = 0^-1;
-            #else
-            event.fd = -1;
-            #end
-            event.events = 0;
-            event.revents = 0;
+        let ebuf = this.epoll_buffer;
+        let count = sys.epoll_wait(this.epoll_fd, ebuf, 10, timeout);
+        if count <= 0 {
+            os:sleep_ms(100);
+            return events;
+        }
+        rep count = count @as uxx;
+        let i = 0#uxx;
+        while i < count {
+            let ev = (ebuf + (i * @sizeof_class(sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event;
+            let lsn = ev.data @as *Listener[T];
+            lsn.set_events(ev.events);
+            if lsn.has_stopped_the_connection() {
+                this.listeners.remove_item(lsn);
+                //let ev = @stack_object(sys.cstruct_epoll_event);
+                //ev.events = 0;
+                //let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_DEL, lsn.fd, ev);
+            }
+            events.push(&lsn);
             i++;
         }
+        #else
+        let by_index = this.lsn_by_index;
+        let buf = this.epoll_buffer;
+        let i = 0#uxx;
+        each this.listeners as lsn {
+            let pollfd = (buf + (i * @sizeof_class(sys.cstruct_pollfd))) @as sys.cstruct_pollfd;
+            pollfd.fd = lsn.fd;
+            pollfd.events = lsn.detect_events @as i16;
+            pollfd.revents = 0;
+            @ptrv(by_index, ptr, i) = lsn @as ptr;
+            i++;
+        }
+        let all = i;
+        let count = sys.poll(buf, all @as u32, timeout);
+        if count <= 0 {
+            //let err = sys.WSAGetLastError();
+            os:sleep_ms(100);
+            return events;
+        }
+        rep count = count @as uxx;
+        i = 0;
+        while i < all {
+            let pollfd = (buf + (i * @sizeof_class(sys.cstruct_pollfd))) @as sys.cstruct_pollfd;
+            if pollfd.revents == 0 {
+                i++;
+                continue;
+            }
+            let lsn = @ptrv(by_index, ptr, i) @as *Listener[T];
+            lsn.set_events(pollfd.revents);
+            if lsn.has_stopped_the_connection() {
+                this.listeners.remove_item(lsn);
+            }
+            events.push(&lsn);
+            i++;
+        }
+
+        #end
+
+        return events;
     }
-    #end
 
-    fn listener(fd: i32, key: uxx = 0) PollListener {
-
-        let pool = this.pool;
-        let listeners = this.listeners;
-
-        let lsn = pool.pop() !? {{
-            #if OS == linux
-            let new = PollListener {
-                poll_fd: this.fd,
-                fd: fd,
-                key: key,
-            };
-            #else
-            let new = PollListener {
-                poll: this,
-                poll_index: this.poll_index++,
-                fd: fd,
-                key: key,
-            };
-            #end
-            //listeners.push(new);
-            return new;
-        }};
-
-        lsn.fd = fd;
-        lsn.key = key;
+    fn create_listener(fd: i32, data: T) Listener[T] {
+        let lsn = Listener[T] {
+            epoll_fd: this.epoll_fd,
+            fd: fd,
+            data: data,
+        };
 
         #if OS == linux
         let ev = @stack_object(sys.cstruct_epoll_event);
         ev.events = 0;
         ev.data = lsn @as ptr;
-        let res = sys.epoll_ctl(this.fd, sys.OS.EPOLL_CTL_ADD, fd, ev);
+        let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_ADD, fd, ev);
         if res != 0 {
             //println("> Failed to add epoll listener");
         }
         #else
-        if lsn.poll_index >= this.poll_size {
-            let old_size = this.poll_size;
-            let new_size = old_size * 2;
-            let new_results = mem:calloc(@sizeof_class(sys.cstruct_pollfd) * new_size);
-            mem:copy(this.results, new_results, @sizeof_class(sys.cstruct_pollfd) * old_size);
-            mem:free(this.results);
-            CLASS.disable_poll_fds(new_results, old_size, old_size);
-            this.poll_size = new_size;
-            this.results = new_results;
-            //
-            mem:free(this.results_int);
-            this.results_int = mem:calloc(@sizeof_class(PollEvent) * new_size);
+        // Increase size
+        let size = this.lsn_by_index_size;
+        if this.listeners.length == size {
+            size *= 2;
+            this.lsn_by_index_size = size;
+            mem:free(this.lsn_by_index);
+            mem:free(this.epoll_buffer);
+            this.lsn_by_index = mem:alloc(size * @sizeof(ptr));
+            this.epoll_buffer = mem:alloc(size * @sizeof_class(sys.cstruct_pollfd));
         }
-        if fd @as uxx >= this.lsn_by_fd_size {
-            let old_size = this.lsn_by_fd_size;
-            let new_size = old_size * 2;
-            while fd @as uxx >= new_size {
-                new_size *= 2;
-            }
-            let new_list = mem:calloc(@sizeof_class(ptr) * new_size);
-            mem:copy(this.lsn_by_fd, new_list, @sizeof(ptr) * old_size);
-            mem:free(this.lsn_by_fd);
-            this.lsn_by_fd_size = new_size;
-            this.lsn_by_fd = new_list;
-        }
-        let events = this.results;
-        let event = (events + @sizeof_class(sys.cstruct_pollfd) * lsn.poll_index) @as sys.cstruct_pollfd;
-        event.fd = fd;
-        event.events = 0;
-        let lsn_by_fd = this.lsn_by_fd;
-        @ptrv(lsn_by_fd, PollListener, fd) = lsn;
         #end
+
+        lsn.update_epoll();
+        this.listeners.push(&lsn);
 
         return lsn;
     }
-
-    fn remove(listener: PollListener) void {
-
-        #if OS == linux
-        let ev = @stack_object(sys.cstruct_epoll_event);
-        ev.events = 0;
-        let res = sys.epoll_ctl(this.fd, sys.OS.EPOLL_CTL_DEL, listener.fd, ev);
-        #else
-        let events = this.results;
-        let event = (events + @sizeof_class(sys.cstruct_pollfd) * listener.poll_index) @as sys.cstruct_pollfd;
-        #if OS == win
-        event.fd = 0^-1;
-        #else
-        event.fd = -1;
-        #end
-        event.events = 0;
-        #end
-
-        this.pool.add(listener)!;
-    }
-
-    fn wait(timeout: i32 = -1) uxx {
-
-        let results = this.results;
-
-        #if OS == linux
-        let event_count = sys.epoll_wait(this.fd, results, 10, timeout);
-        if event_count < 0 {
-            this.resultc = 0;
-            return 0;
-        }
-        rep event_count = event_count @as uxx;
-        this.resultc = event_count;
-        let results_int = this.results_int;
-
-        let i : uxx = 0;
-        while i < event_count {
-            let e = (results + (i * @sizeof_class(sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event;
-            let ei = (results_int + (i * @sizeof_class(PollEvent))) @as PollEvent;
-            i++;
-            ei.events = e.events;
-            ei.listener = e.data @as PollListener;
-        }
-        #else
-        if this.poll_index == 0 {
-            return 0;
-        }
-        let events = this.results;
-        let event_count = sys.poll(events, this.poll_index @as u32, timeout);
-        if event_count < 0 {
-            this.resultc = 0;
-            return 0;
-        }
-        rep event_count = event_count @as uxx;
-        this.resultc = event_count;
-        let results_int = this.results_int;
-        let lsn_by_fd = this.lsn_by_fd;
-
-        #if OS == win
-        let invalid : uxx = 0^-1;
-        #else
-        let invalid : i32 = -1;
-        #end
-
-        let i : uxx = 0;
-        let ri : uxx = 0;
-        let last = this.poll_index;
-        while i < last {
-            let event = (events + @sizeof_class(sys.cstruct_pollfd) * i) @as sys.cstruct_pollfd;
-            i++;
-            if event.fd == invalid : continue;
-            if event.revents == 0 : continue;
-
-            let ei = (results_int + (ri * @sizeof_class(PollEvent))) @as PollEvent;
-            ri++;
-            ei.events = event.revents @as u32;
-            ei.listener = @ptrv(lsn_by_fd, PollListener, event.fd);
-        }
-        #end
-
-        return event_count;
-    }
-
-    fn get_event(index: uxx) &PollEvent !invalid_index {
-        if(index >= this.resultc) {
-            throw invalid_index;
-        }
-        let results_int = this.results_int;
-        return (results_int + (index * @sizeof_class(PollEvent))) @as PollEvent;
-    }
-
-    fn __before_free() void {
-
-        while true {
-            let item = this.listeners.pop() !! break;;
-            item.__free();
-        }
-
-        mem:free(this.results);
-        mem:free(this.results_int);
-    }
 }
 
-struct PollListener {
-    #if OS == linux
-    -poll_fd: i32;
-    #else
-    -poll: raw Poll;
-    ~poll_index: uxx;
-    #end
-    ~key: uxx = 0;
-    ~fd : i32 = 0;
-    -detect_events: u32 = 0;
+class Listener[T] {
+    data: T;
+    ~ epoll_fd: i32 = 0;
+    ~ fd: i32;
+    ~ detect_read: bool = false;
+    ~ detect_write: bool = false;
+    - detect_events: u32 = 0;
+    - events: u32 = 0;
 
-    fn read(v: bool) void {
-        #if OS == linux
-        let ev : u32 = sys.OS.EPOLLIN;
-        #else
-        let ev : u32 = sys.OS.POLLIN;
-        #end
-        this.update_event(v, ev);
-    }
-    fn write(v: bool) void {
-        #if OS == linux
-        let ev : u32 = sys.OS.EPOLLOUT;
-        #else
-        let ev : u32 = sys.OS.POLLOUT;
-        #end
-        this.update_event(v, ev);
-    }
-    fn stopped_reading(v: bool) void {
-        #if OS == win
-        return;
-        #else
-
-        #if OS == linux
-        let ev : u32 = sys.OS.EPOLLRDHUP;
-        #else
-        let ev : u32 = sys.OS.POLLRDHUP;
-        #end
-        this.update_event(v, ev);
-
-        #end
-    }
-    -fn update_event(v: bool, ev: u32) void {
-        if(v) {
-            this.detect_events = this.detect_events | ev;
-        } else if (this.detect_events & ev) > 0 {
-            this.detect_events = this.detect_events ^ ev;
-        }
-
-        #if OS == linux
-        let evo = @stack_object(sys.cstruct_epoll_event);
-        evo.events = this.detect_events;
-        evo.data = this @as ptr;
-        let res = sys.epoll_ctl(this.poll_fd, sys.OS.EPOLL_CTL_MOD, this.fd, evo);
-        if res != 0 {
-            //println("> Failed to update epoll events");
-        }
-        #else
-        let p = this.poll;
-        let events = p.results;
-        let event = (events + @sizeof_class(sys.cstruct_pollfd) * this.poll_index) @as sys.cstruct_pollfd;
-        event.events = this.detect_events @as i16;
-        #end
-    }
-}
-
-struct PollEvent {
-    ~listener: PollListener;
-    ~events: u32;
-
-    fn is_readable() bool %inline {
-        #if OS == linux
-        let ev : u32 = sys.OS.EPOLLIN;
-        #else
-        let ev : u32 = sys.OS.POLLIN;
-        #end
-        return (this.events & ev) > 0;
-    }
-    fn is_writable() bool %inline {
-        #if OS == linux
-        let ev : u32 = sys.OS.EPOLLOUT;
-        #else
-        let ev : u32 = sys.OS.POLLOUT;
-        #end
-        return (this.events & ev) > 0;
+    fn set_events(events: u32) {
+        this.events = events;
     }
 
-    fn is_stopped_reading() bool %inline {
-        #if OS == win
-        return false;
-        #else
-
+    fn has_read_request() bool {
         #if OS == linux
-        let ev : u32 = sys.OS.EPOLLRDHUP;
+        return (this.events & sys.OS.EPOLLIN) > 0;
         #else
-        let ev : u32 = sys.OS.POLLRDHUP;
-        #end
-        return (this.events & ev) > 0;
-
+        return (this.events & sys.OS.POLLIN) > 0;
         #end
     }
-
-    fn wants_to_close() bool %inline {
+    fn has_write_request() bool {
+        #if OS == linux
+        return (this.events & sys.OS.EPOLLOUT) > 0;
+        #else
+        return (this.events & sys.OS.POLLOUT) > 0;
+        #end
+    }
+    fn has_stopped_the_connection() bool {
         let evs = this.events;
         #if OS == linux
         return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0;
@@ -364,6 +172,47 @@ struct PollEvent {
         return (evs & sys.OS.POLLHUP) > 0 || (evs & sys.OS.POLLERR) > 0;
         #end
     }
-}
 
+    fn detect_read_request(v: bool) {
+        this.detect_read = v;
+        this.update_epoll();
+    }
+    fn detect_write_request(v: bool) {
+        this.detect_write = v;
+        this.update_epoll();
+    }
+    - fn update_epoll() {
+        let ev = 0#u32;
+        if this.detect_read {
+        #if OS == linux
+        ev = ev | sys.OS.EPOLLIN;
+        #else
+        ev = ev | sys.OS.POLLIN;
+        #end
+        }
+        if this.detect_write {
+        #if OS == linux
+        ev = ev | sys.OS.EPOLLOUT;
+        #else
+        ev = ev | sys.OS.POLLOUT;
+        #end
+        }
+        #if OS == linux
+        ev = ev | sys.OS.EPOLLRDHUP;
+        #elif OS == win
+        //ev = ev | sys.OS.POLLHUP;
+        #else
+        ev = ev | sys.OS.POLLRDHUP;
+        #end
+
+        this.detect_events = ev;
+
+        #if OS == linux
+        let evo = @stack_object(sys.cstruct_epoll_event);
+        evo.events = this.detect_events;
+        evo.data = this @as ptr;
+        let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_MOD, this.fd, evo);
+        #end
+    }
+}
 

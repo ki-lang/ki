@@ -99,8 +99,6 @@ class Server {
         let max_connections = data.max_connections;
         let handler = data.handler;
 
-        let cons = Array[Connection].new(50);
-        let index_pool = utils:Pool[uxx].new(max_connections);
         let nr = @atomic_op data.thread_nr ADD 1;
 
         //println("[-] Start thread: " + nr.str());
@@ -108,20 +106,19 @@ class Server {
         let sock = data.socket;
         let sock_fd = sock.fd;
 
-        let poll = io:Poll.new(max_connections);
-        let sock_lsn = poll.listener(sock_fd);
-        sock_lsn.read(true);
+        let poll = io:Poll[?Connection].new();
+        let sock_lsn = poll.create_listener(sock_fd, null);
+        sock_lsn.detect_read_request(true);
 
         while true {
-            let result_count = poll.wait();
+            let events = poll.wait();
+            let event_count = events.length;
             let i : uxx = 0;
 
-            while i < result_count {
-                let event = poll.get_event(i) !! break;;
-                i++;
-
-                let lsn = event.listener;
+            while i < event_count {
+                let lsn = events.get(i) !! break;;
                 let fd = lsn.fd;
+                i++;
 
                 //println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
 
@@ -136,68 +133,39 @@ class Server {
                         println("[+] New connection: " + fd.str());
                     }
 
-                    let index = index_pool.pop() !? max_connections;
-                    if index == max_connections {
-                        let http_con = Connection {
-                            netcon: netcon,
-                            fd: fd,
-                        };
-                        index = cons.push(http_con);
-                    } else {
-                        // Clear existing connection io buffers
-                        let http_con = cons.get(index) !! {
-                            net:Socket.close(fd);
-                            println("[+] Max connections reached, closing connection");
-                            continue;
-                        };
-                        http_con.fd = fd;
-                        http_con.netcon = netcon;
+                    let http_con = Connection {
+                        netcon: netcon,
+                        fd: fd,
+                    };
 
-                        http_con.reset_parser();
-                        http_con.read_buf.clear();
-                        http_con.reset_out();
-                    }
-
-                    let lsn = poll.listener(fd, index);
-                    lsn.read(true);
-                    lsn.write(false);
-                    lsn.stopped_reading(true);
-
+                    let lsn = poll.create_listener(fd, http_con);
+                    lsn.detect_read_request(true);
+                    lsn.detect_write_request(false);
                     continue;
                 }
 
-                rep lsn = lsn @as io:PollListener;
-
-                // Get connection
-                let index = lsn.key;
-                let http_con = cons.get(index) !! {
-                    println("❓ Missing http connection : " + nr.str());
-                    net:Socket.close(fd);
-                    poll.remove(lsn);
-                    index_pool.add(index)!;
+                let http_con = lsn.data ?! {
+                    println("❓ Missing http connection for fd: " + lsn.fd.str());
+                    net:Socket.close(lsn.fd);
                     continue;
                 };
 
                 if http_con.fd != fd {
-                    println("❗ fd changed : " + nr.str() + " | " + http_con.fd.str() + " -> " + fd.str() + " | key: " + lsn.key.str());
+                    println("❗ fd mismatch");
                     net:Socket.close(fd);
-                    poll.remove(lsn);
-                    index_pool.add(index)!;
                     continue;
                 }
 
                 // Existing connection
-                if event.wants_to_close() {
+                if lsn.has_stopped_the_connection() {
                     if data.show_info {
                         println("[+] Close connection: " + fd.str());
                     }
                     net:Socket.close(fd);
-                    poll.remove(lsn);
-                    index_pool.add(index)!;
                     continue;
                 }
 
-                if event.is_writable() {
+                if lsn.has_write_request() {
                     //println("[+] Continue sending response: " + fd.str());
 
                     if http_con.can_clear_out() {
@@ -207,23 +175,21 @@ class Server {
                     http_con.send_response_bytes();
 
                     if !http_con.has_data_to_send() {
-                        lsn.write(false);
+                        lsn.detect_write_request(false);
                         http_con.reset_out();
                     }
                     continue;
                 }
-                if event.is_readable() {
+                if lsn.has_read_request() {
                     Server.respond(data, http_con, handler) !! {
                         if data.show_info {
                             println("[+] Invalid request: " + fd.str());
                         }
                         net:Socket.close(fd);
-                        poll.remove(lsn);
-                        index_pool.add(index)!;
                         continue;
                     };
                     if http_con.has_data_to_send() {
-                        lsn.write(true);
+                        lsn.detect_write_request(true);
                     } else {
                         http_con.reset_out();
                     }
