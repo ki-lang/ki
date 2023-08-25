@@ -68,7 +68,11 @@ void cmd_lsp_server() {
         int rcvd = chunk_len;
         char part[chunk_len];
         while (rcvd == chunk_len) {
+#ifdef _WIN32
+            rcvd = read(_fileno(stdin), part, chunk_len);
+#else
             rcvd = read(STDIN_FILENO, part, chunk_len);
+#endif
             if (rcvd > 0) {
                 str_append_from_ptr(input, part, rcvd);
             }
@@ -122,7 +126,11 @@ void lsp_respond(cJSON *resp) {
     int clen = strlen(str);
     char output[clen + 100];
     sprintf(output, "Content-Length: %d\r\n\r\n%s", clen, str);
+#ifdef _WIN32
+    write(_fileno(stdout), output, strlen(output));
+#else
     write(STDOUT_FILENO, output, strlen(output));
+#endif
 
     cJSON_Delete(resp);
     free(str);
