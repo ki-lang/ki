@@ -377,6 +377,7 @@ void stage_8_link_libs(Str *cmd, Build *b, int type) {
 void stage_8_link_libs_all(Str *cmd, Build *b) {
     //
     bool is_win = b->target_os == os_win;
+    bool is_macos = b->target_os == os_macos;
 
     for (int i = 0; i < b->links->length; i++) {
         Link *link = array_get_index(b->links, i);
@@ -386,7 +387,7 @@ void stage_8_link_libs_all(Str *cmd, Build *b) {
         bool is_static = link->type == link_static;
         if (!is_win) {
             prefix = "-l";
-            if (is_static) {
+            if (is_static && !is_macos) {
                 prefix = "-l:lib";
                 suffix = ".a";
             }

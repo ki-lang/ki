@@ -6,6 +6,9 @@ link_static "advapi32";
 link_static "user32";
 link_static "bcrypt";
 link_static "crypt32";
+#elif OS == macos
+link_static "ssl";
+link_static "crypto";
 #else
 link_static "ssl";
 link_static "crypto";
