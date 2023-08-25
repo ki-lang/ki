@@ -24,15 +24,19 @@ class SocketTCP async {
 		if !blocking: flags = flags | sys.OS.SOCK_NONBLOCK;
     	let fd = sys.socket(sys.OS.AF_INET, flags, 0);
 		#else
+
 		// Win & macos
     	let fd = sys.socket(sys.OS.AF_INET, sys.OS.SOCK_STREAM, 0);
+
         #if OS == macos
 		let flags = sys.fcntl(fd, sys.OS.F_GETFL, 0);
 		if flags >= 0 && !blocking : sys.fcntl(fd, sys.OS.F_SETFL, flags | sys.OS.O_NONBLOCK);
 		#end
+
         #if OS == win
 		rep fd = os:WSA_unix_fd(fd);
 		#end
+
 		#end
 
     	if fd == -1 {
@@ -42,7 +46,19 @@ class SocketTCP async {
 			throw os_socket_create;
     	}
 
+		// Get host info
 		let addrinfo = CLASS.get_addrinfo(host, port) !! throw invalid_host;;
+
+		// Set timeout
+        #if OS == win
+		let timeout : i32 = 1000 * 5; // 5 seconds
+    	sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_RCVTIMEO, @ptr_of(timeout), @sizeof(i32));
+		#else
+		let timeout = @stack_object(sys.cstruct_timeval);
+		timeout.tv_sec = 5;
+		timeout.tv_usec = 0;
+    	sys.setsockopt(fd, sys.OS.SOL_SOCKET, sys.OS.SO_RCVTIMEO, @ptr_of(timeout), @sizeof(sys.cstruct_timeval));
+		#end
 
 		return SocketTCP{
 			host: host,

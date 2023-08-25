@@ -222,6 +222,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
         path_out = al(alc, KI_PATH_MAX);
         strcpy(path_out, cache_dir);
         strcat(path_out, "/out");
+        if (target_os == os_win)
+            strcat(path_out, ".exe");
         if (verbose > 0) {
             printf("💾 Temporary out : %s\n", path_out);
         }

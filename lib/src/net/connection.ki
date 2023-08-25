@@ -105,60 +105,53 @@ class Connection {
 
         if !this.open : return;
 
-        let bytes = 0#uxx;
         let buf_size : uxx = 65535;
         let ssl = this.ssl;
-        while true {
-            buffer.minimum_free_space(buf_size);
-            let count = 0#uxx;
 
-            if @isset(ssl) {
-                let rcvd = ossl.SSL_read(ssl.ssl, buffer.data + buffer.length, buf_size);
-                if rcvd <= 0 {
-                    // SSL_ERROR_NONE: 0
-                    // SSL_ERROR_WANT_READ: 2
-                    // SSL_ERROR_ZERO_RETURN: 6
-                    let err = ossl.SSL_get_error(ssl.ssl, rcvd);
-                    if err != 0 && err != 6 {
-                        if err == 2 {
-                            result.incomplete = true;
-                            break;
-                        }
-                        result.connection_error = true;
+        buffer.minimum_free_space(buf_size);
+        let count = 0#uxx;
+
+        if @isset(ssl) {
+            let rcvd = ossl.SSL_read(ssl.ssl, buffer.data + buffer.length, buf_size);
+            if rcvd <= 0 {
+                // SSL_ERROR_NONE: 0
+                // SSL_ERROR_WANT_READ: 2
+                // SSL_ERROR_ZERO_RETURN: 6
+                let err = ossl.SSL_get_error(ssl.ssl, rcvd);
+                if err != 0 && err != 6 {
+                    if err == 2 {
+                        result.incomplete = true;
+                        return;
                     }
-                    break;
-                }
-                count = rcvd @as uxx;
-            } else {
-                #if OS == win
-                let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size @as i32, 0);
-                #else
-                let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size, 0);
-                #end
-                if (rcvd == -2){
-                    // EAGAIN
-                    result.incomplete = true;
-                    break;
-                }
-                if (rcvd < 0) {
                     result.connection_error = true;
-                    break;
                 }
-                if (rcvd == 0) {
-                    break;
-                }
-                count = rcvd @as uxx;
+                return;
             }
+            count = rcvd @as uxx;
 
-            buffer.length += count;
-            bytes += count;
-
-            //if(count < buf_size) {
-            //    break;
-            //}
+        } else {
+            #if OS == win
+            let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size @as i32, 0);
+            #else
+            let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size, 0);
+            #end
+            if (rcvd == -2){
+                // EAGAIN
+                result.incomplete = true;
+                return;
+            }
+            if (rcvd < 0) {
+                result.connection_error = true;
+                return;
+            }
+            if (rcvd == 0) {
+                return;
+            }
+            count = rcvd @as uxx;
         }
-
-        result.bytes_received = bytes;
+            
+        buffer.length += count;
+        result.bytes_received = count;
     }
 
     fn __before_free() {

@@ -61,15 +61,25 @@ class ClientRequest {
 		buf.clear();
 		con.recv(buf, recv);
 
-		if recv.connection_error || recv.incomplete {
+		if recv.connection_error {
 			throw connection_failed, "Failed reading from connection";
 		}
 
 		// Parse response
 		let res = ParseResult{};
-		Parser.parse_response(buf, res) !! {
-			throw invalid_response, "Invalid response";
-		};
+		while true {
+			Parser.parse_response(buf, res) !! {
+				throw invalid_response, "Invalid response";
+			};
+			if res.fully_parsed {
+				break;
+			}
+			buf.clear();
+			con.recv(buf, recv);
+			if recv.connection_error {
+				throw connection_failed, "Failed reading from connection";
+			}
+		}
 
 		return ClientResponse {
 			status: res.status,

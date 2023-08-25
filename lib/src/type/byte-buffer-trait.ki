@@ -18,6 +18,7 @@ trait ByteBufferTrait {
 	}
 
 	fn clear() void %inline {
+		this.start_index = 0;
 		this.length = 0;
 	}
 
