@@ -23,7 +23,7 @@ class Server {
     - max_connections: uxx;
     - handler: fn(*Request)(Response);
     - static_dirs: Array[String] = Array[String].new();
-    - show_info: bool = false;
+    show_info: bool = false;
 
     static fn new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error !socket_bind_error {
 
@@ -71,8 +71,10 @@ class Server {
             worker_count = 128;
         }
 
-        println("[+] Running http server on port " + this.port.str());
-        println("[+] Worker count: " + worker_count.str());
+        if this.show_info {
+            println("[+] Running http server on port " + this.port.str());
+            println("[+] Worker count: " + worker_count.str());
+        }
 
         worker_count--;
         while worker_count > 0 {
@@ -299,7 +301,9 @@ class Server {
 
     fn add_static_dir(path: *String) void {
         let full = fs:exe_dir() + "/" + path.trim("/") + "/";
-        println("[+] Add static dir: " + full);
+        if this.show_info {
+            println("[+] Add static dir: " + full);
+        }
         this.static_dirs.push(full);
     }
 }

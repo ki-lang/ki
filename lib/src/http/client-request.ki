@@ -22,7 +22,17 @@ class ClientRequest {
 
 		let is_https = parts.protocol == "https";
 
-		let sock = net:Socket.new_tcp(parts.domain, is_https ? 443#u16 : 80#u16, true) !! {
+		let split = parts.domain.split(":");
+		let domain = parts.domain;
+		let port = is_https ? 443#u16 : 80#u16;
+		if split.length > 2 : throw invalid_url;
+		if split.length == 2 {
+			domain = split.get(0) !? "";
+			let p = split.get(1) !! throw invalid_url;;
+			port = (p.to_uxx() !! throw invalid_url;) @as u16;
+		}
+
+		let sock = net:Socket.new_tcp(domain, port, true) !! |err, msg| {
 			throw invalid_url, "Invalid request url";
 		};
 

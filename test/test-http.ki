@@ -1,0 +1,29 @@
+
+use ki:os;
+use ki:http;
+
+fn test_http_handler (req: *http:Request) http:Response {
+    return http:Response.html("TEST_RESPONSE");
+}
+
+fn test_http_server() {
+    let s = http:Server.new("127.0.0.1", 9000, test_http_handler) !! {
+        println("Failed to initialize http server");
+        return;
+    };
+    s.start();
+}
+
+test "http" {
+
+	let thread = os:Thread[void].start(test_http_server) !! panic("failed");;
+
+	os:sleep_ms(100);
+
+    let req = http:Client.request("GET", "http://127.0.0.1:9000/");
+    let resp = req.exec() !! |err, msg| {
+		panic("Request failed: " + msg);
+    };
+
+	@expect resp.body == "TEST_RESPONSE";
+}
