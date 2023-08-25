@@ -105,12 +105,16 @@ class Array[T] {
 		@move value;
 	}
 
-	fn remove(index: uxx) void {
+	fn remove_index(index: uxx) {
 		println(index.str());
 		if index == this.length - 1 {
 			this.length--;
 		}
 		println("remove: " + (this.length).str());
+	}
+	fn remove_item(item: *T) {
+		let index = this.index_of(item) !! return;;
+		this.remove_index(index);
 	}
 
 	fn pop() T !empty {
