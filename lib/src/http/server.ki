@@ -235,53 +235,58 @@ class Server {
 
     - static fn respond(data: *ServerData, http_con: *Connection, handler: fn(*Request)(Response)) void !read_error !sent_error {
 
-        let res = http_con.parse_result;
-        let read_buf = http_con.read_buf;
-        let recv = http_con.recv_result;
-		while true {
-			http_con.netcon.recv(read_buf, recv);
-			Parser.parse_request(read_buf, res) !! {
-                http_con.respond(Response.error(400));
-				throw read_error, "Invalid request";
-			};
-			if res.fully_parsed {
-				break;
-			}
-			if recv.connection_error {
-                http_con.respond(Response.error(400));
-				throw read_error, "Failed reading from connection";
-			}
-			read_buf.clear();
-		}
+        while true {
+            let res = http_con.parse_result;
+            let read_buf = http_con.read_buf;
+            let recv = http_con.recv_result;
+            while true {
+                if read_buf.start_index == read_buf.length {
+                    http_con.netcon.recv(read_buf, recv);
+                }
+                Parser.parse_request(read_buf, res) !! {
+                    http_con.respond(Response.error(400));
+                    throw read_error, "Invalid request";
+                };
+                if res.fully_parsed {
+                    break;
+                }
+                if recv.connection_error {
+                    http_con.respond(Response.error(400));
+                    throw read_error, "Failed reading from connection";
+                }
+                read_buf.clear();
+                if recv.incomplete : return;
+            }
 
-        if !res.fully_parsed {
-            return;
-        }
+            if !res.fully_parsed {
+                return;
+            }
 
-        http_con.reset_parser();
+            http_con.reset_parser();
 
-        if data.static_dirs.length > 0 {
-            let path = res.path.trim("/");
-            each data.static_dirs as dir {
-                let fullpath = dir + path; 
-                if fs:is_file(fullpath) {
-                    let stream = fs:open(fullpath, true, false) !! continue;;
-                    http_con.send_file(stream, null);
-                    return;
+            if data.static_dirs.length > 0 {
+                let path = res.path.trim("/");
+                each data.static_dirs as dir {
+                    let fullpath = dir + path; 
+                    if fs:is_file(fullpath) {
+                        let stream = fs:open(fullpath, true, false) !! continue;;
+                        http_con.send_file(stream, null);
+                        return;
+                    }
                 }
             }
+
+            let req = Request{
+                http_con: &http_con,
+                headers: res.headers,
+                method: res.method,
+                path: res.path,
+                body: res.body,
+            };
+            let resp = handler(req);
+
+            http_con.respond(resp);
         }
-
-        let req = Request{
-            http_con: &http_con,
-            headers: res.headers,
-            method: res.method,
-            path: res.path,
-            body: res.body,
-        };
-        let resp = handler(req);
-
-        http_con.respond(resp);
     }
 
     fn add_static_dir(path: *String) void {

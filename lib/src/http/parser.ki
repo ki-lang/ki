@@ -16,7 +16,7 @@ class ParseResult {
 	~ fully_parsed: bool = false;
 	~ headers_parsed: bool = false;
 	- stage: uxx = 0;
-	- buffer: ByteBuffer = ByteBuffer.new(100);
+	- line: ByteBuffer = ByteBuffer.new(100);
 }
 
 class Parser {
@@ -37,16 +37,16 @@ class Parser {
 
 		if result.fully_parsed {
 			result.stage = 0;
-			result.buffer.clear();
+			result.line.clear();
 			result.headers_parsed = false;
 			result.fully_parsed = false;
 			result.content_length = 0;
 			result.status = 0;
 			result.body = "";
-			result.headers.clear();
+			result.headers = Map[String]{};
 		}
 
-		let line = result.buffer;
+		let line = result.line;
 		let stage = result.stage;
 		let data = bytes.data;
 		let pos = bytes.start_index;
@@ -56,8 +56,6 @@ class Parser {
 		if stage > 2 && only_headers {
 			return;
 		}
-
-		let status_str = "200";
 
 		let ch = (pos > 0) ? @ptrv(data, u8, pos - 1) : '\0';
 		let prev_ch = '\0';
@@ -85,20 +83,20 @@ class Parser {
 				if stage == 0 {
 					let line_str = line.to_str();
 					let split = line_str.split(" ");
-					//if split.length != 3 {
-					//	throw invalid;
-					//}
+					if split.length != 3 {
+						throw invalid;
+					}
 					let version = "";
 					if is_request {
 						// Request "GET / HTTP/1.1"
-						//result.method = split.get(0) !? "GET";
-						//result.path = split.get(1) !? "/";
-						//version = split.get(2) !? "";
+						result.method = split.get(0) !? "GET";
+						result.path = split.get(1) !? "/";
+						version = split.get(2) !? "";
 					} else {
 						// Response "HTTP/1.1 200 OK"
-						//version = split.get(0) !? "";
-						//let status_str = split.get(1) !! throw invalid;;
-						//result.status = status_str.to_uxx() !! throw invalid;;
+						version = split.get(0) !? "";
+						let status_str = split.get(1) !! throw invalid;;
+						result.status = status_str.to_uxx() !! throw invalid;;
 						//let ok = split.get(2) !? "";
 					}
 

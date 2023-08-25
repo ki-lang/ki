@@ -77,11 +77,13 @@ class Connection {
                 #else
                 let wbytes = sys.send(this.fd, buffer.data + start_index, chunk_size, 0);
                 #end
-                if wbytes == -2 {
-                    result.incomplete = true;
-                    break;
-                }
                 if wbytes < 0 {
+                    let err = @ptrv(sys.__errno_location(), i32, 0);
+                    if err == 11 {
+                        // EAGAIN
+                        result.incomplete = true;
+                        break;
+                    }
                     result.connection_error = true;
                     break;
                 }
@@ -135,12 +137,13 @@ class Connection {
             #else
             let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size, 0);
             #end
-            if (rcvd == -2){
-                // EAGAIN
-                result.incomplete = true;
-                return;
-            }
             if (rcvd < 0) {
+                let err = @ptrv(sys.__errno_location(), i32, 0);
+                if err == 11 {
+                    // EAGAIN
+                    result.incomplete = true;
+                    return;
+                }
                 result.connection_error = true;
                 return;
             }
