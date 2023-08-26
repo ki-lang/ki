@@ -106,14 +106,23 @@ class Array[T] {
 	}
 
 	fn remove_index(index: uxx) {
-		//println(index.str());
-		//if index == this.length - 1 {
-		//	this.length--;
-		//}
-		//println("remove: " + (this.length).str());
+		let len = this.length;
+		if index >= len : return;
+		let data = this.data;
+		let after_count = len - (index + 1);
+
+		let v = @ptrv(data, T, index);
+
+		if after_count > 0 {
+			mem:copy(data + (index + 1) * @sizeof(T), data + index * @sizeof(T), after_count * @sizeof(T));
+		}
+
+		this.length--;
 	}
 	fn remove_item(item: *T) {
-		let index = this.index_of(item) !! return;;
+		let index = this.index_of(item) !! {
+			return;
+		};
 		this.remove_index(index);
 	}
 

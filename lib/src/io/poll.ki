@@ -49,14 +49,12 @@ class Poll[T] {
         while i < count {
             let ev = (ebuf + (i * @sizeof_class(sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event;
             let lsn = ev.data @as *Listener[T];
+            let add = &lsn;
             lsn.set_events(ev.events);
             if lsn.has_stopped_the_connection() {
                 this.listeners.remove_item(lsn);
-                //let ev = @stack_object(sys.cstruct_epoll_event);
-                //ev.events = 0;
-                //let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_DEL, lsn.fd, ev);
             }
-            events.push(&lsn);
+            events.push(add);
             i++;
         }
         #else
@@ -132,6 +130,15 @@ class Poll[T] {
         this.listeners.push(&lsn);
 
         return lsn;
+    }
+
+    - fn __before_free() {
+        #if OS == linux
+        mem:free(this.epoll_buffer);
+        #else
+        mem:free(this.epoll_buffer);
+        mem:free(this.lsn_by_index);
+        #end
     }
 }
 
@@ -213,6 +220,10 @@ class Listener[T] {
         evo.data = this @as ptr;
         let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_MOD, this.fd, evo);
         #end
+    }
+
+    fn __before_free() {
+        //println("FREE");
     }
 }
 

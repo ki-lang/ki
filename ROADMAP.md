@@ -5,7 +5,6 @@ Feature todo list in order:
 
 ```
 - package platform: pkg.ki-lang.dev
-- test if poll frees Listener objects
 - fix correctness of shared reference types
 - rename '@as' to 'as'
 
