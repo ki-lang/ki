@@ -4,12 +4,6 @@ header "openssl" as ossl;
 
 use io;
 
-class SendResult {
-    bytes_sent: uxx = 0;
-    connection_error: bool = false;
-    incomplete: bool = false; // EAGAIN in async communication
-}
-
 class Connection {
     ~ fd: i32;
     ~ open: bool = true;

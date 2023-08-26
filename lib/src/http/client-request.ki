@@ -61,24 +61,9 @@ class ClientRequest {
 			}
 		}
 
-		// Receive response
-		buf.clear();
-		con.recv(buf) !! |err| {
-			if err == err#connection_error {
-				throw connection_failed, "Failed reading from connection";
-			}
-			throw connection_failed, "Unexpected non-blocking connection";
-		};
-
-		// Parse response
+		// Receive & parse response
 		let res = ParseResult{};
 		while true {
-			Parser.parse_response(buf, res) !! {
-				throw invalid_response, "Invalid response";
-			};
-			if res.fully_parsed {
-				break;
-			}
 			buf.clear();
 			let bytes = con.recv(buf) !! |err| {
 				if err == err#e_again {
@@ -88,6 +73,12 @@ class ClientRequest {
 			};
 			if bytes == 0 {
 				throw connection_failed, "Empty packet";
+			}
+			Parser.parse_response(buf, res) !! {
+				throw invalid_response, "Invalid response";
+			};
+			if res.fully_parsed {
+				break;
 			}
 		}
 
