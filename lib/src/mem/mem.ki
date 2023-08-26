@@ -35,8 +35,15 @@ fn clear(adrc: ptr, length: uxx) void {
 	}
 }
 
-fn copy(from: ptr, to: ptr, length: uxx) void {
-
+fn copy(from: ptr, to: ptr, length: uxx, byte_by_byte: bool = false) void {
+	if byte_by_byte {
+		let i = 0#uxx;
+		while i < length {
+			@ptrv(to, u8, i) = @ptrv(from, u8, i);
+			i++;
+		}
+		return;
+	}
 	let i = 0#uxx;
 	let chunks = length / @sizeof(uxx);
 	while i < chunks {
@@ -47,6 +54,26 @@ fn copy(from: ptr, to: ptr, length: uxx) void {
 	while i < length {
 		@ptrv(to, u8, i) = @ptrv(from, u8, i);
 		i++;
+	}
+}
+fn copy_backwards(from: ptr, to: ptr, length: uxx, byte_by_byte: bool = false) void {
+	if byte_by_byte {
+		let i = length;
+		while i > 0 {
+			i--;
+			@ptrv(to, u8, i) = @ptrv(from, u8, i);
+		}
+		return;
+	}
+	let chunks = length / @sizeof(uxx);
+	let i = length - (chunks * @sizeof(uxx));
+	while chunks > 0 {
+		chunks--;
+		@ptrv(to, uxx, chunks) = @ptrv(from, uxx, chunks);
+	}
+	while i > 0 {
+		i--;
+		@ptrv(to, u8, i) = @ptrv(from, u8, i);
 	}
 }
 
