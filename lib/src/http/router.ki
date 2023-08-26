@@ -66,7 +66,7 @@ class Router[T] {
 			let find = blocks.get(key) !? {{
 				let v = RouteBlock[T]{ blocks: Map[RouteBlock[T]]{} };
 				let ref = &v;
-				blocks.set(key.copy(), v);
+				blocks.set(key, v);
 				return ref @as RouteBlock[T];
 			}};
 

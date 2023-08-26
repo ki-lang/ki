@@ -594,8 +594,10 @@ class String type:ptr track rc {
 	/////////////////////
 
 	fn copy() String {
-		@ref this;
-		return this @as String;
+		let len = this.bytes();
+		let res = String.make_empty(len);
+		mem:copy(this.data(), res.data(), len);
+		return res;
 	}
 
 	- fn __ref() void {

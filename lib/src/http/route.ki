@@ -8,7 +8,7 @@ class Route[T] {
 		let parts = path.split("/"); 
 		each this.args as arg {
 			let p = parts.get(arg.i) !! continue;;
-			result.set(arg.name.copy(), p + "");
+			result.set(arg.name, p + "");
 		}
 		return result;
 	}

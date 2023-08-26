@@ -44,7 +44,7 @@ class Server {
 
         let dirs = Array[String].new();
         each this.static_dirs as dir {
-            dirs.push(dir + "");
+            dirs.push(dir.copy());
         }
 
         return ServerData {
@@ -53,7 +53,6 @@ class Server {
             handler: this.handler,
             show_info: this.show_info,
             static_dirs: dirs,
-
         };
     }
 
@@ -256,8 +255,12 @@ class Server {
         }
     }
 
-    fn add_static_dir(path: *String) void {
-        let full = fs:exe_dir() + "/" + path.trim("/") + "/";
+    fn add_static_dir(path: *String, relative_to_exe: bool = false) void {
+        let full = path + "";
+        if relative_to_exe {
+            full = fs:exe_dir() + "/" + path.trim("/");
+        }
+        full = full.rtrim("/") + "/";
         if this.show_info {
             println("[+] Add static dir: " + full);
         }
