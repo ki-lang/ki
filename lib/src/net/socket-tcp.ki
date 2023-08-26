@@ -35,6 +35,8 @@ class SocketTCP async {
 
         #if OS == win
 		rep fd = os:WSA_unix_fd(fd);
+		let nonblock_v = 1; // 1 = non-blocking, 0 = blocking
+		if !blocking : sys.ioctlsocket(fd, sys.OS.FIONBIO, @ptr_of(nonblock_v));
 		#end
 
 		#end
@@ -141,16 +143,22 @@ class SocketTCP async {
 	}
 
 	fn accept() Connection !error {
+		let flags = 0;
         #if OS == linux
-		let fd = sys.accept4(this.fd, null, null, sys.OS.SOCK_NONBLOCK);
+		if !this.blocking : flags = flags | sys.OS.SOCK_NONBLOCK;
+		let fd = sys.accept4(this.fd, null, null, flags);
 		#else
 		let fd = sys.accept(this.fd, null, null);
         #if OS == macos
-		let flags = sys.fcntl(fd, sys.OS.F_GETFL, 0);
-		if flags >= 0 : sys.fcntl(fd, sys.OS.F_SETFL, flags | sys.OS.O_NONBLOCK);
+		if !this.blocking {
+			let flags = sys.fcntl(fd, sys.OS.F_GETFL, 0);
+			if flags >= 0 : sys.fcntl(fd, sys.OS.F_SETFL, flags | sys.OS.O_NONBLOCK);
+		}
 		#end
         #if OS == win
 		rep fd = os:WSA_unix_fd(fd);
+		let nonblock_v = 1; // 1 = non-blocking, 0 = blocking
+		if !this.blocking : sys.ioctlsocket(fd, sys.OS.FIONBIO, @ptr_of(nonblock_v));
 		#end
 		#end
 		if fd == -1 {

@@ -60,7 +60,7 @@ fn WSAPoll(fds: ptr, nfds: u32, timeout: i32) i32;
 fn WSAGetLastError() i32;
 fn WSAStartup(wVersionRequired: u16, lpWSAData: WSADATA) i32;
 fn closesocket(fd: SOCKET) i32;
-//fn WSPStartup(wVersionRequested: u16, lpWSPData: WSPDATA, lpProtocolInfo: WSAPROTOCOL_INFOA, UpcallTable: .WSPUPCALLTABLE, lpProcTable: WSPPROC_TABLE) i32;
+fn ioctlsocket(fd: SOCKET, cmd: ixx, arg: ptr) i32;
 
 fn pipe(pipefd: i32[2]) i32;
 //int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict exceptfds, struct timeval *restrict timeout);

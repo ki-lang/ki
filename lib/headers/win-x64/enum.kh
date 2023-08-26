@@ -10,6 +10,7 @@ enum OS {
     PATHMAX: 4096,
 
     WSAENOBUFS: 10055,
+    FIONBIO: 2148034174,
 
     SOCK_STREAM:     1,               // stream socket
     SOCK_DGRAM:      2,               // datagram socket
