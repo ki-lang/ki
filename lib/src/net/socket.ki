@@ -15,24 +15,4 @@ class Socket {
         io:close(fd);
         #end
 	}
-
-	static fn read(fd: i32, buffer: *ByteBuffer, read_bytes: uxx) uxx !e_again !read_error {
-		if read_bytes > 2000000 {
-			read_bytes = 2000000;
-		}
-        buffer.minimum_free_space(read_bytes);
-		let bytes = read_bytes @as i32;
-        #if OS == win
-        let rcvd = sys.recv(fd, buffer.data + buffer.length, bytes, 0);
-        #else
-        let rcvd = sys.read(fd, buffer.data + buffer.length, bytes);
-        #end
-        if (rcvd == -2){
-            // EAGAIN
-            throw e_again;
-        } else if (rcvd < 0) {
-            throw read_error;
-        }
-		return rcvd @as uxx;
-	}
 }

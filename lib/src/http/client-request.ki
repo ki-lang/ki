@@ -49,21 +49,26 @@ class ClientRequest {
 
 		// Send request
 		let buf = this.get_send_data(parts);
-		let sendres = net:SendResult{};
-		con.send(buf, 0, sendres);
-
-		if sendres.connection_error {
-			throw connection_failed, "Connection failed";
+		while true {
+			let bytes = con.send(buf) !! |err| {
+				if err == err#connection_error {
+					throw connection_failed, "Failed reading from connection";
+				}
+				throw connection_failed, "Unexpected non-blocking connection";
+			};
+			if bytes == 0 {
+				break;
+			}
 		}
 
 		// Receive response
-		let recv = net:RecvResult{};
 		buf.clear();
-		con.recv(buf, recv);
-
-		if recv.connection_error {
-			throw connection_failed, "Failed reading from connection";
-		}
+		con.recv(buf) !! |err| {
+			if err == err#connection_error {
+				throw connection_failed, "Failed reading from connection";
+			}
+			throw connection_failed, "Unexpected non-blocking connection";
+		};
 
 		// Parse response
 		let res = ParseResult{};
@@ -75,14 +80,13 @@ class ClientRequest {
 				break;
 			}
 			buf.clear();
-			con.recv(buf, recv);
-			if recv.connection_error {
+			let bytes = con.recv(buf) !! |err| {
+				if err == err#e_again {
+					throw connection_failed, "Waiting for response timeout";
+				}
 				throw connection_failed, "Failed reading from connection";
-			}
-			if recv.incomplete {
-				throw connection_failed, "Waiting for response timeout";
-			}
-			if recv.bytes_received == 0 {
+			};
+			if bytes == 0 {
 				throw connection_failed, "Empty packet";
 			}
 		}

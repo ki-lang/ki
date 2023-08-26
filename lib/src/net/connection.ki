@@ -9,11 +9,6 @@ class SendResult {
     connection_error: bool = false;
     incomplete: bool = false; // EAGAIN in async communication
 }
-class RecvResult {
-    bytes_received: uxx = 0;
-    connection_error: bool = false;
-    incomplete: bool = false; // EAGAIN in async communication
-}
 
 class Connection {
     ~ fd: i32;
@@ -39,90 +34,72 @@ class Connection {
         this.open = false;
     }
 
-    fn send(buffer: *ByteBuffer, start_index: uxx = 0, result: *SendResult) {
+    fn send(buffer: *ByteBuffer) uxx !connection_error !e_again {
 
-        result.bytes_sent = 0;
-        result.incomplete = false;
-        result.connection_error = false;
+        if !this.open : throw connection_error;
+        if buffer.start_index >= buffer.length : return 0; 
 
-        if !this.open : return;
-
-        let sent = 0#uxx;
-        let bytes_to_send = buffer.length - start_index;
-        let chunk_size : uxx = 65535;
         let ssl = this.ssl;
-        while bytes_to_send > 0 {
-            let bytes_sent = 0#uxx;
-            if @isset(ssl) {
-                // SSL
-                let wbytes = ossl.SSL_write(ssl.ssl, buffer.data + start_index, bytes_to_send @as i32);
-                if wbytes <= 0 {
-                    // SSL_ERROR_WANT_WRITE: 3
-                    let err = ossl.SSL_get_error(ssl.ssl, wbytes);
-                    if err != 0 {
-                        if err == 3 {
-                            result.incomplete = true;
-                            break;
-                        }
-                        result.connection_error = true;
-                    }
-                    break;
-                }
-                if wbytes == 0 {
-                    break;
-                }
-                bytes_sent = wbytes @as uxx;
+        let bytes_to_send = buffer.length - buffer.start_index;
+        let bytes_sent = 0#uxx;
 
-            } else {
-                // No SSL
-                #if OS == win
-                let wbytes = sys.send(this.fd, buffer.data + start_index, bytes_to_send @as i32, 0);
-                #else
-                let wbytes = sys.send(this.fd, buffer.data + start_index, bytes_to_send, 0);
-                #end
-                if wbytes < 0 {
-                    #if OS == win
-                    let err = sys.WSAGetLastError();
-                    if err == sys.OS.WSAENOBUFS {
-                        // EAGAIN
-                        result.incomplete = true;
-                        break;
+        if @isset(ssl) {
+            // SSL
+            let wbytes = ossl.SSL_write(ssl.ssl, buffer.data + buffer.start_index, bytes_to_send @as i32);
+            if wbytes <= 0 {
+                // SSL_ERROR_WANT_WRITE: 3
+                let err = ossl.SSL_get_error(ssl.ssl, wbytes);
+                if err != 0 {
+                    if err == 3 {
+                        throw e_again;
                     }
-                    #else
-                    #if OS == macos
-                    let err = @ptrv(sys.__error(), i32, 0);
-                    #else
-                    let err = @ptrv(sys.__errno_location(), i32, 0);
-                    #end
-                    if err == sys.OS.EAGAIN {
-                        // EAGAIN
-                        result.incomplete = true;
-                        break;
-                    }
-                    #end
-                    result.connection_error = true;
-                    break;
+                    throw connection_error;
                 }
-                if wbytes == 0 {
-                    break;
-                }
-                bytes_sent = wbytes @as uxx;
+                return 0;
             }
-            sent += bytes_sent;
-            start_index += bytes_sent;
-            bytes_to_send -= bytes_sent;
+            bytes_sent = wbytes @as uxx;
+
+        } else {
+            // No SSL
+            #if OS == win
+            let wbytes = sys.send(this.fd, buffer.data + buffer.start_index, bytes_to_send @as i32, 0);
+            #else
+            let wbytes = sys.send(this.fd, buffer.data + buffer.start_index, bytes_to_send, 0);
+            #end
+            if wbytes < 0 {
+                #if OS == win
+                let err = sys.WSAGetLastError();
+                if err == sys.OS.WSAENOBUFS {
+                    // EAGAIN
+                    throw e_again;
+                }
+                #else
+                #if OS == macos
+                let err = @ptrv(sys.__error(), i32, 0);
+                #else
+                let err = @ptrv(sys.__errno_location(), i32, 0);
+                #end
+                if err == sys.OS.EAGAIN {
+                    // EAGAIN
+                    throw e_again;
+                }
+                #end
+                throw connection_error;
+            }
+            if wbytes == 0 {
+                return 0;
+            }
+            bytes_sent = wbytes @as uxx;
         }
 
-        result.bytes_sent = sent;
+        buffer.start_index += bytes_sent;
+
+        return bytes_sent;
     }
 
-    fn recv(buffer: *ByteBuffer, result: *RecvResult) {
+    fn recv(buffer: *ByteBuffer) uxx !connection_error !e_again {
 
-        result.bytes_received = 0;
-        result.incomplete = false;
-        result.connection_error = false;
-
-        if !this.open : return;
+        if !this.open : return 0;
 
         let buf_size : uxx = 65535;
         let ssl = this.ssl;
@@ -139,12 +116,11 @@ class Connection {
                 let err = ossl.SSL_get_error(ssl.ssl, rcvd);
                 if err != 0 && err != 6 {
                     if err == 2 {
-                        result.incomplete = true;
-                        return;
+                        throw e_again;
                     }
-                    result.connection_error = true;
+                    throw connection_error;
                 }
-                return;
+                return 0;
             }
             count = rcvd @as uxx;
 
@@ -159,8 +135,7 @@ class Connection {
                 let err = sys.WSAGetLastError();
                 if err == sys.OS.WSAENOBUFS {
                     // EAGAIN
-                    result.incomplete = true;
-                    return;
+                    throw e_again;
                 }
                 #else
                 #if OS == macos
@@ -170,21 +145,19 @@ class Connection {
                 #end
                 if err == sys.OS.EAGAIN {
                     // EAGAIN
-                    result.incomplete = true;
-                    return;
+                    throw e_again;
                 }
                 #end
-                result.connection_error = true;
-                return;
+                throw connection_error;
             }
             if (rcvd == 0) {
-                return;
+                return 0;
             }
             count = rcvd @as uxx;
         }
             
         buffer.length += count;
-        result.bytes_received = count;
+        return count;
     }
 
     fn __before_free() {

@@ -204,25 +204,24 @@ class Server {
         while true {
             let res = http_con.parse_result;
             let read_buf = http_con.read_buf;
-            let recv = http_con.recv_result;
             while true {
                 if read_buf.start_index == read_buf.length {
-                    http_con.netcon.recv(read_buf, recv);
+                    let bytes = http_con.netcon.recv(read_buf) !! |err| {
+                        if err == err#e_again {
+                            return;
+                        }
+                        http_con.respond(Response.error(400));
+                        throw read_error, "Failed reading from connection";
+                    };
                 }
                 Parser.parse_request(read_buf, res) !! {
                     http_con.respond(Response.error(400));
                     throw read_error, "Invalid request";
                 };
+                read_buf.clear();
+
                 if res.fully_parsed {
                     break;
-                }
-                if recv.connection_error {
-                    http_con.respond(Response.error(400));
-                    throw read_error, "Failed reading from connection";
-                }
-                read_buf.clear();
-                if recv.incomplete {
-                    return;
                 }
             }
 
