@@ -38,12 +38,12 @@ fn clear(adrc: ptr, length: uxx) void {
 fn copy(from: ptr, to: ptr, length: uxx) void {
 
 	let i = 0#uxx;
-	//let chunks = length / @sizeof(uxx);
-	//while i < chunks {
-	//	@ptrv(to, uxx, i) = @ptrv(from, uxx, i);
-	//	i++;
-	//}
-	//i = i * @sizeof(uxx);
+	let chunks = length / @sizeof(uxx);
+	while i < chunks {
+		@ptrv(to, uxx, i) = @ptrv(from, uxx, i);
+		i++;
+	}
+	i = i * @sizeof(uxx);
 	while i < length {
 		@ptrv(to, u8, i) = @ptrv(from, u8, i);
 		i++;

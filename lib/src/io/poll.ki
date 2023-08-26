@@ -85,11 +85,12 @@ class Poll[T] {
                 continue;
             }
             let lsn = @ptrv(by_index, ptr, i) @as *Listener[T];
+            let add = &lsn;
             lsn.set_events(pollfd.revents);
             if lsn.has_stopped_the_connection() {
                 this.listeners.remove_item(lsn);
             }
-            events.push(&lsn);
+            events.push(add);
             i++;
         }
 
