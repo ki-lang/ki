@@ -221,9 +221,5 @@ class Listener[T] {
         let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_MOD, this.fd, evo);
         #end
     }
-
-    fn __before_free() {
-        //println("FREE");
-    }
 }
 
