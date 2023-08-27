@@ -144,6 +144,12 @@ void stage_8(Build *b) {
         build_error(b, "❌ Missing 'main' function");
     }
 
+#ifdef WIN32
+    _flushall();
+#else
+    sync();
+#endif
+
     stage_8_link(b, o_files);
 
 #ifdef WIN32
@@ -219,13 +225,15 @@ void *stage_8_compile_o(void *data_) {
 
     if (b->optimize) {
         stage_8_optimize(nsc_mod);
-    }
-
-    if (LLVMTargetMachineEmitToFile(target->target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
-        fprintf(stderr, "Failed to emit machine code!\n");
-        fprintf(stderr, "Error: %s\n", error);
-        LLVMDisposeMessage(error);
-        exit(1);
+        printf("write BC: %s\n", path_o);
+        LLVMWriteBitcodeToFile(nsc_mod, path_o);
+    } else {
+        if (LLVMTargetMachineEmitToFile(target->target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
+            fprintf(stderr, "Failed to emit machine code!\n");
+            fprintf(stderr, "Error: %s\n", error);
+            LLVMDisposeMessage(error);
+            exit(1);
+        }
     }
 
     // printf("Object created: %s\n", outpath);
@@ -402,8 +410,41 @@ void stage_8_link_libs_all(Str *cmd, Build *b) {
     }
 }
 
+void stage_8_lto(Build *b, Array *o_files) {
+    //
+    lto_code_gen_t cg = lto_codegen_create();
+    for (int i = 0; i < o_files->length; i++) {
+        char *path = array_get_index(o_files, i);
+        lto_module_t mod = lto_module_create(path);
+        if (!mod) {
+            printf("LTO load module failed: %s\n", lto_get_error_message());
+        }
+        lto_bool_t err = lto_codegen_add_module(cg, mod);
+        if (err) {
+            printf("LTO add module failed: %s\n", lto_get_error_message());
+        }
+    }
+
+    // Keep main
+    lto_codegen_add_must_preserve_symbol(cg, "main");
+
+    lto_codegen_optimize(cg);
+
+    const char *name;
+    lto_bool_t err = lto_codegen_compile_to_file(cg, &name);
+    if (err) {
+        printf("LTO compile failed: %s\n", lto_get_error_message());
+    }
+    o_files->length = 0;
+    array_push(o_files, dups(b->alc, name));
+}
+
 void stage_8_link(Build *b, Array *o_files) {
     //
+    if (b->optimize) {
+        stage_8_lto(b, o_files);
+    }
+
     Str *cmd = str_make(b->alc, 1000);
     bool is_linux = b->target_os == os_linux;
     bool is_macos = b->target_os == os_macos;
