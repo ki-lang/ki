@@ -310,8 +310,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     if (type_tracks_ownership(type)) {
-        if (type->class && type->class->is_circular)
-            type->shared_ref = ref;
+        type->shared_ref = ref;
     }
     if (type_is_rc(type)) {
         type->borrow = borrow;

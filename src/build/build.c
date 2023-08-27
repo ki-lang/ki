@@ -331,7 +331,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
         exit(0);
     }
 
-    compile_loop(b, 6); // Complete all other stages
+    compile_loop(b, 0); // Complete all other stages
 
     if (b->lsp) {
         build_end(b, 0);

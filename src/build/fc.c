@@ -69,6 +69,7 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
     fc->mod_time = 0;
     fc->lsp_file = b->lsp && (strcmp(b->lsp->filepath, path_ki) == 0);
 
+    fc->stage_completed = 0;
     fc->test_counter = 0;
 
     //

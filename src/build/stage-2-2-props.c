@@ -5,7 +5,7 @@ void stage_2_2(Fc *fc) {
     //
     Build *b = fc->b;
     if (b->verbose > 2) {
-        printf("# Stage 2 : Read types : %s\n", fc->path_ki);
+        printf("# Stage 2.2 : Read types : %s\n", fc->path_ki);
     }
 
     for (int i = 0; i < fc->classes->length; i++) {

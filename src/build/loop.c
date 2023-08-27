@@ -22,6 +22,7 @@ void compile_loop(Build *b, int max_stage) {
         Fc *fc = chain_get(stage);
         while (fc) {
             stage->func(fc);
+            fc->stage_completed = i + 1;
             fc = chain_get(stage);
             did_work = true;
         }

@@ -183,6 +183,7 @@ struct Fc {
     void *win_file_handle;
     long int mod_time;
     //
+    int stage_completed;
     int test_counter;
     //
     bool is_header;

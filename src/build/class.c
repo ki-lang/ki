@@ -514,26 +514,36 @@ Class *class_get_generic_class(Class *class, Array *types) {
 
         // stage_2(new_fc);
         stage_2_2_class_read_props(new_fc, gclass, false, false);
-        class_check_size(gclass);
-        stage_2_3_circular(new_fc->b, gclass);
-        stage_2_4_class_props_update(new_fc, gclass);
-        stage_2_6_class_functions(new_fc, gclass);
-        stage_3_class(new_fc, gclass);
+        if (fc->stage_completed <= 2) {
+            chain_add(b->stage_2_3, new_fc);
+            return gclass;
+        }
 
-        // stage_2_class_defaults(new_fc, gclass);
-        // for (int i = 0; i < new_fc->funcs->length; i++) {
-        //     Func *func = array_get_index(new_fc->funcs, i);
-        //     if (!func->chunk_args)
-        //         continue;
-        //     if (b->verbose > 2) {
-        //         printf("> Scan generic class func types: %s\n", func->dname);
-        //     }
-        //     stage_2_func(new_fc, func);
-        // }
-        // stage_2_class_type_checks(new_fc, gclass);
-        // stage_3_circular(b, gclass);
-        // stage_3_shared_circular_refs(b, class);
-        // stage_5(new_fc);
+        class_check_size(gclass);
+        if (fc->stage_completed <= 3) {
+            chain_add(b->stage_2_3, new_fc);
+            return gclass;
+        }
+
+        stage_2_3_circular(new_fc->b, gclass);
+        if (fc->stage_completed <= 4) {
+            chain_add(b->stage_2_4, new_fc);
+            return gclass;
+        }
+
+        stage_2_4_class_props_update(new_fc, gclass);
+        if (fc->stage_completed <= 5) {
+            chain_add(b->stage_2_6, new_fc);
+            return gclass;
+        }
+
+        stage_2_6_class_functions(new_fc, gclass);
+        if (fc->stage_completed <= 7) {
+            chain_add(b->stage_3, new_fc);
+            return gclass;
+        }
+
+        stage_3_class(new_fc, gclass);
         chain_add(b->stage_4_1, new_fc);
     }
 
