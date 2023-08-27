@@ -1,126 +1,75 @@
 
 #include "../all.h"
 
-void *io_loop(void *build) {
-    //
-    Build *b = (Build *)build;
-    Chain *read_chain = b->read_ki_file;
-    Chain *write_chain = b->write_ir;
+void compile_loop(Build *b, int max_stage) {
 
-    while (!b->ir_ready || b->event_count != b->events_done) {
+    Array *stages = array_make(b->alc, 20);
+    array_push(stages, b->stage_1);
+    array_push(stages, b->stage_2_1);
+    array_push(stages, b->stage_2_2);
+    array_push(stages, b->stage_2_3);
+    array_push(stages, b->stage_2_4);
+    array_push(stages, b->stage_2_5);
+    array_push(stages, b->stage_2_6);
+    array_push(stages, b->stage_3);
+    array_push(stages, b->stage_4_1);
+
+    const int stage_count = max_stage > 0 ? 1 : stages->length;
+
+    for (int i = 0; i < stage_count; i++) {
         bool did_work = false;
-
-        Fc *read_fc = chain_get(read_chain);
-
-        if (read_fc) {
-            if (b->verbose > 1) {
-                printf("👓 Read : %s\n", read_fc->path_ki);
-            }
+        Chain *stage = array_get_index(stages, i);
+        Fc *fc = chain_get(stage);
+        while (fc) {
+            stage->func(fc);
+            fc = chain_get(stage);
             did_work = true;
-            file_get_contents(b->str_buf_io, read_fc->path_ki);
-            char *content = str_to_chars(b->alc_io, b->str_buf_io);
-            read_fc->chunk->content = content;
-            read_fc->chunk->length = strlen(content);
-            b->events_done++;
-            chain_add(b->stage_1, read_fc);
+        }
+        if (did_work) {
+            i = -1;
             continue;
         }
+    }
+}
 
-        Fc *write_fc = chain_get(write_chain);
-
-        if (write_fc) {
-            did_work = true;
-            write_file(write_fc->path_ir, write_fc->ir, false);
-            b->events_done++;
-            continue;
+Chain *chain_make(Allocator *alc, void (*func)(Fc *)) {
+    Chain *chain = al(alc, sizeof(Chain));
+    chain->alc = alc;
+    chain->first = NULL;
+    chain->last = NULL;
+    chain->current = NULL;
+    chain->func = func;
+    return chain;
+}
+Fc *chain_get(Chain *chain) {
+    //
+    if (chain->current == NULL) {
+        chain->current = chain->first;
+        ChainItem *cur = chain->current;
+        if (cur) {
+            return cur->item;
         }
-
-        sleep_ns(10000); // 10 micro seconds
+        return NULL;
+    }
+    ChainItem *next = chain->current->next;
+    if (next) {
+        chain->current = next;
+        return next->item;
     }
     return NULL;
 }
 
-void compile_loop(Build *b, int max_stage) {
-
-    while (true) {
-        bool did_work = false;
-
-        Fc *stage1 = chain_get(b->stage_1);
-        while (stage1) {
-            stage_1(stage1);
-            stage1 = chain_get(b->stage_1);
-        }
-
-        if (b->event_count > b->events_done) {
-            sleep_ns(5000); // 5 micro seconds
-            continue;
-        }
-
-        if (max_stage > 1) {
-            Fc *stage2 = chain_get(b->stage_2);
-            while (stage2) {
-                stage_2(stage2);
-                stage2 = chain_get(b->stage_2);
-                did_work = true;
-            }
-            Fc *stage2_1 = chain_get(b->stage_2_1);
-            while (stage2_1) {
-                stage_2_1(stage2_1);
-                stage2_1 = chain_get(b->stage_2_1);
-                did_work = true;
-            }
-            if (did_work)
-                continue;
-        }
-
-        if (max_stage > 2) {
-            Fc *stage3 = chain_get(b->stage_3);
-            while (stage3) {
-                stage_3(stage3);
-                stage3 = chain_get(b->stage_3);
-                did_work = true;
-            }
-            if (did_work)
-                continue;
-        }
-
-        if (max_stage > 3) {
-            Fc *stage4 = chain_get(b->stage_4);
-            while (stage4) {
-                stage_4(stage4);
-                stage4 = chain_get(b->stage_4);
-                did_work = true;
-            }
-            if (did_work)
-                continue;
-        }
-
-        if (max_stage > 4) {
-            Fc *stage5 = chain_get(b->stage_5);
-            while (stage5) {
-                stage_5(stage5);
-                stage5 = chain_get(b->stage_5);
-                did_work = true;
-            }
-            if (did_work)
-                continue;
-        }
-
-        if (max_stage > 5) {
-            Fc *stage6 = chain_get(b->stage_6);
-            while (stage6) {
-                stage_6(stage6);
-                stage6 = chain_get(b->stage_6);
-                did_work = true;
-            }
-            if (did_work)
-                continue;
-        }
-
-        if (b->event_count == b->events_done) {
-            break;
-        }
-
-        sleep_ns(10000); // 10 micro seconds
+void chain_add(Chain *chain, Fc *item) {
+    //
+    ChainItem *ci = al(chain->alc, sizeof(ChainItem));
+    ci->item = item;
+    ci->next = NULL;
+    if (chain->first == NULL) {
+        chain->first = ci;
+        chain->last = ci;
+        return;
     }
+    ChainItem *last = chain->last;
+    last->next = ci;
+    chain->last = ci;
 }

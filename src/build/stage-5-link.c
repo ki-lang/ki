@@ -33,11 +33,11 @@ struct CompileData {
 };
 
 void llvm_init(Build *b, struct Target *t);
-void *stage_8_compile_o(void *data_);
-void stage_8_optimize(LLVMModuleRef mod);
-void stage_8_link(Build *b, Array *o_files);
+void *stage_5_compile_o(void *data_);
+void stage_5_optimize(LLVMModuleRef mod);
+void stage_5_link(Build *b, Array *o_files);
 
-void stage_8(Build *b) {
+void stage_5(Build *b) {
 
     bool compiled_any = false;
     Array *o_files = array_make(b->alc, 20);
@@ -89,7 +89,7 @@ void stage_8(Build *b) {
             data->path_o = nsc->path_o;
             data->target = al(b->alc, sizeof(struct Target));
             llvm_init(b, data->target);
-            // stage_8_compile_o((void *)data);
+            // stage_5_compile_o((void *)data);
 
 #ifdef WIN32
             if (threads->length >= 16) {
@@ -98,7 +98,7 @@ void stage_8(Build *b) {
                 WaitForSingleObject(thr, INFINITE);
             }
 
-            void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))stage_8_compile_o, (void *)data, 0, NULL);
+            void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))stage_5_compile_o, (void *)data, 0, NULL);
 #else
             if (threads->length >= 16) {
                 // Wait for the first thread
@@ -107,7 +107,7 @@ void stage_8(Build *b) {
             }
 
             pthread_t *thr = al(b->alc, sizeof(pthread_t));
-            pthread_create(thr, NULL, stage_8_compile_o, (void *)data);
+            pthread_create(thr, NULL, stage_5_compile_o, (void *)data);
 #endif
 
             array_push(threads, thr);
@@ -144,7 +144,7 @@ void stage_8(Build *b) {
         build_error(b, "❌ Missing 'main' function");
     }
 
-    stage_8_link(b, o_files);
+    stage_5_link(b, o_files);
 
 #ifdef WIN32
     QueryPerformanceCounter(&end);
@@ -159,7 +159,7 @@ void stage_8(Build *b) {
     }
 }
 
-void *stage_8_compile_o(void *data_) {
+void *stage_5_compile_o(void *data_) {
 
     // LLVMStartMultithreaded();
     struct CompileData *data = (struct CompileData *)data_;
@@ -218,7 +218,7 @@ void *stage_8_compile_o(void *data_) {
     LLVMSetDataLayout(nsc_mod, target->llvm_data_layout);
 
     if (b->optimize) {
-        stage_8_optimize(nsc_mod);
+        stage_5_optimize(nsc_mod);
     }
 
     if (LLVMTargetMachineEmitToFile(target->target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
@@ -246,7 +246,7 @@ void *stage_8_compile_o(void *data_) {
 #endif
 }
 
-void stage_8_optimize(LLVMModuleRef mod) {
+void stage_5_optimize(LLVMModuleRef mod) {
 
     LLVMPassManagerBuilderRef passBuilder = LLVMPassManagerBuilderCreate();
 
@@ -345,7 +345,7 @@ void llvm_init(Build *b, struct Target *t) {
     // printf("datalayout: %s\n", datalayout_str);
 }
 
-void stage_8_link_libs(Str *cmd, Build *b, int type) {
+void stage_5_link_libs(Str *cmd, Build *b, int type) {
     //
     bool is_win = b->target_os == os_win;
     bool is_static = type == link_static;
@@ -374,7 +374,7 @@ void stage_8_link_libs(Str *cmd, Build *b, int type) {
     }
 }
 
-void stage_8_link_libs_all(Str *cmd, Build *b) {
+void stage_5_link_libs_all(Str *cmd, Build *b) {
     //
     bool is_win = b->target_os == os_win;
     bool is_macos = b->target_os == os_macos;
@@ -402,7 +402,7 @@ void stage_8_link_libs_all(Str *cmd, Build *b) {
     }
 }
 
-void stage_8_link(Build *b, Array *o_files) {
+void stage_5_link(Build *b, Array *o_files) {
     //
     Str *cmd = str_make(b->alc, 1000);
     bool is_linux = b->target_os == os_linux;
@@ -543,7 +543,7 @@ void stage_8_link(Build *b, Array *o_files) {
     }
 
     // Link libs
-    stage_8_link_libs_all(cmd, b);
+    stage_5_link_libs_all(cmd, b);
     // stage_8_link_libs(cmd, b, link_dynamic);
     // stage_8_link_libs(cmd, b, link_static);
 

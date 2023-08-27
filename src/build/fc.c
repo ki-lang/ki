@@ -147,47 +147,6 @@ void fc_set_cache_paths(Fc *fc) {
     }
 }
 
-Chain *chain_make(Allocator *alc) {
-    Chain *chain = al(alc, sizeof(Chain));
-    chain->alc = alc;
-    chain->first = NULL;
-    chain->last = NULL;
-    chain->current = NULL;
-    return chain;
-}
-Fc *chain_get(Chain *chain) {
-    //
-    if (chain->current == NULL) {
-        chain->current = chain->first;
-        ChainItem *cur = chain->current;
-        if (cur) {
-            return cur->item;
-        }
-        return NULL;
-    }
-    ChainItem *next = chain->current->next;
-    if (next) {
-        chain->current = next;
-        return next->item;
-    }
-    return NULL;
-}
-
-void chain_add(Chain *chain, Fc *item) {
-    //
-    ChainItem *ci = al(chain->alc, sizeof(ChainItem));
-    ci->item = item;
-    ci->next = NULL;
-    if (chain->first == NULL) {
-        chain->first = ci;
-        chain->last = ci;
-        return;
-    }
-    ChainItem *last = chain->last;
-    last->next = ci;
-    chain->last = ci;
-}
-
 void fc_error(Fc *fc) {
     //
     Allocator *alc = fc->alc;

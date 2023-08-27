@@ -1,11 +1,11 @@
 
 #include "../headers/LLVM.h"
 
-void stage_7(Fc *fc) {
+void stage_4_2(Fc *fc) {
     //
     Build *b = fc->b;
     if (b->verbose > 2) {
-        printf("# Stage 7 : LLVM IR : %s\n", fc->path_ki);
+        printf("# Stage 4.2 : LLVM IR : %s\n", fc->path_ki);
     }
 
     Allocator *alc = fc->alc_ast;
@@ -64,8 +64,6 @@ void stage_7(Fc *fc) {
         }
 
         fc->ir = ir;
-        // chain_add(b->write_ir, fc);
-        // b->event_count++;
         write_file(fc->path_ir, fc->ir, false);
     }
 

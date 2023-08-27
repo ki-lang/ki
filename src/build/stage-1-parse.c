@@ -111,7 +111,7 @@ void stage_1(Fc *fc) {
     b->LOC += fc->chunk->line;
 
     //
-    chain_add(b->stage_2, fc);
+    chain_add(b->stage_2_1, fc);
 }
 
 void stage_1_func(Fc *fc) {
