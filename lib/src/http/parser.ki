@@ -16,7 +16,6 @@ class ParseResult {
 	~ fully_parsed: bool = false;
 	~ headers_parsed: bool = false;
 	- stage: uxx = 0;
-	- line: ByteBuffer = ByteBuffer.new(100);
 }
 
 class Parser {
@@ -37,7 +36,6 @@ class Parser {
 
 		if result.fully_parsed {
 			result.stage = 0;
-			result.line.clear();
 			result.headers_parsed = false;
 			result.fully_parsed = false;
 			result.content_length = 0;
@@ -46,12 +44,10 @@ class Parser {
 			result.headers = Map[String]{};
 		}
 
-		let line = result.line;
 		let stage = result.stage;
 		let data = bytes.data;
 		let pos = bytes.start_index;
 		let length = bytes.length;
-		let content_len = result.content_length;
 
 		if stage > 2 && only_headers {
 			return;
@@ -59,99 +55,97 @@ class Parser {
 
 		let ch = (pos > 0) ? @ptrv(data, u8, pos - 1) : '\0';
 		let prev_ch = '\0';
-		while pos < length {
-			prev_ch = ch;
-			ch = @ptrv(data, u8, pos);
-			pos++;
 
-			if stage == 2 {
-				line.append_byte(ch);
-				if line.length == content_len {
-					stage = 3;
-					result.stage = stage;
-					result.body = line.to_str();
-					result.fully_parsed = true;
-					break;
-				}
-				continue;
+		// Header
+		if stage == 0 {
+			let index = bytes.index_of_byte('\r', pos) !! return;;
+			if index + 1 == length : return;
+			if @ptrv(data, u8, index + 1) != '\n' : throw invalid;
+
+			let space1 = bytes.index_of_byte(' ', pos) !! throw invalid;;
+			let space2 = bytes.index_of_byte(' ', space1 + 1) !! throw invalid;;
+
+			if space1 > index || space2 > index : throw invalid;
+
+			let part1 = bytes.sub_str(pos, space1);
+			let part2 = bytes.sub_str(space1 + 1, space2 - space1 - 1);
+			let part3 = bytes.sub_str(space2 + 1, index - space2 - 1);
+
+			if is_request {
+				// Request "GET / HTTP/1.1"
+				result.method = part1;
+				result.path = part2;
+				let version = part3;
+			} else {
+				// Response "HTTP/1.1 200 OK"
+				let version = part1;
+				let status_str = part2;
+				result.status = status_str.to_uxx() !! throw invalid;;
 			}
 
-			if prev_ch == '\r' && ch == '\n' {
-
-				line.length--; // Remove \r
-
-				if stage == 0 {
-					let line_str = line.to_str();
-					let split = line_str.split(" ");
-					if split.length != 3 {
-						throw invalid;
-					}
-					let version = "";
-					if is_request {
-						// Request "GET / HTTP/1.1"
-						result.method = split.get(0) !? "GET";
-						result.path = split.get(1) !? "/";
-						version = split.get(2) !? "";
-					} else {
-						// Response "HTTP/1.1 200 OK"
-						version = split.get(0) !? "";
-						let status_str = split.get(1) !! throw invalid;;
-						result.status = status_str.to_uxx() !! throw invalid;;
-						//let ok = split.get(2) !? "";
-					}
-
-					stage = 1;
-					result.stage = stage;
-					line.clear();
-					continue;
-				}
-
-				// Parse headers
-				if line.length == 0 {
-					// End of headers
-					result.headers_parsed = true;
-					stage = 2;
-					result.stage = stage;
-					line.clear();
-
-					let content_len_str = result.headers.get("content-length") !? "0";
-					content_len = content_len_str.to_uxx() !! {
-						throw invalid;
-					};
-					result.content_length = content_len;
-
-					if result.content_length == 0 {
-						stage = 3;
-						result.stage = stage;
-						result.body = "";
-						result.fully_parsed = true;
-						break;
-					}
-
-					if only_headers {
-						break;
-					}
-					continue;
-				}
-
-				let headers = result.headers;
-				let split_index = line.index_of_byte(':') !! {
-					throw invalid;
-				};
-				// Key
-				let key = line.sub_str(0, split_index).to_lower();
-				// Value
-				let value_start_index = split_index + 1;
-				let value_index = line.index_where_byte_is_not(' ', value_start_index) !? value_start_index;
-				let value = line.sub_str(value_index, line.length - value_index);
-
-				headers.set(key, value);
-				line.clear();
-				continue;
-			}
-			line.append_byte(ch);
+			pos = index + 2;
+			bytes.start_index = pos;
+			stage = 1;
+			result.stage = stage;
 		}
 
-		bytes.start_index = pos;
+		// Headers
+		let headers = result.headers;
+		let content_len = result.content_length;
+		while stage == 1 {
+			let index = bytes.index_of_byte('\r', pos) !! return;;
+			if index + 1 == length : return;
+			if @ptrv(data, u8, index + 1) != '\n' : throw invalid;
+
+			if index == pos {
+				// End of headers
+				pos = index + 2;
+				bytes.start_index = pos;
+				stage = 2;
+				result.stage = stage;
+
+				let content_len_str = headers.get("content-length") !? "0";
+				content_len = content_len_str.to_uxx() !! {
+					throw invalid;
+				};
+				result.content_length = content_len;
+				result.headers_parsed = true;
+				break;
+			}
+
+			let split = bytes.index_of_byte(':', pos) !! throw invalid;;
+			if split > index : throw invalid;
+			while @ptrv(data, u8, split + 1) == ' ' {
+				split++;
+			}
+
+			let key = bytes.sub_str(pos, split - pos - 1);
+			let value = bytes.sub_str(split + 1, index - split - 1);
+
+			headers.set(key.to_lower(), value);
+
+			pos = index + 2;
+			bytes.start_index = pos;
+		}
+
+		if only_headers {
+			return;
+		}
+
+		if stage == 2 {
+			let bytes_left = length - pos;
+			if bytes_left < content_len {
+				return;
+			}
+
+			let body = bytes.sub_str(pos, content_len);
+
+			pos += content_len;
+			bytes.start_index = pos;
+			result.fully_parsed = true;
+			result.body = body;
+			result.stage = 3;
+		}
+
 	}
 }

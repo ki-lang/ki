@@ -217,7 +217,8 @@ class Server {
                     http_con.respond(Response.error(400));
                     throw read_error, "Invalid request";
                 };
-                read_buf.clear();
+
+                read_buf.clear_before_start_index();
 
                 if res.fully_parsed {
                     break;

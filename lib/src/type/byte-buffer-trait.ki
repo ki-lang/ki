@@ -120,6 +120,16 @@ trait ByteBufferTrait {
 		return str;
 	}
 
+	fn clear_before_start_index() {
+		let index = this.start_index;
+		if index == 0 : return;
+		let bytes = this.length - index;
+		let data = this.data;
+		mem:copy(data + index, data, bytes, bytes < @sizeof(ptr));
+		this.length -= index;
+		this.start_index = 0;
+	}
+
 	// 
 	fn minimum_free_space(length: uxx) void {
 		this.minimum_size(this.length + length);
