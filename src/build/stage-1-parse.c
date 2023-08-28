@@ -91,10 +91,10 @@ void stage_1(Fc *fc) {
             stage_1_alias(fc, alias_id);
             continue;
         }
-        if (strcmp(token, "type_alias") == 0) {
-            stage_1_alias(fc, alias_type);
-            continue;
-        }
+        // if (strcmp(token, "type_alias") == 0) {
+        //     stage_1_alias(fc, alias_type);
+        //     continue;
+        // }
         if (strcmp(token, "test") == 0) {
             stage_1_test(fc);
             continue;
@@ -505,7 +505,7 @@ void stage_1_header(Fc *fc) {
     bool found = false;
     for (int i = 0; i < dirs->length; i++) {
         char *dir = array_get_index(dirs, i);
-        sprintf(fc->sbuf, "%s/%s.kh", dir, fn);
+        sprintf(fc->sbuf, "%s%s.kh", dir, fn);
 
         if (file_exists(fc->sbuf)) {
             char *path = dups(fc->alc, fc->sbuf);

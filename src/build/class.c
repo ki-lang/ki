@@ -207,10 +207,12 @@ void class_generate_deref_props(Class *class) {
 }
 void class_generate_free(Class *class) {
     //
+    printf("c:%p\n", class);
     Func *func = class->func_free;
     if (func->chunk_body)
         return;
 
+    printf("0\n");
     func_make_arg_decls(func);
 
     Build *b = class->fc->b;
@@ -224,6 +226,7 @@ void class_generate_free(Class *class) {
     Decl *this_decl = this_arg->decl;
     Value *this = value_init(alc, v_decl, this_decl, type_class);
 
+    printf("1\n");
     // Call __before_free
     if (class->func_before_free) {
         Value *on = vgen_fptr(alc, class->func_before_free, NULL);
@@ -233,6 +236,7 @@ void class_generate_free(Class *class) {
         array_push(fscope->ast, token_init(alc, tkn_statement, fcall));
     }
 
+    printf("2\n");
     // Call __deref_props
     if (class->func_deref_props) {
         Value *on = vgen_fptr(alc, class->func_deref_props, NULL);
@@ -244,6 +248,7 @@ void class_generate_free(Class *class) {
 
     ClassProp *propw = map_get(class->props, "_RC_WEAK");
     Scope *free_scope = fscope;
+    printf("3\n");
 
     if (propw) {
         free_scope = scope_init(alc, sct_default, fscope, true);
@@ -513,6 +518,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
         map_set(gclass->scope->identifiers, "CLASS", idf);
 
         // stage_2(new_fc);
+        new_fc->chunk = class->chunk_body;
         stage_2_2_class_read_props(new_fc, gclass, false, false);
         if (fc->stage_completed <= 2) {
             chain_add(b->stage_2_3, new_fc);

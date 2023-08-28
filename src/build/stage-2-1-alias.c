@@ -13,7 +13,7 @@ void stage_2_1(Fc *fc) {
         fc->chunk = a->chunk;
 
         Idf *idf_a = NULL;
-        if (a->type == alias_type) {
+        if (a->type == alias_id) {
             Idf *idf = read_idf(fc, fc->scope, true, true);
             idf_a = idf_init(fc->alc, idf->type);
             idf_a->item = idf->item;

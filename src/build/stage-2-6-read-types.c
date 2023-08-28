@@ -2,6 +2,8 @@
 
 #include "../all.h"
 
+void stage_2_6_class_default_functions(Fc *fc, Class *class);
+
 void stage_2_6(Fc *fc) {
     // Aliasses
     Build *b = fc->b;
@@ -9,6 +11,12 @@ void stage_2_6(Fc *fc) {
         printf("# Stage 2.1 : Read aliasses : %s\n", fc->path_ki);
     }
 
+    for (int i = 0; i < fc->classes->length; i++) {
+        Class *class = array_get_index(fc->classes, i);
+        if (class->is_generic_base)
+            continue;
+        stage_2_6_class_default_functions(fc, class);
+    }
     for (int i = 0; i < fc->funcs->length; i++) {
         Func *func = array_get_index(fc->funcs, i);
         if (!func->chunk_args)
@@ -171,4 +179,56 @@ void stage_2_6_func(Fc *fc, Func *func) {
     }
 
     fc->error_func_info = prev_error_func_info;
+}
+
+void stage_2_6_class_default_functions(Fc *fc, Class *class) {
+
+    // Generate __free / __deref / _RC
+    if (class->type == ct_struct) {
+        Build *b = fc->b;
+        if (class->is_rc) {
+            // Define __deref_props
+            // Only generate the function if there are properties that can be dereferenced
+            Array *props = class->props->values;
+            for (int i = 0; i < props->length; i++) {
+                ClassProp *prop = array_get_index(props, i);
+                Class *pclass = prop->type->class;
+                if (pclass && pclass->is_rc) {
+                    class->func_deref_props = class_define_func(fc, class, false, "__deref_props", NULL, b->type_void, 0);
+                    class->func_deref_props->is_generated = true;
+                    break;
+                }
+            }
+        }
+        // Define __free
+        if (!class->func_free) {
+            class->func_free = class_define_func(fc, class, false, "__free", NULL, b->type_void, 0);
+            class->func_free->is_generated = true;
+        }
+    }
+
+    if (class->is_rc) {
+        if (class->type != ct_struct) {
+            if (!class->func_ref) {
+                sprintf(fc->sbuf, "Missing function '__ref' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+            if (!class->func_deref) {
+                sprintf(fc->sbuf, "Missing function '__deref' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+            if (!class->func_ref_weak) {
+                sprintf(fc->sbuf, "Missing function '__ref_weak' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+            if (!class->func_deref_weak) {
+                sprintf(fc->sbuf, "Missing function '__deref_weak' in type '%s'", class->dname);
+                fc_error(fc);
+            }
+        }
+        if (!class->func_free) {
+            sprintf(fc->sbuf, "Missing function '__free' in type '%s'", class->dname);
+            fc_error(fc);
+        }
+    }
 }

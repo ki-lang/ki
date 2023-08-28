@@ -5,16 +5,13 @@ void stage_2_2(Fc *fc) {
     //
     Build *b = fc->b;
     if (b->verbose > 2) {
-        printf("# Stage 2.2 : Read types : %s\n", fc->path_ki);
+        printf("# Stage 2.2 : Read class properties : %s\n", fc->path_ki);
     }
 
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
             continue;
-        if (b->verbose > 2) {
-            printf("> Scan class properties: %s\n", class->dname);
-        }
 
         fc->chunk = class->chunk_body;
         stage_2_2_class_read_props(fc, class, false, false);
@@ -28,6 +25,13 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
     //
     char *token = fc->token;
     Scope *scope = class->scope;
+
+    Class *prev_error_class_info = fc->error_class_info;
+    fc->error_class_info = class;
+
+    if (fc->b->verbose > 2) {
+        printf("> Read class properties: %s\n", class->dname);
+    }
 
     while (true) {
 
@@ -76,7 +80,7 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
             map_set(trait_scope->identifiers, "CLASS", map_get(scope->identifiers, "CLASS"));
             class->scope = trait_scope;
 
-            stage_2_2_class_read_props(fc, class, true, false);
+            stage_2_2_class_read_props(fc, class, true, is_extend);
 
             class->scope = scope;
             fc->chunk = current;
@@ -254,6 +258,36 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
     }
 
     if (!is_trait && !is_extend) {
+
         // Define default properties
+        if (class->type == ct_struct) {
+            Build *b = fc->b;
+            if (class->is_rc) {
+                // Define _RC
+                Type *type = type_gen(b, b->alc, "u32");
+                ClassProp *prop = class_prop_init(b->alc, class, type);
+                prop->value = vgen_vint(b->alc, 1, type, false);
+                prop->act = act_private;
+                map_set(class->props, "_RC", prop);
+
+                Type *type_weak = type_gen(b, b->alc, "u32");
+                ClassProp *prop_weak = class_prop_init(b->alc, class, type_weak);
+                prop_weak->value = vgen_vint(b->alc, 0, type_weak, false);
+                prop_weak->act = act_private;
+                map_set(class->props, "_RC_WEAK", prop_weak);
+            }
+
+            if (class->props->keys->length == 0) {
+                sprintf(fc->sbuf, "Class has no properties");
+                fc_error(fc);
+            }
+        }
+
+        // Check size
+        if (!class_check_size(class)) {
+            array_push(fc->class_size_checks, class);
+        }
     }
+
+    fc->error_class_info = prev_error_class_info;
 }
