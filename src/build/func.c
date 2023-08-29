@@ -54,6 +54,34 @@ void fcall_type_check(Fc *fc, Value *on, Array *values) {
     }
 }
 
+Value *func_arg_get_value(Fc *fc, Arg *arg) {
+    //
+    if (arg->value) {
+        Value *res = al(fc->alc, sizeof(Value));
+        Value *default_val = arg->value;
+        *res = *default_val;
+        return res;
+    }
+    if (arg->value_chunk) {
+        if (arg->parsing_value) {
+            sprintf(fc->sbuf, "Class property has an infinite recursive value definition");
+            fc_error(fc);
+        }
+        arg->parsing_value = true;
+
+        Chunk original;
+        original = *fc->chunk;
+        *fc->chunk = *arg->value_chunk;
+        Value *res = read_value(fc, fc->alc, arg->value_chunk_scope, false, 0, false);
+        *fc->chunk = original;
+
+        arg->parsing_value = false;
+        arg->value = res;
+        return res;
+    }
+    return NULL;
+}
+
 void func_make_arg_decls(Func *func) {
     //
     Allocator *alc = func->fc->alc;

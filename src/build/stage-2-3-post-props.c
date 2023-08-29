@@ -122,5 +122,6 @@ void stage_2_3_circular(Build *b, Class *class) {
     if (circular) {
         class->is_circular = true;
         class->track_ownership = true;
+        // printf("circular: %s\n", class->dname);
     }
 }

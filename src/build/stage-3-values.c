@@ -18,9 +18,6 @@ void stage_3(Fc *fc) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
             continue;
-        if (b->verbose > 2) {
-            printf("> Read class values: %s\n", class->dname);
-        }
         stage_3_class(fc, class);
     }
     for (int i = 0; i < fc->funcs->length; i++) {
@@ -37,6 +34,10 @@ void stage_3(Fc *fc) {
 
 void stage_3_class(Fc *fc, Class *class) {
 
+    if (fc->b->verbose > 2) {
+        printf("> Read class values: %s\n", class->dname);
+    }
+
     Allocator *alc = fc->alc;
     Map *props = class->props;
     for (int i = 0; i < props->keys->length; i++) {
@@ -46,7 +47,7 @@ void stage_3_class(Fc *fc, Class *class) {
         if (!chunk)
             continue;
 
-        fc->chunk = chunk;
+        *fc->chunk = *chunk;
 
         Value *val = read_value(fc, alc, class->scope, false, 0, false);
         val = try_convert(fc, alc, val, prop->type);

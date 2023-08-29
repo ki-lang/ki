@@ -401,10 +401,12 @@ struct Arg {
     char *name;
     Type *type;
     Value *value;
+    Scope *value_chunk_scope;
     Chunk *value_chunk;
     Chunk *type_chunk;
     Decl *decl;
     bool is_mut;
+    bool parsing_value;
 };
 struct UsageLine {
     Decl *decl;

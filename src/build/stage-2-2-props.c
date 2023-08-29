@@ -13,7 +13,7 @@ void stage_2_2(Fc *fc) {
         if (class->is_generic_base)
             continue;
 
-        fc->chunk = class->chunk_body;
+        *fc->chunk = *class->chunk_body;
         stage_2_2_class_read_props(fc, class, false, false);
     }
 

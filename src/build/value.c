@@ -1602,7 +1602,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         while (index < argc) {
             Arg *arg = array_get_index(args, index);
 
-            Value *val = arg->value;
+            Value *val = func_arg_get_value(fc, arg);
             if (!val)
                 break;
 

@@ -231,6 +231,7 @@ void scope_add_defer_token(Allocator *alc, Scope *scope, Token *token);
 Func *func_init(Allocator *alc, Build *b);
 void fcall_type_check(Fc *fc, Value *on, Array *values);
 void func_make_arg_decls(Func *func);
+Value *func_arg_get_value(Fc *fc, Arg *arg);
 
 // Class
 Class *class_init(Allocator *alc);

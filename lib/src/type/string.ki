@@ -5,7 +5,7 @@
 use mem;
 use os;
 
-class String type:ptr track rc {
+class String type:ptr rc {
 
 	/////////////////////
 	// Core

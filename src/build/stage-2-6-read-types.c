@@ -11,12 +11,6 @@ void stage_2_6(Fc *fc) {
         printf("# Stage 2.1 : Read aliasses : %s\n", fc->path_ki);
     }
 
-    for (int i = 0; i < fc->classes->length; i++) {
-        Class *class = array_get_index(fc->classes, i);
-        if (class->is_generic_base)
-            continue;
-        stage_2_6_class_default_functions(fc, class);
-    }
     for (int i = 0; i < fc->funcs->length; i++) {
         Func *func = array_get_index(fc->funcs, i);
         if (!func->chunk_args)
@@ -36,6 +30,12 @@ void stage_2_6(Fc *fc) {
         }
         g->type = type;
     }
+    for (int i = 0; i < fc->classes->length; i++) {
+        Class *class = array_get_index(fc->classes, i);
+        if (class->is_generic_base)
+            continue;
+        stage_2_6_class_default_functions(fc, class);
+    }
 
     chain_add(b->stage_3, fc);
 }
@@ -50,6 +50,8 @@ void stage_2_6_class_functions(Fc *fc, Class *class) {
         Func *func = array_get_index(funcs, i);
         stage_2_6_func(fc, func);
     }
+
+    stage_2_6_class_default_functions(fc, class);
 }
 
 void stage_2_6_func(Fc *fc, Func *func) {
@@ -102,6 +104,7 @@ void stage_2_6_func(Fc *fc, Func *func) {
 
             Arg *arg = arg_init(alc, name, type);
             arg->value_chunk = val_chunk;
+            arg->value_chunk_scope = func->scope;
             arg->type_chunk = type_chunk;
 
             array_push(func->args, arg);
