@@ -309,7 +309,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         fc_error(fc);
     }
 
-    if (type_tracks_ownership(type)) {
+    if (type_tracks_ownership(type) && type->shared_ref == false) {
         type->shared_ref = ref;
     }
     if (type_is_rc(type)) {

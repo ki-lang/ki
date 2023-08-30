@@ -37,10 +37,10 @@ void stage_2_4_class_props_update(Fc *fc, Class *class) {
         if (!pclass) {
             continue;
         }
-        if (!pclass->is_circular && !pclass->track_ownership) {
-            type->shared_ref = false;
-        }
-        if (class->is_rc && type->shared_ref) {
+        // if (!pclass->is_circular && !pclass->track_ownership) {
+        //     type->shared_ref = false;
+        // }
+        if (class->is_rc && type->shared_ref && pclass->is_circular) {
             Array *prop_names = array_make(b->alc, 10);
             stage_2_3_circular_find(class, pclass, prop_names);
             // Circular error
