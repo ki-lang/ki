@@ -98,8 +98,8 @@ Value *vgen_class_pa(Allocator *alc, Scope *scope, Value *on, ClassProp *prop) {
     if (scope && type_tracks_ownership(prop_type)) {
 
         item->cache_llvm_val = true;
-        if (prop_type->class && prop_type->class->is_circular)
-            prop_type->shared_ref = true;
+        // if (prop_type->class && prop_type->class->is_circular)
+        prop_type->shared_ref = true;
 
         Value *from = vgen_ir_from(alc, res);
         item->deref_token = tgen_ref_change_exec(alc, scope, from, -1);

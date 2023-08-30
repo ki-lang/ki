@@ -132,6 +132,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             sprintf(fc->sbuf, "The first argument in '@swap' must be assignable. e.g. a variable");
             fc_error(fc);
         }
+        value_disable_upref_deref(var);
+
         if (var->type == v_decl) {
             Decl *decl = var->item;
             if (!decl->is_mut) {
@@ -1754,6 +1756,7 @@ void value_disable_upref_deref(Value *val) {
             exec = pa->upref_token->item;
             exec->enable = false;
         }
+        val->rett = pa->prop->type;
     }
     if (val->type == v_array_item) {
         VArrayItem *ai = val->item;

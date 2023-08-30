@@ -214,7 +214,7 @@ void stage_1_class(Fc *fc, bool is_struct) {
     class->scope = scope_init(fc->alc, sct_class, fc->scope, false);
     class->is_struct = is_struct;
     class->is_rc = !is_struct;
-    class->track_ownership = false;
+    class->track_ownership = !is_struct;
     class->def_chunk = def_chunk;
 
     array_push(fc->classes, class);
@@ -265,6 +265,7 @@ void stage_1_class(Fc *fc, bool is_struct) {
     while (strcmp(token, "{") != 0) {
         if (strcmp(token, "type") == 0) {
             class->is_rc = false;
+            class->track_ownership = false;
             tok_expect(fc, ":", true, false);
             tok(fc, token, true, false);
             if (strcmp(token, "ptr") == 0) {

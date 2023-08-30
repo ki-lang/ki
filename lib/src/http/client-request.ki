@@ -82,10 +82,12 @@ class ClientRequest {
 			}
 		}
 
+		let headers = @swap res.headers with Map[String]{};
+
 		return ClientResponse {
 			status: res.status,
-			headers: res.headers,
-			body: res.body,
+			headers: @swap res.headers with Map[String]{},
+			body: @swap res.body with "",
 		};
 	}
 

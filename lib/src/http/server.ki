@@ -245,10 +245,10 @@ class Server {
 
             let req = Request{
                 http_con: &http_con,
-                headers: res.headers,
-                method: res.method,
-                path: res.path,
-                body: res.body,
+			    headers: @swap res.headers with Map[String]{},
+			    method: @swap res.method with "",
+			    body: @swap res.body with "",
+			    path: @swap res.path with "",
             };
             let resp = handler(req);
 
