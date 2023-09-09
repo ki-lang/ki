@@ -1,9 +1,9 @@
 
 #include "../all.h"
 
-void stage_6_func(Fc *fc, Func *func);
-void stage_6_gen_main(Fc *fc);
-void stage_6_gen_test_main(Fc *fc);
+void stage_4_1_func(Fc *fc, Func *func);
+void stage_4_1_gen_main(Fc *fc);
+void stage_4_1_gen_test_main(Fc *fc);
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace);
 void token_return(Allocator *alc, Fc *fc, Scope *scope);
@@ -12,22 +12,22 @@ void token_if(Allocator *alc, Fc *fc, Scope *scope);
 void token_while(Allocator *alc, Fc *fc, Scope *scope);
 void token_each(Allocator *alc, Fc *fc, Scope *scope);
 
-void stage_6(Fc *fc) {
+void stage_4_1(Fc *fc) {
     //
     if (fc->is_header)
         return;
 
     Build *b = fc->b;
     if (b->verbose > 2) {
-        printf("# Stage 6 : AST : %s\n", fc->path_ki);
+        printf("# Stage 4.1 : AST : %s\n", fc->path_ki);
     }
 
     if ((b->main_func && fc == b->main_func->fc) || (!b->main_func && !b->main_fc && fc->nsc == b->nsc_main)) {
         b->main_fc = fc;
         if (b->test) {
-            stage_6_gen_test_main(fc);
+            stage_4_1_gen_test_main(fc);
         }
-        stage_6_gen_main(fc);
+        stage_4_1_gen_main(fc);
     }
 
     for (int i = 0; i < fc->funcs->length; i++) {
@@ -37,7 +37,7 @@ void stage_6(Fc *fc) {
         if (b->verbose > 2) {
             printf("> Read func AST: %s\n", func->dname);
         }
-        stage_6_func(fc, func);
+        stage_4_1_func(fc, func);
     }
 
     if (b->lsp) {
@@ -46,10 +46,10 @@ void stage_6(Fc *fc) {
     }
 
     // Write IR
-    stage_7(fc);
+    stage_4_2(fc);
 }
 
-void stage_6_func(Fc *fc, Func *func) {
+void stage_4_1_func(Fc *fc, Func *func) {
     //
     fc->error_func_info = func;
 
@@ -800,7 +800,7 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     array_push(scope->ast, tgen_each(alc, on, sub, decl_k, decl_v, line, col));
 }
 
-void stage_6_gen_main(Fc *fc) {
+void stage_4_1_gen_main(Fc *fc) {
     //
     Build *b = fc->b;
     Allocator *alc = fc->alc;
@@ -901,7 +901,7 @@ void stage_6_gen_main(Fc *fc) {
     read_ast(fc, scope, false);
 }
 
-void stage_6_gen_test_main(Fc *fc) {
+void stage_4_1_gen_test_main(Fc *fc) {
     //
     Allocator *alc = fc->alc_ast;
     Func *func = func_init(alc, fc->b);

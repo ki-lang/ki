@@ -70,6 +70,7 @@ struct Chain {
     ChainItem *first;
     ChainItem *last;
     ChainItem *current;
+    void (*func)(Fc *);
 };
 struct ChainItem {
     Fc *item;
@@ -117,22 +118,20 @@ struct Build {
     Str *str_buf_io;
     Array *tests;
     //
-    Chain *read_ki_file;
-    Chain *write_ir;
     Chain *stage_1;
-    Chain *stage_2;
     Chain *stage_2_1;
+    Chain *stage_2_2;
+    Chain *stage_2_3;
+    Chain *stage_2_4;
+    Chain *stage_2_5;
+    Chain *stage_2_6;
     Chain *stage_3;
-    Chain *stage_4;
-    Chain *stage_5;
-    Chain *stage_6;
+    Chain *stage_4_1;
     //
     Type *type_void;
     // LSP
     LspData *lsp;
     //
-    int event_count;
-    int events_done;
     int ptr_size;
     int verbose;
     int LOC;
@@ -184,6 +183,7 @@ struct Fc {
     void *win_file_handle;
     long int mod_time;
     //
+    int stage_completed;
     int test_counter;
     //
     bool is_header;
@@ -401,10 +401,12 @@ struct Arg {
     char *name;
     Type *type;
     Value *value;
+    Scope *value_chunk_scope;
     Chunk *value_chunk;
     Chunk *type_chunk;
     Decl *decl;
     bool is_mut;
+    bool parsing_value;
 };
 struct UsageLine {
     Decl *decl;

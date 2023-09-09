@@ -124,12 +124,11 @@ GithubPkg *github_parse_url(Allocator *alc, char *name);
 char *github_full_commit_hash(GithubPkg *ghub, char *shash);
 
 // Chain
-Chain *chain_make(Allocator *alc);
+Chain *chain_make(Allocator *alc, void (*func)(Fc *));
 Fc *chain_get(Chain *chain);
 void chain_add(Chain *chain, Fc *item);
 
 // Loop
-void *io_loop(void *build);
 void compile_loop(Build *b, int max_stage);
 
 // Pkc
@@ -149,22 +148,33 @@ void fc_error(Fc *fc);
 void fc_update_cache(Fc *fc);
 
 //
-void stage_1(Fc *);
-void stage_2(Fc *);
-void stage_2_class(Fc *fc, Class *class);
-void stage_2_class_defaults(Fc *fc, Class *class);
-void stage_2_class_type_checks(Fc *fc, Class *class);
-void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend);
-void stage_2_func(Fc *fc, Func *func);
-void stage_2_1(Fc *fc);
-void stage_3(Fc *);
-void stage_3_circular(Build *b, Class *class);
-void stage_3_shared_circular_refs(Build *b, Class *class);
-void stage_4(Fc *);
-void stage_5(Fc *);
-void stage_6(Fc *);
-void stage_7(Fc *);
-void stage_8(Build *b);
+void stage_1(Fc* fc);
+void stage_2_1(Fc* fc);
+void stage_2_2(Fc* fc);
+void stage_2_3(Fc* fc);
+void stage_2_4(Fc* fc);
+void stage_2_5(Fc* fc);
+void stage_2_6(Fc* fc);
+void stage_3(Fc* fc);
+void stage_4_1(Fc* fc);
+void stage_4_2(Fc* fc);
+void stage_5(Build *b);
+
+void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_extend);
+bool stage_2_3_circular_find(Class *find, Class *in, Array *prop_names);
+void stage_2_3_circular(Build *b, Class *class);
+void stage_2_4_class_props_update(Fc *fc, Class *class);
+void stage_2_6_func(Fc *fc, Func *func);
+void stage_2_6_class_functions(Fc *fc, Class *class);
+void stage_3_class(Fc *fc, Class *class);
+
+// void stage_2_class_type_checks(Fc *fc, Class *class);
+// void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend);
+// void stage_2_func(Fc *fc, Func *func);
+// void stage_2_1(Fc *fc);
+// void stage_3(Fc *);
+// void stage_2_3_circular(Build *b, Class *class);
+// void stage_2_3_shared_circular_refs(Build *b, Class *class);
 
 // Read
 Chunk *chunk_init(Allocator *alc, Fc *fc);
@@ -221,6 +231,7 @@ void scope_add_defer_token(Allocator *alc, Scope *scope, Token *token);
 Func *func_init(Allocator *alc, Build *b);
 void fcall_type_check(Fc *fc, Value *on, Array *values);
 void func_make_arg_decls(Func *func);
+Value *func_arg_get_value(Fc *fc, Arg *arg);
 
 // Class
 Class *class_init(Allocator *alc);
@@ -253,6 +264,7 @@ char *type_to_str(Type *t, char *res, bool simple);
 void type_check(Fc *fc, Type *t1, Type *t2);
 Type *type_clone(Allocator *alc, Type *type);
 bool type_tracks_ownership(Type *type);
+bool type_tracks_usage(Type *type);
 bool type_is_rc(Type *type);
 bool type_allowed_async(Type *type, bool recursive);
 Type *type_get_inline(Allocator *alc, Type *type);

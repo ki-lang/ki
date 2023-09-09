@@ -1,41 +1,42 @@
 
 #include "../all.h"
 
-void stage_5_class(Fc *fc, Class *class);
-void stage_5_func(Fc *fc, Func *func);
+void stage_3_class(Fc *fc, Class *class);
+void stage_3_func(Fc *fc, Func *func);
 
 void class_generate_free(Class *class);
 void class_generate_deref_props(Class *class);
 
-void stage_5(Fc *fc) {
+void stage_3(Fc *fc) {
     //
     Build *b = fc->b;
     if (b->verbose > 2) {
-        printf("# Stage 5 : Read values : %s\n", fc->path_ki);
+        printf("# Stage 3 : Read values : %s\n", fc->path_ki);
     }
 
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
             continue;
-        if (b->verbose > 2) {
-            printf("> Read class values: %s\n", class->dname);
-        }
-        stage_5_class(fc, class);
+        stage_3_class(fc, class);
     }
     for (int i = 0; i < fc->funcs->length; i++) {
         Func *func = array_get_index(fc->funcs, i);
         if (b->verbose > 2) {
             printf("> Read func values: %s\n", func->dname);
         }
-        stage_5_func(fc, func);
+        stage_3_func(fc, func);
     }
 
     //
-    chain_add(b->stage_6, fc);
+    chain_add(b->stage_4_1, fc);
 }
 
-void stage_5_class(Fc *fc, Class *class) {
+void stage_3_class(Fc *fc, Class *class) {
+
+    if (fc->b->verbose > 2) {
+        printf("> Read class values: %s\n", class->dname);
+    }
 
     Allocator *alc = fc->alc;
     Map *props = class->props;
@@ -46,7 +47,7 @@ void stage_5_class(Fc *fc, Class *class) {
         if (!chunk)
             continue;
 
-        fc->chunk = chunk;
+        *fc->chunk = *chunk;
 
         Value *val = read_value(fc, alc, class->scope, false, 0, false);
         val = try_convert(fc, alc, val, prop->type);
@@ -63,7 +64,7 @@ void stage_5_class(Fc *fc, Class *class) {
     }
 }
 
-void stage_5_func(Fc *fc, Func *func) {
+void stage_3_func(Fc *fc, Func *func) {
     //
     Allocator *alc = fc->alc;
     Map *args = func->args_by_name;

@@ -13,7 +13,7 @@ class SocketTCP async {
 	- addrinfo: sys.cstruct_addrinfo;
 	- connection: ?Connection = null;
 
-	static fn new(host: String, port: u16, blocking: bool = true) SocketTCP !os_socket_create !invalid_host {
+	static fn new(host: *String, port: u16, blocking: bool = true) SocketTCP !os_socket_create !invalid_host {
 
         #if OS == win
 		os:WSA_init();
@@ -63,7 +63,7 @@ class SocketTCP async {
 		#end
 
 		return SocketTCP{
-			host: host,
+			host: host + "",
 			port: port,
 			fd: fd,
 			blocking: blocking,
@@ -71,7 +71,7 @@ class SocketTCP async {
 		};
     }
 
-	fn connect() Connection !connection_failed {
+	fn connect() &Connection !connection_failed {
 
 		let c = this.connection ?? {{
 			let c = Connection {

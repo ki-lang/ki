@@ -91,10 +91,10 @@ void stage_1(Fc *fc) {
             stage_1_alias(fc, alias_id);
             continue;
         }
-        if (strcmp(token, "type_alias") == 0) {
-            stage_1_alias(fc, alias_type);
-            continue;
-        }
+        // if (strcmp(token, "type_alias") == 0) {
+        //     stage_1_alias(fc, alias_type);
+        //     continue;
+        // }
         if (strcmp(token, "test") == 0) {
             stage_1_test(fc);
             continue;
@@ -111,7 +111,7 @@ void stage_1(Fc *fc) {
     b->LOC += fc->chunk->line;
 
     //
-    chain_add(b->stage_2, fc);
+    chain_add(b->stage_2_1, fc);
 }
 
 void stage_1_func(Fc *fc) {
@@ -264,8 +264,8 @@ void stage_1_class(Fc *fc, bool is_struct) {
     bool track = false;
     while (strcmp(token, "{") != 0) {
         if (strcmp(token, "type") == 0) {
-            class->track_ownership = false;
             class->is_rc = false;
+            class->track_ownership = false;
             tok_expect(fc, ":", true, false);
             tok(fc, token, true, false);
             if (strcmp(token, "ptr") == 0) {
@@ -505,7 +505,7 @@ void stage_1_header(Fc *fc) {
     bool found = false;
     for (int i = 0; i < dirs->length; i++) {
         char *dir = array_get_index(dirs, i);
-        sprintf(fc->sbuf, "%s/%s.kh", dir, fn);
+        sprintf(fc->sbuf, "%s%s.kh", dir, fn);
 
         if (file_exists(fc->sbuf)) {
             char *path = dups(fc->alc, fc->sbuf);

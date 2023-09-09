@@ -309,9 +309,8 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         fc_error(fc);
     }
 
-    if (type_tracks_ownership(type)) {
-        if (type->class && type->class->is_circular)
-            type->shared_ref = ref;
+    if (type_tracks_ownership(type) && type->shared_ref == false) {
+        type->shared_ref = ref;
     }
     if (type_is_rc(type)) {
         type->borrow = borrow;
@@ -625,11 +624,14 @@ void type_check(Fc *fc, Type *t1, Type *t2) {
     }
 }
 
+bool type_tracks_usage(Type *type) {
+    //
+    return type_tracks_ownership(type) || type_is_rc(type);
+}
+
 bool type_is_rc(Type *type) {
-    Class *class = type->class;
-    if (!class)
-        return false;
-    return class->is_rc;
+    //
+    return type->class && type->class->is_rc;
 }
 
 bool type_tracks_ownership(Type *type) {

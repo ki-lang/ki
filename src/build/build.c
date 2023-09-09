@@ -243,8 +243,6 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     b->ptr_size = ptr_size;
     b->cache_dir = cache_dir;
     //
-    b->event_count = 0;
-    b->events_done = 0;
     b->verbose = verbose;
     //
     b->packages = array_make(alc, 100);
@@ -261,15 +259,15 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     b->str_buf_io = str_make(alc_io, 10000);
     b->tests = array_make(alc, 20);
     //
-    b->read_ki_file = chain_make(alc);
-    b->write_ir = chain_make(alc);
-    b->stage_1 = chain_make(alc);
-    b->stage_2 = chain_make(alc);
-    b->stage_2_1 = chain_make(alc);
-    b->stage_3 = chain_make(alc);
-    b->stage_4 = chain_make(alc);
-    b->stage_5 = chain_make(alc);
-    b->stage_6 = chain_make(alc);
+    b->stage_1 = chain_make(alc, stage_1);
+    b->stage_2_1 = chain_make(alc, stage_2_1);
+    b->stage_2_2 = chain_make(alc, stage_2_2);
+    b->stage_2_3 = chain_make(alc, stage_2_3);
+    b->stage_2_4 = chain_make(alc, stage_2_4);
+    b->stage_2_5 = chain_make(alc, stage_2_5);
+    b->stage_2_6 = chain_make(alc, stage_2_6);
+    b->stage_3 = chain_make(alc, stage_3);
+    b->stage_4_1 = chain_make(alc, stage_4_1);
     //
     b->ir_ready = false;
     b->optimize = optimize;
@@ -333,7 +331,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
         exit(0);
     }
 
-    compile_loop(b, 6); // Complete all other stages
+    compile_loop(b, 0); // Complete all other stages
 
     if (b->lsp) {
         build_end(b, 0);
@@ -362,7 +360,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     }
 
     // Linker stage
-    stage_8(b);
+    stage_5(b);
 
 #ifdef WIN32
     QueryPerformanceCounter(&end);

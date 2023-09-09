@@ -113,8 +113,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         if (on->rett->strict_ownership) {
             Type *rett = type_clone(alc, on->rett);
             rett->strict_ownership = false;
-            if (rett->class && rett->class->is_circular)
-                rett->shared_ref = true;
+            // if (rett->class && rett->class->is_circular)
+            rett->shared_ref = true;
             rett->borrow = false;
             on->rett = rett;
         }
@@ -132,6 +132,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             sprintf(fc->sbuf, "The first argument in '@swap' must be assignable. e.g. a variable");
             fc_error(fc);
         }
+        value_disable_upref_deref(var);
+
         if (var->type == v_decl) {
             Decl *decl = var->item;
             if (!decl->is_mut) {
@@ -920,8 +922,8 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
 
         if (scope && type_tracks_ownership(type)) {
             Type *rett = type_clone(alc, type);
-            if (rett->class && rett->class->is_circular)
-                rett->shared_ref = true;
+            // if (rett->class && rett->class->is_circular)
+            rett->shared_ref = true;
             res->rett = rett;
 
             Value *from = vgen_ir_from(alc, res);
@@ -1602,7 +1604,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         while (index < argc) {
             Arg *arg = array_get_index(args, index);
 
-            Value *val = arg->value;
+            Value *val = func_arg_get_value(fc, arg);
             if (!val)
                 break;
 
@@ -1754,6 +1756,7 @@ void value_disable_upref_deref(Value *val) {
             exec = pa->upref_token->item;
             exec->enable = false;
         }
+        val->rett = pa->prop->type;
     }
     if (val->type == v_array_item) {
         VArrayItem *ai = val->item;
