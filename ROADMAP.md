@@ -6,7 +6,6 @@ Feature todo list in order:
 ```
 - package platform: pkg.ki-lang.dev
 - fix correctness of shared reference types
-- rename '@as' to 'as'
 - http methods + data encoding
 
 -- release version 0.1.0

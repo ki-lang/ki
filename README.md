@@ -5,7 +5,13 @@
 </p>
 </div>
 
-# Ki
+# Ki (Discontinued)
+
+We decided not to continue the development of ki because of how the programming world works. Ki was built to be a language that had all the good stuff, but we never saw memory management as an obstical for this ideal language. We wanted automatic memory management without garbage collection and no memory leaks. Turns out, the only way to do this, is using the ownership model. Which we did and everything worked perfect. But ownership comes with complexity and we realised we were going to be too similar to Rust. Which was fine, but.. After looking at many online discussions, we understood that even Rust has problems with making people adopt the language. We know it's popular, but how many companies are using it? Very few. So we came to the realisation that if we are too similar to Rust, the chance of ki being used in the real world would almost be zero. It seems like companies or developers in general prefer to use the language that they already know, even if that language has a mountain of problems. Therefor we decided it would be better for us to spend our energy on something else.
+
+That being said, if we could ever find a new memory management technique that has all our requirements while not introducing complexity, we would certainly look into starting a new project. It would have such an edge over other languages that people might get interested. Any how. This repository will remain public for the people who wish to know how a compiler is built.
+
+---
 
 [Website](https://ki-lang.dev) | [Documentation](https://ki-lang.dev/docs) | [Discord](https://discord.gg/T7pR6fm6SC)
 
