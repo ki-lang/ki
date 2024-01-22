@@ -32,7 +32,7 @@ class Connection {
         this.out_pos = 0;
 	}
 
-	fn send_file(stream: fs:FileStream, filename: *?String) void {
+	fn send_file(stream: fs:FileStream, filename: &?String) void {
 
 		let out = this.out_buf;
 		let path = stream.path;
@@ -53,7 +53,7 @@ class Connection {
 		this.send_response_bytes();
 	}
 
-	fn respond(resp: *Response) void {
+	fn respond(resp: &Response) void {
 		let filepath = resp.filepath;
 		if @isset(filepath) {
 			let stream = fs:open(filepath + "", true, false) !! {

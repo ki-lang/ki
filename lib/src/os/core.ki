@@ -1,13 +1,13 @@
 
 header "sys" as sys;
 
-fn system(cmd: *String) i32 {
+fn system(cmd: &String) i32 {
 	let ccmd = cmd.to_c_string();
 	let code = sys.system(ccmd);
 	ccmd.free();
 	return code;
 }
-fn exec(cmd: *String) String !failed {
+fn exec(cmd: &String) String !failed {
 
 	let buf = ByteBuffer.new(1024);
 
@@ -54,7 +54,7 @@ fn sleep_ns(ns: uxx) void {
 	#end
 }
 
-fn !panic(msg: *String) void {
+fn !panic(msg: &String) void {
 	print("PANIC ERROR : ");
 	print(msg);
 	print("\n");

@@ -28,7 +28,7 @@ class Connection {
         this.open = false;
     }
 
-    fn send(buffer: *ByteBuffer) uxx !connection_error !e_again {
+    fn send(buffer: &ByteBuffer) uxx !connection_error !e_again {
 
         if !this.open : throw connection_error;
         if buffer.start_index >= buffer.length : return 0; 
@@ -91,7 +91,7 @@ class Connection {
         return bytes_sent;
     }
 
-    fn recv(buffer: *ByteBuffer) uxx !connection_error !e_again {
+    fn recv(buffer: &ByteBuffer) uxx !connection_error !e_again {
 
         if !this.open : return 0;
 

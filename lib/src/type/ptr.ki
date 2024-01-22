@@ -25,7 +25,7 @@ class ptr type:ptr math async {
         }
     }
 
-    static fn write_string_bytes(adr: ptr, str: *String) void {
+    static fn write_string_bytes(adr: ptr, str: &String) void {
         let data = str.data();
         mem:copy(data, adr, str.bytes());
     }

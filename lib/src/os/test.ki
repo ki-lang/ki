@@ -7,7 +7,7 @@ fn test_expect(passed: bool, expect_success: u32[1], expect_fail: u32[1]) void {
 	}
 }
 
-fn test_print_name(name: *String, passed: bool) void {
+fn test_print_name(name: &String, passed: bool) void {
 	let msg = "> %"{ name };
 	let len = msg.bytes();
 	let chars : u32 = 48;

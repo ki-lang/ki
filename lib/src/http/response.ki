@@ -31,11 +31,11 @@ class Response {
 	static fn error(code: u32) Response {
 		return Response{ status: code };
 	}
-	static fn file(path: *String, filename: ?String  = null) Response {
+	static fn file(path: &String, filename: ?String  = null) Response {
 		return Response{ filepath: path + "", filename: filename };
 	}
 
-	fn compile(buf: *ByteBuffer) void {
+	fn compile(buf: &ByteBuffer) void {
 
 		let len = this.body.bytes();
 

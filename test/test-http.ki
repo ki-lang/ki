@@ -2,7 +2,7 @@
 use ki:os;
 use ki:http;
 
-fn test_http_handler (req: *http:Request) http:Response {
+fn test_http_handler (req: &http:Request) http:Response {
     return http:Response.html("TEST_RESPONSE");
 }
 

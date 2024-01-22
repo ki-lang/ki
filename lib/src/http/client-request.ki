@@ -82,16 +82,16 @@ class ClientRequest {
 			}
 		}
 
-		let headers = @swap res.headers with Map[String]{};
+		let headers = swap(res.headers, Map[String]{});
 
 		return ClientResponse {
 			status: res.status,
-			headers: @swap res.headers with Map[String]{},
-			body: @swap res.body with "",
+			headers: swap(res.headers, Map[String]{}),
+			body: swap(res.body, ""),
 		};
 	}
 
-	- fn get_send_data(parts: *type:Uri) ByteBuffer {
+	- fn get_send_data(parts: &type:Uri) ByteBuffer {
 
 		let len = this.body.bytes();
 		let buf = ByteBuffer.new(len + 256);

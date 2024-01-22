@@ -1,6 +1,6 @@
 
 global g_mimes : ?Map[String];
-fn mime(extension_no_dot: *String) String {
+fn mime(extension_no_dot: &String) String {
 
 	let mimes = g_mimes ?? {{
 		let mimes = Map[String]{};
@@ -81,7 +81,7 @@ fn mime(extension_no_dot: *String) String {
 		mimes.set("3g2", "video/3gpp2");
 		mimes.set("7z", "application/x-7z-compressed");
 
-		let ref = &mimes;
+		let ref = share(mimes);
 		g_mimes = mimes;
 		return ref;
 	}};

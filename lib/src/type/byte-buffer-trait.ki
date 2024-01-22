@@ -24,7 +24,7 @@ trait ByteBufferTrait {
 
 	// Appending
 
-	fn append(buffer: *CLASS) void {
+	fn append(buffer: &CLASS) void {
 		this.append_from_ptr(buffer.data, buffer.length);
 	}
 
@@ -51,13 +51,13 @@ trait ByteBufferTrait {
 		this.length = new_bytes;
 	}
 
-	fn append_str(str: *String) void {
+	fn append_str(str: &String) void {
 		this.append_from_ptr(str.data(), str.bytes());
 	}
 
 	// Compare
 
-	fn eq_str(str: *String) bool {
+	fn eq_str(str: &String) bool {
 		let str_len = str.bytes();
 		let len = this.length;
 		if str_len != len {

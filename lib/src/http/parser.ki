@@ -20,14 +20,14 @@ class ParseResult {
 
 class Parser {
 
-	static fn parse_response(bytes: *ByteBuffer, result: *ParseResult, only_headers: bool = false) !invalid {
+	static fn parse_response(bytes: &ByteBuffer, result: &ParseResult, only_headers: bool = false) !invalid {
 		Parser.parse_bytes(bytes, result, only_headers, false) !! throw invalid;;
 	}
-	static fn parse_request(bytes: *ByteBuffer, result: *ParseResult, only_headers: bool = false) !invalid {
+	static fn parse_request(bytes: &ByteBuffer, result: &ParseResult, only_headers: bool = false) !invalid {
 		Parser.parse_bytes(bytes, result, only_headers, true) !! throw invalid;;
 	}
 
-	- static fn parse_bytes(bytes: *ByteBuffer, result: *ParseResult, only_headers: bool, is_request: bool) !invalid {
+	- static fn parse_bytes(bytes: &ByteBuffer, result: &ParseResult, only_headers: bool, is_request: bool) !invalid {
 
 		// Stage 0. Protocol & status
 		// Stage 1. Headers

@@ -108,8 +108,10 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             fc_error(fc);
         }
         v = vgen_compare(alc, b, on, vgen_vint(alc, 0, type_gen(b, alc, "bool"), true), op_eq);
-    } else if (strcmp(token, "&") == 0) {
+    } else if (strcmp(token, "share") == 0) {
+        tok_expect(fc, "(", true, false);
         Value *on = read_value(fc, alc, scope, false, 1, false);
+        tok_expect(fc, ")", true, true);
         if (on->rett->strict_ownership) {
             Type *rett = type_clone(alc, on->rett);
             rett->strict_ownership = false;
@@ -125,8 +127,8 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         v = vgen_vint(alc, 0, type_gen(b, alc, "bool"), true);
     } else if (strcmp(token, "null") == 0) {
         v = vgen_null(alc, b);
-    } else if (strcmp(token, "@swap") == 0) {
-
+    } else if (strcmp(token, "swap") == 0) {
+        tok_expect(fc, "(", true, false);
         Value *var = read_value(fc, alc, scope, false, 0, false);
         if (!value_is_assignable(var)) {
             sprintf(fc->sbuf, "The first argument in '@swap' must be assignable. e.g. a variable");
@@ -141,13 +143,15 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             }
         }
 
-        tok_expect(fc, "with", false, true);
+        tok_expect(fc, ",", true, true);
 
         Value *with = read_value(fc, alc, scope, false, 0, false);
         with = try_convert(fc, alc, with, var->rett);
         type_check(fc, var->rett, with->rett);
 
         with = usage_move_value(alc, fc, scope, with, var->rett);
+
+        tok_expect(fc, ")", true, true);
 
         v = vgen_swap(alc, var, with);
 

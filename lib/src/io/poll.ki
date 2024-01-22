@@ -33,9 +33,9 @@ class Poll[T] {
         #end
     }
 
-    fn wait(timeout: i32 = -1) Array[&Listener[T]] {
+    fn wait(timeout: i32 = -1) Array[+Listener[T]] {
 
-        let events = Array[&Listener[T]].new();
+        let events = Array[+Listener[T]].new();
 
         #if OS == linux
         let ebuf = this.epoll_buffer;
@@ -48,8 +48,8 @@ class Poll[T] {
         let i = 0#uxx;
         while i < count {
             let ev = (ebuf + (i * @sizeof_class(sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event;
-            let lsn = ev.data @as *Listener[T];
-            let add = &lsn;
+            let lsn = ev.data @as &Listener[T];
+            let add = share(lsn);
             lsn.set_events(ev.events);
             if lsn.has_stopped_the_connection() {
                 this.listeners.remove_item(lsn);
@@ -84,8 +84,8 @@ class Poll[T] {
                 i++;
                 continue;
             }
-            let lsn = @ptrv(by_index, ptr, i) @as *Listener[T];
-            let add = &lsn;
+            let lsn = @ptrv(by_index, ptr, i) @as &Listener[T];
+            let add = share(lsn);
             lsn.set_events(pollfd.revents);
             if lsn.has_stopped_the_connection() {
                 this.listeners.remove_item(lsn);
@@ -99,7 +99,7 @@ class Poll[T] {
         return events;
     }
 
-    fn create_listener(fd: i32, data: T) &Listener[T] {
+    fn create_listener(fd: i32, data: T) +Listener[T] {
         let lsn = Listener[T] {
             epoll_fd: this.epoll_fd,
             fd: fd,
@@ -128,7 +128,7 @@ class Poll[T] {
         #end
 
         lsn.update_epoll();
-        let result = &lsn;
+        let result = share(lsn);
         this.listeners.push(lsn);
 
         return result;

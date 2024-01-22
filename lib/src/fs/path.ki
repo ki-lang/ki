@@ -9,7 +9,7 @@ global EXE_DIR : ?String;
 class Path {
 	parts: Array[String];
 
-	static fn new(path: *String) Path {
+	static fn new(path: &String) Path {
 		return Path{
 			parts: path.split("/"),
 		};
@@ -44,7 +44,7 @@ class Path {
 	//}
 }
 
-fn exe_dir() &String {
+fn exe_dir() +String {
 	let res = EXE_DIR ?! {
 		let dir = dir_of(exe_path());
 		EXE_DIR = dir;
@@ -53,7 +53,7 @@ fn exe_dir() &String {
 	return res;
 }
 
-fn exe_path() &String {
+fn exe_path() +String {
 	let path = EXE_PATH ?! {
 		let str = String.make_empty(sys.OS.PATHMAX);
 		let data = str.data();
@@ -66,14 +66,14 @@ fn exe_path() &String {
 		mem:free(link);
 		#end
 
-		let ref = &str;
+		let ref = share(str);
 		EXE_PATH = str;
 		return ref;
 	};
 	return path;
 }
 
-fn ext(path: *String) String {
+fn ext(path: &String) String {
 	let len = path.bytes();
 	let start = len;
 	let found = false;
@@ -100,7 +100,7 @@ fn ext(path: *String) String {
 // e.g. /etc -> /
 // e.g. "" -> ""
 // e.g. etc -> etc
-fn dir_of(path: *String) String {
+fn dir_of(path: &String) String {
 	let end = path.bytes() - 1;
 	while(end > 0){
 		end--;
@@ -119,7 +119,7 @@ fn dir_of(path: *String) String {
 // e.g. /etc/nginx/ -> nginx
 // e.g. / -> ""
 // e.g. "" -> ""
-fn basename(path: *String) String {
+fn basename(path: &String) String {
 	let len = path.bytes();
 	let start = len;
 	while(start > 0){

@@ -40,12 +40,12 @@ fn recv(fd: SOCKET, buf: ptr, len: i32, flags: i32) i32;
 fn send(fd: SOCKET, buf: ptr, len: i32, flags: i32) i32;
 
 // Files
-fn _stat(path: c_string, stat_buf: *cstruct_stat) i32;
-fn fstat(fd: i32, stat_buf: *cstruct_stat) i32;
-fn lstat(path: c_string, stat_buf: *cstruct_stat) i32;
+fn _stat(path: c_string, stat_buf: &cstruct_stat) i32;
+fn fstat(fd: i32, stat_buf: &cstruct_stat) i32;
+fn lstat(path: c_string, stat_buf: &cstruct_stat) i32;
 
-fn FindFirstFileA(lpFileName: c_string, lpFindFileData: *WIN32_FIND_DATAA) ptr;
-fn FindNextFileA(hFindFile: ptr, lpFindFileData: *WIN32_FIND_DATAA) bool;
+fn FindFirstFileA(lpFileName: c_string, lpFindFileData: &WIN32_FIND_DATAA) ptr;
+fn FindNextFileA(hFindFile: ptr, lpFindFileData: &WIN32_FIND_DATAA) bool;
 fn FindClose(hFindFile: ptr) bool;
 
 // OS
@@ -63,40 +63,40 @@ fn closesocket(fd: SOCKET) i32;
 fn ioctlsocket(fd: SOCKET, cmd: ixx, arg: ptr) i32;
 
 fn pipe(pipefd: i32[2]) i32;
-//int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict exceptfds, struct timeval *restrict timeout);
+//int select(int nfds, fd_set &restrict readfds, fd_set &restrict writefds, fd_set &restrict exceptfds, struct timeval &restrict timeout);
 fn dup(old_fd: i32) i32;
 fn dup2(old_fd: i32, new_fd: i32) i32;
 
 fn socket(domain: i32, type: i32, protocol: i32) SOCKET;
-fn connect(sockfd: SOCKET, addr: *cstruct_sockaddr, addrlen: i32) i32;
-fn accept(sockfd: SOCKET, addr: *?cstruct_sockaddr, addrlen: ?u32[1]) i32;
-//fn accept4(sockfd: i32, addr: *?cstruct_sockaddr, addrlen: ?u32[1], flags: i32) i32;
+fn connect(sockfd: SOCKET, addr: &cstruct_sockaddr, addrlen: i32) i32;
+fn accept(sockfd: SOCKET, addr: &?cstruct_sockaddr, addrlen: ?u32[1]) i32;
+//fn accept4(sockfd: i32, addr: &?cstruct_sockaddr, addrlen: ?u32[1], flags: i32) i32;
 fn shutdown(sockfd: SOCKET, how: i32) i32;
-fn bind(sockfd: SOCKET, addr: *cstruct_sockaddr, addrlen: i32) i32;
+fn bind(sockfd: SOCKET, addr: &cstruct_sockaddr, addrlen: i32) i32;
 fn listen(sockfd: SOCKET, backlog: i32) i32;
 
 fn getsockopt(sockfd: SOCKET, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
 fn setsockopt(sockfd: SOCKET, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
-fn getaddrinfo(host: c_string, port: c_string, hints: *cstruct_addrinfo, res: *(?cstruct_addrinfo)[1]) i32;
+fn getaddrinfo(host: c_string, port: c_string, hints: &cstruct_addrinfo, res: *(?cstruct_addrinfo)[1]) i32;
 fn freeaddrinfo(info: cstruct_addrinfo) i32;
 
-//int clone(int (*fn)(void *), void *stack, int flags, void *arg, .../* pid_t *parent_tid, void *tls, pid_t *child_tid */ );
+//int clone(int (&fn)(void *), void &stack, int flags, void &arg, .../* pid_t &parent_tid, void &tls, pid_t &child_tid */ );
 fn fork() i32;
 fn vfork() i32;
 
-fn execve(pathname: c_string, argv: *c_string[unsafe], envp: *c_string[unsafe]) i32;
+fn execve(pathname: c_string, argv: &c_string[unsafe], envp: &c_string[unsafe]) i32;
 
-//fn wait3(wstatus: i32[1], options: i32, struct rusage *rusage) i32;
-//fn wait4(pid: i32, wstatus: i32[1], options: i32, struct rusage *rusage) i32;
+//fn wait3(wstatus: i32[1], options: i32, struct rusage &rusage) i32;
+//fn wait4(pid: i32, wstatus: i32[1], options: i32, struct rusage &rusage) i32;
 
 fn kill(pid: i32, sig: i32) i32;
-//fn uname(struct utsname *buf) i32;
+//fn uname(struct utsname &buf) i32;
 
 //int fcntl(int fd, int cmd, ... /* arg */ );
 
 fn getcwd(buf: c_string, size: uxx) c_string;
-//char *getwd(char *buf);
-//char *get_current_dir_name();
+//char &getwd(char &buf);
+//char &get_current_dir_name();
 //int chdir(path: c_string);
 //int fchdir(int fd);
 
@@ -116,11 +116,11 @@ fn lchown(pathname: c_string, owner: u32, group: u32) i32;
 
 fn umask(mask: u32) u32;
 
-fn gettimeofday(tv: *cstruct_timeval, tz: *cstruct_timezone) i32;
-fn settimeofday(tv: *cstruct_timeval, tz: *cstruct_timezone) i32;
-//time_t time(time_t *tloc);
+fn gettimeofday(tv: &cstruct_timeval, tz: &cstruct_timezone) i32;
+fn settimeofday(tv: &cstruct_timeval, tz: &cstruct_timezone) i32;
+//time_t time(time_t &tloc);
 
-//int sysinfo(struct sysinfo *info);
+//int sysinfo(struct sysinfo &info);
 
 fn sync() void;
 

@@ -133,7 +133,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     bool async = false;
 
     bool borrow = false;
-    bool ref = false;
+    bool shared_ref = false;
     bool raw_ptr = false;
     bool weak_ptr = false;
     bool inline_ = false;
@@ -157,11 +157,11 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         }
         weak_ptr = true;
         tok(fc, token, true, true);
-    } else if (strcmp(token, "*") == 0) {
+    } else if (strcmp(token, "&") == 0) {
         borrow = true;
         tok(fc, token, true, false);
-    } else if (strcmp(token, "&") == 0) {
-        ref = true;
+    } else if (strcmp(token, "+") == 0) {
+        shared_ref = true;
         tok(fc, token, true, false);
     }
 
@@ -170,7 +170,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         tok(fc, token, true, false);
     }
 
-    if (inline_ && (borrow || ref || raw_ptr || weak_ptr || nullable)) {
+    if (inline_ && (borrow || shared_ref || raw_ptr || weak_ptr || nullable)) {
         sprintf(fc->sbuf, "You cannot use &/*/? on inline types '.'");
         fc_error(fc);
     }
@@ -310,7 +310,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     }
 
     if (type_tracks_ownership(type) && type->shared_ref == false) {
-        type->shared_ref = ref;
+        type->shared_ref = shared_ref;
     }
     if (type_is_rc(type)) {
         type->borrow = borrow;

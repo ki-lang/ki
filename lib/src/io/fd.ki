@@ -1,7 +1,7 @@
 
 header "sys" as sys;
 
-fn open(path: *String, flags: i32, mode: i32) i32 !open {
+fn open(path: &String, flags: i32, mode: i32) i32 !open {
 	let fd = sys.open(path, flags, mode);
 	if fd < 0 {
 		throw open;
@@ -9,7 +9,7 @@ fn open(path: *String, flags: i32, mode: i32) i32 !open {
 	return fd;
 }
 
-fn write(fd: i32, str: *String) void !failed !again {
+fn write(fd: i32, str: &String) void !failed !again {
 	let c = sys.write(fd, str.data(), str.bytes());
 	if c == -2 {
 		throw again;

@@ -4,7 +4,7 @@ header "sys" as sys;
 use mem;
 use io;
 
-fn stat(path: *String, buf: *sys.cstruct_stat) void !failed {
+fn stat(path: &String, buf: &sys.cstruct_stat) void !failed {
 	let plen = path.bytes();
 	let cstr_ptr = @stack_alloc(plen + 1);
 	mem:copy(path.data(), cstr_ptr, plen);
@@ -13,13 +13,13 @@ fn stat(path: *String, buf: *sys.cstruct_stat) void !failed {
 	let res = sys.stat(cstr, buf);
 	if res == -1 : throw failed;
 }
-fn size(path: *String) uxx {
+fn size(path: &String) uxx {
 	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
 	stat(path, buf) !! return 0;;
 	return buf.st_size @as uxx;
 }
 
-fn open_fd(path: *String, read: bool, write: bool) i32 !open {
+fn open_fd(path: &String, read: bool, write: bool) i32 !open {
 
 	let cstr = path.to_c_string();
 	let fd = sys.open(cstr, 0, 0);
@@ -35,7 +35,7 @@ fn fd_close(fd: i32) void !close {
 	}
 }
 
-fn read(path: *String) String !open !read !close {
+fn read(path: &String) String !open !read !close {
 
 	let fd = open_fd(path, true, false) !! throw open;;
 
@@ -61,7 +61,7 @@ fn read(path: *String) String !open !read !close {
 	return res.to_str();
 }
 
-fn write(path: *String, content: *String, append: bool = true) void !open {
+fn write(path: &String, content: &String, append: bool = true) void !open {
 
 	let cpath = path.to_c_string();
 
@@ -74,12 +74,12 @@ fn write(path: *String, content: *String, append: bool = true) void !open {
     io:close(fd);
 }
 
-fn exists(path: *String) bool {
+fn exists(path: &String) bool {
 	let fd = open_fd(path, true, false) !! return false;;
 	fd_close(fd)!;
 	return true;
 }
-fn delete(path: *String) void !failed {
+fn delete(path: &String) void !failed {
 
 	let plen = path.bytes();
 	let cstr_ptr = @stack_alloc(plen + 1);
@@ -92,7 +92,7 @@ fn delete(path: *String) void !failed {
 		throw failed;
 	}
 }
-fn mkdir(path: *String) void !failed {
+fn mkdir(path: &String) void !failed {
 
 	let plen = path.bytes();
 	let cstr_ptr = @stack_alloc(plen + 1);
@@ -106,18 +106,18 @@ fn mkdir(path: *String) void !failed {
 	}
 }
 
-fn is_file(path: *String) bool {
+fn is_file(path: &String) bool {
 	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
 	stat(path, buf) !! return false;;
 	return (buf.st_mode & sys.OS.S_IFMT) == sys.OS.S_IFREG;
 }
-fn is_dir(path: *String) bool {
+fn is_dir(path: &String) bool {
 	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
 	stat(path, buf) !! return false;;
 	return (buf.st_mode & sys.OS.S_IFMT) == sys.OS.S_IFDIR;
 }
 
-fn files_in(directory: *String, files: bool = true, dirs: bool = true) Array[String] {
+fn files_in(directory: &String, files: bool = true, dirs: bool = true) Array[String] {
 	let result = Array[String].new();
 	let path = directory.rtrim("/") + "/";
 

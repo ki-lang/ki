@@ -11,24 +11,25 @@ class ServerData {
     socket: net:SocketTCP;
     max_connections: uxx;
     thread_nr: uxx = 0;
-    handler: fn(*Request)(Response);
+    handler: fn(&Request)(Response);
     static_dirs: Array[String] = Array[String].new();
     show_info: bool;
 }
 
 class Server {
-    - host: String;
+    - host: +String;
     - port: u16;
     - socket: net:SocketTCP;
     - max_connections: uxx;
-    - handler: fn(*Request)(Response);
+    - handler: fn(&Request)(Response);
     - static_dirs: Array[String] = Array[String].new();
     show_info: bool = false;
 
-    static fn new(host: String, port: u16, handler: fn(*Request)(Response)) Server !socket_init_error !socket_bind_error {
+    static fn new(host: &String, port: u16, handler: fn(&Request)(Response)) Server !socket_init_error !socket_bind_error {
 
+        rep host = share(host);
         let max_connections : uxx = 10000;
-        let socket = net:Socket.new_tcp(host + "", port, false) !! throw socket_init_error;;
+        let socket = net:Socket.new_tcp(host, port, false) !! throw socket_init_error;;
         socket.bind() !! throw socket_bind_error;;
 
         return Server{
@@ -198,7 +199,7 @@ class Server {
         }
     }
 
-    - static fn respond(data: *ServerData, http_con: *Connection, handler: fn(*Request)(Response)) void !read_error !sent_error {
+    - static fn respond(data: &ServerData, http_con: &Connection, handler: fn(&Request)(Response)) void !read_error !sent_error {
 
         while true {
             let res = http_con.parse_result;
@@ -244,11 +245,11 @@ class Server {
             }
 
             let req = Request{
-                http_con: &http_con,
-			    headers: @swap res.headers with Map[String]{},
-			    method: @swap res.method with "",
-			    body: @swap res.body with "",
-			    path: @swap res.path with "",
+                http_con: share(http_con),
+			    headers: swap(res.headers, Map[String]{}),
+			    method: swap(res.method, ""),
+			    body: swap(res.body, ""),
+			    path: swap(res.path, ""),
             };
             let resp = handler(req);
 
@@ -256,7 +257,7 @@ class Server {
         }
     }
 
-    fn add_static_dir(path: *String, relative_to_exe: bool = false) void {
+    fn add_static_dir(path: &String, relative_to_exe: bool = false) void {
         let full = path + "";
         if relative_to_exe {
             full = fs:exe_dir() + "/" + path.trim("/");

@@ -191,7 +191,7 @@ class String type:ptr track rc {
 	// Split / Merge
 	/////////////////////
 
-	fn split(on: *String) Array[String] {
+	fn split(on: &String) Array[String] {
 		let result = Array[String].new();
 
 		let pos : uxx = 0;
@@ -269,12 +269,12 @@ class String type:ptr track rc {
 	// Adjustments
 	/////////////////////
 
-	fn trim(part: *String) String {
+	fn trim(part: &String) String {
 		let res = this.ltrim(part);
 		return res.rtrim(part);
 	}
 
-	fn rtrim(part: *String) String {
+	fn rtrim(part: &String) String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -291,7 +291,7 @@ class String type:ptr track rc {
 		return result;
 	}
 
-	fn ltrim(part: *String) String {
+	fn ltrim(part: &String) String {
 		let part_bytes = part.bytes();
 		let part_data = part.data();
 		let bytes = this.bytes();
@@ -307,7 +307,7 @@ class String type:ptr track rc {
 		return result;
 	}
 
-	fn replace(find: *String, with: *String) String {
+	fn replace(find: &String, with: &String) String {
 		let pos : uxx = 0;
 		let adr = this.data();
 		let adr_find = find.data();
@@ -371,7 +371,7 @@ class String type:ptr track rc {
 		return buf.to_str();
 	}
 
-	fn replace_bytes(find: u8, with: *String) String {
+	fn replace_bytes(find: u8, with: &String) String {
 		let len = this.bytes();
 		let len_with = with.bytes();
 		if len == 0 {
@@ -426,7 +426,7 @@ class String type:ptr track rc {
 		throw not_found;
 	}
 
-	fn index_of(find: *String, start_index: uxx = 0) uxx !not_found !invalid_utf8 {
+	fn index_of(find: &String, start_index: uxx = 0) uxx !not_found !invalid_utf8 {
 		let bytes = this.bytes();
 		let fbytes = find.bytes();
 		let pos = start_index;
@@ -546,7 +546,7 @@ class String type:ptr track rc {
 	/////////////////////
 	// Syntax
 	/////////////////////
-	fn is_alpha(allow_chars: *String = "") bool {
+	fn is_alpha(allow_chars: &String = "") bool {
 		let i = 0#uxx;
 		let len = this.bytes();
 		while i < len {
@@ -560,7 +560,7 @@ class String type:ptr track rc {
 		}
 		return true;
 	}
-	fn is_alpha_numeric(allow_chars: *String = "") bool {
+	fn is_alpha_numeric(allow_chars: &String = "") bool {
 		let i = 0#uxx;
 		let len = this.bytes();
 		while i < len {
@@ -574,7 +574,7 @@ class String type:ptr track rc {
 		}
 		return true;
 	}
-	fn is_numeric(allow_chars: *String = "") bool {
+	fn is_numeric(allow_chars: &String = "") bool {
 		let i = 0#uxx;
 		let len = this.bytes();
 		while i < len {
@@ -644,7 +644,7 @@ class String type:ptr track rc {
 		mem:free(this @as ptr);
 	}
 
-	- fn __add(str: *String) String {
+	- fn __add(str: &String) String {
 		let this_len = this.bytes();
 		let str_len = str.bytes();
 		if str_len == 0 {
@@ -663,7 +663,7 @@ class String type:ptr track rc {
 		return new_str;
 	}
 
-	- fn __eq(b: *String) bool {
+	- fn __eq(b: &String) bool {
 		let a_ptr = this @as ptr;
 		let b_ptr = b @as ptr;
 		if(a_ptr == b_ptr) {
@@ -675,7 +675,7 @@ class String type:ptr track rc {
 		}
 		return mem:equal(this.data(), b.data(), bytes);
 	}
-	- fn __lt(b: *String) bool {
+	- fn __lt(b: &String) bool {
 		let a_ptr = this @as ptr;
 		let b_ptr = b @as ptr;
 		if(a_ptr == b_ptr) {
@@ -698,7 +698,7 @@ class String type:ptr track rc {
 		}
 		return bytes_a <= bytes_b;
 	}
-	- fn __gt(b: *String) bool {
+	- fn __gt(b: &String) bool {
 		return !this.__lt(b);
 	}
 
@@ -738,7 +738,7 @@ class String type:ptr track rc {
 		let valuec = partc - 1;
 		let i : uxx = 0;
 		while i < valuec {
-			let val = @ptrv(values, *String, i);
+			let val = @ptrv(values, &String, i);
 			bytes += val.bytes();
 			i++;
 		}
@@ -747,12 +747,12 @@ class String type:ptr track rc {
 		i = 0;
 		while i < partc {
 			if i > 0 {
-				let val = @ptrv(values, *String, i - 1);
+				let val = @ptrv(values, &String, i - 1);
 				let val_bytes = val.bytes();
 				mem:copy(val.data(), data, val_bytes);
 				data += val_bytes;
 			}
-			let part = @ptrv(parts, *String, i);
+			let part = @ptrv(parts, &String, i);
 			let part_bytes = part.bytes();
 			mem:copy(part.data(), data, part_bytes);
 			data += part_bytes;
