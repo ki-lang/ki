@@ -77,7 +77,7 @@ fn listen(sockfd: SOCKET, backlog: i32) i32;
 
 fn getsockopt(sockfd: SOCKET, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
 fn setsockopt(sockfd: SOCKET, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
-fn getaddrinfo(host: c_string, port: c_string, hints: &cstruct_addrinfo, res: *(?cstruct_addrinfo)[1]) i32;
+fn getaddrinfo(host: c_string, port: c_string, hints: &cstruct_addrinfo, res: &(?cstruct_addrinfo)[1]) i32;
 fn freeaddrinfo(info: cstruct_addrinfo) i32;
 
 //int clone(int (&fn)(void *), void &stack, int flags, void &arg, .../* pid_t &parent_tid, void &tls, pid_t &child_tid */ );

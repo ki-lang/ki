@@ -94,8 +94,8 @@ jobs:
           curl
           make
           mingw-w64-x86_64-cmake
-          mingw-w64-x86_64-llvm
-          mingw-w64-x86_64-clang
+          mingw-w64-x86_64-llvm-15
+          mingw-w64-x86_64-clang-15
           mingw-w64-x86_64-lld
     - uses: actions/checkout@v3
 
