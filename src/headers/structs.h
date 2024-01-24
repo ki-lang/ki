@@ -52,18 +52,17 @@ typedef struct PkgVersion PkgVersion;
 #include "value.h"
 
 struct Allocator {
+    AllocatorBlock *first_block_private;
+    AllocatorBlock *last_block_private;
     AllocatorBlock *first_block;
-    AllocatorBlock *current_block;
     AllocatorBlock *last_block;
 };
 struct AllocatorBlock {
-    AllocatorBlock *prev_block;
-    AllocatorBlock *next_block;
+    AllocatorBlock *next;
     size_t size;
     size_t space_left;
     void *start_adr;
     void *current_adr;
-    bool private;
 };
 struct Chain {
     Allocator *alc;

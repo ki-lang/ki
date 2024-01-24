@@ -35,7 +35,7 @@ bool starts_with(const char *a, const char *b);
 Allocator *alc_make();
 void alc_wipe(Allocator *alc);
 void alc_delete(Allocator *alc);
-AllocatorBlock *alc_block_make(AllocatorBlock *prev, AllocatorBlock *next, size_t size);
+AllocatorBlock *alc_block_make(size_t size);
 void *al(Allocator *alc, size_t size);
 AllocatorBlock *al_private(Allocator *alc, size_t size);
 void free_block(AllocatorBlock *block);
