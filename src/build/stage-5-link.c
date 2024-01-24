@@ -92,7 +92,7 @@ void stage_5(Build *b) {
             // stage_5_compile_o((void *)data);
 
 #ifdef WIN32
-            if (threads->length >= 16) {
+            if (threads->length >= 8) {
                 // Wait for the first thread
                 void *thr = array_pop_first(threads);
                 WaitForSingleObject(thr, INFINITE);
@@ -100,7 +100,7 @@ void stage_5(Build *b) {
 
             void *thr = CreateThread(NULL, 0, (unsigned long (*)(void *))stage_5_compile_o, (void *)data, 0, NULL);
 #else
-            if (threads->length >= 16) {
+            if (threads->length >= 8) {
                 // Wait for the first thread
                 pthread_t *thr = array_pop_first(threads);
                 pthread_join(*thr, NULL);
@@ -229,9 +229,9 @@ void *stage_5_compile_o(void *data_) {
     }
 
     // printf("Object created: %s\n", outpath);
-
     LLVMDisposeMessage(error);
     LLVMDisposeModule(nsc_mod);
+    LLVMContextDispose(ctx);
 
     // gettimeofday(&end, NULL);
     // double time_o = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);

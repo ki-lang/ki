@@ -579,7 +579,7 @@ void token_throw(Allocator *alc, Fc *fc, Scope *scope) {
     }
     char *err_name = dups(alc, token);
 
-    Throw *throw = al(fc->alc, sizeof(Throw));
+    Throw *throw = al(alc, sizeof(Throw));
     throw->func = func;
     throw->code = index + 1;
     throw->msg = NULL;

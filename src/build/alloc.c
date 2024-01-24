@@ -48,25 +48,30 @@ void *al(Allocator *alc, size_t size) {
     if (size > block_private_size) {
         return al_private(alc, size)->start_adr;
     }
-    if (size % 8 > 0) {
-        size += 8 - (size % 8);
-    }
+    size_t offset = size > 8 ? 8 : size;
     AllocatorBlock *block = alc->current_block;
-    if (size < block->space_left) {
+    if ((size + offset) < block->space_left) {
         void *adr = block->current_adr;
-        block->current_adr += size;
-        block->space_left -= size;
+        size_t skip = (size_t)adr % offset;
+        block->current_adr += size + skip;
+        block->space_left -= size + skip;
         // printf("l:%ld\n", block->space_left);
-        return adr;
+        return adr + skip;
     }
-    size_t new_size = block_size;
-    if (size > new_size) {
-        new_size = size;
+    AllocatorBlock *new_block = NULL;
+    while(!new_block && block->next_block) {
+        block = block->next_block;
+        if(!block->private) {
+            new_block = block;
+        }
     }
-    AllocatorBlock *new_block = alc_block_make(block, NULL, new_size);
-    alc->last_block->next_block = new_block;
-    alc->last_block = new_block;
-    alc->current_block = new_block;
+    if(!new_block) {
+        // Create new block
+        new_block = alc_block_make(block, NULL, block_size);
+        alc->last_block = new_block;
+        alc->current_block = new_block;
+        block->next_block = new_block;
+    }
     void *adr = new_block->current_adr;
     new_block->current_adr = adr + size;
     new_block->space_left -= size;
