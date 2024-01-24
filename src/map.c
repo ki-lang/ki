@@ -11,7 +11,7 @@ Map *map_make(Allocator *alc) {
 
 bool map_contains(Map *map, char *key) {
     int i = array_find(map->keys, key, arr_find_str);
-    if (i == -1 || array_get_index(map->values, i) == NULL) {
+    if (i == -1) {
         return false;
     }
     return true;

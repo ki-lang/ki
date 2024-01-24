@@ -8,8 +8,13 @@ ifeq ($(UNAME), Linux)
 CC=clang-15
 LCC=clang-15
 LLVM_CFG=llvm-config-15
+else ifeq ($(UNAME), MINGW)
+# Windows
+CC=clang-15
+LCC=clang-15
+LLVM_CFG=llvm-config-15
 else
-# From Windows and MacOS
+# MacOS
 CC=clang
 LCC=clang
 LLVM_CFG=llvm-config
