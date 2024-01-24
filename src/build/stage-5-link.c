@@ -12,7 +12,6 @@
 #include <llvm-c/Support.h>
 #include <llvm-c/Target.h>
 #include <llvm-c/TargetMachine.h>
-#include <llvm-c/Transforms/IPO.h>
 #include <llvm-c/Transforms/PassBuilder.h>
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 #include <llvm-c/Transforms/Scalar.h>
