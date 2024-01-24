@@ -7,7 +7,7 @@ use io;
 use utils;
 use fs;
 
-class ServerData {
+- class ServerData {
     socket: net:SocketTCP;
     max_connections: uxx;
     thread_nr: uxx = 0;
@@ -270,8 +270,8 @@ class Server {
     }
 }
 
-global interrupted : bool;
-fn interrupt(sig: i32) void {
+- global interrupted : bool;
+- fn interrupt(sig: i32) void {
     if(interrupted){
         os:exit(1);
     }

@@ -12,15 +12,11 @@ void stage_2_1(Fc *fc) {
         Alias *a = array_get_index(fc->aliasses, i);
         fc->chunk = a->chunk;
 
-        Idf *idf_a = NULL;
+        Idf *idf = a->idf;
         if (a->type == alias_id) {
-            Idf *idf = read_idf(fc, fc->scope, true, true);
-            idf_a = idf_init(fc->alc, idf->type);
-            idf_a->item = idf->item;
-        }
-        map_set(fc->nsc->scope->identifiers, a->name, idf_a);
-        if (fc->is_header) {
-            map_set(fc->scope->identifiers, a->name, idf_a);
+            Idf *idf_r = read_idf(fc, fc->scope, true, true);
+            idf->type = idf_r->type;
+            idf->item = idf_r->item;
         }
     }
 

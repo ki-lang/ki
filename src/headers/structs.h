@@ -450,6 +450,8 @@ struct Alias {
     Chunk *chunk;
     char *name;
     int type;
+    Idf *idf;
+    bool private;
 };
 
 struct TypeCheck {

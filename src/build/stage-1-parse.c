@@ -1,16 +1,17 @@
 
 #include "../all.h"
 
-void stage_1_func(Fc *fc);
-void stage_1_class(Fc *fc, bool is_struct);
-void stage_1_trait(Fc *fc);
+void stage_1_func(Fc *fc, bool is_private);
+void stage_1_class(Fc *fc, bool is_struct, bool is_private);
+void stage_1_trait(Fc *fc, bool is_private);
+void stage_1_enum(Fc *fc, bool is_private);
+void stage_1_global(Fc *fc, bool shared, bool is_private);
+void stage_1_alias(Fc *fc, int alias_type, bool is_private);
+
 void stage_1_extend(Fc *fc);
-void stage_1_enum(Fc *fc);
 void stage_1_use(Fc *fc);
 void stage_1_header(Fc *fc);
 void stage_1_link(Fc *fc, int link_type);
-void stage_1_global(Fc *fc, bool shared);
-void stage_1_alias(Fc *fc, int alias_type);
 void stage_1_test(Fc *fc);
 void stage_1_macro(Fc *fc);
 
@@ -35,28 +36,53 @@ void stage_1(Fc *fc) {
             continue;
         }
 
+        bool private = false;
+        if (strcmp(token, "-") == 0) {
+            private = true;
+            tok(fc, token, true, true);
+        }
+
+        // Indentifiers
         if (strcmp(token, "fn") == 0) {
-            stage_1_func(fc);
+            stage_1_func(fc, private);
             continue;
         }
         if (strcmp(token, "class") == 0) {
-            stage_1_class(fc, false);
+            stage_1_class(fc, false, private);
             continue;
         }
         if (strcmp(token, "struct") == 0) {
-            stage_1_class(fc, true);
+            stage_1_class(fc, true, private);
             continue;
         }
         if (strcmp(token, "trait") == 0) {
-            stage_1_trait(fc);
-            continue;
-        }
-        if (strcmp(token, "extend") == 0) {
-            stage_1_extend(fc);
+            stage_1_trait(fc, private);
             continue;
         }
         if (strcmp(token, "enum") == 0) {
-            stage_1_enum(fc);
+            stage_1_enum(fc, private);
+            continue;
+        }
+        if (strcmp(token, "global") == 0) {
+            stage_1_global(fc, false, private);
+            continue;
+        }
+        if (strcmp(token, "shared") == 0) {
+            stage_1_global(fc, true, private);
+            continue;
+        }
+        if (strcmp(token, "alias") == 0) {
+            stage_1_alias(fc, alias_id, private);
+            continue;
+        }
+        if(private) {
+            sprintf(fc->sbuf, "Unexpected private '-' token ");
+            fc_error(fc);
+        }
+
+        // Non identifiers
+        if (strcmp(token, "extend") == 0) {
+            stage_1_extend(fc);
             continue;
         }
         if (strcmp(token, "use") == 0) {
@@ -77,18 +103,6 @@ void stage_1(Fc *fc) {
         }
         if (strcmp(token, "link_static") == 0) {
             stage_1_link(fc, link_static);
-            continue;
-        }
-        if (strcmp(token, "global") == 0) {
-            stage_1_global(fc, false);
-            continue;
-        }
-        if (strcmp(token, "shared") == 0) {
-            stage_1_global(fc, true);
-            continue;
-        }
-        if (strcmp(token, "alias") == 0) {
-            stage_1_alias(fc, alias_id);
             continue;
         }
         // if (strcmp(token, "type_alias") == 0) {
@@ -114,7 +128,7 @@ void stage_1(Fc *fc) {
     chain_add(b->stage_2_1, fc);
 }
 
-void stage_1_func(Fc *fc) {
+void stage_1_func(Fc *fc, bool is_private) {
     //
     Build *b = fc->b;
     char *token = fc->token;
@@ -189,7 +203,7 @@ void stage_1_func(Fc *fc) {
     }
 }
 
-void stage_1_class(Fc *fc, bool is_struct) {
+void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
     //
     Build *b = fc->b;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
@@ -336,7 +350,7 @@ void stage_1_class(Fc *fc, bool is_struct) {
     skip_body(fc, '}');
 }
 
-void stage_1_trait(Fc *fc) {
+void stage_1_trait(Fc *fc, bool is_private) {
     //
     char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
@@ -389,7 +403,7 @@ void stage_1_extend(Fc *fc) {
     array_push(fc->extends, ex);
 }
 
-void stage_1_enum(Fc *fc) {
+void stage_1_enum(Fc *fc, bool is_private) {
     //
     char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
@@ -630,7 +644,7 @@ void stage_1_use(Fc *fc) {
     tok_expect(fc, ";", true, true);
 }
 
-void stage_1_global(Fc *fc, bool shared) {
+void stage_1_global(Fc *fc, bool shared, bool is_private) {
     //
     char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
@@ -674,7 +688,7 @@ void stage_1_global(Fc *fc, bool shared) {
     }
 }
 
-void stage_1_alias(Fc *fc, int alias_type) {
+void stage_1_alias(Fc *fc, int alias_type, bool is_private) {
     //
     Alias *a = al(fc->alc, sizeof(Alias));
     a->chunk = chunk_clone(fc->alc, fc->chunk);
@@ -688,12 +702,26 @@ void stage_1_alias(Fc *fc, int alias_type) {
     tok(fc, token, true, true);
 
     if (!is_valid_varname(token)) {
-        sprintf(fc->sbuf, "Invalid global name syntax '%s'", token);
+        sprintf(fc->sbuf, "Invalid alias name syntax '%s'", token);
         fc_error(fc);
     }
-    name_taken_check(fc, fc->nsc->scope, token);
+    if(is_private || fc->is_header) {
+        name_taken_check(fc, fc->scope, token);
+    } else {
+        name_taken_check(fc, fc->nsc->scope, token);
+    }
 
     a->name = dups(fc->alc, token);
+
+    Idf* idf = idf_init(fc->alc, 0);
+    a->idf = idf;
+    a->private = is_private;
+
+    if(is_private || fc->is_header) {
+        map_set(fc->scope->identifiers, a->name, idf);
+    } else {
+        map_set(fc->nsc->scope->identifiers, a->name, idf);
+    }
 
     tok_expect(fc, ";", true, true);
 
