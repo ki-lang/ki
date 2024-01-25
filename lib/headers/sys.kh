@@ -13,6 +13,7 @@ header "linux-[ARCH]/enum";
 #elif OS == macos
 
 link_dynamic "System";
+
 header "macos/structs";
 header "macos/api";
 header "macos-[ARCH]/enum";
@@ -24,6 +25,7 @@ link_dynamic "libucrt";
 link_dynamic "WS2_32";
 link_dynamic "msvcrt";
 link_dynamic "libvcruntime";
+
 header "win/structs";
 header "win/api";
 header "win-[ARCH]/enum";

@@ -6,13 +6,11 @@ shared stdout : ?FILE;
 
 alias ptr as FILE;
 alias uxx as SOCKET;
+alias ptr as HANDLE;
 
 // HANDLE : ptr
 // DWORD : u32
 // ULONG : u32
-
-alias ptr as HANDLE;
-alias uxx as SOCKET;
 
 alias _read as read;
 alias _write as write;

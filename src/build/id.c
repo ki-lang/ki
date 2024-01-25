@@ -145,6 +145,23 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
         //     idf = idf_by_id(fc, scope, &id, false);
     }
 
+    if (idf && idf->type == idf_fc && get_char(fc, 0) == '.') {
+        Fc *rfc = idf->item;
+        if (rfc->is_header) {
+            chunk_move(fc->chunk, 1);
+
+            char buf[256];
+            strcpy(buf, token);
+            tok(fc, token, true, false);
+
+            idf = idf_get_from_header(rfc, token, 0);
+            if (!idf) {
+                sprintf(fc->sbuf, "Identifier '%s' not found in '%s'", token, rfc->path_ki);
+                fc_error(fc);
+            }
+        }
+    }
+
     if (!idf) {
         sprintf(fc->sbuf, "Unknown identifier: '%s'", token);
         fc_error(fc);

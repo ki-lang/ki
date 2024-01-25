@@ -105,10 +105,6 @@ void stage_1(Fc *fc) {
             stage_1_link(fc, link_static);
             continue;
         }
-        // if (strcmp(token, "type_alias") == 0) {
-        //     stage_1_alias(fc, alias_type);
-        //     continue;
-        // }
         if (strcmp(token, "test") == 0) {
             stage_1_test(fc);
             continue;
