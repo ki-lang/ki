@@ -2,19 +2,20 @@
 VERSION=dev
 UNAME=$(shell uname)
 UNAMEO=$(shell uname -o)
+SUB_UNAME := $(findstring MINGW32, $(UNAME))
 
 ifeq ($(UNAME), Linux)
 # From linux
 CC=clang-15
 LCC=clang-15
 LLVM_CFG=llvm-config-15
-else ifeq ($(UNAME), MINGW)
-# Windows
-CC=clang-15
-LCC=clang-15
-LLVM_CFG=llvm-config-15
+else ifeq ($(SUB_UNAME), MINGW32)
+# Mingw
+CC=/mingw64/opt/llvm-15/bin/clang
+LCC=/mingw64/opt/llvm-15/bin/clang
+LLVM_CFG=/mingw64/opt/llvm-15/bin/llvm-config
 else
-# MacOS
+# MacOS, ...
 CC=clang
 LCC=clang
 LLVM_CFG=llvm-config
