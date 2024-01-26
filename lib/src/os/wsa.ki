@@ -16,7 +16,7 @@ fn WSA_init() void {
         @ptrv(v_ptr, u8, 0) = 2;
         @ptrv(v_ptr, u8, 1) = 2;
 
-        let data = mem:alloc(@sizeof(.sys.WSADATA)) @as sys.WSADATA;
+        let data = mem:alloc(sizeof(.sys.WSADATA)) @as sys.WSADATA;
         let err = sys.WSAStartup(v, data);
         if err != 0 {
 			println("WSA startup error: " + sys.WSAGetLastError().str());

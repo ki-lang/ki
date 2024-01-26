@@ -22,13 +22,13 @@ class Poll[T] {
         let fd = sys.epoll_create(1);
         return CLASS {
             epoll_fd: fd,
-            epoll_buffer: mem:alloc(20 * @sizeof_class(sys.cstruct_epoll_event)),
+            epoll_buffer: mem:alloc(20 * sizeof_class(sys.cstruct_epoll_event)),
             lsn_by_index: 0 @as ptr,
         };
         #else
         return CLASS {
-            epoll_buffer: mem:alloc(20 * @sizeof_class(sys.cstruct_pollfd)),
-            lsn_by_index: mem:alloc(20 * @sizeof(ptr)),
+            epoll_buffer: mem:alloc(20 * sizeof_class(sys.cstruct_pollfd)),
+            lsn_by_index: mem:alloc(20 * sizeof(ptr)),
         };
         #end
     }
@@ -47,7 +47,7 @@ class Poll[T] {
         rep count = count @as uxx;
         let i = 0#uxx;
         while i < count {
-            let ev = (ebuf + (i * @sizeof_class(sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event;
+            let ev = (ebuf + (i * sizeof_class(sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event;
             let lsn = ev.data @as &Listener[T];
             let add = share(lsn);
             lsn.set_events(ev.events);
@@ -62,7 +62,7 @@ class Poll[T] {
         let buf = this.epoll_buffer;
         let i = 0#uxx;
         each this.listeners as lsn {
-            let pollfd = (buf + (i * @sizeof_class(sys.cstruct_pollfd))) @as sys.cstruct_pollfd;
+            let pollfd = (buf + (i * sizeof_class(sys.cstruct_pollfd))) @as sys.cstruct_pollfd;
             pollfd.fd = lsn.fd;
             pollfd.events = lsn.detect_events @as i16;
             pollfd.revents = 0;
@@ -79,7 +79,7 @@ class Poll[T] {
         rep count = count @as uxx;
         i = 0;
         while i < all {
-            let pollfd = (buf + (i * @sizeof_class(sys.cstruct_pollfd))) @as sys.cstruct_pollfd;
+            let pollfd = (buf + (i * sizeof_class(sys.cstruct_pollfd))) @as sys.cstruct_pollfd;
             if pollfd.revents == 0 {
                 i++;
                 continue;
@@ -122,8 +122,8 @@ class Poll[T] {
             this.lsn_by_index_size = size;
             mem:free(this.lsn_by_index);
             mem:free(this.epoll_buffer);
-            this.lsn_by_index = mem:alloc(size * @sizeof(ptr));
-            this.epoll_buffer = mem:alloc(size * @sizeof_class(sys.cstruct_pollfd));
+            this.lsn_by_index = mem:alloc(size * sizeof(ptr));
+            this.epoll_buffer = mem:alloc(size * sizeof_class(sys.cstruct_pollfd));
         }
         #end
 

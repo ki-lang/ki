@@ -13,10 +13,10 @@ fn print(str: &String) void {
 fn println(str: &String) void {
 	let size = str.bytes();
 	let rsize = size + 1;
-	let adr = @stack_alloc(rsize + 8 + @sizeof(uxx));
+	let adr = @stack_alloc(rsize + 8 + sizeof(uxx));
 	let adr_ = adr;
 	@ptrv(adr, uxx, 0) = rsize;
-	adr += @sizeof(uxx);
+	adr += sizeof(uxx);
 	@ptrv(adr, u8, 0) = 0#u8;
 	adr += 4;
 	@ptrv(adr, u32, 0) = 1#u32;

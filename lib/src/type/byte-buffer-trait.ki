@@ -125,7 +125,7 @@ trait ByteBufferTrait {
 		if index == 0 : return;
 		let bytes = this.length - index;
 		let data = this.data;
-		mem:copy(data + index, data, bytes, bytes < @sizeof(ptr));
+		mem:copy(data + index, data, bytes, bytes < sizeof(ptr));
 		this.length -= index;
 		this.start_index = 0;
 	}

@@ -37,7 +37,7 @@ class Connection {
         let bytes_to_send = buffer.length - buffer.start_index;
         let bytes_sent = 0#uxx;
 
-        if @isset(ssl) {
+        if isset(ssl) {
             // SSL
             let wbytes = ossl.SSL_write(ssl.ssl, buffer.data + buffer.start_index, bytes_to_send @as i32);
             if wbytes <= 0 {
@@ -101,7 +101,7 @@ class Connection {
         buffer.minimum_free_space(buf_size);
         let count = 0#uxx;
 
-        if @isset(ssl) {
+        if isset(ssl) {
             let rcvd = ossl.SSL_read(ssl.ssl, buffer.data + buffer.length, buf_size);
             if rcvd <= 0 {
                 // SSL_ERROR_NONE: 0

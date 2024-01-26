@@ -34,7 +34,7 @@ class Thread[T] {
 		rep thr = thr ?! throw fail;;
 		let t = CLASS{ os_handle: thr };
 		#else
-    	let thr = mem:alloc(@sizeof_class(pt.pthread_t)) @as pt.pthread_t;
+    	let thr = mem:alloc(sizeof_class(pt.pthread_t)) @as pt.pthread_t;
     	let err = pt.pthread_create(thr, null, CLASS.entry, start_func @as ptr);
     	if err != 0 {
 			throw fail;
@@ -65,7 +65,7 @@ class Thread[T] {
 		rep thr = thr ?! throw fail;;
 		let t = CLASS{ os_handle: thr };
 		#else
-    	let thr = mem:alloc(@sizeof_class(pt.pthread_t)) @as pt.pthread_t;
+    	let thr = mem:alloc(sizeof_class(pt.pthread_t)) @as pt.pthread_t;
     	let err = pt.pthread_create(thr, null, CLASS.entry, entry_data @as ptr);
     	if err != 0 {
 			throw fail;

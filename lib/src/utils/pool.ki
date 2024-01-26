@@ -13,7 +13,7 @@ class Pool[T] {
 		}
 		return CLASS {
 			size: max_items,
-			data: mem:alloc(max_items * @sizeof(T)),
+			data: mem:alloc(max_items * sizeof(T)),
 		};
 	}
 

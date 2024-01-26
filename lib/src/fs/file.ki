@@ -14,7 +14,7 @@ fn stat(path: &String, buf: &sys.cstruct_stat) void !failed {
 	if res == -1 : throw failed;
 }
 fn size(path: &String) uxx {
-	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
+	let buf = @stack_alloc(sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
 	stat(path, buf) !! return 0;;
 	return buf.st_size @as uxx;
 }
@@ -107,12 +107,12 @@ fn mkdir(path: &String) void !failed {
 }
 
 fn is_file(path: &String) bool {
-	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
+	let buf = @stack_alloc(sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
 	stat(path, buf) !! return false;;
 	return (buf.st_mode & sys.OS.S_IFMT) == sys.OS.S_IFREG;
 }
 fn is_dir(path: &String) bool {
-	let buf = @stack_alloc(@sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
+	let buf = @stack_alloc(sizeof_class(sys.cstruct_stat)) @as sys.cstruct_stat;
 	stat(path, buf) !! return false;;
 	return (buf.st_mode & sys.OS.S_IFMT) == sys.OS.S_IFDIR;
 }
@@ -124,7 +124,7 @@ fn files_in(directory: &String, files: bool = true, dirs: bool = true) Array[Str
 	#if OS == win
 
 	let pattern = (path + "*").to_c_string();
-	let data = @stack_alloc(@sizeof_class(sys.WIN32_FIND_DATAA)) @as sys.WIN32_FIND_DATAA;
+	let data = @stack_alloc(sizeof_class(sys.WIN32_FIND_DATAA)) @as sys.WIN32_FIND_DATAA;
     let hFind = sys.FindFirstFileA(pattern, data);
     if hFind != -1 @as ptr {
 		let loop = true;

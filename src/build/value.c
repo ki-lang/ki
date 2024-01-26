@@ -192,21 +192,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         v = value_init(alc, v_getptr, on, rett);
         //
 
-    } else if (strcmp(token, "@ptr_val") == 0) {
-        tok_expect(fc, "(", true, false);
-        Value *on = read_value(fc, alc, scope, false, 0, false);
-        Type *rett = on->rett;
-        if (rett->ptr_depth == 0 || (!rett->class && !rett->array_of)) {
-            sprintf(fc->sbuf, "Value used in '@ptr_val' must be a pointer value and the sub-type must be known (so 'ptr' also does not work)");
-            fc_error(fc);
-        }
-        tok_expect(fc, ")", false, true);
-        if (rett->ptr_depth == 1 && rett->type == type_arr) {
-            rett = rett->array_of;
-        } else {
-            rett = type_get_inline(alc, rett);
-        }
-        v = value_init(alc, v_ptrval, on, rett);
+    } else if (strcmp(token, "@borrow") == 0) {
 
     } else if (strcmp(token, "@stack_alloc") == 0) {
 
@@ -255,7 +241,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         rett->borrow = true;
         v = value_init(alc, v_stack_alloc, vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false), rett);
 
-    } else if (strcmp(token, "@atomic_op") == 0) {
+    } else if (strcmp(token, "atomic_op") == 0) {
+
+        tok_expect(fc, "(", true, false);
 
         Value *on = read_value(fc, alc, scope, true, 0, true);
         if (!value_is_assignable(on)) {
@@ -294,9 +282,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         right = try_convert(fc, alc, right, on->rett);
         type_check(fc, on->rett, right->rett);
 
+        tok_expect(fc, ")", false, true);
+
         v = vgen_atomicop(alc, on, right, op);
 
-    } else if (strcmp(token, "@isset") == 0) {
+    } else if (strcmp(token, "isset") == 0) {
 
         tok_expect(fc, "(", true, false);
         Value *on = read_value(fc, alc, scope, false, 0, false);
@@ -316,12 +306,12 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             array_push(issets, on);
         }
 
-    } else if (strcmp(token, "@sizeof") == 0) {
+    } else if (strcmp(token, "sizeof") == 0) {
         tok_expect(fc, "(", true, false);
         Type *type = read_type(fc, alc, scope, false, true, rtc_default);
         tok_expect(fc, ")", false, true);
         v = vgen_vint(alc, type->bytes, type_gen(b, alc, "i32"), false);
-    } else if (strcmp(token, "@sizeof_class") == 0) {
+    } else if (strcmp(token, "sizeof_class") == 0) {
         tok_expect(fc, "(", true, false);
         Type *type = read_type(fc, alc, scope, false, true, rtc_default);
         tok_expect(fc, ")", false, true);

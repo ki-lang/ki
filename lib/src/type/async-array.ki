@@ -13,7 +13,7 @@ class AsyncArray[T] async {
 		return CLASS {
 			size: start_size,
 			length: 0,
-			data: mem:alloc(start_size * @sizeof(T)),
+			data: mem:alloc(start_size * sizeof(T)),
 		};
 	}
 
@@ -25,8 +25,8 @@ class AsyncArray[T] async {
 		if length == size {
 			// Increase mem
 			let new_size = size * 2;
-			let new_data = mem:alloc(new_size * @sizeof(T));
-			mem:copy(data, new_data, size * @sizeof(T));
+			let new_data = mem:alloc(new_size * sizeof(T));
+			mem:copy(data, new_data, size * sizeof(T));
 			data = new_data;
 			this.data = new_data;
 			this.size = new_size;
@@ -42,7 +42,7 @@ class AsyncArray[T] async {
 		if index >= this.length {
 			throw not_found;
 		}
-		let data = this.data + (index * @sizeof(T));
+		let data = this.data + (index * sizeof(T));
 		return @ptrv(data, T, 0);
 	}
 
@@ -50,7 +50,7 @@ class AsyncArray[T] async {
 		if index >= this.length {
 			throw out_of_range;
 		}
-		let data = this.data + (index * @sizeof(T));
+		let data = this.data + (index * sizeof(T));
 		@ptrv(data, T, 0) = value;
 	}
 

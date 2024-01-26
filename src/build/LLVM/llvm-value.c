@@ -114,11 +114,6 @@ char *llvm_value(LB *b, Scope *scope, Value *v) {
         Value *val = v->item;
         return llvm_assign_value(b, scope, val);
     }
-    if (v->type == v_ptrval) {
-        Value *val = v->item;
-        char *lval = llvm_value(b, scope, val);
-        return llvm_ir_load(b, v->rett, lval);
-    }
     if (v->type == v_op) {
         VOp *vop = v->item;
         int op = vop->op;

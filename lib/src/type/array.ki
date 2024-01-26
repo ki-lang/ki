@@ -28,7 +28,7 @@ class Array[T] {
 		}
 		return CLASS {
 			size: start_size,
-			data: mem:alloc(start_size * @sizeof(T)),
+			data: mem:alloc(start_size * sizeof(T)),
 		};
 	}
 
@@ -40,8 +40,8 @@ class Array[T] {
 		if length == size {
 			// Increase mem
 			let new_size = size * 2;
-			let new_data = mem:alloc(new_size * @sizeof(T));
-			mem:copy(data, new_data, size * @sizeof(T));
+			let new_data = mem:alloc(new_size * sizeof(T));
+			mem:copy(data, new_data, size * sizeof(T));
 			mem:free(data);
 			data = new_data;
 			this.data = new_data;
@@ -64,8 +64,8 @@ class Array[T] {
 		if length == size {
 			// Increase mem
 			let new_size = size * 2;
-			let new_data = mem:alloc(new_size * @sizeof(T));
-			mem:copy(data, new_data, size * @sizeof(T));
+			let new_data = mem:alloc(new_size * sizeof(T));
+			mem:copy(data, new_data, size * sizeof(T));
 			mem:free(data);
 			data = new_data;
 			this.data = new_data;
@@ -114,7 +114,7 @@ class Array[T] {
 		let v = @ptrv(data, T, index);
 
 		if after_count > 0 {
-			mem:copy(data + (index + 1) * @sizeof(T), data + index * @sizeof(T), after_count * @sizeof(T));
+			mem:copy(data + (index + 1) * sizeof(T), data + index * sizeof(T), after_count * sizeof(T));
 		}
 
 		this.length--;

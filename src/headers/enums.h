@@ -108,7 +108,6 @@ enum VALUETYPE {
     v_isset,
     v_ref,
     v_swap,
-    v_ptrval,
     v_this_or_that
 };
 

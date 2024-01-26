@@ -12,28 +12,28 @@ class String type:ptr track rc {
 	/////////////////////
 
 	fn is_const() bool %inline {
-		return @ptrv(this @as ptr + @sizeof(uxx), u8, 0) == 1#u8;
+		return @ptrv(this @as ptr + sizeof(uxx), u8, 0) == 1#u8;
 	}
 
 	- fn rc() u32 %inline {
 		if(this.is_const()) { return 420; } // Let the person who has insight calculate the number of the beast, for it is the number of a man. That number is 420.
 		let adr = this @as ptr;
-		adr += @sizeof(uxx) + 2;
+		adr += sizeof(uxx) + 2;
 		return @ptrv(adr, u16, 0) @as u32;
 	}
 	- fn rc_weak() u32 %inline {
 		if(this.is_const()) { return 0; }
 		let adr = this @as ptr;
-		adr += @sizeof(uxx) + 4;
+		adr += sizeof(uxx) + 4;
 		return @ptrv(adr, u32, 0);
 	}
 
 	fn data() ptr %inline {
 		let adr = this @as ptr;
 		if(this.is_const()){
-			adr += @sizeof(uxx) + 1;
+			adr += sizeof(uxx) + 1;
 		} else {
-			adr += @sizeof(uxx) + 8;
+			adr += sizeof(uxx) + 8;
 		}
 		return adr;
 	}
@@ -602,13 +602,13 @@ class String type:ptr track rc {
 
 	- fn __ref() void {
 		if this.is_const() { return; }
-		let adr = (this @as ptr) + @sizeof(uxx) + 2;
+		let adr = (this @as ptr) + sizeof(uxx) + 2;
 		let rc = @ptrv(adr, u16, 0) + 1;
 		@ptrv(adr, u16, 0) = rc;
 	}
 	- fn __deref() void {
 		if this.is_const() { return; }
-		let adr = (this @as ptr) + @sizeof(uxx) + 2;
+		let adr = (this @as ptr) + sizeof(uxx) + 2;
 		let rc = @ptrv(adr, u16, 0) - 1;
 		if rc == 0 {
 			let rcw = @ptrv(adr + 2, u32, 0);
@@ -621,13 +621,13 @@ class String type:ptr track rc {
 	}
 	- fn __ref_weak() void {
 		if this.is_const() { return; }
-		let adr = (this @as ptr) + @sizeof(uxx) + 4;
+		let adr = (this @as ptr) + sizeof(uxx) + 4;
 		let rcw = @ptrv(adr, u32, 0) + 1;
 		@ptrv(adr, u32, 0) = rcw;
 	}
 	- fn __deref_weak() void {
 		if this.is_const() { return; }
-		let adr = (this @as ptr) + @sizeof(uxx) + 2;
+		let adr = (this @as ptr) + sizeof(uxx) + 2;
 		let adrw = adr + 2;
 		let rcw = @ptrv(adrw, u32, 0) - 1;
 		if rcw == 0 {
@@ -720,10 +720,10 @@ class String type:ptr track rc {
 	/////////////////////
 
 	static fn make_empty(size: uxx) String {
-		let adr = mem:alloc(size + 8 + @sizeof(uxx));
+		let adr = mem:alloc(size + 8 + sizeof(uxx));
 		let adr_ = adr;
 		@ptrv(adr, uxx, 0) = size;
-		adr += @sizeof(uxx);
+		adr += sizeof(uxx);
 		@ptrv(adr, u8, 0) = 0#u8;
 		adr += 2;
 		@ptrv(adr, u16, 0) = 1#u16;
