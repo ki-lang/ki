@@ -6,6 +6,7 @@ Chunk *chunk_init(Allocator *alc, Fc *fc) {
     ch->parent = NULL;
     ch->fc = fc;
     ch->content = NULL;
+    ch->tokens = NULL;
     ch->length = 0;
     ch->i = 0;
     ch->line = 1;

@@ -1204,6 +1204,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
         chunk->parent = fc->chunk;
         chunk->content = content;
         chunk->length = buf->length;
+        chunk_lex(fc, chunk, -1);
 
         // printf(">>>%s<<<", content);
         fc->chunk = chunk;

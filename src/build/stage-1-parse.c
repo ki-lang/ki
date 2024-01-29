@@ -1,7 +1,6 @@
 
 #include "../all.h"
 
-void stage_1_lex(Fc *fc);
 void stage_1_func(Fc *fc, bool is_private);
 void stage_1_class(Fc *fc, bool is_struct, bool is_private);
 void stage_1_trait(Fc *fc, bool is_private);
@@ -23,7 +22,7 @@ void stage_1(Fc *fc) {
         printf("# Stage 1 : Parse : %s\n", fc->path_ki);
     }
 
-    stage_1_lex(fc);
+    chunk_lex(fc, fc->chunk, -1);
 
     char *token = fc->token;
 
@@ -802,9 +801,9 @@ void stage_1_test(Fc *fc) {
         test->expects = NULL;
 
         Chunk *chunk = chunk_init(alc, fc);
-        chunk->fc = fc;
         chunk->content = "ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {";
         chunk->length = strlen(chunk->content);
+        chunk_lex(fc, chunk, -1);
 
         func->chunk_args = chunk;
         func->chunk_body = chunk_clone(fc->alc, fc->chunk);

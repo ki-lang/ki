@@ -863,6 +863,7 @@ void stage_4_1_gen_main(Fc *fc) {
     bool main_has_arg = mfunc && mfunc->args->length > 0;
 
     Str *code = str_make(alc, 1000);
+    str_append_chars(code, "{\n");
     str_append_chars(code, "let arr = Array[String].new();\n");
     str_append_chars(code, "let i = 0;\n");
     str_append_chars(code, "while i < argc {\n");
@@ -885,18 +886,18 @@ void stage_4_1_gen_main(Fc *fc) {
             str_append_chars(code, ");\n");
         }
         if (!main_has_return)
-            str_append_chars(code, "return 0;");
+            str_append_chars(code, "return 0;\n");
     }
 
     str_append_chars(code, "}\n");
 
     chunk->content = str_to_chars(alc, code);
     chunk->length = code->length;
-    chunk->i = 0;
+    chunk->i = 1;
     chunk->line = 1;
     chunk->col = 1;
-
     fc->chunk = chunk;
+    chunk_lex(fc, chunk, -1);
 
     read_ast(fc, scope, false);
 }
@@ -979,6 +980,7 @@ void stage_4_1_gen_test_main(Fc *fc) {
     Chunk *chunk = chunk_init(alc, fc);
     chunk->content = str_to_chars(alc, code);
     chunk->length = code->length;
+    chunk_lex(fc, chunk, -1);
 
     func->chunk_body = chunk;
 }

@@ -226,6 +226,7 @@ struct Chunk {
     Fc *fc;
     Chunk *parent;
     char *content;
+    char *tokens;
     int length;
     int i;
     int line;

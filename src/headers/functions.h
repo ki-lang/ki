@@ -184,6 +184,7 @@ Chunk *chunk_init(Allocator *alc, Fc *fc);
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk);
 void chunk_move(Chunk *chunk, int pos);
 void chunk_update_col(Chunk *chunk);
+void chunk_lex(Fc *fc, Chunk* chunk, int err_i);
 void tok(Fc *fc, char *token, bool sameline, bool allow_space);
 void rtok(Fc *fc);
 void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space);
