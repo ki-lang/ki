@@ -1,6 +1,7 @@
 
 #include "../all.h"
 
+void stage_1_lex(Fc *fc);
 void stage_1_func(Fc *fc, bool is_private);
 void stage_1_class(Fc *fc, bool is_struct, bool is_private);
 void stage_1_trait(Fc *fc, bool is_private);
@@ -21,6 +22,8 @@ void stage_1(Fc *fc) {
     if (b->verbose > 2) {
         printf("# Stage 1 : Parse : %s\n", fc->path_ki);
     }
+
+    stage_1_lex(fc);
 
     char *token = fc->token;
 

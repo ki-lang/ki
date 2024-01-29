@@ -176,6 +176,9 @@ void stage_3_class(Fc *fc, Class *class);
 // void stage_2_3_circular(Build *b, Class *class);
 // void stage_2_3_shared_circular_refs(Build *b, Class *class);
 
+// Lexer
+char convert_backslash_char(char ch);
+
 // Read
 Chunk *chunk_init(Allocator *alc, Fc *fc);
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk);
