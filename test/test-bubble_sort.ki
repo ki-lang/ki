@@ -2,18 +2,22 @@ test "bubble_sort_dynamic array" {
 
     let arr = array[i32]{ 4, 3, 1, 6, 7, 9, 5, 8, 0, 2 };
 
-    let i = 0;
-    while (i < 10) {
-        let j = 0;
-        while (j < 9 - i) {
-            if (arr.get(j) !? -1) > (arr.get(j + 1) !? -1) {
-                let tmp = arr.get(j) !? -1;
-                arr.set(j, arr.get(j + 1) !? -1)!;
-                arr.set(j + 1, tmp)!;
+    let len = arr.length;
+    let last = len - 1;
+    while len > 0 {
+        len--;
+        let j : uxx = 0;
+        let last_ = last;
+        while j < last_ {
+            let left = arr.get(j) !! break;;
+            let right = arr.get(j + 1) !! break;;
+            if left > right {
+                arr.set(j, right)!;
+                arr.set(j + 1, left)!;
             }
             j++;
         }
-        i++;
+        last--;
     }
 
     @expect (arr.get(0) !? -1) == 0;
