@@ -216,7 +216,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
     }
     name_taken_check(fc, fc->nsc->scope, token);
 
-    char *name = dups(fc->alc, token);
+    char *name = token;
     char *gname = nsc_gname(fc, name);
     char *dname = nsc_dname(fc, name);
 
@@ -263,7 +263,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
                 fc_error(fc);
             }
 
-            char *name = dups(fc->alc, token);
+            char *name = token;
             array_push(class->generic_names, name);
 
             token = tok(fc, NULL, true, true);
@@ -369,7 +369,7 @@ void stage_1_trait(Fc *fc, bool is_private) {
     }
     name_taken_check(fc, fc->nsc->scope, token);
 
-    char *name = dups(fc->alc, token);
+    char *name = token;
     char *gname = nsc_gname(fc, name);
     char *dname = nsc_dname(fc, name);
 
@@ -417,7 +417,7 @@ void stage_1_enum(Fc *fc, bool is_private) {
     }
     name_taken_check(fc, fc->nsc->scope, token);
 
-    char *name = dups(fc->alc, token);
+    char *name = token;
     char *gname = nsc_gname(fc, name);
     char *dname = nsc_dname(fc, name);
 
@@ -440,7 +440,7 @@ void stage_1_enum(Fc *fc, bool is_private) {
             sprintf(fc->sbuf, "Invalid enum property name '%s'", token);
             fc_error(fc);
         }
-        char *name = dups(fc->alc, token);
+        char *name = token;
         token = tok(fc, NULL, false, true);
         if (strcmp(token, ":") == 0) {
             token = tok(fc, NULL, false, true);
@@ -542,7 +542,7 @@ void stage_1_header(Fc *fc) {
                 }
                 name_taken_check(fc, fc->scope, token);
 
-                char *as = dups(fc->alc, token);
+                char *as = token;
 
                 //
                 Idf *idf = idf_init(fc->alc, idf_fc);
@@ -624,10 +624,9 @@ void stage_1_use(Fc *fc) {
     }
 
     char *as = nsc_name;
-    char *token = fc->token;
-    tok(fc, token, true, true);
+    char* token = tok(fc, NULL, true, true);
     if (strcmp(token, "as") == 0) {
-        tok(fc, token, true, true);
+        token = tok(fc, NULL, true, true);
         if (!is_valid_varname(token)) {
             sprintf(fc->sbuf, "Invalid variable name syntax '%s'", token);
             fc_error(fc);
@@ -648,9 +647,8 @@ void stage_1_use(Fc *fc) {
 
 void stage_1_global(Fc *fc, bool shared, bool is_private) {
     //
-    char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
-    tok(fc, token, true, true);
+    char* token = tok(fc, NULL, true, true);
 
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid global name syntax '%s'", token);
@@ -700,8 +698,7 @@ void stage_1_alias(Fc *fc, int alias_type, bool is_private) {
 
     tok_expect(fc, "as", true, true);
 
-    char *token = fc->token;
-    tok(fc, token, true, true);
+    char* token = tok(fc, NULL, true, true);
 
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid alias name syntax '%s'", token);
@@ -824,8 +821,7 @@ void stage_1_macro(Fc *fc) {
     Build *b = fc->b;
     Allocator *alc = fc->alc;
 
-    char *token = fc->token;
-    tok(fc, token, true, true);
+    char* token = tok(fc, NULL, true, true);
 
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid macro name syntax '%s'", token);
@@ -833,7 +829,7 @@ void stage_1_macro(Fc *fc) {
     }
     name_taken_check(fc, fc->nsc->scope, token);
 
-    char *name = dups(fc->alc, token);
+    char *name = token;
     char *dname = nsc_dname(fc, name);
 
     Macro *mac = al(alc, sizeof(Macro));
@@ -862,7 +858,7 @@ void stage_1_macro(Fc *fc) {
 
     while (true) {
         // Read input groups
-        tok(fc, token, false, true);
+        token = tok(fc, NULL, false, true);
         if (strcmp(token, "\"") == 0) {
             // New group
             MacroVarGroup *mvg = al(alc, sizeof(MacroVarGroup));
@@ -912,7 +908,7 @@ void stage_1_macro(Fc *fc) {
                 //     sprintf(fc->sbuf, "Expected ':', found: '%s'", pattern);
                 //     fc_error(fc);
                 // }
-                tok(fc, token, false, true);
+                token = tok(fc, NULL, false, true);
                 if (!is_valid_varname(token)) {
                     sprintf(fc->sbuf, "Invalid input name syntax '%s'", token);
                     fc_error(fc);
@@ -923,7 +919,7 @@ void stage_1_macro(Fc *fc) {
                 }
 
                 MacroVar *mv = al(alc, sizeof(MacroVar));
-                mv->name = dups(alc, token);
+                mv->name = token;
                 mv->replaces = array_make(alc, 4);
                 mv->repeat = false;
 
@@ -931,7 +927,7 @@ void stage_1_macro(Fc *fc) {
                 array_push(mvg->vars, mv);
 
                 while (true) {
-                    tok(fc, token, false, true);
+                    token = tok(fc, NULL, false, true);
 
                     if (strcmp(token, "@repeat") == 0) {
                         repeat = true;
