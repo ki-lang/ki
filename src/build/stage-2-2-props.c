@@ -36,7 +36,6 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
     while (true) {
 
         tok(fc, token, false, true);
-        // printf("t:'%s'\n", token);
 
         if (token[0] == 0) {
             sprintf(fc->sbuf, "Unexpected end of file");
@@ -45,11 +44,6 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
 
         if (strcmp(token, "}") == 0) {
             break;
-        }
-
-        if (strcmp(token, "/") == 0 && get_char(fc, 0) == '/') {
-            skip_body(fc, '\n');
-            continue;
         }
 
         if (strcmp(token, "#") == 0) {
@@ -184,7 +178,7 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
             tok(fc, token, true, true);
             if (strcmp(token, "(") == 0) {
                 func->chunk_args = chunk_clone(fc->alc, fc->chunk);
-                skip_body(fc, ')');
+                skip_body(fc);
             } else {
                 rtok(fc);
                 func->chunk_args = chunk_clone(fc->alc, fc->chunk);
@@ -193,7 +187,7 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
 
             skip_until_char(fc, "{");
             func->chunk_body = chunk_clone(fc->alc, fc->chunk);
-            skip_body(fc, '}');
+            skip_body(fc);
 
         } else {
             // Property

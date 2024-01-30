@@ -236,80 +236,55 @@ Str *read_string(Fc *fc) {
     return buf;
 }
 
-Array *read_string_chunks(Allocator *alc, Fc *fc) {
+Array *string_read_format_chunks(Allocator *alc, Fc* fc, char *body) {
     //
     Array *result = array_make(alc, 4);
     Str *buf = fc->b->str_buf;
     str_clear(buf);
 
-    Chunk *chunk = fc->chunk;
-    char *data = chunk->content;
-    int i = chunk->i;
-    int col = chunk->col;
-    int line = chunk->line;
-    int len = chunk->length;
-    while (i < len) {
-        char ch = *(data + i);
-        i++;
-        col++;
-
+    int i = 0;
+    while (true) {
+        const char ch = body[i++];
+        if(ch == 0)
+            break;
         if (ch == '\\') {
-            if (i == len) {
-                break;
-            }
-            char add = *(data + i);
-            if (add == 'n') {
-                add = '\n';
-            } else if (add == 'r') {
-                add = '\r';
-            } else if (add == 't') {
-                add = '\t';
-            } else if (add == 'f') {
-                add = '\f';
-            } else if (add == 'b') {
-                add = '\b';
-            } else if (add == 'v') {
-                add = '\v';
-            } else if (add == 'f') {
-                add = '\f';
-            } else if (add == 'a') {
-                add = '\a';
-            }
-            i++;
-            col++;
-
-            str_append_char(buf, add);
+            char ch = body[i++];
+            ch = backslash_char(ch);
+            str_append_char(buf, ch);
             continue;
         }
-
-        if (ch == '"') {
-            array_push(result, str_to_chars(alc, buf));
-            str_clear(buf);
-            break;
-        }
-
         if (ch == '%') {
             array_push(result, str_to_chars(alc, buf));
             str_clear(buf);
             continue;
         }
-
-        if (is_newline(ch)) {
-            line++;
-            col = 1;
-        }
         str_append_char(buf, ch);
     }
 
-    if (i == len) {
-        sprintf(fc->sbuf, "Missing end of string");
-        fc_error(fc);
+    return result;
+}
+
+char* string_replace_backslash_chars(Allocator* alc, char* body) {
+    //
+    int len = strlen(body);
+    if(len == 0)
+        return "";
+    char* result = al(alc, len);
+    int i = 0;
+    int ri = 0;
+    while(true) {
+        const char ch = body[i++];
+        if(ch == 0)
+            break;
+        if (ch == '\\') {
+            char ch = body[i++];
+            ch = backslash_char(ch);
+            result[ri++] = ch;
+            continue;
+        }
+        result[ri++] = ch;
     }
-
-    chunk->i = i;
-    chunk->col = col;
-    chunk->line = line;
-
+    result[ri] = 0;
     return result;
 }
 

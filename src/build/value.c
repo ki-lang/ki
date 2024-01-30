@@ -21,8 +21,10 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
     char *token = fc->token;
     Build *b = fc->b;
     Value *v = NULL;
+    Chunk* chunk = fc->chunk;
 
-    tok(fc, token, sameline, true);
+    char* tkn = tok(fc, token, sameline, true);
+    char t = chunk->token;
 
     bool skip_move = assignable;
 
@@ -31,15 +33,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         tok_expect(fc, ")", false, true);
         skip_move = true;
         //
-    } else if (strcmp(token, "\"") == 0) {
-        Chunk before_str[1];
-        *before_str = *fc->chunk;
-        Str *str = read_string(fc);
-        char *body = str_to_chars(alc, str);
+    } else if (t == tok_string) {
+        char *body = tkn;
         if (get_char(fc, 0) == '{') {
             // Format string
-            *fc->chunk = *before_str;
-            Array *parts = read_string_chunks(alc, fc);
+            Array *parts = string_read_format_chunks(alc, fc, body);
 
             tok_expect(fc, "{", true, false);
 
@@ -59,46 +57,22 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             VFString *vfs = al(alc, sizeof(VFString));
             vfs->parts = parts;
             vfs->values = values;
-            vfs->line = before_str->line;
-            vfs->col = before_str->col;
+            vfs->line = chunk->line;
+            vfs->col = chunk->col;
             Type *rett = type_gen(fc->b, alc, "String");
             rett->strict_ownership = true;
             v = value_init(alc, v_fstring, vfs, rett);
 
             tok_expect(fc, "}", false, true);
         } else {
+            body = string_replace_backslash_chars(alc, body);
             Type *rett = type_gen(fc->b, alc, "String");
             rett->strict_ownership = true;
             v = value_init(alc, v_string, body, rett);
         }
         //
-    } else if (strcmp(token, "'") == 0) {
-        char ch = get_char(fc, 0);
-        chunk_move(fc->chunk, 1);
-        if (ch == '\\') {
-            char nch = get_char(fc, 0);
-            chunk_move(fc->chunk, 1);
-            if (nch == '0') {
-                ch = '\0';
-            } else if (nch == 'n') {
-                ch = '\n';
-            } else if (nch == 'r') {
-                ch = '\r';
-            } else if (nch == 't') {
-                ch = '\t';
-            } else if (nch == 'v') {
-                ch = '\v';
-            } else if (nch == 'f') {
-                ch = '\f';
-            } else if (nch == 'b') {
-                ch = '\b';
-            } else if (nch == 'a') {
-                ch = '\a';
-            }
-        }
-
-        tok_expect(fc, "'", true, false);
-
+    } else if (t == tok_char_string) {
+        char ch = token[0];
         v = vgen_vint(alc, ch, type_gen(b, alc, "u8"), true);
         //
     } else if (strcmp(token, "!") == 0) {

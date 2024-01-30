@@ -127,7 +127,7 @@ void stage_1(Fc *fc) {
     b->LOC += fc->chunk->line;
 
     //
-    // chain_add(b->stage_2_1, fc);
+    chain_add(b->stage_2_1, fc);
 }
 
 void stage_1_func(Fc *fc, bool is_private) {
@@ -188,7 +188,7 @@ void stage_1_func(Fc *fc, bool is_private) {
     token = tok(fc, NULL, true, true);
     if (strcmp(token, "(") == 0) {
         func->chunk_args = chunk_clone(fc->alc, fc->chunk);
-        skip_body(fc, ')');
+        skip_body(fc);
     } else {
         rtok(fc);
         func->parse_args = false;
@@ -200,7 +200,7 @@ void stage_1_func(Fc *fc, bool is_private) {
     } else {
         skip_until_char(fc, "{");
         func->chunk_body = chunk_clone(fc->alc, fc->chunk);
-        skip_body(fc, '}');
+        skip_body(fc);
     }
 }
 
@@ -351,7 +351,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
 
     class->chunk_body = chunk_clone(fc->alc, fc->chunk);
 
-    skip_body(fc, '}');
+    skip_body(fc);
 }
 
 void stage_1_trait(Fc *fc, bool is_private) {
@@ -389,7 +389,7 @@ void stage_1_trait(Fc *fc, bool is_private) {
 
     tr->chunk = chunk_clone(fc->alc, fc->chunk);
 
-    skip_body(fc, '}');
+    skip_body(fc);
 }
 
 void stage_1_extend(Fc *fc) {
@@ -401,7 +401,7 @@ void stage_1_extend(Fc *fc) {
     skip_type(fc);
     tok_expect(fc, "{", false, true);
     ex->chunk_body = chunk_clone(fc->alc, fc->chunk);
-    skip_body(fc, '}');
+    skip_body(fc);
 
     array_push(fc->extends, ex);
 }
@@ -813,7 +813,7 @@ void stage_1_test(Fc *fc) {
         array_push(b->tests, test);
     }
 
-    skip_body(fc, '}');
+    skip_body(fc);
 }
 
 void stage_1_macro(Fc *fc) {

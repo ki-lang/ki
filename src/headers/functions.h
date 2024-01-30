@@ -30,6 +30,7 @@ bool is_valid_hex_number(char *str);
 bool is_valid_macro_number(char *str);
 bool ends_with(const char *str, const char *suffix);
 bool starts_with(const char *a, const char *b);
+char backslash_char(char ch);
 
 // Alloc
 Allocator *alc_make();
@@ -176,9 +177,6 @@ void stage_3_class(Fc *fc, Class *class);
 // void stage_2_3_circular(Build *b, Class *class);
 // void stage_2_3_shared_circular_refs(Build *b, Class *class);
 
-// Lexer
-char convert_backslash_char(char ch);
-
 // Read
 Chunk *chunk_init(Allocator *alc, Fc *fc);
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk);
@@ -194,11 +192,12 @@ void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space);
 char get_char(Fc *fc, int index);
 void read_hex(Fc *fc, char *token);
 Str *read_string(Fc *fc);
-Array *read_string_chunks(Allocator *alc, Fc *fc);
+Array *string_read_format_chunks(Allocator *alc, Fc* fc, char *body);
+char* string_replace_backslash_chars(Allocator* alc, char* body);
 char *read_part(Allocator *alc, Fc *fc, int i, int len);
 
 // Skips
-void skip_body(Fc *fc, char until_ch);
+void skip_body(Fc *fc);
 void skip_string(Fc *fc, char end_char);
 void skip_until_char(Fc *fc, char *find);
 void skip_whitespace(Fc *fc);

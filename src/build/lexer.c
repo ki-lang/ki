@@ -26,7 +26,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
     char token[256];
     int token_i = 0;
 
-    int line = 0;
+    int line = 1;
     int col = 0;
     int i_last = 0;
 
@@ -75,6 +75,11 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             while(ch <= 32) {
                 if(ch == 0)
                     break;
+                if(ch == '\n') {
+                    i_last = i;
+                    col = 0;
+                    line++;
+                }
                 ch = content[++i];
             }
             continue;
@@ -190,7 +195,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             char ch = content[i++];
             if(ch == '\\') {
                 ch = content[i++];
-                ch = convert_backslash_char(ch);
+                ch = backslash_char(ch);
             }
             if(content[i++] != '\'') {
                 sprintf(fc->sbuf, "Missing character closing tag ('), found '%c'", content[i - 1]);
@@ -296,25 +301,4 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
     tokens[o++] = '\0';
 
     chunk->tokens = tokens;
-}
-
-char convert_backslash_char(char ch) {
-    if (ch == 'n') {
-        ch = '\n';
-    } else if (ch == 'r') {
-        ch = '\r';
-    } else if (ch == 't') {
-        ch = '\t';
-    } else if (ch == 'f') {
-        ch = '\f';
-    } else if (ch == 'b') {
-        ch = '\b';
-    } else if (ch == 'v') {
-        ch = '\v';
-    } else if (ch == 'f') {
-        ch = '\f';
-    } else if (ch == 'a') {
-        ch = '\a';
-    }
-    return ch;
 }

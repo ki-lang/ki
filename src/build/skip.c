@@ -1,6 +1,6 @@
 #include "../all.h"
 
-void skip_body(Fc *fc, char until_ch) {
+void skip_body(Fc *fc) {
     //
     Chunk* chunk = fc->chunk;
     chunk->i = chunk->scope_end_i;
@@ -123,35 +123,28 @@ void skip_traits(Fc *fc) {
 
 void skip_value(Fc *fc) {
 
-    char *token = fc->token;
+    Chunk *chunk = fc->chunk;
     while (true) {
 
-        tok(fc, token, false, true);
+        char* token = tok(fc, NULL, false, true);
+        char t = chunk->token;
 
-        if (strcmp(token, "\"") == 0) {
-            skip_string(fc, '"');
+        if (t == tok_string) {
             continue;
         }
-        if (strcmp(token, "'") == 0) {
-            skip_string(fc, '\'');
+        if (t == tok_char_string) {
             continue;
         }
-        if (strcmp(token, "(") == 0) {
-            skip_until_char(fc, ")");
+        if (t == tok_scope_open) {
+            skip_body(fc);
             continue;
         }
-        if (strcmp(token, "{") == 0) {
-            skip_until_char(fc, "}");
+        if (t == tok_id) {
             continue;
         }
-        if (strcmp(token, "[") == 0) {
-            skip_until_char(fc, "]");
+        if (t == tok_number) {
             continue;
         }
-        if (is_valid_varname_char(token[0]))
-            continue;
-        if (is_number(token[0]))
-            continue;
 
         if (strcmp(token, ":") == 0 || strcmp(token, ".") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, "&&") == 0 || strcmp(token, "||") == 0 || strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "/") == 0 || strcmp(token, "*") == 0 || strcmp(token, "%") == 0 || strcmp(token, "&") == 0 || strcmp(token, "|") == 0 || strcmp(token, "^") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "->") == 0 || strcmp(token, "??") == 0 || strcmp(token, "?!") == 0 || strcmp(token, "!!") == 0 || strcmp(token, "?") == 0) {
             continue;
@@ -179,7 +172,7 @@ void skip_type(Fc *fc) {
     }
     token = tok(fc, NULL, true, false);
     if(token[0] == '[') {
-        skip_body(fc, ']');
+        skip_body(fc);
     } else {
         rtok(fc);
     }
