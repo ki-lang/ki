@@ -169,14 +169,6 @@ void stage_2_6_func(Fc *fc, Func *func);
 void stage_2_6_class_functions(Fc *fc, Class *class);
 void stage_3_class(Fc *fc, Class *class);
 
-// void stage_2_class_type_checks(Fc *fc, Class *class);
-// void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend);
-// void stage_2_func(Fc *fc, Func *func);
-// void stage_2_1(Fc *fc);
-// void stage_3(Fc *);
-// void stage_2_3_circular(Build *b, Class *class);
-// void stage_2_3_shared_circular_refs(Build *b, Class *class);
-
 // Read
 Chunk *chunk_init(Allocator *alc, Fc *fc);
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk);
