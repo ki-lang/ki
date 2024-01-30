@@ -46,7 +46,7 @@ void stage_1(Fc *fc) {
         bool private = false;
         if (strcmp(token, "-") == 0) {
             private = true;
-            tok(fc, token, true, true);
+            token = tok(fc, NULL, true, true);
         }
 
         // Indentifiers
@@ -534,8 +534,7 @@ void stage_1_header(Fc *fc) {
             } else {
                 tok_expect(fc, "as", true, true);
 
-                char *token = fc->token;
-                tok(fc, token, true, true);
+                char* token = tok(fc, NULL, true, true);
 
                 if (!is_valid_varname_char(token[0])) {
                     sprintf(fc->sbuf, "Invalid variable name syntax: '%s'", token);
@@ -890,7 +889,7 @@ void stage_1_macro(Fc *fc) {
                 }
 
                 // int type;
-                // tok(fc, token, false, true);
+                // token = tok(fc, NULL, false, true);
                 // if (strcmp(token, "T") == 0) {
                 //     type = macro_part_type;
                 // } else if (strcmp(token, "V") == 0) {
@@ -900,10 +899,10 @@ void stage_1_macro(Fc *fc) {
                 //     fc_error(fc);
                 // }
 
-                // tok(fc, token, true, false);
+                // token = tok(fc, NULL, true, false);
                 // if (strcmp(token, "*") == 0) {
                 //     infinite = true;
-                //     tok(fc, token, true, false);
+                //     token = tok(fc, NULL, true, false);
                 // }
                 // if (strcmp(token, ":") != 0) {
                 //     sprintf(fc->sbuf, "Expected ':', found: '%s'", pattern);

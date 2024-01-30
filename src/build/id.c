@@ -24,11 +24,10 @@ Idf *idf_init_item(Allocator *alc, int type, void *item) {
 
 Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
     //
-    char *token = fc->token;
     Id *id = fc->id_buf;
     id->has_nsc = false;
 
-    tok(fc, token, sameline, allow_space);
+    char* token = tok(fc, NULL, sameline, allow_space);
 
     // if (token[0] == ':') {
     //     strcpy(token, "main");
@@ -46,7 +45,7 @@ Id *read_id(Fc *fc, bool sameline, bool allow_space, bool crash) {
         id->has_nsc = true;
         strcpy(id->nsc_name, token);
         chunk_move(fc->chunk, 1);
-        tok(fc, token, true, false);
+        token = tok(fc, NULL, true, false);
 
         if (!is_valid_varname(token)) {
             if (!crash)
@@ -66,8 +65,7 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
     bool lsp = fc->lsp_file && lsp_check(fc);
     Build *b = fc->b;
 
-    char *token = fc->token;
-    tok(fc, token, sameline, allow_space);
+    char* token = tok(fc, NULL, sameline, allow_space);
 
     Idf *idf = NULL;
 
@@ -132,7 +130,7 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
             build_end(b, 0);
         }
 
-        tok(fc, token, true, false);
+        token = tok(fc, NULL, true, false);
 
         id.has_nsc = false;
         id.name = token;
@@ -152,7 +150,7 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
 
             char buf[256];
             strcpy(buf, token);
-            tok(fc, token, true, false);
+            token = tok(fc, NULL, true, false);
 
             idf = idf_get_from_header(rfc, token, 0);
             if (!idf) {

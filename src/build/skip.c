@@ -106,9 +106,8 @@ void skip_macro_if(Fc *fc) {
 
 void skip_traits(Fc *fc) {
     //
-    char *token = fc->token;
     while (true) {
-        tok(fc, token, false, true);
+        char* token = tok(fc, NULL, false, true);
         if (is_valid_varname_char(token[0])) {
             rtok(fc);
             read_id(fc, false, true, true);
@@ -180,10 +179,9 @@ void skip_type(Fc *fc) {
 
 void skip_macro_input(Fc *fc, char *end) {
 
-    char *token = fc->token;
     while (true) {
 
-        tok(fc, token, false, true);
+        char* token = tok(fc, NULL, false, true);
 
         if (token[0] == '\0') {
             sprintf(fc->sbuf, "Your macro is missing a closing tag, unexpected end of file");

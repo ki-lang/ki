@@ -99,7 +99,7 @@ void stage_4_1_func(Fc *fc, Func *func) {
 
 void read_ast(Fc *fc, Scope *scope, bool single_line) {
     //
-    char *token = fc->token;
+    char *token;
     bool first_line = true;
     Allocator *alc = fc->alc_ast;
 
@@ -111,7 +111,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
     while (true) {
         //
-        tok(fc, token, false, true);
+        token = tok(fc, NULL, false, true);
 
         if (token[0] == 0) {
             sprintf(fc->sbuf, "Unexpected end of file");
@@ -259,7 +259,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         // Assign
         if (value_is_assignable(left)) {
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
             sprintf(fc->sbuf, ".%s.", token);
             if (strstr(".=.+=.-=.*=./=.", fc->sbuf)) {
                 char *sign = dups(alc, token);
@@ -388,9 +388,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
 void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
     //
-    char *token = fc->token;
-
-    tok(fc, token, true, true);
+    char* token = tok(fc, NULL, true, true);
 
     if (is_valid_varname_char(token[0])) {
         sprintf(fc->sbuf, "Invalid variable name syntax '%s'", token);
@@ -414,10 +412,10 @@ void token_declare(Allocator *alc, Fc *fc, Scope *scope, bool replace) {
 
     Type *type = NULL;
 
-    tok(fc, token, false, true);
+    token = tok(fc, NULL, false, true);
     if (strcmp(token, ":") == 0) {
         type = read_type(fc, alc, scope, false, true, rtc_decl);
-        tok(fc, token, false, true);
+        token = tok(fc, NULL, false, true);
     }
 
     if (strcmp(token, "=") != 0) {
@@ -570,15 +568,13 @@ void token_throw(Allocator *alc, Fc *fc, Scope *scope) {
         fc_error(fc);
     }
 
-    char *token = fc->token;
     Array *errors = func->errors;
-
     if (!func->errors) {
         sprintf(fc->sbuf, "Missing list of errors (compiler bug)");
         fc_error(fc);
     }
 
-    tok(fc, token, true, true);
+    char* token = tok(fc, NULL, true, true);
     int index = array_find(errors, token, arr_find_str);
     if (index < 0) {
         sprintf(fc->sbuf, "The function has no error named '%s'", token);
@@ -591,7 +587,7 @@ void token_throw(Allocator *alc, Fc *fc, Scope *scope) {
     throw->code = index + 1;
     throw->msg = NULL;
 
-    tok(fc, token, true, true);
+    token = tok(fc, NULL, true, true);
     if (strcmp(token, ",") == 0) {
         Value *msg = read_value(fc, alc, scope, false, 0, false);
         if (msg->type != v_string) {
@@ -612,15 +608,13 @@ void token_throw(Allocator *alc, Fc *fc, Scope *scope) {
 
 void token_if(Allocator *alc, Fc *fc, Scope *scope) {
     //
-    char *token = fc->token;
-
     Value *cond = read_value(fc, alc, scope, true, 0, false);
     if (!type_is_bool(cond->rett, fc->b)) {
         sprintf(fc->sbuf, "Condition value must return a bool");
         fc_error(fc);
     }
 
-    tok(fc, token, false, true);
+    char* token = tok(fc, NULL, false, true);
     bool single = false;
     if (strcmp(token, "{") == 0) {
     } else if (strcmp(token, ":") == 0) {
@@ -637,15 +631,15 @@ void token_if(Allocator *alc, Fc *fc, Scope *scope) {
 
     read_ast(fc, sub, single);
 
-    tok(fc, token, false, true);
+    token = tok(fc, NULL, false, true);
     if (strcmp(token, "else") == 0 && fc->chunk->token != tok_cc) {
-        tok(fc, token, true, true);
+        token = tok(fc, NULL, true, true);
         bool has_if = strcmp(token, "if") == 0;
         if (has_if) {
             token_if(alc, fc, else_scope);
         } else {
             rtok(fc);
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
             bool single = false;
             if (strcmp(token, "{") == 0) {
             } else if (strcmp(token, ":") == 0) {
@@ -673,7 +667,6 @@ void token_if(Allocator *alc, Fc *fc, Scope *scope) {
 
 void token_while(Allocator *alc, Fc *fc, Scope *scope) {
     //
-    char *token = fc->token;
     Scope *sub = usage_scope_init(alc, scope, sct_loop);
     Value *cond = read_value(fc, alc, sub, true, 0, false);
 
@@ -682,7 +675,7 @@ void token_while(Allocator *alc, Fc *fc, Scope *scope) {
         fc_error(fc);
     }
 
-    tok(fc, token, false, true);
+    char* token = tok(fc, NULL, false, true);
     bool single = false;
     if (strcmp(token, "{") == 0) {
     } else if (strcmp(token, ":") == 0) {
@@ -709,7 +702,6 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     int col = fc->chunk->col;
     int line = fc->chunk->line;
 
-    char *token = fc->token;
     Value *value = read_value(fc, alc, scope, true, 0, false);
     Value *on = vgen_ir_val(alc, value, value->rett);
     array_push(scope->ast, token_init(alc, tkn_ir_val, on->item));
@@ -731,7 +723,7 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     }
 
     tok_expect(fc, "as", false, true);
-    tok(fc, token, false, true);
+    char* token = tok(fc, NULL, false, true);
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid variable name '%s'", token);
         fc_error(fc);
@@ -741,11 +733,11 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
     char *key_name = NULL;
     char *value_name = dups(alc, token);
 
-    tok(fc, token, false, true);
+    token = tok(fc, NULL, false, true);
     if (strcmp(token, ",") == 0) {
         key_name = value_name;
 
-        tok(fc, token, false, true);
+        token = tok(fc, NULL, false, true);
         if (!is_valid_varname(token)) {
             sprintf(fc->sbuf, "Invalid variable name '%s'", token);
             fc_error(fc);
@@ -757,7 +749,7 @@ void token_each(Allocator *alc, Fc *fc, Scope *scope) {
         name_taken_check(fc, scope, token);
         value_name = dups(alc, token);
 
-        tok(fc, token, false, true);
+        token = tok(fc, NULL, false, true);
     }
 
     // Declare next_key

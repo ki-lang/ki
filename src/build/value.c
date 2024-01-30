@@ -18,12 +18,11 @@ Value *value_init(Allocator *alc, int type, void *item, Type *rett) {
 
 Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio, bool assignable) {
     //
-    char *token = fc->token;
     Build *b = fc->b;
     Value *v = NULL;
     Chunk* chunk = fc->chunk;
 
-    char* tkn = tok(fc, token, sameline, true);
+    char* token = tok(fc, NULL, sameline, true);
     char t = chunk->token;
 
     bool skip_move = assignable;
@@ -34,7 +33,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         skip_move = true;
         //
     } else if (t == tok_string) {
-        char *body = tkn;
+        char *body = token;
         if (get_char(fc, 0) == '{') {
             // Format string
             Array *parts = string_read_format_chunks(alc, fc, body);
@@ -235,7 +234,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             fc_error(fc);
         }
 
-        tok(fc, token, true, true);
+        token = tok(fc, NULL, true, true);
 
         int op = op_add;
         if (strcmp(token, "ADD") == 0) {
@@ -346,7 +345,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         bool is_negative = strcmp(token, "-") == 0;
 
         if (is_negative) {
-            tok(fc, token, true, false);
+            token = tok(fc, NULL, true, false);
         }
 
         bool is_float = false;
@@ -367,7 +366,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     is_float = true;
 
                     chunk_move(fc->chunk, 1);
-                    tok(fc, token, true, false);
+                    token = tok(fc, NULL, true, false);
 
                     float_str = al(alc, strlen(num_str) + strlen(token) + 2);
                     strcpy(float_str, num_str);
@@ -422,7 +421,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         fc_error(fc);
     }
 
-    tok(fc, token, true, false);
+    token = tok(fc, NULL, true, false);
     while (strcmp(token, ".") == 0 || strcmp(token, "(") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "[") == 0) {
 
         Type *rett = v->rett;
@@ -481,7 +480,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 build_end(b, 0);
             }
 
-            tok(fc, token, true, false);
+            token = tok(fc, NULL, true, false);
 
             ClassProp *prop = map_get(class->props, token);
             if (prop) {
@@ -567,11 +566,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             v = vgen_array_item(alc, scope, v, index);
         }
 
-        tok(fc, token, true, false);
+        token = tok(fc, NULL, true, false);
     }
 
     rtok(fc);
-    tok(fc, token, false, true);
+    token = tok(fc, NULL, false, true);
 
     if (prio == 0 || prio > 7) {
         while (strcmp(token, "@as") == 0) {
@@ -583,7 +582,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             Type *type = read_type(fc, alc, scope, false, true, rtc_ptrv);
             v = vgen_cast(alc, v, type);
 
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
         }
     }
 
@@ -625,7 +624,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
             v = vgen_this_or_that(alc, v, true_scope, left, false_scope, right, type);
 
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
         }
     }
 
@@ -648,7 +647,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
             if (strcmp(token, "?!") == 0) {
                 // ?!
-                tok(fc, token, false, true);
+                token = tok(fc, NULL, false, true);
                 bool single_line = strcmp(token, "{") != 0;
                 if (single_line)
                     rtok(fc);
@@ -676,7 +675,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 v = vgen_or_value(alc, v, right, usage_scope, else_scope, deref_scope);
             }
 
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
         }
     }
 
@@ -692,7 +691,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             Value *right = read_value(fc, alc, scope, false, 10, false);
             v = value_op(fc, alc, scope, v, right, op);
 
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
         }
     }
 
@@ -706,7 +705,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             Value *right = read_value(fc, alc, scope, false, 20, false);
             v = value_op(fc, alc, scope, v, right, op);
 
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
         }
     }
 
@@ -720,7 +719,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             Value *right = read_value(fc, alc, scope, false, 25, false);
             v = value_op(fc, alc, scope, v, right, op);
 
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
         }
     }
 
@@ -799,7 +798,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 v = vgen_compare(alc, b, left, right, op);
             }
 
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
             sprintf(fc->sbuf, ".%s.", token);
         }
     }
@@ -816,7 +815,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             Value *right = read_value(fc, alc, scope, false, 35, false);
             v = value_op(fc, alc, scope, v, right, op);
 
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
         }
     }
 
@@ -843,7 +842,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
             v = vgen_and_or(alc, b, v, right, op);
 
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
         }
     }
 
@@ -854,7 +853,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
 Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
     //
-    char *token = fc->token;
+    char *token;
 
     if (idf->type == idf_decl_type_overwrite) {
         DeclOverwrite *dov = idf->item;
@@ -940,7 +939,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
                 build_end(b, 0);
             }
 
-            tok(fc, token, true, false);
+            token = tok(fc, NULL, true, false);
             Func *func = map_get(class->funcs, token);
             if (!func || !func->is_static) {
                 sprintf(fc->sbuf, "Unknown static function: '%s'", token);
@@ -957,11 +956,11 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
             return vgen_fptr(alc, func, NULL);
         }
 
-        tok(fc, token, true, true);
+        token = tok(fc, NULL, true, true);
         if (strcmp(token, "{") == 0) {
             // Class init
             Map *values = map_make(alc);
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
             while (strcmp(token, "}") != 0) {
                 ClassProp *prop = map_get(class->props, token);
                 if (!prop) {
@@ -983,9 +982,9 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
 
                 map_set(values, name, value);
                 //
-                tok(fc, token, false, true);
+                token = tok(fc, NULL, false, true);
                 if (strcmp(token, ",") == 0) {
-                    tok(fc, token, false, true);
+                    token = tok(fc, NULL, false, true);
                 }
             }
             for (int i = 0; i < class->props->keys->length; i++) {
@@ -1012,7 +1011,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
         Enum *enu = idf->item;
         tok_expect(fc, ".", true, false);
 
-        tok(fc, token, true, false);
+        token = tok(fc, NULL, true, false);
         if (!map_contains(enu->values, token)) {
             sprintf(fc->sbuf, "Enum property does not exist '%s'", token);
             fc_error(fc);
@@ -1026,7 +1025,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
         Fc *rfc = idf->item;
 
         tok_expect(fc, ".", true, false);
-        tok(fc, token, true, false);
+        token = tok(fc, NULL, true, false);
 
         Idf *idf_ = idf_get_from_header(rfc, token, 0);
         if (!idf_) {
@@ -1041,7 +1040,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
         Decl *decl = idf->item;
         if (get_char(fc, 0) == '#') {
             chunk_move(fc->chunk, 1);
-            tok(fc, token, true, false);
+            token = tok(fc, NULL, true, false);
             Array *errors = decl->type->func_errors;
             int index = array_find(errors, token, arr_find_str);
             if (index < 0) {
@@ -1078,7 +1077,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
             }
 
             int count = 0;
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
             if (strcmp(token, mvg->end) == 0) {
             } else {
                 rtok(fc);
@@ -1105,7 +1104,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
                     }
                     count++;
 
-                    tok(fc, token, false, true);
+                    token = tok(fc, NULL, false, true);
                     if (strcmp(token, mvg->end) == 0) {
                         break;
                     } else if (strcmp(token, ",") == 0) {
@@ -1468,7 +1467,6 @@ Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type) {
 
 Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     //
-    char *token = fc->token;
     Type *ont = on->rett;
     int ontt = ont->type;
 
@@ -1524,7 +1522,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         build_end(fc->b, 0);
     }
 
-    tok(fc, token, false, true);
+    char* token = tok(fc, NULL, false, true);
     bool named_args = strcmp(token, "{") == 0;
 
     if (named_args) {
@@ -1554,10 +1552,10 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 type_check(fc, arg->type, val->rett);
                 array_push(values, val);
 
-                tok(fc, token, false, true);
+                token = tok(fc, NULL, false, true);
                 if (strcmp(token, ",") == 0) {
                     if (fc->lsp_file) {
-                        tok(fc, token, false, true);
+                        token = tok(fc, NULL, false, true);
                         rtok(fc);
                     }
                     continue;
@@ -1590,7 +1588,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
     if (can_error) {
 
-        tok(fc, token, false, true);
+        token = tok(fc, NULL, false, true);
         if (strcmp(token, "!") == 0) {
             // !
             if (!type_is_void(rett)) {
@@ -1616,10 +1614,10 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
             if (strcmp(token, "!!") == 0) {
                 // !!
-                tok(fc, token, false, true);
+                token = tok(fc, NULL, false, true);
 
                 if (strcmp(token, "|") == 0) {
-                    tok(fc, token, true, true);
+                    token = tok(fc, NULL, true, true);
                     if (!is_valid_varname(token)) {
                         sprintf(fc->sbuf, "Invalid variable name '%s'", token);
                         fc_error(fc);
@@ -1628,19 +1626,19 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                     char *msg_name = NULL;
 
                     // tok_expect(fc, "|", true, true);
-                    // tok(fc, token, false, true);
-                    tok(fc, token, false, true);
+                    // token = tok(fc, NULL, false, true);
+                    token = tok(fc, NULL, false, true);
                     if (strcmp(token, ",") == 0) {
-                        tok(fc, token, true, true);
+                        token = tok(fc, NULL, true, true);
                         if (!is_valid_varname(token)) {
                             sprintf(fc->sbuf, "Invalid variable name '%s'", token);
                             fc_error(fc);
                         }
                         msg_name = dups(alc, token);
                         tok_expect(fc, "|", true, true);
-                        tok(fc, token, false, true);
+                        token = tok(fc, NULL, false, true);
                     } else if (strcmp(token, "|") == 0) {
-                        tok(fc, token, false, true);
+                        token = tok(fc, NULL, false, true);
                     } else {
                         sprintf(fc->sbuf, "Expected '|' or ',' but found: '%s'", token);
                         fc_error(fc);

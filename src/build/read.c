@@ -134,8 +134,7 @@ char* tok_read(Chunk* chunk, int *i_ref) {
 void rtok(Fc *fc) { *fc->chunk = *fc->chunk_prev; }
 
 void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space) {
-    char token[KI_TOKEN_MAX];
-    tok(fc, token, sameline, allow_space);
+    char* token = tok(fc, NULL, sameline, allow_space);
     if (strcmp(token, expect) != 0) {
         sprintf(fc->sbuf, "Expected: '%s', but found: '%s'", expect, token);
         fc_error(fc);
