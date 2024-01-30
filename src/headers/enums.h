@@ -10,7 +10,7 @@ enum TOKENS {
     tok_string,
     tok_char_string,
     tok_op3,
-    tok_op2,
+    tok_op2, // 10
     tok_op1,
     tok_char,
     tok_scope_open,

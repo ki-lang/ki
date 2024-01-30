@@ -80,7 +80,7 @@ void skip_macro_if(Fc *fc) {
         if(chunk->token == tok_cc) {
             if(strcmp(token, "if") == 0) {
                 depth++;
-            } else if(strcmp(token, "elif") == 0 || strcmp(token, "else")) {
+            } else if(strcmp(token, "elif") == 0 || strcmp(token, "else") == 0) {
                 if(depth == 1) {
                     depth--;
                     break;

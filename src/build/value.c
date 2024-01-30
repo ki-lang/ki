@@ -296,7 +296,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false);
         //
-    } else if (strcmp(token, "{{") == 0) {
+    } else if (strcmp(token, "<{") == 0) {
         // value scope
         // tok_expect(fc, ":", false, true);
         // Type *rett = read_type(fc, alc, scope, false, true, rtc_func_rett);
@@ -312,7 +312,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         read_ast(fc, sub, false);
 
         if (!sub->did_return || !sub->vscope->rett) {
-            sprintf(fc->sbuf, "The value scope '{{' did not return a value");
+            sprintf(fc->sbuf, "The value scope '<{' did not return a value");
             fc_error(fc);
         }
 
@@ -413,7 +413,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         Idf *idf = read_idf(fc, scope, sameline, true);
         v = value_handle_idf(fc, alc, scope, idf);
     } else {
-        sprintf(fc->sbuf, "Unknown value: '%s'", token);
+        sprintf(fc->sbuf, "Unknown value: '%s' (token_type: %d)", token, t);
         fc_error(fc);
     }
 

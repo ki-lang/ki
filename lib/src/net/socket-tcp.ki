@@ -73,7 +73,7 @@ class SocketTCP async {
 
 	fn connect() +Connection !connection_failed {
 
-		let c = this.connection ?? {{
+		let c = this.connection ?? <{
 			let c = Connection {
 				fd: this.fd
 				open: false,
@@ -81,7 +81,7 @@ class SocketTCP async {
 			let res = share(c);
 			this.connection = c;
 			return res;
-		}};
+		};
 
 		if !c.open {
         	#if OS == win

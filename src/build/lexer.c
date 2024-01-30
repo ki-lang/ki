@@ -20,6 +20,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
     bracket_table['('] = ')';
     bracket_table['['] = ']';
     bracket_table['{'] = '}';
+    bracket_table['<'] = '}';
 
     int cc_depth = 0;
 
@@ -176,6 +177,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
                     tokens[o++] = ch;
                 }
                 if(ch == 0){
+                    chunk->i = i;
                     sprintf(fc->sbuf, "Missing string closing tag '\"', compiler reached end of file");
                     fc_error(fc);
                 }
@@ -198,6 +200,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
                 ch = backslash_char(ch);
             }
             if(content[i++] != '\'') {
+                chunk->i = i;
                 sprintf(fc->sbuf, "Missing character closing tag ('), found '%c'", content[i - 1]);
                 fc_error(fc);
             }
@@ -207,11 +210,14 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             continue;
         }
         // Scopes
-        if(ch == '(' || ch == '[' || ch == '{') {
+        if(ch == '(' || ch == '[' || ch == '{' || (ch == '<' && content[i] == '{')) {
             tokens[o++] = tok_scope_open;
             int index = o;
             o += sizeof(int);
             tokens[o++] = ch;
+            if(ch == '<') {
+                tokens[o++] = content[i++];
+            }
             tokens[o++] = '\0';
             closer_chars[depth] = bracket_table[ch];
             closer_indexes[depth] = index;
@@ -293,6 +299,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
     }
 
     if(depth > 0) {
+        chunk->i = i;
         sprintf(fc->sbuf, "Missing closing tag '%c'", closer_chars[depth - 1]);
         fc_error(fc);
     }
@@ -301,4 +308,12 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
     tokens[o++] = '\0';
 
     chunk->tokens = tokens;
+
+    // Probably will never happen
+    // if (err_token_i > -1) {
+    //     *err_content_i = i;
+    //     *err_line = line;
+    //     *err_col = col;
+    //     return;
+    // }
 }

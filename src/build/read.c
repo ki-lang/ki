@@ -83,14 +83,18 @@ char* tok_next(Chunk* chunk, bool sameline, bool allow_space, bool update) {
     char* res = tok_read(chunk, &x);
     char t = chunk->token;
     if(t == tok_space) {
-        if(!allow_space)
+        if(!allow_space) {
+            chunk->token = tok_none;
             return "";
+        }
         res = tok_read(chunk, &x);
         t = chunk->token;
     }
     if(t == tok_newline) {
-        if(!allow_space || sameline)
+        if(!allow_space || sameline){
+            chunk->token = tok_none;
             return "";
+        }
         res = tok_read(chunk, &x);
     }
     if(update) {
@@ -260,6 +264,9 @@ Array *string_read_format_chunks(Allocator *alc, Fc* fc, char *body) {
         }
         str_append_char(buf, ch);
     }
+
+    array_push(result, str_to_chars(alc, buf));
+    str_clear(buf);
 
     return result;
 }

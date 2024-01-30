@@ -104,7 +104,10 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
     Allocator *alc = fc->alc_ast;
 
     bool is_vscope = scope->vscope != NULL;
-    const char *end_char = is_vscope ? "}}" : "}";
+    const char *end_char = is_vscope ? "}" : "}";
+
+    Chunk *chunk = fc->chunk;
+    char *t_ = &chunk->token;
 
     while (true) {
         //
@@ -115,7 +118,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             fc_error(fc);
         }
 
-        if (strcmp(token, "#") == 0) {
+
+        int t = *t_;
+        if (t == tok_cc) {
+            rtok(fc);
+            skip_whitespace(fc);
             read_macro(fc, alc, scope);
             continue;
         }
@@ -460,7 +467,7 @@ void token_return(Allocator *alc, Fc *fc, Scope *scope) {
         Type *rett = vscope->vscope->rett;
         Value *val = read_value(fc, alc, scope, true, 0, false);
         if (type_is_void(val->rett)) {
-            sprintf(fc->sbuf, "You cannot return a void value inside a value scope '{{'");
+            sprintf(fc->sbuf, "You cannot return a void value inside a value scope '<{'");
             fc_error(fc);
         }
         if (rett) {
@@ -631,7 +638,7 @@ void token_if(Allocator *alc, Fc *fc, Scope *scope) {
     read_ast(fc, sub, single);
 
     tok(fc, token, false, true);
-    if (strcmp(token, "else") == 0) {
+    if (strcmp(token, "else") == 0 && fc->chunk->token != tok_cc) {
         tok(fc, token, true, true);
         bool has_if = strcmp(token, "if") == 0;
         if (has_if) {
@@ -893,11 +900,11 @@ void stage_4_1_gen_main(Fc *fc) {
 
     chunk->content = str_to_chars(alc, code);
     chunk->length = code->length;
-    chunk->i = 1;
-    chunk->line = 1;
-    chunk->col = 1;
+    chunk->i = 0;
     fc->chunk = chunk;
     chunk_lex_start(chunk);
+    // Skip first character
+    tok(fc, NULL, false, true);
 
     read_ast(fc, scope, false);
 }

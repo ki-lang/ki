@@ -33,6 +33,9 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
         printf("> Read class properties: %s\n", class->dname);
     }
 
+    Chunk *chunk = fc->chunk;
+    char *t_ = &chunk->token;
+
     while (true) {
 
         tok(fc, token, false, true);
@@ -46,7 +49,10 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
             break;
         }
 
-        if (strcmp(token, "#") == 0) {
+        int t = *t_;
+        if (t == tok_cc) {
+            rtok(fc);
+            skip_whitespace(fc);
             read_macro(fc, fc->alc, scope);
             continue;
         }

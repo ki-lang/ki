@@ -35,7 +35,8 @@ void stage_1(Fc *fc) {
         if (token[0] == 0)
             break;
 
-        if (*t_ == tok_cc) {
+        int t = *t_;
+        if (t == tok_cc) {
             rtok(fc);
             skip_whitespace(fc);
             read_macro(fc, fc->alc, fc->scope);

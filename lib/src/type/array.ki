@@ -7,11 +7,11 @@ use mem;
 // 		"{}" values @repeat;
 // 	}
 // 	output {
-// 		"{{\n"
+// 		"<{\n"
 // 		"let array = Array[%type].new();\n"
 // 		"array.push(%values);\n"
 // 		"return array;\n"
-// 		"}}"
+// 		"}"
 // 	}
 // }
 
