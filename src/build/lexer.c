@@ -10,6 +10,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
     char* content = chunk->content;
     int length = chunk->length;
     Fc* fc = chunk->fc;
+    Build* b = fc->b;
 
     int i = 0;
     int o = 0;
@@ -115,7 +116,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
                     if (cc_depth < 0) {
                         fc->chunk->i = i;
                         sprintf(fc->sbuf, "Using #%s without an #if before it", token);
-                        fc_error(fc);
+                        display_error(b, chunk, fc->sbuf, i, line, col);
                     }
                 }
                 i = x;
@@ -179,7 +180,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
                 if(ch == 0){
                     chunk->i = i;
                     sprintf(fc->sbuf, "Missing string closing tag '\"', compiler reached end of file");
-                    fc_error(fc);
+                    display_error(b, chunk, fc->sbuf, i, line, col);
                 }
                 ch = content[++i];
                 // Extend memory if needed
@@ -202,7 +203,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             if(content[i++] != '\'') {
                 chunk->i = i;
                 sprintf(fc->sbuf, "Missing character closing tag ('), found '%c'", content[i - 1]);
-                fc_error(fc);
+                display_error(b, chunk, fc->sbuf, i, line, col);
             }
             tokens[o++] = tok_char_string;
             tokens[o++] = ch;
@@ -229,12 +230,12 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             if(depth < 0) {
                 chunk->i = i;
                 sprintf(fc->sbuf, "Unexpected closing tag '%c'", ch);
-                fc_error(fc);
+                display_error(b, chunk, fc->sbuf, i, line, col);
             }
             if(closer_chars[depth] != ch) {
                 chunk->i = i;
                 sprintf(fc->sbuf, "Unexpected closing tag '%c', expected '%c'", ch, closer_chars[depth]);
-                fc_error(fc);
+                display_error(b, chunk, fc->sbuf, i, line, col);
             }
             tokens[o++] = tok_scope_close;
             tokens[o++] = ch;
@@ -295,13 +296,13 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
 
         chunk->i = i;
         sprintf(fc->sbuf, "Unexpected token '%c'", ch);
-        fc_error(fc);
+        display_error(b, chunk, fc->sbuf, i, line, col);
     }
 
     if(depth > 0) {
         chunk->i = i;
         sprintf(fc->sbuf, "Missing closing tag '%c'", closer_chars[depth - 1]);
-        fc_error(fc);
+        display_error(b, chunk, fc->sbuf, i, line, col);
     }
 
     tokens[o++] = tok_eof;

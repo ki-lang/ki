@@ -9,8 +9,8 @@ Chunk *chunk_init(Allocator *alc, Fc *fc) {
     ch->tokens = NULL;
     ch->length = 0;
     ch->i = 0;
-    ch->line = 1;
-    ch->col = 1;
+    ch->line = -1;
+    ch->col = -1;
     ch->token = 0;
     ch->scope_end_i = 0;
 

@@ -730,48 +730,15 @@ void stage_1_alias(Fc *fc, int alias_type, bool is_private) {
 void stage_1_test(Fc *fc) {
     //
     int line = fc->chunk->line;
-    char *token = fc->token;
+    char buf[512];
     Allocator *alc = fc->alc;
     Build *b = fc->b;
 
-    tok_expect(fc, "\"", true, true);
-
-    Chunk *chu = fc->chunk;
-    char *content = chu->content;
-    int i = chu->i;
-    Str *str = str_make(alc, 64);
-
-    bool found = false;
-    char ch = content[i];
-    while (ch != '\0') {
-        ch = content[i];
-        i++;
-        if (ch == '\n')
-            break;
-        if (ch == '\\') {
-            str_append_char(str, '\\');
-            str_append_char(str, ch);
-            i++;
-            continue;
-        }
-        if (ch == '"') {
-            found = true;
-            break;
-        }
-        str_append_char(str, ch);
-    }
-    if (!found) {
-        sprintf(fc->sbuf, "Missing end of string");
+    char *test_name = tok(fc, true, true);
+    if(fc->chunk->token != tok_string) {
+        sprintf(fc->sbuf, "Expected a test name here wrapped in dubbel-quotes, e.g. \"My test\"");
         fc_error(fc);
     }
-    chu->i = i;
-
-    if (str->length > 128) {
-        sprintf(fc->sbuf, "Test name too long");
-        fc_error(fc);
-    }
-
-    char *body = str_to_chars(alc, str);
 
     tok_expect(fc, "{", false, true);
 
@@ -781,9 +748,9 @@ void stage_1_test(Fc *fc) {
         Func *func = func_init(fc->alc, fc->b);
         func->line = line;
 
-        sprintf(token, "ki__TEST_%d__%s", ++fc->test_counter, fc->path_hash);
+        sprintf(buf, "ki__TEST_%d__%s", ++fc->test_counter, fc->path_hash);
 
-        char *name = dups(fc->alc, token);
+        char *name = dups(fc->alc, buf);
         char *gname = nsc_gname(fc, name);
         char *dname = nsc_dname(fc, name);
 
@@ -796,15 +763,16 @@ void stage_1_test(Fc *fc) {
         func->is_test = true;
 
         Test *test = al(alc, sizeof(Test));
-        test->name = body;
+        test->name = test_name;
         test->func = func;
         func->test = test;
         test->expects = NULL;
 
         Chunk *chunk = chunk_init(alc, fc);
-        chunk->content = "ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {";
+        chunk->content = "(ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {}";
         chunk->length = strlen(chunk->content);
         chunk_lex_start(chunk);
+        tok_next(chunk, false, true, true);
 
         func->chunk_args = chunk;
         func->chunk_body = chunk_clone(fc->alc, fc->chunk);

@@ -150,19 +150,32 @@ void fc_set_cache_paths(Fc *fc) {
 
 void fc_error(Fc *fc) {
     //
-    Allocator *alc = fc->alc;
     Chunk *chunk = fc->chunk;
+
+    int line = -1;
+    int col = -1;
+    int i;
+    chunk_lex(chunk, chunk->i, &i, &line, &col);
+
+    display_error(fc->b, chunk, fc->sbuf, i, line, col);
+}
+
+void display_error(Build* b, Chunk *chunk, char* msg, int i, int line, int col) {
+
+    Allocator *alc = b->alc;
+    Fc *fc = chunk->fc;
+
     char *content = chunk->content;
     int length = chunk->length;
+    // printf("content:'%s'\n", content);
 
-    Build *b = fc->b;
     if (b->lsp) {
         LspData *ld = b->lsp;
         if (ld->type == lspt_diagnostic) {
             Array *errors = array_make(alc, 10);
             FcError *err = al(alc, sizeof(FcError));
-            err->line = chunk->line - 1;
-            err->col = chunk->col - 1;
+            err->line = line;
+            err->col = col;
             err->msg = fc->sbuf;
             err->path = fc->path_ki;
             array_push(errors, err);
@@ -173,15 +186,6 @@ void fc_error(Fc *fc) {
         build_end(b, 1);
     }
 
-    // if (is_newline(get_char(fc, 0))) {
-    //     chunk->i--;
-    // }
-
-    int line = -1;
-    int col = -1;
-    int i;
-    chunk_lex(chunk, chunk->i, &i, &line, &col);
-
     printf("\n");
     Chunk *parent = chunk->parent;
     while (parent) {
@@ -191,14 +195,14 @@ void fc_error(Fc *fc) {
         parent = parent->parent;
     }
     printf("File: %s\n", chunk->fc ? chunk->fc->path_ki : "?");
-    if (fc->error_class_info) {
+    if (fc && fc->error_class_info) {
         printf("Class: %s\n", fc->error_class_info->dname);
     }
-    if (fc->error_func_info) {
+    if (fc && fc->error_func_info) {
         printf("Function: %s\n", fc->error_func_info->dname);
     }
     printf("At: line:%d | col:%d\n", line, col);
-    printf("Error: %s\n", fc->sbuf);
+    printf("Error: %s\n", msg);
     printf("\n");
 
     int start = i - col + 1;

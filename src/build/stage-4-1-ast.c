@@ -46,7 +46,7 @@ void stage_4_1(Fc *fc) {
     }
 
     // Write IR
-    // stage_4_2(fc);
+    stage_4_2(fc);
 }
 
 void stage_4_1_func(Fc *fc, Func *func) {
@@ -933,6 +933,7 @@ void stage_4_1_gen_test_main(Fc *fc) {
     map_set(scope->identifiers, "os_test_report", ki_lib_get(b, "os", "test_report"));
 
     Str *code = str_make(alc, 5000);
+    str_append_chars(code, "{\n");
     str_append_chars(code, "let test_success : u32 = 0;\n");
     str_append_chars(code, "let test_fail : u32 = 0;\n");
     str_append_chars(code, "let expect_total : u32 = 0;\n");
@@ -980,6 +981,8 @@ void stage_4_1_gen_test_main(Fc *fc) {
     chunk->content = str_to_chars(alc, code);
     chunk->length = code->length;
     chunk_lex_start(chunk);
+    // Skip first character
+    tok_next(chunk, false, true, true);
 
     func->chunk_body = chunk;
 }

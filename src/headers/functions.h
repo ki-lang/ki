@@ -146,6 +146,7 @@ char *nsc_dname(Fc *fc, char *name);
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate);
 void fc_set_cache_paths(Fc *fc);
 void fc_error(Fc *fc);
+void display_error(Build* b, Chunk *chunk, char* msg, int i, int line, int col);
 void fc_update_cache(Fc *fc);
 
 //
