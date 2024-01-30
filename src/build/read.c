@@ -272,7 +272,7 @@ char* string_replace_backslash_chars(Allocator* alc, char* body) {
     int len = strlen(body);
     if(len == 0)
         return "";
-    char* result = al(alc, len);
+    char* result = al(alc, len + 1);
     int i = 0;
     int ri = 0;
     while(true) {
