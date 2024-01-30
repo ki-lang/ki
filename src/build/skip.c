@@ -53,7 +53,7 @@ void skip_until_char(Fc *fc, char *find) {
             sprintf(fc->sbuf, "End of file, missing '%s' token", find);
             fc_error(fc);
         }
-        token = tok(fc, NULL, false, true);
+        token = tok(fc, false, true);
     }
 }
 
@@ -76,7 +76,7 @@ void skip_macro_if(Fc *fc) {
     Chunk *chunk = fc->chunk;
     int depth = 1;
     while (true) {
-        char* token = tok(fc, NULL, false, true);
+        char* token = tok(fc, false, true);
         if(chunk->token == tok_cc) {
             if(strcmp(token, "if") == 0) {
                 depth++;
@@ -107,7 +107,7 @@ void skip_macro_if(Fc *fc) {
 void skip_traits(Fc *fc) {
     //
     while (true) {
-        char* token = tok(fc, NULL, false, true);
+        char* token = tok(fc, false, true);
         if (is_valid_varname_char(token[0])) {
             rtok(fc);
             read_id(fc, false, true, true);
@@ -125,7 +125,7 @@ void skip_value(Fc *fc) {
     Chunk *chunk = fc->chunk;
     while (true) {
 
-        char* token = tok(fc, NULL, false, true);
+        char* token = tok(fc, false, true);
         char t = chunk->token;
 
         if (t == tok_string) {
@@ -158,18 +158,18 @@ void skip_type(Fc *fc) {
     //
     Chunk *chunk = fc->chunk;
 
-    char * token = tok(fc, NULL, false, true);
+    char * token = tok(fc, false, true);
     if(strcmp(token, "raw") == 0 || strcmp(token, "weak") == 0){
-        token = tok(fc, NULL, true, true);
+        token = tok(fc, true, true);
     }
     while (strcmp(token, "?") == 0 || strcmp(token, ".") == 0 || strcmp(token, "&") == 0 || strcmp(token, "+") == 0) {
-        token = tok(fc, NULL, true, false);
+        token = tok(fc, true, false);
     }
     if(chunk->token != tok_id && token[0] != ':') {
         sprintf(fc->sbuf, "Expected a type here");
         fc_error(fc);
     }
-    token = tok(fc, NULL, true, false);
+    token = tok(fc, true, false);
     if(token[0] == '[') {
         skip_body(fc);
     } else {
@@ -181,7 +181,7 @@ void skip_macro_input(Fc *fc, char *end) {
 
     while (true) {
 
-        char* token = tok(fc, NULL, false, true);
+        char* token = tok(fc, false, true);
 
         if (token[0] == '\0') {
             sprintf(fc->sbuf, "Your macro is missing a closing tag, unexpected end of file");

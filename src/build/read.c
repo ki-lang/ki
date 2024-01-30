@@ -68,14 +68,11 @@ void chunk_update_col(Chunk *chunk) {
     chunk->col = col;
 }
 
-char* tok(Fc *fc, char *token, bool sameline, bool allow_space) {
+char* tok(Fc *fc, bool sameline, bool allow_space) {
     //
     Chunk *chunk = fc->chunk;
     *fc->chunk_prev = *chunk;
-    char *res = tok_next(chunk, sameline, allow_space, true);
-    if(token)
-        strcpy(token, res);
-    return res;
+    return tok_next(chunk, sameline, allow_space, true);
 }
 
 char* tok_next(Chunk* chunk, bool sameline, bool allow_space, bool update) {
@@ -134,7 +131,7 @@ char* tok_read(Chunk* chunk, int *i_ref) {
 void rtok(Fc *fc) { *fc->chunk = *fc->chunk_prev; }
 
 void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space) {
-    char* token = tok(fc, NULL, sameline, allow_space);
+    char* token = tok(fc, sameline, allow_space);
     if (strcmp(token, expect) != 0) {
         sprintf(fc->sbuf, "Expected: '%s', but found: '%s'", expect, token);
         fc_error(fc);

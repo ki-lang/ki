@@ -65,7 +65,7 @@ void stage_2_6_func(Fc *fc, Func *func) {
     // Args
     fc->chunk = func->chunk_args;
     if (func->parse_args) {
-        token = tok(fc, NULL, true, true);
+        token = tok(fc, true, true);
         while (strcmp(token, ")") != 0) {
 
             if (!is_valid_varname(token)) {
@@ -86,7 +86,7 @@ void stage_2_6_func(Fc *fc, Func *func) {
 
             Type *type = read_type(fc, alc, func->scope->parent, true, true, rtc_func_arg);
 
-            token = tok(fc, NULL, true, true);
+            token = tok(fc, true, true);
             if (strcmp(token, "=") == 0) {
                 val_chunk = chunk_clone(alc, fc->chunk);
                 skip_value(fc);
@@ -94,9 +94,9 @@ void stage_2_6_func(Fc *fc, Func *func) {
                 rtok(fc);
             }
 
-            token = tok(fc, NULL, false, true);
+            token = tok(fc, false, true);
             if (strcmp(token, ",") == 0) {
-                token = tok(fc, NULL, false, true);
+                token = tok(fc, false, true);
             } else if (strcmp(token, ")") != 0) {
                 sprintf(fc->sbuf, "Unexpected token '%s'", token);
                 fc_error(fc);
@@ -113,11 +113,11 @@ void stage_2_6_func(Fc *fc, Func *func) {
     }
 
     // Return type
-    token = tok(fc, NULL, false, true);
+    token = tok(fc, false, true);
     if (strcmp(token, "!") != 0 && strcmp(token, "%") != 0 && strcmp(token, "{") != 0) {
         rtok(fc);
         func->rett = read_type(fc, alc, func->scope->parent, true, true, rtc_func_rett);
-        token = tok(fc, NULL, false, true);
+        token = tok(fc, false, true);
     }
 
     if (func->will_exit && !type_is_void(func->rett)) {
@@ -133,7 +133,7 @@ void stage_2_6_func(Fc *fc, Func *func) {
             func->can_error = true;
         }
 
-        token = tok(fc, NULL, true, false);
+        token = tok(fc, true, false);
         if (!is_valid_varname(token)) {
             sprintf(fc->sbuf, "Invalid error name '%s'", token);
             fc_error(fc);
@@ -144,13 +144,13 @@ void stage_2_6_func(Fc *fc, Func *func) {
         }
         array_push(errors, dups(alc, token));
 
-        token = tok(fc, NULL, false, true);
+        token = tok(fc, false, true);
     }
 
     func->errors = errors;
 
     while (strcmp(token, "%") == 0) {
-        token = tok(fc, NULL, false, false);
+        token = tok(fc, false, false);
         if (strcmp(token, "hot") == 0) {
             func->opt_hot = true;
         } else if (strcmp(token, "inline") == 0) {
@@ -160,7 +160,7 @@ void stage_2_6_func(Fc *fc, Func *func) {
             fc_error(fc);
         }
 
-        token = tok(fc, NULL, false, true);
+        token = tok(fc, false, true);
     }
 
     // Define arguments in AST

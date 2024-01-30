@@ -184,7 +184,7 @@ void chunk_move(Chunk *chunk, int pos);
 void chunk_update_col(Chunk *chunk);
 void chunk_lex_start(Chunk *chunk);
 void chunk_lex(Chunk* chunk, int err_token_i, int* err_content_i, int* err_line, int* err_col);
-char* tok(Fc *fc, char *token, bool sameline, bool allow_space);
+char* tok(Fc *fc, bool sameline, bool allow_space);
 char* tok_next(Chunk* chunk, bool sameline, bool allow_space, bool update);
 char* tok_read(Chunk* chunk, int *i_ref);
 void rtok(Fc *fc);

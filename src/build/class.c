@@ -559,7 +559,7 @@ Array *read_generic_types(Fc *fc, Scope *scope, Class *class) {
         Type *type = read_type(fc, fc->alc, scope, true, true, rtc_default);
         array_push(types, type);
 
-        char *token = tok(fc, NULL, true, true);
+        char *token = tok(fc, true, true);
         if (strcmp(token, ",") != 0 && strcmp(token, "]") != 0) {
             sprintf(fc->sbuf, "Unexpected token '%s'", token);
             fc_error(fc);

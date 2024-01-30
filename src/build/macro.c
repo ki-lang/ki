@@ -11,7 +11,7 @@ MacroScope *init_macro_scope(Allocator *alc) {
 
 void read_macro(Fc *fc, Allocator *alc, Scope *scope) {
     //
-    char *token = tok(fc, NULL, true, false);
+    char *token = tok(fc, true, false);
 
     if (strcmp(token, "if") == 0) {
         MacroScope *mc = fc->current_macro_scope;
@@ -90,7 +90,7 @@ void read_macro(Fc *fc, Allocator *alc, Scope *scope) {
 
 bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
     //
-    char* token = tok(fc, NULL, true, true);
+    char* token = tok(fc, true, true);
 
     bool result = false;
 
@@ -190,7 +190,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
             fc_error(fc);
         }
 
-        token = tok(fc, NULL, true, true);
+        token = tok(fc, true, true);
 
         result = map_get(class->props, token) ? true : false;
 
@@ -208,7 +208,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
             fc_error(fc);
         }
 
-        token = tok(fc, NULL, true, true);
+        token = tok(fc, true, true);
 
         result = map_get(class->funcs, token) ? true : false;
 
@@ -240,19 +240,19 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         }
         result = strcmp(value, "1") == 0;
 
-        token = tok(fc, NULL, true, true);
+        token = tok(fc, true, true);
         if (strcmp(token, "==") == 0) {
-            token = tok(fc, NULL, true, true);
+            token = tok(fc, true, true);
             result = strcmp(value, token) == 0;
         } else if (strcmp(token, "!=") == 0) {
-            token = tok(fc, NULL, true, true);
+            token = tok(fc, true, true);
             result = strcmp(value, token) != 0;
         } else {
             rtok(fc);
         }
     }
 
-    token = tok(fc, NULL, true, true);
+    token = tok(fc, true, true);
     if (strcmp(token, "&&") == 0) {
         result = result && macro_resolve_if_value(fc, scope, mc);
     } else if (strcmp(token, "||") == 0) {
