@@ -1,17 +1,17 @@
 
-macro map {
-	input {
-		"[]" type;
-		"{}" values @repeat @replace("=>", ",");
-	}
-	output {
-		"{{\n"
-		"let map = Map[%type].new();\n"
-		"map.set(%values);\n"
-		"return map;\n"
-		"}}"
-	}
-}
+// macro map {
+// 	input {
+// 		"[]" type;
+// 		"{}" values @repeat @replace("=>", ",");
+// 	}
+// 	output {
+// 		"{{\n"
+// 		"let map = Map[%type].new();\n"
+// 		"map.set(%values);\n"
+// 		"return map;\n"
+// 		"}}"
+// 	}
+// }
 
 // TODO : Use hash maps
 class Map[T] {

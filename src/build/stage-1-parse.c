@@ -22,18 +22,22 @@ void stage_1(Fc *fc) {
         printf("# Stage 1 : Parse : %s\n", fc->path_ki);
     }
 
-    chunk_lex(fc, fc->chunk, -1);
+    Chunk *chunk = fc->chunk;
+    chunk_lex_start(chunk);
 
-    char *token = fc->token;
+    char *token;
+    char *t_ = &chunk->token;
 
     while (true) {
 
-        tok(fc, token, false, true);
+        token = tok(fc, NULL, false, true);
 
         if (token[0] == 0)
             break;
 
-        if (strcmp(token, "#") == 0) {
+        if (*t_ == tok_cc) {
+            rtok(fc);
+            skip_whitespace(fc);
             read_macro(fc, fc->alc, fc->scope);
             continue;
         }
@@ -123,20 +127,19 @@ void stage_1(Fc *fc) {
     b->LOC += fc->chunk->line;
 
     //
-    chain_add(b->stage_2_1, fc);
+    // chain_add(b->stage_2_1, fc);
 }
 
 void stage_1_func(Fc *fc, bool is_private) {
     //
     Build *b = fc->b;
-    char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
-    tok(fc, token, true, true);
+    char* token = tok(fc, NULL, true, true);
 
     bool will_exit = false;
     if (strcmp(token, "!") == 0) {
         will_exit = true;
-        tok(fc, token, true, false);
+        token = tok(fc, NULL, true, false);
     }
 
     if (!is_valid_varname(token)) {
@@ -151,11 +154,11 @@ void stage_1_func(Fc *fc, bool is_private) {
 
     bool is_main = fc->nsc == b->nsc_main && strcmp(token, "main") == 0;
     if (is_main) {
-        strcpy(token, "ki__main__");
+        token = "ki__main__";
         b->main_func = func;
     }
 
-    char *name = dups(fc->alc, token);
+    char *name = token;
     char *gname = nsc_gname(fc, name);
     char *dname = nsc_dname(fc, name);
 
@@ -182,7 +185,7 @@ void stage_1_func(Fc *fc, bool is_private) {
         map_set(fc->scope->identifiers, name, idf);
     }
 
-    tok(fc, token, true, true);
+    token = tok(fc, NULL, true, true);
     if (strcmp(token, "(") == 0) {
         func->chunk_args = chunk_clone(fc->alc, fc->chunk);
         skip_body(fc, ')');
@@ -205,8 +208,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
     //
     Build *b = fc->b;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
-    char *token = fc->token;
-    tok(fc, token, true, true);
+    char* token = tok(fc, NULL, true, true);
 
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid class name '%s'", token);
@@ -248,7 +250,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
         class->generic_names = array_make(fc->alc, 4);
         class->generics = map_make(fc->alc);
 
-        tok(fc, token, true, true);
+        token = tok(fc, NULL, true, true);
         while (true) {
             if (!is_valid_varname(token)) {
                 sprintf(fc->sbuf, "Invalid name");
@@ -264,29 +266,33 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
             char *name = dups(fc->alc, token);
             array_push(class->generic_names, name);
 
-            tok(fc, token, true, true);
+            token = tok(fc, NULL, true, true);
             if (strcmp(token, ",") == 0)
-                tok(fc, token, true, true);
-            if (strcmp(token, "]") == 0)
+                token = tok(fc, NULL, true, true);
+            else if (strcmp(token, "]") == 0)
                 break;
+            else {
+                sprintf(fc->sbuf, "Unexpected token '%s', expected ',' or ']'", token);
+                fc_error(fc);
+            }
         }
     }
 
-    tok(fc, token, true, true);
+    token = tok(fc, NULL, true, true);
     bool track = false;
     while (strcmp(token, "{") != 0) {
         if (strcmp(token, "type") == 0) {
             class->is_rc = false;
             class->track_ownership = false;
             tok_expect(fc, ":", true, false);
-            tok(fc, token, true, false);
+            token = tok(fc, NULL, true, false);
             if (strcmp(token, "ptr") == 0) {
                 class->type = ct_ptr;
                 class->size = fc->b->ptr_size;
             } else if (strcmp(token, "int") == 0 || strcmp(token, "float") == 0) {
                 class->type = strcmp(token, "int") == 0 ? ct_int : ct_float;
                 tok_expect(fc, ":", true, false);
-                tok(fc, token, true, false);
+                token = tok(fc, NULL, true, false);
                 int size = 0;
                 if (strcmp(token, "*") == 0) {
                     size = fc->b->ptr_size;
@@ -303,7 +309,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
                         fc_error(fc);
                     }
                     tok_expect(fc, ":", true, false);
-                    tok(fc, token, true, false);
+                    token = tok(fc, NULL, true, false);
                     if (strcmp(token, "true") != 0 && strcmp(token, "false") != 0) {
                         sprintf(fc->sbuf, "Invalid value for is_signed, options: true,false, received: '%s'", token);
                         fc_error(fc);
@@ -337,7 +343,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
             fc_error(fc);
         }
 
-        tok(fc, token, true, true);
+        token = tok(fc, NULL, true, true);
     }
 
     if (track)
@@ -350,9 +356,8 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
 
 void stage_1_trait(Fc *fc, bool is_private) {
     //
-    char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
-    tok(fc, token, true, true);
+    char *token = tok(fc, NULL, true, true);
 
     if (fc->is_header) {
         sprintf(fc->sbuf, "You cannot use 'trait' inside a header file");
@@ -403,9 +408,8 @@ void stage_1_extend(Fc *fc) {
 
 void stage_1_enum(Fc *fc, bool is_private) {
     //
-    char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
-    tok(fc, token, true, true);
+    char* token = tok(fc, NULL, true, true);
 
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid enum name '%s'", token);
@@ -430,20 +434,20 @@ void stage_1_enum(Fc *fc, bool is_private) {
 
     Map *values = map_make(fc->alc);
 
-    tok(fc, token, false, true);
+    token = tok(fc, NULL, false, true);
     while (strcmp(token, "}") != 0) {
         if (!is_valid_varname(token)) {
             sprintf(fc->sbuf, "Invalid enum property name '%s'", token);
             fc_error(fc);
         }
         char *name = dups(fc->alc, token);
-        tok(fc, token, false, true);
+        token = tok(fc, NULL, false, true);
         if (strcmp(token, ":") == 0) {
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
             bool negative = false;
             if (strcmp(token, "-") == 0) {
                 negative = true;
-                tok(fc, token, true, false);
+                token = tok(fc, NULL, true, false);
             }
             if (is_valid_number(token)) {
                 int value = 0;
@@ -461,9 +465,9 @@ void stage_1_enum(Fc *fc, bool is_private) {
 
                 map_set(values, name, (void *)(intptr_t)value);
 
-                tok(fc, token, false, true);
+                token = tok(fc, NULL, false, true);
                 if (strcmp(token, ",") == 0) {
-                    tok(fc, token, false, true);
+                    token = tok(fc, NULL, false, true);
                     continue;
                 } else if (strcmp(token, "}") == 0) {
                     break;
@@ -483,7 +487,7 @@ void stage_1_enum(Fc *fc, bool is_private) {
                 val = autov++;
             }
             map_set(values, name, (void *)(intptr_t)val);
-            tok(fc, token, false, true);
+            token = tok(fc, NULL, false, true);
             continue;
         } else if (strcmp(token, "}") == 0) {
             break;
@@ -506,12 +510,12 @@ void stage_1_enum(Fc *fc, bool is_private) {
 
 void stage_1_header(Fc *fc) {
     //
-    tok_expect(fc, "\"", true, true);
-
-    Str *buf = read_string(fc);
-    Str *fnstr = macro_replace_str_vars(fc->alc, fc, buf);
-    char *fn = str_to_chars(fc->alc, fnstr);
-    Nsc *nsc_main = fc->b->nsc_main;
+    char* fn = tok(fc, NULL, true, true);
+    if(fc->chunk->token != tok_string) {
+        sprintf(fc->sbuf, "Expected a filepath here wrapped in dubbel-quotes, e.g. \"headers/mylib\"");
+        fc_error(fc);
+    }
+    fn = macro_replace_str_vars(fc->alc, fc, fn);
 
     Array *dirs = fc->config_pkc->header_dirs;
     bool found = false;
@@ -568,11 +572,11 @@ void stage_1_header(Fc *fc) {
 
 void stage_1_link(Fc *fc, int link_type) {
     //
-    tok_expect(fc, "\"", true, true);
-
-    Str *buf = read_string(fc);
-    Str *fnstr = macro_replace_str_vars(fc->alc, fc, buf);
-    char *fn = str_to_chars(fc->alc, fnstr);
+    char* fn = tok(fc, NULL, true, true);
+    if(fc->chunk->token != tok_string) {
+        sprintf(fc->sbuf, "Expected a library name here wrapped in dubbel-quotes, e.g. \"pthread\"");
+        fc_error(fc);
+    }
 
     if (link_type == link_default) {
         link_type = fc->b->link_static ? link_static : link_dynamic;
@@ -803,7 +807,7 @@ void stage_1_test(Fc *fc) {
         Chunk *chunk = chunk_init(alc, fc);
         chunk->content = "ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {";
         chunk->length = strlen(chunk->content);
-        chunk_lex(fc, chunk, -1);
+        chunk_lex_start(chunk);
 
         func->chunk_args = chunk;
         func->chunk_body = chunk_clone(fc->alc, fc->chunk);

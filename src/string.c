@@ -55,7 +55,7 @@ void str_append_chars(Str *str, char *add) {
 void str_increase_memsize(Str *str, int new_memsize) {
     //
     void* data = al(str->alc, new_memsize);
-    memcpy(str->data, data, str->length);
+    memcpy(data, str->data, str->length);
     str->data = data;
     str->mem_size = new_memsize;
 }

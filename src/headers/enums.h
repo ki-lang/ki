@@ -15,6 +15,8 @@ enum TOKENS {
     tok_char,
     tok_scope_open,
     tok_scope_close,
+    tok_pos,
+    tok_cc,
 };
 
 enum BUILD_TYPES {

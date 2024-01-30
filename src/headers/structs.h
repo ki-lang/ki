@@ -231,6 +231,8 @@ struct Chunk {
     int i;
     int line;
     int col;
+    int scope_end_i;
+    char token;
 };
 struct Scope {
     int type;

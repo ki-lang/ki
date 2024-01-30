@@ -11,6 +11,8 @@ Chunk *chunk_init(Allocator *alc, Fc *fc) {
     ch->i = 0;
     ch->line = 1;
     ch->col = 1;
+    ch->token = 0;
+    ch->scope_end_i = 0;
 
     return ch;
 }
@@ -21,34 +23,35 @@ Chunk *chunk_clone(Allocator *alc, Chunk *chunk) {
     return ch;
 }
 void chunk_move(Chunk *chunk, int pos) {
+    tok_next(chunk, false, true, true);
     //
-    int i = chunk->i;
-    while (pos > 0) {
-        pos--;
-        char ch = chunk->content[chunk->i];
-        chunk->i++;
-        chunk->col++;
-        if (ch == '\n') {
-            chunk->line++;
-            chunk->col = 0;
-        }
-    }
-    while (pos < 0) {
-        pos++;
-        char ch = chunk->content[chunk->i];
-        chunk->i--;
-        chunk->col--;
-        if (ch == '\n') {
-            chunk->line--;
-            int x = chunk->i;
-            int col = 0;
-            while (x > 0 && chunk->content[x] != '\n') {
-                x--;
-                col++;
-            }
-            chunk->col = col;
-        }
-    }
+    // int i = chunk->i;
+    // while (pos > 0) {
+    //     pos--;
+    //     char ch = chunk->content[chunk->i];
+    //     chunk->i++;
+    //     chunk->col++;
+    //     if (ch == '\n') {
+    //         chunk->line++;
+    //         chunk->col = 0;
+    //     }
+    // }
+    // while (pos < 0) {
+    //     pos++;
+    //     char ch = chunk->content[chunk->i];
+    //     chunk->i--;
+    //     chunk->col--;
+    //     if (ch == '\n') {
+    //         chunk->line--;
+    //         int x = chunk->i;
+    //         int col = 0;
+    //         while (x > 0 && chunk->content[x] != '\n') {
+    //             x--;
+    //             col++;
+    //         }
+    //         chunk->col = col;
+    //     }
+    // }
 }
 void chunk_update_col(Chunk *chunk) {
     //
@@ -65,182 +68,63 @@ void chunk_update_col(Chunk *chunk) {
     chunk->col = col;
 }
 
-void tok(Fc *fc, char *token, bool sameline, bool allow_space) {
+char* tok(Fc *fc, char *token, bool sameline, bool allow_space) {
     //
     Chunk *chunk = fc->chunk;
     *fc->chunk_prev = *chunk;
+    char *res = tok_next(chunk, sameline, allow_space, true);
+    if(token)
+        strcpy(token, res);
+    return res;
+}
 
-    int i = chunk->i;
-    int col = chunk->col;
-    const char *content = chunk->content;
-    char ch = content[i];
-
-    while (ch == '\0') {
-        if (chunk->parent) {
-            chunk = chunk->parent;
-            fc->chunk = chunk;
-            *fc->chunk_prev = *chunk;
-            i = chunk->i;
-            col = chunk->col;
-            content = chunk->content;
-            ch = content[i];
-            continue;
-        }
-        token[0] = '\0';
-        return;
+char* tok_next(Chunk* chunk, bool sameline, bool allow_space, bool update) {
+    int x = chunk->i;
+    char* res = tok_read(chunk, &x);
+    char t = chunk->token;
+    if(t == tok_space) {
+        if(!allow_space)
+            return "";
+        res = tok_read(chunk, &x);
+        t = chunk->token;
     }
-
-    if (!allow_space && is_whitespace(ch)) {
-        token[0] = '\0';
-        return;
+    if(t == tok_newline) {
+        if(!allow_space || sameline)
+            return "";
+        res = tok_read(chunk, &x);
     }
-
-    // Skip whitespace
-    while (true) {
-        while (is_whitespace(ch)) {
-            //
-            if (is_newline(ch)) {
-                chunk->line++;
-                col = 1;
-                if (sameline) {
-                    token[0] = '\0';
-                    chunk->i = i;
-                    chunk->col = col;
-                    return;
-                }
-            }
-            //
-            i++;
-            col++;
-            ch = content[i];
-            if (ch == '\0') {
-                if (chunk->parent) {
-                    chunk->i = i;
-                    chunk->col = col;
-                    chunk = chunk->parent;
-                    fc->chunk = chunk;
-                    *fc->chunk_prev = *chunk;
-                    i = chunk->i;
-                    col = chunk->col;
-                    content = chunk->content;
-                    ch = content[i];
-                    if (ch != '\0') {
-                        continue;
-                    }
-                }
-                token[0] = '\0';
-                chunk->i = i;
-                chunk->col = col;
-                return;
-            }
-        }
-        // Skip comment
-        if (!sameline && ch == '/' && content[i + 1] == '/') {
-            i += 2;
-            col += 2;
-            ch = content[i];
-            while (!is_newline(ch)) {
-                if (ch == '\0') {
-                    token[0] = '\0';
-                    chunk->i = i;
-                    chunk->col = col;
-                    return;
-                }
-                i++;
-                col++;
-                ch = content[i];
-            }
-            i++;
-            col++;
-            ch = content[i];
-            chunk->line++;
-            chunk->col = 1;
-        } else {
-            break;
-        }
+    if(update) {
+        chunk->i = x;
     }
+    return res;
+}
 
-    int pos = 1;
-    token[0] = ch;
-    i++;
-    col++;
-
-    if (is_number(ch)) {
-        // Read number
-        ch = content[i];
-        while (is_number(ch)) {
-            token[pos] = ch;
-            i++;
-            col++;
-            pos++;
-            ch = content[i];
-        }
-    } else if (is_valid_varname_char(ch) || ch == '@') {
-        // Read var name
-        ch = content[i];
-        while (is_valid_varname_char(ch)) {
-            token[pos] = ch;
-            i++;
-            pos++;
-            col++;
-            ch = content[i];
-        }
-    } else {
-        // Special character
-        char nch = content[i];
-        if ((nch == '=' && (ch == '+' || ch == '-' || ch == '*' || ch == '/'))) {
-            i++;
-            col++;
-            token[pos] = nch;
-            pos++;
-        } else if ((ch == '&' && nch == '&') || (ch == '|' && nch == '|')) {
-            i++;
-            col++;
-            token[pos] = nch;
-            pos++;
-        } else if ((ch == '=' && nch == '=') || (ch == '!' && nch == '=') || (ch == '<' && nch == '=') || (ch == '>' && nch == '=')) {
-            i++;
-            col++;
-            token[pos] = nch;
-            pos++;
-        } else if ((ch == '<' && nch == '<') || (ch == '>' && nch == '>')) {
-            i++;
-            col++;
-            token[pos] = nch;
-            pos++;
-        } else if ((ch == '+' && nch == '+') || (ch == '-' && nch == '-')) {
-            i++;
-            col++;
-            token[pos] = nch;
-            pos++;
-        } else if ((ch == '-' && nch == '>')) {
-            i++;
-            col++;
-            token[pos] = nch;
-            pos++;
-        } else if ((ch == '?' && nch == '?') || (ch == '?' && nch == '!')) {
-            i++;
-            col++;
-            token[pos] = nch;
-            pos++;
-        } else if ((ch == '!' && nch == '!') || (ch == '!' && nch == '?')) {
-            i++;
-            col++;
-            token[pos] = nch;
-            pos++;
-        } else if ((ch == '{' && nch == '{') || (ch == '}' && nch == '}')) {
-            i++;
-            col++;
-            token[pos] = nch;
-            pos++;
-        }
+char* tok_read(Chunk* chunk, int *i_ref) {
+    //
+    int i = i_ref ? *i_ref : chunk->i;
+    char* tokens = chunk->tokens;
+    char t = tokens[i++];
+    if(t == tok_pos) {
+        int line = *(int*)(&tokens[i]);
+        i += sizeof(int);
+        int col = *(int*)(&tokens[i]);
+        i += sizeof(int);
+        chunk->line = line;
+        chunk->col = col;
+        t = tokens[i++];
     }
-
-    token[pos] = '\0';
-    // printf("tok: '%s'\n", token);
-
-    chunk->i = i;
-    chunk->col = col;
+    if(t == tok_scope_open) {
+        chunk->scope_end_i = *(int*)(&tokens[i]);
+        i += sizeof(int);
+    }
+    char* tchars = (char*)(&tokens[i]);
+    if(t != tok_eof && i_ref) {
+        while(tokens[i++] != 0) {
+        }
+        *i_ref = i;
+    }
+    chunk->token = t;
+    return tchars;
 }
 
 void rtok(Fc *fc) { *fc->chunk = *fc->chunk_prev; }
@@ -257,7 +141,8 @@ void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space) {
 char get_char(Fc *fc, int index) {
     //
     Chunk *chunk = fc->chunk;
-    return chunk->content[chunk->i + index];
+    char *res = tok_next(chunk, true, false, false);
+    return res[0];
 }
 
 void read_hex(Fc *fc, char *token) {

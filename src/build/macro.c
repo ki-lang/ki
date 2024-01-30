@@ -279,19 +279,18 @@ char *macro_get_var(MacroScope *mc, char *key) {
     return NULL;
 }
 
-Str *macro_replace_str_vars(Allocator *alc, Fc *fc, Str *str) {
+char *macro_replace_str_vars(Allocator *alc, Fc *fc, char *str) {
     //
-    int len = str->length;
+    int len = strlen(str);
     Str *result = str_make(alc, len + 1);
-    char *data = str->data;
     for (int i = 0; i < len; i++) {
-        char ch = data[i];
+        char ch = str[i];
         if (ch == '[') {
             i++;
             char var_name[128];
             int vi = 0;
-            while (data[i] != ']') {
-                var_name[vi] = data[i];
+            while (str[i] != ']') {
+                var_name[vi] = str[i];
                 vi++;
                 i++;
             }
@@ -311,5 +310,5 @@ Str *macro_replace_str_vars(Allocator *alc, Fc *fc, Str *str) {
         }
         str_append_char(result, ch);
     }
-    return result;
+    return str_to_chars(alc, result);
 }

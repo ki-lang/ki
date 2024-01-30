@@ -173,25 +173,14 @@ void fc_error(Fc *fc) {
         build_end(b, 1);
     }
 
-    if (is_newline(get_char(fc, 0))) {
-        chunk->i--;
-    }
+    // if (is_newline(get_char(fc, 0))) {
+    //     chunk->i--;
+    // }
 
-    int line = chunk->line;
-    int i = chunk->i;
-
-    int col = 0;
-    i = chunk->i;
-    while (i >= 0) {
-        char ch = content[i];
-        if (is_newline(ch)) {
-            i++;
-            break;
-        }
-        col++;
-        i--;
-    }
-    int start = i;
+    int line = -1;
+    int col = -1;
+    int i;
+    chunk_lex(chunk, chunk->i, &i, &line, &col);
 
     printf("\n");
     Chunk *parent = chunk->parent;
@@ -208,9 +197,13 @@ void fc_error(Fc *fc) {
     if (fc->error_func_info) {
         printf("Function: %s\n", fc->error_func_info->dname);
     }
-    printf("At: line:%d | col:%d\n", chunk->line, chunk->col);
+    printf("At: line:%d | col:%d\n", line, col);
     printf("Error: %s\n", fc->sbuf);
     printf("\n");
+
+    int start = i - col + 1;
+    if(start < 0)
+        start = 0;
 
     // Line 1
     int c = 40;
@@ -221,7 +214,6 @@ void fc_error(Fc *fc) {
     printf("\n");
 
     // Code
-    i = chunk->i;
     while (i < length) {
         char ch = content[i];
         if (is_newline(ch)) {

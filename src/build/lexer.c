@@ -1,10 +1,15 @@
 
 #include "../all.h"
 
-void chunk_lex(Fc *fc, Chunk* chunk, int err_i) {
+void chunk_lex_start(Chunk *chunk) {
+    chunk_lex(chunk, -1, NULL, NULL, NULL);
+}
+
+void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line, int *err_col) {
     //
     char* content = chunk->content;
     int length = chunk->length;
+    Fc* fc = chunk->fc;
 
     int i = 0;
     int o = 0;
@@ -16,17 +21,25 @@ void chunk_lex(Fc *fc, Chunk* chunk, int err_i) {
     bracket_table['['] = ']';
     bracket_table['{'] = '}';
 
+    int cc_depth = 0;
+
+    char token[256];
+    int token_i = 0;
+
     int line = 0;
     int col = 0;
     int i_last = 0;
 
-    Str* tokens_str = str_make(fc->alc, length * 2 + 512);
+    Str* tokens_str = str_make(fc->alc, length * 3 + 1024);
     char* tokens = tokens_str->data;
 
     while(true) {
         const char ch = content[i];
-        if(err_i > -1 && i >= err_i) {
-            // Throw err
+        if(err_token_i > -1 && o >= err_token_i) {
+            *err_content_i = i;
+            *err_line = line;
+            *err_col = col;
+            return;
         }
         if(ch == '\0') 
             break;
@@ -40,8 +53,10 @@ void chunk_lex(Fc *fc, Chunk* chunk, int err_i) {
             tokens = tokens_str->data;
         }
         if(ch == ' ' || ch == '\t') {
-            tokens[o++] = tok_space;
-            tokens[o++] = 0;
+            if (o < 2 || tokens[o - 2] != tok_newline) {
+                tokens[o++] = tok_space;
+                tokens[o++] = 0;
+            }
             char ch = content[i];
             while(ch == ' ' || ch == '\t') {
                 ch = content[++i];
@@ -49,8 +64,10 @@ void chunk_lex(Fc *fc, Chunk* chunk, int err_i) {
             continue;
         }
         if(ch == '\n') {
-            tokens[o++] = tok_newline;
-            tokens[o++] = 0;
+            if (o < 2 || tokens[o - 2] != tok_newline) {
+                tokens[o++] = tok_newline;
+                tokens[o++] = 0;
+            }
             i_last = i;
             col = 0;
             line++;
@@ -65,9 +82,52 @@ void chunk_lex(Fc *fc, Chunk* chunk, int err_i) {
         if(ch == '\r') {
             continue;
         }
+        // Compile conditions
+        if(ch == '#' && (o < 2 || tokens[o - 2] == tok_newline)) {
+            int x = i;
+            char ch = content[x];
+            while(ch >= 97 && ch <= 122) {
+                token[token_i++] = ch;
+                ch = content[++x];
+            }
+            token[token_i] = '\0';
+            token_i = 0;
+            if(strcmp(token, "if") == 0) {
+                tokens[o++] = tok_cc;
+                strcpy((char*)((intptr_t)tokens + o), token);
+                o += 3;
+                cc_depth++;
+                i = x;
+                continue;
+            }
+            if(strcmp(token, "elif") == 0 || strcmp(token, "else") == 0 || strcmp(token, "end") == 0) {
+                tokens[o++] = tok_cc;
+                strcpy((char*)((intptr_t)tokens + o), token);
+                o += (strcmp(token, "end") == 0) ? 4 : 5;
+                if (strcmp(token, "end") == 0) {
+                    cc_depth--;
+                    if (cc_depth < 0) {
+                        fc->chunk->i = i;
+                        sprintf(fc->sbuf, "Using #%s without an #if before it", token);
+                        fc_error(fc);
+                    }
+                }
+                i = x;
+                continue;
+            }
+        }
         // ID: a-zA-Z_
         if((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95 || ch == '@') {
-            tokens[o++] = ch == '@' ? tok_at_word : tok_id;
+            if(ch == '@') {
+                tokens[o++] = tok_at_word;
+            } else {
+                tokens[o++] = tok_pos;
+                *(int*)((intptr_t)tokens + o) = line;
+                o += 4;
+                *(int*)((intptr_t)tokens + o) = col;
+                o += 4;
+                tokens[o++] = tok_id;
+            }
             tokens[o++] = ch;
             // a-zA-Z0-9_
             char ch = content[i];
@@ -98,8 +158,6 @@ void chunk_lex(Fc *fc, Chunk* chunk, int err_i) {
             while (ch != '\n' && ch != 0) {
                 ch = content[++i];
             }
-            if(ch == '\n')
-                i++;
             continue;
         }
         // Strings
@@ -171,7 +229,7 @@ void chunk_lex(Fc *fc, Chunk* chunk, int err_i) {
             tokens[o++] = ch;
             tokens[o++] = '\0';
             int offset = closer_indexes[depth];
-            *(int*)((intptr_t)tokens + offset) = o;
+            *(int*)(&tokens[offset]) = o;
             continue;
         }
         // Operators
@@ -225,8 +283,6 @@ void chunk_lex(Fc *fc, Chunk* chunk, int err_i) {
         }
 
         chunk->i = i;
-        printf("i: %d\n", i);
-        printf("len: %d\n", chunk->length);
         sprintf(fc->sbuf, "Unexpected token '%c'", ch);
         fc_error(fc);
     }
@@ -239,7 +295,7 @@ void chunk_lex(Fc *fc, Chunk* chunk, int err_i) {
     tokens[o++] = tok_eof;
     tokens[o++] = '\0';
 
-    chunk->tokens= tokens;
+    chunk->tokens = tokens;
 }
 
 char convert_backslash_char(char ch) {

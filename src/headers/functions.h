@@ -184,8 +184,11 @@ Chunk *chunk_init(Allocator *alc, Fc *fc);
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk);
 void chunk_move(Chunk *chunk, int pos);
 void chunk_update_col(Chunk *chunk);
-void chunk_lex(Fc *fc, Chunk* chunk, int err_i);
-void tok(Fc *fc, char *token, bool sameline, bool allow_space);
+void chunk_lex_start(Chunk *chunk);
+void chunk_lex(Chunk* chunk, int err_token_i, int* err_content_i, int* err_line, int* err_col);
+char* tok(Fc *fc, char *token, bool sameline, bool allow_space);
+char* tok_next(Chunk* chunk, bool sameline, bool allow_space, bool update);
+char* tok_read(Chunk* chunk, int *i_ref);
 void rtok(Fc *fc);
 void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space);
 char get_char(Fc *fc, int index);
@@ -210,7 +213,7 @@ MacroScope *init_macro_scope(Allocator *alc);
 void read_macro(Fc *fc, Allocator *alc, Scope *scope);
 bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc);
 char *macro_get_var(MacroScope *mc, char *key);
-Str *macro_replace_str_vars(Allocator *alc, Fc *fc, Str *str);
+char *macro_replace_str_vars(Allocator *alc, Fc *fc, char *str);
 
 // Id
 Id *id_init(Allocator *alc);

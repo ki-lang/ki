@@ -897,7 +897,7 @@ void stage_4_1_gen_main(Fc *fc) {
     chunk->line = 1;
     chunk->col = 1;
     fc->chunk = chunk;
-    chunk_lex(fc, chunk, -1);
+    chunk_lex_start(chunk);
 
     read_ast(fc, scope, false);
 }
@@ -980,7 +980,7 @@ void stage_4_1_gen_test_main(Fc *fc) {
     Chunk *chunk = chunk_init(alc, fc);
     chunk->content = str_to_chars(alc, code);
     chunk->length = code->length;
-    chunk_lex(fc, chunk, -1);
+    chunk_lex_start(chunk);
 
     func->chunk_body = chunk;
 }

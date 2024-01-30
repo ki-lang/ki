@@ -360,7 +360,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     }
 
     // Linker stage
-    stage_5(b);
+    // stage_5(b);
 
 #ifdef WIN32
     QueryPerformanceCounter(&end);
@@ -382,6 +382,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
 #endif
     int i = 0;
     while (!file_exists(b->path_out)) {
+        break;
         sleep_ms(10);
         i++;
         if (i == 100)
