@@ -1,3 +1,4 @@
+
 test "array" {
     // let arr = array[String]{ "Hello", "World" };
     let arr = Array[String].new();

@@ -72,5 +72,3 @@ test "`<` and `>`" {
 test "`!`" {
     @expect !false;
 }
-
-fn main() i32 { return 0; }
