@@ -17,7 +17,6 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     b->alc = alc;
     b->alc_io = alc_io;
     b->alc_ast = alc_make();
-    b->token = al(alc, KI_TOKEN_MAX);
     b->sbuf = al(alc, 2000);
     b->lsp = lsp_data;
     //

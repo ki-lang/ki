@@ -274,7 +274,6 @@ Type *type_merge(Build* build, Allocator *alc, Type *a, Type *b);
 
 // Var
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_arg);
-Var *var_init(Allocator *alc, Decl *decl, Type *type);
 Arg *arg_init(Allocator *alc, char *name, Type *type);
 
 // UsageLine

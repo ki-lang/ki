@@ -41,7 +41,6 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
     fc->alc_ast = b->alc_ast;
     fc->deps = array_make(alc, 20);
     fc->sub_headers = array_make(alc, 2);
-    fc->token = b->token;
     fc->sbuf = b->sbuf;
     fc->chunk = chunk_init(alc, fc);
     fc->chunk_prev = chunk_init(alc, fc);

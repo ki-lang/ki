@@ -24,7 +24,6 @@ typedef struct Enum Enum;
 typedef struct Extend Extend;
 typedef struct Decl Decl;
 typedef struct DeclOverwrite DeclOverwrite;
-typedef struct Var Var;
 typedef struct Arg Arg;
 typedef struct UsageLine UsageLine;
 typedef struct Global Global;
@@ -89,7 +88,6 @@ struct Build {
     char *path_out;
     char *cache_dir;
     char *pkg_dir;
-    char *token;
     char *sbuf;
     //
     Allocator *alc;
@@ -150,7 +148,6 @@ struct Fc {
     char *path_ir;
     char *path_cache;
     char *path_hash;
-    char *token;
     char *sbuf;
     char *ir;
     char *ir_hash;
@@ -394,10 +391,6 @@ struct Decl {
 struct DeclOverwrite {
     Type *type;
     Decl *decl;
-};
-struct Var {
-    Decl *decl;
-    Type *type;
 };
 struct Arg {
     char *name;
