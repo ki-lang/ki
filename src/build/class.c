@@ -461,7 +461,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
         str_append_chars(hash_buf, type_buf);
     }
     char *hash_content = str_to_chars(alc, hash_buf);
-    simple_hash(hash_content, hash);
+    ctxhash(hash_content, hash);
 
     Class *gclass = map_get(class->generics, hash);
     if (!gclass) {

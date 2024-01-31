@@ -42,8 +42,8 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
     fc->deps = array_make(alc, 20);
     fc->sub_headers = array_make(alc, 2);
     fc->sbuf = b->sbuf;
-    fc->chunk = chunk_init(alc, fc);
-    fc->chunk_prev = chunk_init(alc, fc);
+    fc->chunk = chunk_init(alc, b, fc);
+    fc->chunk_prev = chunk_init(alc, b, fc);
     fc->id_buf = id_init(alc);
     fc->str_buf = str_make(alc, 100);
 
@@ -90,8 +90,10 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
             }
         }
         if (!content) {
+            unsigned long start = microtime();
             file_get_contents(buf, fc->path_ki);
             content = str_to_chars(alc, buf);
+            b->time_fs += microtime() - start;
         }
         fc->chunk->content = content;
         fc->chunk->length = strlen(content);
@@ -127,7 +129,7 @@ void fc_set_cache_paths(Fc *fc) {
     fc->path_cache = path_cache;
 
     char *hash = al(alc, 64);
-    simple_hash(fc->path_ki, hash);
+    ctxhash(fc->path_ki, hash);
     fc->path_hash = hash;
 
     // Str *buf = str_make(alc, 500);
@@ -137,7 +139,9 @@ void fc_set_cache_paths(Fc *fc) {
         fc->cache = NULL;
     }
     if (file_exists(fc->path_cache)) {
+        unsigned long start = microtime();
         file_get_contents(buf, fc->path_cache);
+        b->time_fs += microtime() - start;
         char *content = str_to_chars(alc, buf);
         fc->cache = cJSON_ParseWithLength(content, buf->length);
         cJSON *item = cJSON_GetObjectItemCaseSensitive(fc->cache, "ir_hash");

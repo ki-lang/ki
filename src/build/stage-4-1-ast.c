@@ -22,6 +22,8 @@ void stage_4_1(Fc *fc) {
         printf("# Stage 4.1 : AST : %s\n", fc->path_ki);
     }
 
+    unsigned long start = microtime();
+
     if ((b->main_func && fc == b->main_func->fc) || (!b->main_func && !b->main_fc && fc->nsc == b->nsc_main)) {
         b->main_fc = fc;
         if (b->test) {
@@ -44,6 +46,8 @@ void stage_4_1(Fc *fc) {
         alc_wipe(fc->alc_ast);
         return;
     }
+
+    // b->time_parse += microtime() - start;
 
     // Write IR
     stage_4_2(fc);
@@ -804,7 +808,7 @@ void stage_4_1_gen_main(Fc *fc) {
     Build *b = fc->b;
     Allocator *alc = fc->alc;
 
-    Chunk *chunk = chunk_init(alc, fc);
+    Chunk *chunk = chunk_init(alc, b, fc);
     Func *mfunc = b->main_func;
     if (mfunc) {
         // Validate main
@@ -977,7 +981,7 @@ void stage_4_1_gen_test_main(Fc *fc) {
 
     str_append_chars(code, "}\n");
 
-    Chunk *chunk = chunk_init(alc, fc);
+    Chunk *chunk = chunk_init(alc, b, fc);
     chunk->content = str_to_chars(alc, code);
     chunk->length = code->length;
     chunk_lex_start(chunk);

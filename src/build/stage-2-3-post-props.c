@@ -8,6 +8,8 @@ void stage_2_3(Fc *fc) {
         printf("# Stage 2.3 : Post work on class properties : %s\n", fc->path_ki);
     }
 
+    unsigned long start = microtime();
+
     Array *checks = fc->class_size_checks;
 
     while (true) {
@@ -32,7 +34,7 @@ void stage_2_3(Fc *fc) {
             }
         }
         if (did_fix_any && last != NULL) {
-            sprintf(b->sbuf, "Compiler could not figure out all type sizes");
+            sprintf(b->sbuf, "Compiler could not figure out the sizes of all types. Most likely due to circular dependency of inline types.");
             build_error(b, b->sbuf);
         }
         if (!had_missing_size) {
@@ -53,6 +55,8 @@ void stage_2_3(Fc *fc) {
             build_error(b, b->sbuf);
         }
     }
+
+    b->time_parse += microtime() - start;
 
     //
     chain_add(b->stage_2_4, fc);
@@ -100,6 +104,7 @@ void stage_2_3_circular(Build *b, Class *class) {
     //
     if (!class->is_rc)
         return;
+
     bool circular = false;
     Array *types = class->refers_to_types;
     Array *names = class->refers_to_names;

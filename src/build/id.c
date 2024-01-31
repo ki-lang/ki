@@ -72,7 +72,9 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
     Id id;
     id.has_nsc = false;
     id.name = token;
+    unsigned long start = microtime();
     idf = idf_by_id(fc, scope, &id, false);
+    // b->time_parse += microtime() - start;
 
     if (idf && idf->type == idf_nsc && get_char(fc, 0) == ':') {
 
@@ -192,6 +194,7 @@ Idf *read_idf(Fc *fc, Scope *scope, bool sameline, bool allow_space) {
 
 Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail) {
     //
+    Build* b = fc->b;
 
     if (id->has_nsc) {
         Scope *fc_scope = scope_find(scope, sct_fc);
@@ -211,7 +214,9 @@ Idf *idf_by_id(Fc *fc, Scope *scope, Id *id, bool fail) {
     char *name = id->name;
     while (!idf) {
         //
+    unsigned long start = microtime();
         idf = map_get(scope->identifiers, name);
+                b->time_parse += microtime() - start;
         //
         if (!idf) {
             scope = scope->parent;

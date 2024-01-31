@@ -355,8 +355,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         if (strcmp(token, "0") == 0 && get_char(fc, 0) == 'x') {
             //
             chunk_move(fc->chunk, 1);
-            read_hex(fc, token);
-            iv = hex2int(token);
+            char buf[256];
+            read_hex(fc, buf);
+            iv = hex2int(buf);
         } else if (is_number(token[0])) {
             char *num_str = dups(alc, token);
             char *float_str = NULL;
@@ -1173,7 +1174,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
         str_append_char(buf, ' ');
         char *content = str_to_chars(alc, buf);
 
-        Chunk *chunk = chunk_init(alc, NULL);
+        Chunk *chunk = chunk_init(alc, fc->b, NULL);
         chunk->parent = fc->chunk;
         chunk->content = content;
         chunk->length = buf->length;

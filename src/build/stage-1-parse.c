@@ -28,6 +28,8 @@ void stage_1(Fc *fc) {
     char *token;
     char *t_ = &chunk->token;
 
+    unsigned long start = microtime();
+
     while (true) {
 
         token = tok(fc, false, true);
@@ -125,8 +127,7 @@ void stage_1(Fc *fc) {
         fc_error(fc);
     }
 
-    b->LOC += fc->chunk->line;
-
+    b->time_parse += microtime() - start;
     //
     chain_add(b->stage_2_1, fc);
 }
@@ -768,7 +769,7 @@ void stage_1_test(Fc *fc) {
         func->test = test;
         test->expects = NULL;
 
-        Chunk *chunk = chunk_init(alc, fc);
+        Chunk *chunk = chunk_init(alc, b, fc);
         chunk->content = "(ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {}";
         chunk->length = strlen(chunk->content);
         chunk_lex_start(chunk);

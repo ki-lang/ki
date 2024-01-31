@@ -8,6 +8,8 @@ void stage_2_2(Fc *fc) {
         printf("# Stage 2.2 : Read class properties : %s\n", fc->path_ki);
     }
 
+    unsigned long start = microtime();
+
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
@@ -17,6 +19,8 @@ void stage_2_2(Fc *fc) {
         stage_2_2_class_read_props(fc, class, false, false);
     }
 
+    b->time_parse += microtime() - start;
+
     //
     chain_add(fc->b->stage_2_3, fc);
 }
@@ -24,6 +28,7 @@ void stage_2_2(Fc *fc) {
 void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
     //
     Scope *scope = class->scope;
+    Build *b = fc->b;
 
     Class *prev_error_class_info = fc->error_class_info;
     fc->error_class_info = class;

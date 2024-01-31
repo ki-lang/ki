@@ -11,6 +11,8 @@ void stage_2_6(Fc *fc) {
         printf("# Stage 2.1 : Read aliasses : %s\n", fc->path_ki);
     }
 
+    unsigned long start = microtime();
+
     for (int i = 0; i < fc->funcs->length; i++) {
         Func *func = array_get_index(fc->funcs, i);
         if (!func->chunk_args)
@@ -36,6 +38,8 @@ void stage_2_6(Fc *fc) {
             continue;
         stage_2_6_class_default_functions(fc, class);
     }
+
+    // b->time_parse += microtime() - start;
 
     chain_add(b->stage_3, fc);
 }
@@ -77,7 +81,7 @@ void stage_2_6_func(Fc *fc, Func *func) {
                 fc_error(fc);
             }
 
-            char *name = dups(alc, token);
+            char *name = token;
 
             tok_expect(fc, ":", true, true);
 

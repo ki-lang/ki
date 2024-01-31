@@ -9,6 +9,7 @@ typedef struct Map {
     Allocator *alc;
     Array *keys;
     Array *values;
+    int find_start;
 } Map;
 
 Map *map_make(Allocator *alc);

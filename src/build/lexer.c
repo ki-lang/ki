@@ -2,7 +2,9 @@
 #include "../all.h"
 
 void chunk_lex_start(Chunk *chunk) {
+    unsigned long start = microtime();
     chunk_lex(chunk, -1, NULL, NULL, NULL);
+    chunk->b->time_lex += microtime() - start;
 }
 
 void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line, int *err_col) {
@@ -309,6 +311,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
     tokens[o++] = '\0';
 
     chunk->tokens = tokens;
+    chunk->b->LOC += line;
 
     // Probably will never happen
     // if (err_token_i > -1) {

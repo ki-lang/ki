@@ -24,6 +24,7 @@ void *array_pop(Array *arr);
 void *array_pop_first(Array *arr);
 bool array_contains(Array *, void *, int);
 int array_find(Array *, void *, int);
+int array_find_x(Array *arr, void *item, int type, int start, int end);
 void array_shift(Array *arr, void *item);
 void *array_get_index(Array *, int);
 void array_set_index(Array *, int, void *);

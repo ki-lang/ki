@@ -140,6 +140,10 @@ struct Build {
     bool clear_cache;
     bool run_code;
     bool link_static;
+    unsigned long time_lex;
+    unsigned long time_fs;
+    unsigned long time_ir;
+    unsigned long time_parse;
 };
 
 struct Fc {
@@ -220,6 +224,7 @@ struct Link {
 };
 
 struct Chunk {
+    Build *b;
     Fc *fc;
     Chunk *parent;
     char *content;

@@ -56,7 +56,9 @@ Pkc *loader_get_pkc_for_dir(Build *b, char *dir) {
         return pkc;
     }
 
+    unsigned long start = microtime();
     Config *cfg = cfg_load(alc, b->str_buf, cfg_dir);
+    b->time_fs += microtime() - start;
     if (cfg) {
         cJSON *name_ = cJSON_GetObjectItemCaseSensitive(cfg->json, "name");
         if (name_ && name_->valuestring) {
@@ -69,7 +71,7 @@ Pkc *loader_get_pkc_for_dir(Build *b, char *dir) {
             pkc = b->pkc_main;
         } else {
             name = al(alc, 64);
-            simple_hash(cfg->dir, name);
+            ctxhash(cfg->dir, name);
         }
     }
 

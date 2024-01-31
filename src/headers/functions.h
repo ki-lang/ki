@@ -7,7 +7,7 @@ int atoi(const char *str);
 int hex2int(char *hex);
 void sleep_ns(unsigned int ns);
 void sleep_ms(unsigned int ms);
-void simple_hash(char *content, char *buf);
+void ctxhash(char *content, char *buf);
 Array *explode(Allocator *alc, char *part, char *content);
 int system_silent(char *cmd);
 char *str_replace_simple(char *s, const char *s1, const char *s2);
@@ -15,6 +15,10 @@ char *str_replace(Allocator *alc, char *orig, char *rep, char *with);
 void free_delayed(void *item);
 void rtrim(char *str, char ch);
 void run_async(void *func, void *arg, bool wait);
+unsigned long microtime();
+
+// crc32
+unsigned int calculate_crc32c(unsigned int crc32c, const unsigned char *buffer, unsigned int length);
 
 // Syntax
 bool is_alpha_char(char c);
@@ -171,10 +175,9 @@ void stage_2_6_class_functions(Fc *fc, Class *class);
 void stage_3_class(Fc *fc, Class *class);
 
 // Read
-Chunk *chunk_init(Allocator *alc, Fc *fc);
+Chunk *chunk_init(Allocator *alc, Build* b, Fc *fc);
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk);
 void chunk_move(Chunk *chunk, int pos);
-void chunk_update_col(Chunk *chunk);
 void chunk_lex_start(Chunk *chunk);
 void chunk_lex(Chunk* chunk, int err_token_i, int* err_content_i, int* err_line, int* err_col);
 char* tok(Fc *fc, bool sameline, bool allow_space);

@@ -1,9 +1,10 @@
 
 #include "../all.h"
 
-Chunk *chunk_init(Allocator *alc, Fc *fc) {
+Chunk *chunk_init(Allocator *alc, Build* b, Fc *fc) {
     Chunk *ch = al(alc, sizeof(Chunk));
     ch->parent = NULL;
+    ch->b = b;
     ch->fc = fc;
     ch->content = NULL;
     ch->tokens = NULL;
@@ -22,50 +23,9 @@ Chunk *chunk_clone(Allocator *alc, Chunk *chunk) {
     *ch = *chunk;
     return ch;
 }
+
 void chunk_move(Chunk *chunk, int pos) {
     tok_next(chunk, false, true, true);
-    //
-    // int i = chunk->i;
-    // while (pos > 0) {
-    //     pos--;
-    //     char ch = chunk->content[chunk->i];
-    //     chunk->i++;
-    //     chunk->col++;
-    //     if (ch == '\n') {
-    //         chunk->line++;
-    //         chunk->col = 0;
-    //     }
-    // }
-    // while (pos < 0) {
-    //     pos++;
-    //     char ch = chunk->content[chunk->i];
-    //     chunk->i--;
-    //     chunk->col--;
-    //     if (ch == '\n') {
-    //         chunk->line--;
-    //         int x = chunk->i;
-    //         int col = 0;
-    //         while (x > 0 && chunk->content[x] != '\n') {
-    //             x--;
-    //             col++;
-    //         }
-    //         chunk->col = col;
-    //     }
-    // }
-}
-void chunk_update_col(Chunk *chunk) {
-    //
-    int col = 1;
-    int i = chunk->i;
-    char *content = chunk->content;
-    while (i > 0) {
-        i--;
-        col++;
-        char ch = content[i];
-        if (ch == '\n')
-            break;
-    }
-    chunk->col = col;
 }
 
 char* tok(Fc *fc, bool sameline, bool allow_space) {
