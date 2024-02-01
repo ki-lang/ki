@@ -471,29 +471,25 @@ struct Test {
 struct Macro {
     char *name;
     char *dname;
-    Map *vars;
-    Array *groups;
-    Array *parts;
+    Array *input;
+    Array *output;
+    Array *valid_var_names;
 };
-struct MacroVarGroup {
-    char *start;
-    char *end;
-    Array *vars;
-    bool repeat_last_input;
+struct MacroInput {
+    int type; // mi_str, mi_value, mi_type, mi_repeat
+    void* item;
+    char* save_as;
 };
-struct MacroVar {
-    char *name;
-    Array *replaces;
-    bool repeat;
+struct MacroRepeat {
+    Array *input;
+    char* token_repeat;
+    char* token_end;
 };
-struct MacroReplace {
-    char *find;
-    char *with;
+struct MacroOutput {
+    char* text;
+    char* repeat_var;
 };
-struct MacroPart {
-    Array *sub_parts;
-    bool loop;
-};
+
 
 // Pkg
 struct PkgCmd {
