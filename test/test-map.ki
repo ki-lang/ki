@@ -1,3 +1,4 @@
+
 test "map" {
     let m = Map[i32].new();
     m.set("test_id", 1000);

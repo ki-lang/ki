@@ -51,6 +51,15 @@ void str_append_chars(Str *str, char *add) {
     int add_len = strlen(add);
     str_append_from_ptr(str, add, add_len);
 }
+
+void str_increase_memsize(Str *str, int new_memsize) {
+    //
+    void* data = al(str->alc, new_memsize);
+    memcpy(data, str->data, str->length);
+    str->data = data;
+    str->mem_size = new_memsize;
+}
+
 void str_append_from_ptr(Str *str, void *ptr, int len) {
     //
     if (len == 0) {

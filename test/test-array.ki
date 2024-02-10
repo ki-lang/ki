@@ -1,5 +1,9 @@
+
 test "array" {
-    let arr = array[String]{ "Hello", "World" };
+    // let arr = array[String]{ "Hello", "World" };
+    let arr = Array[String].new();
+    arr.push("Hello");
+    arr.push("World");
     @expect (arr.get(0) !? "not found") == "Hello";
     @expect (arr.get(1) !? "not found") == "World";
     @expect (arr.get(2) !? "not found") == "not found";

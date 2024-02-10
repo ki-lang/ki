@@ -63,12 +63,12 @@ class Router[T] {
 				throw invalid_route;
 			}
 
-			let find = blocks.get(key) !? {{
+			let find = blocks.get(key) !? <{
 				let v = RouteBlock[T]{ blocks: Map[RouteBlock[T]]{} };
 				let ref = share(v);
 				blocks.set(key, v);
 				return ref @as RouteBlock[T];
-			}};
+			};
 
 			block = find;
 		}

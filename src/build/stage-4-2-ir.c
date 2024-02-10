@@ -8,6 +8,8 @@ void stage_4_2(Fc *fc) {
         printf("# Stage 4.2 : LLVM IR : %s\n", fc->path_ki);
     }
 
+    unsigned long start = microtime();
+
     Allocator *alc = fc->alc_ast;
 
     LB *lb = al(alc, sizeof(LB));
@@ -49,10 +51,13 @@ void stage_4_2(Fc *fc) {
 
     llvm_build_ir(lb);
 
-    char *ir = str_to_chars(b->alc, lb->ir_final);
+    b->time_ir += microtime() - start;
+
+    str_append_char(lb->ir_final, 0);
+    char *ir = lb->ir_final->data;
 
     char *ir_hash = al(b->alc, 64);
-    simple_hash(ir, ir_hash);
+    ctxhash(ir, ir_hash);
 
     if (strcmp(fc->ir_hash, ir_hash) != 0 || b->clear_cache) {
 
@@ -64,7 +69,10 @@ void stage_4_2(Fc *fc) {
         }
 
         fc->ir = ir;
+
+        start = microtime();
         write_file(fc->path_ir, fc->ir, false);
+        b->time_fs += microtime() - start;
     }
 
     //

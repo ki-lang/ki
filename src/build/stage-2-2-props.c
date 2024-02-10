@@ -8,6 +8,8 @@ void stage_2_2(Fc *fc) {
         printf("# Stage 2.2 : Read class properties : %s\n", fc->path_ki);
     }
 
+    unsigned long start = microtime();
+
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
@@ -17,14 +19,16 @@ void stage_2_2(Fc *fc) {
         stage_2_2_class_read_props(fc, class, false, false);
     }
 
+    b->time_parse += microtime() - start;
+
     //
     chain_add(fc->b->stage_2_3, fc);
 }
 
 void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_extend) {
     //
-    char *token = fc->token;
     Scope *scope = class->scope;
+    Build *b = fc->b;
 
     Class *prev_error_class_info = fc->error_class_info;
     fc->error_class_info = class;
@@ -33,10 +37,12 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
         printf("> Read class properties: %s\n", class->dname);
     }
 
+    Chunk *chunk = fc->chunk;
+    char *t_ = &chunk->token;
+
     while (true) {
 
-        tok(fc, token, false, true);
-        // printf("t:'%s'\n", token);
+        char* token = tok(fc, false, true);
 
         if (token[0] == 0) {
             sprintf(fc->sbuf, "Unexpected end of file");
@@ -47,12 +53,10 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
             break;
         }
 
-        if (strcmp(token, "/") == 0 && get_char(fc, 0) == '/') {
-            skip_body(fc, '\n');
-            continue;
-        }
-
-        if (strcmp(token, "#") == 0) {
+        int t = *t_;
+        if (t == tok_cc) {
+            rtok(fc);
+            skip_whitespace(fc);
             read_macro(fc, fc->alc, scope);
             continue;
         }
@@ -96,20 +100,19 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
 
         if (strcmp(token, "-") == 0) {
             act = act_private;
-            tok(fc, token, true, true);
+            token = tok(fc, true, true);
         } else if (strcmp(token, "~") == 0) {
             act = act_readonly;
-            tok(fc, token, true, true);
+            token = tok(fc, true, true);
         }
 
         Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
 
-        char next_token[KI_TOKEN_MAX];
-        tok(fc, next_token, true, true);
+        char* next_token = tok(fc, true, true);
 
         if (strcmp(token, "static") == 0 && strcmp(next_token, "fn") == 0) {
             is_static = true;
-            strcpy(token, next_token);
+            token = next_token;
         } else {
             rtok(fc);
         }
@@ -125,7 +128,7 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
         } else if (strcmp(token, "fn") == 0) {
             // Function
             *def_chunk = *fc->chunk;
-            tok(fc, token, true, true);
+            token = tok(fc, true, true);
 
             bool borrow = true;
             bool ref = false;
@@ -134,14 +137,14 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
             if (strcmp(token, "!") == 0) {
                 will_exit = true;
                 *def_chunk = *fc->chunk;
-                tok(fc, token, true, false);
+                token = tok(fc, true, false);
             }
 
             if (!is_static) {
                 if (strcmp(token, ">") == 0) {
                     borrow = false;
                     *def_chunk = *fc->chunk;
-                    tok(fc, token, true, false);
+                    token = tok(fc, true, false);
                 }
             }
 
@@ -181,10 +184,10 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
                 class->func_before_free = func;
             }
 
-            tok(fc, token, true, true);
+            token = tok(fc, true, true);
             if (strcmp(token, "(") == 0) {
                 func->chunk_args = chunk_clone(fc->alc, fc->chunk);
-                skip_body(fc, ')');
+                skip_body(fc);
             } else {
                 rtok(fc);
                 func->chunk_args = chunk_clone(fc->alc, fc->chunk);
@@ -193,7 +196,7 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
 
             skip_until_char(fc, "{");
             func->chunk_body = chunk_clone(fc->alc, fc->chunk);
-            skip_body(fc, '}');
+            skip_body(fc);
 
         } else {
             // Property
@@ -223,7 +226,7 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
 
             tok_expect(fc, ":", true, true);
 
-            // tok(fc, token, true, true);
+            // token = tok(fc, true, true);
             // if (strcmp(token, ":") == 0) {
             Type *type = read_type(fc, fc->alc, scope, true, true, rtc_prop_type);
             if (type_is_void(type)) {
@@ -235,7 +238,7 @@ void stage_2_2_class_read_props(Fc *fc, Class *class, bool is_trait, bool is_ext
             }
             prop->type = type;
 
-            tok(fc, token, true, true);
+            token = tok(fc, true, true);
             // }
 
             if (strcmp(token, "=") == 0) {

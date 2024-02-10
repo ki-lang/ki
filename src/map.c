@@ -6,22 +6,39 @@ Map *map_make(Allocator *alc) {
     m->alc = alc;
     m->keys = array_make(alc, 4);
     m->values = array_make(alc, 4);
+    m->find_start = 0;
     return m;
 }
 
 bool map_contains(Map *map, char *key) {
-    int i = array_find(map->keys, key, arr_find_str);
+    // int i = array_find(map->keys, key, arr_find_str);
+    // if (i == -1)
+    //     return false;
+    int i = array_find_x(map->keys, key, arr_find_str, map->find_start, map->keys->length);
     if (i == -1) {
-        return false;
+        if(map->find_start > 0) {
+            i = array_find_x(map->keys, key, arr_find_str, 0, map->find_start);
+        }
+        if(i == -1)
+            return false;
     }
+    map->find_start = i;
     return true;
 }
 
 void *map_get(Map *map, char *key) {
-    int i = array_find(map->keys, key, arr_find_str);
+    // int i = array_find(map->keys, key, arr_find_str);
+    // if (i == -1)
+    //     return NULL;
+    int i = array_find_x(map->keys, key, arr_find_str, map->find_start, map->keys->length);
     if (i == -1) {
-        return NULL;
+        if(map->find_start > 0) {
+            i = array_find_x(map->keys, key, arr_find_str, 0, map->find_start);
+        }
+        if(i == -1)
+            return NULL;
     }
+    map->find_start = i;
     return array_get_index(map->values, i);
 }
 

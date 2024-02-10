@@ -1,47 +1,9 @@
 #include "../all.h"
 
-void skip_body(Fc *fc, char until_ch) {
+void skip_body(Fc *fc) {
     //
-    int depth = 0;
-    if (until_ch == '}' || until_ch == ')' || until_ch == ']')
-        depth = 1;
-    char *token = fc->token;
-    while (true) {
-        //
-        tok(fc, token, false, true);
-
-        if (token[0] == 0)
-            break;
-
-        char ch = token[0];
-
-        if (ch == '"' || ch == '\'') {
-            skip_string(fc, ch);
-            continue;
-        }
-
-        if (ch == '/' && get_char(fc, 0) == '/') {
-            skip_until_char(fc, "\n");
-            continue;
-        }
-
-        if (ch == '{' || ch == '(' || ch == '[') {
-            depth++;
-            continue;
-        }
-        if (ch == '}' || ch == ')' || ch == ']') {
-            depth--;
-            if (depth == 0 && until_ch == ch)
-                break;
-            if (depth < 0)
-                break;
-            continue;
-        }
-    }
-    if (depth != 0) {
-        sprintf(fc->sbuf, "Unexpected end of code, missing bracket somewhere");
-        fc_error(fc);
-    }
+    Chunk* chunk = fc->chunk;
+    chunk->i = chunk->scope_end_i;
 }
 
 void skip_string(Fc *fc, char end_char) {
@@ -84,132 +46,68 @@ void skip_string(Fc *fc, char end_char) {
 
 void skip_until_char(Fc *fc, char *find) {
     //
-    int depth = 0;
-    Chunk *chunk = fc->chunk;
-    int len = strlen(find);
-    char ch;
-    int i = chunk->i;
-    int col = chunk->col;
-    const char *content = chunk->content;
-    int chunk_len = chunk->length;
-    while (i < chunk_len) {
-        //
-        ch = chunk->content[i];
-        i++;
-        col++;
-
-        if (is_newline(ch)) {
-            chunk->line++;
-            col = 1;
+    char* token = "";
+    Chunk* chunk = fc->chunk;
+    while(strcmp(token, find) != 0 || fc->chunk->token == tok_string) {
+        if(fc->chunk->token == tok_eof) {
+            sprintf(fc->sbuf, "End of file, missing '%s' token", find);
+            fc_error(fc);
         }
-
-        if (depth == 0) {
-            for (int o = 0; o < len; o++) {
-                char fch = find[o];
-                if (ch == fch) {
-                    chunk->i = i;
-                    chunk->col = col;
-                    return;
-                }
-            }
-        }
-
-        if (ch == '{' || ch == '(' || ch == '[') {
-            depth++;
-            continue;
-        }
-        if (ch == '}' || ch == ')' || ch == ']') {
-            depth--;
-            continue;
-        }
+        token = tok(fc, false, true);
     }
-    chunk->i = i;
-    chunk->col = col;
 }
 
 void skip_whitespace(Fc *fc) {
     //
     Chunk *chunk = fc->chunk;
-    char ch;
-    int i = chunk->i;
-    int col = chunk->col;
-    const char *content = chunk->content;
-    while (chunk->i < chunk->length) {
-        //
-        ch = chunk->content[i];
-        if (!is_whitespace(ch)) {
-            break;
-        }
-        if (is_newline(ch)) {
-            chunk->line++;
-            col = 0;
-        }
-        i++;
-        col++;
+    int x = chunk->i;
+    tok_read(chunk, &x);
+    if(chunk->token == tok_space) {
+        chunk->i = x;
+        tok_read(chunk, &x);
     }
-    chunk->i = i;
-    chunk->col = col;
+    if(chunk->token == tok_newline) {
+        chunk->i = x;
+    }
 }
 
 void skip_macro_if(Fc *fc) {
     //
     Chunk *chunk = fc->chunk;
-    const int length = chunk->length;
-    const char *content = chunk->content;
-    char ch;
-    char *token = fc->token;
     int depth = 1;
-    while (chunk->i < length) {
-        //
-        char ch = content[chunk->i];
-        chunk->i++;
-
-        if (ch == '"' || ch == '\'') {
-            skip_string(fc, ch);
-            continue;
-        }
-
-        if (!is_newline(ch)) {
-            continue;
-        }
-
-        chunk->line++;
-
-        tok(fc, token, false, true);
-
-        if (strcmp(token, "#") != 0) {
-            continue;
-        }
-
-        tok(fc, token, true, false);
-        if (strcmp(token, "if") == 0) {
-            depth++;
-        } else if (strcmp(token, "elif") == 0 || strcmp(token, "else") == 0) {
-            if (depth == 1) {
+    while (true) {
+        char* token = tok(fc, false, true);
+        if(chunk->token == tok_cc) {
+            if(strcmp(token, "if") == 0) {
+                depth++;
+            } else if(strcmp(token, "elif") == 0 || strcmp(token, "else") == 0) {
+                if(depth == 1) {
+                    depth--;
+                    break;
+                }
+            } else if(strcmp(token, "end") == 0) {
                 depth--;
-                chunk_move(chunk, -5);
-                break;
+                if(depth == 0)
+                    break;
             }
-        } else if (strcmp(token, "end") == 0) {
-            depth--;
-            if (depth == 0) {
-                chunk_move(chunk, -4);
-                break;
-            }
+        } else if(chunk->token == tok_eof) {
+            break;
         }
     }
 
     if (depth != 0) {
-        sprintf(fc->sbuf, "End of file, missing #end macro");
+        sprintf(fc->sbuf, "End of file, missing #end token");
         fc_error(fc);
     }
+
+    rtok(fc);
+    skip_whitespace(fc);
 }
 
 void skip_traits(Fc *fc) {
     //
-    char *token = fc->token;
     while (true) {
-        tok(fc, token, false, true);
+        char* token = tok(fc, false, true);
         if (is_valid_varname_char(token[0])) {
             rtok(fc);
             read_id(fc, false, true, true);
@@ -224,35 +122,28 @@ void skip_traits(Fc *fc) {
 
 void skip_value(Fc *fc) {
 
-    char *token = fc->token;
+    Chunk *chunk = fc->chunk;
     while (true) {
 
-        tok(fc, token, false, true);
+        char* token = tok(fc, false, true);
+        char t = chunk->token;
 
-        if (strcmp(token, "\"") == 0) {
-            skip_string(fc, '"');
+        if (t == tok_string) {
             continue;
         }
-        if (strcmp(token, "'") == 0) {
-            skip_string(fc, '\'');
+        if (t == tok_char_string) {
             continue;
         }
-        if (strcmp(token, "(") == 0) {
-            skip_until_char(fc, ")");
+        if (t == tok_scope_open) {
+            skip_body(fc);
             continue;
         }
-        if (strcmp(token, "{") == 0) {
-            skip_until_char(fc, "}");
+        if (t == tok_id) {
             continue;
         }
-        if (strcmp(token, "[") == 0) {
-            skip_until_char(fc, "]");
+        if (t == tok_number) {
             continue;
         }
-        if (is_valid_varname_char(token[0]))
-            continue;
-        if (is_number(token[0]))
-            continue;
 
         if (strcmp(token, ":") == 0 || strcmp(token, ".") == 0 || strcmp(token, "<=") == 0 || strcmp(token, ">=") == 0 || strcmp(token, "==") == 0 || strcmp(token, "!=") == 0 || strcmp(token, "&&") == 0 || strcmp(token, "||") == 0 || strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "/") == 0 || strcmp(token, "*") == 0 || strcmp(token, "%") == 0 || strcmp(token, "&") == 0 || strcmp(token, "|") == 0 || strcmp(token, "^") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "->") == 0 || strcmp(token, "??") == 0 || strcmp(token, "?!") == 0 || strcmp(token, "!!") == 0 || strcmp(token, "?") == 0) {
             continue;
@@ -264,66 +155,33 @@ void skip_value(Fc *fc) {
 }
 
 void skip_type(Fc *fc) {
-
-    skip_whitespace(fc);
-
     //
     Chunk *chunk = fc->chunk;
-    char ch;
-    int i = chunk->i;
-    int col = chunk->col;
-    const char *content = chunk->content;
-    while (chunk->i < chunk->length) {
-        //
-        ch = chunk->content[i];
-        i++;
-        col++;
 
-        if (ch == '?') {
-            continue;
-        }
-        if (ch == ':') {
-            continue;
-        }
-        if (ch == '.') {
-            continue;
-        }
-        if (ch == '!') {
-            continue;
-        }
-        if (ch == '(') {
-            chunk->i = i;
-            chunk->col = col;
-            skip_body(fc, ')');
-            i = chunk->i;
-            continue;
-        }
-        if (ch == '[') {
-            chunk->i = i;
-            chunk->col = col;
-            skip_body(fc, ']');
-            i = chunk->i;
-            continue;
-        }
-        if (is_valid_varname_char(ch)) {
-            continue;
-        }
-
-        i--;
-        col--;
-        break;
+    char * token = tok(fc, false, true);
+    if(strcmp(token, "raw") == 0 || strcmp(token, "weak") == 0){
+        token = tok(fc, true, true);
     }
-
-    chunk->i = i;
-    chunk->col = col;
+    while (strcmp(token, "?") == 0 || strcmp(token, ".") == 0 || strcmp(token, "&") == 0 || strcmp(token, "+") == 0) {
+        token = tok(fc, true, false);
+    }
+    if(chunk->token != tok_id && token[0] != ':') {
+        sprintf(fc->sbuf, "Expected a type here");
+        fc_error(fc);
+    }
+    token = tok(fc, true, false);
+    if(token[0] == '[') {
+        skip_body(fc);
+    } else {
+        rtok(fc);
+    }
 }
 
 void skip_macro_input(Fc *fc, char *end) {
 
-    char *token = fc->token;
     while (true) {
 
-        tok(fc, token, false, true);
+        char* token = tok(fc, false, true);
 
         if (token[0] == '\0') {
             sprintf(fc->sbuf, "Your macro is missing a closing tag, unexpected end of file");

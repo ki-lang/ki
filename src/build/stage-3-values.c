@@ -14,6 +14,8 @@ void stage_3(Fc *fc) {
         printf("# Stage 3 : Read values : %s\n", fc->path_ki);
     }
 
+    unsigned long start = microtime();
+
     for (int i = 0; i < fc->classes->length; i++) {
         Class *class = array_get_index(fc->classes, i);
         if (class->is_generic_base)
@@ -28,7 +30,8 @@ void stage_3(Fc *fc) {
         stage_3_func(fc, func);
     }
 
-    //
+    // b->time_parse += microtime() - start;
+
     chain_add(b->stage_4_1, fc);
 }
 

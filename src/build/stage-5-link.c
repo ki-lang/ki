@@ -43,18 +43,7 @@ void stage_5(Build *b) {
     Array *o_files = array_make(b->alc, 20);
     Array *threads = array_make(b->alc, 20);
 
-#ifdef WIN32
-    LARGE_INTEGER frequency;
-    LARGE_INTEGER start;
-    LARGE_INTEGER end;
-    QueryPerformanceFrequency(&frequency);
-    QueryPerformanceCounter(&start);
-    _flushall();
-#else
-    struct timeval begin, end;
-    gettimeofday(&begin, NULL);
-    sync();
-#endif
+    unsigned long start = microtime();
 
     for (int o = 0; o < b->namespaces_by_dir->values->length; o++) {
         Nsc *nsc = array_get_index(b->namespaces_by_dir->values, o);
@@ -126,19 +115,11 @@ void stage_5(Build *b) {
 #endif
     }
 
-#ifdef WIN32
-    QueryPerformanceCounter(&end);
-    double time_llvm = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
-    QueryPerformanceCounter(&start);
-#else
-    gettimeofday(&end, NULL);
-    double time_llvm = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
-    gettimeofday(&begin, NULL);
-#endif
-
     if (b->verbose > 0) {
-        printf("⌚ LLVM build o: %.3fs\n", time_llvm);
+        printf("⌚ LLVM build o: %.3fs\n", (double)(microtime() - start) / 1000000);
     }
+
+    start = microtime();
 
     if (!b->main_func && !b->test) {
         build_error(b, "❌ Missing 'main' function");
@@ -146,16 +127,8 @@ void stage_5(Build *b) {
 
     stage_5_link(b, o_files);
 
-#ifdef WIN32
-    QueryPerformanceCounter(&end);
-    double time_link = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
-#else
-    gettimeofday(&end, NULL);
-    double time_link = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
-#endif
-
     if (b->verbose > 0) {
-        printf("⌚ Link: %.3fs\n", time_link);
+        printf("⌚ Link: %.3fs\n", (double)(microtime() - start) / 1000000);
     }
 }
 

@@ -9,6 +9,8 @@ void stage_2_4(Fc *fc) {
         printf("# Stage 2.4 : Update class properties : %s\n", fc->path_ki);
     }
 
+    unsigned long start = microtime();
+
     Array *classes = fc->classes;
     for (int i = 0; i < classes->length; i++) {
         Class *class = array_get_index(classes, i);
@@ -18,14 +20,18 @@ void stage_2_4(Fc *fc) {
         stage_2_4_class_props_update(fc, class);
     }
 
+    b->time_parse += microtime() - start;
+
     chain_add(b->stage_2_5, fc);
 }
 
 void stage_2_4_class_props_update(Fc *fc, Class *class) {
     //
-    Build *b = fc->b;
     if (!class->is_rc)
         return;
+
+    Build *b = fc->b;
+
     Array *types = class->refers_to_types;
     Array *names = class->refers_to_names;
     for (int i = 0; i < types->length; i++) {

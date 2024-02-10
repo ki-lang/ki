@@ -17,7 +17,6 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     b->alc = alc;
     b->alc_io = alc_io;
     b->alc_ast = alc_make();
-    b->token = al(alc, KI_TOKEN_MAX);
     b->sbuf = al(alc, 2000);
     b->lsp = lsp_data;
     //
@@ -199,7 +198,7 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     strcat(cache_buf, optimize ? "1" : "0");
     strcat(cache_buf, debug ? "1" : "0");
     strcat(cache_buf, test ? "1" : "0");
-    simple_hash(cache_buf, cache_hash);
+    ctxhash(cache_buf, cache_hash);
     strcpy(cache_dir, get_storage_path());
     strcat(cache_dir, "/cache/");
 
@@ -279,17 +278,9 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     b->link_static = link_static;
     //
     b->type_void = type_gen_void(alc);
-
-#ifdef WIN32
-    LARGE_INTEGER frequency;
-    LARGE_INTEGER start;
-    LARGE_INTEGER end;
-    QueryPerformanceFrequency(&frequency);
-    QueryPerformanceCounter(&start);
-#else
-    struct timeval begin, end;
-    gettimeofday(&begin, NULL);
-#endif
+    //
+    b->time_lex = 0;
+    b->time_fs = 0;
 
     // Init main:main
     Config *main_cfg = NULL;
@@ -319,6 +310,8 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
     loader_load_nsc(pkc_ki, "mem");
     loader_load_nsc(pkc_ki, "os");
 
+    unsigned long start = microtime();
+
     // Compile ki lib
     compile_loop(b, 1); // Scan identifiers
 
@@ -347,31 +340,19 @@ void cmd_build(int argc, char *argv[], LspData *lsp_data) {
         }
     }
 
-#ifdef WIN32
-    QueryPerformanceCounter(&end);
-    double time_ast = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
-#else
-    gettimeofday(&end, NULL);
-    double time_ast = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
-#endif
-
     if (verbose > 0) {
-        printf("⌚ Parse + IR gen: %.3fs\n", time_ast);
+        printf("⌚ Lexer: %.3fs\n", (double)b->time_lex / 1000000);
+        printf("⌚ Parser: %.3fs\n", (double)b->time_parse / 1000000);
+        printf("⌚ IR Gen: %.3fs\n", (double)b->time_ir / 1000000);
+        printf("⌚ File IO: %.3fs\n", (double)b->time_fs / 1000000);
+        // printf("⌚ Other: %.3fs\n", (double)(microtime() - start - b->time_lex - b->time_parse - b->time_fs - b->time_ir) / 1000000);
     }
 
     // Linker stage
     stage_5(b);
 
-#ifdef WIN32
-    QueryPerformanceCounter(&end);
-    double time_all = (double)(end.QuadPart - start.QuadPart) / frequency.QuadPart;
-#else
-    gettimeofday(&end, NULL);
-    double time_all = (double)(end.tv_usec - begin.tv_usec) / 1000000 + (double)(end.tv_sec - begin.tv_sec);
-#endif
-
     if (!run_code || b->verbose > 0) {
-        printf("✅ Compiled in: %.3fs\n", time_all);
+        printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
     }
 
     // Flush all output

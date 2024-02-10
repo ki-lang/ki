@@ -2,7 +2,7 @@
 global g_mimes : ?Map[String];
 fn mime(extension_no_dot: &String) String {
 
-	let mimes = g_mimes ?? {{
+	let mimes = g_mimes ?? <{
 		let mimes = Map[String]{};
 
 		mimes.set("aac", "audio/aac");
@@ -84,7 +84,7 @@ fn mime(extension_no_dot: &String) String {
 		let ref = share(mimes);
 		g_mimes = mimes;
 		return ref;
-	}};
+	};
 
 	let mime = mimes.get(extension_no_dot) !? "application/octet-stream";
 	//println("MI:"+mime);

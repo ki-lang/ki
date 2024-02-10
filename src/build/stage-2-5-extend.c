@@ -8,6 +8,8 @@ void stage_2_5(Fc *fc) {
         printf("# Stage 2.5 : Extend : %s\n", fc->path_ki);
     }
 
+    unsigned long start = microtime();
+
     Allocator *alc = fc->alc;
     Array *extends = fc->extends;
 
@@ -29,6 +31,8 @@ void stage_2_5(Fc *fc) {
         stage_2_2_class_read_props(fc, class, false, true);
         class->scope = class_scope;
     }
+
+    b->time_parse += microtime() - start;
 
     chain_add(b->stage_2_6, fc);
 }

@@ -15,14 +15,6 @@ Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val
     return v;
 }
 
-Var *var_init(Allocator *alc, Decl *decl, Type *type) {
-    //
-    Var *v = al(alc, sizeof(Var));
-    v->decl = decl;
-    v->type = type;
-    return v;
-}
-
 Arg *arg_init(Allocator *alc, char *name, Type *type) {
     //
     Arg *v = al(alc, sizeof(Arg));
