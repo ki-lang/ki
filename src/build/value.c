@@ -1053,138 +1053,138 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
         return value_init(alc, v_decl, decl, decl->type);
     }
 
-    if (idf->type == idf_macro) {
-        Macro *mac = idf->item;
+    // if (idf->type == idf_macro) {
+    //     Macro *mac = idf->item;
 
-        Map *values = map_make(alc);
-        Array *repeat_values = array_make(alc, 8);
-        Array *repeat_values_empty = array_make(alc, 8);
-        array_push(repeat_values_empty, NULL);
+    //     Map *values = map_make(alc);
+    //     Array *repeat_values = array_make(alc, 8);
+    //     Array *repeat_values_empty = array_make(alc, 8);
+    //     array_push(repeat_values_empty, NULL);
 
-        Array *groups = mac->groups;
-        Array *parts = mac->parts;
-        Map *vars = mac->vars;
-        Array *input_names = vars->keys;
-        char *repeat_name = NULL;
+    //     Array *groups = mac->groups;
+    //     Array *parts = mac->parts;
+    //     Map *vars = mac->vars;
+    //     Array *input_names = vars->keys;
+    //     char *repeat_name = NULL;
 
-        for (int i = 0; i < groups->length; i++) {
-            MacroVarGroup *mvg = array_get_index(groups, i);
-            tok_expect(fc, mvg->start, true, false);
+    //     for (int i = 0; i < groups->length; i++) {
+    //         MacroVarGroup *mvg = array_get_index(groups, i);
+    //         tok_expect(fc, mvg->start, true, false);
 
-            bool does_repeat = mvg->repeat_last_input;
-            int input_count = mvg->vars->length - (does_repeat ? 1 : 0);
-            if (does_repeat) {
-                repeat_name = array_get_index(input_names, input_names->length - 1);
-            }
+    //         bool does_repeat = mvg->repeat_last_input;
+    //         int input_count = mvg->vars->length - (does_repeat ? 1 : 0);
+    //         if (does_repeat) {
+    //             repeat_name = array_get_index(input_names, input_names->length - 1);
+    //         }
 
-            int count = 0;
-            token = tok(fc, false, true);
-            if (strcmp(token, mvg->end) == 0) {
-            } else {
-                rtok(fc);
-                while (true) {
-                    skip_whitespace(fc);
+    //         int count = 0;
+    //         token = tok(fc, false, true);
+    //         if (strcmp(token, mvg->end) == 0) {
+    //         } else {
+    //             rtok(fc);
+    //             while (true) {
+    //                 skip_whitespace(fc);
 
-                    int v_start = fc->chunk->i;
-                    Chunk *v_startc = fc->chunk;
-                    skip_macro_input(fc, mvg->end);
-                    int v_end = fc->chunk->i;
-                    Chunk *v_endc = fc->chunk;
+    //                 int v_start = fc->chunk->i;
+    //                 Chunk *v_startc = fc->chunk;
+    //                 skip_macro_input(fc, mvg->end);
+    //                 int v_end = fc->chunk->i;
+    //                 Chunk *v_endc = fc->chunk;
 
-                    if (v_startc != v_endc) {
-                        sprintf(fc->sbuf, "Invalid macro input (mixed macros)");
-                        fc_error(fc);
-                    }
+    //                 if (v_startc != v_endc) {
+    //                     sprintf(fc->sbuf, "Invalid macro input (mixed macros)");
+    //                     fc_error(fc);
+    //                 }
 
-                    char *value = read_part(alc, fc, v_start, v_end - v_start);
-                    if (count >= input_count) {
-                        array_push(repeat_values, value);
-                    } else {
-                        char *name = array_get_index(input_names, count);
-                        map_set(values, name, value);
-                    }
-                    count++;
+    //                 char *value = read_part(alc, fc, v_start, v_end - v_start);
+    //                 if (count >= input_count) {
+    //                     array_push(repeat_values, value);
+    //                 } else {
+    //                     char *name = array_get_index(input_names, count);
+    //                     map_set(values, name, value);
+    //                 }
+    //                 count++;
 
-                    token = tok(fc, false, true);
-                    if (strcmp(token, mvg->end) == 0) {
-                        break;
-                    } else if (strcmp(token, ",") == 0) {
-                        continue;
-                    } else {
-                        sprintf(fc->sbuf, "Expected ',' or '%s', found: '%s'", mvg->end, token);
-                        fc_error(fc);
-                    }
-                }
-            }
+    //                 token = tok(fc, false, true);
+    //                 if (strcmp(token, mvg->end) == 0) {
+    //                     break;
+    //                 } else if (strcmp(token, ",") == 0) {
+    //                     continue;
+    //                 } else {
+    //                     sprintf(fc->sbuf, "Expected ',' or '%s', found: '%s'", mvg->end, token);
+    //                     fc_error(fc);
+    //                 }
+    //             }
+    //         }
 
-            if (count < input_count) {
-                sprintf(fc->sbuf, "Missing macro inputs. Expected%s '%d', found '%d'", does_repeat ? " a minimum of" : "", input_count, count);
-                fc_error(fc);
-            }
-            if (!does_repeat && count > input_count) {
-                sprintf(fc->sbuf, "Too many macro inputs. Expected '%d', found '%d'", input_count, count);
-                fc_error(fc);
-            }
-        }
+    //         if (count < input_count) {
+    //             sprintf(fc->sbuf, "Missing macro inputs. Expected%s '%d', found '%d'", does_repeat ? " a minimum of" : "", input_count, count);
+    //             fc_error(fc);
+    //         }
+    //         if (!does_repeat && count > input_count) {
+    //             sprintf(fc->sbuf, "Too many macro inputs. Expected '%d', found '%d'", input_count, count);
+    //             fc_error(fc);
+    //         }
+    //     }
 
-        Str *buf = fc->str_buf;
-        str_clear(buf);
-        for (int i = 0; i < parts->length; i++) {
-            //
-            MacroPart *part = array_get_index(parts, i);
-            Array *sub_parts = part->sub_parts;
+    //     Str *buf = fc->str_buf;
+    //     str_clear(buf);
+    //     for (int i = 0; i < parts->length; i++) {
+    //         //
+    //         MacroPart *part = array_get_index(parts, i);
+    //         Array *sub_parts = part->sub_parts;
 
-            Array *loop_values = part->loop ? repeat_values : repeat_values_empty;
-            //
-            for (int o = 0; o < loop_values->length; o++) {
-                char *repeat_value = array_get_index(loop_values, o);
-                for (int u = 0; u < sub_parts->length; u++) {
-                    char *spart = array_get_index(sub_parts, u);
-                    if (u % 2 == 0) {
-                        // String part
-                        str_append_chars(buf, spart);
-                    } else {
-                        // Input
-                        if (repeat_value && strcmp(spart, repeat_name) == 0) {
-                            char *input = repeat_value;
-                            MacroVar *mv = map_get(vars, repeat_name);
-                            for (int x = 0; x < mv->replaces->length; x++) {
-                                MacroReplace *rep = array_get_index(mv->replaces, x);
-                                input = str_replace(alc, input, rep->find, rep->with);
-                            }
-                            str_append_chars(buf, input);
-                            continue;
-                        }
-                        MacroVar *mv = map_get(vars, spart);
-                        char *input = map_get(values, spart);
-                        if (!input || !mv) {
-                            sprintf(fc->sbuf, "Cannot find macro input by name: '%s' (compiler bug)", spart);
-                            fc_error(fc);
-                        }
-                        for (int x = 0; x < mv->replaces->length; x++) {
-                            MacroReplace *rep = array_get_index(mv->replaces, x);
-                            input = str_replace(alc, input, rep->find, rep->with);
-                        }
-                        str_append_chars(buf, input);
-                    }
-                }
-            }
-        }
+    //         Array *loop_values = part->loop ? repeat_values : repeat_values_empty;
+    //         //
+    //         for (int o = 0; o < loop_values->length; o++) {
+    //             char *repeat_value = array_get_index(loop_values, o);
+    //             for (int u = 0; u < sub_parts->length; u++) {
+    //                 char *spart = array_get_index(sub_parts, u);
+    //                 if (u % 2 == 0) {
+    //                     // String part
+    //                     str_append_chars(buf, spart);
+    //                 } else {
+    //                     // Input
+    //                     if (repeat_value && strcmp(spart, repeat_name) == 0) {
+    //                         char *input = repeat_value;
+    //                         MacroVar *mv = map_get(vars, repeat_name);
+    //                         for (int x = 0; x < mv->replaces->length; x++) {
+    //                             MacroReplace *rep = array_get_index(mv->replaces, x);
+    //                             input = str_replace(alc, input, rep->find, rep->with);
+    //                         }
+    //                         str_append_chars(buf, input);
+    //                         continue;
+    //                     }
+    //                     MacroVar *mv = map_get(vars, spart);
+    //                     char *input = map_get(values, spart);
+    //                     if (!input || !mv) {
+    //                         sprintf(fc->sbuf, "Cannot find macro input by name: '%s' (compiler bug)", spart);
+    //                         fc_error(fc);
+    //                     }
+    //                     for (int x = 0; x < mv->replaces->length; x++) {
+    //                         MacroReplace *rep = array_get_index(mv->replaces, x);
+    //                         input = str_replace(alc, input, rep->find, rep->with);
+    //                     }
+    //                     str_append_chars(buf, input);
+    //                 }
+    //             }
+    //         }
+    //     }
 
-        str_append_char(buf, ' ');
-        char *content = str_to_chars(alc, buf);
+    //     str_append_char(buf, ' ');
+    //     char *content = str_to_chars(alc, buf);
 
-        Chunk *chunk = chunk_init(alc, fc->b, NULL);
-        chunk->parent = fc->chunk;
-        chunk->content = content;
-        chunk->length = buf->length;
-        chunk_lex_start(chunk);
+    //     Chunk *chunk = chunk_init(alc, fc->b, NULL);
+    //     chunk->parent = fc->chunk;
+    //     chunk->content = content;
+    //     chunk->length = buf->length;
+    //     chunk_lex_start(chunk);
 
-        // printf(">>>%s<<<", content);
-        fc->chunk = chunk;
+    //     // printf(">>>%s<<<", content);
+    //     fc->chunk = chunk;
 
-        return read_value(fc, alc, scope, false, 0, false);
-    }
+    //     return read_value(fc, alc, scope, false, 0, false);
+    // }
 
     sprintf(fc->sbuf, "Cannot convert identifier to a value");
     fc_error(fc);
