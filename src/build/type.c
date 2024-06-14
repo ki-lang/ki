@@ -127,7 +127,6 @@ Type *type_gen_void(Allocator *alc) {
 
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_space, int context) {
     //
-    char *token = fc->token;
     bool nullable = false;
     bool t_inline = false;
     bool async = false;
@@ -138,36 +137,36 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
     bool weak_ptr = false;
     bool inline_ = false;
 
-    tok(fc, token, sameline, allow_space);
+    char* token = tok(fc, sameline, allow_space);
 
     if (strcmp(token, "async") == 0) {
         async = true;
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
     }
     if (strcmp(token, ".") == 0) {
         inline_ = true;
-        tok(fc, token, true, false);
+        token = tok(fc, true, false);
     } else if (strcmp(token, "raw") == 0) {
         raw_ptr = true;
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
     } else if (strcmp(token, "weak") == 0) {
         if (context != rtc_prop_type) {
             sprintf(fc->sbuf, "'weak' types are only allowed for object properties");
             fc_error(fc);
         }
         weak_ptr = true;
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
     } else if (strcmp(token, "&") == 0) {
         borrow = true;
-        tok(fc, token, true, false);
+        token = tok(fc, true, false);
     } else if (strcmp(token, "+") == 0) {
         shared_ref = true;
-        tok(fc, token, true, false);
+        token = tok(fc, true, false);
     }
 
     if (strcmp(token, "?") == 0) {
         nullable = true;
-        tok(fc, token, true, false);
+        token = tok(fc, true, false);
     }
 
     if (inline_ && (borrow || shared_ref || raw_ptr || weak_ptr || nullable)) {
@@ -195,7 +194,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         Array *args = array_make(alc, 2);
 
         tok_expect(fc, "(", true, true);
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
         while (strcmp(token, ")") != 0) {
 
             rtok(fc);
@@ -204,9 +203,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
             Arg *arg = arg_init(alc, "", type);
             array_push(args, arg);
-            tok(fc, token, true, true);
+            token = tok(fc, true, true);
             if (strcmp(token, ",") == 0) {
-                tok(fc, token, true, true);
+                token = tok(fc, true, true);
             }
         }
         type->func_args = args;
@@ -216,33 +215,6 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         type->func_rett = read_type(fc, alc, scope, true, true, rtc_func_rett);
         tok_expect(fc, ")", true, true);
 
-        // i = tok(fc, token, true, true);
-
-        // if (strcmp(token, "or") == 0) {
-        //     // Read error codes
-        //     type->func_can_error = true;
-        //     fc->i = i;
-
-        //     type->func_error_codes = array_make(2);
-        //     while (true) {
-        //         fc->i = tok(fc, token, true, true);
-        //         if (!is_valid_varname(token)) {
-        //             fc_error(fc, "Invalid error code syntax: '%s'", token);
-        //         }
-        //         if (array_contains(type->func_error_codes, token, arr_find_str)) {
-        //             fc_error(fc, "Duplicate error code: '%s'", token);
-        //         }
-
-        //         array_push(type->func_error_codes, strdup(token));
-
-        //         i = tok(fc, token, true, true);
-        //         if (strcmp(token, ",") == 0) {
-        //             fc->i = i;
-        //             continue;
-        //         }
-        //         break;
-        //     }
-        // }
     } else {
 
         rtok(fc);
@@ -284,9 +256,9 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
         }
     }
 
-    tok(fc, token, true, false);
+    token = tok(fc, true, false);
     while (strcmp(token, "[") == 0) {
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
         int count = -1;
         if (is_valid_number(token)) {
             count = atoi(token);
@@ -300,7 +272,7 @@ Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool sameline, bool allow_
 
         type = type_array_of(alc, fc->b, type, count);
 
-        tok(fc, token, true, false);
+        token = tok(fc, true, false);
     }
     rtok(fc);
     //

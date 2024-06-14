@@ -461,7 +461,7 @@ Class *class_get_generic_class(Class *class, Array *types) {
         str_append_chars(hash_buf, type_buf);
     }
     char *hash_content = str_to_chars(alc, hash_buf);
-    simple_hash(hash_content, hash);
+    ctxhash(hash_content, hash);
 
     Class *gclass = map_get(class->generics, hash);
     if (!gclass) {
@@ -553,14 +553,13 @@ Class *class_get_generic_class(Class *class, Array *types) {
 
 Array *read_generic_types(Fc *fc, Scope *scope, Class *class) {
     //
-    char *token = fc->token;
     tok_expect(fc, "[", true, true);
     Array *types = array_make(fc->alc, class->generic_names->length + 1);
     while (true) {
         Type *type = read_type(fc, fc->alc, scope, true, true, rtc_default);
         array_push(types, type);
 
-        tok(fc, token, true, true);
+        char *token = tok(fc, true, true);
         if (strcmp(token, ",") != 0 && strcmp(token, "]") != 0) {
             sprintf(fc->sbuf, "Unexpected token '%s'", token);
             fc_error(fc);

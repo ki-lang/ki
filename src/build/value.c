@@ -18,11 +18,12 @@ Value *value_init(Allocator *alc, int type, void *item, Type *rett) {
 
 Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio, bool assignable) {
     //
-    char *token = fc->token;
     Build *b = fc->b;
     Value *v = NULL;
+    Chunk* chunk = fc->chunk;
 
-    tok(fc, token, sameline, true);
+    char* token = tok(fc, sameline, true);
+    char t = chunk->token;
 
     bool skip_move = assignable;
 
@@ -31,15 +32,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         tok_expect(fc, ")", false, true);
         skip_move = true;
         //
-    } else if (strcmp(token, "\"") == 0) {
-        Chunk before_str[1];
-        *before_str = *fc->chunk;
-        Str *str = read_string(fc);
-        char *body = str_to_chars(alc, str);
+    } else if (t == tok_string) {
+        char *body = token;
         if (get_char(fc, 0) == '{') {
             // Format string
-            *fc->chunk = *before_str;
-            Array *parts = read_string_chunks(alc, fc);
+            Array *parts = string_read_format_chunks(alc, fc, body);
 
             tok_expect(fc, "{", true, false);
 
@@ -59,46 +56,22 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             VFString *vfs = al(alc, sizeof(VFString));
             vfs->parts = parts;
             vfs->values = values;
-            vfs->line = before_str->line;
-            vfs->col = before_str->col;
+            vfs->line = chunk->line;
+            vfs->col = chunk->col;
             Type *rett = type_gen(fc->b, alc, "String");
             rett->strict_ownership = true;
             v = value_init(alc, v_fstring, vfs, rett);
 
             tok_expect(fc, "}", false, true);
         } else {
+            body = string_replace_backslash_chars(alc, body);
             Type *rett = type_gen(fc->b, alc, "String");
             rett->strict_ownership = true;
             v = value_init(alc, v_string, body, rett);
         }
         //
-    } else if (strcmp(token, "'") == 0) {
-        char ch = get_char(fc, 0);
-        chunk_move(fc->chunk, 1);
-        if (ch == '\\') {
-            char nch = get_char(fc, 0);
-            chunk_move(fc->chunk, 1);
-            if (nch == '0') {
-                ch = '\0';
-            } else if (nch == 'n') {
-                ch = '\n';
-            } else if (nch == 'r') {
-                ch = '\r';
-            } else if (nch == 't') {
-                ch = '\t';
-            } else if (nch == 'v') {
-                ch = '\v';
-            } else if (nch == 'f') {
-                ch = '\f';
-            } else if (nch == 'b') {
-                ch = '\b';
-            } else if (nch == 'a') {
-                ch = '\a';
-            }
-        }
-
-        tok_expect(fc, "'", true, false);
-
+    } else if (t == tok_char_string) {
+        char ch = token[0];
         v = vgen_vint(alc, ch, type_gen(b, alc, "u8"), true);
         //
     } else if (strcmp(token, "!") == 0) {
@@ -261,7 +234,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             fc_error(fc);
         }
 
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
 
         int op = op_add;
         if (strcmp(token, "ADD") == 0) {
@@ -322,7 +295,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         }
         v = vgen_vint(alc, class->size, type_gen(b, alc, "i32"), false);
         //
-    } else if (strcmp(token, "{{") == 0) {
+    } else if (strcmp(token, "<{") == 0) {
         // value scope
         // tok_expect(fc, ":", false, true);
         // Type *rett = read_type(fc, alc, scope, false, true, rtc_func_rett);
@@ -338,7 +311,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         read_ast(fc, sub, false);
 
         if (!sub->did_return || !sub->vscope->rett) {
-            sprintf(fc->sbuf, "The value scope '{{' did not return a value");
+            sprintf(fc->sbuf, "The value scope '<{' did not return a value");
             fc_error(fc);
         }
 
@@ -372,7 +345,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         bool is_negative = strcmp(token, "-") == 0;
 
         if (is_negative) {
-            tok(fc, token, true, false);
+            token = tok(fc, true, false);
         }
 
         bool is_float = false;
@@ -382,8 +355,9 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         if (strcmp(token, "0") == 0 && get_char(fc, 0) == 'x') {
             //
             chunk_move(fc->chunk, 1);
-            read_hex(fc, token);
-            iv = hex2int(token);
+            char buf[256];
+            read_hex(fc, buf);
+            iv = hex2int(buf);
         } else if (is_number(token[0])) {
             char *num_str = dups(alc, token);
             char *float_str = NULL;
@@ -393,7 +367,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                     is_float = true;
 
                     chunk_move(fc->chunk, 1);
-                    tok(fc, token, true, false);
+                    token = tok(fc, true, false);
 
                     float_str = al(alc, strlen(num_str) + strlen(token) + 2);
                     strcpy(float_str, num_str);
@@ -439,7 +413,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         Idf *idf = read_idf(fc, scope, sameline, true);
         v = value_handle_idf(fc, alc, scope, idf);
     } else {
-        sprintf(fc->sbuf, "Unknown value: '%s'", token);
+        sprintf(fc->sbuf, "Unknown value: '%s' (token_type: %d)", token, t);
         fc_error(fc);
     }
 
@@ -448,7 +422,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
         fc_error(fc);
     }
 
-    tok(fc, token, true, false);
+    token = tok(fc, true, false);
     while (strcmp(token, ".") == 0 || strcmp(token, "(") == 0 || strcmp(token, "++") == 0 || strcmp(token, "--") == 0 || strcmp(token, "[") == 0) {
 
         Type *rett = v->rett;
@@ -507,7 +481,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 build_end(b, 0);
             }
 
-            tok(fc, token, true, false);
+            token = tok(fc, true, false);
 
             ClassProp *prop = map_get(class->props, token);
             if (prop) {
@@ -593,11 +567,11 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             v = vgen_array_item(alc, scope, v, index);
         }
 
-        tok(fc, token, true, false);
+        token = tok(fc, true, false);
     }
 
     rtok(fc);
-    tok(fc, token, false, true);
+    token = tok(fc, false, true);
 
     if (prio == 0 || prio > 7) {
         while (strcmp(token, "@as") == 0) {
@@ -609,7 +583,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             Type *type = read_type(fc, alc, scope, false, true, rtc_ptrv);
             v = vgen_cast(alc, v, type);
 
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
         }
     }
 
@@ -651,7 +625,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
             v = vgen_this_or_that(alc, v, true_scope, left, false_scope, right, type);
 
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
         }
     }
 
@@ -674,7 +648,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
             if (strcmp(token, "?!") == 0) {
                 // ?!
-                tok(fc, token, false, true);
+                token = tok(fc, false, true);
                 bool single_line = strcmp(token, "{") != 0;
                 if (single_line)
                     rtok(fc);
@@ -702,7 +676,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 v = vgen_or_value(alc, v, right, usage_scope, else_scope, deref_scope);
             }
 
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
         }
     }
 
@@ -718,7 +692,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             Value *right = read_value(fc, alc, scope, false, 10, false);
             v = value_op(fc, alc, scope, v, right, op);
 
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
         }
     }
 
@@ -732,7 +706,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             Value *right = read_value(fc, alc, scope, false, 20, false);
             v = value_op(fc, alc, scope, v, right, op);
 
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
         }
     }
 
@@ -746,7 +720,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             Value *right = read_value(fc, alc, scope, false, 25, false);
             v = value_op(fc, alc, scope, v, right, op);
 
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
         }
     }
 
@@ -825,7 +799,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
                 v = vgen_compare(alc, b, left, right, op);
             }
 
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
             sprintf(fc->sbuf, ".%s.", token);
         }
     }
@@ -842,7 +816,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
             Value *right = read_value(fc, alc, scope, false, 35, false);
             v = value_op(fc, alc, scope, v, right, op);
 
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
         }
     }
 
@@ -869,7 +843,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
             v = vgen_and_or(alc, b, v, right, op);
 
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
         }
     }
 
@@ -880,7 +854,7 @@ Value *read_value(Fc *fc, Allocator *alc, Scope *scope, bool sameline, int prio,
 
 Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
     //
-    char *token = fc->token;
+    char *token;
 
     if (idf->type == idf_decl_type_overwrite) {
         DeclOverwrite *dov = idf->item;
@@ -966,7 +940,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
                 build_end(b, 0);
             }
 
-            tok(fc, token, true, false);
+            token = tok(fc, true, false);
             Func *func = map_get(class->funcs, token);
             if (!func || !func->is_static) {
                 sprintf(fc->sbuf, "Unknown static function: '%s'", token);
@@ -983,11 +957,11 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
             return vgen_fptr(alc, func, NULL);
         }
 
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
         if (strcmp(token, "{") == 0) {
             // Class init
             Map *values = map_make(alc);
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
             while (strcmp(token, "}") != 0) {
                 ClassProp *prop = map_get(class->props, token);
                 if (!prop) {
@@ -1009,9 +983,9 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
 
                 map_set(values, name, value);
                 //
-                tok(fc, token, false, true);
+                token = tok(fc, false, true);
                 if (strcmp(token, ",") == 0) {
-                    tok(fc, token, false, true);
+                    token = tok(fc, false, true);
                 }
             }
             for (int i = 0; i < class->props->keys->length; i++) {
@@ -1038,7 +1012,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
         Enum *enu = idf->item;
         tok_expect(fc, ".", true, false);
 
-        tok(fc, token, true, false);
+        token = tok(fc, true, false);
         if (!map_contains(enu->values, token)) {
             sprintf(fc->sbuf, "Enum property does not exist '%s'", token);
             fc_error(fc);
@@ -1052,7 +1026,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
         Fc *rfc = idf->item;
 
         tok_expect(fc, ".", true, false);
-        tok(fc, token, true, false);
+        token = tok(fc, true, false);
 
         Idf *idf_ = idf_get_from_header(rfc, token, 0);
         if (!idf_) {
@@ -1067,7 +1041,7 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
         Decl *decl = idf->item;
         if (get_char(fc, 0) == '#') {
             chunk_move(fc->chunk, 1);
-            tok(fc, token, true, false);
+            token = tok(fc, true, false);
             Array *errors = decl->type->func_errors;
             int index = array_find(errors, token, arr_find_str);
             if (index < 0) {
@@ -1079,137 +1053,138 @@ Value *value_handle_idf(Fc *fc, Allocator *alc, Scope *scope, Idf *idf) {
         return value_init(alc, v_decl, decl, decl->type);
     }
 
-    if (idf->type == idf_macro) {
-        Macro *mac = idf->item;
+    // if (idf->type == idf_macro) {
+    //     Macro *mac = idf->item;
 
-        Map *values = map_make(alc);
-        Array *repeat_values = array_make(alc, 8);
-        Array *repeat_values_empty = array_make(alc, 8);
-        array_push(repeat_values_empty, NULL);
+    //     Map *values = map_make(alc);
+    //     Array *repeat_values = array_make(alc, 8);
+    //     Array *repeat_values_empty = array_make(alc, 8);
+    //     array_push(repeat_values_empty, NULL);
 
-        Array *groups = mac->groups;
-        Array *parts = mac->parts;
-        Map *vars = mac->vars;
-        Array *input_names = vars->keys;
-        char *repeat_name = NULL;
+    //     Array *groups = mac->groups;
+    //     Array *parts = mac->parts;
+    //     Map *vars = mac->vars;
+    //     Array *input_names = vars->keys;
+    //     char *repeat_name = NULL;
 
-        for (int i = 0; i < groups->length; i++) {
-            MacroVarGroup *mvg = array_get_index(groups, i);
-            tok_expect(fc, mvg->start, true, false);
+    //     for (int i = 0; i < groups->length; i++) {
+    //         MacroVarGroup *mvg = array_get_index(groups, i);
+    //         tok_expect(fc, mvg->start, true, false);
 
-            bool does_repeat = mvg->repeat_last_input;
-            int input_count = mvg->vars->length - (does_repeat ? 1 : 0);
-            if (does_repeat) {
-                repeat_name = array_get_index(input_names, input_names->length - 1);
-            }
+    //         bool does_repeat = mvg->repeat_last_input;
+    //         int input_count = mvg->vars->length - (does_repeat ? 1 : 0);
+    //         if (does_repeat) {
+    //             repeat_name = array_get_index(input_names, input_names->length - 1);
+    //         }
 
-            int count = 0;
-            tok(fc, token, false, true);
-            if (strcmp(token, mvg->end) == 0) {
-            } else {
-                rtok(fc);
-                while (true) {
-                    skip_whitespace(fc);
+    //         int count = 0;
+    //         token = tok(fc, false, true);
+    //         if (strcmp(token, mvg->end) == 0) {
+    //         } else {
+    //             rtok(fc);
+    //             while (true) {
+    //                 skip_whitespace(fc);
 
-                    int v_start = fc->chunk->i;
-                    Chunk *v_startc = fc->chunk;
-                    skip_macro_input(fc, mvg->end);
-                    int v_end = fc->chunk->i;
-                    Chunk *v_endc = fc->chunk;
+    //                 int v_start = fc->chunk->i;
+    //                 Chunk *v_startc = fc->chunk;
+    //                 skip_macro_input(fc, mvg->end);
+    //                 int v_end = fc->chunk->i;
+    //                 Chunk *v_endc = fc->chunk;
 
-                    if (v_startc != v_endc) {
-                        sprintf(fc->sbuf, "Invalid macro input (mixed macros)");
-                        fc_error(fc);
-                    }
+    //                 if (v_startc != v_endc) {
+    //                     sprintf(fc->sbuf, "Invalid macro input (mixed macros)");
+    //                     fc_error(fc);
+    //                 }
 
-                    char *value = read_part(alc, fc, v_start, v_end - v_start);
-                    if (count >= input_count) {
-                        array_push(repeat_values, value);
-                    } else {
-                        char *name = array_get_index(input_names, count);
-                        map_set(values, name, value);
-                    }
-                    count++;
+    //                 char *value = read_part(alc, fc, v_start, v_end - v_start);
+    //                 if (count >= input_count) {
+    //                     array_push(repeat_values, value);
+    //                 } else {
+    //                     char *name = array_get_index(input_names, count);
+    //                     map_set(values, name, value);
+    //                 }
+    //                 count++;
 
-                    tok(fc, token, false, true);
-                    if (strcmp(token, mvg->end) == 0) {
-                        break;
-                    } else if (strcmp(token, ",") == 0) {
-                        continue;
-                    } else {
-                        sprintf(fc->sbuf, "Expected ',' or '%s', found: '%s'", mvg->end, token);
-                        fc_error(fc);
-                    }
-                }
-            }
+    //                 token = tok(fc, false, true);
+    //                 if (strcmp(token, mvg->end) == 0) {
+    //                     break;
+    //                 } else if (strcmp(token, ",") == 0) {
+    //                     continue;
+    //                 } else {
+    //                     sprintf(fc->sbuf, "Expected ',' or '%s', found: '%s'", mvg->end, token);
+    //                     fc_error(fc);
+    //                 }
+    //             }
+    //         }
 
-            if (count < input_count) {
-                sprintf(fc->sbuf, "Missing macro inputs. Expected%s '%d', found '%d'", does_repeat ? " a minimum of" : "", input_count, count);
-                fc_error(fc);
-            }
-            if (!does_repeat && count > input_count) {
-                sprintf(fc->sbuf, "Too many macro inputs. Expected '%d', found '%d'", input_count, count);
-                fc_error(fc);
-            }
-        }
+    //         if (count < input_count) {
+    //             sprintf(fc->sbuf, "Missing macro inputs. Expected%s '%d', found '%d'", does_repeat ? " a minimum of" : "", input_count, count);
+    //             fc_error(fc);
+    //         }
+    //         if (!does_repeat && count > input_count) {
+    //             sprintf(fc->sbuf, "Too many macro inputs. Expected '%d', found '%d'", input_count, count);
+    //             fc_error(fc);
+    //         }
+    //     }
 
-        Str *buf = fc->str_buf;
-        str_clear(buf);
-        for (int i = 0; i < parts->length; i++) {
-            //
-            MacroPart *part = array_get_index(parts, i);
-            Array *sub_parts = part->sub_parts;
+    //     Str *buf = fc->str_buf;
+    //     str_clear(buf);
+    //     for (int i = 0; i < parts->length; i++) {
+    //         //
+    //         MacroPart *part = array_get_index(parts, i);
+    //         Array *sub_parts = part->sub_parts;
 
-            Array *loop_values = part->loop ? repeat_values : repeat_values_empty;
-            //
-            for (int o = 0; o < loop_values->length; o++) {
-                char *repeat_value = array_get_index(loop_values, o);
-                for (int u = 0; u < sub_parts->length; u++) {
-                    char *spart = array_get_index(sub_parts, u);
-                    if (u % 2 == 0) {
-                        // String part
-                        str_append_chars(buf, spart);
-                    } else {
-                        // Input
-                        if (repeat_value && strcmp(spart, repeat_name) == 0) {
-                            char *input = repeat_value;
-                            MacroVar *mv = map_get(vars, repeat_name);
-                            for (int x = 0; x < mv->replaces->length; x++) {
-                                MacroReplace *rep = array_get_index(mv->replaces, x);
-                                input = str_replace(alc, input, rep->find, rep->with);
-                            }
-                            str_append_chars(buf, input);
-                            continue;
-                        }
-                        MacroVar *mv = map_get(vars, spart);
-                        char *input = map_get(values, spart);
-                        if (!input || !mv) {
-                            sprintf(fc->sbuf, "Cannot find macro input by name: '%s' (compiler bug)", spart);
-                            fc_error(fc);
-                        }
-                        for (int x = 0; x < mv->replaces->length; x++) {
-                            MacroReplace *rep = array_get_index(mv->replaces, x);
-                            input = str_replace(alc, input, rep->find, rep->with);
-                        }
-                        str_append_chars(buf, input);
-                    }
-                }
-            }
-        }
+    //         Array *loop_values = part->loop ? repeat_values : repeat_values_empty;
+    //         //
+    //         for (int o = 0; o < loop_values->length; o++) {
+    //             char *repeat_value = array_get_index(loop_values, o);
+    //             for (int u = 0; u < sub_parts->length; u++) {
+    //                 char *spart = array_get_index(sub_parts, u);
+    //                 if (u % 2 == 0) {
+    //                     // String part
+    //                     str_append_chars(buf, spart);
+    //                 } else {
+    //                     // Input
+    //                     if (repeat_value && strcmp(spart, repeat_name) == 0) {
+    //                         char *input = repeat_value;
+    //                         MacroVar *mv = map_get(vars, repeat_name);
+    //                         for (int x = 0; x < mv->replaces->length; x++) {
+    //                             MacroReplace *rep = array_get_index(mv->replaces, x);
+    //                             input = str_replace(alc, input, rep->find, rep->with);
+    //                         }
+    //                         str_append_chars(buf, input);
+    //                         continue;
+    //                     }
+    //                     MacroVar *mv = map_get(vars, spart);
+    //                     char *input = map_get(values, spart);
+    //                     if (!input || !mv) {
+    //                         sprintf(fc->sbuf, "Cannot find macro input by name: '%s' (compiler bug)", spart);
+    //                         fc_error(fc);
+    //                     }
+    //                     for (int x = 0; x < mv->replaces->length; x++) {
+    //                         MacroReplace *rep = array_get_index(mv->replaces, x);
+    //                         input = str_replace(alc, input, rep->find, rep->with);
+    //                     }
+    //                     str_append_chars(buf, input);
+    //                 }
+    //             }
+    //         }
+    //     }
 
-        str_append_char(buf, ' ');
-        char *content = str_to_chars(alc, buf);
+    //     str_append_char(buf, ' ');
+    //     char *content = str_to_chars(alc, buf);
 
-        Chunk *chunk = chunk_init(alc, NULL);
-        chunk->parent = fc->chunk;
-        chunk->content = content;
-        chunk->length = buf->length;
+    //     Chunk *chunk = chunk_init(alc, fc->b, NULL);
+    //     chunk->parent = fc->chunk;
+    //     chunk->content = content;
+    //     chunk->length = buf->length;
+    //     chunk_lex_start(chunk);
 
-        // printf(">>>%s<<<", content);
-        fc->chunk = chunk;
+    //     // printf(">>>%s<<<", content);
+    //     fc->chunk = chunk;
 
-        return read_value(fc, alc, scope, false, 0, false);
-    }
+    //     return read_value(fc, alc, scope, false, 0, false);
+    // }
 
     sprintf(fc->sbuf, "Cannot convert identifier to a value");
     fc_error(fc);
@@ -1493,7 +1468,6 @@ Value *try_convert(Fc *fc, Allocator *alc, Value *val, Type *to_type) {
 
 Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     //
-    char *token = fc->token;
     Type *ont = on->rett;
     int ontt = ont->type;
 
@@ -1549,7 +1523,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         build_end(fc->b, 0);
     }
 
-    tok(fc, token, false, true);
+    char* token = tok(fc, false, true);
     bool named_args = strcmp(token, "{") == 0;
 
     if (named_args) {
@@ -1579,10 +1553,10 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 type_check(fc, arg->type, val->rett);
                 array_push(values, val);
 
-                tok(fc, token, false, true);
+                token = tok(fc, false, true);
                 if (strcmp(token, ",") == 0) {
                     if (fc->lsp_file) {
-                        tok(fc, token, false, true);
+                        token = tok(fc, false, true);
                         rtok(fc);
                     }
                     continue;
@@ -1615,7 +1589,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
     if (can_error) {
 
-        tok(fc, token, false, true);
+        token = tok(fc, false, true);
         if (strcmp(token, "!") == 0) {
             // !
             if (!type_is_void(rett)) {
@@ -1641,10 +1615,10 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
             if (strcmp(token, "!!") == 0) {
                 // !!
-                tok(fc, token, false, true);
+                token = tok(fc, false, true);
 
                 if (strcmp(token, "|") == 0) {
-                    tok(fc, token, true, true);
+                    token = tok(fc, true, true);
                     if (!is_valid_varname(token)) {
                         sprintf(fc->sbuf, "Invalid variable name '%s'", token);
                         fc_error(fc);
@@ -1652,20 +1626,18 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                     char *err_name = dups(alc, token);
                     char *msg_name = NULL;
 
-                    // tok_expect(fc, "|", true, true);
-                    // tok(fc, token, false, true);
-                    tok(fc, token, false, true);
+                    token = tok(fc, false, true);
                     if (strcmp(token, ",") == 0) {
-                        tok(fc, token, true, true);
+                        token = tok(fc, true, true);
                         if (!is_valid_varname(token)) {
                             sprintf(fc->sbuf, "Invalid variable name '%s'", token);
                             fc_error(fc);
                         }
                         msg_name = dups(alc, token);
                         tok_expect(fc, "|", true, true);
-                        tok(fc, token, false, true);
+                        token = tok(fc, false, true);
                     } else if (strcmp(token, "|") == 0) {
-                        tok(fc, token, false, true);
+                        token = tok(fc, false, true);
                     } else {
                         sprintf(fc->sbuf, "Expected '|' or ',' but found: '%s'", token);
                         fc_error(fc);

@@ -1,3 +1,4 @@
+
 test "`=`" {
     @expect 1 == 1;
 
@@ -71,5 +72,3 @@ test "`<` and `>`" {
 test "`!`" {
     @expect !false;
 }
-
-fn main() i32 { return 0; }

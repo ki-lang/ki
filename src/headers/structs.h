@@ -24,7 +24,6 @@ typedef struct Enum Enum;
 typedef struct Extend Extend;
 typedef struct Decl Decl;
 typedef struct DeclOverwrite DeclOverwrite;
-typedef struct Var Var;
 typedef struct Arg Arg;
 typedef struct UsageLine UsageLine;
 typedef struct Global Global;
@@ -89,7 +88,6 @@ struct Build {
     char *path_out;
     char *cache_dir;
     char *pkg_dir;
-    char *token;
     char *sbuf;
     //
     Allocator *alc;
@@ -142,6 +140,10 @@ struct Build {
     bool clear_cache;
     bool run_code;
     bool link_static;
+    unsigned long time_lex;
+    unsigned long time_fs;
+    unsigned long time_ir;
+    unsigned long time_parse;
 };
 
 struct Fc {
@@ -150,7 +152,6 @@ struct Fc {
     char *path_ir;
     char *path_cache;
     char *path_hash;
-    char *token;
     char *sbuf;
     char *ir;
     char *ir_hash;
@@ -223,13 +224,17 @@ struct Link {
 };
 
 struct Chunk {
+    Build *b;
     Fc *fc;
     Chunk *parent;
     char *content;
+    char *tokens;
     int length;
     int i;
     int line;
     int col;
+    int scope_end_i;
+    char token;
 };
 struct Scope {
     int type;
@@ -392,10 +397,6 @@ struct DeclOverwrite {
     Type *type;
     Decl *decl;
 };
-struct Var {
-    Decl *decl;
-    Type *type;
-};
 struct Arg {
     char *name;
     Type *type;
@@ -470,29 +471,25 @@ struct Test {
 struct Macro {
     char *name;
     char *dname;
-    Map *vars;
-    Array *groups;
-    Array *parts;
+    Array *input;
+    Array *output;
+    Array *valid_var_names;
 };
-struct MacroVarGroup {
-    char *start;
-    char *end;
-    Array *vars;
-    bool repeat_last_input;
+struct MacroInput {
+    int type; // mi_str, mi_value, mi_type, mi_repeat
+    void* item;
+    char* save_as;
 };
-struct MacroVar {
-    char *name;
-    Array *replaces;
-    bool repeat;
+struct MacroRepeat {
+    Array *input;
+    char* token_repeat;
+    char* token_end;
 };
-struct MacroReplace {
-    char *find;
-    char *with;
+struct MacroOutput {
+    char* text;
+    char* repeat_var;
 };
-struct MacroPart {
-    Array *sub_parts;
-    bool loop;
-};
+
 
 // Pkg
 struct PkgCmd {

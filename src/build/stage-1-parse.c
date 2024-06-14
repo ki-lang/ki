@@ -22,16 +22,25 @@ void stage_1(Fc *fc) {
         printf("# Stage 1 : Parse : %s\n", fc->path_ki);
     }
 
-    char *token = fc->token;
+    Chunk *chunk = fc->chunk;
+    chunk_lex_start(chunk);
+
+    char *token;
+    char *t_ = &chunk->token;
+
+    unsigned long start = microtime();
 
     while (true) {
 
-        tok(fc, token, false, true);
+        token = tok(fc, false, true);
 
         if (token[0] == 0)
             break;
 
-        if (strcmp(token, "#") == 0) {
+        int t = *t_;
+        if (t == tok_cc) {
+            rtok(fc);
+            skip_whitespace(fc);
             read_macro(fc, fc->alc, fc->scope);
             continue;
         }
@@ -39,7 +48,7 @@ void stage_1(Fc *fc) {
         bool private = false;
         if (strcmp(token, "-") == 0) {
             private = true;
-            tok(fc, token, true, true);
+            token = tok(fc, true, true);
         }
 
         // Indentifiers
@@ -118,8 +127,7 @@ void stage_1(Fc *fc) {
         fc_error(fc);
     }
 
-    b->LOC += fc->chunk->line;
-
+    b->time_parse += microtime() - start;
     //
     chain_add(b->stage_2_1, fc);
 }
@@ -127,14 +135,13 @@ void stage_1(Fc *fc) {
 void stage_1_func(Fc *fc, bool is_private) {
     //
     Build *b = fc->b;
-    char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
-    tok(fc, token, true, true);
+    char* token = tok(fc, true, true);
 
     bool will_exit = false;
     if (strcmp(token, "!") == 0) {
         will_exit = true;
-        tok(fc, token, true, false);
+        token = tok(fc, true, false);
     }
 
     if (!is_valid_varname(token)) {
@@ -149,11 +156,11 @@ void stage_1_func(Fc *fc, bool is_private) {
 
     bool is_main = fc->nsc == b->nsc_main && strcmp(token, "main") == 0;
     if (is_main) {
-        strcpy(token, "ki__main__");
+        token = "ki__main__";
         b->main_func = func;
     }
 
-    char *name = dups(fc->alc, token);
+    char *name = token;
     char *gname = nsc_gname(fc, name);
     char *dname = nsc_dname(fc, name);
 
@@ -180,10 +187,10 @@ void stage_1_func(Fc *fc, bool is_private) {
         map_set(fc->scope->identifiers, name, idf);
     }
 
-    tok(fc, token, true, true);
+    token = tok(fc, true, true);
     if (strcmp(token, "(") == 0) {
         func->chunk_args = chunk_clone(fc->alc, fc->chunk);
-        skip_body(fc, ')');
+        skip_body(fc);
     } else {
         rtok(fc);
         func->parse_args = false;
@@ -195,7 +202,7 @@ void stage_1_func(Fc *fc, bool is_private) {
     } else {
         skip_until_char(fc, "{");
         func->chunk_body = chunk_clone(fc->alc, fc->chunk);
-        skip_body(fc, '}');
+        skip_body(fc);
     }
 }
 
@@ -203,8 +210,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
     //
     Build *b = fc->b;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
-    char *token = fc->token;
-    tok(fc, token, true, true);
+    char* token = tok(fc, true, true);
 
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid class name '%s'", token);
@@ -212,7 +218,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
     }
     name_taken_check(fc, fc->nsc->scope, token);
 
-    char *name = dups(fc->alc, token);
+    char *name = token;
     char *gname = nsc_gname(fc, name);
     char *dname = nsc_dname(fc, name);
 
@@ -246,7 +252,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
         class->generic_names = array_make(fc->alc, 4);
         class->generics = map_make(fc->alc);
 
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
         while (true) {
             if (!is_valid_varname(token)) {
                 sprintf(fc->sbuf, "Invalid name");
@@ -259,32 +265,36 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
                 fc_error(fc);
             }
 
-            char *name = dups(fc->alc, token);
+            char *name = token;
             array_push(class->generic_names, name);
 
-            tok(fc, token, true, true);
+            token = tok(fc, true, true);
             if (strcmp(token, ",") == 0)
-                tok(fc, token, true, true);
-            if (strcmp(token, "]") == 0)
+                token = tok(fc, true, true);
+            else if (strcmp(token, "]") == 0)
                 break;
+            else {
+                sprintf(fc->sbuf, "Unexpected token '%s', expected ',' or ']'", token);
+                fc_error(fc);
+            }
         }
     }
 
-    tok(fc, token, true, true);
+    token = tok(fc, true, true);
     bool track = false;
     while (strcmp(token, "{") != 0) {
         if (strcmp(token, "type") == 0) {
             class->is_rc = false;
             class->track_ownership = false;
             tok_expect(fc, ":", true, false);
-            tok(fc, token, true, false);
+            token = tok(fc, true, false);
             if (strcmp(token, "ptr") == 0) {
                 class->type = ct_ptr;
                 class->size = fc->b->ptr_size;
             } else if (strcmp(token, "int") == 0 || strcmp(token, "float") == 0) {
                 class->type = strcmp(token, "int") == 0 ? ct_int : ct_float;
                 tok_expect(fc, ":", true, false);
-                tok(fc, token, true, false);
+                token = tok(fc, true, false);
                 int size = 0;
                 if (strcmp(token, "*") == 0) {
                     size = fc->b->ptr_size;
@@ -301,7 +311,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
                         fc_error(fc);
                     }
                     tok_expect(fc, ":", true, false);
-                    tok(fc, token, true, false);
+                    token = tok(fc, true, false);
                     if (strcmp(token, "true") != 0 && strcmp(token, "false") != 0) {
                         sprintf(fc->sbuf, "Invalid value for is_signed, options: true,false, received: '%s'", token);
                         fc_error(fc);
@@ -335,7 +345,7 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
             fc_error(fc);
         }
 
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
     }
 
     if (track)
@@ -343,14 +353,13 @@ void stage_1_class(Fc *fc, bool is_struct, bool is_private) {
 
     class->chunk_body = chunk_clone(fc->alc, fc->chunk);
 
-    skip_body(fc, '}');
+    skip_body(fc);
 }
 
 void stage_1_trait(Fc *fc, bool is_private) {
     //
-    char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
-    tok(fc, token, true, true);
+    char *token = tok(fc, true, true);
 
     if (fc->is_header) {
         sprintf(fc->sbuf, "You cannot use 'trait' inside a header file");
@@ -362,7 +371,7 @@ void stage_1_trait(Fc *fc, bool is_private) {
     }
     name_taken_check(fc, fc->nsc->scope, token);
 
-    char *name = dups(fc->alc, token);
+    char *name = token;
     char *gname = nsc_gname(fc, name);
     char *dname = nsc_dname(fc, name);
 
@@ -382,7 +391,7 @@ void stage_1_trait(Fc *fc, bool is_private) {
 
     tr->chunk = chunk_clone(fc->alc, fc->chunk);
 
-    skip_body(fc, '}');
+    skip_body(fc);
 }
 
 void stage_1_extend(Fc *fc) {
@@ -394,16 +403,15 @@ void stage_1_extend(Fc *fc) {
     skip_type(fc);
     tok_expect(fc, "{", false, true);
     ex->chunk_body = chunk_clone(fc->alc, fc->chunk);
-    skip_body(fc, '}');
+    skip_body(fc);
 
     array_push(fc->extends, ex);
 }
 
 void stage_1_enum(Fc *fc, bool is_private) {
     //
-    char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
-    tok(fc, token, true, true);
+    char* token = tok(fc, true, true);
 
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid enum name '%s'", token);
@@ -411,7 +419,7 @@ void stage_1_enum(Fc *fc, bool is_private) {
     }
     name_taken_check(fc, fc->nsc->scope, token);
 
-    char *name = dups(fc->alc, token);
+    char *name = token;
     char *gname = nsc_gname(fc, name);
     char *dname = nsc_dname(fc, name);
 
@@ -428,20 +436,20 @@ void stage_1_enum(Fc *fc, bool is_private) {
 
     Map *values = map_make(fc->alc);
 
-    tok(fc, token, false, true);
+    token = tok(fc, false, true);
     while (strcmp(token, "}") != 0) {
         if (!is_valid_varname(token)) {
             sprintf(fc->sbuf, "Invalid enum property name '%s'", token);
             fc_error(fc);
         }
-        char *name = dups(fc->alc, token);
-        tok(fc, token, false, true);
+        char *name = token;
+        token = tok(fc, false, true);
         if (strcmp(token, ":") == 0) {
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
             bool negative = false;
             if (strcmp(token, "-") == 0) {
                 negative = true;
-                tok(fc, token, true, false);
+                token = tok(fc, true, false);
             }
             if (is_valid_number(token)) {
                 int value = 0;
@@ -459,9 +467,9 @@ void stage_1_enum(Fc *fc, bool is_private) {
 
                 map_set(values, name, (void *)(intptr_t)value);
 
-                tok(fc, token, false, true);
+                token = tok(fc, false, true);
                 if (strcmp(token, ",") == 0) {
-                    tok(fc, token, false, true);
+                    token = tok(fc, false, true);
                     continue;
                 } else if (strcmp(token, "}") == 0) {
                     break;
@@ -481,7 +489,7 @@ void stage_1_enum(Fc *fc, bool is_private) {
                 val = autov++;
             }
             map_set(values, name, (void *)(intptr_t)val);
-            tok(fc, token, false, true);
+            token = tok(fc, false, true);
             continue;
         } else if (strcmp(token, "}") == 0) {
             break;
@@ -504,12 +512,12 @@ void stage_1_enum(Fc *fc, bool is_private) {
 
 void stage_1_header(Fc *fc) {
     //
-    tok_expect(fc, "\"", true, true);
-
-    Str *buf = read_string(fc);
-    Str *fnstr = macro_replace_str_vars(fc->alc, fc, buf);
-    char *fn = str_to_chars(fc->alc, fnstr);
-    Nsc *nsc_main = fc->b->nsc_main;
+    char* fn = tok(fc, true, true);
+    if(fc->chunk->token != tok_string) {
+        sprintf(fc->sbuf, "Expected a filepath here wrapped in dubbel-quotes, e.g. \"headers/mylib\"");
+        fc_error(fc);
+    }
+    fn = macro_replace_str_vars(fc->alc, fc, fn);
 
     Array *dirs = fc->config_pkc->header_dirs;
     bool found = false;
@@ -527,8 +535,7 @@ void stage_1_header(Fc *fc) {
             } else {
                 tok_expect(fc, "as", true, true);
 
-                char *token = fc->token;
-                tok(fc, token, true, true);
+                char* token = tok(fc, true, true);
 
                 if (!is_valid_varname_char(token[0])) {
                     sprintf(fc->sbuf, "Invalid variable name syntax: '%s'", token);
@@ -536,7 +543,7 @@ void stage_1_header(Fc *fc) {
                 }
                 name_taken_check(fc, fc->scope, token);
 
-                char *as = dups(fc->alc, token);
+                char *as = token;
 
                 //
                 Idf *idf = idf_init(fc->alc, idf_fc);
@@ -566,11 +573,11 @@ void stage_1_header(Fc *fc) {
 
 void stage_1_link(Fc *fc, int link_type) {
     //
-    tok_expect(fc, "\"", true, true);
-
-    Str *buf = read_string(fc);
-    Str *fnstr = macro_replace_str_vars(fc->alc, fc, buf);
-    char *fn = str_to_chars(fc->alc, fnstr);
+    char* fn = tok(fc, true, true);
+    if(fc->chunk->token != tok_string) {
+        sprintf(fc->sbuf, "Expected a library name here wrapped in dubbel-quotes, e.g. \"pthread\"");
+        fc_error(fc);
+    }
 
     if (link_type == link_default) {
         link_type = fc->b->link_static ? link_static : link_dynamic;
@@ -618,10 +625,9 @@ void stage_1_use(Fc *fc) {
     }
 
     char *as = nsc_name;
-    char *token = fc->token;
-    tok(fc, token, true, true);
+    char* token = tok(fc, true, true);
     if (strcmp(token, "as") == 0) {
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
         if (!is_valid_varname(token)) {
             sprintf(fc->sbuf, "Invalid variable name syntax '%s'", token);
             fc_error(fc);
@@ -642,9 +648,8 @@ void stage_1_use(Fc *fc) {
 
 void stage_1_global(Fc *fc, bool shared, bool is_private) {
     //
-    char *token = fc->token;
     Chunk *def_chunk = chunk_clone(fc->alc, fc->chunk);
-    tok(fc, token, true, true);
+    char* token = tok(fc, true, true);
 
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid global name syntax '%s'", token);
@@ -694,8 +699,7 @@ void stage_1_alias(Fc *fc, int alias_type, bool is_private) {
 
     tok_expect(fc, "as", true, true);
 
-    char *token = fc->token;
-    tok(fc, token, true, true);
+    char* token = tok(fc, true, true);
 
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid alias name syntax '%s'", token);
@@ -727,48 +731,15 @@ void stage_1_alias(Fc *fc, int alias_type, bool is_private) {
 void stage_1_test(Fc *fc) {
     //
     int line = fc->chunk->line;
-    char *token = fc->token;
+    char buf[512];
     Allocator *alc = fc->alc;
     Build *b = fc->b;
 
-    tok_expect(fc, "\"", true, true);
-
-    Chunk *chu = fc->chunk;
-    char *content = chu->content;
-    int i = chu->i;
-    Str *str = str_make(alc, 64);
-
-    bool found = false;
-    char ch = content[i];
-    while (ch != '\0') {
-        ch = content[i];
-        i++;
-        if (ch == '\n')
-            break;
-        if (ch == '\\') {
-            str_append_char(str, '\\');
-            str_append_char(str, ch);
-            i++;
-            continue;
-        }
-        if (ch == '"') {
-            found = true;
-            break;
-        }
-        str_append_char(str, ch);
-    }
-    if (!found) {
-        sprintf(fc->sbuf, "Missing end of string");
+    char *test_name = tok(fc, true, true);
+    if(fc->chunk->token != tok_string) {
+        sprintf(fc->sbuf, "Expected a test name here wrapped in dubbel-quotes, e.g. \"My test\"");
         fc_error(fc);
     }
-    chu->i = i;
-
-    if (str->length > 128) {
-        sprintf(fc->sbuf, "Test name too long");
-        fc_error(fc);
-    }
-
-    char *body = str_to_chars(alc, str);
 
     tok_expect(fc, "{", false, true);
 
@@ -778,9 +749,9 @@ void stage_1_test(Fc *fc) {
         Func *func = func_init(fc->alc, fc->b);
         func->line = line;
 
-        sprintf(token, "ki__TEST_%d__%s", ++fc->test_counter, fc->path_hash);
+        sprintf(buf, "ki__TEST_%d__%s", ++fc->test_counter, fc->path_hash);
 
-        char *name = dups(fc->alc, token);
+        char *name = dups(fc->alc, buf);
         char *gname = nsc_gname(fc, name);
         char *dname = nsc_dname(fc, name);
 
@@ -793,15 +764,16 @@ void stage_1_test(Fc *fc) {
         func->is_test = true;
 
         Test *test = al(alc, sizeof(Test));
-        test->name = body;
+        test->name = test_name;
         test->func = func;
         func->test = test;
         test->expects = NULL;
 
-        Chunk *chunk = chunk_init(alc, fc);
-        chunk->fc = fc;
-        chunk->content = "ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {";
+        Chunk *chunk = chunk_init(alc, b, fc);
+        chunk->content = "(ki__test__expect_count: u32[1], ki__test__success_count: u32[1], ki__test__fail_count: u32[1]) void {}";
         chunk->length = strlen(chunk->content);
+        chunk_lex_start(chunk);
+        tok_next(chunk, false, true, true);
 
         func->chunk_args = chunk;
         func->chunk_body = chunk_clone(fc->alc, fc->chunk);
@@ -810,7 +782,7 @@ void stage_1_test(Fc *fc) {
         array_push(b->tests, test);
     }
 
-    skip_body(fc, '}');
+    skip_body(fc);
 }
 
 void stage_1_macro(Fc *fc) {
@@ -818,8 +790,7 @@ void stage_1_macro(Fc *fc) {
     Build *b = fc->b;
     Allocator *alc = fc->alc;
 
-    char *token = fc->token;
-    tok(fc, token, true, true);
+    char* token = tok(fc, true, true);
 
     if (!is_valid_varname(token)) {
         sprintf(fc->sbuf, "Invalid macro name syntax '%s'", token);
@@ -827,15 +798,15 @@ void stage_1_macro(Fc *fc) {
     }
     name_taken_check(fc, fc->nsc->scope, token);
 
-    char *name = dups(fc->alc, token);
+    char *name = token;
     char *dname = nsc_dname(fc, name);
 
     Macro *mac = al(alc, sizeof(Macro));
     mac->name = name;
     mac->dname = dname;
-    mac->vars = map_make(alc);
-    mac->groups = array_make(alc, 2);
-    mac->parts = array_make(alc, 8);
+    mac->input = array_make(alc, 8);
+    mac->output = array_make(alc, 8);
+    mac->valid_var_names = array_make(alc, 8);
 
     Idf *idf = idf_init(alc, idf_macro);
     idf->item = mac;
@@ -845,253 +816,234 @@ void stage_1_macro(Fc *fc) {
         map_set(fc->scope->identifiers, name, idf);
     }
 
+
     ///////////
 
-    tok_expect(fc, "{", false, true);
-    tok_expect(fc, "input", false, true);
-    tok_expect(fc, "{", false, true);
+    // tok_expect(fc, "{", false, true);
+    // tok_expect(fc, "input", false, true);
+    // tok_expect(fc, "{", false, true);
 
-    Map *vars = mac->vars;
-    bool repeat = false;
+    // Map *vars = mac->vars;
+    // bool repeat = false;
 
-    while (true) {
-        // Read input groups
-        tok(fc, token, false, true);
-        if (strcmp(token, "\"") == 0) {
-            // New group
-            MacroVarGroup *mvg = al(alc, sizeof(MacroVarGroup));
-            mvg->vars = array_make(alc, 4);
+    // while (true) {
+    //     // Read input groups
+    //     token = tok(fc, false, true);
+    //     if (strcmp(token, "\"") == 0) {
+    //         // New group
+    //         MacroVarGroup *mvg = al(alc, sizeof(MacroVarGroup));
+    //         mvg->vars = array_make(alc, 4);
 
-            Str *pat = read_string(fc);
-            char *pattern = str_to_chars(alc, pat);
-            if (strcmp(pattern, "[]") == 0) {
-            } else if (strcmp(pattern, "{}") == 0) {
-            } else if (strcmp(pattern, "()") == 0) {
-            } else {
-                sprintf(fc->sbuf, "Invalid macro pattern: '%s'", pattern);
-                fc_error(fc);
-            }
+    //         Str *pat = read_string(fc);
+    //         char *pattern = str_to_chars(alc, pat);
+    //         if (strcmp(pattern, "[]") == 0) {
+    //         } else if (strcmp(pattern, "{}") == 0) {
+    //         } else if (strcmp(pattern, "()") == 0) {
+    //         } else {
+    //             sprintf(fc->sbuf, "Invalid macro pattern: '%s'", pattern);
+    //             fc_error(fc);
+    //         }
 
-            char sign[2];
-            sign[0] = pattern[0];
-            sign[1] = '\0';
-            mvg->start = dups(alc, sign);
-            sign[0] = pattern[1];
-            mvg->end = dups(alc, sign);
+    //         char sign[2];
+    //         sign[0] = pattern[0];
+    //         sign[1] = '\0';
+    //         mvg->start = dups(alc, sign);
+    //         sign[0] = pattern[1];
+    //         mvg->end = dups(alc, sign);
 
-            while (true) {
+    //         while (true) {
 
-                if (repeat) {
-                    sprintf(fc->sbuf, "You cannot add more inputs after defining a repeating input '*'");
-                    fc_error(fc);
-                }
+    //             if (repeat) {
+    //                 sprintf(fc->sbuf, "You cannot add more inputs after defining a repeating input '*'");
+    //                 fc_error(fc);
+    //             }
 
-                // int type;
-                // tok(fc, token, false, true);
-                // if (strcmp(token, "T") == 0) {
-                //     type = macro_part_type;
-                // } else if (strcmp(token, "V") == 0) {
-                //     type = macro_part_type;
-                // } else {
-                //     sprintf(fc->sbuf, "Expected 'T' or 'V' here, found: '%s'", pattern);
-                //     fc_error(fc);
-                // }
+    //             token = tok(fc, false, true);
+    //             if (!is_valid_varname(token)) {
+    //                 sprintf(fc->sbuf, "Invalid input name syntax '%s'", token);
+    //                 fc_error(fc);
+    //             }
+    //             if (map_contains(vars, token)) {
+    //                 sprintf(fc->sbuf, "Duplicate input name '%s'", token);
+    //                 fc_error(fc);
+    //             }
 
-                // tok(fc, token, true, false);
-                // if (strcmp(token, "*") == 0) {
-                //     infinite = true;
-                //     tok(fc, token, true, false);
-                // }
-                // if (strcmp(token, ":") != 0) {
-                //     sprintf(fc->sbuf, "Expected ':', found: '%s'", pattern);
-                //     fc_error(fc);
-                // }
-                tok(fc, token, false, true);
-                if (!is_valid_varname(token)) {
-                    sprintf(fc->sbuf, "Invalid input name syntax '%s'", token);
-                    fc_error(fc);
-                }
-                if (map_contains(vars, token)) {
-                    sprintf(fc->sbuf, "Duplicate input name '%s'", token);
-                    fc_error(fc);
-                }
+    //             MacroVar *mv = al(alc, sizeof(MacroVar));
+    //             mv->name = token;
+    //             mv->replaces = array_make(alc, 4);
+    //             mv->repeat = false;
 
-                MacroVar *mv = al(alc, sizeof(MacroVar));
-                mv->name = dups(alc, token);
-                mv->replaces = array_make(alc, 4);
-                mv->repeat = false;
+    //             map_set(vars, mv->name, mv);
+    //             array_push(mvg->vars, mv);
 
-                map_set(vars, mv->name, mv);
-                array_push(mvg->vars, mv);
+    //             while (true) {
+    //                 token = tok(fc, false, true);
 
-                while (true) {
-                    tok(fc, token, false, true);
+    //                 if (strcmp(token, "@repeat") == 0) {
+    //                     repeat = true;
+    //                     mv->repeat = true;
+    //                     continue;
+    //                 } else if (strcmp(token, "@replace") == 0) {
+    //                     tok_expect(fc, "(", true, false);
+    //                     tok_expect(fc, "\"", true, true);
 
-                    if (strcmp(token, "@repeat") == 0) {
-                        repeat = true;
-                        mv->repeat = true;
-                        continue;
-                    } else if (strcmp(token, "@replace") == 0) {
-                        tok_expect(fc, "(", true, false);
-                        tok_expect(fc, "\"", true, true);
+    //                     Str *buf = read_string(fc);
+    //                     char *find = str_to_chars(alc, buf);
+    //                     tok_expect(fc, ",", true, true);
+    //                     tok_expect(fc, "\"", true, true);
+    //                     buf = read_string(fc);
+    //                     char *with = str_to_chars(alc, buf);
 
-                        Str *buf = read_string(fc);
-                        char *find = str_to_chars(alc, buf);
-                        tok_expect(fc, ",", true, true);
-                        tok_expect(fc, "\"", true, true);
-                        buf = read_string(fc);
-                        char *with = str_to_chars(alc, buf);
+    //                     tok_expect(fc, ")", true, true);
 
-                        tok_expect(fc, ")", true, true);
+    //                     MacroReplace *rep = al(alc, sizeof(MacroReplace));
+    //                     rep->find = find;
+    //                     rep->with = with;
 
-                        MacroReplace *rep = al(alc, sizeof(MacroReplace));
-                        rep->find = find;
-                        rep->with = with;
+    //                     array_push(mv->replaces, rep);
+    //                     continue;
+    //                 } else {
+    //                     break;
+    //                 }
+    //             }
+    //             if (strcmp(token, ",") == 0) {
+    //                 continue;
+    //             } else if (strcmp(token, ";") == 0) {
+    //                 break;
+    //             } else {
+    //                 sprintf(fc->sbuf, "Expected ',' or ';', found: '%s'", token);
+    //                 fc_error(fc);
+    //             }
+    //         }
 
-                        array_push(mv->replaces, rep);
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-                if (strcmp(token, ",") == 0) {
-                    continue;
-                } else if (strcmp(token, ";") == 0) {
-                    break;
-                } else {
-                    sprintf(fc->sbuf, "Expected ',' or ';', found: '%s'", token);
-                    fc_error(fc);
-                }
-            }
+    //         mvg->repeat_last_input = repeat;
+    //         array_push(mac->groups, mvg);
 
-            mvg->repeat_last_input = repeat;
-            array_push(mac->groups, mvg);
+    //     } else if (strcmp(token, "}") == 0) {
+    //         break;
+    //     } else {
+    //         sprintf(fc->sbuf, "Expected '\"' or '}', found: '%s'", token);
+    //         fc_error(fc);
+    //     }
+    // }
+    // if (mac->groups->length == 0) {
+    //     sprintf(fc->sbuf, "No inputs defined");
+    //     fc_error(fc);
+    // }
 
-        } else if (strcmp(token, "}") == 0) {
-            break;
-        } else {
-            sprintf(fc->sbuf, "Expected '\"' or '}', found: '%s'", token);
-            fc_error(fc);
-        }
-    }
-    if (mac->groups->length == 0) {
-        sprintf(fc->sbuf, "No inputs defined");
-        fc_error(fc);
-    }
+    // tok_expect(fc, "output", false, true);
+    // tok_expect(fc, "{", false, true);
 
-    tok_expect(fc, "output", false, true);
-    tok_expect(fc, "{", false, true);
+    // Chunk *chunk = fc->chunk;
+    // int i = chunk->i;
+    // int col = chunk->col;
+    // int line = chunk->line;
+    // char *content = chunk->content;
+    // int len = chunk->length;
 
-    Chunk *chunk = fc->chunk;
-    int i = chunk->i;
-    int col = chunk->col;
-    int line = chunk->line;
-    char *content = chunk->content;
-    int len = chunk->length;
+    // Str *buf = fc->b->str_buf;
+    // while (i < len) {
+    //     char ch = content[i];
+    //     i++;
+    //     col++;
+    //     if (is_whitespace(ch))
+    //         continue;
+    //     if (ch == '}') {
+    //         break;
+    //     } else if (ch == '"') {
 
-    Str *buf = fc->b->str_buf;
-    while (i < len) {
-        char ch = content[i];
-        i++;
-        col++;
-        if (is_whitespace(ch))
-            continue;
-        if (ch == '}') {
-            break;
-        } else if (ch == '"') {
+    //         bool loop = false;
+    //         Array *sub_parts = array_make(alc, 4);
+    //         str_clear(buf);
 
-            bool loop = false;
-            Array *sub_parts = array_make(alc, 4);
-            str_clear(buf);
+    //         // String
+    //         while (i < len) {
+    //             char ch = content[i];
+    //             i++;
+    //             col++;
 
-            // String
-            while (i < len) {
-                char ch = content[i];
-                i++;
-                col++;
+    //             if (ch == '\\') {
+    //                 if (i == len) {
+    //                     break;
+    //                 }
+    //                 char add = content[i];
+    //                 if (add == 'n') {
+    //                     add = '\n';
+    //                 } else if (add == 'r') {
+    //                     add = '\r';
+    //                 } else if (add == 't') {
+    //                     add = '\t';
+    //                 } else if (add == 'f') {
+    //                     add = '\f';
+    //                 } else if (add == 'b') {
+    //                     add = '\b';
+    //                 } else if (add == 'v') {
+    //                     add = '\v';
+    //                 } else if (add == 'f') {
+    //                     add = '\f';
+    //                 } else if (add == 'a') {
+    //                     add = '\a';
+    //                 }
+    //                 i++;
+    //                 col++;
 
-                if (ch == '\\') {
-                    if (i == len) {
-                        break;
-                    }
-                    char add = content[i];
-                    if (add == 'n') {
-                        add = '\n';
-                    } else if (add == 'r') {
-                        add = '\r';
-                    } else if (add == 't') {
-                        add = '\t';
-                    } else if (add == 'f') {
-                        add = '\f';
-                    } else if (add == 'b') {
-                        add = '\b';
-                    } else if (add == 'v') {
-                        add = '\v';
-                    } else if (add == 'f') {
-                        add = '\f';
-                    } else if (add == 'a') {
-                        add = '\a';
-                    }
-                    i++;
-                    col++;
+    //                 str_append_char(buf, add);
+    //                 continue;
+    //             }
 
-                    str_append_char(buf, add);
-                    continue;
-                }
+    //             if (ch == '"') {
+    //                 array_push(sub_parts, str_to_chars(alc, buf));
+    //                 str_clear(buf);
+    //                 break;
+    //             }
 
-                if (ch == '"') {
-                    array_push(sub_parts, str_to_chars(alc, buf));
-                    str_clear(buf);
-                    break;
-                }
+    //             if (ch == '%') {
+    //                 array_push(sub_parts, str_to_chars(alc, buf));
+    //                 str_clear(buf);
+    //                 ch = content[i];
+    //                 while (is_valid_varname_char(ch)) {
+    //                     i++;
+    //                     col++;
+    //                     str_append_char(buf, ch);
+    //                     ch = content[i];
+    //                 }
 
-                if (ch == '%') {
-                    array_push(sub_parts, str_to_chars(alc, buf));
-                    str_clear(buf);
-                    ch = content[i];
-                    while (is_valid_varname_char(ch)) {
-                        i++;
-                        col++;
-                        str_append_char(buf, ch);
-                        ch = content[i];
-                    }
+    //                 char *var_name = str_to_chars(alc, buf);
+    //                 str_clear(buf);
+    //                 MacroVar *mv = map_get(mac->vars, var_name);
+    //                 if (!mv) {
+    //                     sprintf(fc->sbuf, "Unknown macro input: '%s'", var_name);
+    //                     fc_error(fc);
+    //                 }
+    //                 if (repeat && mv->repeat) {
+    //                     loop = true;
+    //                 }
+    //                 array_push(sub_parts, var_name);
+    //                 continue;
+    //             }
 
-                    char *var_name = str_to_chars(alc, buf);
-                    str_clear(buf);
-                    MacroVar *mv = map_get(mac->vars, var_name);
-                    if (!mv) {
-                        sprintf(fc->sbuf, "Unknown macro input: '%s'", var_name);
-                        fc_error(fc);
-                    }
-                    if (repeat && mv->repeat) {
-                        loop = true;
-                    }
-                    array_push(sub_parts, var_name);
-                    continue;
-                }
+    //             if (is_newline(ch)) {
+    //                 line++;
+    //                 col = 1;
+    //             }
+    //             str_append_char(buf, ch);
+    //         }
 
-                if (is_newline(ch)) {
-                    line++;
-                    col = 1;
-                }
-                str_append_char(buf, ch);
-            }
+    //         MacroPart *part = al(alc, sizeof(MacroPart));
+    //         part->loop = loop;
+    //         part->sub_parts = sub_parts;
 
-            MacroPart *part = al(alc, sizeof(MacroPart));
-            part->loop = loop;
-            part->sub_parts = sub_parts;
+    //         array_push(mac->parts, part);
 
-            array_push(mac->parts, part);
+    //     } else {
+    //         sprintf(fc->sbuf, "Expected '\"' or '}', found: '%c'", ch);
+    //         fc_error(fc);
+    //     }
+    // }
 
-        } else {
-            sprintf(fc->sbuf, "Expected '\"' or '}', found: '%c'", ch);
-            fc_error(fc);
-        }
-    }
+    // chunk->i = i;
+    // chunk->col = col;
+    // chunk->line = line;
 
-    chunk->i = i;
-    chunk->col = col;
-    chunk->line = line;
-
-    tok_expect(fc, "}", false, true);
+    // tok_expect(fc, "}", false, true);
 }

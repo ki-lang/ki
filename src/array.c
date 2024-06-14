@@ -140,3 +140,26 @@ int array_find(Array *arr, void *item, int type) {
     }
     return -1;
 }
+int array_find_x(Array *arr, void *item, int type, int start, int end) {
+    int x = start;
+    while (x < end) {
+        uintptr_t *adr = arr->data + (x * sizeof(void *));
+        if (type == arr_find_adr) {
+            if (*adr == (uintptr_t)item)
+                return x;
+        } else if (type == arr_find_str) {
+            char *a = (char *)*adr;
+            char *b = (char *)item;
+            if (strcmp(a, b) == 0)
+                return x;
+        } else if (type == arr_find_int) {
+            if ((int)(*adr) == *(int *)item)
+                return x;
+        } else {
+            die("array.c invalid search type");
+        }
+        x++;
+    }
+    return -1;
+}
+

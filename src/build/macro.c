@@ -11,8 +11,7 @@ MacroScope *init_macro_scope(Allocator *alc) {
 
 void read_macro(Fc *fc, Allocator *alc, Scope *scope) {
     //
-    char *token = fc->token;
-    tok(fc, token, true, false);
+    char *token = tok(fc, true, false);
 
     if (strcmp(token, "if") == 0) {
         MacroScope *mc = fc->current_macro_scope;
@@ -91,8 +90,7 @@ void read_macro(Fc *fc, Allocator *alc, Scope *scope) {
 
 bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
     //
-    char *token = fc->token;
-    tok(fc, token, true, true);
+    char* token = tok(fc, true, true);
 
     bool result = false;
 
@@ -192,7 +190,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
             fc_error(fc);
         }
 
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
 
         result = map_get(class->props, token) ? true : false;
 
@@ -210,7 +208,7 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
             fc_error(fc);
         }
 
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
 
         result = map_get(class->funcs, token) ? true : false;
 
@@ -242,19 +240,19 @@ bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc) {
         }
         result = strcmp(value, "1") == 0;
 
-        tok(fc, token, true, true);
+        token = tok(fc, true, true);
         if (strcmp(token, "==") == 0) {
-            tok(fc, token, true, true);
+            token = tok(fc, true, true);
             result = strcmp(value, token) == 0;
         } else if (strcmp(token, "!=") == 0) {
-            tok(fc, token, true, true);
+            token = tok(fc, true, true);
             result = strcmp(value, token) != 0;
         } else {
             rtok(fc);
         }
     }
 
-    tok(fc, token, true, true);
+    token = tok(fc, true, true);
     if (strcmp(token, "&&") == 0) {
         result = result && macro_resolve_if_value(fc, scope, mc);
     } else if (strcmp(token, "||") == 0) {
@@ -279,19 +277,18 @@ char *macro_get_var(MacroScope *mc, char *key) {
     return NULL;
 }
 
-Str *macro_replace_str_vars(Allocator *alc, Fc *fc, Str *str) {
+char *macro_replace_str_vars(Allocator *alc, Fc *fc, char *str) {
     //
-    int len = str->length;
+    int len = strlen(str);
     Str *result = str_make(alc, len + 1);
-    char *data = str->data;
     for (int i = 0; i < len; i++) {
-        char ch = data[i];
+        char ch = str[i];
         if (ch == '[') {
             i++;
             char var_name[128];
             int vi = 0;
-            while (data[i] != ']') {
-                var_name[vi] = data[i];
+            while (str[i] != ']') {
+                var_name[vi] = str[i];
                 vi++;
                 i++;
             }
@@ -311,5 +308,5 @@ Str *macro_replace_str_vars(Allocator *alc, Fc *fc, Str *str) {
         }
         str_append_char(result, ch);
     }
-    return result;
+    return str_to_chars(alc, result);
 }

@@ -7,7 +7,7 @@ int atoi(const char *str);
 int hex2int(char *hex);
 void sleep_ns(unsigned int ns);
 void sleep_ms(unsigned int ms);
-void simple_hash(char *content, char *buf);
+void ctxhash(char *content, char *buf);
 Array *explode(Allocator *alc, char *part, char *content);
 int system_silent(char *cmd);
 char *str_replace_simple(char *s, const char *s1, const char *s2);
@@ -15,6 +15,10 @@ char *str_replace(Allocator *alc, char *orig, char *rep, char *with);
 void free_delayed(void *item);
 void rtrim(char *str, char ch);
 void run_async(void *func, void *arg, bool wait);
+unsigned long microtime();
+
+// crc32
+unsigned int calculate_crc32c(unsigned int crc32c, const unsigned char *buffer, unsigned int length);
 
 // Syntax
 bool is_alpha_char(char c);
@@ -30,6 +34,7 @@ bool is_valid_hex_number(char *str);
 bool is_valid_macro_number(char *str);
 bool ends_with(const char *str, const char *suffix);
 bool starts_with(const char *a, const char *b);
+char backslash_char(char ch);
 
 // Alloc
 Allocator *alc_make();
@@ -145,6 +150,7 @@ char *nsc_dname(Fc *fc, char *name);
 Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate);
 void fc_set_cache_paths(Fc *fc);
 void fc_error(Fc *fc);
+void display_error(Build* b, Chunk *chunk, char* msg, int i, int line, int col);
 void fc_update_cache(Fc *fc);
 
 //
@@ -168,30 +174,26 @@ void stage_2_6_func(Fc *fc, Func *func);
 void stage_2_6_class_functions(Fc *fc, Class *class);
 void stage_3_class(Fc *fc, Class *class);
 
-// void stage_2_class_type_checks(Fc *fc, Class *class);
-// void stage_2_class_props(Fc *fc, Class *class, bool is_trait, bool is_extend);
-// void stage_2_func(Fc *fc, Func *func);
-// void stage_2_1(Fc *fc);
-// void stage_3(Fc *);
-// void stage_2_3_circular(Build *b, Class *class);
-// void stage_2_3_shared_circular_refs(Build *b, Class *class);
-
 // Read
-Chunk *chunk_init(Allocator *alc, Fc *fc);
+Chunk *chunk_init(Allocator *alc, Build* b, Fc *fc);
 Chunk *chunk_clone(Allocator *alc, Chunk *chunk);
 void chunk_move(Chunk *chunk, int pos);
-void chunk_update_col(Chunk *chunk);
-void tok(Fc *fc, char *token, bool sameline, bool allow_space);
+void chunk_lex_start(Chunk *chunk);
+void chunk_lex(Chunk* chunk, int err_token_i, int* err_content_i, int* err_line, int* err_col);
+char* tok(Fc *fc, bool sameline, bool allow_space);
+char* tok_next(Chunk* chunk, bool sameline, bool allow_space, bool update);
+char* tok_read(Chunk* chunk, int *i_ref);
 void rtok(Fc *fc);
 void tok_expect(Fc *fc, char *expect, bool sameline, bool allow_space);
 char get_char(Fc *fc, int index);
 void read_hex(Fc *fc, char *token);
 Str *read_string(Fc *fc);
-Array *read_string_chunks(Allocator *alc, Fc *fc);
+Array *string_read_format_chunks(Allocator *alc, Fc* fc, char *body);
+char* string_replace_backslash_chars(Allocator* alc, char* body);
 char *read_part(Allocator *alc, Fc *fc, int i, int len);
 
 // Skips
-void skip_body(Fc *fc, char until_ch);
+void skip_body(Fc *fc);
 void skip_string(Fc *fc, char end_char);
 void skip_until_char(Fc *fc, char *find);
 void skip_whitespace(Fc *fc);
@@ -206,7 +208,7 @@ MacroScope *init_macro_scope(Allocator *alc);
 void read_macro(Fc *fc, Allocator *alc, Scope *scope);
 bool macro_resolve_if_value(Fc *fc, Scope *scope, MacroScope *mc);
 char *macro_get_var(MacroScope *mc, char *key);
-Str *macro_replace_str_vars(Allocator *alc, Fc *fc, Str *str);
+char *macro_replace_str_vars(Allocator *alc, Fc *fc, char *str);
 
 // Id
 Id *id_init(Allocator *alc);
@@ -275,7 +277,6 @@ Type *type_merge(Build* build, Allocator *alc, Type *a, Type *b);
 
 // Var
 Decl *decl_init(Allocator *alc, Scope *scope, char *name, Type *type, Value *val, bool is_arg);
-Var *var_init(Allocator *alc, Decl *decl, Type *type);
 Arg *arg_init(Allocator *alc, char *name, Type *type);
 
 // UsageLine

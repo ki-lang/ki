@@ -17,7 +17,7 @@ Pkc *pkc_init(Allocator *alc, Build *b, char *name, char *dir, Config *cfg) {
     pkc->header_dirs = array_make(alc, 10);
     pkc->config = cfg;
 
-    simple_hash(pkc->dir, pkc->hash);
+    ctxhash(pkc->dir, pkc->hash);
 
     array_push(b->packages, pkc);
 

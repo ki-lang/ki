@@ -65,7 +65,7 @@ Feature todo list in order:
 - format string
 - http server
 - __eq
-- {{ ... }} (value-scopes)
+- <{ ... } (value-scopes)
 - __before_free
 - strict ownership types
 - shared ownership types

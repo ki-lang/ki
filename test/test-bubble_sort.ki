@@ -1,6 +1,18 @@
+
 test "bubble_sort_dynamic array" {
 
-    let arr = array[i32]{ 4, 3, 1, 6, 7, 9, 5, 8, 0, 2 };
+    // let arr = array[i32]{ 4, 3, 1, 6, 7, 9, 5, 8, 0, 2 };
+    let arr = Array[i32].new();
+    arr.push(4);
+    arr.push(3);
+    arr.push(1);
+    arr.push(6);
+    arr.push(7);
+    arr.push(9);
+    arr.push(5);
+    arr.push(8);
+    arr.push(0);
+    arr.push(2);
 
     let len = arr.length;
     let last = len - 1;

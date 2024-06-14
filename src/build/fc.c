@@ -41,10 +41,9 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
     fc->alc_ast = b->alc_ast;
     fc->deps = array_make(alc, 20);
     fc->sub_headers = array_make(alc, 2);
-    fc->token = b->token;
     fc->sbuf = b->sbuf;
-    fc->chunk = chunk_init(alc, fc);
-    fc->chunk_prev = chunk_init(alc, fc);
+    fc->chunk = chunk_init(alc, b, fc);
+    fc->chunk_prev = chunk_init(alc, b, fc);
     fc->id_buf = id_init(alc);
     fc->str_buf = str_make(alc, 100);
 
@@ -91,8 +90,10 @@ Fc *fc_init(Build *b, char *path_ki, Nsc *nsc, bool duplicate) {
             }
         }
         if (!content) {
+            unsigned long start = microtime();
             file_get_contents(buf, fc->path_ki);
             content = str_to_chars(alc, buf);
+            b->time_fs += microtime() - start;
         }
         fc->chunk->content = content;
         fc->chunk->length = strlen(content);
@@ -128,7 +129,7 @@ void fc_set_cache_paths(Fc *fc) {
     fc->path_cache = path_cache;
 
     char *hash = al(alc, 64);
-    simple_hash(fc->path_ki, hash);
+    ctxhash(fc->path_ki, hash);
     fc->path_hash = hash;
 
     // Str *buf = str_make(alc, 500);
@@ -138,7 +139,9 @@ void fc_set_cache_paths(Fc *fc) {
         fc->cache = NULL;
     }
     if (file_exists(fc->path_cache)) {
+        unsigned long start = microtime();
         file_get_contents(buf, fc->path_cache);
+        b->time_fs += microtime() - start;
         char *content = str_to_chars(alc, buf);
         fc->cache = cJSON_ParseWithLength(content, buf->length);
         cJSON *item = cJSON_GetObjectItemCaseSensitive(fc->cache, "ir_hash");
@@ -150,19 +153,32 @@ void fc_set_cache_paths(Fc *fc) {
 
 void fc_error(Fc *fc) {
     //
-    Allocator *alc = fc->alc;
     Chunk *chunk = fc->chunk;
+
+    int line = -1;
+    int col = -1;
+    int i;
+    chunk_lex(chunk, chunk->i, &i, &line, &col);
+
+    display_error(fc->b, chunk, fc->sbuf, i, line, col);
+}
+
+void display_error(Build* b, Chunk *chunk, char* msg, int i, int line, int col) {
+
+    Allocator *alc = b->alc;
+    Fc *fc = chunk->fc;
+
     char *content = chunk->content;
     int length = chunk->length;
+    // printf("content:'%s'\n", content);
 
-    Build *b = fc->b;
     if (b->lsp) {
         LspData *ld = b->lsp;
         if (ld->type == lspt_diagnostic) {
             Array *errors = array_make(alc, 10);
             FcError *err = al(alc, sizeof(FcError));
-            err->line = chunk->line - 1;
-            err->col = chunk->col - 1;
+            err->line = line;
+            err->col = col;
             err->msg = fc->sbuf;
             err->path = fc->path_ki;
             array_push(errors, err);
@@ -173,26 +189,6 @@ void fc_error(Fc *fc) {
         build_end(b, 1);
     }
 
-    if (is_newline(get_char(fc, 0))) {
-        chunk->i--;
-    }
-
-    int line = chunk->line;
-    int i = chunk->i;
-
-    int col = 0;
-    i = chunk->i;
-    while (i >= 0) {
-        char ch = content[i];
-        if (is_newline(ch)) {
-            i++;
-            break;
-        }
-        col++;
-        i--;
-    }
-    int start = i;
-
     printf("\n");
     Chunk *parent = chunk->parent;
     while (parent) {
@@ -202,15 +198,19 @@ void fc_error(Fc *fc) {
         parent = parent->parent;
     }
     printf("File: %s\n", chunk->fc ? chunk->fc->path_ki : "?");
-    if (fc->error_class_info) {
+    if (fc && fc->error_class_info) {
         printf("Class: %s\n", fc->error_class_info->dname);
     }
-    if (fc->error_func_info) {
+    if (fc && fc->error_func_info) {
         printf("Function: %s\n", fc->error_func_info->dname);
     }
-    printf("At: line:%d | col:%d\n", chunk->line, chunk->col);
-    printf("Error: %s\n", fc->sbuf);
+    printf("At: line:%d | col:%d\n", line, col);
+    printf("Error: %s\n", msg);
     printf("\n");
+
+    int start = i - col + 1;
+    if(start < 0)
+        start = 0;
 
     // Line 1
     int c = 40;
@@ -221,7 +221,6 @@ void fc_error(Fc *fc) {
     printf("\n");
 
     // Code
-    i = chunk->i;
     while (i < length) {
         char ch = content[i];
         if (is_newline(ch)) {
